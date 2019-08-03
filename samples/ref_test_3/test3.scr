@@ -1,0 +1,108 @@
+file rtest
+b 174
+r
+print header
+n
+print withpic
+n
+print def-BINARY-CHAR            
+n
+print def-BINARY-CHAR-SIGNED     
+n
+print def-BINARY-CHAR-UNSIGNED   
+n
+print def-BINARY-C-LONG          
+n
+print def-BINARY-C-LONG-SIGNED   
+n
+print def-BINARY-C-LONG-UNSIGNED 
+n
+print def-BINARY-DOUBLE          
+n
+print def-BINARY-DOUBLE-SIGNED   
+n
+print def-BINARY-DOUBLE-UNSIGNED 
+n
+print def-BINARY-INT             
+n
+print def-BINARY-LONG            
+n
+print def-BINARY-LONG-SIGNED     
+n
+print def-BINARY-LONG-UNSIGNED   
+n
+print def-BINARY-LONG-LONG       
+n
+print def-BINARY-SHORT           
+n
+print def-BINARY-SHORT-SIGNED    
+n
+print def-BINARY-SHORT-UNSIGNED  
+n
+print def-COMPUTATIONAL        
+n
+print def-COMP-1                 
+n
+print def-COMP-2                 
+n
+print def-COMPUTATIONAL-1        
+n
+print def-COMPUTATIONAL-2        
+n
+print def-FLOAT-DECIMAL-16       
+n
+print def-FLOAT-DECIMAL-34       
+n
+print def-FLOAT-LONG             
+n
+print def-FLOAT-SHORT            
+n
+print def-INDEX                  
+n
+print def-SIGNED-INT             
+n
+print def-SIGNED-LONG            
+n
+print def-SIGNED-SHORT           
+n
+print def-UNSIGNED-INT           
+n
+print def-UNSIGNED-LONG          
+n
+print def-UNSIGNED-SHORT         
+n
+print def-COMP-3                 
+n
+print def-COMPUTATIONAL-3    
+n
+print def-PACKED-DECIMAL     
+n
+print def-PACKED-DECIMAL-S   
+n
+print def-BINARY             
+n
+print def-BINARY-S           
+n
+print def-COMP               
+n
+print def-COMPUTATIONAL      
+n
+print def-COMP-4             
+n
+print def-COMPUTATIONAL-4    
+n
+print def-COMP-5             
+n
+print def-COMPUTATIONAL-5    
+n
+print def-COMP-6             
+n
+print def-COMP-X             
+n
+print def-COMPUTATIONAL-X    
+n
+print def-COMP-XX            
+n
+print def-DISPLAY     
+n
+

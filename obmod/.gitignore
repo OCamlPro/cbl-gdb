@@ -1,0 +1,9 @@
+*.o
+*.d
+obmod
+odbmod.exe
+/Debug
+/Release
+/x64
+/.vs
+

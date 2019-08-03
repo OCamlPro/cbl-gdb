@@ -1,0 +1,9 @@
+*.o
+*.d
+cobst
+cobst.exe
+/Debug
+/Release
+/x64
+/.vs
+
