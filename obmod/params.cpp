@@ -174,12 +174,13 @@ static void Usage()
     cerr << "   -o <path to the .o output file\n";
     cerr << "   -t <path to the cobst-generated symbol table information\n";
     cerr << "   -q quiet (suppresses version display on entry)\n";
-    cerr << "   -V displays version information\n";
+    cerr << "   -v displays version information and exits\n";
 }
 
 static void Version()
 {
-    cerr << "obmod Version " VERSION "\n";
+    cerr << "obmod version " VERSION "\n";
+    exit(1);
 }
 
 void OpenOrFail(std::ifstream &ifs,const std::string &fname,std::ios_base::openmode mode/* = std::ifstream::in*/)
@@ -214,9 +215,9 @@ PARAMETERS GetParameters(int argc, char *argv[])
     string cobst_parameter;
     int c;
     retval.quiet = false;
-    while ((c = getopt (argc, argv, "i:o:t:Vq")) != -1) {
+    while ((c = getopt (argc, argv, "i:o:t:vq")) != -1) {
         switch (c) {
-        case 'V':
+        case 'v':
             Version();
             break;
         case 'i':

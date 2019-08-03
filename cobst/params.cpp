@@ -165,12 +165,13 @@ void DecodeTest()
 
 static void Usage()
 {
-    cerr << "cobst: Cobol Symbol Table generator.\n";
-    cerr << "cobst [-q] FileName.CBL\n";
+    cerr << "cobst: Cobol Symbol Table generator version: " << VERSION << endl;
+    cerr << "cobst [-v] [-q] FileName.CBL\n";
     cerr << "Reads various other files with the same FileName root;\n";
     cerr << "Generates FileName.tab containing the symbol table data\n";
     cerr << "-q suppresses the one-line version announcement\n";
-}
+    cerr << "-v generates the one-line version announcement and exits\n";
+    }
 
 void OpenOrFail(std::ifstream &ifs,const std::string &fname,std::ios_base::openmode mode/* = std::ifstream::in*/)
 {
@@ -204,10 +205,14 @@ PARAMETERS GetParameters(int argc, char *argv[])
 
     string input_parameter;
     int c;
-    while ((c = getopt (argc, argv, "q")) != -1) {
+    while ((c = getopt (argc, argv, "qv")) != -1) {
         switch (c) {
         case 'q':
             retval.quiet = true;
+        case 'v':
+            cerr << "cobst: Cobol Symbol Table generator version: " 
+                << VERSION << endl;
+            exit(0);
         case '?':
             fprintf (stderr, "Unknown option '-%c'.\n", optopt);
             exit(1);
