@@ -1,4 +1,7 @@
-GDB_DATA_DIRECTORY := $(shell echo 'show data-directory'|gdb -q |tr -cd [:print:]|sed -e 's/.*\"\(.*\)\".*/\1/')
+# Code to see if ~/.gdbinit already exists
+
+AUTO_LOAD_FOUND := $(shell grep -s -e "^[ \t]*set auto-load safe-path /" ~/.gdbinit | wc -l)
+AUTO_SCRIPTS_FOUND := $(shell grep -s -e "^[ \t]*set auto-load python-scripts on" ~/.gdbinit | wc -l)
 
 .PHONY: all
 all :
@@ -10,10 +13,20 @@ pregit:
 	dos2unix Makefile
 	dos2unix .gitignore
 
-# cprint.py needs to go into the gdb's data-directory, which can be
-# seen with (gdb) show data-directory
+#
+# As of this writing, cprint.py is being embedded into the COBOL executables.
+# By default, gdb doesn't put the current working directory onto the list 
+# of safe auto-load directories.  There is a default safe directory, but that
+# directory isn't on the search path.  So, one way or the other, the user's 
+# .gdbinit file has to be modified.	 I have chosen to defeat the default 
+# security setting to allow auto-load from anywhere.
+#
 .PHONY : install
 install :
-	echo Install not implemented
-#	@mkdir -p $(GDB_DATA_DIRECTORY)/auto-load/
-#	install cprint.py $(GDB_DATA_DIRECTORY)/auto-load/
+ifeq ($(AUTO_LOAD_FOUND), 0)
+	echo "set auto-load safe-path /" >>~/.gdbinit
+endif
+ifeq ($(AUTO_SCRIPTS_FOUND), 0)
+	echo "set auto-load python-scripts on" >>~/.gdbinit
+endif
+

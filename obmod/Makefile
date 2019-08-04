@@ -7,13 +7,18 @@ dep = $(obj:.o=.d)  # one dependency file for each source
 
 $(project) : $(obj)
 	$(CPP) -o $@ $^
-
+	
 -include $(dep)   # include all dep files in the makefile
 
 # rule to generate a dep file by using the C preprocessor
 # (see man cpp for details on the -MM and -MT options)
 %.d: %.cpp
 	@$(CPP) $(CFLAGS) $< -MM -MT $(@:.d=.o) >$@
+    
+c_elf.cpp : cprint_py.h
+	
+cprint_py.h : ../python/cprint.py
+	xxd -i ../python/cprint.py >cprint_py.h
 
 .PHONY: clean
 clean:

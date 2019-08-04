@@ -1,57 +1,16 @@
-Instructions for cprint.py, version 0.4
+Instructions for cprint.py, version 0.5
 
-The key to making cprint.py work is your personal ~/.gdbinit file.
+The key to making cprint.py work is your personal ~/.gdbinit file.  
 
-Prior to version 0.4, we had a line of code in .gdbinit that always loaded
-cprint.py.  Mine looked like this:
+However: ./python/make install now takes care of it.
 
-# source ~/projects/cobol/batch-demo/gdb/python/cprint.py
+Remove any ~/.gdbinit instructions that look like
 
-Remove it.
+    source ~/projects/cobol/batch-demo/gdb/python/cprint.py
+    directory ~/projects/cobol/batch-demo/gdb/python
+    add-auto-load-safe-path ~/projects/cobol/batch-demo/gdb/python
 
-The obmod program v0.4 is putting a directive into the ELF executable file that 
-directs gdb to load cprint.py when, and only when, a COBOL executable is loaded.  
-We have to set up .gdbinit so that gdb knows where to find cprint.py and has 
-permission to load it.
+You can leave this next one; if you take it out, the install will put it back in
 
-Put the following instructions (don't forget to modify them as necessary for
-the location of your copy of cprint.py) into your ~/.gdbinit file:
+    set auto-load python-scripts on
 
-################################
-
-set auto-load python-scripts on
-directory ~/projects/cobol/batch-demo/gdb/python
-add-auto-load-safe-path ~/projects/cobol/batch-demo/gdb/python
-
-################################
-
-You can see the dynamic loading of cprint.py working like this:  
-
-Just start gdb and execute:
-
-    (gdb) info auto-load python-scripts
-    No auto-load scripts.
-
-Now load a COBOL executable:
-
-    (gdb) file rtest
-    Reading symbols from rtest...done.
-    registering CPrint v0.4 , (Usage is "print <COBOL identifier>")
-    
-Note that cprint.py announces that it was registered itself:
-
-This can be verified thusly:
-
-    (gdb) info auto-load python-scripts
-    Loaded  Script
-    Yes     cprint.py
-            full name: /home/bob/projects/cobol/batch-demo/gdb/python/cprint.py
-
-And you can verify that it is appropriately unloaded:
-
-    (gdb) file
-    No executable file now.
-    Discard symbol table from `/home/bob/projects/cobol/batch-demo/gdb/samples/ref_test_2/rtest'? (y or n) y
-    No symbol file now.
-    (gdb) info auto-load python-scripts
-    No auto-load scripts.
