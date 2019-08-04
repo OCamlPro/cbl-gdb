@@ -83,5 +83,13 @@
     <ClInclude Include="cobst.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cprint_py.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\python\cprint.py">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

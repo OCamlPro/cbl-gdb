@@ -11,7 +11,7 @@
 #
 #   This structure will have an f_ symbol pointing to it.
 #
-#       typedef struct __cob_field
+#       typedef struct __cob_field 
 #           {
 #           size_t                  size;       /* Field size */
 #           unsigned char           *data;      /* Pointer to field data */

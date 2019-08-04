@@ -4,6 +4,7 @@
 #include "params.h"
 #include "profiler.h"
 #include "dwarf4.h"
+#include "cprint_py.h"
 
 #define EQ ==
 #define AND &&
@@ -996,8 +997,10 @@ void ELF::CreateSection(const std::string &sec_name,
     }
 }
 
+#if 0
 void ELF::InsertDebugScript(const std::string &python_script)
 {
+    // This version puts in just the name
     // We're going to <add python_script> to the .debug_gdb_scripts section
     const string script_sec = ".debug_gdb_scripts";
 
@@ -1007,6 +1010,27 @@ void ELF::InsertDebugScript(const std::string &python_script)
     strange_string += python_script;
     AddToStringTable(script_sec,strange_string);
 }
+#else
+void ELF::InsertDebugScript(const std::string &python_script)
+{
+    // This version embeds the entire cprint.py program as a text string
+    // We're going to <add python_script> to the .debug_gdb_scripts section
+    const string script_sec = ".debug_gdb_scripts";
+
+    char *embedded = new char[___python_cprint_py_len + 1];
+    memcpy(embedded,___python_cprint_py,___python_cprint_py_len);
+    embedded[___python_cprint_py_len] = '\0';
+
+    // Make sure we have a section
+    CreateSection(script_sec,SHT_PROGBITS,0);
+    string strange_string = "\x04";
+    strange_string += python_script;
+    strange_string += "\n";
+    strange_string += embedded;
+    AddToStringTable(script_sec,strange_string);
+    delete[] embedded;
+}
+#endif
 
 void ELF::ReadFrom(string object_filename)
 {
