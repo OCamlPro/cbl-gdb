@@ -27,3 +27,8 @@ pregit:
 	dos2unix .gitignore
 	astyle -n --style=kr *.h
 	astyle -n --style=kr *.cpp
+
+.PHONY : install
+install :
+	install $(project) /usr/local/bin/
+	

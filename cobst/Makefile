@@ -3,12 +3,12 @@ CPP = g++
 
 src = $(wildcard *.cpp)
 obj = $(src:.cpp=.o)
-dep = $(obj:.o=.d)  # one dependency file for each source
+dep = $(obj:.o=.d)	# one dependency file for each source
 
 $(project) : $(obj)
 	$(CPP) -o $@ $^
 
--include $(dep)   # include all dep files in the makefile
+-include $(dep)	  # include all dep files in the makefile
 
 # rule to generate a dep file by using the C preprocessor
 # (see man cpp for details on the -MM and -MT options)
@@ -27,3 +27,8 @@ pregit:
 	dos2unix .gitignore
 	astyle -n --style=kr *.h
 	astyle -n --style=kr *.cpp
+
+.PHONY : install
+install :
+	install $(project) /usr/local/bin/
+	
