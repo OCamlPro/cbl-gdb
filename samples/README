@@ -1,0 +1,24 @@
+These sample folders are for cobst/obmod/cprint.py exploration and development 
+purposes.  
+
+The Makefile & Makefile.inc combination works with the individual Makefiles 
+to create debuggable executables from .cbl sources.  All the various 
+intermediate files are left intact, as well as some files that aren't used for
+anything.
+
+The implicit warning is that this playground is not like a production 
+environment.  Please don't try to turn it into one, and don't expect a 
+production environment to produce results that look like what happens here.
+
+Specifically, the current process is 
+    cobc produces relocatable .o files and several listing files
+    cobst reads the listing files and produces the .tab file
+    obmod reads the .o file and modifies it into .cbl.o by modifying the .debug
+            line table, and by embedding cprint.py
+    cobc then converts .cbl.o into an executable.
+
+In production, everything except the executable and .tab can be deleted.  The
+executable and the .tab file must be co-located in the same directory in order
+for cprint.py to work.
+
+Bob Dubner 2019-08-13

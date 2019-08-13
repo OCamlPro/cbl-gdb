@@ -1416,8 +1416,9 @@ class CPrintWorker() :
     def ProcessInfoSource(self, info_source) :
         # This routine is given the results of the gdb "info source" command
 
-        # A valid response starts with "Current source file is NC101A.cbl"
-        result = re.search("^Current source file is (.+)\s", info_source)
+        info_source = info_source.replace('\n',' |')
+        # A valid response starts with "Located in /path/to/NC101A.cbl"
+        result = re.search("\|Located in (.+?) ", info_source)
 
         if result:
             source_file = result.group(1)
@@ -1611,7 +1612,7 @@ if 'gdb' in sys.modules :
 
         def __init__ (self):
             super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
-            print('registering CPrint v0.5 , (Usage is "print <COBOL identifier>")')
+            print('registering CPrint v0.5.1 , (Usage is "print <COBOL identifier>")')
             self.Worker = CPrintWorker()
 
         def invoke (self, arguments, from_tty):
@@ -1624,7 +1625,7 @@ if 'gdb' not in sys.modules:
     # I debug with Visual Studio in Windows, which doesn't provide a gdb object.
     # Test code goes here
     Worker = CPrintWorker()
-    Worker.ProcessInfoSource(r"Current source file is C:\projects\1-symas\batch-demo\gdb\samples\optfde01\optfde01.cbl ")
+    Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\batch-demo\gdb\samples\optfde01\optfde01.cbl ")
     Worker.ProcessArguments("*")
     Worker.ProcessArguments("22")
     Worker.ProcessArguments("22")

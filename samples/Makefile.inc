@@ -36,7 +36,8 @@ all: $(project).x $(project) $(project).s
 #
 # Note that it is this srule/script that will have to be copied elsewhere to
 # compile .cbl sources for gdb debugging
-$(project) : $(project).cbl 
+# (Note: COBST and OBMOD need to be here for development, not production)
+$(project) : $(project).cbl $(OBMOD) $(COBST)
 	@# cobc creates the initial relocatable .o ELF file
 	COB_CFLAGS="-Wa,-L,-anchls=$(project).lst" cobc -c -x -d -g $(free) \
 		-T$(project).cbl.lst --tlines=0 --tsymbols $(project).cbl
