@@ -1,0 +1,9 @@
+This directory is the root of the Visual Studio Code extension that knows how
+to set breakpoints in a .cbl file.  With breakpoints set, you can use Visual
+Studio Code to launch the cobst/obmod modified executable.
+
+As of this writing, the variables window will show the variables from the
+intermediate .C file generated as part of the cobc/gcc/gas/ld process.  But the
+DEBUGGER OUTPUT window can be used to "p COBOL-VARIABLE".
+
+Bob Dubner, 2019-08-14

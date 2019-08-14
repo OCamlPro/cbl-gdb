@@ -1,0 +1,3 @@
+#!/bin/bash
+zip cobol_debug -r \[Content_Types\].xml extension.vsixmanifest extension
+mv cobol_debug.zip cobol_debug.vsix
