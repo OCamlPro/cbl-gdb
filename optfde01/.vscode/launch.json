@@ -7,7 +7,7 @@
 
         {
             "name": "cobc/cobst/obmod build and debug",
-            "type": "cobolgdb",
+            "type": "cobol_debug",
             "request": "launch",
             "target": "${fileDirname}/optfde01",
             "arguments": "",
