@@ -128,7 +128,7 @@ void CreateFullCSV(PARAMETERS &params,
         stringstream ss;
         ios_base::fmtflags deflags = ss.flags();
 
-        csv.AddData(SOURCE,                cob_labels.GetSourceFilename());
+        csv.AddData(SOURCE,              cs.source_file);
         ss.flags(deflags);
         ss.str("");
         ss << cs.line_number;
@@ -339,11 +339,11 @@ void CreateCSV(PARAMETERS &params,
         stringstream ss;
         ios_base::fmtflags deflags = ss.flags();
 
-        csv.AddData(SOURCE,                cob_labels.GetSourceFilename());
+        csv.AddData(SOURCE,             cs.source_file);
         ss.flags(deflags);
         ss.str("");
         ss << cs.line_number;
-        csv.AddData(LINE,                ss.str());
+        csv.AddData(LINE,               ss.str());
         ss.flags(deflags);
         ss.str("");
         ss << cs.sentence_number;

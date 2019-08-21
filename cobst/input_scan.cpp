@@ -104,9 +104,10 @@ void GAS_SYMBOLS::GetSymbolsFromFile(const string &source, const string &scope, 
             string find_me = SectionValueCombiner(gs.gas_section,gs.gas_value);
             unordered_map<string,size_t>::const_iterator it = reverse_gas_symbol_location.find(find_me);
 
-            // Some symbols will get both .Local assignments along with the ones generated more directly
-            // from the C code.  The map can only have one string associated with a relative location;
-            // prefer one that is generated from the C code.
+            // Some symbols will get both .Local assignments along with the
+            // ones generated more directly from the C code.  The map can only
+            // have one string associated with a relative location; prefer one
+            // that is generated from the C code.
 
             string already = ".";
             if(it != reverse_gas_symbol_location.end()) {
@@ -235,6 +236,10 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
     int current_line_number = -1;
     int current_sentence_number = 1;
 
+    string current_c_source = "dummy.c";
+    string current_c_source_line = "000";
+    string current_cbl_source = "dummy.cbl";
+
     set<string>linkage_weve_seen;
     for(;;) {
         getline(ifs,input);
@@ -244,13 +249,31 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
         vector<string>tokens = Split(input," \t");
         bool is_comment = tokens.size() >= 2 AND tokens[1] EQ "****";
         if(is_comment) {
-            // This is the big divide.  Four-star comments are the GnuCOBOL-generated C
-            // source code lines.  They can contain information we need, in particular
-            // about PROGRAM-ID, SECTION, ENTRY, and PARAGRAPH names that we want to associate
+            // This is the big divide.  Four-star comments are the
+            // GnuCOBOL-generated C source code lines.  They can contain
+            // information we need, in particular about PROGRAM-ID, SECTION,
+            // ENTRY, and PARAGRAPH names that we want to associate
             // with relative addresses in the machine code.
             //
-            // Note: I am aware that four stars really means just "the C part of the mixed C/assembler
-            // output.  But "comment" is how I started thinking about it, and it stuck.
+            // Note: I am aware that four stars really means just "the C part
+            // of the mixed C/assembler output".  But "comment" is how I
+            // started thinking about it, and it stuck.
+
+            // Look for the COB_SOURCE_FILE line, and strip out the default
+            // .c and .cbl names.  We might need them for the PROGRAM-ID
+            // section, which is coming up.
+
+            vector<string>file_pieces = Split(tokens[0],":");
+            if(file_pieces.size() >= 2) {
+                current_c_source_line = file_pieces[0];
+                current_c_source      = file_pieces[1];
+            }
+
+            if(tokens.size() EQ 5 AND tokens[3] EQ "COB_SOURCE_FILE") {
+                current_cbl_source = StripQuotes(tokens[4]);
+                continue;
+            }
+
             //
             // Try for   ===>  49:rtest.c       **** /* PROGRAM-ID 'RTEST' */ <===
             //
@@ -266,12 +289,15 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
                 if( it != program_id_lines.end() ) {
                     int line_number = it->second;
 
-                    /*  Here's our situation:  We have found a point in the assembly language that
-                        corresponds to ==>ID DIVISION. PROGRAM-ID. program_id.<==  In order to make
-                        stepping through COBOL code with a debugger make sense, we need to
-                        get this line_number into the line_numbers_needing_addresses stack.  But that
-                        has to be done in an appropriate way.  So, we're going to modify our list
-                        of tokens so that we co-opt the code down below to serve our purposes:
+                    /*  Here's our situation:  We have found a point in the
+                        assembly language that corresponds to ==>ID DIVISION.
+                        PROGRAM-ID. program_id.<==  In order to make stepping
+                        through COBOL code with a debugger make sense, we need
+                        to get this line_number into the
+                        line_numbers_needing_addresses stack.  But that has to
+                        be done in an appropriate way.  So, we're going to
+                        modify our list of tokens so that we co-opt the code
+                        down below to serve our purposes:
 
                     */
                     current_entry.clear();
@@ -279,16 +305,22 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
                     current_paragraph.clear();
 
                     tokens.clear();
-                    tokens.push_back("000:dummy.c");    //  0
-                    tokens.push_back("****");           //  1
-                    tokens.push_back("/*");             //  2
-                    tokens.push_back("Line:");          //  3
+                    string dummy_c = current_c_source_line;
+                    dummy_c += ':';
+                    dummy_c += current_c_source;
+                    tokens.push_back(dummy_c);              //  0
+                    tokens.push_back("****");               //  1
+                    tokens.push_back("/*");                 //  2
+                    tokens.push_back("Line:");              //  3
                     stringstream ss;
                     ss << line_number;
-                    tokens.push_back(ss.str());         //  4
-                    tokens.push_back(":");              //  5
-                    tokens.push_back("PROGRAM-ID");     //  6
-                    tokens.push_back(program_id);       //  7
+                    tokens.push_back(ss.str());             //  4
+                    tokens.push_back(":");                  //  5
+                    tokens.push_back("PROGRAM-ID");         //  6
+                    tokens.push_back(program_id);           //  7
+                    tokens.push_back(":");                  //  8
+                    tokens.push_back(current_cbl_source);   //  9
+                    tokens.push_back("*/");                 //  10
                 }
                 // And fall through to process that pseudo-line
             }
@@ -305,6 +337,11 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
             }
 
             if(tokens.size() >= 6 AND tokens[3] EQ "Line:") {
+                // The last two tokens will always be <source_code_module> and
+                // "*/"
+
+                current_cbl_source = tokens[tokens.size()-2];
+
                 int line_number = stoi(tokens[4]);
                 if(line_number EQ current_line_number) {
                     // We are dealing with multiple sentences on a single line
@@ -355,6 +392,7 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
                 // We will create an entry for every line number. By doing so, we are
                 // building up a symbol table entry for every line of COBOL code.
                 COB_LABEL cs;
+                cs.source_file = current_cbl_source;
                 cs.line_number = current_line_number;
                 cs.sentence_number = current_sentence_number;
                 if(program_id_stack.size() >= 1) {
@@ -374,14 +412,6 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
                 continue;
             }
 
-            if( tokens.size() EQ 5
-                    AND tokens[2] EQ "#define"
-                    AND tokens[3] EQ "COB_SOURCE_FILE" ) {
-                source_file = tokens[4].substr(1);
-                source_file = source_file.substr(0,source_file.size()-1);
-                continue;
-            }
-
             // There is information to be gleaned from various C calls.
             bool to_be_continued = false;
             if( tokens.size() >= 3 AND tokens[2] EQ "cob_check_linkage" ) {
@@ -391,6 +421,7 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
                     if( linkage_weve_seen.find(sm[1]) EQ linkage_weve_seen.end() ) {
                         linkage_weve_seen.insert(sm[1]);
                         COB_LABEL cs;
+                        cs.source_file = current_cbl_source;
                         cs.line_number = current_line_number;
                         cs.sentence_number = current_sentence_number;
                         if(program_id_stack.size() >= 1) {
@@ -474,6 +505,7 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
                 if(cbl_lines_needing_addresses.empty()) {
                     // Only do this if nobody else is in there already
                     COB_LABEL cs;
+                    cs.source_file = current_cbl_source;
                     cs.line_number = current_line_number+1;
                     cs.sentence_number = current_sentence_number;
                     if(program_id_stack.size() >= 1) {
@@ -524,6 +556,7 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
 
                 */
                 COB_LABEL cs;
+                cs.source_file = current_cbl_source;
                 current_line_number += 1;
                 cs.line_number = current_line_number;
                 cs.sentence_number = current_sentence_number;
@@ -540,7 +573,6 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
         }
     }
 }
-
 
 void COB_LABELS::GetProgramIdLineNumbers(const std::string &source, const std::string &scope, std::ifstream &ifs, GAS_SYMBOLS &gas_symbol_table)
 {

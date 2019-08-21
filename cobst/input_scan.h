@@ -107,6 +107,7 @@ public:
 class COB_LABEL
 {
 public:
+    std::string source_file;
     int line_number;
     int sentence_number;
     std::string program;
@@ -130,18 +131,12 @@ class COB_LABELS
 {
 protected:
     VCOB_LABEL          symbols;
-    std::string         source_file;
     std::unordered_map<std::string,int>program_id_lines;
 
 public:
     void GetProgramIdLineNumbers(const std::string &source, const std::string &scope, std::ifstream &ifs, GAS_SYMBOLS &gas_symbol_table);
     void GetSymbolsFromFile(const std::string &source, const std::string &scope, std::ifstream &ifs, GAS_SYMBOLS &gas_symbol_table);
     void MergeGasSymbols(const GAS_SYMBOLS &gas_symbol_table);
-
-    const std::string & GetSourceFilename() const
-    {
-        return source_file;
-    }
 
     int size() const
     {
