@@ -16,7 +16,7 @@ void LNS_REGISTERS::Init()
 
     address = 0;
     op_index = 0;
-    file = 1;
+    file_number = 1;
     line = 1;
     column = 0; // Spec calls for 1, but 0 is understood to mean "left side of statement"
     is_stmt = default_is_stmt;
@@ -291,9 +291,9 @@ void LNS_STATE_MACHINE::StateMachineDifference(UBYTE opcode, UBYTE extended_opco
 
     cout << (out.is_stmt ? " NS" : "");
 
-    if(in.file != out.file) {
+    if(in.file_number != out.file_number) {
         cout << " url: ";
-        cout << lns_file_names[(size_t)out.file].name;
+        cout << lns_file_names[(size_t)out.file_number].name;
     }
 
     if(out.new_statement) {
@@ -343,7 +343,7 @@ void LNS_STATE_MACHINE::Run(char *line_data)
         if(first_time) {
             first_time = false;
             // Change the .file value to force the display of the file's URI
-            starting_registers.file -= 1;
+            starting_registers.file_number -= 1;
         }
         UBYTE opcode = GetUbyte(line_program_data);
         UBYTE extended_opcode = 0;
@@ -384,7 +384,7 @@ void LNS_STATE_MACHINE::Run(char *line_data)
 
             case DW_LNS_set_file:
                 file_number = ULEB128Decode(line_program_data);
-                current_registers.file = file_number;
+                current_registers.file_number = file_number;
                 break;
 
             case DW_LNS_set_column:
@@ -514,24 +514,36 @@ void LNS_BUILDER::SetParams(UBYTE ml, UBYTE mopi, BYTE lb, UBYTE lr, UBYTE ob, b
     memcpy(standard_opcode_lengths,sol,sizeof(standard_opcode_lengths));
 }
 
-void LNS_BUILDER::AddFile(const std::string &filename)
+int LNS_BUILDER::AddFile(const std::string &filename)
 {
     LNS_FILE_NAME lfn;
     if(lns_file_names.size() EQ 0) {
         // The zeroth entry is empty; it implies the compilation directory
         lns_file_names.push_back(lfn);
     }
-
-    lfn.name = filename;
-    lfn.include_directory_index = 0;
-    lfn.time_modified = 0;
-    lfn.file_length = 0;
-    lns_file_names.push_back(lfn);
+    int retval = -1;
+    VLNS_FILE_NAMES::const_iterator it = lns_file_names.begin();
+    while(it != lns_file_names.end()) {
+        it++;
+    }
+    if(it EQ lns_file_names.end()) {
+        // This is a never-before-seen filename, so append it.
+        lfn.name = filename;
+        lfn.include_directory_index = 0;
+        lfn.time_modified = 0;
+        lfn.file_length = 0;
+        lns_file_names.push_back(lfn);
+        retval = (int)lns_file_names.size() - 1;
+    } else {
+        retval = (int)(it - lns_file_names.begin());
+    }
+    return retval;
 }
 
-void LNS_BUILDER::AddToAddressLineList(ULONGLONG address, ULONGLONG line)
+void LNS_BUILDER::AddToAddressLineList(ULONGLONG address, int file_number, ULONGLONG line)
 {
     ADDRESS_LINE_PAIR alp;
+    alp.file_number = file_number;
     alp.address = address;
     alp.line = line;
     address_line_pairs.push_back(alp);
@@ -678,6 +690,7 @@ vector<UBYTE> LNS_BUILDER::BuildProgram()
 
         // Prime the pump.
         registers_target.address = address_line_pairs[next_pair].address;
+        registers_target.file_number = address_line_pairs[next_pair].file_number;
         registers_target.line = address_line_pairs[next_pair].line;
         next_pair += 1;
     }
@@ -717,10 +730,10 @@ vector<UBYTE> LNS_BUILDER::BuildProgram()
             registers_current.epilogue_begin = registers_target.epilogue_begin;
             continue;
         }
-        if(registers_current.file != registers_target.file) {
+        if(registers_current.file_number != registers_target.file_number) {
             PushValue((UBYTE)DW_LNS_set_file);
-            PushULEB128(registers_target.file);
-            registers_current.file = registers_target.file;
+            PushULEB128(registers_target.file_number);
+            registers_current.file_number = registers_target.file_number;
             continue;
         }
         if(registers_current.isa != registers_target.isa) {

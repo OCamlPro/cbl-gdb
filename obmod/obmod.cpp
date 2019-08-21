@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
     // Extract the Debugging Information Entry data from the .debug_info
     // section.
-    elf.BuildDieTree(".debug_info");
+    //elf.BuildDieTree(".debug_info");
 
     //cout << "DIE tree for .debug_info\n";
     //elf.DumpEntireDebugInfoDieTree(".debug_info");

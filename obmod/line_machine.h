@@ -20,7 +20,7 @@ public:
                                         index of the first operation is 0. For non-VLIW architectures, this register will always be 0.
                                         The address and op_index registers, taken together, form an operation pointer that can
                                         reference any individual operation with the instruction stream. */
-    ULONGLONG   file;           /*  An unsigned integer indicating the identity of the source file corresponding to a machine instruction. */
+    ULONGLONG   file_number;    /*  An unsigned integer indicating the identity of the source file corresponding to a machine instruction. */
     ULONGLONG   line;           /*  An unsigned integer indicating a source line number. Lines are numbered beginning at 1. The compiler
                                         may emit the value 0 in cases where an instruction cannot be attributed to any source line. */
     ULONGLONG   column;         /*  An unsigned integer indicating a column number within a source line. Columns are numbered beginning
@@ -79,6 +79,7 @@ class ADDRESS_LINE_PAIR
 {
 public:
     ULONGLONG   address;
+    int         file_number;
     ULONGLONG   line;
 };
 typedef std::vector<ADDRESS_LINE_PAIR>VADDRESS_LINE_PAIRS;
@@ -183,9 +184,9 @@ public:
                         ,    bool    default_is_stmt
                         ,    const UBYTE *standard_opcode_lengths
                   );
-    void AddFile(const std::string &filename);
+    int AddFile(const std::string &filename);
 
-    void AddToAddressLineList(ULONGLONG address, ULONGLONG line);
+    void AddToAddressLineList(ULONGLONG address, int file_number, ULONGLONG line);
     std::vector<UBYTE> BuildProgram();
     size_t GetLineProgramSize() const
     {

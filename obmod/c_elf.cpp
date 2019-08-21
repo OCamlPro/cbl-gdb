@@ -881,11 +881,6 @@ void ELF::ReplaceDebugLineSection()
                             lns_state_machine.StandardOpcodeLengths() // standard_opcode_lengths
                          );
 
-    string file;
-    if(cobst_symbols.size() > 0) {
-        file = cobst_symbols[0].file;
-    }
-    lns_builder.AddFile(file);
     for(size_t i=0; i<cobst_symbols.size(); i++) {
         const COBST_SYMBOL cs = cobst_symbols[i];
 
@@ -899,7 +894,8 @@ void ELF::ReplaceDebugLineSection()
             "Line 0"?  So, we filter it out here.  */
 
         if(line != 0) {
-            lns_builder.AddToAddressLineList(address,line);
+            int file_number = lns_builder.AddFile(cobst_symbols[i].file);
+            lns_builder.AddToAddressLineList(address,file_number,line);
         }
     }
 
