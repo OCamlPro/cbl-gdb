@@ -107,6 +107,9 @@ void LNS_STATE_MACHINE::ReadProgramHeader(char *pdata)
     }
 
     LNS_FILE_NAME lns_file_name;
+    lns_file_names.clear(); // We reuse this table when we build our
+    // replacement .debug_line_info, so clear it out
+    // first.
     lns_file_names.push_back(lns_file_name);    // Zeroth entry is understood to be given by the
     // DW_AT_name attribute in the compilation unit.
     // The rest start with the index 1.
@@ -761,6 +764,7 @@ vector<UBYTE> LNS_BUILDER::BuildProgram()
         // didn't involve special opcodes.  That means it's now time to DW_LNS_copy:
 
         if(     registers_current.address EQ registers_target.address
+                AND registers_current.file_number EQ registers_target.file_number
                 AND registers_current.line    EQ registers_target.line      ) {
             PushValue((UBYTE)DW_LNS_copy);
 
@@ -783,7 +787,7 @@ vector<UBYTE> LNS_BUILDER::BuildProgram()
         // must be different.
         LONGLONG delta_line = registers_target.line - registers_current.line;
 
-        if(delta_line > line_threshold) {
+        if(delta_line > line_threshold OR delta_line < 0) {
             PushValue((UBYTE)DW_LNS_advance_line);
             PushLEB128(delta_line);
             registers_current.line += delta_line; // After the addition, current should be the same as target

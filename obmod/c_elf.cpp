@@ -1131,6 +1131,5 @@ void ELF::BruteForceReplace(const string &section, const string &was, const stri
 
         memcpy(data - (len+1),is.c_str(),len);
         continue;
-
     }
 }
