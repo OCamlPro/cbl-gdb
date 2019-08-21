@@ -107,6 +107,9 @@ void LNS_STATE_MACHINE::ReadProgramHeader(char *pdata)
     }
 
     LNS_FILE_NAME lns_file_name;
+    lns_file_names.clear(); // We reuse this table when we build our
+    // replacement .debug_line_info, so clear it out
+    // first.
     lns_file_names.push_back(lns_file_name);    // Zeroth entry is understood to be given by the
     // DW_AT_name attribute in the compilation unit.
     // The rest start with the index 1.
@@ -629,12 +632,10 @@ vector<UBYTE> LNS_BUILDER::BuildProgram()
         PushValue(standard_opcode_lengths[i]);
     }
 
-    // Next up: include directories.
+    // Next up: include directories.  We don't have any.
 
-    // We don't have any. If we did have any, they go here, as a series of
-    // null-terminated strings.
-
-    // The last entry is followed by a single null byte.
+    // If there have any, they go here, as a series of null-terminated strings.
+    //The last entry is followed by a single null byte.
     PushValue((UBYTE)0);
 
     // Next, we have the source file names.  We probably have just the one at index [1]; the
@@ -647,20 +648,6 @@ vector<UBYTE> LNS_BUILDER::BuildProgram()
         PushULEB128(lns_file_names[i].include_directory_index);
         PushULEB128(lns_file_names[i].time_modified);
         PushULEB128(lns_file_names[i].file_length);
-    }
-
-    // When GDB loads, it defaults to showing you the last file in the list.
-    // We (probably) want that to be the first, so if we have more than one
-    // (recalling the first is a dummy) duplicate [1] at the end.
-
-    if(lns_file_names.size() > 2) {
-        for(size_t j=0; j<lns_file_names[1].name.size(); j++) {
-            PushValue(lns_file_names[1].name[j]);
-        }
-        PushValue((UBYTE)0);    // This terminates the string
-        PushULEB128(lns_file_names[1].include_directory_index);
-        PushULEB128(lns_file_names[1].time_modified);
-        PushULEB128(lns_file_names[1].file_length);
     }
     PushValue((UBYTE)0);    // This terminates the list of files
 
@@ -777,6 +764,7 @@ vector<UBYTE> LNS_BUILDER::BuildProgram()
         // didn't involve special opcodes.  That means it's now time to DW_LNS_copy:
 
         if(     registers_current.address EQ registers_target.address
+                AND registers_current.file_number EQ registers_target.file_number
                 AND registers_current.line    EQ registers_target.line      ) {
             PushValue((UBYTE)DW_LNS_copy);
 
@@ -799,7 +787,7 @@ vector<UBYTE> LNS_BUILDER::BuildProgram()
         // must be different.
         LONGLONG delta_line = registers_target.line - registers_current.line;
 
-        if(delta_line > line_threshold) {
+        if(delta_line > line_threshold OR delta_line < 0) {
             PushValue((UBYTE)DW_LNS_advance_line);
             PushLEB128(delta_line);
             registers_current.line += delta_line; // After the addition, current should be the same as target
