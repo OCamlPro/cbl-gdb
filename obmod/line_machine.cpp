@@ -524,6 +524,9 @@ int LNS_BUILDER::AddFile(const std::string &filename)
     int retval = -1;
     VLNS_FILE_NAMES::const_iterator it = lns_file_names.begin();
     while(it != lns_file_names.end()) {
+        if(it->name EQ filename) {
+            break;
+        }
         it++;
     }
     if(it EQ lns_file_names.end()) {
@@ -770,6 +773,7 @@ vector<UBYTE> LNS_BUILDER::BuildProgram()
 
             // And we need to establish the new address/line target:
             registers_target.address = address_line_pairs[next_pair].address;
+            registers_target.file_number = address_line_pairs[next_pair].file_number;
             registers_target.line = address_line_pairs[next_pair].line;
             next_pair += 1;
             continue;
@@ -809,6 +813,7 @@ vector<UBYTE> LNS_BUILDER::BuildProgram()
 
             // And we need to establish the new address/line target:
             registers_target.address = address_line_pairs[next_pair].address;
+            registers_target.file_number = address_line_pairs[next_pair].file_number;
             registers_target.line = address_line_pairs[next_pair].line;
             next_pair += 1;
             continue;
