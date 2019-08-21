@@ -1612,7 +1612,7 @@ if 'gdb' in sys.modules :
 
         def __init__ (self):
             super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
-            print('registering CPrint v0.5.1 , (Usage is "print <COBOL identifier>")')
+            print('registering CPrint v0.6.0 , (Usage is "print <COBOL identifier>")')
             self.Worker = CPrintWorker()
 
         def invoke (self, arguments, from_tty):
