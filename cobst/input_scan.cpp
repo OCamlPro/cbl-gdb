@@ -326,6 +326,42 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
             }
 
             //
+            // Special code for main:
+            //
+            if(tokens.size() EQ 6 AND tokens[3] EQ "Main" AND tokens[4] EQ "function") {
+                int line_number = 1;
+
+                /*  We are going to create an entry for the location
+                corresponding to the main: entry point.  This is in an effort
+                to have gdb default to the module containing main: when it
+                starts up.
+
+                */
+                current_entry.clear();
+                current_section.clear();
+                current_paragraph.clear();
+
+                tokens.clear();
+                string dummy_c = current_c_source_line;
+                dummy_c += ':';
+                dummy_c += current_c_source;
+                tokens.push_back(dummy_c);              //  0
+                tokens.push_back("****");               //  1
+                tokens.push_back("/*");                 //  2
+                tokens.push_back("Line:");              //  3
+                stringstream ss;
+                ss << line_number;
+                tokens.push_back(ss.str());             //  4
+                tokens.push_back(":");                  //  5
+                tokens.push_back("ENTRY ");             //  6
+                tokens.push_back("main");               //  7
+                tokens.push_back(":");                  //  8
+                tokens.push_back(current_cbl_source);   //  9
+                tokens.push_back("*/");                 //  10
+                // And fall through to process that pseudo-line
+            }
+
+            //
             // Try for   ===>  223:rtest.c       **** /* End PROGRAM-ID 'RTEST' */ <===
             //
             if(tokens.size() EQ 7 AND tokens[3] EQ "End" AND tokens[4] EQ "PROGRAM-ID") {
