@@ -31,10 +31,9 @@ int main(int argc, char **argv)
     //cout << "DIE tree for .debug_info\n";
     //elf.DumpEntireDebugInfoDieTree(".debug_info");
 
-    // Run the line number state machine to get the original information
-    // from cobc.  We need to do this because we copy certain information
-    // over from, for instance, the DWARF .debug_line_info header.
-    elf.RunLineStateMachine();
+    // Run the line number state machine to see the original information from
+    // cobc
+    // elf.RunLineStateMachine();
 
     // This is meat and potatoes stuff:  Discard the .debug_line information
     // that gcc-as generated for the cobc-generated .c version of the COBOL
@@ -44,7 +43,7 @@ int main(int argc, char **argv)
     elf.ReplaceDebugLineSection();
 
     // Run the line number state machine to see our replacements
-    elf.RunLineStateMachine();
+    // elf.RunLineStateMachine();
 
     elf.InsertDebugScript("cprint.py");
 
