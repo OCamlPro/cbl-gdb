@@ -4,8 +4,8 @@
       *>       optfde01
       *> JCL equivalent is src/jcl/optfde01.jcl (I hope)
       
-       IDENTIFICATION DIVISION.
-       PROGRAM-ID. optfde01.
+       IDENTIFICATION DIVISION. 
+       PROGRAM-ID. optfde01. 
       
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -34,7 +34,17 @@
        01 working-data.
           05 pgm-name      pic x(9)   VALUE "optfde01".
           05 old-date      pic 9(8)   VALUE ZERO.
+      *> Gratuitous redefines for cbl-gdb demo
+          05 old-dat1 REDEFINES old-date.
+             10 datmo      PIC 9(2).
+             10 datda      PIC 9(2).
+             10 datyr      PIC 9(4).
           05 new-date      pic 9(8)   VALUE ZERO.
+      *> Gratuitous redefines for cbl-gdb demo
+          05 new-dat1 REDEFINES new-date.
+             10 datyr      PIC 9(4).
+             10 datmo      PIC 9(2).
+             10 datda      PIC 9(2).
           05 my-counters.
              10 FILLER       PIC X(18) VALUE "Records modified: ".
              10 custmas-ctr  PIC 9(5) VALUE ZERO.
@@ -78,7 +88,7 @@
              INTO new-date.
           MOVE new-date TO oeit-orddate in oeit.
 
-       59-close.
+       59-close. 
           CLOSE pgm-input.
           CLOSE pgm-output.
 
