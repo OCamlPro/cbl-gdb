@@ -294,7 +294,8 @@ void LNS_STATE_MACHINE::StateMachineDifference(UBYTE opcode, UBYTE extended_opco
 
     cout << (out.is_stmt ? " NS" : "");
 
-    if(in.file_number != out.file_number) {
+    if(in.file_number != out.file_number
+            AND out.file_number < lns_file_names.size() ) {
         cout << " url: ";
         cout << lns_file_names[(size_t)out.file_number].name;
     }
@@ -323,16 +324,22 @@ void LNS_STATE_MACHINE::StateMachineDifference(UBYTE opcode, UBYTE extended_opco
     cout << endl;
 }
 
-void LNS_STATE_MACHINE::Run(char *line_data)
+void LNS_STATE_MACHINE::Run(char *line_data
+                            , size_t line_data_length
+                            , bool read_header
+                            , bool show_your_work)
 {
     CPROFILER;
-
-    static const bool show_your_work = false;
 
     line_address_matrix.clear();    // Make sure our output is empty
 
     // Get hold of the DWARF Version 4 documentation.  Look for section 6.2.4
-    ReadProgramHeader(line_data);
+    if( read_header ) {
+        ReadProgramHeader(line_data);
+    } else {
+        line_program_data = line_data;
+        line_program_data_end = line_program_data + line_data_length;
+    }
     current_registers.SetDefaultIsStmt(default_is_stmt);
 
     if(show_your_work) {

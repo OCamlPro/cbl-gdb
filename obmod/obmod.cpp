@@ -22,19 +22,19 @@ int main(int argc, char **argv)
     // Headers, just Section Headers)and disassembles it into separate
     // ElfHeader and Section objects:
     elf.ReadFrom(params.o_input_filename.WholePath());
-    //elf.DisplaySectionHeaders(cout);
+    elf.DisplaySectionHeaders(cout);
 
     // Extract the Debugging Information Entry data from the .debug_info
     // section.
-    //elf.BuildDieTree(".debug_info");
+    elf.BuildDieTree(".debug_info");
 
     //cout << "DIE tree for .debug_info\n";
-    //elf.DumpEntireDebugInfoDieTree(".debug_info");
+    elf.DumpEntireDebugInfoDieTree(".debug_info");
 
     // Run the line number state machine to get the original information
     // from cobc.  We need to do this because we copy certain information
     // over from, for instance, the DWARF .debug_line_info header.
-    elf.RunLineStateMachine();
+    elf.RunLineStateMachine(false);
 
     // This is meat and potatoes stuff:  Discard the .debug_line information
     // that gcc-as generated for the cobc-generated .c version of the COBOL
@@ -44,9 +44,12 @@ int main(int argc, char **argv)
     elf.ReplaceDebugLineSection();
 
     // Run the line number state machine to see our replacements
-    elf.RunLineStateMachine();
+    elf.RunLineStateMachine(false);
 
     elf.InsertDebugScript("cprint.py");
+
+    // Put the COBOL symbols into the elf segments
+    elf.AugmentSymbolTable();
 
     // Put the headers and sections back together, and writes them out to a
     // file.

@@ -247,9 +247,6 @@ void DIE::Show()
         cout.width(22);
         cout << left << DW_TagToString(at_form_pairs[i].GetForm());
         string payload = at_form_pairs[i].PayloadAsString();
-        if(payload EQ "f_6") {
-            printf("Payload is %s\n",payload.c_str());
-        }
         cout << payload;
         cout << endl;
     }
@@ -286,7 +283,6 @@ void DIE_TREE::DisplayEntireTree(DIE *die)
         DisplayEntireTree(die->children[i]);
     }
 }
-
 
 void DIE_TREE::GetNextDie(PCHAR &pdata)
 {
@@ -594,10 +590,11 @@ void ELF::BuildDieTree(string section_name)
 
     char *pdata_end = pdata + section_length;
     USHORT version = GetUshort(pdata);
-    ULONGLONG debug_abbrev_offset = GetOffset(bIs64,pdata); // In the single Computation Unit that we
+    ULONGLONG debug_abbrev_offset = GetOffset(bIs64,pdata);
+    // In the single Computation Unit that we
     // should see in a .o relocation module (that is:
-    // from a -c gcc compilation), this offset should
-    // be zero
+    // from a -c gcc compilation), debug_abbrev_offset should
+    // be zero.
     if(debug_abbrev_offset != 0) {
         cerr << "debug_abbrev_offset is non-zero in ELF::BuildDieTree(). Something\n";
         cerr << "is going on that I don't understand.  R.J.Dubner 2019-06-21\n";
@@ -676,9 +673,9 @@ void ELF::DumpEntireDebugInfoDieTree(string section_name)
     p_die_tree->DisplayEntireTree(nullptr);
 }
 
-void ELF::RunLineStateMachine()
+void ELF::RunLineStateMachine(bool show_your_work)
 {
-    lns_state_machine.Run(section_headers[GetSectionHeaderIndex(".debug_line")].RawData());
+    lns_state_machine.Run(section_headers[GetSectionHeaderIndex(".debug_line")].RawData(),0,true,show_your_work);
 }
 
 void ELF::ApplyRelocations(int plus_or_minus)
@@ -764,9 +761,10 @@ void ELF::ApplyRelocations(int plus_or_minus)
 
     for(USHORT i=0; i<elf_header.e_shnum; i++) {
         if(section_headers[i].section_header.sh_type EQ SHT_RELA OR section_headers[i].section_header.sh_type EQ SHT_REL ) {
-            SECTION_HEADER *sreloc    = &section_headers[i];                         // Relocation info
-            SECTION_HEADER *ssymbols  = &section_headers[sreloc->section_header.sh_link];  // Symbol table
-            SECTION_HEADER *starget   = &section_headers[sreloc->section_header.sh_info];  // Target
+            SECTION_HEADER *sreloc    = &section_headers[i];                                // Relocation info
+            SECTION_HEADER *ssymbols  = &section_headers[  sreloc->section_header.sh_link]; // Symbol table
+            SECTION_HEADER *starget   = &section_headers[  sreloc->section_header.sh_info]; // Target
+            SECTION_HEADER *sstrings  = &section_headers[ssymbols->section_header.sh_link]; // strings
 
             Elf64_Sym *symbol_table = (Elf64_Sym *)ssymbols->RawData();
 
@@ -774,6 +772,8 @@ void ELF::ApplyRelocations(int plus_or_minus)
                 cout << sreloc->section_header_name << " applies ";
                 cout << ssymbols->section_header_name << " to ";
                 cout << starget->section_header_name;
+                cout << "; The symbol strings are in ";
+                cout << sstrings->section_header_name;
                 cout << endl;
             }
 
@@ -792,6 +792,7 @@ void ELF::ApplyRelocations(int plus_or_minus)
                     relocation_entry.r_info = rel.r_info;
                     relocation_entry.r_addend = 0;
                 }
+
                 int symbol_index = ELF64_R_SYM(relocation_entry.r_info);
 
                 Elf64_Sym symbol = symbol_table[symbol_index];
@@ -811,6 +812,8 @@ void ELF::ApplyRelocations(int plus_or_minus)
                     cout << right << relocation_type;
                     cout.width(strlen(" Addend"));
                     cout << right << relocation_entry.r_addend;
+                    cout << "   ";
+                    cout << sstrings->GetSymbolByIndex(symbol.st_name);
                     cout << endl;
                 }
 
@@ -1085,16 +1088,13 @@ void ELF::ReplaceASymbol(const string &section, const string &was, const string 
         }
         string symbol = symbols;
 
-        if(symbol[0] EQ 'f' AND symbol EQ "f_6") {
-            cout << symbol << endl;
-        }
-
         size_t length = whole_symbol ? symbol.size() : was.size();
 
         if(symbol.substr(0,length) EQ was) {
             // Replace symbol with new symbol:
             memcpy(symbols,is.c_str(),is.size());
-            cout << "replaced!\n";
+            cout << "ELF::ReplaceASymbol(): replaced "
+                 << was << " with " << is << endl;
             break;
         }
         symbols += symbol.size()+1;
@@ -1129,7 +1129,14 @@ void ELF::BruteForceReplace(const string &section, const string &was, const stri
             continue;
         }
 
+        cout << "ELF::BruteForceReplace(): replaced "
+             << was << " with " << is << endl;
+
         memcpy(data - (len+1),is.c_str(),len);
         continue;
     }
+}
+
+void ELF::AugmentSymbolTable()
+{
 }

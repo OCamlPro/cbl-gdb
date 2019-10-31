@@ -51,9 +51,9 @@ string ATTRIBUTE_FORMAT_PAIR::PayloadAsString()
         char *p = pelf->GetSectionDataLocation(".debug_str");
         p += offset;
         retval = p;
+        nLength = 0;
+        break;
     }
-    nLength = 0;
-    break;
     case DW_FORM_udata:
         break;
     case DW_FORM_ref_addr:
@@ -76,8 +76,13 @@ string ATTRIBUTE_FORMAT_PAIR::PayloadAsString()
         break;
     case DW_FORM_sec_offset:
         break;
-    case DW_FORM_exprloc:
+    case DW_FORM_exprloc: {
         break;
+        LNS_STATE_MACHINE location;
+        location.Run((char *)payload.data(),payload.size(),false,true);
+        nLength = 0;
+        break;
+    }
     case DW_FORM_flag_present:
         // This FORM has no actual data
         retval = "flag_present";

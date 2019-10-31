@@ -119,8 +119,14 @@ private:
 public:
     LNS_STATE_MACHINE()
     {
+        version = 2;
+        opcode_base = 9;
+        minimum_instruction_length = 1;
+        maximum_operations_per_instruction = 1;
+        line_base = 1;
+        line_range = 1;
     }
-    void Run(char *line_data);
+    void Run(char *line_data,size_t line_data_length,bool read_header,bool show_your_work);
     UBYTE GetOpcodeBase() const
     {
         return opcode_base;
@@ -176,13 +182,13 @@ public:
     void PushULEB128(ULONGLONG v);
     void PushLEB128(LONGLONG v);
 
-    void SetParams(     UBYTE   min_inst_length
-                        ,    UBYTE   max_ops_per_instr
-                        ,    BYTE    line_base
-                        ,    UBYTE   line_range
-                        ,    UBYTE   opcode_base
-                        ,    bool    default_is_stmt
-                        ,    const UBYTE *standard_opcode_lengths
+    void SetParams(UBYTE   min_inst_length
+                   ,    UBYTE   max_ops_per_instr
+                   ,    BYTE    line_base
+                   ,    UBYTE   line_range
+                   ,    UBYTE   opcode_base
+                   ,    bool    default_is_stmt
+                   ,    const UBYTE *standard_opcode_lengths
                   );
     int AddFile(const std::string &filename);
 

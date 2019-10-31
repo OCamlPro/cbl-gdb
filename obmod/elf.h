@@ -514,20 +514,20 @@ typedef struct {
 
 typedef struct {
     Elf32_Word    st_name;        /* Symbol name (string tbl index) */
-    Elf32_Addr    st_value;        /* Symbol value */
+    Elf32_Addr    st_value;       /* Symbol value */
     Elf32_Word    st_size;        /* Symbol size */
-    unsigned char    st_info;        /* Symbol type and binding */
-    unsigned char    st_other;        /* Symbol visibility */
-    Elf32_Section    st_shndx;        /* Section index */
+    unsigned char st_info;        /* Symbol type and binding */
+    unsigned char st_other;       /* Symbol visibility */
+    Elf32_Section st_shndx;       /* Section index */
 } Elf32_Sym;
 
 typedef struct {
     Elf64_Word    st_name;        /* Symbol name (string tbl index) */
-    unsigned char    st_info;        /* Symbol type and binding */
-    unsigned char st_other;        /* Symbol visibility */
-    Elf64_Section    st_shndx;        /* Section index */
-    Elf64_Addr    st_value;        /* Symbol value */
-    Elf64_Xword    st_size;        /* Symbol size */
+    unsigned char st_info;        /* Symbol type and binding */
+    unsigned char st_other;       /* Symbol visibility */
+    Elf64_Section st_shndx;       /* Section index */
+    Elf64_Addr    st_value;       /* Symbol value */
+    Elf64_Xword   st_size;        /* Symbol size */
 } Elf64_Sym;
 
 /* The syminfo section if available contains additional information about
@@ -635,55 +635,55 @@ whoever) gets their act together.  */
 
 typedef struct {
     Elf64_Addr    r_offset;        /* Address */
-    Elf64_Xword    r_info;            /* Relocation type and symbol index */
+    Elf64_Xword   r_info;          /* Relocation type and symbol index */
 } Elf64_Rel;
 
 /* Relocation table entry with addend (in section of type SHT_RELA).  */
 
 typedef struct {
     Elf32_Addr    r_offset;        /* Address */
-    Elf32_Word    r_info;            /* Relocation type and symbol index */
-    Elf32_Sword    r_addend;        /* Addend */
+    Elf32_Word    r_info;          /* Relocation type and symbol index */
+    Elf32_Sword   r_addend;        /* Addend */
 } Elf32_Rela;
 
 typedef struct {
-    Elf64_Addr    r_offset;        /* Address */
-    Elf64_Xword    r_info;            /* Relocation type and symbol index */
-    Elf64_Sxword    r_addend;        /* Addend */
+    Elf64_Addr     r_offset;        /* Address */
+    Elf64_Xword    r_info;          /* Relocation type and symbol index */
+    Elf64_Sxword   r_addend;        /* Addend */
 } Elf64_Rela;
 
 /* How to extract and insert information held in the r_info field.  */
 
 #define ELF32_R_SYM(val)        ((val) >> 8)
-#define ELF32_R_TYPE(val)        ((val) & 0xff)
-#define ELF32_R_INFO(sym, type)        (((sym) << 8) + ((type) & 0xff))
+#define ELF32_R_TYPE(val)       ((val) & 0xff)
+#define ELF32_R_INFO(sym, type) (((sym) << 8) + ((type) & 0xff))
 
-#define ELF64_R_SYM(i)            ((i) >> 32)
-#define ELF64_R_TYPE(i)            ((i) & 0xffffffff)
-#define ELF64_R_INFO(sym,type)        ((((Elf64_Xword) (sym)) << 32) + (type))
+#define ELF64_R_SYM(i)          ((i) >> 32)
+#define ELF64_R_TYPE(i)         ((i) & 0xffffffff)
+#define ELF64_R_INFO(sym,type)  ((((Elf64_Xword) (sym)) << 32) + (type))
 
 /* Program segment header.  */
 
 typedef struct {
-    Elf32_Word    p_type;            /* Segment type */
-    Elf32_Off    p_offset;        /* Segment file offset */
-    Elf32_Addr    p_vaddr;        /* Segment virtual address */
-    Elf32_Addr    p_paddr;        /* Segment physical address */
-    Elf32_Word    p_filesz;        /* Segment size in file */
-    Elf32_Word    p_memsz;        /* Segment size in memory */
-    Elf32_Word    p_flags;        /* Segment flags */
-    Elf32_Word    p_align;        /* Segment alignment */
+    Elf32_Word    p_type;      /* Segment type */
+    Elf32_Off     p_offset;    /* Segment file offset */
+    Elf32_Addr    p_vaddr;     /* Segment virtual address */
+    Elf32_Addr    p_paddr;     /* Segment physical address */
+    Elf32_Word    p_filesz;    /* Segment size in file */
+    Elf32_Word    p_memsz;     /* Segment size in memory */
+    Elf32_Word    p_flags;     /* Segment flags */
+    Elf32_Word    p_align;     /* Segment alignment */
 } Elf32_Phdr;
 
 typedef struct {
-    Elf64_Word    p_type;            /* Segment type */
-    Elf64_Word    p_flags;        /* Segment flags */
-    Elf64_Off    p_offset;        /* Segment file offset */
-    Elf64_Addr    p_vaddr;        /* Segment virtual address */
-    Elf64_Addr    p_paddr;        /* Segment physical address */
-    Elf64_Xword    p_filesz;        /* Segment size in file */
-    Elf64_Xword    p_memsz;        /* Segment size in memory */
-    Elf64_Xword    p_align;        /* Segment alignment */
+    Elf64_Word    p_type;      /* Segment type */
+    Elf64_Word    p_flags;     /* Segment flags */
+    Elf64_Off     p_offset;    /* Segment file offset */
+    Elf64_Addr    p_vaddr;     /* Segment virtual address */
+    Elf64_Addr    p_paddr;     /* Segment physical address */
+    Elf64_Xword   p_filesz;    /* Segment size in file */
+    Elf64_Xword   p_memsz;     /* Segment size in memory */
+    Elf64_Xword   p_align;     /* Segment alignment */
 } Elf64_Phdr;
 
 /* Special value for e_phnum.  This indicates that the real number of

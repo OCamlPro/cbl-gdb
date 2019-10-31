@@ -143,7 +143,7 @@ string DW_TagToString(DW_CHILDREN dw_child)
     case DW_CHILDREN_yes                        :
         return "DW_CHILDREN_yes";
     default                                     :
-        return "<unknown DW_CHILDREN";
+        return "<unknown DW_CHILDREN>";
     }
 }
 
@@ -338,8 +338,11 @@ string DW_TagToString(DW_AT dw_at)
         return "DW_AT_lo_user";
     case DW_AT_hi_user                   :
         return "DW_AT_hi_user";
-    default                              :
-        return "<unknown DW_AT";
+    default                              : {
+        char ach[128];
+        sprintf(ach,"<unknown DW_AT 0x%4.4X>",dw_at);
+        return string(ach);
+    }
     };
 }
 
@@ -396,8 +399,11 @@ string DW_TagToString(DW_FORM dw_form)
         return "DW_FORM_flag_present";
     case DW_FORM_ref_sig8        :
         return "DW_FORM_ref_sig8";
-    default                      :
-        return "<unknown DW_FORM>";
+    default                      : {
+        char ach[128];
+        sprintf(ach,"<unknown DW_FORM 0x%4.4X>",dw_form);
+        return string(ach);
+    }
     };
 }
 
@@ -542,8 +548,11 @@ string DW_TagToString(DW_OP dw_tag)
         return "DW_OP_lo_user";
     case DW_OP_hi_user :
         return "DW_OP_hi_user";
-    default                      :
-        return "<unknown DW_OP>";
+    default                      : {
+        char ach[128];
+        sprintf(ach,"<unknown DW_OP 0x%4.4X>",dw_tag);
+        return string(ach);
+    }
     };
 }
 
@@ -586,8 +595,11 @@ string DW_TagToString(DW_ATE dw_tag)
         return "DW_ATE_lo_user";
     case DW_ATE_hi_user :
         return "DW_ATE_hi_user";
-    default                      :
-        return "<unknown DW_ATE>";
+    default                      : {
+        char ach[128];
+        sprintf(ach,"<unknown DW_ATE 0x%4.4X>",dw_tag);
+        return string(ach);
+    }
     };
 }
 

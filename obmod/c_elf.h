@@ -22,7 +22,9 @@ class SECTION_HEADER
 {
 private:
     char *raw_data;                     // Local copy of raw section data.
-    // section_header.size *always* reflects the size of this block.
+    //                                  // section_header.size *always*
+    //                                  // reflects the size of this block.
+
 public:
     Elf64_Shdr section_header;          // section header from ELF file
     std::string section_header_name;    // section name as indexed in .shstrtab section
@@ -54,6 +56,14 @@ public:
     {
         delete raw_data;
         raw_data = nullptr;
+    }
+    std::string GetSymbolByIndex(int index)
+    {
+        std::string retval = "<??>" ;
+        if( index < section_header.sh_size ) {
+            retval = std::string(raw_data + index);
+        }
+        return retval;
     }
 };
 typedef std::vector<SECTION_HEADER> VSECTION_HEADER;
@@ -107,9 +117,10 @@ public:
     char *GetAbbreviationLocation(ULONGLONG abbreviation) const;
     void BuildDieTree(std::string section_name);
     void DumpEntireDebugInfoDieTree(std::string section_name);
-    void RunLineStateMachine();
+    void RunLineStateMachine(bool show_your_work);
     void ReplaceDebugLineSection();
     void InsertDebugScript(const std::string &python_script);
+    void AugmentSymbolTable();
 
     ULONGLONG GetAddressSize() const
     {
