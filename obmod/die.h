@@ -5,118 +5,121 @@ class ELF;
 class ATTRIBUTE_FORMAT_PAIR
 {
 private:
-    ELF *pelf;    // Parent ELF object, needed for PayloadAsString
-    DW_AT attribute;
-    DW_FORM format;
-    char *location_of_payload;
-    ULONGLONG total_size_of_payload;
-    std::vector<UBYTE> payload;
+    DW_AT dw_at;                // Decoded as per abbreviation table
+    DW_FORM dw_form;            // Decoded as per abbreviation table
+    std::vector<UBYTE> payload; // Actual payload from .debug_info data,
+    //                          // decoded as per DW_FORM
+
+    size_t location_of_payload; // Offset of payload in .debug_info
 
 public:
-    ATTRIBUTE_FORMAT_PAIR(ELF *elf)
+    ATTRIBUTE_FORMAT_PAIR()
     {
-        pelf = elf;
-        location_of_payload = nullptr;
-        total_size_of_payload = 0;
+        location_of_payload = 0;
+        dw_at = (DW_AT)0;
+        dw_form = (DW_FORM)0;
     }
-
-    void SetAT(ULONGLONG a)
+    void SetAT(DW_AT a)
     {
-        attribute = static_cast<DW_AT>(a);
+        dw_at = static_cast<DW_AT>(a);
     }
-    void SetForm(ULONGLONG f)
+    void SetForm(DW_FORM f)
     {
-        format = static_cast<DW_FORM>(f);
+        dw_form = static_cast<DW_FORM>(f);
     }
     DW_AT GetAT() const
     {
-        return attribute;
+        return dw_at;
     }
     DW_FORM GetForm() const
     {
-        return format;
+        return dw_form;
     }
-    void SetPayloadLocation(char *p)
+    size_t GetLocationOfPayload() const
     {
-        location_of_payload = p;
+        return location_of_payload;
     }
-    void SetPayloadTotalSize(char *p)
+    void SetPayloadLocation(size_t l)
     {
-        total_size_of_payload = p - location_of_payload;
+        location_of_payload = l;
     }
     void PayloadPush(char n)
     {
         payload.push_back(n);
     }
-    std::string PayloadAsString();
+    const UBYTE *PayloadBytes() const
+    {
+        return payload.data();
+    }
+    std::string PayloadAsString(const ELF &elf,bool with_offset=true) const;
 
 };
 typedef std::vector<ATTRIBUTE_FORMAT_PAIR>VATTRIBUTE_FORMAT_PAIRS;
+
+class ABBREVIATION
+{
+private:
+    size_t  sequence_number;
+    DW_TAG  dw_tag;
+    bool    has_children;
+    VATTRIBUTE_FORMAT_PAIRS at_form_pairs;
+
+public:
+    ABBREVIATION()
+    {
+        Initialize();
+    }
+    void Initialize()
+    {
+        sequence_number = 0;
+        dw_tag = DW_TAG_NONE;
+        has_children = false;
+        at_form_pairs.clear();
+    }
+    friend class DIE;
+    friend class ELF;
+};
 
 class DIE
 {
     // This is a Debugging Information Entry
 private:
-    ELF *pelf;            // Parent ELF object
+    size_t location_offset;     // Location offset in .debug_info
+    size_t abbreviation_index;  // Index into .debug_abbrev
+    int    nlevel;              // What generation we are
 
-    char    *offset;            // Offset into debug_<section>
-    DW_TAG  dw_tag;
-    bool    has_children;       // Redundant: has_children if and only if children.size() is non-zero
-    // But it can be meaningful *before* we've had a chance to process those children
-    VATTRIBUTE_FORMAT_PAIRS at_form_pairs;
+    ABBREVIATION abbreviation;  // From the abbreviation table
+
     void Initialize()
     {
-        // Dangerous if called with parent != nullptr; you could cause memory
-        // leaks unless you know what you are doing.
-        offset = nullptr;
-        dw_tag = DW_TAG_NONE;
-        has_children = false;
-        parent = nullptr;
+        abbreviation.Initialize();
     }
 public:
-    int  sequence_number;
-    DIE *parent;                 // nullptr at root of tree
-    std::vector<DIE *>children;
-
-    DIE(ELF *elf)
+    DIE()
     {
-        pelf = elf;
         Initialize();
     }
-    void DecodeThyself(PCHAR &debug_section_pointer);
+    void DecodeThyself(int &nLevel_,
+                       CPCHAR &debug_section_pointer,
+                       const ELF &elf,
+                       bool bIs64);
     bool HasChildren() const
     {
-        return has_children;
+        return abbreviation.has_children;
     }
     DW_TAG GetTag() const
     {
-        return dw_tag;
+        return abbreviation.dw_tag;
     }
-    void Show();
-};
-
-class DIE_TREE
-{
-private:
-    ELF *pelf;
-    DIE *root;
-    std::vector<DIE *>parents;  // parents.back() is the most recent DIE flagged as having children.
-    // We need it to establish DIE.parent as we walk through the debug_<section>
-    void UprootTheTree(DIE *);
-    int  sequence_number;       // Useful for tracking parents
-
-public:
-    DIE_TREE(ELF *elf)
+    void Show(const ELF &elf);
+    size_t Size() const
     {
-        pelf = elf;
-        root = nullptr;
-        sequence_number = 0;
+        return abbreviation.at_form_pairs.size();
     }
-    ~DIE_TREE()
+    const ATTRIBUTE_FORMAT_PAIR & operator[](size_t i) const
     {
-        UprootTheTree(root);
+        return abbreviation.at_form_pairs[i];
     }
-    void GetNextDie(PCHAR &debug_section_pointer);
-    void DisplayEntireTree(DIE *die);
-};
 
+};
+typedef std::vector<DIE>DIES;

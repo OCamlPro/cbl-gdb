@@ -10,6 +10,33 @@
 
 using namespace std;
 
+LONGLONG LNS_STATE_MACHINE::ProcessSingleExpression(CPCHAR &p,bool isElf64Bit)
+{
+    LONGLONG retval = 0;
+    DW_OP dw_op = (DW_OP)((unsigned char)*p++);
+    switch(dw_op) {
+    case DW_OP_addr:
+        if(isElf64Bit) {
+            retval = *(LONGLONG *)p;
+            p += 8;
+        } else {
+            retval = (LONGLONG)(*(ULONG *)p);
+            p += 4;
+        }
+        break;
+    case DW_OP_fbreg:
+        retval = LEB128Decode(p);
+        break;
+    default:
+        std::cout << "Unknown DW_OP in LNS_STATE_MACHINE::ProcessSingleExpression()";
+        std::cout << std::endl;
+        exit(1);
+        break;
+    }
+    return retval;
+}
+
+
 void LNS_REGISTERS::Init()
 {
     // Initialize the state machine as per the DWARF-4 specification:
@@ -44,8 +71,7 @@ LNS_REGISTERS::LNS_REGISTERS(bool bdefault_is_stmt)
     Init();
 }
 
-
-void LNS_STATE_MACHINE::ReadProgramHeader(char *pdata)
+void LNS_STATE_MACHINE::ReadProgramHeader(CPCHAR pdata)
 {
     CPROFILER;
 
@@ -320,26 +346,17 @@ void LNS_STATE_MACHINE::StateMachineDifference(UBYTE opcode, UBYTE extended_opco
         }
     }
 
-
     cout << endl;
 }
 
-void LNS_STATE_MACHINE::Run(char *line_data
-                            , size_t line_data_length
-                            , bool read_header
-                            , bool show_your_work)
+void LNS_STATE_MACHINE::Run(char *line_data, bool show_your_work)
 {
     CPROFILER;
 
     line_address_matrix.clear();    // Make sure our output is empty
 
     // Get hold of the DWARF Version 4 documentation.  Look for section 6.2.4
-    if( read_header ) {
-        ReadProgramHeader(line_data);
-    } else {
-        line_program_data = line_data;
-        line_program_data_end = line_program_data + line_data_length;
-    }
+    ReadProgramHeader(line_data);
     current_registers.SetDefaultIsStmt(default_is_stmt);
 
     if(show_your_work) {

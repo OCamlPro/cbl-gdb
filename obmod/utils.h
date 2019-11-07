@@ -4,6 +4,7 @@
 #include <vector>
 
 typedef char *PCHAR;
+typedef char const *CPCHAR;
 
 typedef  int8_t  BYTE;
 typedef uint8_t UBYTE;

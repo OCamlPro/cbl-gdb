@@ -22,14 +22,14 @@ int main(int argc, char **argv)
     // Headers, just Section Headers)and disassembles it into separate
     // ElfHeader and Section objects:
     elf.ReadFrom(params.o_input_filename.WholePath());
+#if 0
     elf.DisplaySectionHeaders(cout);
+#endif
 
-    // Extract the Debugging Information Entry data from the .debug_info
-    // section.
-    elf.BuildDieTree(".debug_info");
-
-    //cout << "DIE tree for .debug_info\n";
-    elf.DumpEntireDebugInfoDieTree(".debug_info");
+#if 0
+    cout << "Initial DIE list from.debug_info\n";
+    elf.DumpEntireDebugInfoDieTree();
+#endif
 
     // Run the line number state machine to get the original information
     // from cobc.  We need to do this because we copy certain information
@@ -50,6 +50,13 @@ int main(int argc, char **argv)
 
     // Put the COBOL symbols into the elf segments
     elf.AugmentSymbolTable();
+
+#if 0
+    cout << "DIE tree after the AugmentSymbolTable() call\n";
+    elf.BuildAbbreviationIndex();
+    elf.BuildDebugInfo();
+    elf.DumpEntireDebugInfoDieTree();
+#endif
 
     // Put the headers and sections back together, and writes them out to a
     // file.

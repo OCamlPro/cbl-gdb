@@ -19,6 +19,10 @@ public:
 
     ULONGLONG   address;    //  Relative address
 
+    std::string full_name;  //  COBOL symbol name
+    std::string base_symbol;//  C-code base symbol for the COBOL symbol
+    ULONGLONG   offset;     //  offset from the base address
+
     COBST_SYMBOL()
     {
         line_number = 0;

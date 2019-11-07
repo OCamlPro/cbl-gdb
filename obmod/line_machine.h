@@ -91,8 +91,8 @@ private:
     VLNS_REGISTERS line_address_matrix;
 
     // The following variables are for analyzing a .debug_line section.
-    char *line_program_data;        // This is the pointer used to scan through the .debug_line section
-    char *line_program_data_end;    // Don't scan past this location
+    CPCHAR line_program_data;        // This is the pointer used to scan through the .debug_line section
+    CPCHAR line_program_data_end;    // Don't scan past this location
     bool bIs64;
 
     // ***************** The following values come from the Line Number Program Header
@@ -111,7 +111,7 @@ private:
     VLNS_FILE_NAMES lns_file_names;                 // File names start with the index of 1
     // *****************
 
-    void ReadProgramHeader(char *pdata);
+    void ReadProgramHeader(CPCHAR pdata);
     void DecodeSpecialOpcode(UBYTE opcode, ULONGLONG &delta_address,LONGLONG &delta_line,ULONGLONG &op_index);
     void ProcessSpecialOpcode(UBYTE opcode);
     void StateMachineDifference(UBYTE opcode, UBYTE extended_opcode, const LNS_REGISTERS &in, const LNS_REGISTERS &out);
@@ -126,7 +126,7 @@ public:
         line_base = 1;
         line_range = 1;
     }
-    void Run(char *line_data,size_t line_data_length,bool read_header,bool show_your_work);
+    void Run(char *line_data,bool show_your_work);
     UBYTE GetOpcodeBase() const
     {
         return opcode_base;
@@ -135,6 +135,8 @@ public:
     {
         return standard_opcode_lengths;
     }
+
+    static LONGLONG ProcessSingleExpression(CPCHAR &p,bool bIsTarget64);
 };
 
 

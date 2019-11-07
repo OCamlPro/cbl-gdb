@@ -6,6 +6,8 @@ using namespace std;
 string DW_TagToString(DW_TAG dw_tag)
 {
     switch(dw_tag) {
+    case DW_TAG_NONE                            :
+        return "DW_TAG_none";
     case DW_TAG_array_type                      :
         return "DW_TAG_array_type";
     case DW_TAG_class_type                      :
@@ -334,8 +336,12 @@ string DW_TagToString(DW_AT dw_at)
         return "DW_AT_enum_class";
     case DW_AT_linkage_name              :
         return "DW_AT_linkage_name";
+    case DW_AT_alignment                 :
+        return "DW_AT_alignment";
     case DW_AT_lo_user                   :
         return "DW_AT_lo_user";
+    case DW_AT_GNU_all_tail_call_sites         :
+        return "DW_AT_GNU_all_tail_call_sites";
     case DW_AT_hi_user                   :
         return "DW_AT_hi_user";
     default                              : {

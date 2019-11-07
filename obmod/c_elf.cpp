@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstring>
+#include <unordered_map>
 #include "c_elf.h"
 #include "params.h"
 #include "profiler.h"
@@ -12,41 +13,45 @@
 
 using namespace std;
 
-void DIE::DecodeThyself(PCHAR &pdata)
+void DIE::DecodeThyself(int &nLevel_,CPCHAR &pdata,const ELF &elf, bool bDwarfIs64)
 {
     CPROFILER;
-    ULONGLONG address_size = pelf->GetAddressSize();
-    bool bIs64 = pelf->Is64();
 
     Initialize();
-    char const * const pdata_start = pdata;
-    offset = pdata;
-    ULONGLONG abbreviation = ULEB128Decode(pdata);
-    if(abbreviation != 0) {
-        char *pabbrev = pelf->GetAbbreviationLocation(abbreviation);
+
+    bool bTargetIs64 = elf.IsTarget64();
+
+    nlevel = nLevel_;
+    char const * const pdata_start = elf.GetSectionDataLocation(".debug_info");
+    location_offset = pdata - pdata_start;
+    abbreviation_index = ULEB128Decode(pdata);
+
+    if(abbreviation_index != 0) {
+        char const * pabbrev = elf.GetAbbreviationLocation(abbreviation_index);
         if(pabbrev EQ nullptr) {
             cerr << "GetAbbreviationLocation() returned NULL in DIE::DecodeThyself().\n";
             cerr << "This needs to be understood.\n";
             exit(1);
         }
         ULONGLONG abbrev_from_pabbrev = ULEB128Decode(pabbrev);
-        if(abbreviation != abbrev_from_pabbrev) {
+        if(abbreviation_index != abbrev_from_pabbrev) {
             cerr << "abbreviation != abbrev_from_pabbrev in DIE::DecodeThyself().\n";
             cerr << "This needs to be understood.\n";
             exit(1);
         }
 
         // First element is a DW_TAG
-        dw_tag = static_cast<DW_TAG>(ULEB128Decode(pabbrev));
+        abbreviation.dw_tag = static_cast<DW_TAG>(ULEB128Decode(pabbrev));
 
         // The second element is DW_CHILDREN
         DW_CHILDREN dw_children = static_cast<DW_CHILDREN>(ULEB128Decode(pabbrev));
         switch(dw_children) {
         case DW_CHILDREN_no:
-            has_children = false;
+            abbreviation.has_children = false;
             break;
         case DW_CHILDREN_yes:
-            has_children = true;
+            abbreviation.has_children = true;
+            nLevel_ += 1;
             break;
         default:
             cerr << "In DIE::DecodeThyself(), the second abbreviation\n";
@@ -56,14 +61,14 @@ void DIE::DecodeThyself(PCHAR &pdata)
         }
 
         for(;;) {
-            ATTRIBUTE_FORMAT_PAIR afp(pelf);
-            ULONGLONG a = ULEB128Decode(pabbrev);
-            ULONGLONG f = ULEB128Decode(pabbrev);
-            if( a EQ 0 AND f EQ 0) {
+            ATTRIBUTE_FORMAT_PAIR afp;
+            DW_AT dw_at = (DW_AT)ULEB128Decode(pabbrev);
+            DW_FORM dw_form = (DW_FORM)ULEB128Decode(pabbrev);
+            if( (int)dw_at EQ 0 AND (int)dw_form EQ 0) {
                 break;
             }
-            afp.SetAT(a);
-            afp.SetForm(f);
+            afp.SetAT(dw_at);
+            afp.SetForm(dw_form);
 
             /*  Here's where it gets exciting.
 
@@ -86,20 +91,18 @@ void DIE::DecodeThyself(PCHAR &pdata)
                 */
 
             // This value gets set before we pick up any bytes of the payload.
-            afp.SetPayloadLocation(pdata);
+            afp.SetPayloadLocation(pdata-pdata_start);
 
 IndirectFormProcessing:
             // Note that the indirect form means that the first part of the payload is
             // a DW_FORM code itself. That second one also needs processing.  Hence this goto target
             // address has to appear after the SetPayloadLocation call.
-
-            // Pick up the DW_FORM code
-            DW_FORM dw_form = afp.GetForm();
+            dw_form = afp.GetForm(); // In case this is an IndirectFormProcessing sequence
 
             ULONGLONG nLength = 0;
             switch(dw_form) {
             case DW_FORM_addr:
-                nLength = address_size;
+                nLength = bTargetIs64 ? 8 : 4;
                 break;
             case DW_FORM_block2:
                 nLength = GetUshort(pdata);
@@ -139,6 +142,8 @@ IndirectFormProcessing:
                 nLength = 1;
                 break;
             case DW_FORM_sdata:
+                // The payload is a signed LEB128 number.  Each byte
+                // except the last has the 0x80 bit ON.
                 for(;;) {
                     UBYTE b = GetUbyte(pdata);
                     afp.PayloadPush(b);
@@ -148,13 +153,12 @@ IndirectFormProcessing:
                 }
                 break;
             case DW_FORM_strp: {
-                ULONGLONG offset = pdata - pdata_start;
-
-                ULONG check = *(ULONG *)pdata;
-                nLength = bIs64 ? 8 : 4;
+                nLength = bDwarfIs64 ? 8 : 4;
                 break;
             }
             case DW_FORM_udata:
+                // The payload is an unsigned LEB128 number.  Each byte
+                // except the last has the 0x80 bit ON.
                 for(;;) {
                     UBYTE b = GetUbyte(pdata);
                     afp.PayloadPush(b);
@@ -164,7 +168,7 @@ IndirectFormProcessing:
                 }
                 break;
             case DW_FORM_ref_addr:
-                nLength = bIs64 ? 8 : 4;
+                nLength = bDwarfIs64 ? 8 : 4;
                 break;
             case DW_FORM_ref1:
                 nLength = 1;
@@ -191,13 +195,13 @@ IndirectFormProcessing:
                 // This is whacked out.  The initial payload is a DW_FORM code that
                 // has to be processed:
             {
-                ULONGLONG form = static_cast<DW_FORM>(ULEB128Decode(pdata));
+                DW_FORM form = static_cast<DW_FORM>(ULEB128Decode(pdata));
                 afp.SetForm(form);
+                goto IndirectFormProcessing;
+                break;
             }
-            goto IndirectFormProcessing;
-            break;
             case DW_FORM_sec_offset:
-                nLength = bIs64 ? 8 : 4;
+                nLength = bDwarfIs64 ? 8 : 4;
                 break;
             case DW_FORM_exprloc:
                 nLength = ULEB128Decode(pdata);
@@ -216,81 +220,42 @@ IndirectFormProcessing:
             for(ULONGLONG i=0; i<nLength; i++) {
                 afp.PayloadPush(GetUbyte(pdata));
             }
-            afp.SetPayloadTotalSize(pdata);
 
             // We've built this AT_FORM_PAIR; push it onto our list
-            at_form_pairs.push_back(afp);
+            abbreviation.at_form_pairs.push_back(afp);
         }
     }
 }
 
-void DIE::Show()
+void DIE::Show(const ELF &elf)
 {
     CPROFILER;
-    cout << "Seq: " << sequence_number;
-    cout << "  Parent: " ;
-    if(parent EQ nullptr) {
-        cout << "None";
-    } else {
-        cout << parent->sequence_number;
-    }
+    cout << "<" << nlevel << ">";
+    cout << "<" << hex << location_offset << ">";
+
+    cout << " Abbrev: " << dec << abbreviation_index;
+    cout << " (" << DW_TagToString(abbreviation.dw_tag) << ")";
     cout << endl;
 
-    cout << "     ";
-    cout << DW_TagToString(dw_tag);
-    cout << endl;
-
-    for(size_t i=0; i<at_form_pairs.size(); i++) {
-        cout << "        ";
+    for(size_t i=0; i<abbreviation.at_form_pairs.size(); i++) {
+        cout << "   ";
+        cout << "<" << hex << abbreviation.at_form_pairs[i].GetLocationOfPayload() << ">";
         cout.width(30);
-        cout << left << DW_TagToString(at_form_pairs[i].GetAT());
+        cout << left << DW_TagToString(abbreviation.at_form_pairs[i].GetAT());
         cout.width(22);
-        cout << left << DW_TagToString(at_form_pairs[i].GetForm());
-        string payload = at_form_pairs[i].PayloadAsString();
+        cout << left << DW_TagToString(abbreviation.at_form_pairs[i].GetForm());
+        string payload = abbreviation.at_form_pairs[i].PayloadAsString(elf);
         cout << payload;
         cout << endl;
     }
 }
 
-void DIE_TREE::UprootTheTree(DIE *node)
+DIE ELF::GetNextDie(int &nLevel, CPCHAR &pdata, bool bDwarfIs64)
 {
-    CPROFILER;
-    // This routine is called by destructor; gets rid of the entire tree
-    // via a depth-first search
-    if(node EQ nullptr) {
-        return;
-    }
-    // Don't bother updating the parent's pointers to children, because
-    // the parents are also about to disappear.
-    for(size_t i=0; i<node->children.size(); i++) {
-        UprootTheTree(node->children[i]);
-    }
-    delete node;
-    node = nullptr;
-}
+    DIE die;
+    die.DecodeThyself(nLevel, pdata, *this, bDwarfIs64);
 
-void DIE_TREE::DisplayEntireTree(DIE *die)
-{
-    CPROFILER;
-    if(root EQ nullptr) {
-        return;
-    }
-    if(die EQ nullptr) {
-        die=root;
-    }
-    die->Show();
-    for(int i=0; i<(int)(die->children.size()); i++) {
-        DisplayEntireTree(die->children[i]);
-    }
-}
-
-void DIE_TREE::GetNextDie(PCHAR &pdata)
-{
-    DIE *die = new DIE(pelf);
-    die->sequence_number = ++sequence_number;
-    die->DecodeThyself(pdata);
-
-    if(die->GetTag() EQ DW_TAG_NONE) {
+    if( die.GetTag() EQ DW_TAG_NONE ) {
         // This was a null entry, with an abbreviation code of zero.  Such entries
         // are described in the standard at sections 2.3 and as 7.5.3 as
         // "terminating a chain of sibling entries".
@@ -359,41 +324,9 @@ void DIE_TREE::GetNextDie(PCHAR &pdata)
         // In the fullness of time, either none of this will matter, or else I'll run across relocation objects in the wild
         // that will settle the question.
         //
-
-        if(parents.size() > 1) {
-            // Don't let the stack go empty.  Leave the root there, if nobody else.
-            parents.pop_back();
-        }
-
-        // And otherwise ignore this NULL entry.
-        return;
+        nLevel -= 1;
     }
-
-    if(root EQ nullptr) {
-        // This is the start of the tree
-        root = die;
-        // We have to assume the root is a parent
-        if(!root->HasChildren()) {
-            cerr << "The first entry seen by DIE_TREE::GetNextDie() is flagged 'no children'\n";
-            cerr << "This needs to be understood.\n";
-            exit(1);
-        }
-
-        parents.push_back(root);
-    } else {
-        // We have a growing and healthy tree
-
-        // Put in the backlink
-        die->parent = parents.back();
-
-        // And tie us to their apron strings:
-        parents.back()->children.push_back(die);
-
-        // And if we're pregnant, put us on the parents list
-        if(die->HasChildren()) {
-            parents.push_back(die);
-        }
-    }
+    return die;
 }
 
 void ELF::ReadInElfHeader(ifstream &ifs)
@@ -553,9 +486,9 @@ void ELF::ReadInRawSectionData(ifstream &ifs)
 
             size_t raw_size = (size_t)section_headers[i].section_header.sh_size;
             char *raw_data = new char[raw_size];
+            ifs.read(raw_data,raw_size);
 
             section_headers[i].SetRawDataPointer(raw_data,raw_size);
-            ifs.read(raw_data,raw_size);
         }
     }
 }
@@ -570,40 +503,43 @@ void ELF::WriteOutRawSectionData(ofstream &ofs)
     }
 }
 
-void ELF::BuildDieTree(string section_name)
+void ELF::BuildDebugInfo()
 {
     CPROFILER;
-    DIE_TREE *p_die_tree = nullptr;
-    if(section_name EQ ".debug_info") {
-        p_die_tree = debug_info_die_tree;
-    }
 
-    if(p_die_tree EQ nullptr) {
-        cerr << "The section name " << section_name << " isn't good in ELF::BuildDieTree()\n";
+    debug_info_dies.clear();
+
+    size_t debug_info_section = GetSectionHeaderIndex(".debug_info");
+    if(debug_info_section EQ string::npos) {
+        cerr << "No \".debug_info\" section in BuildDebugInfo()???\n";
         exit(1);
     }
 
-    size_t debug_info_section = GetSectionHeaderIndex(section_name);
-    char *pdata = section_headers[debug_info_section].RawData();
+    CPCHAR pdata = section_headers[debug_info_section].RawData();
 
-    ULONGLONG section_length = GetSectionLength(pdata,bIs64);
+    bool bDwarfIs64; // This will be established by GetSectionLength
+    ULONGLONG section_length = GetSectionLength(pdata,bDwarfIs64);
 
-    char *pdata_end = pdata + section_length;
+    CPCHAR pdata_end = pdata + section_length;
     USHORT version = GetUshort(pdata);
-    ULONGLONG debug_abbrev_offset = GetOffset(bIs64,pdata);
+    ULONGLONG debug_abbrev_offset = GetOffset(bDwarfIs64,pdata);
     // In the single Computation Unit that we
     // should see in a .o relocation module (that is:
     // from a -c gcc compilation), debug_abbrev_offset should
     // be zero.
     if(debug_abbrev_offset != 0) {
-        cerr << "debug_abbrev_offset is non-zero in ELF::BuildDieTree(). Something\n";
+        cerr << "debug_abbrev_offset is non-zero in ELF::BuildDebugInfo(). Something\n";
         cerr << "is going on that I don't understand.  R.J.Dubner 2019-06-21\n";
-        //exit(1);
+        exit(1);
     }
-    debug_info_address_size = GetUbyte(pdata);
+
+    UBYTE debug_info_address_size = GetUbyte(pdata);
+
+    int nLevel = 0;
 
     while(pdata < pdata_end) {
-        p_die_tree->GetNextDie(pdata);
+        DIE die = GetNextDie(nLevel,pdata,bDwarfIs64);
+        debug_info_dies.push_back(die);
     }
 }
 
@@ -616,18 +552,21 @@ void ELF::BuildAbbreviationIndex()
     // .debug_abbrev will be a linear-time operation.  Without it,
     // the time will go up as the square of the number of entries.
 
+    location_of_abbreviation_element.clear();
+
     size_t section_index = GetSectionHeaderIndex(".debug_abbrev");
     SECTION_HEADER *section = &(section_headers[section_index]);
 
-    char *pdata = section->RawData();
+    CPCHAR pdata = section->RawData();
     ULONGLONG data_length = section->section_header.sh_size;
-    char *pdata_end = pdata + data_length;
+    CPCHAR pdata_end = pdata + data_length;
 
-    // This code assumes that there is one, and only one, computation unit involved here,
-    // which means that abbreviation identifiers will not be re-used.  The single CU model
-    // is what we see in relocation modules.  (Executable modules can have more than one.)
+    // This code assumes that there is one, and only one, Computation Unit (CU)
+    // involved here, which means that abbreviation identifiers will not be
+    // re-used.  The single CU model is what we see in relocation modules.
+    // (Executable modules can have more than one.)
     while(pdata < pdata_end) {
-        char *pstart = pdata;
+        CPCHAR pstart = pdata;
         ULONGLONG abbreviation = ULEB128Decode(pdata);
         if(abbreviation EQ 0) {
             // We've hit the end of the list
@@ -635,14 +574,14 @@ void ELF::BuildAbbreviationIndex()
         }
         // Save the value we came to get:  The abbreviation's starting element
 
-        unordered_map<ULONGLONG,char *>::const_iterator it = location_of_abbreviation_element.find(abbreviation);
+        unordered_map<size_t,size_t>::const_iterator it = location_of_abbreviation_element.find(abbreviation);
         if(it != location_of_abbreviation_element.end()) {
             cerr << ".debug_abbrev is reusing abbreviation ID values: " << abbreviation << endl;
             cerr << "We need to recode to handle that.\n";
             exit(1);
         }
 
-        location_of_abbreviation_element[abbreviation] = pstart;
+        location_of_abbreviation_element[abbreviation] = pstart - section->RawData();
         // Skip along to the end of this element
         while(pdata < pdata_end) { // Shouldn't be necessary to do this test
             ULONGLONG attribute_type = ULEB128Decode(pdata);
@@ -654,33 +593,31 @@ void ELF::BuildAbbreviationIndex()
     }
 }
 
-char *ELF::GetAbbreviationLocation(ULONGLONG abbreviation) const
+char const *ELF::GetAbbreviationLocation(ULONGLONG abbreviation) const
 {
-    char *retval = nullptr;
-    std::unordered_map<ULONGLONG,char *>::const_iterator it = location_of_abbreviation_element.find(abbreviation);
+    const char *retval = nullptr;
+    std::unordered_map<size_t,size_t>::const_iterator it = location_of_abbreviation_element.find(abbreviation);
     if(it != location_of_abbreviation_element.end()) {
-        retval = it->second;
+        retval = it->second + GetSectionDataLocation(".debug_abbrev");
     }
     return retval;
 }
 
-void ELF::DumpEntireDebugInfoDieTree(string section_name)
+void ELF::DumpEntireDebugInfoDieTree()
 {
-    DIE_TREE *p_die_tree = nullptr;
-    if(section_name EQ ".debug_info") {
-        p_die_tree = debug_info_die_tree;
+    for( DIE die : debug_info_dies ) {
+        die.Show(*this);
     }
-    p_die_tree->DisplayEntireTree(nullptr);
 }
 
 void ELF::RunLineStateMachine(bool show_your_work)
 {
-    lns_state_machine.Run(section_headers[GetSectionHeaderIndex(".debug_line")].RawData(),0,true,show_your_work);
+    lns_state_machine.Run(section_headers[GetSectionHeaderIndex(".debug_line")].RawData(),show_your_work);
 }
 
 void ELF::ApplyRelocations(int plus_or_minus)
 {
-    static const bool show_your_work = false;
+    bool show_your_work = false;
     /*  As a convenience, I am including the relevant relocation information from
 
     System V Application Binary Interface
@@ -768,7 +705,13 @@ void ELF::ApplyRelocations(int plus_or_minus)
 
             Elf64_Sym *symbol_table = (Elf64_Sym *)ssymbols->RawData();
 
-            if(show_your_work) {
+            if( starget->section_header_name EQ ".debug_info" ) {
+                show_your_work = false;
+            } else {
+                show_your_work = false;
+            }
+
+            if( show_your_work ) {
                 cout << sreloc->section_header_name << " applies ";
                 cout << ssymbols->section_header_name << " to ";
                 cout << starget->section_header_name;
@@ -799,19 +742,19 @@ void ELF::ApplyRelocations(int plus_or_minus)
 
                 int relocation_type = ELF64_R_TYPE(relocation_entry.r_info);
 
-                if(show_your_work) {
+                if( show_your_work ) {
                     if(first_time) {
                         first_time = false;
                         cout << "Relocation Offset Symbol Index Relocation Type Addend\n";
                     }
                     cout.width(strlen("Relocation Offset"));
-                    cout << right << relocation_entry.r_offset;
+                    cout << hex << right << relocation_entry.r_offset;
                     cout.width(strlen(" Symbol Index"));
                     cout << right << symbol_index;
                     cout.width(strlen(" Relocation Type"));
                     cout << right << relocation_type;
                     cout.width(strlen(" Addend"));
-                    cout << right << relocation_entry.r_addend;
+                    cout << hex << right << relocation_entry.r_addend;
                     cout << "   ";
                     cout << sstrings->GetSymbolByIndex(symbol.st_name);
                     cout << endl;
@@ -912,11 +855,12 @@ void ELF::ReplaceDebugLineSection()
     size_t debug_line_section_index = GetSectionHeaderIndex(".debug_line");
     SECTION_HEADER *dls = &section_headers[debug_line_section_index];
 
-    dls->section_header.sh_size = lns_builder.GetLineProgramSize();
-    dls->DeleteRawData();
-    char *newprogram = new char[(size_t)dls->section_header.sh_size];
-    memcpy(newprogram,lns_builder.GetLineProgramData(),(size_t)dls->section_header.sh_size);
-    dls->SetRawDataPointer(newprogram,dls->section_header.sh_size);
+    const char  *newdata = lns_builder.GetLineProgramData();
+    const size_t newsize = (size_t)lns_builder.GetLineProgramSize();
+
+    char *newprogram = new char[newsize];
+    memcpy(newprogram,newdata,newsize);
+    dls->SetRawDataPointer(newprogram,newsize);
 
     // Okay, the .debug_line section is modified and ready to go.
 
@@ -950,22 +894,11 @@ ULONGLONG ELF::AddToStringTable(const std::string &sec_name,const std::string &t
         exit(1);
     }
     // Pick up the existing buffer size and location
-    ULONG size = ULONG(section_headers[section_index].section_header.sh_size);
-    char *pointer = section_headers[section_index].RawData();
+    ULONG old_size = ULONG(section_headers[section_index].section_header.sh_size);
 
-    // Allocate a new, larger buffer:
-    ULONG new_size = ULONG(size + text.size() + 1);
-    char *new_data = new char[new_size];
+    section_headers[section_index].AppendToRawData(text.c_str(),text.size()+1);
 
-    // Copy over the current data
-    memcpy(new_data,pointer,size);
-
-    // Append the new string, and its NULL ender.
-    strcpy(new_data+size,text.c_str());
-
-    // Replace the buffer
-    section_headers[section_index].SetRawDataPointer(new_data,new_size);
-    return size;
+    return old_size;
 }
 
 
@@ -1039,8 +972,9 @@ void ELF::ReadFrom(string object_filename)
     ReadInElfHeader(ifs);
     ReadInSectionHeaders(ifs);
     ReadInRawSectionData(ifs);
+    ApplyRelocations(+1);   // This has to be done before BuildingDebugInfo
     BuildAbbreviationIndex();
-    ApplyRelocations(+1);
+    BuildDebugInfo();
 }
 
 void ELF::WriteTo(string object_filename)
@@ -1076,7 +1010,7 @@ void ELF::WriteTo(string object_filename)
 void ELF::ReplaceASymbol(const string &section, const string &was, const string &is, bool whole_symbol)
 {
     size_t section_header_index = GetSectionHeaderIndex(section);
-    char * const symstart = GetSectionDataLocation(section);
+    char * const symstart = GetSectionDataLocationDangerous(section);
     char *symbols = symstart;
 
     symbols += 1;    // Skip past the first null
@@ -1104,7 +1038,7 @@ void ELF::ReplaceASymbol(const string &section, const string &was, const string 
 void ELF::BruteForceReplace(const string &section, const string &was, const string &is)
 {
     size_t section_header_index = GetSectionHeaderIndex(section);
-    char *const dstart = GetSectionDataLocation(section);
+    char *const dstart = GetSectionDataLocationDangerous(section);
     char *data = dstart;
 
     // Pure brute force:
@@ -1137,6 +1071,391 @@ void ELF::BruteForceReplace(const string &section, const string &was, const stri
     }
 }
 
+size_t ELF::AddToAbbreviations(ABBREVIATION &abbreviation)
+{
+    SECTION_HEADER *abbrevs = GetSectionHeaderDangerous(".debug_abbrev");
+
+    // Figure out the sequence number of this new element.  The elements
+    // are numbered from 1, so we have to add 1 at this point
+    abbreviation.sequence_number = location_of_abbreviation_element.size()+1;
+
+    // Adjust our finder table to reflect the abbreviation we're about to build
+    location_of_abbreviation_element[abbreviation.sequence_number]
+        = abbrevs->section_header.sh_size;
+
+    char ach[1024]; // Ain't no abbreviation gonna be this big.
+
+    PCHAR pdata = ach;
+
+    // Turn the abbreviation into a byte stream;
+    ULEB128Encode(abbreviation.sequence_number,pdata);
+    ULEB128Encode(abbreviation.dw_tag,pdata);
+    *pdata++ = (char)(abbreviation.has_children ?
+                      DW_CHILDREN_yes
+                      : DW_CHILDREN_no);
+    for( ATTRIBUTE_FORMAT_PAIR afp : abbreviation.at_form_pairs ) {
+        ULEB128Encode(afp.GetAT(),pdata);
+        ULEB128Encode(afp.GetForm(),pdata);
+    }
+    // Put in a pair of zeroes to end the abbreviation
+    ULEB128Encode(0,pdata);
+    ULEB128Encode(0,pdata);
+
+    // Put in a zero to end the list of abbreviations
+    *pdata++ = 0;
+
+    // Calculate the size of this entry
+    size_t nbytes = pdata - ach;
+
+    // Arrange to overwrite the zero that ended the existing list
+    abbrevs->TrimRawData(1);
+
+    // Append our new entry, complete with terminating zero
+    abbrevs->AppendToRawData(ach,nbytes);
+    return abbreviation.sequence_number;
+}
+
+void SingleExpressionAddress(PCHAR &pdata,LONGLONG address,bool bTarget64)
+{
+    if(bTarget64 AND address >= 0) {
+        *pdata++ = 9;
+        *pdata++ = DW_OP_addr;
+        *(LONGLONG *)pdata = address;
+        pdata += sizeof(LONGLONG);
+    } else if(!bTarget64 AND address >= 0) {
+        *pdata++ = 5;
+        *pdata++ = DW_OP_addr;
+        *(LONG *)pdata = (LONG)address;
+        pdata += sizeof(LONG);
+    } else {
+        vector<UBYTE> databytes = LEB128Encode(address);
+        *pdata++ = (char)databytes.size()+1;
+        *pdata++ = (char)DW_OP_fbreg;
+        memcpy(pdata,databytes.data(),databytes.size());
+        pdata += databytes.size();
+    }
+}
+
 void ELF::AugmentSymbolTable()
 {
+    // These are the section headers we're going to be manipulating
+
+    const char string_section[] = ".debug_str";
+
+    SECTION_HEADER *relocs     = GetSectionHeaderDangerous(".rela.debug_info");
+    SECTION_HEADER *strings    = GetSectionHeaderDangerous(string_section);
+    SECTION_HEADER *abbrevs    = GetSectionHeaderDangerous(".debug_abbrev");
+    SECTION_HEADER *debug_info = GetSectionHeaderDangerous(".debug_info");
+
+    // We need to find a typical relocation entry.  I have
+    // been unsuccessful in completely figuring them out, so I am reduced
+    // to mimicry.
+    Elf64_Rela relocation_prototype;
+    for( size_t i=0; i<relocs->section_header.sh_size/relocs->section_header.sh_entsize; i++ ) {
+        const Elf64_Rela rela = *(Elf64_Rela *)(relocs->RawData() + i * relocs->section_header.sh_entsize);
+        const LONGLONG r_addend = rela.r_addend;
+        const ULONG type = ELF64_R_TYPE(rela.r_info);
+        if(r_addend != 0 AND type EQ 0xa) {
+            relocation_prototype = rela;
+            break;
+        }
+    }
+
+    // Our WORKING-STORAGE and LINKAGE symbols are referenced against a b_xx
+    // c_sym symbol.  Let's scan debug_info once and build a map of what
+    // we're going to need.
+
+    unordered_map<string,LONGLONG>c_sym_to_location;
+    for( DIE die : debug_info_dies ) {
+        DW_TAG dw_tag = die.GetTag();
+        if( dw_tag EQ DW_TAG_formal_parameter
+                OR
+                dw_tag EQ DW_TAG_variable ) {
+            // We have found a tag or a formal parameter.  Fetch the string
+            // associated with it.
+            string c_sym;
+            LONGLONG location;
+            bool gotsym = false;
+            bool gotloc = false;
+            for( size_t i=0; i<die.Size(); i++ ) {
+                const ATTRIBUTE_FORMAT_PAIR afp = die[i];
+                const DW_AT dw_at = afp.GetAT();
+                const DW_FORM dw_form = afp.GetForm();
+
+                if( dw_at EQ DW_AT_name) {
+                    gotsym = true;
+                    c_sym = afp.PayloadAsString(*this,false);
+                }
+                if( dw_at EQ DW_AT_location) {
+                    gotloc = true;
+                    CPCHAR p = (CPCHAR)afp.PayloadBytes();
+                    location = LNS_STATE_MACHINE::ProcessSingleExpression(p,IsTarget64());
+                }
+                if(gotloc AND gotsym) {
+                    c_sym_to_location[c_sym] = location;
+                }
+            }
+        }
+    }
+
+    // We need to create a new base type called 'cob_variable'
+
+    // We have to put cob_variable into the string table, which means an
+    // associated relocation entry:
+
+    size_t location_of_cob_variable_string = AddToStringTable(string_section,"cob_variable");
+
+    // Now that we have the location of the string, we can create a .debug_abbrev
+    // entry that will be used for cob_variable base_type.  This abbreviation
+    // undoubtedly already exists in the abbreviation list, but rather than
+    // find it, I got lazy and built a new one.
+
+    ABBREVIATION abbreviation;
+    ATTRIBUTE_FORMAT_PAIR afp;
+    size_t size;
+
+    abbreviation.Initialize();
+    abbreviation.dw_tag = DW_TAG_base_type;
+    abbreviation.has_children = false;
+    //
+    afp.SetAT(DW_AT_byte_size);
+    afp.SetForm(DW_FORM_data1);
+    abbreviation.at_form_pairs.push_back(afp);
+    //
+    afp.SetAT(DW_AT_encoding);
+    afp.SetForm(DW_FORM_data1);
+    abbreviation.at_form_pairs.push_back(afp);
+    //
+    afp.SetAT(DW_AT_name);
+    afp.SetForm(DW_FORM_strp);
+    abbreviation.at_form_pairs.push_back(afp);
+    //
+    size_t abbreviation_index_of_base_type = AddToAbbreviations(abbreviation);
+
+    // We now need to create an abbreviation for the cob_variable type for
+    // ordinary variables, that is, working-storage or local-storage
+
+    abbreviation.Initialize();
+    abbreviation.dw_tag = DW_TAG_variable;
+    abbreviation.has_children = false;
+    //
+    afp.SetAT(DW_AT_name);
+    afp.SetForm(DW_FORM_strp);
+    abbreviation.at_form_pairs.push_back(afp);
+    //
+    afp.SetAT(DW_AT_type);
+    afp.SetForm(DW_FORM_ref4);
+    abbreviation.at_form_pairs.push_back(afp);
+    //
+    afp.SetAT(DW_AT_location);
+    afp.SetForm(DW_FORM_exprloc);
+    abbreviation.at_form_pairs.push_back(afp);
+    //
+    size_t abbreviation_index_of_variable = AddToAbbreviations(abbreviation);
+
+    // We now need to create an abbreviation for the cob_variable type for
+    // formal parameters:
+
+    abbreviation.Initialize();
+    abbreviation.dw_tag = DW_TAG_formal_parameter;
+    abbreviation.has_children = false;
+    //
+    afp.SetAT(DW_AT_name);
+    afp.SetForm(DW_FORM_strp);
+    abbreviation.at_form_pairs.push_back(afp);
+    //
+    afp.SetAT(DW_AT_type);
+    afp.SetForm(DW_FORM_ref4);
+    abbreviation.at_form_pairs.push_back(afp);
+    //
+    afp.SetAT(DW_AT_location);
+    afp.SetForm(DW_FORM_exprloc);
+    abbreviation.at_form_pairs.push_back(afp);
+    //
+    size_t abbreviation_index_of_formal_parameter = AddToAbbreviations(abbreviation);
+
+    // We can now create the DIE for the cob_variable base type:
+
+    char ach[1024]; // I admit it.  Terrible programming practice.
+
+    // First, trim off the final Abbrev Number 0 entry in the data. We have
+    // to do this before calculating the offset into the data for the
+    // indirect string relocation.
+    debug_info->TrimRawData(1);
+
+    PCHAR pdata = ach;
+
+    // This code is tightly linked to the definition, up above, for
+    // abbreviation_index_of_base_type.  Change one; change the other.  If you
+    // don't, the entire .debug_info section will become higgledy-piggledy.
+    // You Have Been Warned.
+
+    // Start with the abbreviation index
+    ULEB128Encode(abbreviation_index_of_base_type,pdata);
+    // Follow with the byte size
+    *pdata++ = 1;
+    // Follow with the code for unsigned char
+    *pdata++ = DW_ATE_unsigned_char;
+    // And finally the pointer to the string
+
+    // First, calculate where the pointer is going to go in .debug_info; we
+    // need it for the relocation table entry we need to create.
+    size_t offset_for_relocation = debug_info->section_header.sh_size + (pdata-ach) ;
+
+    // And now incorporate the location
+    *(ULONG *)pdata = (ULONG)location_of_cob_variable_string;
+    pdata += sizeof(ULONG);
+
+    // We'll need the offset of the base_type for the DW_AT_type variable
+    // of the DW_TAG_variable values we'll be creating:
+    size_t offset_of_base_type = debug_info->section_header.sh_size;
+
+    // Place a new Abbreviation 0 entry at the end of the data:
+    *pdata++ = 0;
+
+    // We can now incorporate this new information into .debug_info
+    size = pdata - ach ;
+    debug_info->AppendToRawData(ach,size);
+
+    // Along with that .debug_info, which contains an indirect string pointer,
+    // we have to create a matching .rela.debug_info entry:
+
+    relocation_prototype.r_offset = offset_for_relocation;
+    relocation_prototype.r_addend = location_of_cob_variable_string;
+    relocs->AppendToRawData((char *)&relocation_prototype,sizeof(relocation_prototype));
+
+    for( size_t i = 0;
+            i < cobst_symbols.size();
+            i++ ) {
+        const COBST_SYMBOL cobst_symbol = cobst_symbols[i];
+
+        if( cobst_symbol.section EQ "WORKING-STORAGE" ) {
+            const string full_name = cobst_symbol.full_name;
+            string base_symbol = cobst_symbol.base_symbol;
+            const ULONGLONG offset = cobst_symbol.offset;
+
+            unordered_map<string,LONGLONG>::const_iterator it =
+                c_sym_to_location.find(base_symbol);
+
+            if( it != c_sym_to_location.end() ) {
+                LONGLONG relocatable_location = it->second + offset;
+
+                //cout << cobst_symbol.section;
+                //cout << " ";
+                //cout << full_name;
+                //cout << " ";
+                //cout << base_symbol;
+                //cout << " ";
+                //cout << offset;
+                //cout << " ";
+                //cout << relocatable_location;
+                //cout << endl;
+
+                // We need to add this variable to the debug_str table:
+                size_t location_of_variable_name
+                    = AddToStringTable(string_section,full_name);
+
+                // We need to create a DW_TAG_variable for this variable:
+                debug_info->TrimRawData(1); // Remove Abbrev: 0 at end
+                pdata = ach;
+                ULEB128Encode(abbreviation_index_of_variable,pdata);
+                offset_for_relocation = debug_info->section_header.sh_size + (pdata-ach) ;
+                *(ULONG *)pdata = (ULONG)location_of_variable_name;
+                pdata += sizeof(ULONG);
+                *(ULONG *)pdata = (ULONG)offset_of_base_type;
+                pdata += sizeof(ULONG);
+                SingleExpressionAddress(pdata,relocatable_location,IsTarget64());
+                *pdata++ = 0;   // Replace Abbrev: 0 at end
+                size = pdata - ach ;
+                debug_info->AppendToRawData(ach,size);
+
+                // And we also need a relocation entry for the variable name:
+                relocation_prototype.r_offset = offset_for_relocation;
+                relocation_prototype.r_addend = location_of_variable_name;
+                relocs->AppendToRawData((char *)&relocation_prototype,sizeof(relocation_prototype));
+            }
+        }
+
+        if( cobst_symbol.section EQ "LINKAGE" ) {
+            const string full_name = cobst_symbol.full_name;
+            string base_symbol = cobst_symbol.base_symbol;
+            const ULONGLONG offset = cobst_symbol.offset;
+
+            unordered_map<string,LONGLONG>::const_iterator it =
+                c_sym_to_location.find(base_symbol);
+
+            if( it != c_sym_to_location.end() ) {
+                LONGLONG relocatable_location = it->second + offset;
+
+                //cout << cobst_symbol.section;
+                //cout << " ";
+                //cout << full_name;
+                //cout << " ";
+                //cout << base_symbol;
+                //cout << " ";
+                //cout << offset;
+                //cout << " ";
+                //cout << relocatable_location;
+                //cout << endl;
+
+                // We need to add this variable to the debug_str table:
+                size_t location_of_variable_name
+                    = AddToStringTable(string_section,full_name);
+
+                // We need to create a DW_TAG_variable for this variable:
+                debug_info->TrimRawData(1); // Remove Abbrev: 0 at end
+                pdata = ach;
+                ULEB128Encode(abbreviation_index_of_formal_parameter,pdata);
+                offset_for_relocation = debug_info->section_header.sh_size + (pdata-ach) ;
+                *(ULONG *)pdata = (ULONG)location_of_variable_name;
+                pdata += sizeof(ULONG);
+                *(ULONG *)pdata = (ULONG)offset_of_base_type;
+                pdata += sizeof(ULONG);
+                SingleExpressionAddress(pdata,relocatable_location,IsTarget64());
+                *pdata++ = 0;   // Replace Abbrev: 0 at end
+                size = pdata - ach ;
+                debug_info->AppendToRawData(ach,size);
+
+                // And we also need a relocation entry for the variable name:
+                relocation_prototype.r_offset = offset_for_relocation;
+                relocation_prototype.r_addend = location_of_variable_name;
+                relocs->AppendToRawData((char *)&relocation_prototype,sizeof(relocation_prototype));
+            }
+        }
+        if( cobst_symbol.section EQ "LOCAL-STORAGE" ) {
+            const string full_name = cobst_symbol.full_name;
+
+            LONGLONG relocatable_location = -1; // Flag that this is LOCAL-STORAGE
+
+            //cout << cobst_symbol.section;
+            //cout << " ";
+            //cout << full_name;
+            //cout << " ";
+            //cout << relocatable_location;
+            //cout << endl;
+
+            // We need to add this variable to the debug_str table:
+            size_t location_of_variable_name
+                = AddToStringTable(string_section,full_name);
+
+            // We need to create a DW_TAG_variable for this variable:
+            debug_info->TrimRawData(1); // Remove Abbrev: 0 at end
+            pdata = ach;
+            ULEB128Encode(abbreviation_index_of_formal_parameter,pdata);
+            offset_for_relocation = debug_info->section_header.sh_size + (pdata-ach) ;
+            *(ULONG *)pdata = (ULONG)location_of_variable_name;
+            pdata += sizeof(ULONG);
+            *(ULONG *)pdata = (ULONG)offset_of_base_type;
+            pdata += sizeof(ULONG);
+            SingleExpressionAddress(pdata,relocatable_location,IsTarget64());
+            *pdata++ = 0;   // Replace Abbrev: 0 at end
+            size = pdata - ach ;
+            debug_info->AppendToRawData(ach,size);
+
+            // And we also need a relocation entry for the variable name:
+            relocation_prototype.r_offset = offset_for_relocation;
+            relocation_prototype.r_addend = location_of_variable_name;
+            relocs->AppendToRawData((char *)&relocation_prototype,sizeof(relocation_prototype));
+        }
+    }
 }

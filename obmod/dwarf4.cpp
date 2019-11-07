@@ -1,6 +1,7 @@
 
 #include "dwarf4.h"
 #include "profiler.h"
+#include "utils.h"
 
 #define EQ ==
 #define AND &&
@@ -8,7 +9,7 @@
 
 using namespace std;
 
-LONGLONG LEB128Decode(PCHAR &p)
+LONGLONG LEB128Decode(CPCHAR &p)
 {
     LONGLONG result = 0;
     int shift = 0;
@@ -30,7 +31,7 @@ LONGLONG LEB128Decode(PCHAR &p)
     return result;
 }
 
-ULONGLONG ULEB128Decode(PCHAR &p)
+ULONGLONG ULEB128Decode(CPCHAR &p)
 {
     ULONGLONG result = 0;
     int shift = 0;
@@ -45,11 +46,11 @@ ULONGLONG ULEB128Decode(PCHAR &p)
     return result;
 }
 
-ULONGLONG GetSectionLength(PCHAR &p,bool &bIs64)
+ULONGLONG GetSectionLength(CPCHAR &p,bool &bDwarfIs64)
 {
     ULONGLONG retval = -1;
-    bIs64 = *(ULONG *)p EQ 0xFFFFFFFF;
-    if(bIs64) {
+    bDwarfIs64 = *(ULONG *)p EQ 0xFFFFFFFF;
+    if(bDwarfIs64) {
         p += 4;
         retval = *(ULONGLONG *)p;
         p += 8;
@@ -58,6 +59,21 @@ ULONGLONG GetSectionLength(PCHAR &p,bool &bIs64)
         p += 4;
     }
     return retval;
+}
+
+void SetSectionLength(PCHAR &p,bool bDwarfIs64,ULONGLONG length_of_entire_section)
+{
+    if(bDwarfIs64) {
+        length_of_entire_section -= 12;
+        *(ULONG *)p = 0xFFFFFFFF;
+        p += 4;
+        *(ULONGLONG *)p = length_of_entire_section;
+        p += 8;
+    } else {
+        length_of_entire_section -= 4;
+        *(ULONG *)p = (ULONG)length_of_entire_section;
+        p += 4;
+    }
 }
 
 vector<UBYTE> ULEB128Encode(ULONGLONG uval)
@@ -72,6 +88,14 @@ vector<UBYTE> ULEB128Encode(ULONGLONG uval)
         retval.push_back(byte);
     } while (uval != 0);
     return retval;
+}
+
+void ULEB128Encode(ULONGLONG val,PCHAR &p)
+{
+    vector<UBYTE>bytes = ULEB128Encode(val);
+    for( UBYTE byte : bytes ) {
+        *p++ = (char)byte;
+    }
 }
 
 vector<UBYTE> LEB128Encode(LONGLONG val)
@@ -96,39 +120,47 @@ vector<UBYTE> LEB128Encode(LONGLONG val)
     return retval;
 }
 
+void LEB128Encode(LONGLONG val,PCHAR &p)
+{
+    vector<UBYTE>bytes = LEB128Encode(val);
+    for( UBYTE byte : bytes ) {
+        *p++ = (char)byte;
+    }
+}
 
-UBYTE GetUbyte(PCHAR &p)
+
+UBYTE GetUbyte(CPCHAR &p)
 {
     return *p++;
 }
 
-BYTE GetByte(PCHAR &p)
+BYTE GetByte(CPCHAR &p)
 {
     return *p++;
 }
 
-USHORT GetUshort(PCHAR &p)
+USHORT GetUshort(CPCHAR &p)
 {
     USHORT retval = *(USHORT *)p;
     p += 2;
     return retval;
 }
 
-ULONG GetUlong(PCHAR &p)
+ULONG GetUlong(CPCHAR &p)
 {
     ULONG retval = *(ULONG *)p;
     p += 4;
     return retval;
 }
 
-ULONGLONG GetUlonglong(PCHAR &p)
+ULONGLONG GetUlonglong(CPCHAR &p)
 {
     ULONGLONG retval = *(ULONGLONG *)p;
     p += 8;
     return retval;
 }
 
-ULONGLONG GetOffset(bool bIs64,PCHAR &p)
+ULONGLONG GetOffset(bool bIs64,CPCHAR &p)
 {
     return bIs64 ? GetUlonglong(p) : GetUlong(p);
 }

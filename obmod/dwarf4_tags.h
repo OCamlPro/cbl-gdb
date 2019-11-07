@@ -166,7 +166,9 @@ typedef enum {
     DW_AT_const_expr = 0x6c,                //  flag
     DW_AT_enum_class = 0x6d,                //  flag
     DW_AT_linkage_name = 0x6e,              //  string
+    DW_AT_alignment = 0x88,
     DW_AT_lo_user = 0x2000,                 //  ---
+    DW_AT_GNU_all_tail_call_sites = 0x2116,
     DW_AT_hi_user = 0x3fff,                 //  ---
 } DW_AT;
 

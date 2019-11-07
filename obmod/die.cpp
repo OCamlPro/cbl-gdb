@@ -7,13 +7,14 @@
 
 using namespace std;
 
-string ATTRIBUTE_FORMAT_PAIR::PayloadAsString()
+string ATTRIBUTE_FORMAT_PAIR::PayloadAsString(const ELF &elf,bool with_offset) const
 {
     string retval;
 
     // Use the size of payload as a default:
     ULONGLONG nLength = payload.size();
-    switch(format) {
+    LONGLONG exprloc=0x87654321;
+    switch(dw_form) {
     case DW_FORM_addr:
         break;
     case DW_FORM_block2:
@@ -48,9 +49,19 @@ string ATTRIBUTE_FORMAT_PAIR::PayloadAsString()
         for(size_t i=0; i<payload.size(); i++) {
             offset += payload[i] << (i << 3); // I couldn't resist.  It's just (i*8)
         }
-        char *p = pelf->GetSectionDataLocation(".debug_str");
+
+        if( offset EQ 0x1891 ) {
+            cout << "Offset is " << hex << offset << endl;
+        }
+
+        const char *p = elf.GetSectionDataLocation(".debug_str");
         p += offset;
-        retval = p;
+        if(with_offset) {
+            char ach[128];
+            sprintf(ach,"(0x%llx) ",offset);
+            retval += ach;
+        }
+        retval += p;
         nLength = 0;
         break;
     }
@@ -77,10 +88,10 @@ string ATTRIBUTE_FORMAT_PAIR::PayloadAsString()
     case DW_FORM_sec_offset:
         break;
     case DW_FORM_exprloc: {
-        break;
-        LNS_STATE_MACHINE location;
-        location.Run((char *)payload.data(),payload.size(),false,true);
-        nLength = 0;
+        if(dw_at EQ DW_AT_location ) {
+            CPCHAR p = (CPCHAR)payload.data();
+            exprloc = LNS_STATE_MACHINE::ProcessSingleExpression(p,elf.IsTarget64());
+        }
         break;
     }
     case DW_FORM_flag_present:
@@ -110,6 +121,12 @@ string ATTRIBUTE_FORMAT_PAIR::PayloadAsString()
                 retval += 'a'-0x0a+lo;
             }
         }
+    }
+
+    if( dw_at EQ DW_AT_location AND dw_form EQ DW_FORM_exprloc ) {
+        char ach[128];
+        sprintf(ach," (0x%16.16llX)",exprloc);
+        retval += ach;
     }
 
     return retval;
