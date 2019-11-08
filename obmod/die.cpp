@@ -45,7 +45,7 @@ string ATTRIBUTE_FORMAT_PAIR::PayloadAsString(const ELF &elf,bool with_offset) c
     case DW_FORM_sdata:
         break;
     case DW_FORM_strp: {
-        ULONGLONG offset = 0;
+        LONGLONG offset = 0;
         for(size_t i=0; i<payload.size(); i++) {
             offset += payload[i] << (i << 3); // I couldn't resist.  It's just (i*8)
         }
@@ -58,7 +58,7 @@ string ATTRIBUTE_FORMAT_PAIR::PayloadAsString(const ELF &elf,bool with_offset) c
         p += offset;
         if(with_offset) {
             char ach[128];
-            sprintf(ach,"(0x%llx) ",offset);
+            sprintf(ach,"(0x%lx) ",offset);
             retval += ach;
         }
         retval += p;
@@ -125,7 +125,7 @@ string ATTRIBUTE_FORMAT_PAIR::PayloadAsString(const ELF &elf,bool with_offset) c
 
     if( dw_at EQ DW_AT_location AND dw_form EQ DW_FORM_exprloc ) {
         char ach[128];
-        sprintf(ach," (0x%16.16llX)",exprloc);
+        sprintf(ach," (0x%16.16lX)",exprloc);
         retval += ach;
     }
 

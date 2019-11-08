@@ -10,6 +10,8 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
+#include <string.h>
+
 #include "utils.h"
 #include "dwarf4.h"
 #include "die.h"
