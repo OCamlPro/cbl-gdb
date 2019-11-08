@@ -58,7 +58,7 @@ string ATTRIBUTE_FORMAT_PAIR::PayloadAsString(const ELF &elf,bool with_offset) c
         p += offset;
         if(with_offset) {
             char ach[128];
-            sprintf(ach,"(0x%lx) ",offset);
+            sprintf(ach,"(0x%llx) ",(long long)offset);
             retval += ach;
         }
         retval += p;
@@ -125,7 +125,7 @@ string ATTRIBUTE_FORMAT_PAIR::PayloadAsString(const ELF &elf,bool with_offset) c
 
     if( dw_at EQ DW_AT_location AND dw_form EQ DW_FORM_exprloc ) {
         char ach[128];
-        sprintf(ach," (0x%16.16lX)",exprloc);
+        sprintf(ach," (0x%16.16llX)",(long long)exprloc);
         retval += ach;
     }
 

@@ -1147,6 +1147,66 @@ void ELF::AugmentSymbolTable()
     SECTION_HEADER *abbrevs    = GetSectionHeaderDangerous(".debug_abbrev");
     SECTION_HEADER *debug_info = GetSectionHeaderDangerous(".debug_info");
 
+    char *debug_info_base_loc = debug_info->RawData();
+    char *strings_base_loc = strings->RawData();
+
+    // Back to experimenting mode.  Let's convert every x_y to x-y, and see
+    // what the implications are when running GDB, particularly in
+    // --interpreter=mi mode.
+
+    for( DIE die : debug_info_dies ) {
+        DW_TAG dw_tag = die.GetTag();
+        if( dw_tag EQ DW_TAG_formal_parameter
+                OR
+                dw_tag EQ DW_TAG_variable ) {
+            for( size_t i=0; i<die.Size(); i++ ) {
+                const ATTRIBUTE_FORMAT_PAIR afp = die[i];
+                const DW_AT dw_at = afp.GetAT();
+                const DW_FORM dw_form = afp.GetForm();
+
+                if(dw_at EQ DW_AT_name AND dw_form EQ DW_FORM_string) {
+                    char *p = debug_info_base_loc + afp.GetLocationOfPayload();
+                    //cout << "Short string: " << p << endl;
+                    if(p[1] EQ '_') {
+                        p[1] = '-';
+                    }
+                    //cout << "Short string: " << p << endl;
+                }
+                if(dw_at EQ DW_AT_name AND dw_form EQ DW_FORM_strp
+                  ) {
+                    long offset = *(long *)afp.PayloadBytes();
+
+                    char *p = strings_base_loc + offset;
+                    //cout << "Indirect string: " << p << endl;
+                    if( ( p[0] EQ 'a' OR p[0] EQ 'b' OR p[0] EQ 'f')
+                            AND
+                            p[1] EQ '_') {
+                        p[1] = '-';
+                        cout << "Indirect string: " << p << endl;
+                    }
+                }
+            }
+        }
+    }
+
+
+    return ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // We need to find a typical relocation entry.  I have
     // been unsuccessful in completely figuring them out, so I am reduced
     // to mimicry.
