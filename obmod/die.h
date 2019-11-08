@@ -47,6 +47,10 @@ public:
     {
         payload.push_back(n);
     }
+    size_t PayloadBytesSize() const
+    {
+        return payload.size();
+    }
     const UBYTE *PayloadBytes() const
     {
         return payload.data();

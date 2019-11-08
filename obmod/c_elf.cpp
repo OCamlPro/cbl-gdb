@@ -1150,6 +1150,7 @@ void ELF::AugmentSymbolTable()
     char *debug_info_base_loc = debug_info->RawData();
     char *strings_base_loc = strings->RawData();
 
+#if 0
     // Back to experimenting mode.  Let's convert every x_y to x-y, and see
     // what the implications are when running GDB, particularly in
     // --interpreter=mi mode.
@@ -1174,7 +1175,8 @@ void ELF::AugmentSymbolTable()
                 }
                 if(dw_at EQ DW_AT_name AND dw_form EQ DW_FORM_strp
                   ) {
-                    long offset = *(long *)afp.PayloadBytes();
+                    long offset;
+                    memcpy(&offset,afp.PayloadBytes(),4);
 
                     char *p = strings_base_loc + offset;
                     //cout << "Indirect string: " << p << endl;
@@ -1182,30 +1184,15 @@ void ELF::AugmentSymbolTable()
                             AND
                             p[1] EQ '_') {
                         p[1] = '-';
-                        cout << "Indirect string: " << p << endl;
+                        //cout << "Indirect string: " << p << endl;
                     }
                 }
             }
         }
     }
 
-
     return ;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#endif
 
     // We need to find a typical relocation entry.  I have
     // been unsuccessful in completely figuring them out, so I am reduced
@@ -1398,6 +1385,8 @@ void ELF::AugmentSymbolTable()
                 c_sym_to_location.find(base_symbol);
 
             if( it != c_sym_to_location.end() ) {
+                cout << "From c_sym_to_location for " << it->first << " " << it->second << endl;
+
                 LONGLONG relocatable_location = it->second + offset;
 
                 //cout << cobst_symbol.section;
@@ -1424,6 +1413,7 @@ void ELF::AugmentSymbolTable()
                 pdata += sizeof(ULONG);
                 *(ULONG *)pdata = (ULONG)offset_of_base_type;
                 pdata += sizeof(ULONG);
+                cout << full_name << " " << hex << relocatable_location << endl;
                 SingleExpressionAddress(pdata,relocatable_location,IsTarget64());
                 *pdata++ = 0;   // Replace Abbrev: 0 at end
                 size = pdata - ach ;
