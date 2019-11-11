@@ -1136,12 +1136,12 @@ size_t ELF::AddToAbbreviations(DW_TAG dw_tag,
     va_start(valist,bHasChildren);
 
     for(;;) {
-        DW_AT dw_at = va_arg(valist,DW_AT);
+        DW_AT dw_at = (DW_AT)va_arg(valist,int);
         if( dw_at EQ DW_AT_none ) {
             break;
         }
 
-        DW_FORM dw_form = va_arg(valist,DW_FORM);
+        DW_FORM dw_form = (DW_FORM)va_arg(valist,int);
 
         afp.SetAT(dw_at);
         afp.SetForm(dw_form);
@@ -1508,15 +1508,16 @@ void ELF::AugmentSymbolTable()
     // We now need to create an abbreviation for the cob_variable type for
     // ordinary variables, that is, working-storage or local-storage
 
-    size_t abbreviation_index_of_variable = AddToAbbreviations
-                                            (
-                                                    DW_TAG_variable,
-                                                    false,
-                                                    DW_AT_name,DW_FORM_strp,
-                                                    DW_AT_type,DW_FORM_ref4,
-                                                    DW_AT_location,DW_FORM_exprloc,
-                                                    DW_AT_none   // This is the list-ending parameter
-                                            );
+    size_t abbreviation_index_of_variable 
+        = AddToAbbreviations
+                (
+                        DW_TAG_variable,
+                        false,
+                        (int)DW_AT_name,    (int)DW_FORM_strp,
+                        (int)DW_AT_type,    (int)DW_FORM_ref4,
+                        (int)DW_AT_location,(int)DW_FORM_exprloc,
+                        (int)DW_AT_none   // This is the list-ending parameter
+                );
 
     // We now need to create an abbreviation for the cob_variable type for
     // formal parameters:
