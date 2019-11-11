@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstring>
 #include <unordered_map>
+#include <stdarg.h>
 #include "c_elf.h"
 #include "params.h"
 #include "profiler.h"
@@ -1075,6 +1076,13 @@ size_t ELF::AddToAbbreviations(ABBREVIATION &abbreviation)
 {
     SECTION_HEADER *abbrevs = GetSectionHeaderDangerous(".debug_abbrev");
 
+    // We are going to be sticking this new one on the end of the current
+    // list, which ends with a zero.  Trim that one off, so that the
+    // new one overwrites the list-ending zero entry.
+
+    // Arrange to overwrite the zero that ended the existing list
+    abbrevs->TrimRawData(1);
+
     // Figure out the sequence number of this new element.  The elements
     // are numbered from 1, so we have to add 1 at this point
     abbreviation.sequence_number = location_of_abbreviation_element.size()+1;
@@ -1101,18 +1109,47 @@ size_t ELF::AddToAbbreviations(ABBREVIATION &abbreviation)
     ULEB128Encode(0,pdata);
     ULEB128Encode(0,pdata);
 
-    // Put in a zero to end the list of abbreviations
+    // Back at the beginning of this routine, we trimmed off the list-ending
+    // zero entry.  Tack on a new list-ending zero entry:
     *pdata++ = 0;
 
-    // Calculate the size of this entry
+    // Calculate the size of these two entries
     size_t nbytes = pdata - ach;
 
-    // Arrange to overwrite the zero that ended the existing list
-    abbrevs->TrimRawData(1);
-
-    // Append our new entry, complete with terminating zero
+    // Append our new entry followed by the terminating zero
     abbrevs->AppendToRawData(ach,nbytes);
     return abbreviation.sequence_number;
+}
+
+size_t ELF::AddToAbbreviations(DW_TAG dw_tag,
+                               bool bHasChildren,
+                               ...  )
+{
+    ABBREVIATION abbreviation;
+    ATTRIBUTE_FORMAT_PAIR afp;
+
+    abbreviation.Initialize();
+    abbreviation.dw_tag = dw_tag;
+    abbreviation.has_children = bHasChildren;
+
+    va_list valist;
+    va_start(valist,bHasChildren);
+
+    for(;;) {
+        DW_AT dw_at = va_arg(valist,DW_AT);
+        if( dw_at EQ DW_AT_none ) {
+            break;
+        }
+
+        DW_FORM dw_form = va_arg(valist,DW_FORM);
+
+        afp.SetAT(dw_at);
+        afp.SetForm(dw_form);
+        abbreviation.at_form_pairs.push_back(afp);
+    }
+    va_end(valist);
+
+    return AddToAbbreviations(abbreviation);
 }
 
 void SingleExpressionAddress(PCHAR &pdata,LONGLONG address,bool bTarget64)
@@ -1136,6 +1173,255 @@ void SingleExpressionAddress(PCHAR &pdata,LONGLONG address,bool bTarget64)
     }
 }
 
+size_t ELF::BuildDie( PCHAR  &pdata,
+                      size_t &offset_for_relocation,
+                      size_t &offset_of_strp,
+                      size_t abbreviation_index,
+                      bool   bDwarfIs64,
+                      va_list valist)
+{
+    char * const pdata_start = pdata;
+
+    // The list of variables, all LONGLONG, to this function, are tightly
+    // linked to the definition of the abbreviation.  If they don't match,
+    // you will almost certainly end up with a corrupted ELF file.
+
+    // In other words: the abbreviation contents determine the number and
+    // meaning of the variables extracted by va_arg();
+
+    char const * pabbrev = GetAbbreviationLocation(abbreviation_index);
+
+    ULONGLONG abbrev_from_pabbrev = ULEB128Decode(pabbrev);
+    if(abbreviation_index != abbrev_from_pabbrev) {
+        cerr << "abbreviation != abbrev_from_pabbrev in ELF::BuildDie().\n";
+        cerr << "This needs to be understood.\n";
+        exit(1);
+    }
+
+    // The first thing that goes into the DIE is the abbreviation index:
+    ULEB128Encode(abbreviation_index,pdata);
+
+    // First element from the abbreviation is a DW_TAG
+    DW_TAG dw_tag = static_cast<DW_TAG>(ULEB128Decode(pabbrev));
+
+    // The second element is DW_CHILDREN
+    DW_CHILDREN dw_children = static_cast<DW_CHILDREN>(ULEB128Decode(pabbrev));
+    switch(dw_children) {
+    case DW_CHILDREN_no:
+        break;
+    case DW_CHILDREN_yes:
+        break;
+    default:
+        cerr << "In ELF::BuildDie(), the second abbreviation\n";
+        cerr << "element is neither DW_CHILDREN_no nor DW_CHILDREN_yes.\n";
+        cerr << "This needs to be understood.\n";
+        exit(1);
+    }
+
+    //va_list valist;
+    //va_start(valist,bDwarfIs64);
+
+    for(;;) {
+        DW_AT dw_at = (DW_AT)ULEB128Decode(pabbrev);
+        DW_FORM dw_form = (DW_FORM)ULEB128Decode(pabbrev);
+        if( (int)dw_at EQ 0 AND (int)dw_form EQ 0) {
+            // We've reached the end of the at/form pairs:
+            break;
+        }
+        // We are processing another at/form pair:
+
+IndirectFormProcessing:
+
+        // Pick up the parameter from the list
+        LONGLONG param = va_arg(valist,LONGLONG);
+        // By default, that parameter is the data source
+        CPCHAR source = (CPCHAR)&param;
+        ULONGLONG nLength = 0;
+        switch(dw_form) {
+        case DW_FORM_addr:
+            // The parameter is four or eight bytes of data
+            nLength = bTargetIs64 ? 8 : 4;
+            break;
+        case DW_FORM_block2:
+            // First parameter is the length
+            // An additional parameter points to the data
+            nLength = (USHORT)(param);
+            source = (CPCHAR)va_arg(valist,LONGLONG);
+            break;
+        case DW_FORM_block4:
+            // First parameter is the length
+            // An additional parameter points to the data
+            nLength = (ULONG)(param);
+            source = (CPCHAR)va_arg(valist,LONGLONG);
+            break;
+        case DW_FORM_data2:
+            // The length of the data in parameter is 2
+            nLength = 2;
+            break;
+        case DW_FORM_data4:
+            // The length of the data in parameter is 4
+            nLength = 4;
+            break;
+        case DW_FORM_data8:
+            // The length of the data in parameter is 8
+            nLength = 8;
+            break;
+        case DW_FORM_string:
+            // param points to a zero-terminated string
+            source = (CPCHAR)param;
+            nLength = strlen(source)+1;
+            break;
+        case DW_FORM_block:
+            // The first parameter is the length
+            nLength = param;
+            // Encode it into the data stream
+            ULEB128Encode(nLength,pdata);
+            // An additional parameter points to the data
+            source = (CPCHAR)va_arg(valist,LONGLONG);
+            break;
+        case DW_FORM_block1:
+            // First parameter is the length
+            // An additional parameter points to the data
+            nLength = (UBYTE)(param);
+            source = (CPCHAR)va_arg(valist,LONGLONG);
+            break;
+        case DW_FORM_data1:
+            nLength = 1;
+            break;
+        case DW_FORM_flag:
+            nLength = 1;
+            break;
+        case DW_FORM_sdata:
+            LEB128Encode(param,pdata);
+            break;
+        case DW_FORM_strp: {
+            offset_for_relocation = pdata - pdata_start;
+            nLength = bDwarfIs64 ? 8 : 4;
+            offset_of_strp = 0;
+            memcpy(&offset_of_strp,source,nLength);
+            break;
+        }
+        case DW_FORM_udata:
+            ULEB128Encode((ULONGLONG)param,pdata);
+            break;
+        case DW_FORM_ref_addr:
+            offset_for_relocation = pdata - pdata_start;
+            nLength = bDwarfIs64 ? 8 : 4;
+            break;
+        case DW_FORM_ref1:
+            nLength = 1;
+            break;
+        case DW_FORM_ref2:
+            nLength = 2;
+            break;
+        case DW_FORM_ref4:
+            nLength = 4;
+            break;
+        case DW_FORM_ref8:
+            nLength = 8;
+            break;
+        case DW_FORM_ref_udata:
+            ULEB128Encode((ULONGLONG)param,pdata);
+            break;
+        case DW_FORM_indirect:
+            // This is whacked out.  The initial payload is a DW_FORM code that
+            // has to be processed.  This almost certainly will result in
+            // errors; I haven't been able to find or generate any code
+            // that uses this danged form
+        {
+            // The first parameter is the new dw_form value:
+            dw_form = (DW_FORM)param;
+            // Stick it into the stream:
+            ULEB128Encode((ULONGLONG)param,pdata);
+            // And continue processing:
+            goto IndirectFormProcessing;
+            break;
+        }
+        case DW_FORM_sec_offset:
+            nLength = bDwarfIs64 ? 8 : 4;
+            break;
+        case DW_FORM_exprloc:
+            SingleExpressionAddress(pdata,param,IsTarget64());
+            nLength = 0;
+            break;
+        case DW_FORM_flag_present:
+            // This FORM has no actual data
+            break;
+        case DW_FORM_ref_sig8:
+            nLength = 8;
+            break;
+        default:
+            cerr << "switch(afp.GetForm()) processing an unknown value in DIE::DecodeThyself().\n";
+            cerr << "This needs to be understood.\n";
+            break;
+        }
+        // nLength is the number of bytes that need to transferred from
+        // source to pdata:
+        while( nLength-- > 0 ) {
+            *pdata++ = *source++;
+        }
+    }
+
+    //va_end(valist);
+
+    return pdata - pdata_start;
+}
+
+size_t ELF::BuildAndAddDie(SECTION_HEADER *debug_info,
+                           SECTION_HEADER *relocs,
+                           ULONGLONG abbreviation_index_of_base_type,
+                           ...)
+{
+    va_list valist;
+    va_start(valist,abbreviation_index_of_base_type);
+
+    bool bDwarfIs64 = *(ULONG *)(debug_info->RawData()) EQ 0xFFFFFFFF;
+
+    // Note: Building a DIE involves tightly linking the data provided
+    // in the BuildDie call to fields of the specified abbreviation.  A
+    // mismatch will certainly result in a corrupted ELF file.
+
+    char ach[1024]; // I admit it.  Terrible programming practice.
+    size_t offset_for_relocation = 0;
+    size_t value_of_strp = 0;
+    PCHAR pdata = ach;
+    size_t size_of_data = BuildDie(pdata,
+                                   offset_for_relocation,
+                                   value_of_strp,
+                                   abbreviation_index_of_base_type,
+                                   bDwarfIs64,
+                                   valist);
+
+    // First, trim off the final Abbrev Number 0 entry in the data.
+    debug_info->TrimRawData(1);
+    size_t retval = debug_info->section_header.sh_size;
+
+    // Now we know where the base type entry is going to go:
+    size_t offset_of_base_type = debug_info->section_header.sh_size;
+
+    // And now that we know that offset, we know where the offset for relocation
+    // has to be:
+    offset_for_relocation += offset_of_base_type;
+
+    // Place a new Abbreviation 0 entry at the end of the data:
+    *pdata++ = 0;
+
+    // We can now incorporate this new information into .debug_info
+    size_t size = pdata - ach ;
+    debug_info->AppendToRawData(ach,size);
+
+    // Along with that .debug_info, which contains an indirect string pointer,
+    // we have to create a matching .rela.debug_info entry:
+
+    relocation_prototype.r_offset = offset_for_relocation;
+    relocation_prototype.r_addend = value_of_strp;
+    relocs->AppendToRawData((char *)&relocation_prototype,sizeof(relocation_prototype));
+
+    va_end(valist);
+
+    return retval;
+}
+
 void ELF::AugmentSymbolTable()
 {
     // These are the section headers we're going to be manipulating
@@ -1147,57 +1433,9 @@ void ELF::AugmentSymbolTable()
     SECTION_HEADER *abbrevs    = GetSectionHeaderDangerous(".debug_abbrev");
     SECTION_HEADER *debug_info = GetSectionHeaderDangerous(".debug_info");
 
-    char *debug_info_base_loc = debug_info->RawData();
-    char *strings_base_loc = strings->RawData();
-
-#if 0
-    // Back to experimenting mode.  Let's convert every x_y to x-y, and see
-    // what the implications are when running GDB, particularly in
-    // --interpreter=mi mode.
-
-    for( DIE die : debug_info_dies ) {
-        DW_TAG dw_tag = die.GetTag();
-        if( dw_tag EQ DW_TAG_formal_parameter
-                OR
-                dw_tag EQ DW_TAG_variable ) {
-            for( size_t i=0; i<die.Size(); i++ ) {
-                const ATTRIBUTE_FORMAT_PAIR afp = die[i];
-                const DW_AT dw_at = afp.GetAT();
-                const DW_FORM dw_form = afp.GetForm();
-
-                if(dw_at EQ DW_AT_name AND dw_form EQ DW_FORM_string) {
-                    char *p = debug_info_base_loc + afp.GetLocationOfPayload();
-                    //cout << "Short string: " << p << endl;
-                    if(p[1] EQ '_') {
-                        p[1] = '-';
-                    }
-                    //cout << "Short string: " << p << endl;
-                }
-                if(dw_at EQ DW_AT_name AND dw_form EQ DW_FORM_strp
-                  ) {
-                    long offset;
-                    memcpy(&offset,afp.PayloadBytes(),4);
-
-                    char *p = strings_base_loc + offset;
-                    //cout << "Indirect string: " << p << endl;
-                    if( ( p[0] EQ 'a' OR p[0] EQ 'b' OR p[0] EQ 'f')
-                            AND
-                            p[1] EQ '_') {
-                        p[1] = '-';
-                        //cout << "Indirect string: " << p << endl;
-                    }
-                }
-            }
-        }
-    }
-
-    return ;
-#endif
-
     // We need to find a typical relocation entry.  I have
     // been unsuccessful in completely figuring them out, so I am reduced
     // to mimicry.
-    Elf64_Rela relocation_prototype;
     for( size_t i=0; i<relocs->section_header.sh_size/relocs->section_header.sh_entsize; i++ ) {
         const Elf64_Rela rela = *(Elf64_Rela *)(relocs->RawData() + i * relocs->section_header.sh_entsize);
         const LONGLONG r_addend = rela.r_addend;
@@ -1247,7 +1485,7 @@ void ELF::AugmentSymbolTable()
 
     // We need to create a new base type called 'cob_variable'
 
-    // We have to put cob_variable into the string table, which means an
+    // We have to put "cob_variable" into the string table, which means an
     // associated relocation entry:
 
     size_t location_of_cob_variable_string = AddToStringTable(string_section,"cob_variable");
@@ -1257,123 +1495,54 @@ void ELF::AugmentSymbolTable()
     // undoubtedly already exists in the abbreviation list, but rather than
     // find it, I got lazy and built a new one.
 
-    ABBREVIATION abbreviation;
-    ATTRIBUTE_FORMAT_PAIR afp;
-    size_t size;
-
-    abbreviation.Initialize();
-    abbreviation.dw_tag = DW_TAG_base_type;
-    abbreviation.has_children = false;
-    //
-    afp.SetAT(DW_AT_byte_size);
-    afp.SetForm(DW_FORM_data1);
-    abbreviation.at_form_pairs.push_back(afp);
-    //
-    afp.SetAT(DW_AT_encoding);
-    afp.SetForm(DW_FORM_data1);
-    abbreviation.at_form_pairs.push_back(afp);
-    //
-    afp.SetAT(DW_AT_name);
-    afp.SetForm(DW_FORM_strp);
-    abbreviation.at_form_pairs.push_back(afp);
-    //
-    size_t abbreviation_index_of_base_type = AddToAbbreviations(abbreviation);
+    size_t abbreviation_index_of_base_type = AddToAbbreviations
+            (
+                DW_TAG_base_type,
+                false,
+                DW_AT_byte_size,DW_FORM_data1,
+                DW_AT_encoding,DW_FORM_data1,
+                DW_AT_name,DW_FORM_strp,
+                DW_AT_none   // This is the list-ending parameter
+            );
 
     // We now need to create an abbreviation for the cob_variable type for
     // ordinary variables, that is, working-storage or local-storage
 
-    abbreviation.Initialize();
-    abbreviation.dw_tag = DW_TAG_variable;
-    abbreviation.has_children = false;
-    //
-    afp.SetAT(DW_AT_name);
-    afp.SetForm(DW_FORM_strp);
-    abbreviation.at_form_pairs.push_back(afp);
-    //
-    afp.SetAT(DW_AT_type);
-    afp.SetForm(DW_FORM_ref4);
-    abbreviation.at_form_pairs.push_back(afp);
-    //
-    afp.SetAT(DW_AT_location);
-    afp.SetForm(DW_FORM_exprloc);
-    abbreviation.at_form_pairs.push_back(afp);
-    //
-    size_t abbreviation_index_of_variable = AddToAbbreviations(abbreviation);
+    size_t abbreviation_index_of_variable = AddToAbbreviations
+                                            (
+                                                    DW_TAG_variable,
+                                                    false,
+                                                    DW_AT_name,DW_FORM_strp,
+                                                    DW_AT_type,DW_FORM_ref4,
+                                                    DW_AT_location,DW_FORM_exprloc,
+                                                    DW_AT_none   // This is the list-ending parameter
+                                            );
 
     // We now need to create an abbreviation for the cob_variable type for
     // formal parameters:
 
-    abbreviation.Initialize();
-    abbreviation.dw_tag = DW_TAG_formal_parameter;
-    abbreviation.has_children = false;
-    //
-    afp.SetAT(DW_AT_name);
-    afp.SetForm(DW_FORM_strp);
-    abbreviation.at_form_pairs.push_back(afp);
-    //
-    afp.SetAT(DW_AT_type);
-    afp.SetForm(DW_FORM_ref4);
-    abbreviation.at_form_pairs.push_back(afp);
-    //
-    afp.SetAT(DW_AT_location);
-    afp.SetForm(DW_FORM_exprloc);
-    abbreviation.at_form_pairs.push_back(afp);
-    //
-    size_t abbreviation_index_of_formal_parameter = AddToAbbreviations(abbreviation);
+    size_t abbreviation_index_of_formal_parameter = AddToAbbreviations
+            (
+                DW_TAG_formal_parameter,
+                false,
+                DW_AT_name,DW_FORM_strp,
+                DW_AT_type,DW_FORM_ref4,
+                DW_AT_location,DW_FORM_exprloc,
+                DW_AT_none   // This is the list-ending parameter
+            );
 
     // We can now create the DIE for the cob_variable base type:
 
-    char ach[1024]; // I admit it.  Terrible programming practice.
+    size_t offset_of_base_type
+        = BuildAndAddDie(debug_info,
+                         relocs,
+                         abbreviation_index_of_base_type,
+                         (LONGLONG)1,                              // byte_size
+                         (LONGLONG)DW_ATE_unsigned_char,           // encoding
+                         (LONGLONG)location_of_cob_variable_string // location
+                        );
 
-    // First, trim off the final Abbrev Number 0 entry in the data. We have
-    // to do this before calculating the offset into the data for the
-    // indirect string relocation.
-    debug_info->TrimRawData(1);
-
-    PCHAR pdata = ach;
-
-    // This code is tightly linked to the definition, up above, for
-    // abbreviation_index_of_base_type.  Change one; change the other.  If you
-    // don't, the entire .debug_info section will become higgledy-piggledy.
-    // You Have Been Warned.
-
-    // Start with the abbreviation index
-    ULEB128Encode(abbreviation_index_of_base_type,pdata);
-    // Follow with the byte size
-    *pdata++ = 1;
-    // Follow with the code for unsigned char
-    *pdata++ = DW_ATE_unsigned_char;
-    // And finally the pointer to the string
-
-    // First, calculate where the pointer is going to go in .debug_info; we
-    // need it for the relocation table entry we need to create.
-    size_t offset_for_relocation = debug_info->section_header.sh_size + (pdata-ach) ;
-
-    // And now incorporate the location
-    *(ULONG *)pdata = (ULONG)location_of_cob_variable_string;
-    pdata += sizeof(ULONG);
-
-    // We'll need the offset of the base_type for the DW_AT_type variable
-    // of the DW_TAG_variable values we'll be creating:
-    size_t offset_of_base_type = debug_info->section_header.sh_size;
-
-    // Place a new Abbreviation 0 entry at the end of the data:
-    *pdata++ = 0;
-
-    // We can now incorporate this new information into .debug_info
-    size = pdata - ach ;
-    debug_info->AppendToRawData(ach,size);
-
-    // Along with that .debug_info, which contains an indirect string pointer,
-    // we have to create a matching .rela.debug_info entry:
-
-    relocation_prototype.r_offset = offset_for_relocation;
-    relocation_prototype.r_addend = location_of_cob_variable_string;
-    relocs->AppendToRawData((char *)&relocation_prototype,sizeof(relocation_prototype));
-
-    for( size_t i = 0;
-            i < cobst_symbols.size();
-            i++ ) {
+    for( size_t i = 0; i < cobst_symbols.size(); i++ ) {
         const COBST_SYMBOL cobst_symbol = cobst_symbols[i];
 
         if( cobst_symbol.section EQ "WORKING-STORAGE" ) {
@@ -1385,44 +1554,18 @@ void ELF::AugmentSymbolTable()
                 c_sym_to_location.find(base_symbol);
 
             if( it != c_sym_to_location.end() ) {
-                cout << "From c_sym_to_location for " << it->first << " " << it->second << endl;
-
                 LONGLONG relocatable_location = it->second + offset;
-
-                //cout << cobst_symbol.section;
-                //cout << " ";
-                //cout << full_name;
-                //cout << " ";
-                //cout << base_symbol;
-                //cout << " ";
-                //cout << offset;
-                //cout << " ";
-                //cout << relocatable_location;
-                //cout << endl;
 
                 // We need to add this variable to the debug_str table:
                 size_t location_of_variable_name
                     = AddToStringTable(string_section,full_name);
 
-                // We need to create a DW_TAG_variable for this variable:
-                debug_info->TrimRawData(1); // Remove Abbrev: 0 at end
-                pdata = ach;
-                ULEB128Encode(abbreviation_index_of_variable,pdata);
-                offset_for_relocation = debug_info->section_header.sh_size + (pdata-ach) ;
-                *(ULONG *)pdata = (ULONG)location_of_variable_name;
-                pdata += sizeof(ULONG);
-                *(ULONG *)pdata = (ULONG)offset_of_base_type;
-                pdata += sizeof(ULONG);
-                cout << full_name << " " << hex << relocatable_location << endl;
-                SingleExpressionAddress(pdata,relocatable_location,IsTarget64());
-                *pdata++ = 0;   // Replace Abbrev: 0 at end
-                size = pdata - ach ;
-                debug_info->AppendToRawData(ach,size);
-
-                // And we also need a relocation entry for the variable name:
-                relocation_prototype.r_offset = offset_for_relocation;
-                relocation_prototype.r_addend = location_of_variable_name;
-                relocs->AppendToRawData((char *)&relocation_prototype,sizeof(relocation_prototype));
+                BuildAndAddDie(debug_info,
+                               relocs,
+                               abbreviation_index_of_variable,
+                               (LONGLONG)location_of_variable_name,
+                               (LONGLONG)offset_of_base_type,
+                               relocatable_location);
             }
         }
 
@@ -1437,39 +1580,16 @@ void ELF::AugmentSymbolTable()
             if( it != c_sym_to_location.end() ) {
                 LONGLONG relocatable_location = it->second + offset;
 
-                //cout << cobst_symbol.section;
-                //cout << " ";
-                //cout << full_name;
-                //cout << " ";
-                //cout << base_symbol;
-                //cout << " ";
-                //cout << offset;
-                //cout << " ";
-                //cout << relocatable_location;
-                //cout << endl;
-
                 // We need to add this variable to the debug_str table:
                 size_t location_of_variable_name
                     = AddToStringTable(string_section,full_name);
 
-                // We need to create a DW_TAG_variable for this variable:
-                debug_info->TrimRawData(1); // Remove Abbrev: 0 at end
-                pdata = ach;
-                ULEB128Encode(abbreviation_index_of_formal_parameter,pdata);
-                offset_for_relocation = debug_info->section_header.sh_size + (pdata-ach) ;
-                *(ULONG *)pdata = (ULONG)location_of_variable_name;
-                pdata += sizeof(ULONG);
-                *(ULONG *)pdata = (ULONG)offset_of_base_type;
-                pdata += sizeof(ULONG);
-                SingleExpressionAddress(pdata,relocatable_location,IsTarget64());
-                *pdata++ = 0;   // Replace Abbrev: 0 at end
-                size = pdata - ach ;
-                debug_info->AppendToRawData(ach,size);
-
-                // And we also need a relocation entry for the variable name:
-                relocation_prototype.r_offset = offset_for_relocation;
-                relocation_prototype.r_addend = location_of_variable_name;
-                relocs->AppendToRawData((char *)&relocation_prototype,sizeof(relocation_prototype));
+                BuildAndAddDie(debug_info,
+                               relocs,
+                               abbreviation_index_of_formal_parameter,
+                               (LONGLONG)location_of_variable_name,
+                               (LONGLONG)offset_of_base_type,
+                               relocatable_location);
             }
         }
         if( cobst_symbol.section EQ "LOCAL-STORAGE" ) {
@@ -1477,35 +1597,16 @@ void ELF::AugmentSymbolTable()
 
             LONGLONG relocatable_location = -1; // Flag that this is LOCAL-STORAGE
 
-            //cout << cobst_symbol.section;
-            //cout << " ";
-            //cout << full_name;
-            //cout << " ";
-            //cout << relocatable_location;
-            //cout << endl;
-
             // We need to add this variable to the debug_str table:
             size_t location_of_variable_name
                 = AddToStringTable(string_section,full_name);
 
-            // We need to create a DW_TAG_variable for this variable:
-            debug_info->TrimRawData(1); // Remove Abbrev: 0 at end
-            pdata = ach;
-            ULEB128Encode(abbreviation_index_of_formal_parameter,pdata);
-            offset_for_relocation = debug_info->section_header.sh_size + (pdata-ach) ;
-            *(ULONG *)pdata = (ULONG)location_of_variable_name;
-            pdata += sizeof(ULONG);
-            *(ULONG *)pdata = (ULONG)offset_of_base_type;
-            pdata += sizeof(ULONG);
-            SingleExpressionAddress(pdata,relocatable_location,IsTarget64());
-            *pdata++ = 0;   // Replace Abbrev: 0 at end
-            size = pdata - ach ;
-            debug_info->AppendToRawData(ach,size);
-
-            // And we also need a relocation entry for the variable name:
-            relocation_prototype.r_offset = offset_for_relocation;
-            relocation_prototype.r_addend = location_of_variable_name;
-            relocs->AppendToRawData((char *)&relocation_prototype,sizeof(relocation_prototype));
+            BuildAndAddDie(debug_info,
+                           relocs,
+                           abbreviation_index_of_variable,
+                           (LONGLONG)location_of_variable_name,
+                           (LONGLONG)offset_of_base_type,
+                           relocatable_location);
         }
     }
 }

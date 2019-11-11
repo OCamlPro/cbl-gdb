@@ -74,6 +74,7 @@ typedef enum {
 } DW_CHILDREN;
 
 typedef enum {
+    DW_AT_none = 0x00,                      //  for those times when nothing will suffice
     DW_AT_sibling = 0x01,                   //  reference
     DW_AT_location = 0x02,                  //  exprloc, loclistptr
     DW_AT_name = 0x03,                      //  string
@@ -173,7 +174,7 @@ typedef enum {
 } DW_AT;
 
 typedef enum {
-    DW_FORM_NONE = 0,
+    DW_FORM_none = 0,
     DW_FORM_addr = 0x01,           //  address
     DW_FORM_block2 = 0x03,         //  block
     DW_FORM_block4 = 0x04,         //  block

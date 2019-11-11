@@ -11,9 +11,11 @@
 #include <unordered_map>
 #include <algorithm>
 #include <string.h>
+#include <stdarg.h>
 
 #include "utils.h"
 #include "dwarf4.h"
+#include "dwarf4_tags.h"
 #include "die.h"
 #include "elf.h"
 #include "line_machine.h"
@@ -117,11 +119,30 @@ private:
     COBST_SYMBOLS cobst_symbols;
     DIES debug_info_dies;
 
+    // This next one is dangerously close to being a "global variable".
+    // It's used in only a couple of places inside of ELF, and is basically
+    // here as a convenience
+    Elf64_Rela relocation_prototype;
+
     void ReadInElfHeader(std::ifstream &ifs);
     void ReadInSectionHeaders(std::ifstream &ifs);
     void ReadInRawSectionData(std::ifstream &ifs);
     DIE  GetNextDie(int &nLevel, CPCHAR &pdata, bool bIs64);
     size_t AddToAbbreviations(ABBREVIATION &abbreviation);
+    size_t AddToAbbreviations(DW_TAG dw_tag,
+                              bool bHasChildren,
+                              ...  );
+    size_t BuildDie(PCHAR  &pdata,
+                    size_t &offset_for_relocation,
+                    size_t &value_of_strp,
+                    size_t abbreviation_index,
+                    bool   bDwarfIs64,
+                    va_list valist);
+
+    size_t BuildAndAddDie(SECTION_HEADER *debug_info,
+                          SECTION_HEADER *relocs,
+                          ULONGLONG abbreviation_index_of_base_type,
+                          ...);
 
     ULONGLONG AddToStringTable(const std::string &sec_name,
                                const std::string &text);
