@@ -124,6 +124,10 @@ public:
     {
         return abbreviation.at_form_pairs[i];
     }
+    size_t OffsetIntoDebugInfo() const
+    {
+        return location_offset;
+    }
 
 };
 typedef std::vector<DIE>DIES;

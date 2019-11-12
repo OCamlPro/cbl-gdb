@@ -119,11 +119,6 @@ private:
     COBST_SYMBOLS cobst_symbols;
     DIES debug_info_dies;
 
-    // This next one is dangerously close to being a "global variable".
-    // It's used in only a couple of places inside of ELF, and is basically
-    // here as a convenience
-    Elf64_Rela relocation_prototype;
-
     void ReadInElfHeader(std::ifstream &ifs);
     void ReadInSectionHeaders(std::ifstream &ifs);
     void ReadInRawSectionData(std::ifstream &ifs);
@@ -133,16 +128,23 @@ private:
                               bool bHasChildren,
                               ...  );
     size_t BuildDie(PCHAR  &pdata,
-                    size_t &offset_for_relocation,
-                    size_t &value_of_strp,
+                    size_t &form_strp_offset,
+                    size_t &form_exprloc_offset,
                     size_t abbreviation_index,
                     bool   bDwarfIs64,
                     va_list valist);
-
-    size_t BuildAndAddDie(SECTION_HEADER *debug_info,
-                          SECTION_HEADER *relocs,
-                          ULONGLONG abbreviation_index_of_base_type,
-                          ...);
+    size_t BuildAndInsertDie( size_t start_of_hole,
+                              size_t &form_strp_offset,
+                              size_t &form_exprloc_offset,
+                              SECTION_HEADER *debug_info,
+                              SECTION_HEADER *relocs,
+                              ULONGLONG abbreviation_index_of_base_type,
+                              ...);
+    void CreateRelocationFor(SECTION_HEADER *debug_info,
+                             SECTION_HEADER *relocs,
+                             size_t location_of_at_location,
+                             size_t form_exprloc_offset,
+                             size_t additional_offset);
 
     ULONGLONG AddToStringTable(const std::string &sec_name,
                                const std::string &text);
@@ -174,6 +176,7 @@ public:
     void DisplaySectionHeaders(std::ostream &ofs=std::cout);
 
     void ApplyRelocations(int plus_or_minus);
+    size_t GetAbbreviationOffset(ULONGLONG abbreviation) const;
     const char *GetAbbreviationLocation(ULONGLONG abbreviation) const;
     void BuildAbbreviationIndex();
     void BuildDebugInfo();

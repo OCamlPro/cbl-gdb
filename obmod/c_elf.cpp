@@ -594,6 +594,16 @@ void ELF::BuildAbbreviationIndex()
     }
 }
 
+size_t ELF::GetAbbreviationOffset(ULONGLONG abbreviation) const
+{
+    size_t retval = string::npos;
+    std::unordered_map<size_t,size_t>::const_iterator it = location_of_abbreviation_element.find(abbreviation);
+    if(it != location_of_abbreviation_element.end()) {
+        retval = it->second;
+    }
+    return retval;
+}
+
 char const *ELF::GetAbbreviationLocation(ULONGLONG abbreviation) const
 {
     const char *retval = nullptr;
@@ -1174,8 +1184,8 @@ void SingleExpressionAddress(PCHAR &pdata,LONGLONG address,bool bTarget64)
 }
 
 size_t ELF::BuildDie( PCHAR  &pdata,
-                      size_t &offset_for_relocation,
-                      size_t &offset_of_strp,
+                      size_t &form_strp_offset,
+                      size_t &form_exprloc_offset,
                       size_t abbreviation_index,
                       bool   bDwarfIs64,
                       va_list valist)
@@ -1217,9 +1227,6 @@ size_t ELF::BuildDie( PCHAR  &pdata,
         cerr << "This needs to be understood.\n";
         exit(1);
     }
-
-    //va_list valist;
-    //va_start(valist,bDwarfIs64);
 
     for(;;) {
         DW_AT dw_at = (DW_AT)ULEB128Decode(pabbrev);
@@ -1295,17 +1302,14 @@ IndirectFormProcessing:
             LEB128Encode(param,pdata);
             break;
         case DW_FORM_strp: {
-            offset_for_relocation = pdata - pdata_start;
+            form_strp_offset = pdata-pdata_start;
             nLength = bDwarfIs64 ? 8 : 4;
-            offset_of_strp = 0;
-            memcpy(&offset_of_strp,source,nLength);
             break;
         }
         case DW_FORM_udata:
             ULEB128Encode((ULONGLONG)param,pdata);
             break;
         case DW_FORM_ref_addr:
-            offset_for_relocation = pdata - pdata_start;
             nLength = bDwarfIs64 ? 8 : 4;
             break;
         case DW_FORM_ref1:
@@ -1341,6 +1345,8 @@ IndirectFormProcessing:
             nLength = bDwarfIs64 ? 8 : 4;
             break;
         case DW_FORM_exprloc:
+            // exprloc starts with a count byte, and then a DW_OP opcode
+            form_exprloc_offset = 2 + (pdata - pdata_start);
             SingleExpressionAddress(pdata,param,IsTarget64());
             nLength = 0;
             break;
@@ -1362,18 +1368,19 @@ IndirectFormProcessing:
         }
     }
 
-    //va_end(valist);
-
     return pdata - pdata_start;
 }
 
-size_t ELF::BuildAndAddDie(SECTION_HEADER *debug_info,
-                           SECTION_HEADER *relocs,
-                           ULONGLONG abbreviation_index_of_base_type,
-                           ...)
+size_t ELF::BuildAndInsertDie( size_t start_of_hole,
+                               size_t &form_strp_offset,
+                               size_t &form_exprloc_offset,
+                               SECTION_HEADER *debug_info,
+                               SECTION_HEADER *relocs,
+                               ULONGLONG abbreviation_index,
+                               ...)
 {
     va_list valist;
-    va_start(valist,abbreviation_index_of_base_type);
+    va_start(valist,abbreviation_index);
 
     bool bDwarfIs64 = *(ULONG *)(debug_info->RawData()) EQ 0xFFFFFFFF;
 
@@ -1382,75 +1389,411 @@ size_t ELF::BuildAndAddDie(SECTION_HEADER *debug_info,
     // mismatch will certainly result in a corrupted ELF file.
 
     char ach[1024]; // I admit it.  Terrible programming practice.
-    size_t offset_for_relocation = 0;
-    size_t value_of_strp = 0;
+    size_t offset_for_strp_relocation = string::npos;
+    size_t value_of_strp = string::npos;
     PCHAR pdata = ach;
-    size_t size_of_data = BuildDie(pdata,
-                                   offset_for_relocation,
-                                   value_of_strp,
-                                   abbreviation_index_of_base_type,
+    size_t size_of_hole = BuildDie(pdata,
+                                   form_strp_offset,
+                                   form_exprloc_offset,
+                                   abbreviation_index,
                                    bDwarfIs64,
                                    valist);
 
-    // First, trim off the final Abbrev Number 0 entry in the data.
-    debug_info->TrimRawData(1);
-    size_t retval = debug_info->section_header.sh_size;
+    size_t end_of_hole = start_of_hole + size_of_hole;
 
-    // Now we know where the base type entry is going to go:
-    size_t offset_of_base_type = debug_info->section_header.sh_size;
+    // We know that this DIE is going to take up size_of_hole bytes in the
+    // .debug_info section.
 
-    // And now that we know that offset, we know where the offset for relocation
-    // has to be:
-    offset_for_relocation += offset_of_base_type;
+    // Expand the .debug_info section by that many bytes.
+    // (ach[] is unimportant here; we'll copy those bytes to the end,
+    // but the next instruction will overwrite them)
+    debug_info->AppendToRawData(ach,size_of_hole);
 
-    // Place a new Abbreviation 0 entry at the end of the data:
-    *pdata++ = 0;
+    // Now, punch the hole into the middle of .debug_info:
+    memmove(debug_info->RawData()+end_of_hole,
+            debug_info->RawData()+start_of_hole,
+            debug_info->section_header.sh_size - end_of_hole
+           );
 
-    // We can now incorporate this new information into .debug_info
-    size_t size = pdata - ach ;
-    debug_info->AppendToRawData(ach,size);
+    // Fill that hole with the data we've just created:
+    memcpy(debug_info->RawData()+start_of_hole,
+           ach,
+           size_of_hole);
 
-    // Along with that .debug_info, which contains an indirect string pointer,
-    // we have to create a matching .rela.debug_info entry:
+    // Here's where the code gets interesting.  We have to walk the
+    // entire .debug_info data block, DIE by DIE, looking for references
+    // like DW_AT_name, DW_AT_sibling, and DW_AT_abstract_origin, which
+    // refer to relative locations inside .debug_line.  When we find them,
+    // we have to adjust them.
 
-    relocation_prototype.r_offset = offset_for_relocation;
-    relocation_prototype.r_addend = value_of_strp;
-    relocs->AppendToRawData((char *)&relocation_prototype,sizeof(relocation_prototype));
+    // So, commence walking the debug_info data
+    CPCHAR cpdata = debug_info->RawData();
+
+    bDwarfIs64; // This will be re-established by GetSectionLength
+    ULONGLONG section_length = GetSectionLength(cpdata,bDwarfIs64);
+
+    CPCHAR cpdata_end = cpdata + section_length;
+    USHORT version = GetUshort(cpdata);
+    ULONGLONG debug_abbrev_offset = GetOffset(bDwarfIs64,cpdata);
+
+    UBYTE debug_info_address_size = GetUbyte(cpdata);
+
+    int nLevel = 0;
+    while(cpdata < cpdata_end) {
+        DIE die = GetNextDie(nLevel,cpdata,bDwarfIs64);
+
+        for(size_t i=0; i<die.Size(); i++) {
+            ATTRIBUTE_FORMAT_PAIR afp = die[i];
+            switch(afp.GetAT()) {
+            // These are the types we need to modify
+            case DW_AT_type:
+            case DW_AT_sibling:
+            case DW_AT_abstract_origin: {
+                switch(afp.GetForm()) {
+                // This is a type that might need modification
+                case DW_FORM_ref4: {
+                    ULONG *ploc = (ULONG *)(debug_info->RawData() + afp.GetLocationOfPayload());
+                    ULONG loc = *ploc;
+
+                    if( loc >= start_of_hole ) {
+                        // The specified location is at or after the
+                        // beginning of the hole we just made.  So,
+                        // we have to add the size of the hole to it.
+                        loc += (ULONG)size_of_hole;
+                        *ploc = loc;
+                    }
+
+                    break;
+                }
+                default:
+                    cout << "Forgive us, for we know not what we do!\n";
+                    break;
+                }
+                break;
+            }
+            }
+        }
+    }
 
     va_end(valist);
 
-    return retval;
+#if 0
+    /*  Development note:  The following code allows for the insertion
+        of a DIE in the middle of the list of DIEs, because it modifies
+        the .rela.debug_info entries to match.  But if you do that, the
+        c_sym_to_relocation mapping in AugmentSymbolTable() has to be
+        modified as well.  Since at this writing I am trying to do away
+        with the need to insert in the middle (as opposed to just at the
+        very end) I have commented all this code out.  If everything works,
+        this code never be re-enabled.
+        */
+
+    // At this point, we calculated a new DIE of size_of_data, running from
+    // offset to end_of_hole.  Every DIE relative address pointing to something
+    // >= offset has been incremented by size_of_data.  And if there was a
+    // relocation in the new DIE, that's in relocs.
+
+    // So, now we need to scan the relocs entries and do the same kind of
+    // of compensation for the movement of the DIE entries, changing
+
+    Elf64_Rela *relocation_entry = (Elf64_Rela *)relocs->RawData();
+    Elf64_Rela *last_entry
+        = (Elf64_Rela *)(relocs->RawData() + relocs->section_header.sh_size);
+    while( relocation_entry < last_entry ) {
+        if( relocation_entry->r_offset >= end_of_hole ) {
+            size_t type = ELF64_R_TYPE(relocation_entry->r_info);
+            switch(type) {
+            case 0x0A: {
+                cout << "Type A - ";
+                ULONG *ptarget = (ULONG *)(debug_info->RawData() + relocation_entry->r_offset + size_of_hole);
+
+                if( relocation_entry->r_addend != *ptarget) {
+                    exit(1);
+                }
+
+                cout << "Modifying " << hex << relocation_entry->r_offset
+                     << " to be " << relocation_entry->r_offset + size_of_hole
+                     << " (" << relocation_entry->r_addend << ") ";
+                cout << hex << *ptarget;
+                cout << endl;
+
+                if( relocation_entry->r_addend != *ptarget) {
+                    exit(1);
+                }
+                relocation_entry->r_offset += size_of_hole;
+                break;
+            }
+            case 0x01: {
+                cout << "Type 1 - ";
+                ULONGLONG *ptarget = (ULONGLONG *)(debug_info->RawData() + relocation_entry->r_offset + size_of_hole);
+
+                if( relocation_entry->r_addend != *ptarget) {
+                    exit(1);
+                }
+
+                cout << "Modifying " << hex << relocation_entry->r_offset
+                     << " to be " << relocation_entry->r_offset + size_of_hole
+                     << " (" << relocation_entry->r_addend << ") ";
+                cout << hex << *ptarget;
+                cout << endl;
+
+                if( relocation_entry->r_addend != *ptarget) {
+                    exit(1);
+                }
+                relocation_entry->r_offset += size_of_hole;
+                break;
+            }
+            default:
+                cout << "What in tarnation? " << type << endl;
+                exit(1);
+                break;
+
+            }
+
+        }
+        relocation_entry++;
+    }
+#endif
+
+    return start_of_hole;
+}
+
+void ELF::CreateRelocationFor(SECTION_HEADER *debug_info,
+                              SECTION_HEADER *relocs,
+                              size_t location_of_at_location,
+                              size_t form_exprloc_offset,
+                              size_t additional_offset)
+{
+    // This routine looks for a relocation entry pointing to
+    // location_of_at_location, and duplicates it as pointing to
+    // form_exprloc_offset
+
+    // Easy-peasy. Slowish, but easy-peasy.  When optimization is no longer
+    // premature, consider hashing the relocation entry offsets to speed
+    // this sucker up!
+
+    if( *(UBYTE *)(debug_info->RawData() + location_of_at_location) EQ 9 ) {
+        // Okay, so that was magical.  We only know how to handle the
+        // 9-byte 0x03 positive eight-byte number entries
+
+        location_of_at_location += 2;   // Skip past the 0x09 and 0x03
+
+        Elf64_Rela *relocation_entries = (Elf64_Rela *)relocs->RawData();
+        size_t relocation_entry_count
+            = relocs->section_header.sh_size/relocs->section_header.sh_entsize;
+        size_t relocation_index;
+        for(relocation_index=0; relocation_index<relocation_entry_count; relocation_index++ ) {
+            Elf64_Rela rel_entry = relocation_entries[relocation_index];
+            if( rel_entry.r_offset EQ location_of_at_location) {
+                rel_entry.r_offset = form_exprloc_offset;
+                rel_entry.r_addend += additional_offset;
+                relocs->AppendToRawData((const char *)&rel_entry,sizeof(rel_entry));
+            }
+        }
+    }
 }
 
 void ELF::AugmentSymbolTable()
 {
-    // These are the section headers we're going to be manipulating
+    /*  This is a complex routine that digs deep into the structure of
+        an ELF relocatable.  We need to talk about what we are trying to do,
+        here. I am not just lecturing you; I am lecturing myself.  This is the
+        kind of code that's been confusing me even as I write it.  When I look
+        at it even a few weeks from now, never mind a year or two, it's going
+        to bewilder me.
+
+        So, I am mainly talking to myself, here.  If you need to be here, well,
+        for what you are about to receive, may the Lord make you truly grateful.
+
+        The purpose of this routine is to augment the .debug_info portion of
+        a relocatable .o ELF file with information about COBOL variables.
+
+        We know about each COBOL variable by means of the .tab file, which was
+        created by the COBST program.  It gives us a cross reference for each
+        COBOL variable back to a C variable (henceforth known as the CVAR) which
+        was assigned by the COBC compiler.
+
+        So, at this point we know that, for example,  COBOL INPUT-RECORD maps
+        to CVAR b_12 with an offset of 0x10.
+
+        So, let's use `readelf -aW --debug-dump rtest.o` to look at the
+        relocatable file generated by COBC.  The .debug_info entry for b_12 is
+
+     <2><1eda>: Abbrev Number: 44 (DW_TAG_variable)
+        <1edb>   DW_AT_name        : (indirect string, offset: 0x93f): b_12
+        <1edf>   DW_AT_decl_file   : 2
+        <1ee0>   DW_AT_decl_line   : 39
+        <1ee1>   DW_AT_type        : <0x1ff0>
+        <1ee5>   DW_AT_alignment   : 16
+        <1ee6>   DW_AT_location    : 9 byte block: 3 40 0 0 0 0 0 0 0 (DW_OP_addr: 40)
+
+        Here is some hard-won knowledge, that took me a couple of days to
+        fully figure out.  Both the DW_AT_name and DW_AT_location entries
+        are modified by relocation entries in the .rela.debug_info section.
+
+        We can locate those entries by the offset field in the relocations.
+
+        The relocation for the DW_AT_name entry will have the offset 0x1edb.
+
+        The relocation for the DW_AT_location entry will have the offset
+        0x1ee8.  That's because The entry at 0x1ee6 starts with 0x09 (the byte
+        count) and 0x03 (the opcode that says, "the next eight bytes are the
+        value you want.")
+
+        A quick search through the .rela.debug_info section finds those entries:
+
+    Offset            Info             Type        Symbol's Value    Symbol's Name + Addend
+    0000000000001edb  000003040000000a R_X86_64_32 0000000000000000 .debug_str + 93f
+    0000000000001ee8  0000000400000001 R_X86_64_64 0000000000000000 .bss + 40
+
+        This tells us that the string "b_12" is found in the .debug_str
+        section at 32-bit offset 0x93f, and that the CVAR b_12's runtime data
+        will be located in this module's .BSS section at 64-bit offset 0x40.
+
+        Note further that READELF actually applies the relocations when showing
+        us the .debug_info data.  A `hexdump -C test.o` look at the raw data
+        at those offsets (locations aa24 and aa31 in the ELF file) shows us
+
+    ......................|(Note the four zeroes)
+    0000aa20  00 00 00 2c 00 00 00 00  02 27 f0 1f 00 00 10 09  |...,.....'......|
+    0000aa30  03 00 00 00 00 00 00 00  00 2c 00 00 00 00 02 28  |.........,.....(|
+    .............|(Note the eight zeroes)
+
+        that those values in the file are actually zero, and get modified
+        by the application of relocation entries when the module is loaded.
+
+        Our challenge:  To duplicate all that stuff so that when you enter
+        the GDB command `info address INPUT-RECORD`, you get back the same
+        answer as when you enter `info address b_12`.
+
+        Keep in mind that at this point in our program, we too have applied the
+        relocations.  And we will also, before we save our modified .o
+        file, we will disapply any relocations that we create.  It will
+        often be the case that a COBOL variable is at CVAR+offset, and we'll
+        have to make sure the value in the DIE ends up with the correct
+        values after offsets are removed and reapplied.
+
+        Earlier, we said that we want INPUT-RECORD to point 0x10 bytes
+        past b_12's location.  To make this happen, we're going to need
+        a DW_TAG_variable that will look something like this:
+
+    <0><2213>: Abbrev Number: 56 (DW_TAG_variable)
+    <2214>   DW_AT_name        : (indirect string, offset: 0xde6): INPUT-RECORD/TEST-PROG
+    <2218>   DW_AT_type        : <0x220b>
+    <221c>   DW_AT_location    : 9 byte block: 3 50 0 0 0 0 0 0 0  (DW_OP_addr: 50)
+
+        As you'll see below, we'll create our own abbreviation for this truncated
+        DW_TAG_variable, one that has no _file or _line entries.  We'll
+        keep track of the abbreviation number, in this case 56.
+
+        We'll have to add "INPUT-RECORD/TEST-PROG" to the .debug_str section,
+        keeping track of the offset into that section, in this case
+        0xde6.
+
+        We'll look up the DIE for TAG_DW_variable, noting that its DW_AT_location
+        is 0x40.
+
+        When we create our own DIE for INPUT-RECORD, we'll put 0xde6 into
+        the DW_AT_name indirect string value, and we'll add 0x10 to the b_12's
+        0x40 to get 0x50 and put that into DW_AT_location.
+
+        And we'll create two .rela.debug_info entries that will look like this:
+
+    Offset            Info             Type        Symbol's Value    Symbol's Name + Addend
+    0000000000002214  000003040000000a R_X86_64_32 0000000000000000 .debug_str + de6
+    000000000000221e  0000000400000001 R_X86_64_64 0000000000000000 .bss + 40
+
+        Okay, then.
+
+        Is everybody ready?
+
+        Then we'll begin.
+
+        */
+
+    // These are the section headers we're going to be manipulating or using
 
     const char string_section[] = ".debug_str";
 
+    SECTION_HEADER *symtab     = GetSectionHeaderDangerous(".symtab");
     SECTION_HEADER *relocs     = GetSectionHeaderDangerous(".rela.debug_info");
     SECTION_HEADER *strings    = GetSectionHeaderDangerous(string_section);
     SECTION_HEADER *abbrevs    = GetSectionHeaderDangerous(".debug_abbrev");
     SECTION_HEADER *debug_info = GetSectionHeaderDangerous(".debug_info");
+    USHORT debug_str_index    = (USHORT)GetSectionHeaderIndex(string_section);
 
-    // We need to find a typical relocation entry.  I have
-    // been unsuccessful in completely figuring them out, so I am reduced
-    // to mimicry.
-    for( size_t i=0; i<relocs->section_header.sh_size/relocs->section_header.sh_entsize; i++ ) {
-        const Elf64_Rela rela = *(Elf64_Rela *)(relocs->RawData() + i * relocs->section_header.sh_entsize);
-        const LONGLONG r_addend = rela.r_addend;
-        const ULONG type = ELF64_R_TYPE(rela.r_info);
-        if(r_addend != 0 AND type EQ 0xa) {
-            relocation_prototype = rela;
-            break;
+    // For the sake of convenience, we are going to find a typical
+    // DW_FORM_strp relocation entry.  Such an entry will have a
+    // SYM value pointing to the symbol in .symtab that looks like
+    //
+    //      Num:    Value          Size Type    Bind   Vis      Ndx Name
+    //      772: 0000000000000000     0 SECTION LOCAL  DEFAULT   18
+    //
+    // where the Ndx is the index of the .debug_str section
+
+    Elf64_Rela strp_relocation_prototype;
+
+    // Let's use brackets to isolate this code, just on general principles
+    // If we were going to do it more than once I'd turn it into a function
+    {
+        // First, find the index number of the symbol table entry we want
+        Elf64_Sym *symbol_table_entries = (Elf64_Sym *)symtab->RawData();
+        size_t symbol_table_entry_count
+            = symtab->section_header.sh_size/symtab->section_header.sh_entsize;
+        size_t entry_num;
+        for( entry_num=0; entry_num<symbol_table_entry_count; entry_num++ ) {
+            Elf64_Sym symbol_table_entry = symbol_table_entries[entry_num];
+            /*typedef struct
+                {
+                Elf64_Word    st_name;        //* Symbol name (string tbl index) *
+                unsigned char st_info;        //* Symbol type and binding *
+                unsigned char st_other;       //* Symbol visibility *
+                Elf64_Section st_shndx;       //* Section index *
+                Elf64_Addr    st_value;       //* Symbol value *
+                Elf64_Xword   st_size;        //* Symbol size *
+                } Elf64_Sym;
+                */
+
+            UBYTE st_type = ELF64_ST_TYPE(symbol_table_entry.st_info);
+            UBYTE st_bind = ELF64_ST_BIND(symbol_table_entry.st_info);
+            UBYTE st_vis  = ELF64_ST_VISIBILITY(symbol_table_entry.st_other);
+            USHORT st_section = symbol_table_entry.st_shndx;
+            if (  st_section EQ debug_str_index
+                    AND st_type EQ STT_SECTION
+                    AND st_bind EQ STB_LOCAL
+                    AND st_vis  EQ STV_DEFAULT ) {
+                // That's it.  That's what we came to do, to find entry_num
+                break;
+            }
+        }
+        if( entry_num >= symbol_table_entry_count ) {
+            cout << "Weird.  Couldn't find entry_num in ELF::AugmentSymbolTable()\n";
+            cout << "You probably want Dubner to get this unscrewed.\n";
+            exit(1);
+        }
+
+        Elf64_Rela *relocation_entries = (Elf64_Rela *)relocs->RawData();
+        size_t relocation_entry_count
+            = relocs->section_header.sh_size/relocs->section_header.sh_entsize;
+        size_t relocation_index;
+        for(relocation_index=0; relocation_index<relocation_entry_count; relocation_index++ ) {
+            const Elf64_Rela rela = relocation_entries[relocation_index];
+            size_t symnum = ELF64_R_SYM(rela.r_info);
+
+            if( symnum EQ entry_num ) {
+                strp_relocation_prototype = rela;
+                break;
+            }
+        }
+        if( relocation_index >= relocation_entry_count ) {
+            cout << "Weird.  Couldn't find relocation_index in ELF::AugmentSymbolTable()\n";
+            cout << "You probably want Dubner to get this unscrewed.\n";
+            exit(1);
         }
     }
 
-    // Our WORKING-STORAGE and LINKAGE symbols are referenced against a b_xx
-    // c_sym symbol.  Let's scan debug_info once and build a map of what
-    // we're going to need.
-
-    unordered_map<string,LONGLONG>c_sym_to_location;
+    typedef pair<size_t,LONGLONG> LOC_VALUE_PAIR;
+    unordered_map<string,LOC_VALUE_PAIR>c_sym_to_at_location;
     for( DIE die : debug_info_dies ) {
         DW_TAG dw_tag = die.GetTag();
         if( dw_tag EQ DW_TAG_formal_parameter
@@ -1459,7 +1802,7 @@ void ELF::AugmentSymbolTable()
             // We have found a tag or a formal parameter.  Fetch the string
             // associated with it.
             string c_sym;
-            LONGLONG location;
+            size_t location;
             bool gotsym = false;
             bool gotloc = false;
             for( size_t i=0; i<die.Size(); i++ ) {
@@ -1477,7 +1820,11 @@ void ELF::AugmentSymbolTable()
                     location = LNS_STATE_MACHINE::ProcessSingleExpression(p,IsTarget64());
                 }
                 if(gotloc AND gotsym) {
-                    c_sym_to_location[c_sym] = location;
+                    size_t relocation = afp.GetLocationOfPayload();
+                    LOC_VALUE_PAIR lvp;
+                    lvp.first = relocation;
+                    lvp.second = location;
+                    c_sym_to_at_location[c_sym] = lvp;
                 }
             }
         }
@@ -1508,16 +1855,16 @@ void ELF::AugmentSymbolTable()
     // We now need to create an abbreviation for the cob_variable type for
     // ordinary variables, that is, working-storage or local-storage
 
-    size_t abbreviation_index_of_variable 
+    size_t abbreviation_index_of_variable
         = AddToAbbreviations
-                (
-                        DW_TAG_variable,
-                        false,
-                        (int)DW_AT_name,    (int)DW_FORM_strp,
-                        (int)DW_AT_type,    (int)DW_FORM_ref4,
-                        (int)DW_AT_location,(int)DW_FORM_exprloc,
-                        (int)DW_AT_none   // This is the list-ending parameter
-                );
+          (
+              DW_TAG_variable,
+              false,
+              (int)DW_AT_name,    (int)DW_FORM_strp,
+              (int)DW_AT_type,    (int)DW_FORM_ref4,
+              (int)DW_AT_location,(int)DW_FORM_exprloc,
+              (int)DW_AT_none   // This is the list-ending parameter
+          );
 
     // We now need to create an abbreviation for the cob_variable type for
     // formal parameters:
@@ -1534,14 +1881,28 @@ void ELF::AugmentSymbolTable()
 
     // We can now create the DIE for the cob_variable base type:
 
+    size_t form_strp_offset;
+    size_t form_exprloc_offset;
+
     size_t offset_of_base_type
-        = BuildAndAddDie(debug_info,
-                         relocs,
-                         abbreviation_index_of_base_type,
-                         (LONGLONG)1,                              // byte_size
-                         (LONGLONG)DW_ATE_unsigned_char,           // encoding
-                         (LONGLONG)location_of_cob_variable_string // location
-                        );
+        = BuildAndInsertDie(debug_info->section_header.sh_size-1,   // Insert before final zero entry
+                            form_strp_offset,
+                            form_exprloc_offset,
+                            debug_info,
+                            relocs,
+                            abbreviation_index_of_base_type,
+                            (LONGLONG)1,                              // byte_size
+                            (LONGLONG)DW_ATE_unsigned_char,           // encoding
+                            (LONGLONG)location_of_cob_variable_string // location
+                           );
+
+    // Because that DIE has a DW_AT_strp entry, we need to create a matching
+    // .rela.debug_info entry.
+
+    strp_relocation_prototype.r_offset = offset_of_base_type + form_strp_offset;
+    strp_relocation_prototype.r_addend = location_of_cob_variable_string;
+    relocs->AppendToRawData((const char *)&strp_relocation_prototype,
+                            sizeof(strp_relocation_prototype));
 
     for( size_t i = 0; i < cobst_symbols.size(); i++ ) {
         const COBST_SYMBOL cobst_symbol = cobst_symbols[i];
@@ -1551,22 +1912,45 @@ void ELF::AugmentSymbolTable()
             string base_symbol = cobst_symbol.base_symbol;
             const ULONGLONG offset = cobst_symbol.offset;
 
-            unordered_map<string,LONGLONG>::const_iterator it =
-                c_sym_to_location.find(base_symbol);
+            unordered_map<string,LOC_VALUE_PAIR>::const_iterator it =
+                c_sym_to_at_location.find(base_symbol);
 
-            if( it != c_sym_to_location.end() ) {
-                LONGLONG relocatable_location = it->second + offset;
+            if( it != c_sym_to_at_location.end() ) {
+                // There are, in my opinion, times when the C++ STL is
+                // arguable hateful.  The next two instructions make that case.
+                size_t location_of_at_location = it->second.first;
+                LONGLONG at_location_value = it->second.second;
+
+                LONGLONG relocatable_location = at_location_value + offset;
 
                 // We need to add this variable to the debug_str table:
                 size_t location_of_variable_name
                     = AddToStringTable(string_section,full_name);
 
-                BuildAndAddDie(debug_info,
-                               relocs,
-                               abbreviation_index_of_variable,
-                               (LONGLONG)location_of_variable_name,
-                               (LONGLONG)offset_of_base_type,
-                               relocatable_location);
+                size_t die_location
+                    = BuildAndInsertDie(debug_info->section_header.sh_size-1, // Insert before final zero entry
+                                        form_strp_offset,
+                                        form_exprloc_offset,
+                                        debug_info,
+                                        relocs,
+                                        abbreviation_index_of_variable,
+                                        (LONGLONG)location_of_variable_name,
+                                        (LONGLONG)offset_of_base_type,
+                                        relocatable_location);
+
+                // That DIE has a DW_AT_strp entry:
+                strp_relocation_prototype.r_offset = die_location + form_strp_offset;
+                strp_relocation_prototype.r_addend = location_of_variable_name;
+                relocs->AppendToRawData((const char *)&strp_relocation_prototype,
+                                        sizeof(strp_relocation_prototype));
+
+                // That DIE has a DW_AT_location entry:
+                CreateRelocationFor(debug_info,
+                                    relocs,
+                                    location_of_at_location,
+                                    die_location + form_exprloc_offset,
+                                    offset
+                                   );
             }
         }
 
@@ -1575,22 +1959,43 @@ void ELF::AugmentSymbolTable()
             string base_symbol = cobst_symbol.base_symbol;
             const ULONGLONG offset = cobst_symbol.offset;
 
-            unordered_map<string,LONGLONG>::const_iterator it =
-                c_sym_to_location.find(base_symbol);
+            unordered_map<string,LOC_VALUE_PAIR>::const_iterator it =
+                c_sym_to_at_location.find(base_symbol);
 
-            if( it != c_sym_to_location.end() ) {
-                LONGLONG relocatable_location = it->second + offset;
+            if( it != c_sym_to_at_location.end() ) {
+                // There are, in my opinion, times when the C++ STL is
+                // arguable hateful.  The next two instructions make that case.
+                size_t location_of_at_location = it->second.first;
+                LONGLONG at_location_value = it->second.second;
+
+                LONGLONG relocatable_location = at_location_value + offset;
 
                 // We need to add this variable to the debug_str table:
                 size_t location_of_variable_name
                     = AddToStringTable(string_section,full_name);
 
-                BuildAndAddDie(debug_info,
-                               relocs,
-                               abbreviation_index_of_formal_parameter,
-                               (LONGLONG)location_of_variable_name,
-                               (LONGLONG)offset_of_base_type,
-                               relocatable_location);
+                size_t die_location
+                    = BuildAndInsertDie(debug_info->section_header.sh_size-1, // Insert before final zero entry
+                                        form_strp_offset,
+                                        form_exprloc_offset,
+                                        debug_info,
+                                        relocs,
+                                        abbreviation_index_of_formal_parameter,
+                                        (LONGLONG)location_of_variable_name,
+                                        (LONGLONG)offset_of_base_type,
+                                        relocatable_location);
+
+                // That DIE has a DW_AT_strp entry:
+                strp_relocation_prototype.r_offset = die_location + form_strp_offset;
+                strp_relocation_prototype.r_addend = location_of_variable_name;
+                relocs->AppendToRawData((const char *)&strp_relocation_prototype,
+                                        sizeof(strp_relocation_prototype));
+                // That DIE has a DW_AT_location entry:
+                CreateRelocationFor(debug_info,
+                                    relocs,
+                                    location_of_at_location,
+                                    die_location + form_exprloc_offset,
+                                    offset);
             }
         }
         if( cobst_symbol.section EQ "LOCAL-STORAGE" ) {
@@ -1602,12 +2007,24 @@ void ELF::AugmentSymbolTable()
             size_t location_of_variable_name
                 = AddToStringTable(string_section,full_name);
 
-            BuildAndAddDie(debug_info,
-                           relocs,
-                           abbreviation_index_of_variable,
-                           (LONGLONG)location_of_variable_name,
-                           (LONGLONG)offset_of_base_type,
-                           relocatable_location);
+            size_t die_location
+                = BuildAndInsertDie(debug_info->section_header.sh_size-1, // Insert before final zero entry
+                                    form_strp_offset,
+                                    form_exprloc_offset,
+                                    debug_info,
+                                    relocs,
+                                    abbreviation_index_of_variable,
+                                    (LONGLONG)location_of_variable_name,
+                                    (LONGLONG)offset_of_base_type,
+                                    relocatable_location);
+            // That DIE has a DW_AT_strp entry:
+            strp_relocation_prototype.r_offset = die_location + form_strp_offset;
+            strp_relocation_prototype.r_addend = location_of_variable_name;
+            relocs->AppendToRawData((const char *)&strp_relocation_prototype,
+                                    sizeof(strp_relocation_prototype));
         }
     }
 }
+
+
+
