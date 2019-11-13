@@ -9,7 +9,7 @@
 #include <sstream>
 #include <algorithm>
 
-#define PROFILING
+//#define PROFILING
 
 class PPROFILER
 {
