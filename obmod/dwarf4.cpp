@@ -2,6 +2,7 @@
 #include "dwarf4.h"
 #include "profiler.h"
 #include "utils.h"
+#include "profiler.h"
 
 #define EQ ==
 #define AND &&
@@ -11,6 +12,7 @@ using namespace std;
 
 LONGLONG LEB128Decode(CPCHAR &p)
 {
+    PROFILER;
     LONGLONG result = 0;
     int shift = 0;
     const int size = 63;
@@ -33,6 +35,7 @@ LONGLONG LEB128Decode(CPCHAR &p)
 
 ULONGLONG ULEB128Decode(CPCHAR &p)
 {
+    PROFILER;
     ULONGLONG result = 0;
     int shift = 0;
     ULONGLONG byte;
@@ -48,6 +51,7 @@ ULONGLONG ULEB128Decode(CPCHAR &p)
 
 ULONGLONG GetSectionLength(CPCHAR &p,bool &bDwarfIs64)
 {
+    PROFILER;
     ULONGLONG retval = -1;
     bDwarfIs64 = *(ULONG *)p EQ 0xFFFFFFFF;
     if(bDwarfIs64) {
@@ -63,6 +67,7 @@ ULONGLONG GetSectionLength(CPCHAR &p,bool &bDwarfIs64)
 
 void SetSectionLength(PCHAR &p,bool bDwarfIs64,ULONGLONG length_of_entire_section)
 {
+    PROFILER;
     if(bDwarfIs64) {
         length_of_entire_section -= 12;
         *(ULONG *)p = 0xFFFFFFFF;
@@ -78,6 +83,7 @@ void SetSectionLength(PCHAR &p,bool bDwarfIs64,ULONGLONG length_of_entire_sectio
 
 vector<UBYTE> ULEB128Encode(ULONGLONG uval)
 {
+    PROFILER;
     vector<UBYTE>retval;
     do {
         UBYTE byte = uval & 0x7F;
@@ -92,6 +98,7 @@ vector<UBYTE> ULEB128Encode(ULONGLONG uval)
 
 void ULEB128Encode(ULONGLONG val,PCHAR &p)
 {
+    PROFILER;
     vector<UBYTE>bytes = ULEB128Encode(val);
     for( UBYTE byte : bytes ) {
         *p++ = (char)byte;
@@ -100,6 +107,7 @@ void ULEB128Encode(ULONGLONG val,PCHAR &p)
 
 vector<UBYTE> LEB128Encode(LONGLONG val)
 {
+    PROFILER;
     vector<UBYTE>retval;
 
     bool negative = val < 0;
@@ -122,6 +130,7 @@ vector<UBYTE> LEB128Encode(LONGLONG val)
 
 void LEB128Encode(LONGLONG val,PCHAR &p)
 {
+    PROFILER;
     vector<UBYTE>bytes = LEB128Encode(val);
     for( UBYTE byte : bytes ) {
         *p++ = (char)byte;

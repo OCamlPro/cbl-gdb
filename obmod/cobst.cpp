@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include "cobst.h"
 #include "params.h"
+#include "profiler.h"
 
 #define EQ ==
 #define AND &&
@@ -12,6 +13,7 @@ using namespace std;
 
 void COBST_SYMBOLS::ReadFrom(const string &cobst_filename)
 {
+    CPROFILER;
     ifstream ifs;
     OpenOrFail(ifs,cobst_filename);
 

@@ -66,6 +66,7 @@ next_c:
 
 string Replace(const string &s,const char was, const char is)
 {
+    PROFILER;
     string retval;
 
     for(size_t i=0; i<s.size(); i++) {

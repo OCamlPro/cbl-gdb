@@ -1,5 +1,7 @@
 #pragma once
 
+#include "profiler.h"
+
 class ELF;
 
 class ATTRIBUTE_FORMAT_PAIR
@@ -7,9 +9,12 @@ class ATTRIBUTE_FORMAT_PAIR
 private:
     DW_AT dw_at;                // Decoded as per abbreviation table
     DW_FORM dw_form;            // Decoded as per abbreviation table
+
+public:
     std::vector<UBYTE> payload; // Actual payload from .debug_info data,
     //                          // decoded as per DW_FORM
 
+private:
     size_t location_of_payload; // Offset of payload in .debug_info
 
 public:
@@ -75,6 +80,7 @@ public:
     }
     void Initialize()
     {
+        CPROFILER;
         sequence_number = 0;
         dw_tag = DW_TAG_NONE;
         has_children = false;

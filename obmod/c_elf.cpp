@@ -253,6 +253,7 @@ void DIE::Show(const ELF &elf)
 
 DIE ELF::GetNextDie(int &nLevel, CPCHAR &pdata, bool bDwarfIs64)
 {
+    CPROFILER;
     DIE die;
     die.DecodeThyself(nLevel, pdata, *this, bDwarfIs64);
 
@@ -420,6 +421,7 @@ void ELF::WriteOutSectionHeaders(ofstream &ofs)
 
 void ELF::DisplaySectionHeaders(ostream &ofs)
 {
+    CPROFILER;
     for(USHORT i=0; i<elf_header.e_shnum; i++) {
         ofs.width(3);
         ofs << left << i;
@@ -596,6 +598,7 @@ void ELF::BuildAbbreviationIndex()
 
 size_t ELF::GetAbbreviationOffset(ULONGLONG abbreviation) const
 {
+    CPROFILER;
     size_t retval = string::npos;
     std::unordered_map<size_t,size_t>::const_iterator it = location_of_abbreviation_element.find(abbreviation);
     if(it != location_of_abbreviation_element.end()) {
@@ -606,6 +609,7 @@ size_t ELF::GetAbbreviationOffset(ULONGLONG abbreviation) const
 
 char const *ELF::GetAbbreviationLocation(ULONGLONG abbreviation) const
 {
+    CPROFILER;
     const char *retval = nullptr;
     std::unordered_map<size_t,size_t>::const_iterator it = location_of_abbreviation_element.find(abbreviation);
     if(it != location_of_abbreviation_element.end()) {
@@ -616,6 +620,7 @@ char const *ELF::GetAbbreviationLocation(ULONGLONG abbreviation) const
 
 void ELF::DumpEntireDebugInfoDieTree()
 {
+    CPROFILER;
     for( DIE die : debug_info_dies ) {
         die.Show(*this);
     }
@@ -623,11 +628,13 @@ void ELF::DumpEntireDebugInfoDieTree()
 
 void ELF::RunLineStateMachine(bool show_your_work)
 {
+    CPROFILER;
     lns_state_machine.Run(section_headers[GetSectionHeaderIndex(".debug_line")].RawData(),show_your_work);
 }
 
 void ELF::ApplyRelocations(int plus_or_minus)
 {
+    CPROFILER;
     bool show_your_work = false;
     /*  As a convenience, I am including the relevant relocation information from
 
@@ -698,7 +705,6 @@ void ELF::ApplyRelocations(int plus_or_minus)
     yy This relocation only appears in ILP32 executable files or shared objects.
 
     */
-    CPROFILER;
     if(plus_or_minus EQ -1) {
         //return;
     }
@@ -898,6 +904,7 @@ void ELF::ReplaceDebugLineSection()
 
 ULONGLONG ELF::AddToStringTable(const std::string &sec_name,const std::string &text)
 {
+    CPROFILER;
     size_t section_index = GetSectionHeaderIndex(sec_name);
     if( section_index EQ string::npos ) {
         cerr << "He's trying to add something to the non-existant section\n";
@@ -917,6 +924,7 @@ void ELF::CreateSection(const std::string &sec_name,
                         ULONGLONG type,
                         ULONGLONG flags )
 {
+    CPROFILER;
     size_t script_section_index = GetSectionHeaderIndex(sec_name);
     if( script_section_index EQ string::npos ) {
         ULONGLONG offset = AddToStringTable(".shstrtab",sec_name);
@@ -943,6 +951,7 @@ void ELF::CreateSection(const std::string &sec_name,
 #if 0
 void ELF::InsertDebugScript(const std::string &python_script)
 {
+    CPROFILER;
     // This version puts in just the name
     // We're going to <add python_script> to the .debug_gdb_scripts section
     const string script_sec = ".debug_gdb_scripts";
@@ -956,6 +965,7 @@ void ELF::InsertDebugScript(const std::string &python_script)
 #else
 void ELF::InsertDebugScript(const std::string &python_script)
 {
+    CPROFILER;
     // This version embeds the entire cprint.py program as a text string
     // We're going to <add python_script> to the .debug_gdb_scripts section
     const string script_sec = ".debug_gdb_scripts";
@@ -1020,6 +1030,7 @@ void ELF::WriteTo(string object_filename)
 
 void ELF::ReplaceASymbol(const string &section, const string &was, const string &is, bool whole_symbol)
 {
+    CPROFILER;
     size_t section_header_index = GetSectionHeaderIndex(section);
     char * const symstart = GetSectionDataLocationDangerous(section);
     char *symbols = symstart;
@@ -1048,6 +1059,7 @@ void ELF::ReplaceASymbol(const string &section, const string &was, const string 
 
 void ELF::BruteForceReplace(const string &section, const string &was, const string &is)
 {
+    CPROFILER;
     size_t section_header_index = GetSectionHeaderIndex(section);
     char *const dstart = GetSectionDataLocationDangerous(section);
     char *data = dstart;
@@ -1084,6 +1096,7 @@ void ELF::BruteForceReplace(const string &section, const string &was, const stri
 
 size_t ELF::AddToAbbreviations(ABBREVIATION &abbreviation)
 {
+    CPROFILER;
     SECTION_HEADER *abbrevs = GetSectionHeaderDangerous(".debug_abbrev");
 
     // We are going to be sticking this new one on the end of the current
@@ -1135,6 +1148,7 @@ size_t ELF::AddToAbbreviations(DW_TAG dw_tag,
                                bool bHasChildren,
                                ...  )
 {
+    CPROFILER;
     ABBREVIATION abbreviation;
     ATTRIBUTE_FORMAT_PAIR afp;
 
@@ -1190,6 +1204,7 @@ size_t ELF::BuildDie( PCHAR  &pdata,
                       bool   bDwarfIs64,
                       va_list valist)
 {
+    CPROFILER;
     char * const pdata_start = pdata;
 
     // The list of variables, all LONGLONG, to this function, are tightly
@@ -1379,6 +1394,7 @@ size_t ELF::BuildAndInsertDie( size_t start_of_hole,
                                ULONGLONG abbreviation_index,
                                ...)
 {
+    CPROFILER;
     va_list valist;
     va_start(valist,abbreviation_index);
 
@@ -1564,6 +1580,7 @@ void ELF::CreateRelocationFor(SECTION_HEADER *debug_info,
                               size_t form_exprloc_offset,
                               size_t additional_offset)
 {
+    CPROFILER;
     // This routine looks for a relocation entry pointing to
     // location_of_at_location, and duplicates it as pointing to
     // form_exprloc_offset
@@ -1595,6 +1612,7 @@ void ELF::CreateRelocationFor(SECTION_HEADER *debug_info,
 
 void ELF::AugmentSymbolTable()
 {
+    CPROFILER;
     /*  This is a complex routine that digs deep into the structure of
         an ELF relocatable.  We need to talk about what we are trying to do,
         here. I am not just lecturing you; I am lecturing myself.  This is the

@@ -12,6 +12,7 @@ using namespace std;
 
 LONGLONG LNS_STATE_MACHINE::ProcessSingleExpression(CPCHAR &p,bool isElf64Bit)
 {
+    PROFILER;
     LONGLONG retval = 0;
     DW_OP dw_op = (DW_OP)((unsigned char)*p++);
     switch(dw_op) {
@@ -39,6 +40,7 @@ LONGLONG LNS_STATE_MACHINE::ProcessSingleExpression(CPCHAR &p,bool isElf64Bit)
 
 void LNS_REGISTERS::Init()
 {
+    CPROFILER;
     // Initialize the state machine as per the DWARF-4 specification:
 
     address = 0;
@@ -198,6 +200,7 @@ void LNS_STATE_MACHINE::ProcessSpecialOpcode(UBYTE opcode)
 
 static void PutUpLnsHeader()
 {
+    PROFILER;
     cout << "    NS is_stmt, BB new basic block, ET end of text sequence\n";
     cout << "    PE prologue end, EB epilogue begin\n";
     cout << "    IS=val ISA number, DI=val discriminator value\n";
@@ -532,6 +535,7 @@ void LNS_STATE_MACHINE::Run(char *line_data, bool show_your_work)
 
 void LNS_BUILDER::SetParams(UBYTE ml, UBYTE mopi, BYTE lb, UBYTE lr, UBYTE ob, bool def_is_stmt, const UBYTE *sol)
 {
+    CPROFILER;
     minimum_instruction_length = ml;
     maximum_operations_per_instruction = mopi;
     line_base = lb;
@@ -543,6 +547,7 @@ void LNS_BUILDER::SetParams(UBYTE ml, UBYTE mopi, BYTE lb, UBYTE lr, UBYTE ob, b
 
 int LNS_BUILDER::AddFile(const std::string &filename)
 {
+    CPROFILER;
     LNS_FILE_NAME lfn;
     if(lns_file_names.size() EQ 0) {
         // The zeroth entry is empty; it implies the compilation directory
@@ -572,6 +577,7 @@ int LNS_BUILDER::AddFile(const std::string &filename)
 
 void LNS_BUILDER::AddToAddressLineList(ULONGLONG address, int file_number, ULONGLONG line)
 {
+    CPROFILER;
     ADDRESS_LINE_PAIR alp;
     alp.file_number = file_number;
     alp.address = address;
@@ -581,6 +587,7 @@ void LNS_BUILDER::AddToAddressLineList(ULONGLONG address, int file_number, ULONG
 
 void LNS_BUILDER::PushValues(const UBYTE *p,size_t length)
 {
+    CPROFILER;
     while(length-- > 0) {
         line_program.push_back(*p++);
     }
@@ -588,6 +595,7 @@ void LNS_BUILDER::PushValues(const UBYTE *p,size_t length)
 
 void LNS_BUILDER::PushValues(vector<UBYTE>vals)
 {
+    CPROFILER;
     size_t i = 0;
     while( i < vals.size() ) {
         line_program.push_back(vals[i++]);
@@ -596,6 +604,7 @@ void LNS_BUILDER::PushValues(vector<UBYTE>vals)
 
 template<typename T>void LNS_BUILDER::Overwrite(ULONGLONG location,T v)
 {
+    CPROFILER;
     const UBYTE *src = (const UBYTE *)(&v);
     for(size_t i=0; i<sizeof(T); i++) {
         line_program[(size_t)location++] = *src++;

@@ -1,5 +1,6 @@
 #include "c_elf.h"
 #include "die.h"
+#include "profiler.h"
 
 #define EQ ==
 #define AND &&
@@ -9,6 +10,7 @@ using namespace std;
 
 string ATTRIBUTE_FORMAT_PAIR::PayloadAsString(const ELF &elf,bool with_offset) const
 {
+    CPROFILER;
     string retval;
 
     // Use the size of payload as a default:

@@ -20,6 +20,7 @@
 #include "elf.h"
 #include "line_machine.h"
 #include "cobst.h"
+#include "profiler.h"
 
 class ELF;
 
@@ -37,19 +38,23 @@ public:
 
     SECTION_HEADER()
     {
+        CPROFILER;
         raw_data = nullptr;
         allocated_size = 0;
     }
     ~SECTION_HEADER()
     {
+        CPROFILER;
         DeleteRawData();
     }
     char *RawData() const
     {
+        CPROFILER;
         return raw_data;
     }
     void SetRawDataPointer(char *p,ULONGLONG size)
     {
+        CPROFILER;
         DeleteRawData();
         raw_data = p;
         section_header.sh_size = size;
@@ -57,6 +62,7 @@ public:
     }
     void DeleteRawData()
     {
+        CPROFILER;
         delete[] raw_data;
         raw_data = nullptr;
         section_header.sh_size = 0;
@@ -64,6 +70,7 @@ public:
     }
     std::string GetSymbolByIndex(int index)
     {
+        CPROFILER;
         std::string retval = "<??>" ;
         if( index < section_header.sh_size ) {
             retval = std::string(raw_data + index);
@@ -72,6 +79,7 @@ public:
     }
     void TrimRawData(size_t nbytes)
     {
+        CPROFILER;
         // Sometimes it is necessary, like when adding abbreviations to
         // .debug_abbrev, to overwrite something like a final zero.
 
@@ -80,6 +88,7 @@ public:
     }
     void AppendToRawData(const char *p, ULONGLONG size)
     {
+        CPROFILER;
         // Append p to raw_data
         while( section_header.sh_size + size > allocated_size ) {
             allocated_size = std::max(section_header.sh_size + size,allocated_size*2);
@@ -188,6 +197,7 @@ public:
 
     SECTION_HEADER *GetSectionHeaderDangerous(const std::string secname)
     {
+        CPROFILER;
         SECTION_HEADER *retval = nullptr;
         size_t index = GetSectionHeaderIndex(secname);
         if(index != std::string::npos) {
@@ -198,6 +208,7 @@ public:
 
     size_t GetSectionHeaderIndex(const std::string secname) const
     {
+        CPROFILER;
         std::unordered_map<std::string,size_t>::const_iterator it = location_of_section_header_by_name.find(secname);
         if(it == location_of_section_header_by_name.end()) {
             return std::string::npos;
@@ -207,11 +218,13 @@ public:
 
     const char *GetSectionDataLocation(const std::string secname) const
     {
+        CPROFILER;
         size_t index = GetSectionHeaderIndex(secname);
         return section_headers[index].RawData();
     }
     char *GetSectionDataLocationDangerous(const std::string secname)
     {
+        CPROFILER;
         size_t index = GetSectionHeaderIndex(secname);
         return section_headers[index].RawData();
     }
