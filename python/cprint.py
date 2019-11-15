@@ -544,6 +544,8 @@ class CobolVariable() :
         self.display_name = ""
         self.display_body = ""
         self.display_pic  = ""
+        
+        self.rside = ""
 
     def CleanTokens(self,execute_result) :
         # (This was created during initial development.  During refactoring
@@ -1512,7 +1514,17 @@ class CPrintWorker() :
 
     def ProcessArguments(self, arguments) :
         # The command is typically "cp A B C" or "cp/d A B C"
-        args = arguments.split()
+        # There is also the possibility of an '=' character, whereby the
+        # value after the '=' is assigned to the variable described to the left
+        
+        preargs = arguments.split('=',1)
+        
+        rside = None
+        if len(preargs) > 1  :
+            rside = preargs[1]
+        
+        # The variable name side is to the left of any '=' character
+        args = preargs[0].split()
 
         args = self.ProcessDisplayMode(args)
 
@@ -1590,6 +1602,9 @@ class CPrintWorker() :
 
             # Pick up the payload from the list
             payload = self.var_trie.storage_list[payload_number]
+            
+            if rside :
+                print( "rside is " , rside )
 
             # Fetch the data again, just in case he executed some instructions
             # since short-term-memory was established
@@ -1612,7 +1627,7 @@ if 'gdb' in sys.modules :
 
         def __init__ (self):
             super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
-            print('registering CPrint v0.6.0 , (Usage is "print <COBOL identifier>")')
+            print('registering CPrint v0.7.0 , (Usage is "print <COBOL identifier>")')
             self.Worker = CPrintWorker()
 
         def invoke (self, arguments, from_tty):

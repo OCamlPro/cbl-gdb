@@ -19,10 +19,15 @@ c_elf.cpp : cprint_py.h
 	
 cprint_py.h : ../python/cprint.py
 	xxd -i ../python/cprint.py >cprint_py.h
+	@# The following is an attempt to keep git from getting too damned 
+	@# confused by cprint_py.h apparently changing when doing a make -B.  xxd
+	@# creates a format that is different from both whitesmith and K&R, so
+	@# we'll force it, initially, to whitesmith, just to elminate one variable
+	astyle -n --style=kr --indent=spaces=4 ./cprint_py.h
 
 .PHONY: clean
 clean:
-	rm -f $(obj) $(project) $(dep)
+	rm -f $(obj) $(project) $(dep) cprint_py.h
 
 .PHONY: pregit
 pregit:

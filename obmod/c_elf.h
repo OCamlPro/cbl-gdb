@@ -71,7 +71,7 @@ public:
     std::string GetSymbolByIndex(int index)
     {
         CPROFILER;
-        std::string retval = "<??>" ;
+        std::string retval = "<" "?" "?" ">" ;
         if( index < section_header.sh_size ) {
             retval = std::string(raw_data + index);
         }
