@@ -545,8 +545,6 @@ class CobolVariable() :
         self.display_body = ""
         self.display_pic  = ""
         
-        self.rside = ""
-
     def CleanTokens(self,execute_result) :
         # (This was created during initial development.  During refactoring
         #  to use cobst data rather than collecting field and attribute
@@ -594,6 +592,44 @@ class CobolVariable() :
                     or xtoken == "0x0") :
                 tokens.append(xtoken)
         return tokens
+
+    def SetToRside(self, line_list : LineList(), rside) :
+        print( "Inside SetToRside", rside)
+
+        if False :  # dummy code that can be followed by elifs
+            pass
+        elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY :
+            print("Implement: COB_TYPE_NUMERIC_DISPLAY")
+        elif self.AttrType == COB_TYPE_NUMERIC_BINARY :
+            print("Implement: COB_TYPE_NUMERIC_BINARY")
+        elif self.AttrType == COB_TYPE_NUMERIC_PACKED :
+            print("Implement: COB_TYPE_NUMERIC_PACKED")
+        elif self.AttrType == COB_TYPE_NUMERIC_FLOAT :
+            print("Implement: COB_TYPE_NUMERIC_FLOAT")
+        elif self.AttrType == COB_TYPE_NUMERIC_DOUBLE :
+            print("Implement: COB_TYPE_NUMERIC_DOUBLE")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC64 :
+            print("Implement: COB_TYPE_NUMERIC_FP_DEC64")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128 :
+            print("Implement: COB_TYPE_NUMERIC_FP_DEC128")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32 :
+            print("Implement: COB_TYPE_NUMERIC_FP_BIN32")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64 :
+            print("Implement: COB_TYPE_NUMERIC_FP_BIN64")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128 :
+            print("Implement: COB_TYPE_NUMERIC_FP_BIN128")
+        elif self.AttrType == COB_TYPE_ALPHANUMERIC :
+            print("Implement: COB_TYPE_ALPHANUMERIC")
+        elif self.AttrType == COB_TYPE_NUMERIC_EDITED :
+            print("Implement: COB_TYPE_NUMERIC_EDITED")
+        else :
+            print("Say what?")
+
+
+
+
+
+
         
     def FetchVariableData(self, line_list : LineList(), show_failure ) :
         data_string = None
@@ -623,7 +659,7 @@ class CobolVariable() :
                     # trapped inside the referring routine.
                     self.not_in_context = True
             else :
-                # We are running off-line, so simulate the return of zeroes
+                # We are running off-line, so simulate a return of just zeroes
                 data_string = ""
                 for i in range(self.ListSize) :
                     data_string += "0x00 "
@@ -1604,7 +1640,7 @@ class CPrintWorker() :
             payload = self.var_trie.storage_list[payload_number]
             
             if rside :
-                print( "rside is " , rside )
+                payload.SetToRside(self.line_list, rside)
 
             # Fetch the data again, just in case he executed some instructions
             # since short-term-memory was established
@@ -1640,18 +1676,10 @@ if 'gdb' not in sys.modules:
     # I debug with Visual Studio in Windows, which doesn't provide a gdb object.
     # Test code goes here
     Worker = CPrintWorker()
-    Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\batch-demo\gdb\samples\optfde01\optfde01.cbl ")
+    Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
     Worker.ProcessArguments("*")
-    Worker.ProcessArguments("22")
-    Worker.ProcessArguments("22")
-    Worker.ProcessArguments("/v")
-    Worker.ProcessArguments("22")
-    Worker.ProcessArguments("22")
-    Worker.ProcessArguments("/v0")
-    Worker.ProcessArguments("22")
-    Worker.ProcessArguments("22")
-
-    Worker.ProcessArguments("/vd 22")
+    Worker.ProcessArguments("/d 1")
+    Worker.ProcessArguments("1=Banana")
 
     pass
 else:                

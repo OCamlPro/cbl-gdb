@@ -22,7 +22,7 @@ cprint_py.h : ../python/cprint.py
 	@# The following is an attempt to keep git from getting too damned 
 	@# confused by cprint_py.h apparently changing when doing a make -B.  xxd
 	@# creates a format that is different from both whitesmith and K&R, so
-	@# we'll force it, initially, to whitesmith, just to elminate one variable
+	@# we'll force it, initially, to K&R, just to eliminate one variable
 	astyle -n --style=kr --indent=spaces=4 ./cprint_py.h
 
 .PHONY: clean
