@@ -85,6 +85,26 @@ import re
 import sys
 import os
 
+def LeftRight(s) :
+    left = ""
+    right = ""
+    i = 0
+    while i < len(s) :
+        ch = s[i]
+        i += 1
+        if ch == '.' :
+            break
+        left += ch
+    while i < len(s) :
+        ch = s[i]
+        i += 1
+        right += ch
+    if len(left) == 0 :
+        left = '0'
+    if len(right) == 0 :
+        right = '0'
+    return left, right
+
 class VarTrieNode() :
     def __init__(self):
         self.parent = None
@@ -535,7 +555,7 @@ class CobolVariable() :
         self.AttrScale  = 0
         self.AttrFlags  = 0 
 
-        self.data           = []            # list of ListSize bytes
+        self.data       = []            # list of ListSize bytes
 
         # Here is the string information decoded from the attributes and
         # the data we get from gdb:
@@ -596,40 +616,156 @@ class CobolVariable() :
     def SetToRside(self, line_list : LineList(), rside) :
         print( "Inside SetToRside", rside)
 
+        GotData = True
+
         if False :  # dummy code that can be followed by elifs
+            GotData = False
             pass
         elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY :
-            print("Implement: COB_TYPE_NUMERIC_DISPLAY")
+            self.StringToNumericDisplay(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_BINARY :
-            print("Implement: COB_TYPE_NUMERIC_BINARY")
+            self.StringToNumericBinary(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_PACKED :
-            print("Implement: COB_TYPE_NUMERIC_PACKED")
+            self.StringToPackedDecimal(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_FLOAT :
-            print("Implement: COB_TYPE_NUMERIC_FLOAT")
+            self.StringToIeeeBinary(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_DOUBLE :
-            print("Implement: COB_TYPE_NUMERIC_DOUBLE")
+            self.StringToIeeeBinary(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC64 :
-            print("Implement: COB_TYPE_NUMERIC_FP_DEC64")
+            GotData = False
+            print("Need to implement: COB_TYPE_NUMERIC_FP_DEC64")
         elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128 :
-            print("Implement: COB_TYPE_NUMERIC_FP_DEC128")
+            GotData = False
+            print("Need to implement: COB_TYPE_NUMERIC_FP_DEC128")
         elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32 :
-            print("Implement: COB_TYPE_NUMERIC_FP_BIN32")
+            GotData = False
+            print("Need to implement: COB_TYPE_NUMERIC_FP_BIN32")
         elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64 :
-            print("Implement: COB_TYPE_NUMERIC_FP_BIN64")
+            GotData = False
+            print("Need to implement: COB_TYPE_NUMERIC_FP_BIN64")
         elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128 :
-            print("Implement: COB_TYPE_NUMERIC_FP_BIN128")
+            GotData = False
+            print("Need to implement: COB_TYPE_NUMERIC_FP_BIN128")
         elif self.AttrType == COB_TYPE_ALPHANUMERIC :
-            print("Implement: COB_TYPE_ALPHANUMERIC")
+            self.StringToAlphanumeric(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_EDITED :
-            print("Implement: COB_TYPE_NUMERIC_EDITED")
+            self.StringToNumericEdited(rside)
         else :
-            print("Say what?")
+            GotData = False
+            print("Probably a POINTER type.  Not yet implemented")
 
+        if GotData :
+            print("We've GotData: self.data")
+            print(' '.join(format(x, '02x') for x in self.data))
 
+            # We've got self.ListSize bytes in self.data 
+            # Put them into memory
 
+            the_address = self.GetTheAddress(line_list)
 
+            if the_address :
+                i = 0
+                while i < len(self.data) :
+                    command = "set {char}" + hex(the_address+i) + "=" + hex(self.data[i])
+                    if 'gdb' in sys.modules :
+                         gdb.execute(command,False,True)
+                    i += 1
 
+    def GetTheAddress(self,line_list) :
+        if self.Section in ("WORKING-STORAGE",
+                            "INPUT-OUTPUT",
+                            "LINKAGE") :
+            # We can find this variable's address at base_symbol + offset:
+            command = "info address " + self.Base
 
+            if 'gdb' in sys.modules :
+                try :
+                    #print(command)
+                    address_string = gdb.execute(command,False,True)
+
+                    match = re.search("address 0x([0-9a-f]+)\.",address_string)
+                    if not match :
+                        print("No match")
+                    else :
+                        address = int(match.group(1),16)
+                        address += self.Offset
+                        return address
+
+                except gdb.error:
+                    # This exception is thrown when you ask for a LINKAGE 
+                    # variable and it's not available because you aren't
+                    # trapped inside the referring routine.
+                    self.not_in_context = True
+            else :
+                # We are running off-line
+                return None
+
+        elif self.Section == "LOCAL-STORAGE" :
+            if 'gdb' in sys.modules :
+                try :
+                    # Okay.  
+                    #
+                    # We are looking for something in LOCAL-STORAGE.  Local
+                    # storage is kept in a calloc-ed memory location named
+                    # cob_local_ptr.  The complication is that if we have
+                    # several program-ids that each have their own cob_local_ptr
+                    # we have to make sure we know which one we are dealing 
+                    # with.
+                    
+                    # Pick up the decimal line number where we are trapped
+                    line_number = -1
+                    frame_string = gdb.execute("frame",False,True)
+                    # Look for a number after a colon
+                    nfound = frame_string.find(':')
+                    if nfound > -1 :
+                        frame_string = frame_string[nfound+1:]
+                        frame_string = frame_string.split()
+                        try :
+                            line_number = int(frame_string[0])
+                        except :
+                            line_number = -1
+
+                    #print("Trapped at ",line_number)
+                    # We know we are trapped at line_number
+
+                    # Look up the program-id of that line_number
+                    program_id = line_list.Find(line_number)
+                    #print("in :", program_id)
+                    
+                    # Okay again.
+                    #
+                    # program-id is where the program-under-test is
+                    # trapped.  Let's see if that program-id matches
+                    # the final place of the desired variable:
+                    #
+                    #print( self.Name )
+                    split_name = self.Name.split('/')
+                    #print("Match? :",split_name[-1],program_id)
+                    if split_name[-1] == program_id :
+                        # Everything seems to match up, so we can try
+                        # to get this variable's data:
+                        
+                        command = "info address cob_local_ptr"
+                        address_string = gdb.execute(command,False,True)
+                        print(command)
+                        print(address_string)
+                        address_string = gdb.execute(command,False,True)
+
+                        match = re.search("address 0x([0-9a-f]+)\.",address_string)
+                        if not match :
+                            print("No match")
+                        else :
+                            print(match.group(1))
+                            address = int(match.group(1),16)
+                            address += self.Offset
+                            return address
+                    else :
+                        return None
+
+                except gdb.error:
+                    return None
+        else :
+            return None
         
     def FetchVariableData(self, line_list : LineList(), show_failure ) :
         data_string = None
@@ -975,6 +1111,262 @@ class CobolVariable() :
         body += type
         return body , pic
 
+    def StringToIeeeBinary(self,rside) :
+        self.data = bytearray(self.ListSize)
+        length = self.ListSize
+
+        if length == 2 :
+            # binary16
+            exponent_bits = 5
+            fraction_bits = 10
+            bias = 15
+            valid_digits = 4
+        elif length == 4 :
+            # binary32
+            exponent_bits = 8
+            fraction_bits = 23
+            bias = 127
+            valid_digits = 8
+        elif length == 8 :
+            # binary64
+            exponent_bits = 11
+            fraction_bits = 52
+            bias = 1023
+            valid_digits = 16
+        elif length == 16 :
+            # binary128
+            exponent_bits = 15
+            fraction_bits = 112
+            bias = 16383
+            valid_digits = 34
+        elif length == 32 :
+            # binary256
+            exponent_bits = 19
+            fraction_bits = 236
+            bias = 262143
+            valid_digits = 72
+        else :
+            message = "Don't know how to handle IEEE 754 floating point with a length of "
+            message += str(length)
+            message += " bytes"
+            raise Exception (message)
+
+        rside = rside.lower()
+
+        if rside == "inf" or rside == "+inf" :
+            # Positive infinity
+            sign = 0
+            exponent = (1<<exponent_bits)-1
+            significand = 0
+        elif rside == "-inf" :
+            # Negative infinity
+            sign = 1
+            exponent = (1<<exponent_bits)-1
+            significand = 0
+        elif rside == "nan" or rside == "snan" :
+            # signalling NaN
+            sign = 0
+            exponent = (1<<exponent_bits)-1
+            significand = 1
+        elif rside == "qnan" :
+            # quiet NaN
+            sign = 0
+            exponent = (1<<exponent_bits)-1
+            significand = (1<<(fraction_bits-1)) + 1
+        else :
+            try :
+                fpnumber = float(rside)
+            except :
+                print("Ill-formed floating point input")
+                fpnumber = 0
+
+            if fpnumber == 0 :
+                sign = 0
+                exponent = 0
+                significand = 0
+            else :
+                # We have run out of dodges; we have to actually encode
+                # the floating point number
+                if fpnumber < 0 :
+                    sign = 1
+                    fpnumber = -fpnumber
+                else:
+                    sign = 0
+
+                astring = "{0:24.18e}".format(fpnumber)
+                    
+                eloc = astring.find("e")
+                point10 = -1 # Just to the right of the leftmost digit
+                lside = astring[0]
+                lside += astring[2:eloc]
+
+                exp10 = int(astring[eloc+1:])
+
+                while exp10 < 0 :
+                    point10 += 1
+                    if point10 > 0 :
+                        lside = '0' + lside
+                    exp10 += 1
+
+                while exp10 > 0 :
+                    lside = lside + '0'
+                    lside = lside
+                    point10 -= 1
+                    exp10 -= 1
+
+                if point10 < 0 :
+                    intpart = lside[0:-point10]
+                    fracpart = lside[-point10:]
+                else :
+                    intpart = ""
+                    fracpart = lside
+
+                while len(fracpart) > 0 :
+                    if  fracpart[-1:] != '0' : # Just the last char
+                        break
+                    fracpart = fracpart[0:-1] # All but last char
+
+                # Convert the integer part to a string of bytes:
+                intba = bytearray(intpart.encode("utf8"))
+                for i in range(len(intba)) :
+                    intba[i] -= 0x30    # "0"
+
+                # Convert the integer part to a string of bits:
+                intbits = ""
+                while len(intba) > 0 :
+                    # divide intba by two
+                    borrow = 0
+                    for i in range(len(intba)) :
+                        newborrow = intba[i] & 0x01
+                        intba[i] = (borrow*10 + intba[i]) // 2
+                        borrow = newborrow
+                    # Push the lowest order bit onto the bitstring
+                    if borrow ==  1 :
+                        intbits += "1"
+                    else :
+                        intbits += "0"
+                    if intba[0] == 0x00 :
+                        intba = intba[1:]
+
+                # Reverse the order of intbits:
+                intbits = intbits[::-1]
+
+                # Convert the fractional part to a string of bytes:
+                fracba = bytearray(fracpart.encode("utf8"))
+                for i in range(len(fracba)) :
+                    fracba[i] -= 0x30    # "0"
+
+                # Convert the fractional part to a string of bits.  We
+                # we will create one more than we can possibly need
+
+                fracbits = ""
+                while len(fracbits) < fraction_bits+1+1 :
+                    # Multiply fracbits by two:
+                    carry = 0
+                    for i in range(len(fracba)-1,-1,-1) :
+                        fracba[i] = fracba[i]*2 + carry
+                        carry = fracba[i] // 10
+                        fracba[i] = fracba[i] % 10
+                    # Pick up the bit that means >= 0.5
+                    if carry == 1 :
+                        fracbits += '1'
+                    else :
+                        fracbits += '0'
+
+                sigbits = intbits + fracbits
+                binary_point = len(intbits)
+
+                # Round to the actual number of places we'll need
+                carry = sigbits[fraction_bits+1]
+                sigbits = sigbits[0:fraction_bits+1]
+
+                i = len(sigbits)-1
+                while(i >= 0) :
+                    if carry == '0' :
+                        break;
+                    if sigbits[i] == '0' :
+                        sigbits = sigbits[:i] + '1' + sigbits[i+1:]
+                        break;
+                    sigbits = sigbits[:i] + '0' + sigbits[i+1:]
+                    carry = 1
+                    i -= 1
+
+                if carry == 1 :
+                    # Well, this is improbable.  Somebody must've entered
+                    # 0.999999999999999999999999999999999, but in a way
+                    # that snuck past the Python floating point input
+                    # conversion.
+                    #
+                    # What a jerk
+                    #
+                    sigbits = '1' + sigbits
+                    sigbits = sigbits[0:fraction_bits+1]
+                    binary_point += 1
+                    
+                # If the number is >= 1, it's already normalized.
+
+                # Otherwise, strip off leading zeroes while adjusting the
+                # binary point:
+                while sigbits[0] == '0' :
+                    sigbits = sigbits[1:] + '0'
+                    binary_point -= 1;
+
+                # calculate the power_of_two from the binary_point position
+                power_of_two = binary_point - 1
+
+                # Convert the power_of_two using the bias:
+
+                exponent = power_of_two + bias
+
+                if exponent <= 0 :
+                    # I am not going to mess with sub-normal numbers.  This
+                    # is, therefore, just too damned small.  Make it zero
+                    sign = 0
+                    exponent = 0
+                    significand = 0
+                elif exponent >= (1<<exponent_bits)-1 :
+                    # The number is too big for this IEEE format.  
+                    # Make it infinite
+                    exponent = (1<<exponent_bits)-1
+                    significand = 0
+                else :
+                    # We have the sign and exponent.  Build the signicand:
+                    significand = 0
+                    # Trim off the implicit high-order bit:
+                    sigbits = sigbits[1:]
+                    for ch in sigbits :
+                        significand <<= 1
+                        if ch == '1' :
+                            significand += 1;
+
+        # We can now build the self.data bytearray:
+
+        mask = 0x80
+        offset = 0;
+        if sign == 1:
+            self.data[offset] |= mask
+        mask >>= 1
+        if mask == 0 :
+            mask = 0x80
+            offset += 1
+
+        for i in range(exponent_bits) :
+            if exponent & 1<<(exponent_bits-1-i) != 0 :
+                self.data[offset] |= mask
+            mask >>= 1
+            if mask == 0 :
+                mask = 0x80
+                offset += 1
+
+        for i in range(fraction_bits) :
+            if significand & 1<<(fraction_bits-1-i) != 0 :
+                self.data[offset] |= mask
+            mask >>= 1
+            if mask == 0 :
+                mask = 0x80
+                offset += 1
+        self.data.reverse()
+
     def FpNormalize(self,coefficient,exponent) :
         # convert anything to 1.234E5
         if coefficient == 0 :
@@ -1252,6 +1644,102 @@ class CobolVariable() :
         pic += ") ]"
         return body, pic
 
+    def ZeroFilledLeftRight(self,rside) :
+        retval = ""
+
+        sleft, sright = LeftRight(rside)
+        lvalue = int(sleft,0)
+        rvalue = int(sright,0)
+
+        if lvalue < 0 :
+            lvalue = -lvalue
+
+        # convert the left and right values to strings:
+        lstr = str(lvalue)
+        rstr = str(rvalue)
+
+        # figure out the number of digits to the left and right of the
+        # COBOL variable's decimal point
+        rdigits = self.AttrScale
+        ldigits = self.AttrDigits - rdigits
+
+        # If there are too many ldigits, just grab the rightmost
+        if len(lstr) > ldigits :
+            lstr = lstr[-ldigits:]
+
+        # If there are too many rdigits, just grab the leftmost
+        if len(rstr) > rdigits :
+            rstr = rstr[:rdigits]
+
+        # Make sure there are exactly ldigits:
+        while len(lstr) < ldigits :
+            lstr = '0' + lstr
+
+        # Make sure there are exactly rdigits:
+        while len(rstr) < rdigits :
+            rstr = rstr + '0'
+
+        retval = lstr + rstr
+
+        return retval
+
+    def StringToPackedDecimal(self,rside) :
+
+
+        # The sign nybble: 0x0C = positive
+        #                  0x0D = negative
+        #                  0x0F = unsigned
+        # Note: Those values are from the internet, and match a number of
+        # documents.  I haven't strictly verified what GNUCobol does, except
+        # that I have seen 0x0D for negative numbers and I have seen 0x0C
+        # for positives.
+
+        if rside.find('-') == -1 :
+            isnegative = False
+        else :
+            isnegative = True;
+            rside = rside[rside.find('-')+1:]
+
+        if isnegative :
+            sign_nybble = 0x0D  # Indicates negative
+        else :
+            sign_nybble = 0x0C  # Indicates positive
+
+        # A negative number without the HAVE_SIGN is an error.  We are simply
+        # ignoring such things; on his head be it.
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
+            isnegative = False;
+            sign_nybble = 0x0F  # Indicates unsigned
+
+        # Reverse the combined string, because we will build it up
+        # from low-order to high-order
+        combined_string = self.ZeroFilledLeftRight(rside)
+        combined_string = combined_string[::-1]
+
+        # We can now put together the self.data package:
+        self.data = bytearray(self.ListSize)
+        offset = len(self.data)-1
+        mask = 0
+        if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0 :
+            self.data[offset] |= ((sign_nybble&0xF) << (mask*4))
+            #print(''.join(format(x, '02x') for x in self.data))
+            mask += 1;
+            offset -= mask//2
+            mask %= 2
+
+        for ch in combined_string :
+            nch = ord(ch) - ord('0');
+            nch &= 0x0F
+            nch <<= (mask*4)
+            self.data[offset] |= nch;
+            #print(''.join(format(x, '02x') for x in self.data))
+            mask += 1;
+            offset -= mask//2
+            mask %= 2
+         
+        print(''.join(format(x, '02x') for x in self.data))
+
+
     def NumericDisplayToString(self) :
         # numeric digits, but with a decimal point:
         body = ""
@@ -1259,10 +1747,14 @@ class CobolVariable() :
 
         radix_point = self.ListSize - self.AttrScale
 
+        # DISPLAY keeps the negative bit in an oddball place:
+        if (self.data[self.ListSize-1] & 0x40) != 0 :
+            body += '-'
+
         for i in range(self.ListSize) :
             if i == radix_point :
                 body += '.'
-            digit = self.data[i]
+            digit = self.data[i] & 0x3F
             body += chr(digit)
 
         pic += "[ DISPLAY ("
@@ -1272,20 +1764,41 @@ class CobolVariable() :
         pic += ") ]"
         return body , pic
 
+    def StringToNumericDisplay(self,rside) :
+        if rside.find('-') == -1 :
+            isnegative = False
+        else :
+            isnegative = True;
+            rside = rside[rside.find('-')+1:]
+
+        # A negative number without the HAVE_SIGN is an error.  We are simply
+        # ignoring such things; on his head be it.
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
+            isnegative = False;
+
+        combined_string = self.ZeroFilledLeftRight(rside)
+
+        self.data = bytearray(self.ListSize)
+        for i in range(self.ListSize) :
+            self.data[i] = ord(combined_string[i])
+
+        if isnegative :
+            self.data[self.ListSize-1] |= 0x40
+
     def NumericBinaryToString(self) :
         # Generic Binary
 
         # we can be handed binary data in either little-endian
         # or big-endian.  We will operated little-endian
         our_bytes = self.data
-        if self.AttrFlags & COB_FLAG_BINARY_SWAP :
+        if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
             our_bytes.reverse()
 
         # we need to figure out if we are dealing with a signed
         # and negative number.
 
         negative = False
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 1 :
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
             # This is a binary number that can be signed; let's
             # see if it is.
             if (our_bytes[self.ListSize-1] & 0x80) != 0 :
@@ -1343,6 +1856,33 @@ class CobolVariable() :
         pic += ' ]'
         return body, pic;
 
+    def StringToNumericBinary(self,rside) :
+        # Generic binary
+        if rside.find('-') == -1 :
+            isnegative = False
+        else :
+            isnegative = True;
+            rside = rside[rside.find('-')+1:]
+        sleft, sright = LeftRight(rside)
+        value = int(sleft,0)
+
+        if isnegative:
+            value = -value;
+
+        # a negative value with out HAVE_SIGN is an error condition.  We
+        # superciliously just ignore it.
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
+            isnegative = False
+
+        # Build up that value as little-endian
+        self.data = bytearray(self.ListSize)
+        for i in range(self.ListSize) :
+            self.data[i] += value & 0xFF
+            value = value // 256
+
+        if self.AttrFlags & COB_FLAG_BINARY_SWAP :
+            self.data.reverse()
+
     def AlphanumericToString(self) :
         # ALPHANUMERIC
         body = ""
@@ -1359,6 +1899,14 @@ class CobolVariable() :
         pic += ' ]'
         return body, pic;
 
+    def StringToAlphanumeric(self,rside):
+        # String from string:
+        self.data = rside[0:self.ListSize]
+        while len(self.data) < self.ListSize :
+            self.data += ' '
+        # convert to bytearray:
+        self.data = bytearray(self.data,"utf8")
+
     def NumericEditedToString(self) :
         # NUMERIC(EDITED)
         body = ""
@@ -1373,6 +1921,52 @@ class CobolVariable() :
         pic += self.Picture
         pic += ' ]'
         return body, pic;
+
+    def StringToNumericEdited(self,rside) :
+        if rside.find('-') == -1 :
+            isnegative = False
+        else :
+            isnegative = True;
+        sleft, sright = LeftRight(rside)
+        self.data = bytearray(self.Picture,"utf8")
+
+        # Initialize the data from Picture
+        i = 0
+        decimal_place = len(self.data)
+        while i<len(self.data) :
+            ch = chr(self.data[i])
+            if ch == '+' and isnegative :
+                self.data[i] = ord('-')
+            elif ch == 'Z' :
+                self.data[i] = ord(' ')
+            elif ch == '9' :
+                self.data[i] = ord('0')
+            elif ch == '.' :
+                decimal_place = i
+            i += 1
+
+        # Adjust data to the left of the decimal place:
+        i = len(sleft) - 1
+        j = decimal_place - 1
+        while i >= 0 and j >= 0 :
+            ch = chr(self.data[j])
+            j -= 1
+            if ch == ',' :
+                continue;
+            if ch == '$' or ch == '+' or ch == '-':
+                break;
+
+            ch = sleft[i]
+            i -= 1
+            if ch == ',' :
+                continue;
+            self.data[j+1] = ord(ch)
+
+        # Adjust data to the right of the decimal place
+        i = 0
+        while i < len(sright) and decimal_place+1 + i < len(self.data) :
+            self.data[decimal_place+1+i] = ord(sright[i])
+            i += 1
 
     def DataToString(self) :
         value = ""
@@ -1663,7 +2257,7 @@ if 'gdb' in sys.modules :
 
         def __init__ (self):
             super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
-            print('registering CPrint v0.7.0 , (Usage is "print <COBOL identifier>")')
+            print('registering CPrint v0.7.1 , (Usage is "print <COBOL identifier>")')
             self.Worker = CPrintWorker()
 
         def invoke (self, arguments, from_tty):
@@ -1678,9 +2272,62 @@ if 'gdb' not in sys.modules:
     Worker = CPrintWorker()
     Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
     Worker.ProcessArguments("*")
-    Worker.ProcessArguments("/d 1")
-    Worker.ProcessArguments("1=Banana")
+    Worker.ProcessArguments("/d 1=1")
+    Worker.ProcessArguments("/d 2=1")
+    Worker.ProcessArguments("/d 3=1")
+    Worker.ProcessArguments("/d 4=1")
+    Worker.ProcessArguments("/d 5=1")
+    Worker.ProcessArguments("/d 6=1")
+    Worker.ProcessArguments("/d 7=1")
+    Worker.ProcessArguments("/d 8=1")
+    Worker.ProcessArguments("/d 9=1")
+    Worker.ProcessArguments("/d 10=1")
+    Worker.ProcessArguments("/d 11=1")
+    Worker.ProcessArguments("/d 12=1")
+    Worker.ProcessArguments("/d 13=1")
+    Worker.ProcessArguments("/d 14=1")
+    Worker.ProcessArguments("/d 15=1")
+    Worker.ProcessArguments("/d 16=1")
+    Worker.ProcessArguments("/d 17=1")
+    Worker.ProcessArguments("/d 18=1")
+    Worker.ProcessArguments("/d 19=1")
+    Worker.ProcessArguments("/d 20=1")
+    Worker.ProcessArguments("/d 21=1")
+    Worker.ProcessArguments("/d 22=1")
+    Worker.ProcessArguments("/d 23=1")
+    Worker.ProcessArguments("/d 24=1")
+    Worker.ProcessArguments("/d 25=1")
+    Worker.ProcessArguments("/d 26=1")
+    Worker.ProcessArguments("/d 27=1")
+    Worker.ProcessArguments("/d 28=1")
+    Worker.ProcessArguments("/d 29=1")
+    Worker.ProcessArguments("/d 30=1")
+    Worker.ProcessArguments("/d 31=1")
+    Worker.ProcessArguments("/d 32=1")
+    Worker.ProcessArguments("/d 33=1")
+    Worker.ProcessArguments("/d 34=1")
+    Worker.ProcessArguments("/d 35=1")
+    Worker.ProcessArguments("/d 36=1")
+    Worker.ProcessArguments("/d 37=1")
+    Worker.ProcessArguments("/d 38=1")
+    Worker.ProcessArguments("/d 39=1")
+    Worker.ProcessArguments("/d 40=1")
+    Worker.ProcessArguments("/d 41=1")
+    Worker.ProcessArguments("/d 42=1")
+    Worker.ProcessArguments("/d 43=1")
+    Worker.ProcessArguments("/d 44=1")
+    Worker.ProcessArguments("/d 45=1")
+    Worker.ProcessArguments("/d 46=1")
+    Worker.ProcessArguments("/d 47=1")
+    Worker.ProcessArguments("/d 48=1")
+    Worker.ProcessArguments("/d 49=1")
+    Worker.ProcessArguments("/d 50=1")
+    Worker.ProcessArguments("/d 51=1")
+    Worker.ProcessArguments("/d 52=1")
+    Worker.ProcessArguments("/d 53=1")
+    Worker.ProcessArguments("/d 54=1")
 
     pass
 else:                
     CPrint()
+
