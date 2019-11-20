@@ -2243,21 +2243,185 @@ class CPrintWorker() :
             # And display the variable according to the current list v-level
             self.FormattedDisplay(payload)
 
+class CWatchWorker() :
+    """Does most of the non-gdb work of CWatch()"""
+
+    def __init__(self):
+        self.var_trie = VarTrie()
+        self.current_source_file = ""
+        self.short_term_memory = []
+        self.line_list = LineList()
+        self.current_display_mode = "0"
+
+    def ProcessDisplayModeW(self,args) :
+        if len(args) >= 1 :
+            if args[0] == '/h' :
+                print("COBOL cwatch command usage:")
+                print("'cwatch/h' prints this message.")
+                print("'cwatch/vd' or cwatch/d : debug output")
+                print("'cwatch/v0' back to default")
+                args = [""]
+                return args
+
+            # if the first argument is /d, turn on our debug flag:
+            if args[0] == '/d' :
+                self.current_display_mode = 'd'
+                args.pop(0)
+            elif args[0] == '/v' :
+                self.current_display_mode = '4'
+                args.pop(0)
+            elif len(args[0]) >= 3 and args[0][0:2] == '/v' :
+                # This is a display v-code:
+                v_code = args[0][2]
+                args.pop(0)
+                if v_code in "0d" :
+                    # It's a valid display_mode
+                    self.current_display_mode = v_code
+
+        # if len(args) is down to zero, then any /v code established here
+        # becomes the new session default.  Otherwise, it'll apply only
+        # once
+        if len(args) == 0 :
+            self.sticky_display_mode = self.current_display_mode
+
+        return args
+
+    def ProcessInfoSourceW(self, info_source) :
+        # This routine is given the results of the gdb "info source" command
+
+        info_source = info_source.replace('\n',' |')
+        # A valid response starts with "Located in /path/to/NC101A.cbl"
+        result = re.search("\|Located in (.+?) ", info_source)
+
+        if result:
+            source_file = result.group(1)
+            if source_file != self.current_source_file:
+                # We've been given a new source file name, so look up
+                # the COBOL identifiers in it:
+                self.current_source_file = source_file
+
+                # Load the new tables
+                self.var_trie = VarTrie()
+                self.var_trie.ReadFromFile(source_file)
+
+                # Load the new line list:
+                self.line_list = LineList()
+                self.line_list.ReadFromFile(source_file)
+
+        else :
+            # There isn't a current source file.
+            self.current_source_file = ""
+
+    def SetTheWatchpoint(self,payload : CobolVariable()) :
+        the_address = payload.GetTheAddress(self.line_list)
+
+        if not the_address and not 'gdb' in sys.modules :
+            the_address = 0x12345678
+
+        #print("SetTheWatchpoint", hex(the_address))
+
+        command = "watch *(char(*)"
+        command += '[' + str(payload.ListSize) +'])'
+        command += '(' + hex(the_address) + ')' 
+
+        if 'gdb' in sys.modules :
+            #print("The command is:",command)
+            watch_text = gdb.execute(command,False,True)
+            print(watch_text)
+        else :
+            print(command)
+
+    def ProcessArgumentsW(self, arguments) :
+        # The command is typically "cw A 
+        
+        args = arguments.split()
+        args = self.ProcessDisplayModeW(args)
+
+        payload_number = None
+        if len(args) == 1 :
+            if args[0] == '*' :
+                # If the single argument is an asterisk, then
+                # he's looking for help with program names
+                if len(self.var_trie.program_ids) == 1 :
+                    # There is exactly one program-id in our list of 
+                    # program-ids, so show him those variables
+                    args[0] = list(self.var_trie.program_ids)[0]
+                else :
+                    # Make short_term_memory a list of program-ids
+                    self.short_term_memory = sorted(self.var_trie.program_ids)
+
+                    # And display those program-ids:
+                    line_counter = 1
+                    for prog_id in self.short_term_memory :
+                        print(line_counter, prog_id)
+                        line_counter += 1
+                    # Make sure we don't process the '*' any further
+                    args = []
+            
+            elif args[0].isdigit() :
+                # if the single argument is a number, then he is looking
+                # for a short_term_memory entry.  If the short-term entry is 
+                # alphabetic, then it is a reference to a program-id.  If it
+                # is numeric, it's a payload number
+
+                # Pick up the value indexed by the argument:
+                index = int(args[0])
+
+                if index > 0 and index <= len(self.short_term_memory) :
+                    # If index is valid, pick up the short-term memory entry
+                    short_term_entry = self.short_term_memory[index-1]
+                    if isinstance(short_term_entry, int) :
+                        # It is an integer; look up the payload number:
+                        payload_number = self.short_term_memory[index-1]
+                    else :
+                        # It is text, meaning it is a program-id.  Pass it
+                        # along for expansion
+                        args[0] = short_term_entry
+
+        if len(args) >= 1 :
+            if payload_number == None :
+                # There are one or more arguments.  Use our clever routine
+                # to come up with the possibilities:
+                possibilities = self.var_trie.GetListOfPossibilities(args)
+                if len(possibilities) == 1 :
+                    # There's only one possibility, which is nice and simple.
+                    # We'll just move ahead and process it.
+                    payload_number = possibilities[0]
+                elif len(possibilities) > 1 :
+                    # There are multiple possibilities.  Load them into
+                    # short-term memory:
+                    self.short_term_memory = possibilities
+
+                    # and show them to our user
+                    line_counter = 1
+                    for payload_index in possibilities :
+                        payload = self.var_trie.storage_list[payload_index]
+                        payload.FetchVariableData(self.line_list , False)
+                        s = "{0:2} : ".format(line_counter)
+                        s += payload.display_name
+                        s += " : "
+                        s += payload.display_body
+                        print(s)
+                        line_counter += 1
+
+        # At this point, if we have a single payload, it's time to show
+        # that to our user:
+        if payload_number != None :
+            #print("Watch Payload number is ", payload_number)
+
+            # Pick up the payload from the list
+            payload = self.var_trie.storage_list[payload_number]
+
+            # And go set the Watchpoint
+            self.SetTheWatchpoint(payload)
+
 if 'gdb' in sys.modules :
     class CPrint (gdb.Command) :
         """Prints COBOL-NAMED variables when debugging cobst/obmod processed object files."""
 
-    # Because I couldn't get this to work automatically, even though it ought to
-    # when put into data-directory/gdb/python:
-    #
-    # https://sourceware.org/gdb/current/onlinedocs/gdb/Python.html#Python
-    #
-    # I created a ~/.gdbinit file, which includes
-    #       source /path/to/thisfile.py
-
         def __init__ (self):
             super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
-            print('registering CPrint v0.7.1 , (Usage is "print <COBOL identifier>")')
+            print('registering CPrint v0.7.2 , (Usage is "print <COBOL identifier>")')
             self.Worker = CPrintWorker()
 
         def invoke (self, arguments, from_tty):
@@ -2265,6 +2429,20 @@ if 'gdb' in sys.modules :
             info_source = gdb.execute("info source",False,True)
             self.Worker.ProcessInfoSource(info_source)
             self.Worker.ProcessArguments(arguments)
+
+    class CWatch (gdb.Command) :
+        """Used for creating COBOL-NAMED watchpoints when debugging cobst/obmod processed object files."""
+
+        def __init__ (self):
+            super (CWatch, self).__init__ ("cwatch", gdb.COMMAND_USER)
+            print('registering CWatch v0.7.2 , (Usage is "cwatch <COBOL identifier>")')
+            self.Worker = CWatchWorker()
+
+        def invoke (self, arguments, from_tty):
+            # pick up the name of the current source file
+            info_source = gdb.execute("info source",False,True)
+            self.Worker.ProcessInfoSourceW(info_source)
+            self.Worker.ProcessArgumentsW(arguments)
             
 if 'gdb' not in sys.modules:
     # I debug with Visual Studio in Windows, which doesn't provide a gdb object.
@@ -2272,62 +2450,13 @@ if 'gdb' not in sys.modules:
     Worker = CPrintWorker()
     Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
     Worker.ProcessArguments("*")
-    Worker.ProcessArguments("/d 1=1")
-    Worker.ProcessArguments("/d 2=1")
-    Worker.ProcessArguments("/d 3=1")
-    Worker.ProcessArguments("/d 4=1")
-    Worker.ProcessArguments("/d 5=1")
-    Worker.ProcessArguments("/d 6=1")
-    Worker.ProcessArguments("/d 7=1")
-    Worker.ProcessArguments("/d 8=1")
-    Worker.ProcessArguments("/d 9=1")
-    Worker.ProcessArguments("/d 10=1")
-    Worker.ProcessArguments("/d 11=1")
-    Worker.ProcessArguments("/d 12=1")
-    Worker.ProcessArguments("/d 13=1")
-    Worker.ProcessArguments("/d 14=1")
-    Worker.ProcessArguments("/d 15=1")
-    Worker.ProcessArguments("/d 16=1")
-    Worker.ProcessArguments("/d 17=1")
-    Worker.ProcessArguments("/d 18=1")
-    Worker.ProcessArguments("/d 19=1")
-    Worker.ProcessArguments("/d 20=1")
-    Worker.ProcessArguments("/d 21=1")
-    Worker.ProcessArguments("/d 22=1")
-    Worker.ProcessArguments("/d 23=1")
-    Worker.ProcessArguments("/d 24=1")
-    Worker.ProcessArguments("/d 25=1")
-    Worker.ProcessArguments("/d 26=1")
-    Worker.ProcessArguments("/d 27=1")
-    Worker.ProcessArguments("/d 28=1")
-    Worker.ProcessArguments("/d 29=1")
-    Worker.ProcessArguments("/d 30=1")
-    Worker.ProcessArguments("/d 31=1")
-    Worker.ProcessArguments("/d 32=1")
-    Worker.ProcessArguments("/d 33=1")
-    Worker.ProcessArguments("/d 34=1")
-    Worker.ProcessArguments("/d 35=1")
-    Worker.ProcessArguments("/d 36=1")
-    Worker.ProcessArguments("/d 37=1")
-    Worker.ProcessArguments("/d 38=1")
-    Worker.ProcessArguments("/d 39=1")
-    Worker.ProcessArguments("/d 40=1")
-    Worker.ProcessArguments("/d 41=1")
-    Worker.ProcessArguments("/d 42=1")
-    Worker.ProcessArguments("/d 43=1")
-    Worker.ProcessArguments("/d 44=1")
-    Worker.ProcessArguments("/d 45=1")
-    Worker.ProcessArguments("/d 46=1")
-    Worker.ProcessArguments("/d 47=1")
-    Worker.ProcessArguments("/d 48=1")
-    Worker.ProcessArguments("/d 49=1")
-    Worker.ProcessArguments("/d 50=1")
-    Worker.ProcessArguments("/d 51=1")
-    Worker.ProcessArguments("/d 52=1")
-    Worker.ProcessArguments("/d 53=1")
-    Worker.ProcessArguments("/d 54=1")
 
+    WWorker = CWatchWorker()
+    WWorker.ProcessInfoSourceW(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
+    WWorker.ProcessArgumentsW("*")
+    WWorker.ProcessArgumentsW("1")
     pass
 else:                
     CPrint()
+    CWatch()
 
