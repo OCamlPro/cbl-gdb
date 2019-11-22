@@ -614,7 +614,7 @@ class CobolVariable() :
         return tokens
 
     def SetToRside(self, line_list : LineList(), rside) :
-        print( "Inside SetToRside", rside)
+        #print( "Inside SetToRside", rside)
 
         GotData = True
 
@@ -654,9 +654,9 @@ class CobolVariable() :
             GotData = False
             print("Probably a POINTER type.  Not yet implemented")
 
-        if GotData :
-            print("We've GotData: self.data")
-            print(' '.join(format(x, '02x') for x in self.data))
+        if GotData and len(self.data) > 0:
+            #print("We've GotData: self.data")
+            #print(' '.join(format(x, '02x') for x in self.data))
 
             # We've got self.ListSize bytes in self.data 
             # Put them into memory
@@ -1645,7 +1645,19 @@ class CobolVariable() :
         return body, pic
 
     def ZeroFilledLeftRight(self,rside) :
-        retval = ""
+        retval = None
+
+        if rside.find('-') == -1 :
+            isnegative = False
+        else :
+            isnegative = True;
+            rside = rside[rside.find('-')+1:]
+
+        # A negative number without the HAVE_SIGN is an error.  We are simply
+        # ignoring such things; on his head be it.
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
+            print("Warning: minus sign is ignored")
+            isnegative = False;
 
         sleft, sright = LeftRight(rside)
         lvalue = int(sleft,0)
@@ -1653,6 +1665,10 @@ class CobolVariable() :
 
         if lvalue < 0 :
             lvalue = -lvalue
+
+        if rvalue < 0 :
+            printf("Warning: minus sign to the right of the decimal point?")
+            rvalue = -rvalue
 
         # convert the left and right values to strings:
         lstr = str(lvalue)
@@ -1663,12 +1679,15 @@ class CobolVariable() :
         rdigits = self.AttrScale
         ldigits = self.AttrDigits - rdigits
 
-        # If there are too many ldigits, just grab the rightmost
+        # If there are too many ldigits flag this as an error
         if len(lstr) > ldigits :
-            lstr = lstr[-ldigits:]
+            print("Error: Magnitude too large")
+            return None
+            #lstr = lstr[-ldigits:]  # This removes the leftmost extra digits
 
         # If there are too many rdigits, just grab the leftmost
         if len(rstr) > rdigits :
+            print("Warning: Least significant digits truncated")
             rstr = rstr[:rdigits]
 
         # Make sure there are exactly ldigits:
@@ -1681,64 +1700,54 @@ class CobolVariable() :
 
         retval = lstr + rstr
 
-        return retval
+        return isnegative , retval
 
     def StringToPackedDecimal(self,rside) :
+        self.data = bytearray()
+        try :
+            is_negative , combined_string = self.ZeroFilledLeftRight(rside)
+            # The sign nybble: 0x0C = positive
+            #                  0x0D = negative
+            #                  0x0F = unsigned
+            # Note: Those values are from the internet, and match a number of
+            # documents.  I haven't strictly verified what GNUCobol does, except
+            # that I have seen 0x0D for negative numbers and I have seen 0x0C
+            # for positives.
 
+            if isnegative :
+                sign_nybble = 0x0D  # Indicates negative
+            else :
+                sign_nybble = 0x0C  # Indicates positive
 
-        # The sign nybble: 0x0C = positive
-        #                  0x0D = negative
-        #                  0x0F = unsigned
-        # Note: Those values are from the internet, and match a number of
-        # documents.  I haven't strictly verified what GNUCobol does, except
-        # that I have seen 0x0D for negative numbers and I have seen 0x0C
-        # for positives.
+            if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
+                sign_nybble = 0x0F  # Indicates unsigned
 
-        if rside.find('-') == -1 :
-            isnegative = False
-        else :
-            isnegative = True;
-            rside = rside[rside.find('-')+1:]
+            # Reverse the combined string, because we will build it up
+            # from low-order to high-order
+            combined_string = combined_string[::-1]
 
-        if isnegative :
-            sign_nybble = 0x0D  # Indicates negative
-        else :
-            sign_nybble = 0x0C  # Indicates positive
+            # We can now put together the self.data package:
+            self.data = bytearray(self.ListSize)
+            offset = len(self.data)-1
+            mask = 0
+            if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0 :
+                self.data[offset] |= ((sign_nybble&0xF) << (mask*4))
+                #print(''.join(format(x, '02x') for x in self.data))
+                mask += 1;
+                offset -= mask//2
+                mask %= 2
 
-        # A negative number without the HAVE_SIGN is an error.  We are simply
-        # ignoring such things; on his head be it.
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
-            isnegative = False;
-            sign_nybble = 0x0F  # Indicates unsigned
-
-        # Reverse the combined string, because we will build it up
-        # from low-order to high-order
-        combined_string = self.ZeroFilledLeftRight(rside)
-        combined_string = combined_string[::-1]
-
-        # We can now put together the self.data package:
-        self.data = bytearray(self.ListSize)
-        offset = len(self.data)-1
-        mask = 0
-        if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0 :
-            self.data[offset] |= ((sign_nybble&0xF) << (mask*4))
-            #print(''.join(format(x, '02x') for x in self.data))
-            mask += 1;
-            offset -= mask//2
-            mask %= 2
-
-        for ch in combined_string :
-            nch = ord(ch) - ord('0');
-            nch &= 0x0F
-            nch <<= (mask*4)
-            self.data[offset] |= nch;
-            #print(''.join(format(x, '02x') for x in self.data))
-            mask += 1;
-            offset -= mask//2
-            mask %= 2
-         
-        print(''.join(format(x, '02x') for x in self.data))
-
+            for ch in combined_string :
+                nch = ord(ch) - ord('0');
+                nch &= 0x0F
+                nch <<= (mask*4)
+                self.data[offset] |= nch;
+                #print(''.join(format(x, '02x') for x in self.data))
+                mask += 1;
+                offset -= mask//2
+                mask %= 2
+        except:
+            pass
 
     def NumericDisplayToString(self) :
         # numeric digits, but with a decimal point:
@@ -1765,25 +1774,18 @@ class CobolVariable() :
         return body , pic
 
     def StringToNumericDisplay(self,rside) :
-        if rside.find('-') == -1 :
-            isnegative = False
-        else :
-            isnegative = True;
-            rside = rside[rside.find('-')+1:]
+        self.data = bytearray()
+        try :
+            isnegative , combined_string = self.ZeroFilledLeftRight(rside)
 
-        # A negative number without the HAVE_SIGN is an error.  We are simply
-        # ignoring such things; on his head be it.
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
-            isnegative = False;
+            self.data = bytearray(self.ListSize)
+            for i in range(self.ListSize) :
+                self.data[i] = ord(combined_string[i])
 
-        combined_string = self.ZeroFilledLeftRight(rside)
-
-        self.data = bytearray(self.ListSize)
-        for i in range(self.ListSize) :
-            self.data[i] = ord(combined_string[i])
-
-        if isnegative :
-            self.data[self.ListSize-1] |= 0x40
+            if isnegative :
+                self.data[self.ListSize-1] |= 0x40
+        except :
+            pass
 
     def NumericBinaryToString(self) :
         # Generic Binary
@@ -1858,30 +1860,24 @@ class CobolVariable() :
 
     def StringToNumericBinary(self,rside) :
         # Generic binary
-        if rside.find('-') == -1 :
-            isnegative = False
-        else :
-            isnegative = True;
-            rside = rside[rside.find('-')+1:]
-        sleft, sright = LeftRight(rside)
-        value = int(sleft,0)
+        self.data = bytearray()
+        try :
+            isnegative , combined_string = self.ZeroFilledLeftRight(rside)
 
-        if isnegative:
-            value = -value;
+            value = int(combined_string)
+            if isnegative :
+                value = -value
 
-        # a negative value with out HAVE_SIGN is an error condition.  We
-        # superciliously just ignore it.
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
-            isnegative = False
+            # Build up that value as little-endian
+            self.data = bytearray(self.ListSize)
+            for i in range(self.ListSize) :
+                self.data[i] += value & 0xFF
+                value = value // 256
 
-        # Build up that value as little-endian
-        self.data = bytearray(self.ListSize)
-        for i in range(self.ListSize) :
-            self.data[i] += value & 0xFF
-            value = value // 256
-
-        if self.AttrFlags & COB_FLAG_BINARY_SWAP :
-            self.data.reverse()
+            if self.AttrFlags & COB_FLAG_BINARY_SWAP :
+                self.data.reverse()
+        except :
+            pass
 
     def AlphanumericToString(self) :
         # ALPHANUMERIC
@@ -2421,7 +2417,7 @@ if 'gdb' in sys.modules :
 
         def __init__ (self):
             super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
-            print('registering CPrint v0.7.2 , (Usage is "print <COBOL identifier>")')
+            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 0.7.3]')
             self.Worker = CPrintWorker()
 
         def invoke (self, arguments, from_tty):
@@ -2435,7 +2431,7 @@ if 'gdb' in sys.modules :
 
         def __init__ (self):
             super (CWatch, self).__init__ ("cwatch", gdb.COMMAND_USER)
-            print('registering CWatch v0.7.2 , (Usage is "cwatch <COBOL identifier>")')
+            print('registering CWatch (Usage is "cwatch <COBOL identifier>")')
             self.Worker = CWatchWorker()
 
         def invoke (self, arguments, from_tty):
@@ -2450,11 +2446,12 @@ if 'gdb' not in sys.modules:
     Worker = CPrintWorker()
     Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
     Worker.ProcessArguments("*")
+    Worker.ProcessArguments("45")
+    Worker.ProcessArguments("45=12345678987654321")
 
     WWorker = CWatchWorker()
     WWorker.ProcessInfoSourceW(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
-    WWorker.ProcessArgumentsW("*")
-    WWorker.ProcessArgumentsW("1")
+    #WWorker.ProcessArgumentsW("*")
     pass
 else:                
     CPrint()
