@@ -2,7 +2,13 @@
 Debug
 Release
 x64
+*.d
+*.o
+selfcheck
 program_under_test
 program_under_test.cbl
 program_under_test.tab
+gdb_script.txt
+results.txt
 results.tab
+

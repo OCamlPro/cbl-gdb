@@ -5,6 +5,7 @@ all:
 	$(MAKE) -C cobst
 	$(MAKE) -C obmod
 	$(MAKE) -C samples
+	$(MAKE) -C selfcheck
 
 .PHONY : clean
 clean:
@@ -28,3 +29,4 @@ pregit:
 	$(MAKE) -C cobst pregit
 	$(MAKE) -C obmod pregit
 	$(MAKE) -C python pregit
+	$(MAKE) -C selfcheck pregit
