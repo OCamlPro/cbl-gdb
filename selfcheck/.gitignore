@@ -1,0 +1,8 @@
+.vs
+Debug
+Release
+x64
+program_under_test
+program_under_test.cbl
+program_under_test.tab
+results.tab

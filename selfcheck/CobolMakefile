@@ -1,0 +1,43 @@
+project=program_under_test
+
+# disable built-in rules:
+.SUFFIXES:
+
+COBC = cobc
+# These paths are established for local debugging.  Most likely the cobst and 
+# obmod executables will find their way into /usr/local/bin/ for production
+# purposes.  You Have Been Warned.
+COBST = ../cobst/cobst
+OBMOD = ../obmod/obmod
+
+all: $(project)
+
+# This rule creates a cbl-gdb modified executable.	The debugging information
+# in the modified executable will point to the project.cbl source code.
+#
+# Note that it is this srule/script that will have to be copied elsewhere to
+# compile .cbl sources for gdb debugging
+# (Note: COBST and OBMOD need to be here for development, not production)
+$(project) : $(project).cbl $(OBMOD) $(COBST)
+	@# cobc creates the initial relocatable .o ELF file
+	COB_CFLAGS="-Wa,-L,-anchls=$(project).lst" cobc -c -x -d -g $(free) \
+		-T$(project).cbl.lst --tlines=0 --tsymbols $(project).cbl
+
+	@# cobst creates the project.tab file from the cobc output files that are
+	@# used by obmod and 
+	$(COBST) $(project).cbl
+	
+	@# obmod creates a modified relocatable .o ELF file from project.tab and
+	@# the .o file created by cobc
+	$(OBMOD) -i $(project).o -t $(project).tab -o $(project).cbl.o
+	
+	@# This second invocation of cobc creates the modified ELF executable from 
+	@# the modified .o ELF relocatable
+	$(COBC) -x -o $(project) $(project).cbl.o
+	
+	rm -f program_under_test.c program_under_test.cbl.lst program_under_test.cbl.o \
+	      program_under_test.c.h program_under_test.full.tab program_under_test.i \
+		  program_under_test.lst program_under_test.o program_under_test.c.l.h
+
+	
+
