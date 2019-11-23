@@ -1651,6 +1651,7 @@ class CobolVariable() :
             isnegative = False
         else :
             isnegative = True;
+            # Trim off everything to the left of the minus sign
             rside = rside[rside.find('-')+1:]
 
         # A negative number without the HAVE_SIGN is an error.  We are simply
@@ -1659,20 +1660,15 @@ class CobolVariable() :
             print("Warning: minus sign is ignored")
             isnegative = False;
 
-        sleft, sright = LeftRight(rside)
-        lvalue = int(sleft,0)
-        rvalue = int(sright,0)
+        lstr, rstr = LeftRight(rside)
 
-        if lvalue < 0 :
-            lvalue = -lvalue
+        # Trim off leading zeroes
+        while len(lstr) > 0 and lstr[0] == '0' :
+            lstr = lstr[1:]
 
-        if rvalue < 0 :
-            printf("Warning: minus sign to the right of the decimal point?")
-            rvalue = -rvalue
-
-        # convert the left and right values to strings:
-        lstr = str(lvalue)
-        rstr = str(rvalue)
+        # Trim off any trailing zeroes:
+        while len(rstr)>0 and rstr[len(rstr)-1] == '0' :
+            rstr = rstr[:len(rstr)-1]
 
         # figure out the number of digits to the left and right of the
         # COBOL variable's decimal point
@@ -1759,6 +1755,9 @@ class CobolVariable() :
         # DISPLAY keeps the negative bit in an oddball place:
         if (self.data[self.ListSize-1] & 0x40) != 0 :
             body += '-'
+        else :
+            if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+                body += '+'
 
         for i in range(self.ListSize) :
             if i == radix_point :
@@ -1965,33 +1964,58 @@ class CobolVariable() :
             i += 1
 
     def DataToString(self) :
+        noisy = False
         value = ""
         pic = "Unknown"
         if False :  # dummy code that can be followed by elifs
             pass
         elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY :
+            if noisy :
+                print("COB_TYPE_NUMERIC_DISPLAY")
             value, pic = self.NumericDisplayToString()
         elif self.AttrType == COB_TYPE_NUMERIC_BINARY :
+            if noisy :
+                print("COB_TYPE_NUMERIC_BINARY")
             value, pic = self.NumericBinaryToString()
         elif self.AttrType == COB_TYPE_NUMERIC_PACKED :
+            if noisy :
+                print("COB_TYPE_NUMERIC_PACKED")
             value, pic = self.PackedDecimalToString()
         elif self.AttrType == COB_TYPE_NUMERIC_FLOAT :
+            if noisy :
+                print("COB_TYPE_NUMERIC_FLOAT")
             value, pic = self.IeeeBinaryToString()
         elif self.AttrType == COB_TYPE_NUMERIC_DOUBLE :
+            if noisy :
+                print("COB_TYPE_NUMERIC_DOUBLE")
             value, pic = self.IeeeBinaryToString()
         elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC64 :
+            if noisy :
+                print("COB_TYPE_NUMERIC_FP_DEC64")
             value, pic = self.GnuCobolDecimal64ToString()
         elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128 :
+            if noisy :
+                print("")
             value, pic = self.GnuCobolDecimal128ToString()
         elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32 :
+            if noisy :
+                print("")
             value, pic = self.IeeeBinaryToString()
         elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64 :
+            if noisy :
+                print("")
             value, pic = self.IeeeBinaryToString()
         elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128 :
+            if noisy :
+                print("")
             value, pic = self.IeeeBinaryToString()
         elif self.AttrType == COB_TYPE_ALPHANUMERIC :
+            if noisy :
+                print("")
             value, pic = self.AlphanumericToString()
         elif self.AttrType == COB_TYPE_NUMERIC_EDITED :
+            if noisy :
+                print("COB_TYPE_NUMERIC_EDITED")
             value, pic = self.NumericEditedToString()
         else :
             # We were handed an unknown type.  Let's look at the data:
@@ -2445,9 +2469,10 @@ if 'gdb' not in sys.modules:
     # Test code goes here
     Worker = CPrintWorker()
     Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
+    Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
     Worker.ProcessArguments("*")
     Worker.ProcessArguments("45")
-    Worker.ProcessArguments("45=12345678987654321")
+    Worker.ProcessArguments("45=0007338.0048000")
 
     WWorker = CWatchWorker()
     WWorker.ProcessInfoSourceW(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
