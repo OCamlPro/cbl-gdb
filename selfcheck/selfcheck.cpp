@@ -19,106 +19,96 @@ static const char GDB_SCRIPT[] = "gdb_script.txt";
 static const char DEBUGGING_ROOT[] = "/home/bob/projects/cobol/cbl-gdb/selfcheck/";
 
 void ExecuteCommand(const char *cmd)
-    {
+{
 #ifdef _WIN32
     string command = "ssh bob@doobie ";
     command += "cd \"";
     command += DEBUGGING_ROOT;
     command += "\";";
-        command += cmd;
+    command += cmd;
     system(command.c_str());
 #else
     system(cmd);
 #endif
-    }
+}
 
 char RandomDigit()
-    {
+{
     char digit = '0' + (char)(10.0 *rand() / (RAND_MAX + 1.0));
     return digit;
-    }
+}
 
 void Scenario(FILE *script,const string &Name,const string &value)
-    {
+{
     const char *pvalue = value.c_str();
     fprintf(script,"p %s=%s\n",Name.c_str(),pvalue);
     fprintf(script,"c\n");
-    }
+}
 
 void RandomScenario(FILE *script,const string &Name,int ldigits, int rdigits)
-    {
+{
     string value = "";
 
-    if( rand() > RAND_MAX/2 )
-        {
+    if( rand() > RAND_MAX/2 ) {
         value += '-';
-        }
+    }
 
     string lsegment;
     string rsegment;
     char ch;
 
-    if( ldigits )
-        {
-        while( (ch = RandomDigit()) EQ '0' )
-            {
+    if( ldigits ) {
+        while( (ch = RandomDigit()) EQ '0' ) {
             // Make sure first digit is non-zero
-            }
+        }
         lsegment = ch;
-        while( lsegment.length() < ldigits)
-            {
+        while( lsegment.length() < ldigits) {
             lsegment += RandomDigit();
-            }
         }
+    }
 
-    if( rdigits)
-        {
-        while( (ch = RandomDigit()) EQ '0' )
-            {
+    if( rdigits) {
+        while( (ch = RandomDigit()) EQ '0' ) {
             // Make sure first digit is non-zero
-            }
-        rsegment = ch;
-        while( rsegment.length() < rdigits)
-            {
-            rsegment += RandomDigit();
-            }
         }
+        rsegment = ch;
+        while( rsegment.length() < rdigits) {
+            rsegment += RandomDigit();
+        }
+    }
 
     value = lsegment;
     value += '.';
     value += rsegment;
 
     Scenario(script,Name,value);
-    }
+}
 
 string Digits(ULONGLONG v, int ndigits)
-    {
-    if(ndigits <= 0)
-        {
+{
+    if(ndigits <= 0) {
         return "";
-        }
+    }
     string retval = string(ndigits,'0');
-    while(--ndigits >= 0)
-        {
+    while(--ndigits >= 0) {
         retval[ndigits] = (char)(v%10 + '0');
         v /= 10;
-        }
-    return retval;
     }
+    return retval;
+}
 
-void GenerateGdbScript(int line_number, 
-                       const string & Name, 
-                       int major_digits, 
-                       int minor_digits, 
+void GenerateGdbScript(int line_number,
+                       const string & Name,
+                       int major_digits,
+                       int minor_digits,
                        int random_iteration_count)
-    {
+{
     FILE *script;
     script = fopen(GDB_SCRIPT,"w");
-    if(script EQ NULL)
-        {
+    if(script EQ NULL) {
         cout << "Couldn't open " << GDB_SCRIPT << endl;
         exit(1);
-        }
+    }
 
     string output = "file ";
     output += PROGRAM_NAME;
@@ -158,13 +148,11 @@ void GenerateGdbScript(int line_number,
     value = '-' + value;
     Scenario(script,Name,value);
 
-    for(int l=0; l <= major_digits+1; l++)
-        {
-        for(int r=0; r <= minor_digits+1; r++)
-            {
+    for(int l=0; l <= major_digits+1; l++) {
+        for(int r=0; r <= minor_digits+1; r++) {
             RandomScenario(script,Name,l,r);
-            }
         }
+    }
 
     fprintf(script,"q\n");
     fclose(script);
@@ -174,29 +162,28 @@ void GenerateGdbScript(int line_number,
     command += GDB_SCRIPT;
     command += " >results.txt";
     ExecuteCommand(command.c_str());
-    }
+}
 
 int GenerateCobolProgram(const string &Name,
-                          const string &Picture,
-                          const string &Usage,
-                          const string &Value)
-    {
+                         const string &Picture,
+                         const string &Usage,
+                         const string &Value)
+{
     FILE *program;
     program = fopen(PROGRAM_UNDER_TEST,"w");
-    if(program EQ NULL)
-        {
+    if(program EQ NULL) {
         cout << "Couldn't open " << PROGRAM_UNDER_TEST << endl;
         exit(1);
-        }
+    }
 
     /*
-    
+
     IDENTIFICATION DIVISION.
     PROGRAM-ID. SELF-TEST.
     DATA DIVISION.
     WORKING-STORAGE SECTION.
     01 <name> PICTURE <picture> <usage> <value> .
-    PROCEDURE DIVISION. 
+    PROCEDURE DIVISION.
     PERFORM DISPLAY-VARIABLE 10 TIMES
     STOP RUN.
     DISPLAY-VARIABLE.
@@ -218,21 +205,18 @@ int GenerateCobolProgram(const string &Name,
     fprintf(program,"%06d %s\n",line_number++,output.c_str());
     output = "01 ";
     output += Name;
-    if( !Picture.empty() )
-        {
+    if( !Picture.empty() ) {
         output += " PICTURE ";
         output += Picture;
-        }
-    if( !Usage.empty() )
-        {
+    }
+    if( !Usage.empty() ) {
         output += " ";
         output += Usage;
-        }
-    if( !Value.empty() )
-        {
+    }
+    if( !Value.empty() ) {
         output += " VALUE ";
         output += Value;
-        }
+    }
     output += ".";
     fprintf(program,"%06d %s\n",line_number++,output.c_str());
     output = "PROCEDURE DIVISION.";
@@ -251,14 +235,13 @@ int GenerateCobolProgram(const string &Name,
     fprintf(program,"%06d %s\n",line_number++,output.c_str());
 
     // If a value was specified, re-initialize our variable inside the loop
-    if( !Value.empty() )
-        {
+    if( !Value.empty() ) {
         output = "MOVE ";
         output += Value;
         output += " TO ";
         output += Name;
         fprintf(program,"%06d %s\n",line_number++,output.c_str());
-        }
+    }
 
     output = "EXIT PARAGRAPH.";
     fprintf(program,"%06d %s\n",line_number++,output.c_str());
@@ -267,58 +250,55 @@ int GenerateCobolProgram(const string &Name,
 
     ExecuteCommand("make -f CobolMakefile");
     return retval;
-    }
+}
 
 void ProcessInputLine(const char *input,FILE *results)
-    {
+{
     VSTRING tokens = Split(Trim(input),"\t");
     int i = 0;
     string Name	       = tokens[i++];
     string Picture	   = tokens[i++];
-    string Usage	   = tokens[i++];	
-    string Value	   = tokens[i++];	
-    int Major	       = stoi(tokens[i++]);	
-    int Minor	       = stoi(tokens[i++]);	
+    string Usage	   = tokens[i++];
+    string Value	   = tokens[i++];
+    int Major	       = stoi(tokens[i++]);
+    int Minor	       = stoi(tokens[i++]);
     int Iterations     = stoi(tokens[i++]);
 
     int line_number = GenerateCobolProgram(Name,Picture,Usage,Value);
     GenerateGdbScript(line_number, Name, Major, Minor, Iterations);
-    }
+}
 
 void ProcessInputsAndOutputs()
-    {
+{
     FILE *inputs;
     inputs = fopen(INPUT_FILE_NAME,"r");
-    if(inputs EQ NULL)
-        {
+    if(inputs EQ NULL) {
         cout << "Couldn't open " << INPUT_FILE_NAME << endl;
         exit(1);
-        }
+    }
     FILE *results;
     results = fopen(RESULTS_FILE_NAME,"w");
-    if( results EQ NULL )
-        {
+    if( results EQ NULL ) {
         cout << "Couldn't open " << RESULTS_FILE_NAME << endl;
         exit(1);
-        }
+    }
     char ach[1024];
 
     //The first line has column headers
     fgets(ach,sizeof(ach),inputs);
     fputs(ach,results);
 
-    while( fgets(ach,sizeof(ach),inputs) )
-        {
+    while( fgets(ach,sizeof(ach),inputs) ) {
         ProcessInputLine(ach,results);
-        }
+    }
     fclose(inputs);
     fclose(results);
-    }
+}
 
 int main()
-    {
+{
     srand(47);
     ProcessInputsAndOutputs();
     return 0;
-    }
+}
 

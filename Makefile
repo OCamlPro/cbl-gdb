@@ -12,7 +12,8 @@ clean:
 	$(MAKE) -C cobst clean
 	$(MAKE) -C obmod clean
 	$(MAKE) -C samples clean
-    
+	$(MAKE) -C selfcheck clean
+
 .PHONY : install
 install:
 	$(MAKE) -C cobst install

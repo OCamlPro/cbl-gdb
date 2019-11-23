@@ -17,7 +17,8 @@ $(project) : $(obj)
 
 .PHONY: clean
 clean:
-	rm -f $(obj) $(project) $(dep)
+	rm -f $(obj) $(project) $(dep) program_under_test program_under_test.cbl \
+		program_under_test.tab results.txt results.tab gdb_script.txt
 
 .PHONY: pregit
 pregit:
