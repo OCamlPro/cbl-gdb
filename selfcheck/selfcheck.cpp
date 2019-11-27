@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <math.h>
 
 #include "params.h"
@@ -16,6 +17,7 @@ static const char GDB_SCRIPT[] = "gdb_script.txt";
 static const char INPUT_FILE_NAME[] = "inputs.tab";
 static const char INTERMEDIATE_RESULTS[] = "results.txt";
 static const char RESULTS_FILE_NAME[] = "results.tab";
+static const char ERRORS_FILE_NAME[] = "errors.txt";
 
 static const char DEBUGGING_ROOT[] = "/home/bob/projects/cobol/cbl-gdb/selfcheck/";
 
@@ -27,9 +29,15 @@ void ExecuteCommand(const char *cmd)
     command += DEBUGGING_ROOT;
     command += "\";";
     command += cmd;
-    system(command.c_str());
+    int result = system(command.c_str());
+    if( result != 0) {
+        exit(1);
+    }
 #else
-    system(cmd);
+    int result = system(cmd);
+    if( result != 0) {
+        exit(1);
+    }
 #endif
 }
 
@@ -48,6 +56,11 @@ void Scenario(FILE *script,const string &Name,const string &value)
 
 void RandomScenario(FILE *script,const string &Name,int ldigits, int rdigits)
 {
+    if(ldigits EQ 0 AND rdigits EQ 0) {
+        // If nothing is wanted, nothing is what is gotten.
+        return;
+    }
+
     string value = "";
 
     if( rand() > RAND_MAX/2 ) {
@@ -74,9 +87,11 @@ void RandomScenario(FILE *script,const string &Name,int ldigits, int rdigits)
         }
     }
 
-    value = lsegment;
-    value += '.';
-    value += rsegment;
+    value += lsegment;
+    if( rsegment.size() > 0 ) {
+        value += '.';
+        value += rsegment;
+    }
 
     Scenario(script,Name,value);
 }
@@ -97,8 +112,7 @@ string Digits(ULONGLONG v, int ndigits)
 void GenerateGdbScript(int line_number,
                        const string & Name,
                        int major_digits,
-                       int minor_digits,
-                       int random_iteration_count)
+                       int minor_digits)
 {
     FILE *script;
     script = fopen(GDB_SCRIPT,"w");
@@ -123,7 +137,7 @@ void GenerateGdbScript(int line_number,
     Scenario(script,Name,"0.");
     Scenario(script,Name,".0");
 
-    // Stupid minimum:
+    // +/- 1:
     Scenario(script,Name,"1");
     Scenario(script,Name,"1.");
     Scenario(script,Name,"-1");
@@ -140,6 +154,14 @@ void GenerateGdbScript(int line_number,
     value += ".";
     value += Digits(n2,minor_digits);
     Scenario(script,Name,value);
+
+    if( minor_digits > 0) {
+        // Minimum
+        value = string(minor_digits,'0');
+        value[minor_digits-1] = '1';
+        value = "." + value;
+        Scenario(script,Name,value);
+    }
 
     // Negative maximum:
     value = '-' + value;
@@ -218,6 +240,7 @@ int GenerateCobolProgram(const string &Name,
     }
     output += ".";
     fprintf(program,"%06d %s\n",line_number++,output.c_str());
+
     output = "PROCEDURE DIVISION.";
     fprintf(program,"%06d %s\n",line_number++,output.c_str());
     output = "PERFORM DISPLAY-VARIABLE 999999999 TIMES.";
@@ -233,11 +256,17 @@ int GenerateCobolProgram(const string &Name,
     output += " \"";
     output += Name;
     output += "\"";
+
+    output += " \" \"";
+
     output += " \"";
-    output += Picture;
+    output += Picture.empty() ? "<none>" : Picture;
     output += "\"";
+
+    output += " \" \"";
+
     output += " \"";
-    output += Usage;
+    output += Usage.empty() ? "<none>" : Usage;
     output += "\"";
     fprintf(program,"%06d %s\n",line_number++,output.c_str());
 
@@ -268,18 +297,17 @@ void ProcessInputLine(const char *input)
     VSTRING tokens = Split(Trim(input),"\t");
     int i = 0;
     string Name	       = tokens[i++];
-    string Picture	   = tokens[i++];
+    string Picture	   = StripQuotes(tokens[i++]);
     string Usage	   = tokens[i++];
     string Value	   = tokens[i++];
     int Major	       = stoi(tokens[i++]);
     int Minor	       = stoi(tokens[i++]);
-    int Iterations     = stoi(tokens[i++]);
 
     int line_number = GenerateCobolProgram(Name,Picture,Usage,Value);
-    GenerateGdbScript(line_number, Name, Major, Minor, Iterations);
+    GenerateGdbScript(line_number, Name, Major, Minor);
 }
 
-void ProcessIntermediateResults(FILE *results)
+void ProcessIntermediateResults(FILE *results,FILE *errors)
 {
     FILE *inputs;
     inputs = fopen(INTERMEDIATE_RESULTS,"r");
@@ -287,30 +315,38 @@ void ProcessIntermediateResults(FILE *results)
         cout << "Couldn't open " << INTERMEDIATE_RESULTS << endl;
         exit(1);
     }
+    FILE *script;
+    script = fopen(GDB_SCRIPT,"r");
+    if(script EQ NULL) {
+        cout << "Couldn't open " << GDB_SCRIPT << endl;
+        exit(1);
+    }
+
+    // We will walk through the script, and the results, in lockstep, so that
+    // we can include the inputs alongside the outputs
+
     char ach[1024];
     while(fgets(ach,sizeof(ach),inputs)) {
-        string input = ach;
-        input = Trim(input);
+        string input = FgetsRtrim(ach);
 
         if( input.substr(0,10) EQ "Breakpoint") {
             // We are at the beginning of an assignment sequence
+
             // Get the echoed "trapped here" output.
 
             // It contains information we need:
             fgets(ach,sizeof(ach),inputs);
-            input = ach;
-            input = Trim(input);
+            input = FgetsRtrim(ach);
             VSTRING variable = Split(input," ");
             string Name = StripQuotes(variable[2]);
-            string Picture = StripQuotes(variable[3]);
-            string Usage = StripQuotes(variable[4]);
+            string Picture = StripQuotes(variable[5]);
+            string Usage = StripQuotes(variable[8]);
 
             string sentry;
 
             // This is the line after the breakpoint
             fgets(ach,sizeof(ach),inputs);
-            input = ach;
-            input = Trim(input);
+            input = FgetsRtrim(ach);
             if( input.substr(0,11) EQ "(gdb) Error") {
                 sentry = "E";
             } else if ( input.substr(0,13) EQ "(gdb) Warning" ) {
@@ -321,8 +357,25 @@ void ProcessIntermediateResults(FILE *results)
             if( !sentry.empty() ) {
                 sentry += ": ";
                 fgets(ach,sizeof(ach),inputs);
-                input = ach;
-                input = Trim(input);
+                input = FgetsRtrim(ach);
+
+                // Check for a second warning line; it can happen when an
+                // unsigned number has a signed input, and when the fractional
+                // part needs to be truncated:
+
+                // You can also have a negative warning followed by an
+                // Error: Magnitude too large
+
+                if( input.substr(0,7) EQ "Warning" ) {
+                    fgets(ach,sizeof(ach),inputs);
+                    input = FgetsRtrim(ach);
+                }
+                if( input.substr(0,5) EQ "Error" ) {
+                    sentry = "E";
+                    fgets(ach,sizeof(ach),inputs);
+                    input = FgetsRtrim(ach);
+                }
+
             }
             if( input.substr(0,6) EQ "(gdb) " ) {
                 input = input.substr(6);
@@ -338,11 +391,23 @@ void ProcessIntermediateResults(FILE *results)
 
             // This next line is the output
             fgets(ach,sizeof(ach),inputs);
-            input = ach;
-            input = Trim(input);
+            input = FgetsRtrim(ach);
             string value_should_be = input;
 
             string mismatch = (value_should_be EQ value_is) ? "" : "***" ;
+            string original_input;
+
+            // Find the script line that generated this output:
+            while(fgets(ach,sizeof(ach),script)) {
+                // We should never break out of this loop, but caution
+                // is always valuable.
+                string script = FgetsRtrim(ach);
+                VSTRING script_tokens = Split(script," =");
+                if( script_tokens.size()>=3 AND script_tokens[0] EQ "p" ) {
+                    original_input = script_tokens[2];
+                    break;
+                }
+            }
 
             // Note:  I want to be able to read the .tab file into Excel.
             // Excel has a serious flaw:  It's too helpful, and you can't
@@ -367,21 +432,38 @@ void ProcessIntermediateResults(FILE *results)
             fprintf(results,"%s\t",Name.c_str());
             fprintf(results,"\"=\"\"%s\"\"\"\t",Picture.c_str());
             fprintf(results,"\"=\"\"%s\"\"\"\t",Usage.c_str());
+            fprintf(results,"\"=\"\"%s\"\"\"\t",original_input.c_str());
             fprintf(results,"%s\t",sentry.c_str());
             fprintf(results,"\"=\"\"%s\"\"\"\t",value_should_be.c_str());
             fprintf(results,"\"=\"\"%s\"\"\"\t",value_is.c_str());
             fprintf(results,"%s\t\n",mismatch.c_str());
 
-            cout << Name;
-            if( !Picture.empty() )
-                cout << " " << Picture;
-            if( !Usage.empty() )
-                cout << " " << Usage;
-            cout << " " << value_should_be << " " << value_is << " " << sentry << endl;
+            stringstream ss;
+
+            if(Picture.empty()) {
+                Picture = "<none>";
+            }
+            if(Usage.empty()) {
+                Usage = "<none>";
+            }
+
+            ss << Name;
+            ss << "\t" << Picture;
+            ss << "\t" << Usage;
+            ss << "\t" << original_input;
+            ss << "\t" << sentry;
+            ss << "\t" << value_should_be;
+            ss << "\t" << value_is;
+            ss << "\t" << mismatch;
+            printf("%s\n",ss.str().c_str());
+
+            if(!mismatch.empty() ) {
+                fprintf(errors,"%s\n",ss.str().c_str());
+            }
         }
     }
 
-
+    fclose(script);
     fclose(inputs);
 }
 
@@ -399,19 +481,29 @@ void ProcessInputsAndOutputs()
         cout << "Couldn't open " << RESULTS_FILE_NAME << endl;
         exit(1);
     }
+    FILE *errors = fopen(ERRORS_FILE_NAME,"w");
+    if( errors EQ NULL ) {
+        cout << "Couldn't open " << ERRORS_FILE_NAME << endl;
+        exit(1);
+    }
+
     char ach[1024];
 
     //The first line has column headers
     fgets(ach,sizeof(ach),inputs);
 
-    fprintf(results,"Variable\tPicture\tUsage\tFlag\tCobolOut\tGdbOut\tMismatch\n");
+    fprintf(results,"Variable\tPicture\tUsage\tInput\tFlag\tCobolOut\tGdbOut\tMismatch\n");
+    fprintf(errors,"Variable\tPicture\tUsage\tInput\tFlag\tCobolOut\tGdbOut\tMismatch\n");
 
     while( fgets(ach,sizeof(ach),inputs) ) {
+        if( ach[0] != '\t' ) {
+            continue;
+        }
         ProcessInputLine(ach);
+        ProcessIntermediateResults(results,errors);
     }
     fclose(inputs);
 
-    ProcessIntermediateResults(results);
 
     fclose(results);
 }

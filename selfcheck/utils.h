@@ -24,3 +24,5 @@ std::string Trim(const std::string &s);
 std::string StripQuotes(const std::string &s);
 VSTRING Split(const std::string &s,const std::string &delimiters);
 std::string Replace(const std::string &s,const char was, const char is);
+
+std::string FgetsRtrim(const std::string &ach);

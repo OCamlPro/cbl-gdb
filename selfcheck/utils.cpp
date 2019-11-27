@@ -78,3 +78,12 @@ string Replace(const string &s,const char was, const char is)
     }
     return retval;
 }
+
+string FgetsRtrim(const string &ach)
+{
+    string retval = ach;
+    size_t n = retval.find("\n");
+    if( n != string::npos )
+        retval = retval.substr(0,n);
+    return retval;
+}

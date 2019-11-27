@@ -85,25 +85,74 @@ import re
 import sys
 import os
 
-def LeftRight(s) :
+def LeftRight(s,splitchar) :
+    """Splits what is presumably a numeric string with a possible
+    splitting character into left and right pieces"""
     left = ""
     right = ""
     i = 0
     while i < len(s) :
         ch = s[i]
         i += 1
-        if ch == '.' :
+        if ch == splitchar :
             break
         left += ch
     while i < len(s) :
         ch = s[i]
         i += 1
         right += ch
-    if len(left) == 0 :
-        left = '0'
-    if len(right) == 0 :
-        right = '0'
     return left, right
+
+def Picture(s) :
+    """ Expands a 9(3)V9(2) to 999V999 """
+    r = ""
+    lch = ''
+    ch = ''
+    i = 0
+    ncount = 0
+    while i < len(s) :
+        ch = s[i].upper()
+        i += 1
+        if ch == '(' :
+            ncount = 0
+            while i < len(s) :
+                ch = s[i]
+                i += 1
+                if ch == ')' :
+                    break;
+                ncount *= 10
+                ncount += ord(ch) - ord('0')
+            ncount -= 1
+            while ncount > 0 :
+                ncount -= 1
+                r += lch
+        else :
+            lch = ch
+            r += ch
+    # To avoid certain types of twitching on the part of your poor beleagured
+    # programmer, replace the digrams 'CR' and 'DB' with 'c' and 'd'.  Note
+    # that CR or DB, if present, are the final characters of the string.
+
+    n = r.find("DB")
+    if n > -1 :
+        r = r[:n] + 'd'
+    n = r.find("CR")
+    if n > -1 :
+        r = r[:n] + 'c'
+
+    return r
+
+def FlagLeadingZeroes(s) :
+    """ Replace leading zeroes with 'z' """
+    r = ""
+    z = 'z'
+    for ch in s :
+        if ch == '0' :
+            r += z
+        else :
+            r += ch
+            z = '0'
+    return r
 
 class VarTrieNode() :
     def __init__(self):
@@ -557,13 +606,26 @@ class CobolVariable() :
 
         self.data       = []            # list of ListSize bytes
 
+        self.decimal_point = '.'        # Eventually we are going to have to
+        self.comma_separator = ','      # handle DECIMAL-POINT IS COMMA
+        self.currency_symbol = '$'
+
         # Here is the string information decoded from the attributes and
         # the data we get from gdb:
-
         self.not_in_context = False
         self.display_name = ""
         self.display_body = ""
         self.display_pic  = ""
+
+        # This section is used for "StringToxxx processing
+        self.rvalue = ""           # Original user string, before cleaning
+        self.cleaned_rvalue = ""   # This will have exactly AttrDigits, zero-filled
+        #                          # as necessary to the left and right
+        self.is_negative = False   # True if there was a minus sign
+        self.expanded_picture = "" # "9(4)" becomes "9999" here
+        self.ldigits = -1          # this integer is AttrDigits - AttrScale
+        self.rdigits = -1          # this integer is AttrScale...
+        #                          # ...but see self.CleanAndScale
         
     def CleanTokens(self,execute_result) :
         # (This was created during initial development.  During refactoring
@@ -613,15 +675,135 @@ class CobolVariable() :
                 tokens.append(xtoken)
         return tokens
 
+    def CleanAndScale(self,rside) :
+        """ Returns False if the number could not be CleanedAndScaled """
+        # rside is the raw data from the user.  
+        self.rvalue = rside
+
+        # Expand 9(6)V9(5) to 999999V99999
+        self.expanded_picture = Picture(self.Picture)
+
+        pcount = 0
+        for ch in self.expanded_picture :
+            if ch == 'P' :
+                pcount += 1
+
+        # If there is a minus sign, flag this value as negative, and flush
+        # out everything to the left of the minus sign
+        nhyphen = rside.find('-')
+        if nhyphen > -1 :
+            self.is_negative = True
+            rside = rside[nhyphen+1:]
+        else :
+            self.is_negative = False
+
+        # A negative number without the HAVE_SIGN is not valid
+        if self.is_negative and (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
+            print("Error: Minus sign not allowed on unsigned variable")
+            return False
+
+        # Let's flush out everything but numeric stuff, so that 1,000 becomes
+        # 1000 and things like 1953/02/02 become 19530202
+        self.cleaned_rvalue = ""
+        for ch in rside :
+            if "0123456789-.".find(ch) > -1 :
+                self.cleaned_rvalue += ch
+
+        # Figure out the initial left/right digit count
+        self.rdigits = self.AttrScale
+        self.ldigits = self.AttrDigits - self.rdigits
+
+        # We need to handle the possibility of  
+        # scaling 'P' characters in the PICTURE clause.
+
+        # Canonical examples:
+        # PICTURE 9PPP yields DIGITS 4, SCALE -3, and an input of
+        # 3000 gets converted to self.data 3
+
+        # PICTURE PPP9 yields DIGITS 4, SCALE 4, and an input of
+        # 0.0003 gets converted to self.data 3
+
+        if pcount > 0 :
+            # Sigh.  Well, we have to do it.  Let's count on GnuCOBOL having
+            # figured out whether this is a left-side or right-side scaling
+
+            lstr, rstr = LeftRight(rside,self.decimal_point)
+
+            if self.rdigits < 0 :
+                self.ldigits = self.AttrDigits
+
+                # This is a 9PPP style picture.  Whether implied or explicit,
+                # the decimal point will be at the right edge of the number
+
+                # There is, therefore, no right string
+                self.rdigits = 0
+                rstr = ""   
+
+                # We lop off the rightmost -ldigits from lstr
+                for i in range(pcount) :
+                    self.ldigits -= 1
+                    lstr = '0' + lstr
+                    lstr = lstr[0:-1];
+
+            elif self.rdigits > 0 :
+                # This is a PPP9 style picture
+
+                # There is, therefore, no left string
+                self.ldigits = 0
+                lstr = ""
+                # And we lop off the leftmost digits of rstr
+                self.rdigits = self.AttrScale
+                for i in range(pcount) :
+                    self.rdigits -= 1
+                    rstr = rstr[1:]
+                    rstr = rstr + '0'
+
+            # Put the number back together for further processing:
+            self.cleaned_rvalue = lstr + self.decimal_point + rstr
+
+        # Let's turn cleaned_rvalue into a string of exactly AttrDigits
+        # characters, zero-filled to the left and right, as necessary
+
+        lstr, rstr = LeftRight(self.cleaned_rvalue,self.decimal_point)
+
+        # Trim off leading zeroes
+        while len(lstr) > 0 and lstr[0] == '0' :
+            lstr = lstr[1:]
+
+        # Trim off any trailing zeroes:
+        while len(rstr)>0 and rstr[len(rstr)-1] == '0' :
+            rstr = rstr[:len(rstr)-1]
+
+        # If there are too many ldigits flag this as an error
+        if len(lstr) > self.ldigits :
+            print("Error: Magnitude too large")
+            return False
+
+        # If there are too many rdigits, just grab the leftmost
+        if len(rstr) > self.rdigits :
+            print("Warning: Least significant digits truncated")
+            rstr = rstr[:self.rdigits]
+
+        # Make sure there are exactly ldigits:
+        while len(lstr) < self.ldigits :
+            lstr = '0' + lstr
+
+        # Make sure there are exactly rdigits:
+        while len(rstr) < self.rdigits :
+            rstr = rstr + '0'
+
+        self.cleaned_rvalue = lstr + rstr
+        if int(self.cleaned_rvalue) == 0 :
+            self.is_negative = False
+
+        return True
+
     def SetToRside(self, line_list : LineList(), rside) :
         #print( "Inside SetToRside", rside)
 
         GotData = True
 
-        if False :  # dummy code that can be followed by elifs
-            GotData = False
-            pass
-        elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY :
+        if self.AttrType == COB_TYPE_NUMERIC_DISPLAY :
             self.StringToNumericDisplay(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_BINARY :
             self.StringToNumericBinary(rside)
@@ -909,13 +1091,91 @@ class CobolVariable() :
         print("Offset:     " , self.Offset          )
         print("Attr:       " , self.Attr            )
         print("ListType:   " , self.ListType        )
+
         print("AttrType:   " , self.AttrType ,end="")
+        print(" (",hex(self.AttrType),") ", sep='', end="")
         if self.AttrType == 0 :
             print(" (Unknown)", end="")
-        print("")
+        elif self.AttrType == COB_TYPE_UNKNOWN             :
+            print("UNKNOWN            ", end="")
+        elif self.AttrType == COB_TYPE_GROUP               :
+            print("GROUP              ", end="")
+        elif self.AttrType == COB_TYPE_BOOLEAN             :
+            print("BOOLEAN            ", end="")
+        #elif self.AttrType == COB_TYPE_NUMERIC             :   # NUMERIC and NUMERIC_DISPLAY are the same
+        #    print("NUMERIC            ", end="")
+        elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY     :
+            print("NUMERIC_DISPLAY    ", end="")
+        elif self.AttrType == COB_TYPE_NUMERIC_BINARY      :
+            print("NUMERIC_BINARY     ", end="")
+        elif self.AttrType == COB_TYPE_NUMERIC_PACKED      :
+            print("NUMERIC_PACKED     ", end="")
+        elif self.AttrType == COB_TYPE_NUMERIC_FLOAT       :
+            print("NUMERIC_FLOAT      ", end="")
+        elif self.AttrType == COB_TYPE_NUMERIC_DOUBLE      :
+            print("NUMERIC_DOUBLE     ", end="")
+        elif self.AttrType == COB_TYPE_NUMERIC_L_DOUBLE    :
+            print("NUMERIC_L_DOUBLE   ", end="")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC64    :
+            print("NUMERIC_FP_DEC64   ", end="")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128   :
+            print("NUMERIC_FP_DEC128  ", end="")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32    :
+            print("NUMERIC_FP_BIN32   ", end="")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64    :
+            print("NUMERIC_FP_BIN64   ", end="")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128   :
+            print("NUMERIC_FP_BIN128  ", end="")
+        elif self.AttrType == COB_TYPE_NUMERIC_COMP5       :
+            print("NUMERIC_COMP5      ", end="")
+        elif self.AttrType == COB_TYPE_ALNUM               :
+            print("ALNUM              ", end="")
+        elif self.AttrType == COB_TYPE_ALPHANUMERIC        :
+            print("ALPHANUMERIC       ", end="")
+        elif self.AttrType == COB_TYPE_ALPHANUMERIC_ALL    :
+            print("ALPHANUMERIC_ALL   ", end="")
+        elif self.AttrType == COB_TYPE_ALPHANUMERIC_EDITED :
+            print("ALPHANUMERIC_EDITED", end="")
+        elif self.AttrType == COB_TYPE_NUMERIC_EDITED      :
+            print("NUMERIC_EDITED     ", end="")
+        elif self.AttrType == COB_TYPE_NATIONAL            :
+            print("NATIONAL           ", end="")
+        elif self.AttrType == COB_TYPE_NATIONAL_EDITED     :
+            print("NATIONAL_EDITED    ", end="")
+        print()
+
         print("AttrDigits: " , self.AttrDigits      )
         print("AttrScale:  " , self.AttrScale       )
-        print("AttrFlags:  " , hex(self.AttrFlags)  )
+
+        print("AttrFlags:  " , hex(self.AttrFlags)  , end = '')
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN     ) != 0 : 
+            print(" HAVE_SIGN", end = '')
+        if (self.AttrFlags & COB_FLAG_SIGN_SEPARATE ) != 0 :
+            print(" SIGN_SEPARATE", end = '')
+        if (self.AttrFlags & COB_FLAG_SIGN_LEADING  ) != 0 :
+            print(" SIGN_LEADING", end = '')
+        if (self.AttrFlags & COB_FLAG_BLANK_ZERO    ) != 0 :
+            print(" BLANK_ZERO", end = '')
+        if (self.AttrFlags & COB_FLAG_JUSTIFIED     ) != 0 :
+            print(" FLAG_JUSTIFIED", end = '')
+        if (self.AttrFlags & COB_FLAG_BINARY_SWAP   ) != 0 :
+            print(" BINARY_SWAP", end = '')
+        if (self.AttrFlags & COB_FLAG_REAL_BINARY   ) != 0 :
+            print(" REAL_BINARY", end = '')
+        if (self.AttrFlags & COB_FLAG_IS_POINTER    ) != 0 :
+            print(" IS_POINTER", end = '')
+        if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) != 0 :
+            print(" NO_SIGN_NIBBLE", end = '')
+        if (self.AttrFlags & COB_FLAG_IS_FP         ) != 0 :
+            print(" IS_FP", end = '')
+        if (self.AttrFlags & COB_FLAG_REAL_SIGN     ) != 0 :
+            print(" REAL_SIGN", end = '')
+        if (self.AttrFlags & COB_FLAG_BINARY_TRUNC  ) != 0 :
+            print(" BINARY_TRUNC", end = '')
+        if (self.AttrFlags & COB_FLAG_CONSTANT      ) != 0 :
+            print(" CONSTANT ", end = '')
+        print()
+
         print("Picture:    " , self.Picture         )
         print("Usage:      " , self.Usage           )
         print("Size:       " , self.ListSize        )
@@ -1643,65 +1903,10 @@ class CobolVariable() :
         pic += str(self.AttrScale)
         pic += ") ]"
         return body, pic
-
-    def ZeroFilledLeftRight(self,rside) :
-        retval = None
-
-        if rside.find('-') == -1 :
-            isnegative = False
-        else :
-            isnegative = True;
-            # Trim off everything to the left of the minus sign
-            rside = rside[rside.find('-')+1:]
-
-        # A negative number without the HAVE_SIGN is an error.  We are simply
-        # ignoring such things; on his head be it.
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
-            print("Warning: minus sign is ignored")
-            isnegative = False;
-
-        lstr, rstr = LeftRight(rside)
-
-        # Trim off leading zeroes
-        while len(lstr) > 0 and lstr[0] == '0' :
-            lstr = lstr[1:]
-
-        # Trim off any trailing zeroes:
-        while len(rstr)>0 and rstr[len(rstr)-1] == '0' :
-            rstr = rstr[:len(rstr)-1]
-
-        # figure out the number of digits to the left and right of the
-        # COBOL variable's decimal point
-        rdigits = self.AttrScale
-        ldigits = self.AttrDigits - rdigits
-
-        # If there are too many ldigits flag this as an error
-        if len(lstr) > ldigits :
-            print("Error: Magnitude too large")
-            return None
-            #lstr = lstr[-ldigits:]  # This removes the leftmost extra digits
-
-        # If there are too many rdigits, just grab the leftmost
-        if len(rstr) > rdigits :
-            print("Warning: Least significant digits truncated")
-            rstr = rstr[:rdigits]
-
-        # Make sure there are exactly ldigits:
-        while len(lstr) < ldigits :
-            lstr = '0' + lstr
-
-        # Make sure there are exactly rdigits:
-        while len(rstr) < rdigits :
-            rstr = rstr + '0'
-
-        retval = lstr + rstr
-
-        return isnegative , retval
-
+    
     def StringToPackedDecimal(self,rside) :
         self.data = bytearray()
-        try :
-            is_negative , combined_string = self.ZeroFilledLeftRight(rside)
+        if self.CleanAndScale(rside) :
             # The sign nybble: 0x0C = positive
             #                  0x0D = negative
             #                  0x0F = unsigned
@@ -1710,7 +1915,7 @@ class CobolVariable() :
             # that I have seen 0x0D for negative numbers and I have seen 0x0C
             # for positives.
 
-            if isnegative :
+            if self.is_negative :
                 sign_nybble = 0x0D  # Indicates negative
             else :
                 sign_nybble = 0x0C  # Indicates positive
@@ -1720,7 +1925,7 @@ class CobolVariable() :
 
             # Reverse the combined string, because we will build it up
             # from low-order to high-order
-            combined_string = combined_string[::-1]
+            rvalue = self.cleaned_rvalue[::-1]
 
             # We can now put together the self.data package:
             self.data = bytearray(self.ListSize)
@@ -1733,7 +1938,7 @@ class CobolVariable() :
                 offset -= mask//2
                 mask %= 2
 
-            for ch in combined_string :
+            for ch in rvalue :
                 nch = ord(ch) - ord('0');
                 nch &= 0x0F
                 nch <<= (mask*4)
@@ -1742,8 +1947,6 @@ class CobolVariable() :
                 mask += 1;
                 offset -= mask//2
                 mask %= 2
-        except:
-            pass
 
     def NumericDisplayToString(self) :
         # numeric digits, but with a decimal point:
@@ -1774,17 +1977,14 @@ class CobolVariable() :
 
     def StringToNumericDisplay(self,rside) :
         self.data = bytearray()
-        try :
-            isnegative , combined_string = self.ZeroFilledLeftRight(rside)
 
+        if self.CleanAndScale(rside) :
             self.data = bytearray(self.ListSize)
             for i in range(self.ListSize) :
-                self.data[i] = ord(combined_string[i])
+                self.data[i] = ord(self.cleaned_rvalue[i])
 
-            if isnegative :
+            if self.is_negative :
                 self.data[self.ListSize-1] |= 0x40
-        except :
-            pass
 
     def NumericBinaryToString(self) :
         # Generic Binary
@@ -1860,11 +2060,9 @@ class CobolVariable() :
     def StringToNumericBinary(self,rside) :
         # Generic binary
         self.data = bytearray()
-        try :
-            isnegative , combined_string = self.ZeroFilledLeftRight(rside)
-
-            value = int(combined_string)
-            if isnegative :
+        if self.CleanAndScale(rside) :
+            value = int(self.cleaned_rvalue,10)
+            if self.is_negative :
                 value = -value
 
             # Build up that value as little-endian
@@ -1875,8 +2073,6 @@ class CobolVariable() :
 
             if self.AttrFlags & COB_FLAG_BINARY_SWAP :
                 self.data.reverse()
-        except :
-            pass
 
     def AlphanumericToString(self) :
         # ALPHANUMERIC
@@ -1912,56 +2108,275 @@ class CobolVariable() :
                 body += '.'
             else :
                 body += chr(self.data[i])
+
+        if False :  # False means "Match observed GnuCOBOL v3.00rc1 behavior"
+
+            # There seems to be an inconsistency in GnuCOBOL's behavior.
+
+            # Given the value 1234.56,
+            # a variable declared 9,999V99 will display as 1,23456
+            # a variable declared 9,999.99 will display as 1,234.56
+            # Both of those are represented internally as NUMERIC-EDITED
+
+            # Meanwhile,
+            # a variable declared 9999V99 will display as 1234.56
+            # a variable declared 9999.99 will display as 1234.56
+            # Both of those are represented internally as NUMERIC-DISPLAY
+
+            # I haven't asked Simon Sobisch about this, and I haven't found
+            # anything definitive in documentation avaialable on the Web; the
+            # topic just seems too danged complex and there are too many
+            # possibilities to enumerate them all.
+
+            # I put in the "if False" up above to make cprint match cobc
+            # behavior, mainly so that my automated selfcheck program can
+            # work properly.  Making it "if True" will put the decimal point
+            # back on display, which really seems like the right thing. I
+            # have the feeling cobc should be changed, or at least the
+            # inconsistency explained.
+
+            # If self.Picture does not contain the decimal point character,
+            # AND self.AttrScale indicates there are characters to the right
+            # of a decimal point, then we need to insert one.
+
+            if self.Picture.find(self.decimal_point) == -1 and self.AttrScale > 0 :
+                body = body[:len(body)-self.AttrScale] + self.decimal_point + body[-self.AttrScale:]
+
         pic += '[ PIC '
         pic += self.Picture
         pic += ' ]'
         return body, pic;
 
     def StringToNumericEdited(self,rside) :
-        if rside.find('-') == -1 :
-            isnegative = False
-        else :
-            isnegative = True;
-        sleft, sright = LeftRight(rside)
-        self.data = bytearray(self.Picture,"utf8")
+        self.data = bytearray()
+        if self.CleanAndScale(rside) :
+            # We have to look for are "floating insertion" symbols
+            # A floating insertion range is indicated by duplicated '$', '+', or
+            # '-' characters.  One caveat: the floating range can have embedded
+            # commas in it.
 
-        # Initialize the data from Picture
-        i = 0
-        decimal_place = len(self.data)
-        while i<len(self.data) :
-            ch = chr(self.data[i])
-            if ch == '+' and isnegative :
-                self.data[i] = ord('-')
-            elif ch == 'Z' :
-                self.data[i] = ord(' ')
-            elif ch == '9' :
-                self.data[i] = ord('0')
-            elif ch == '.' :
-                decimal_place = i
-            i += 1
+            pic_without_commas = ""
+            for ch in self.expanded_picture :
+                if ch != self.comma_separator :
+                    pic_without_commas += ch
+               
+            floating_insertion = None
+            floating_insertion_start = None
+            floating_insertion_end = None
 
-        # Adjust data to the left of the decimal place:
-        i = len(sleft) - 1
-        j = decimal_place - 1
-        while i >= 0 and j >= 0 :
-            ch = chr(self.data[j])
-            j -= 1
-            if ch == ',' :
-                continue;
-            if ch == '$' or ch == '+' or ch == '-':
-                break;
+            currency_doubled = self.currency_symbol + self.currency_symbol
+            if pic_without_commas.find(currency_doubled) > -1 :
+                floating_insertion = self.currency_symbol
+            elif pic_without_commas.find("++") > -1 :
+                floating_insertion = '+'
+            elif pic_without_commas.find("--") > -1 :
+                floating_insertion = '-'
 
-            ch = sleft[i]
-            i -= 1
-            if ch == ',' :
-                continue;
-            self.data[j+1] = ord(ch)
+            # find the start and end of the floating sequence in self.expanded_picture
+            if floating_insertion :
+                for i in range(len(self.expanded_picture)) :
+                    if self.expanded_picture[i] == floating_insertion :
+                        if floating_insertion_start == None:
+                            floating_insertion_start = i
+                        floating_insertion_end = i
 
-        # Adjust data to the right of the decimal place
-        i = 0
-        while i < len(sright) and decimal_place+1 + i < len(self.data) :
-            self.data[decimal_place+1+i] = ord(sright[i])
-            i += 1
+            # We need to convert leading zeroes to the 'z' character:            
+            input = self.cleaned_rvalue
+
+            # zero-flag the integer portion
+            i = 0
+            while i < self.ldigits :
+                if input[i] == '0' :
+                    input = input[:i] + 'z' + input[i+1:]
+                else :
+                    break;
+                i += 1
+            if i >= self.ldigits :
+                # The entire integer part is zero.  How about the fractional part?
+                if self.rdigits > 0 :
+                    if int(input[-self.rdigits:]) == 0 :
+                        # The fractional part is also zero; flag them, too
+                        input = input[0:self.ldigits]
+                        for i in range(self.rdigits) :
+                            input += 'z'
+
+            # Recap:  input is now abs(numeric input), with leading
+            # zeroes to the left of the decimal position replaced with 'z'
+            # (Or everthing is 'z' if the value was zero to begin with)
+
+            # We will now walk the picture and input strings from right
+            # to left, building the resulting string as we go
+
+            pindex = len(self.expanded_picture)-1
+            dindex = len(input)-1
+
+            # This is, perforce, a state machine.  At this stage of development
+            # is is mostly an ad hoc state machine.
+
+            body = ""
+
+            rightmost = True
+            did_floating = False
+
+            while pindex >= 0 :
+                pch = self.expanded_picture[pindex]
+                pindex -= 1
+
+                if rightmost :
+                    rightmost = False
+
+                    if pch == '+' :
+                        if self.is_negative :
+                            body += '-'
+                        else :
+                            body += '+'
+                        continue
+
+                    if pch == '-' :
+                        if self.is_negative :
+                            body += '-'
+                        else :
+                            body += '+'
+                        continue
+
+                    if pch == 'c' :
+                        # This is a CR (See the Picture() function)
+                        if self.is_negative :
+                            body += 'RC'    # We are building body backwards
+                        else :
+                            body += "  "
+                        continue
+
+                    if pch == 'd'  :
+                        # This is a DB
+                        if self.is_negative :
+                            body += 'BD'
+                        else :
+                            body += "  "
+                        continue
+
+                if did_floating :
+                    # Everything to the left of the floating_insertion is
+                    # supposed to be a blank
+                    body += ' '
+                    continue;
+
+                if not did_floating and pindex+1 == floating_insertion_start :
+                    # The leftmost character of the floating_insertion has
+                    # to be set, even at the cost of truncating the input
+                    did_floating = True
+                    if floating_insertion == '-' :
+                        if self.is_negative :
+                            body += '-'
+                        else :
+                            body += ' '
+                        continue
+                    if floating_insertion == '-' :
+                        if self.is_negative :
+                            body += '-'
+                        else :
+                            body += '+'
+                        continue
+                    if floating_insertion == self.currency_symbol :
+                        body += self.currency_symbol
+                        continue
+
+                if "PV".find(pch) > -1 :
+                    # We ignore scaling P characters here, because we processed
+                    # them earlier by scaling the input string
+                    # We also ignore the implicate decimal point 'V'
+                    continue
+
+                inside_floating = False
+                if floating_insertion_start != None :
+                    inside_floating = (pindex+1 >= floating_insertion_start and pindex+1 <= floating_insertion_end)
+                
+                include_literal = "B0/,."
+                if not inside_floating:
+                    include_literal += self.currency_symbol
+                if include_literal.find(pch) > -1 :
+                    body += pch
+                    continue
+
+                # After this point, we need to pull out an input character
+                dch = input[dindex]
+                dindex -= 1
+
+                if inside_floating :
+                    if dch == 'z' :
+                        did_floating = True
+                        body += floating_insertion
+                        continue
+
+                if pch == '9' or inside_floating:
+                    # Explicit characters are expressed explicitly
+                    if dch == 'z' :
+                        dch = '0'
+                    body += dch
+                    continue
+
+                if pch == 'Z' :
+                    # Convert leading zeroes to blanks
+                    if dch == 'z' :
+                        dch = ' '
+                    body += dch
+                    continue
+
+                if pch == '*' :
+                    # Convert leading zeroes to asterisks
+                    if dch == 'z' :
+                        dch = '*'
+                    body += dch
+                    continue
+            
+            # We've built body.  Flip it right-side around
+            body = body[::-1]
+
+            # Depending on the numbers, we could have some interesting
+            # entries.  Let's just power through them.
+            
+            # Get rid of commas preceded by spaces
+            wipe_me = ' ' + self.comma_separator
+            while True :
+                i = body.find(wipe_me)
+                if i == -1 :
+                    break;
+                body = body[:i] + "  " + body[i+2:]
+
+            # Get rid of commas preceded by asterisks:
+            wipe_me = '*' + self.comma_separator
+            while True :
+                i = body.find(wipe_me)
+                if i == -1 :
+                    break;
+                body = body[:i] + "**" + body[i+2:]
+
+            # Get rid of commas preceded by currency symbols:
+            wipe_me = self.currency_symbol + self.comma_separator
+            while True :
+                i = body.find(wipe_me)
+                if i == -1 :
+                    break;
+                body = body[:i] + ' ' + self.currency_symbol + body[i+2:]
+
+            if (body[-2:] == 'CR' or body[-2:0] == 'DB') and body[-3] == ' '  :
+                body = body[:-2] + "  "
+
+            if (body[-2:] == 'CR' or body[-2:0] == 'DB') and body[-4:-2] == " ."  :
+                body = body[:-2] + "  "
+
+            if (body[-1:] == '+' or body[-1] == '-') and body[-2] == ' '  :
+                body = body[:-1] + " "
+
+            if (body[-1:] == '-' or body[-1] == '+') and body[-3:-1] == " ."  :
+                body = body[:-1] + " "
+
+            # If we ended up with just a decimal point, get rid of that:
+            if body.strip() == self.decimal_point :
+                i = body.find(self.decimal_point)
+                body = body[:i] + ' ' + body[i+1:]
+            
+            self.data = bytearray(body.encode("utf8"))
 
     def DataToString(self) :
         noisy = False
@@ -2040,6 +2455,26 @@ class CobolVariable() :
                     else :
                         value += '.'
                 value += '"'
+
+        pcount = 0
+        for ch in self.Picture.upper() :
+            if ch == 'P' :
+                pcount += 1
+
+        if pcount > 0 :
+
+            if self.AttrScale < 0 :
+                for i in range(pcount) :
+                    value += '0'
+            else :
+                stash = ''
+                if value[0] == '+' or value[0] == '-' :
+                    stash = value[0]
+                    value = value[1:]
+                for i in range(pcount) :
+                    value = '0' + value
+                value = stash + self.decimal_point + value
+
         return value, pic;
 
 # Note on the program structure:
@@ -2441,7 +2876,7 @@ if 'gdb' in sys.modules :
 
         def __init__ (self):
             super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
-            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 0.7.3]')
+            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 0.7.4]')
             self.Worker = CPrintWorker()
 
         def invoke (self, arguments, from_tty):
@@ -2468,15 +2903,14 @@ if 'gdb' not in sys.modules:
     # I debug with Visual Studio in Windows, which doesn't provide a gdb object.
     # Test code goes here
     Worker = CPrintWorker()
-    Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
-    Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
-    Worker.ProcessArguments("*")
-    Worker.ProcessArguments("45")
-    Worker.ProcessArguments("45=0007338.0048000")
+    #Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
+    Worker.ProcessInfoSource(r"|Located in Y:\cobol\cbl-gdb\selfcheck\program_under_test.cbl ")
+    #Worker.ProcessArguments("V")
+    Worker.ProcessArguments("V=3856")
 
-    WWorker = CWatchWorker()
-    WWorker.ProcessInfoSourceW(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
-    #WWorker.ProcessArgumentsW("*")
+#    WWorker = CWatchWorker()
+#    WWorker.ProcessInfoSourceW(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
+#    WWorker.ProcessArgumentsW("*")
     pass
 else:                
     CPrint()
