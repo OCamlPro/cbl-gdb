@@ -28,12 +28,14 @@ string StripQuotes(const string &s)
 {
     PROFILER;
     string retval=s;
-    if(retval.size() >= 1 AND retval[retval.size()-1] EQ '"' OR retval[retval.size()-1] EQ '\'') {
+    if(retval.size() >= 1 AND (retval[retval.size()-1] EQ '"' OR retval[retval.size()-1] EQ '\'') ) 
+        {
         retval = retval.substr(0,retval.size()-1);
-    }
-    if(retval.size() >= 1 AND retval[0] EQ '"' OR retval[0] EQ '\'') {
+        }
+    if(retval.size() >= 1 AND (retval[0] EQ '"' OR retval[0] EQ '\'') ) 
+        {
         retval = retval.substr(1);
-    }
+        }
     return retval;
 }
 

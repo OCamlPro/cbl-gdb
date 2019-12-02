@@ -1861,28 +1861,42 @@ class CobolVariable() :
         return body, pic
 
     def PackedDecimalToString(self) :
-        signed = (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0
-
         body = ""
         pic = ""
-        if signed :
-            sign = self.data[self.ListSize-1] & 0x0F
-            if sign in (0xf, 0xa, 0xc, 0xe) : # one learns not to ask silly questions
-                body = '+';
+
+        pcount = 0
+        digit_count = 0
+
+        for ch in Picture(self.Picture) :
+            if ch == '9' :
+                digit_count += 1
+            if ch == 'P' :
+                pcount += 1
+
+        # The sign nybble: 0x0C = positive
+        #                  0x0D = negative
+        #                  0x0F = unsigned
+
+        has_sign_nybble = (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0
+        signed = (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 
+
+        negative = False
+        if has_sign_nybble :
+            sign_nybble = self.data[self.ListSize-1] & 0x0F
+            if sign_nybble in (0xf, 0xa, 0xc, 0xe) : # one learns not to ask silly questions
+                negative = False
             else :
-                body = '-'
+                negative = True
 
         nybble = 0
-        if signed and (self.AttrDigits & 1) == 0 :
+        if has_sign_nybble and (digit_count & 1) == 0 :
             nybble += 1;
-        if not signed and (self.AttrDigits & 1) != 0 :
+        if not has_sign_nybble and (digit_count & 1) != 0 :
             nybble += 1;
 
-        radix_point = self.AttrDigits - self.AttrScale
+        # Pull out the digits
         dcount = 0
-        while dcount < self.AttrDigits :
-            if dcount == radix_point :
-                body += '.'
+        while dcount < digit_count :
             if (nybble & 1) == 0 :
                 digit = self.data[nybble>>1] >> 4
             else :
@@ -1891,6 +1905,27 @@ class CobolVariable() :
             body += chr(digit)
             nybble += 1
             dcount += 1
+
+        if pcount > 0 :
+            if self.AttrScale < 0 :
+                # Scaling to the left of decimal point
+                for i in range(pcount) :
+                    body += '0'
+            else :
+                # Scaling to the right of decimal point
+                for i in range(pcount) :
+                    body = body + '0'
+                body = '.' + body
+        elif self.AttrScale > 0 :
+            body = body[:self.AttrDigits-self.AttrScale] + \
+                    self.decimal_point + \
+                    body[self.AttrDigits-self.AttrScale:]
+
+        if negative :
+            body = '-' + body
+        
+        if signed and not negative :
+            body = '+' + body
 
         pic += "[ "
         if signed :
@@ -1953,20 +1988,43 @@ class CobolVariable() :
         body = ""
         pic = ""
 
-        radix_point = self.ListSize - self.AttrScale
+        # Count up any P-scalers in the Picture string:
+        pcount = 0
+        for ch in Picture(self.Picture) :
+            if ch == 'P' :
+                pcount += 1;
 
+        negative = False
         # DISPLAY keeps the negative bit in an oddball place:
         if (self.data[self.ListSize-1] & 0x40) != 0 :
-            body += '-'
-        else :
-            if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
-                body += '+'
+            negative = True
 
+        # Convert the binary value in self.data to a string
         for i in range(self.ListSize) :
-            if i == radix_point :
-                body += '.'
             digit = self.data[i] & 0x3F
             body += chr(digit)
+
+        if pcount > 0 :
+            # There is scaling involved
+            if self.AttrScale < 0 :
+                # scaling to the left of the decimal point
+                for i in range(pcount) :
+                    body += '0'
+            else :
+                # scaling to the right of the decimal point
+                for i in range(pcount) :
+                    body = '0' + body
+                body = self.decimal_point + body
+        elif self.AttrScale > 0 :
+            # No scaling
+            radix_point = self.ListSize - self.AttrScale
+            body = body[:radix_point] + self.decimal_point + body[radix_point:]
+
+        if negative :
+            body = '-' + body
+        else :
+            if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+                body = '+' + body
 
         pic += "[ DISPLAY ("
         pic += str(self.AttrDigits - self.AttrScale)
@@ -1986,12 +2044,22 @@ class CobolVariable() :
             if self.is_negative :
                 self.data[self.ListSize-1] |= 0x40
 
-    def NumericBinaryToString(self) :
-        # Generic Binary
+    def NumericBinaryToStringComp5(self) :
+        # Special processing for COMP-5, which as of this writing
+        # behaves differently when compared to other Generic Binary variables
+
+        pcount = 0
+        for ch in Picture(self.Picture) :
+            if ch == 'P' :
+                pcount += 1
 
         # we can be handed binary data in either little-endian
         # or big-endian.  We will operated little-endian
         our_bytes = self.data
+
+        #our_bytes = [0x00, 0xb4, 0x21, 0x50, 0x1f, 0x01, 0x00, 0x00] 
+        #our_bytes.reverse();
+
         if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
             our_bytes.reverse()
 
@@ -2026,21 +2094,144 @@ class CobolVariable() :
             value <<= 8
             value += our_bytes[i]
 
-        if negative :
-            value *= -1;
+        # we should be in business:
+
+        body = ""
+        pic = ""
+
+        # Do an initial conversion to a string
+        body += str(value)
+
+        # We need to expand it by adding leading zeroes to get up
+        # to the appropriate length
+
+        length = 0
+        if self.ListSize <= 1 :
+            length = 3
+        elif self.ListSize <= 2 :
+            length = 5
+        elif self.ListSize <= 4 :
+            length = 10
+        else :
+            length = 20
+
+        while len(body) < length :
+            body = '0' + body
+
+        pic += '['
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+            if negative :
+                body = '-' + body
+            else :
+                body = '+' + body
+            pic += " signed "
+        else :
+            pic += " unsigned "
+
+        pic += "binary-"
+        pic += str(self.ListSize*8)
+        if self.AttrScale != 0 :
+            pic += " ("
+            pic += str(self.AttrDigits - self.AttrScale)
+            pic += ','
+            pic += str(self.AttrScale)
+            pic += ")"
+
+        pic += ' ]'
+        return body, pic
+
+    def NumericBinaryToString(self) :
+        if self.Usage == "COMP-5" :
+            body, pic = self.NumericBinaryToStringComp5()
+            return body, pic
+
+        # Generic Binary
+
+        pcount = 0
+        for ch in Picture(self.Picture) :
+            if ch == 'P' :
+                pcount += 1
+
+        # we can be handed binary data in either little-endian
+        # or big-endian.  We will operated little-endian
+        our_bytes = self.data
+
+        #our_bytes = [0x00, 0xb4, 0x21, 0x50, 0x1f, 0x01, 0x00, 0x00] 
+        #our_bytes.reverse();
+
+        if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
+            our_bytes.reverse()
+
+        # we need to figure out if we are dealing with a signed
+        # and negative number.
+
+        negative = False
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+            # This is a binary number that can be signed; let's
+            # see if it is.
+            if (our_bytes[self.ListSize-1] & 0x80) != 0 :
+                # and it is negative
+                negative = True
+
+                # we need to do a complement & increment.  We will
+                # be fighting Python the whole way:
+
+                carry = 1
+                for i in range(self.ListSize) :
+                    our_bytes[i] = ~our_bytes[i];
+                    our_bytes[i] &= 0xFF
+                    our_bytes[i] += carry;
+                    carry = our_bytes[i] >> 8
+                    our_bytes[i] &= 0xFF
+
+        # at this point, the negative flag has been set, and
+        # our_bytes is the absolute value of the output
+        # build up the little-endian value:
+
+        value = 0
+        for i in range(self.ListSize-1,-1, -1) :
+            value <<= 8
+            value += our_bytes[i]
 
         # we should be in business:
 
         body = ""
         pic = ""
 
+        # Do an initial conversion to a string, keeping in mind that because of
+        # COBOL truncation issues, value may have more digits to the left than
+        # we actually want to see.
         body += str(value)
-        if  self.AttrScale != 0 :
-            breakat = len(body) - self.AttrScale
-            body = body[:breakat] + '.' + body[breakat:]
+        body = body[-self.AttrDigits:]
+
+        # We need to expand it by adding leading zeroes to get up
+        # to the appropriate length
+
+        length = self.AttrDigits
+
+        while len(body) < length :
+            body = '0' + body
+
+        if pcount > 0 :
+            if self.AttrScale < 0 :
+                for i in range(pcount) :
+                    body = body[1:] + '0'
+            else :
+                for i in range(pcount) :
+                    body = '0' + body[1:]
+                body = '.' + body
+        else :
+            # Let's put in a decimal point, if necessary
+            if  self.AttrScale > 0 :
+                breakat = len(body) - self.AttrScale
+                body = body[:breakat] + self.decimal_point + body[breakat:]
 
         pic += '['
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 1 :
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+            if negative :
+                body = '-' + body
+            else :
+                body = '+' + body
             pic += " signed "
         else :
             pic += " unsigned "
@@ -2056,6 +2247,7 @@ class CobolVariable() :
 
         pic += ' ]'
         return body, pic;
+
 
     def StringToNumericBinary(self,rside) :
         # Generic binary
@@ -2081,7 +2273,7 @@ class CobolVariable() :
         body += '"'
         for i in range(len(self.data)) :
             if self.data[i] < 32 or self.data[i] >= 128 :
-                body += '.'
+                body += self.decimal_point
             else :
                 body += chr(self.data[i])
         body += '"'
@@ -2457,12 +2649,12 @@ class CobolVariable() :
                 value += '"'
 
         pcount = 0
-        for ch in self.Picture.upper() :
+        for ch in Picture(self.Picture) :
             if ch == 'P' :
                 pcount += 1
+        pcount = 0
 
         if pcount > 0 :
-
             if self.AttrScale < 0 :
                 for i in range(pcount) :
                     value += '0'
@@ -2904,9 +3096,10 @@ if 'gdb' not in sys.modules:
     # Test code goes here
     Worker = CPrintWorker()
     #Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
-    Worker.ProcessInfoSource(r"|Located in Y:\cobol\cbl-gdb\selfcheck\program_under_test.cbl ")
-    #Worker.ProcessArguments("V")
-    Worker.ProcessArguments("V=3856")
+    #Worker.ProcessInfoSource(r"|Located in Y:\cobol\cbl-gdb\selfcheck\program_under_test.cbl ")
+    Worker.ProcessInfoSource(r"|Located in Y:\cobol\cbl-gdb\samples\ref_test_5\rtest.cbl ")
+    Worker.ProcessArguments("VAR")
+    #Worker.ProcessArguments("V=.0000999999999")
 
 #    WWorker = CWatchWorker()
 #    WWorker.ProcessInfoSourceW(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")

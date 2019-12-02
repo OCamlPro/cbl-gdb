@@ -5,6 +5,7 @@ all:
 	$(MAKE) -C cobst
 	$(MAKE) -C obmod
 	$(MAKE) -C samples
+	$(MAKE) -C picgen
 	$(MAKE) -C selfcheck
 
 .PHONY : clean
@@ -12,6 +13,7 @@ clean:
 	$(MAKE) -C cobst clean
 	$(MAKE) -C obmod clean
 	$(MAKE) -C samples clean
+	$(MAKE) -C picgen
 	$(MAKE) -C selfcheck clean
 
 .PHONY : install
@@ -30,4 +32,5 @@ pregit:
 	$(MAKE) -C cobst pregit
 	$(MAKE) -C obmod pregit
 	$(MAKE) -C python pregit
+	$(MAKE) -C picgen
 	$(MAKE) -C selfcheck pregit

@@ -1,0 +1,16 @@
+set height unlimited
+file rtest
+b 16
+r
+p/d VAR1
+x/8 b_8
+p/d VAR2
+x/8 b_9
+p/d VAR3
+x/8 b_10
+p/d VAR4
+x/8 b_11
+p/d VAR5
+x/8 b_12
+c
+q
