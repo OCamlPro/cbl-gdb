@@ -54,7 +54,7 @@
              
       *> ***************************************************************
        PROCEDURE DIVISION.
-       main section.  
+       main section.   
        00-main.
           DISPLAY "Program name: " pgm-name.
           open input pgm-input.

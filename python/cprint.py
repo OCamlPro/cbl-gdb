@@ -484,6 +484,7 @@ class LineList() :
 
     def __init__(self) :
         self.line_list = [] # This will be a list of (int,str) tuples
+        self.EndOfTheWorld = 1000000
 
     def Insert(self,line_number : int, program_id : str) :
         self.line_list.append( (line_number,program_id) )
@@ -577,7 +578,7 @@ class LineList() :
                     self.Insert(line_number,program_id)
                     current_program = program_id
 
-        self.Insert(1000000,"Ragnarök")
+        self.Insert(self.EndOfTheWorld,"Ragnarök")
 
         tab_file.close()
 
@@ -2687,10 +2688,12 @@ class CPrintWorker() :
     def __init__(self):
         self.var_trie = VarTrie()
         self.current_source_file = ""
+        self.current_trapped_routine = ""
         self.short_term_memory = []
         self.line_list = LineList()
         self.sticky_display_mode = os.environ.get('CPRINT_V', '0')
         self.current_display_mode = self.sticky_display_mode
+        self.machine_interface_mode = False
 
     def ProcessInfoSource(self, info_source) :
         # This routine is given the results of the gdb "info source" command
@@ -2718,6 +2721,30 @@ class CPrintWorker() :
             # There isn't a current source file.
             self.current_source_file = ""
 
+    def ProcessInfoLine(self, info_line) :
+        """ Figures out which routine we are currently trapped in"""
+
+        # Info line should start with "Line xxx "
+        self.current_trapped_routine = ""
+
+        if info_line[0:5] == "Line " :
+            # So far we are well formed
+            n = info_line[5:].find(' ')
+            if n > 1 :
+                line_number = int(info_line[5:][:n])
+
+                for xxx in self.line_list.line_list :
+                    if xxx[0] >= self.line_list.EndOfTheWorld :
+                        # We reached the very end of the list, with no joy
+                        self.current_trapped_routine = ""
+                        break;
+                    if xxx[0] > line_number :
+                        # We've gotten past line_number, so the prior entry
+                        # was the one we wanted
+                        break;
+                    # Keep looking
+                    self.current_trapped_routine = xxx[1]
+
     def ProcessDisplayMode(self,args) :
         # Make sure the current display mode is the same as the session mode
         self.current_display_mode = self.sticky_display_mode 
@@ -2738,6 +2765,7 @@ class CPrintWorker() :
                 print("'print/v4' : two-line display with name, variable, and pic-string")
                 print("'print/v'  : same as /v4")
                 print("'print/vd' or print/d : debug output")
+                print("'print/m'  : generate output compatible with '-list-stack-variables --simple-values'")
                 print("default v-level can be set with the environment variable CPRINT_V=<n>")
                 args = [""]
                 return args
@@ -2746,6 +2774,8 @@ class CPrintWorker() :
             if args[0] == '/d' :
                 self.current_display_mode = 'd'
                 args.pop(0)
+            elif args[0] == '/m' :
+                self.machine_interface_mode = True
             elif args[0] == '/v' :
                 self.current_display_mode = '4'
                 args.pop(0)
@@ -2809,22 +2839,8 @@ class CPrintWorker() :
         if len(args) == 1 :
             if args[0] == '*' :
                 # If the single argument is an asterisk, then
-                # he's looking for help with program names
-                if len(self.var_trie.program_ids) == 1 :
-                    # There is exactly one program-id in our list of 
-                    # program-ids, so show him those variables
-                    args[0] = list(self.var_trie.program_ids)[0]
-                else :
-                    # Make short_term_memory a list of program-ids
-                    self.short_term_memory = sorted(self.var_trie.program_ids)
-
-                    # And display those program-ids:
-                    line_counter = 1
-                    for prog_id in self.short_term_memory :
-                        print(line_counter, prog_id)
-                        line_counter += 1
-                    # Make sure we don't process the '*' any further
-                    args = []
+                # he is asking for a list of variables and values:
+                args[0] = list(self.current_trapped_routine)
             
             elif args[0].isdigit() :
                 # if the single argument is a number, then he is looking
@@ -2896,6 +2912,7 @@ class CWatchWorker() :
     def __init__(self):
         self.var_trie = VarTrie()
         self.current_source_file = ""
+        self.current_trapped_routine = ""
         self.short_term_memory = []
         self.line_list = LineList()
         self.current_display_mode = "0"
@@ -2959,6 +2976,30 @@ class CWatchWorker() :
             # There isn't a current source file.
             self.current_source_file = ""
 
+    def ProcessInfoLineW(self, info_line) :
+        """ Figures out which routine we are currently trapped in"""
+
+        # Info line should start with "Line xxx "
+        self.current_trapped_routine = ""
+
+        if info_line[0:5] == "Line " :
+            # So far we are well formed
+            n = info_line[5:].find(' ')
+            if n > 1 :
+                line_number = int(info_line[5:][:n])
+
+                for xxx in self.line_list.line_list :
+                    if xxx[0] >= self.line_list.EndOfTheWorld :
+                        # We reached the very end of the list, with no joy
+                        self.current_trapped_routine = ""
+                        break;
+                    if xxx[0] > line_number :
+                        # We've gotten past line_number, so the prior entry
+                        # was the one we wanted
+                        break;
+                    # Keep looking
+                    self.current_trapped_routine = xxx[1]
+
     def SetTheWatchpoint(self,payload : CobolVariable()) :
         the_address = payload.GetTheAddress(self.line_list)
 
@@ -2988,22 +3029,8 @@ class CWatchWorker() :
         if len(args) == 1 :
             if args[0] == '*' :
                 # If the single argument is an asterisk, then
-                # he's looking for help with program names
-                if len(self.var_trie.program_ids) == 1 :
-                    # There is exactly one program-id in our list of 
-                    # program-ids, so show him those variables
-                    args[0] = list(self.var_trie.program_ids)[0]
-                else :
-                    # Make short_term_memory a list of program-ids
-                    self.short_term_memory = sorted(self.var_trie.program_ids)
-
-                    # And display those program-ids:
-                    line_counter = 1
-                    for prog_id in self.short_term_memory :
-                        print(line_counter, prog_id)
-                        line_counter += 1
-                    # Make sure we don't process the '*' any further
-                    args = []
+                # he's looking for a list of variables
+                args[0] = list(self.current_trapped_routine)
             
             elif args[0].isdigit() :
                 # if the single argument is a number, then he is looking
@@ -3068,13 +3095,15 @@ if 'gdb' in sys.modules :
 
         def __init__ (self):
             super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
-            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 0.7.4]')
+            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 0.8.0]')
             self.Worker = CPrintWorker()
 
         def invoke (self, arguments, from_tty):
             # pick up the name of the current source file
             info_source = gdb.execute("info source",False,True)
             self.Worker.ProcessInfoSource(info_source)
+            info_line = gdb.execute("info line",False,True)
+            self.Worker.ProcessInfoLine(info_line)
             self.Worker.ProcessArguments(arguments)
 
     class CWatch (gdb.Command) :
@@ -3089,6 +3118,8 @@ if 'gdb' in sys.modules :
             # pick up the name of the current source file
             info_source = gdb.execute("info source",False,True)
             self.Worker.ProcessInfoSourceW(info_source)
+            info_line = gdb.execute("info line",False,True)
+            self.Worker.ProcessInfoLineW(info_line)
             self.Worker.ProcessArgumentsW(arguments)
             
 if 'gdb' not in sys.modules:
@@ -3097,12 +3128,14 @@ if 'gdb' not in sys.modules:
     Worker = CPrintWorker()
     #Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
     #Worker.ProcessInfoSource(r"|Located in Y:\cobol\cbl-gdb\selfcheck\program_under_test.cbl ")
-    Worker.ProcessInfoSource(r"|Located in Y:\cobol\cbl-gdb\samples\ref_test_5\rtest.cbl ")
-    Worker.ProcessArguments("VAR")
+    Worker.ProcessInfoSource(r"|Located in Y:\cobol\cbl-gdb\samples\ref_test_1\rtest.cbl ")
+    Worker.ProcessInfoLine(r"Line 34 ")
+    Worker.ProcessArguments("p *")
     #Worker.ProcessArguments("V=.0000999999999")
 
 #    WWorker = CWatchWorker()
 #    WWorker.ProcessInfoSourceW(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
+#    Worker.ProcessInfoLineW(r"Line 34 ")
 #    WWorker.ProcessArgumentsW("*")
     pass
 else:                
