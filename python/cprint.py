@@ -154,6 +154,34 @@ def FlagLeadingZeroes(s) :
             z = '0'
     return r
 
+def MachineInterfaceBody(s) :
+    ### convert display_body for machine interface:
+    body = s
+    body_length = 0
+    is_quoted = False
+
+    # Strip off leading and trailing square brackets, which is what sometimes
+    # get before some variable types (e.g., file records) are initialized
+    #if len(body) >=2 and body[0] == '[' :
+    #    body = body[1:-1]   
+
+    # Strip off leading and trailing double-quotes
+    if len(body) >=2 and body[0] == '"' :
+        is_quoted = True
+        body = body[1:-1]   
+
+    # Whatever is left is now the actual number of characters
+    body_length = len(body)
+
+    # Prefix double-quotes and backslashes with backslashes:
+    temp = ""
+    for ch in body :
+        if ch == '"'  or ch == '\\':
+            temp += '\\'
+        temp += ch
+
+    return body , body_length
+
 class VarTrieNode() :
     def __init__(self):
         self.parent = None
@@ -605,6 +633,7 @@ class CobolVariable() :
         self.AttrScale  = 0
         self.AttrFlags  = 0 
 
+        self.location   = ""            # This is Base + Offset as reported by GDB
         self.data       = []            # list of ListSize bytes
 
         self.decimal_point = '.'        # Eventually we are going to have to
@@ -952,6 +981,7 @@ class CobolVariable() :
         
     def FetchVariableData(self, line_list : LineList(), show_failure ) :
         data_string = None
+        self.location = ""
         self.data = []
         self.display_body = ""
         self.display_pic = ""
@@ -1054,9 +1084,15 @@ class CobolVariable() :
             print("We don't know how to handle",self.Section)
             return
 
-        #print("Here is our data_string: ", data_string)
         if data_string != None :
             bytes = data_string.split()
+
+            if len(bytes) > 0 :
+                self.location = bytes[0]
+                n = self.location.find(':')
+                if n > -1 :
+                    self.location = self.location[0:n]
+
             for byte in bytes :
                 if len(byte) != 4 :
                     # We are ignoring anything that's not a single-byte 0x.. 
@@ -2721,31 +2757,31 @@ class CPrintWorker() :
             # There isn't a current source file.
             self.current_source_file = ""
 
-    def ProcessInfoLine(self, info_line) :
+    def ProcessInfoStack(self, info_stack) :
         """ Figures out which routine we are currently trapped in"""
 
         # Info line should start with "Line xxx "
         self.current_trapped_routine = ""
 
-        if info_line[0:5] == "Line " :
-            # So far we are well formed
-            n = info_line[5:].find(' ')
-            if n > 1 :
-                line_number = int(info_line[5:][:n])
+        m = info_stack.find('\n')
+        if m > -1 :
+            info_stack = info_stack[:m]
 
-                for xxx in self.line_list.line_list :
-                    if xxx[0] >= self.line_list.EndOfTheWorld :
-                        # We reached the very end of the list, with no joy
-                        self.current_trapped_routine = ""
-                        break;
-                    if xxx[0] > line_number :
-                        # We've gotten past line_number, so the prior entry
-                        # was the one we wanted
-                        break;
-                    # Keep looking
-                    self.current_trapped_routine = xxx[1]
+        m = info_stack.find(':')
+        if(m > -1) :
+            # So far we are well formed
+            line_number = int(info_stack[m+1:])
+
+            for xxx in self.line_list.line_list :
+                if xxx[0] > line_number :
+                    # We've gotten past line_number, so the prior entry
+                    # was the one we wanted
+                    break;
+                # Keep looking
+                self.current_trapped_routine = xxx[1]
 
     def ProcessDisplayMode(self,args) :
+        self.machine_interface_mode = False
         # Make sure the current display mode is the same as the session mode
         self.current_display_mode = self.sticky_display_mode 
 
@@ -2765,7 +2801,7 @@ class CPrintWorker() :
                 print("'print/v4' : two-line display with name, variable, and pic-string")
                 print("'print/v'  : same as /v4")
                 print("'print/vd' or print/d : debug output")
-                print("'print/m'  : generate output compatible with '-list-stack-variables --simple-values'")
+                print("'print/m'  : generate output compatible with '-stack-list-variables --simple-values'")
                 print("default v-level can be set with the environment variable CPRINT_V=<n>")
                 args = [""]
                 return args
@@ -2776,6 +2812,7 @@ class CPrintWorker() :
                 args.pop(0)
             elif args[0] == '/m' :
                 self.machine_interface_mode = True
+                args.pop(0)
             elif args[0] == '/v' :
                 self.current_display_mode = '4'
                 args.pop(0)
@@ -2836,11 +2873,13 @@ class CPrintWorker() :
         args = self.ProcessDisplayMode(args)
 
         payload_number = None
+        pstar = False
         if len(args) == 1 :
             if args[0] == '*' :
+                pstar = True
                 # If the single argument is an asterisk, then
                 # he is asking for a list of variables and values:
-                args[0] = list(self.current_trapped_routine)
+                args[0] = self.current_trapped_routine
             
             elif args[0].isdigit() :
                 # if the single argument is a number, then he is looking
@@ -2871,22 +2910,67 @@ class CPrintWorker() :
                     # There's only one possibility, which is nice and simple.
                     # We'll just move ahead and process it.
                     payload_number = possibilities[0]
-                elif len(possibilities) > 1 :
+                elif len(possibilities) > 1 or (len(possibilities) > 0 and pstar) :
                     # There are multiple possibilities.  Load them into
                     # short-term memory:
                     self.short_term_memory = possibilities
 
-                    # and show them to our user
-                    line_counter = 1
-                    for payload_index in possibilities :
-                        payload = self.var_trie.storage_list[payload_index]
-                        payload.FetchVariableData(self.line_list , False)
-                        s = "{0:2} : ".format(line_counter)
-                        s += payload.display_name
-                        s += " : "
-                        s += payload.display_body
+                    if self.machine_interface_mode :
+                        # This is machine interface mode
+                        # Our mission is to emulate the 
+                        # '-stack-list-variables --simple-values'
+
+                        s = "variables=["
+                        for payload_index in possibilities :
+                            payload = self.var_trie.storage_list[payload_index]
+                            payload.FetchVariableData(self.line_list , False)
+
+                            name = payload.display_name;
+                            n = name.find(' ')
+                            if n > -1 :
+                                name = name[n+1:]
+                            n = name.find(' ')
+                            if n > -1 :
+                                name = name[:n]
+
+                            # For testing, end the name at the first slash
+                            n = name.find('/')
+                            if n > -1 :
+                                name = name[:n]
+
+                            body , body_length = MachineInterfaceBody(payload.display_body)
+
+                            s += '{name="'
+                            s += name
+                            #s += payload.Base
+                            s += '"'
+
+                            s += ',type="char *"'
+
+                            s += r',value="'
+                            s += payload.location 
+                            s += r' \"'
+                            s += body
+                            s += r'\""},'
+                        if s[-1] == ',' :
+                            s = s[:-1]  # Strip off final comma
+                        s += ']'
                         print(s)
-                        line_counter += 1
+
+                    else :
+                        # This is human-interactive mode
+                        # and show them to our user
+                        line_counter = 1
+                        for payload_index in possibilities :
+                            payload = self.var_trie.storage_list[payload_index]
+                            payload.FetchVariableData(self.line_list , False)
+                            s = "{0:2} : ".format(line_counter)
+                            s += payload.display_name
+                            s += " : "
+                            s += payload.display_body
+                            print(s)
+                            line_counter += 1
+                    payload_number = None
 
         # At this point, if we have a single payload, it's time to show
         # that to our user:
@@ -2903,8 +2987,14 @@ class CPrintWorker() :
             # since short-term-memory was established
             payload.FetchVariableData(self.line_list , True)
 
-            # And display the variable according to the current list v-level
-            self.FormattedDisplay(payload)
+            if self.machine_interface_mode :
+                body , body_length = MachineInterfaceBody(payload.display_body)
+                s = "value=" + body
+                print(s)
+            else :
+                # Human-interface:
+                # And display the variable according to the current list v-level
+                self.FormattedDisplay(payload)
 
 class CWatchWorker() :
     """Does most of the non-gdb work of CWatch()"""
@@ -2976,29 +3066,28 @@ class CWatchWorker() :
             # There isn't a current source file.
             self.current_source_file = ""
 
-    def ProcessInfoLineW(self, info_line) :
+    def ProcessInfoStackW(self, info_stack) :
         """ Figures out which routine we are currently trapped in"""
 
         # Info line should start with "Line xxx "
         self.current_trapped_routine = ""
 
-        if info_line[0:5] == "Line " :
-            # So far we are well formed
-            n = info_line[5:].find(' ')
-            if n > 1 :
-                line_number = int(info_line[5:][:n])
+        m = info_stack.find('\n')
+        if m > -1 :
+            info_stack = info_stack[:m]
 
-                for xxx in self.line_list.line_list :
-                    if xxx[0] >= self.line_list.EndOfTheWorld :
-                        # We reached the very end of the list, with no joy
-                        self.current_trapped_routine = ""
-                        break;
-                    if xxx[0] > line_number :
-                        # We've gotten past line_number, so the prior entry
-                        # was the one we wanted
-                        break;
-                    # Keep looking
-                    self.current_trapped_routine = xxx[1]
+        m = info_stack.find(':')
+        if(m > -1) :
+            # So far we are well formed
+            line_number = int(info_stack[m+1:])
+
+            for xxx in self.line_list.line_list :
+                if xxx[0] > line_number :
+                    # We've gotten past line_number, so the prior entry
+                    # was the one we wanted
+                    break;
+                # Keep looking
+                self.current_trapped_routine = xxx[1]
 
     def SetTheWatchpoint(self,payload : CobolVariable()) :
         the_address = payload.GetTheAddress(self.line_list)
@@ -3102,8 +3191,8 @@ if 'gdb' in sys.modules :
             # pick up the name of the current source file
             info_source = gdb.execute("info source",False,True)
             self.Worker.ProcessInfoSource(info_source)
-            info_line = gdb.execute("info line",False,True)
-            self.Worker.ProcessInfoLine(info_line)
+            info_stack = gdb.execute("info stack",False,True)
+            self.Worker.ProcessInfoStack(info_stack)
             self.Worker.ProcessArguments(arguments)
 
     class CWatch (gdb.Command) :
@@ -3118,24 +3207,30 @@ if 'gdb' in sys.modules :
             # pick up the name of the current source file
             info_source = gdb.execute("info source",False,True)
             self.Worker.ProcessInfoSourceW(info_source)
-            info_line = gdb.execute("info line",False,True)
-            self.Worker.ProcessInfoLineW(info_line)
+            info_stack = gdb.execute("info stack",False,True)
+            self.Worker.ProcessInfoStackW(info_stack)
             self.Worker.ProcessArgumentsW(arguments)
             
 if 'gdb' not in sys.modules:
     # I debug with Visual Studio in Windows, which doesn't provide a gdb object.
     # Test code goes here
     Worker = CPrintWorker()
-    #Worker.ProcessInfoSource(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
-    #Worker.ProcessInfoSource(r"|Located in Y:\cobol\cbl-gdb\selfcheck\program_under_test.cbl ")
-    Worker.ProcessInfoSource(r"|Located in Y:\cobol\cbl-gdb\samples\ref_test_1\rtest.cbl ")
-    Worker.ProcessInfoLine(r"Line 34 ")
-    Worker.ProcessArguments("p *")
+    #Worker.ProcessInfoSource("|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
+    #Worker.ProcessInfoSource("|Located in Y:\cobol\cbl-gdb\selfcheck\program_under_test.cbl ")
+    #Worker.ProcessInfoSource("|Located in Y:\cobol\cbl-gdb\samples\ref_test_1\rtest.cbl ")
+    #Worker.ProcessInfoStack("Line 60 ")
+    Worker.ProcessInfoSource("|Located in Y:\cobol\cbl-gdb\samples\optfde01\optfde01.cbl ")
+    Worker.ProcessInfoStack("Line:92\n")
+    Worker.ProcessArguments("/m *")
+
+#    Worker.ProcessArguments("*")
+#    Worker.ProcessArguments("/m *")
+#    Worker.ProcessArguments("/m my-counters/working-data/optfde01")
     #Worker.ProcessArguments("V=.0000999999999")
 
 #    WWorker = CWatchWorker()
-#    WWorker.ProcessInfoSourceW(r"|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
-#    Worker.ProcessInfoLineW(r"Line 34 ")
+#    WWorker.ProcessInfoSourceW("|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
+#    Worker.ProcessInfoStackW("Line 34 ")
 #    WWorker.ProcessArgumentsW("*")
     pass
 else:                
