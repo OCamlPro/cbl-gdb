@@ -2925,16 +2925,20 @@ class CPrintWorker() :
                             payload = self.var_trie.storage_list[payload_index]
                             payload.FetchVariableData(self.line_list , False)
 
-                            name = payload.display_name;
+                            name = ""
+                            name += payload.display_name;
                             n = name.find(' ')
                             if n > -1 :
-                                name = name[n+1:]
+                                name = name[:n] + '-' + name[n+1:]
                             n = name.find(' ')
                             if n > -1 :
                                 name = name[:n]
 
-                            # For testing, end the name at the first slash
-                            n = name.find('/')
+                            # Everything after the final slash is the program
+                            # name, which is redundant and takes up valuable
+                            # screen real estate.  Clear it out.
+
+                            n = name.rfind('/')
                             if n > -1 :
                                 name = name[:n]
 
@@ -2942,7 +2946,6 @@ class CPrintWorker() :
 
                             s += '{name="'
                             s += name
-                            #s += payload.Base
                             s += '"'
 
                             s += ',type="char *"'
@@ -2989,7 +2992,8 @@ class CPrintWorker() :
 
             if self.machine_interface_mode :
                 body , body_length = MachineInterfaceBody(payload.display_body)
-                s = "value=" + body
+
+                s = payload.display_name + " set to " + body
                 print(s)
             else :
                 # Human-interface:

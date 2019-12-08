@@ -305,6 +305,15 @@ export class MI2 extends EventEmitter implements IBackend {
 					retval += ch ;
 					}
 				}
+				temp = retval;
+				retval = "";
+				for(var i=0; i<temp.length; i++) {
+					var ch = temp.charAt(i);
+					if( ch == '/'){
+						ch = '/';   // '\u203F'; // undertie
+					}
+					retval += ch ;
+				}
 				//console.log("(MI)", retval);
 			}
 		}
@@ -579,11 +588,17 @@ export class MI2 extends EventEmitter implements IBackend {
 		});
 	}
 
-	changeVariable(name: string, rawValue: string): Thenable<any> {
+	changeVariableOriginal(name: string, rawValue: string): Thenable<any> {
 		if (trace)
 			this.log("stderr", "changeVariable");
 		return this.sendCommand("gdb-set var " + name + "=" + rawValue);
 	}
+
+	changeVariable(name: string, rawValue: string): Thenable<any> {
+		if (trace)
+			this.log("stderr", "changeVariable");
+			return this.sendStraightCommand("p/m " + name.substr(3) + "=" + rawValue);
+		}
 
 	loadBreakPoints(breakpoints: Breakpoint[]): Thenable<[boolean, Breakpoint][]> {
 		if (trace)
@@ -854,7 +869,7 @@ export class MI2 extends EventEmitter implements IBackend {
 	}
 
 	sendUserInput(command: string, threadId: number = 0, frameLevel: number = 0): Thenable<any> {
-		if (command.startsWith("-")) {
+	if (command.startsWith("-")) {
 			return this.sendCommand(command.substr(1));
 		} else {
 			return this.sendCliCommand(command, threadId, frameLevel);
@@ -872,6 +887,14 @@ export class MI2 extends EventEmitter implements IBackend {
 	}
 
 	async sendCliCommand(command: string, threadId: number = 0, frameLevel: number = 0) {
+		// For some reason, somebody, somewhere, is sending a console command "process.pid", which
+		// just confuses everybody and creates an error message the user can see.
+		// Let's nip this one in the bud.
+		
+		if( command == "process.pid" ){
+			return;
+		}
+
 		let miCommand = "interpreter-exec ";
 		if (threadId != 0) {
 			miCommand += `--thread ${threadId} --frame ${frameLevel} `;

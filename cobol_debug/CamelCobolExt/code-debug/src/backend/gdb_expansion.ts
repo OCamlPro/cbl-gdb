@@ -1,7 +1,7 @@
 import { MINode } from "./mi_parse";
 
-const resultRegex = /^([a-zA-Z_\-][a-zA-Z0-9_\-]*|\[\d+\])\s*=\s*/;
-const variableRegex = /^[a-zA-Z_\-][a-zA-Z0-9_\-]*/;
+const resultRegex = /^([0-9a-zA-Z_\-][a-zA-Z0-9_\-\/]*|\[\d+\])\s*=\s*/;  // Dubner added \/ so that a COBOL A of B could be represented A/b
+const variableRegex = /^[0-9a-zA-Z_\-][a-zA-Z0-9_\-\/]*/;  			   // Dubner added \/ so that a COBOL A of B could be represented A/b
 const errorRegex = /^\<.+?\>/;
 const referenceStringRegex = /^(0x[0-9a-fA-F]+\s*)"/;
 const referenceRegex = /^0x[0-9a-fA-F]+/;
