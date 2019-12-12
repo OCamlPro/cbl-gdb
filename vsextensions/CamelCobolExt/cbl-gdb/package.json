@@ -7,7 +7,7 @@
 		"COBOL",
 		"debug"
 	],
-	"version": "0.8.5",
+	"version": "0.8.6",
 	"publisher": "CamelianSystems",
 	"icon": "images/CamelianCobol.png",
 	"engines": {
