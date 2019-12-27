@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Build ${file} with cobc.cobst/obmod, debug with gdb",
+            "name": "Build ${file} with cobc.cobst/obmod, debug with debugServer",
             "type": "node",
             "request": "launch",
             "skipFiles": ["<node_internals>/**"],
@@ -13,6 +13,14 @@
             "program": "${workspaceRoot}/optfde01",
             "cwd": "${workspaceFolder}",
             "debugServer": 4711
-        }
+        },
+        {
+            "name": "Build ${file} with cobc.cobst/obmod, debug with gdb",
+            "type": "cbl-gdb",
+            "request": "launch",
+            "preLaunchTask": "make",
+            "program": "${workspaceRoot}/optfde01",
+            "cwd": "${workspaceFolder}"
+        }        
     ]
 }
