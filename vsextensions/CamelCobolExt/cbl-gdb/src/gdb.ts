@@ -3,6 +3,7 @@ import { DebugSession, InitializedEvent, TerminatedEvent, StoppedEvent, OutputEv
 import { DebugProtocol } from 'vscode-debugprotocol';
 import { MI2 } from "./backend/mi2/mi2";
 import { SSHArguments, ValuesFormattingMode } from './backend/backend';
+import { stringify } from 'querystring';
 
 export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments  {
 	cwd: string;
@@ -21,6 +22,7 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 
 export interface AttachRequestArguments extends DebugProtocol.AttachRequestArguments {
 	cwd: string;
+	solibs: string;
 	target: string;
 	gdbpath: string;
 	env: any;
@@ -122,7 +124,7 @@ class GDBDebugSession extends MI2DebugSession {
 		this.initDebugger();
 		this.quit = false;
 		this.attached = !args.remote;
-		this.needContinue = true;
+		this.needContinue = false;	// Dubner set this to false
 		this.isSSH = false;
 		this.debugReady = false;
 		this.setValuesFormattingMode(args.valuesFormatting);
@@ -166,7 +168,13 @@ class GDBDebugSession extends MI2DebugSession {
 					this.sendErrorResponse(response, 102, `Failed to attach: ${err.toString()}`);
 				});
 			} else {
-				this.miDebugger.attach(args.cwd, args.executable, args.target).then(() => {
+				var iexclause: string;
+				if( args.solibs !== undefined ) {
+					//iexclause = '-iex "set solib-search-path ' + args.solibs + ':."';
+					iexclause = args.solibs + ":.";
+				}
+
+				this.miDebugger.attach(args.cwd, args.executable, args.target, iexclause).then(() => {
 					if (args.autorun)
 						args.autorun.forEach(command => {
 							this.miDebugger.sendUserInput(command);

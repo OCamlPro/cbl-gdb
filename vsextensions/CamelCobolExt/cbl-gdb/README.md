@@ -22,3 +22,32 @@ There are a number of COBOL formatting extensions available at Microsoft's Exten
 
 You likely downloaded this extension in a package that includes a folder named `starter-cbl-gdb`.  Take a look in there for information about setting up a Visual Studio Code workspace for compiling, running, and debugging COBOL source code.
 
+## Attaching to existing processes
+
+If you are in the business of attaching to existing processes, you'll need an appropriate configuration in your launch.json file.  You'll need an `attach` configuration and an `inputs` section:
+
+```
+    "configurations": [
+        {
+            "name": "Attach to COBOL debugger",
+            "type": "cbl-gdb",
+            "request": "attach",
+            "cwd":"${workspaceFolder}",
+            "solibs":"${env:PRIM_LIBRARY_PATH}",
+            "target": "${input:attachtopid}",
+        }
+    ],
+    "inputs": [
+        {
+            "id": "attachtopid",
+            "type": "promptString",
+            "description": "Enter the PID to attach to",
+            "default": ""
+        }
+    ]
+```
+The above methodology is demonstrated in CamelCobolExt/samples/launchso
+
+When you execute `Debug/Start Debugging (F5)` and choose `Attach to COBOL debugger`,you will be asked `Enter the PID to attach to`.  You'll need to know the PID (perhaps the application will have been designed to tell you what its PID is, or you'll have found the PID through ps(1) or pgrep(1)
+
+Take special note of the `"solibs"` variable.  As described here it gets set from a global environment variable.  It doesn't have to be set that way, but if the application involves dynamically-loaded shared libraries, the `"solibs"' variable somehow has to be set to a colon-separated list of folders that include the location of your libraries.  If it isn't set, then the instance of gdb launched by Visual Studio Code won't be able to find the symbols for those libraries.

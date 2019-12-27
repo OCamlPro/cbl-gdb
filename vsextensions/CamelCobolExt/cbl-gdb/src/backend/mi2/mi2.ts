@@ -203,7 +203,7 @@ export class MI2 extends EventEmitter implements IBackend {
 		return cmds;
 	}
 
-	attach(cwd: string, executable: string, target: string): Thenable<any> {
+	attach(cwd: string, executable: string, target: string, iexclause: string): Thenable<any> {
 		return new Promise((resolve, reject) => {
 			let args = [];
 			if (executable && !nativePath.isAbsolute(executable))
@@ -214,15 +214,20 @@ export class MI2 extends EventEmitter implements IBackend {
 			if (target.startsWith("extended-remote")) {
 				isExtendedRemote = true;
 				args = this.preargs;
-			} else
+			} else{
+				if( iexclause != undefined ){
+					args = args.concat("-iex");
+					args = args.concat("set 'solib-search-path " + iexclause + "'")
+				}
 				args = args.concat([executable, target], this.preargs);
+			}
 			this.process = ChildProcess.spawn(this.application, args, { cwd: cwd, env: this.procEnv });
 			this.process.stdout.on("data", this.stdout.bind(this));
 			this.process.stderr.on("data", this.stderr.bind(this));
 			this.process.on("exit", (() => { this.emit("quit"); }).bind(this));
 			this.process.on("error", ((err) => { this.emit("launcherror", err); }).bind(this));
 			const commands = [
-				this.sendCommand("gdb-set target-async on"),
+				//this.sendCommand("gdb-set target-async on"), // Dubner eliminated this to prevent crashing
 				this.sendCommand("environment-directory \"" + escape(cwd) + "\"")
 			];
 			if (isExtendedRemote) {
@@ -877,7 +882,7 @@ export class MI2 extends EventEmitter implements IBackend {
 	}
 
 	sendRaw(raw: string) {
-		console.log("sendRaw():", raw);
+		//console.log("sendRaw():", raw);
 		if (this.printCalls)
 			this.log("log", raw);
 		if (this.isSSH)
