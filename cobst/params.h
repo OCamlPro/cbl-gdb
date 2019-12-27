@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 
-#define VERSION "0.8.6"
+#define VERSION "0.8.7"
 
 class FILENAME
 {

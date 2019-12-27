@@ -1,4 +1,4 @@
-# Development Notes 2019-12-10, Bob Dubner
+# Development Notes 2019-12-27, Bob Dubner
 
 This folder is for developing the cbl-dbg extension.  
 
@@ -15,7 +15,7 @@ sudo snap install --classic code-insiders
 ```
 	
 for the regular and bleeding-edge versions of Visual Studio Code.  You probably
-don't need the code-insiders version.
+don't need the bleeding-edge code-insiders version.
 
 I don't at what point npm was installed.  I do know that getting `vsce` to work
 involved running

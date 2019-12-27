@@ -2906,13 +2906,15 @@ class CPrintWorker() :
                 # There are one or more arguments.  Use our clever routine
                 # to come up with the possibilities:
                 possibilities = self.var_trie.GetListOfPossibilities(args)
-                if len(possibilities) == 1 :
-                    # There's only one possibility, which is nice and simple.
+                if len(possibilities) == 1 and not pstar:
+                    # There's only one possibility, and it wasn't a star. 
+                    # This is nice and simple.
                     # We'll just move ahead and process it.
                     payload_number = possibilities[0]
                 elif len(possibilities) > 1 or (len(possibilities) > 0 and pstar) :
-                    # There are multiple possibilities.  Load them into
-                    # short-term memory:
+                    # There are multiple possibilities, or there is one 
+                    # possibility found via a 'p *'.
+                    # Load them into short-term memory:
                     self.short_term_memory = possibilities
 
                     if self.machine_interface_mode :
@@ -3188,7 +3190,7 @@ if 'gdb' in sys.modules :
 
         def __init__ (self):
             super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
-            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 0.8.6]')
+            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 0.8.7]')
             self.Worker = CPrintWorker()
 
         def invoke (self, arguments, from_tty):
@@ -3223,8 +3225,9 @@ if 'gdb' not in sys.modules:
     #Worker.ProcessInfoSource("|Located in Y:\cobol\cbl-gdb\selfcheck\program_under_test.cbl ")
     #Worker.ProcessInfoSource("|Located in Y:\cobol\cbl-gdb\samples\ref_test_1\rtest.cbl ")
     #Worker.ProcessInfoStack("Line 60 ")
-    Worker.ProcessInfoSource("|Located in Y:\cobol\cbl-gdb\samples\optfde01\optfde01.cbl ")
-    Worker.ProcessInfoStack("Line:92\n")
+    Worker.ProcessInfoSource("|Located in Y:/cobol/cbl-gdb/samples/ref_test_0/rtest.cbl ")
+    Worker.ProcessInfoStack("Line:4\n")
+    Worker.ProcessArguments("*")
     Worker.ProcessArguments("/m *")
 
 #    Worker.ProcessArguments("*")
