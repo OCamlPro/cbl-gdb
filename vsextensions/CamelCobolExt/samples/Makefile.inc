@@ -26,8 +26,8 @@ COBC = cobc
 # These paths are established for local debugging.  Most likely the cobst and 
 # obmod executables will find their way into /usr/local/bin/ for production
 # purposes.  You Have Been Warned.
-COBST = /home/bob/projects/cobol/cbl-gdb/cobst/cobst
-OBMOD = /home/bob/projects/cobol/cbl-gdb/obmod/obmod
+COBST = ../../../../cobst/cobst
+OBMOD = ../../../../obmod/obmod
 
 all: $(project).x $(project) $(project).s
 

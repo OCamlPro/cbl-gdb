@@ -22,6 +22,8 @@ export interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArgum
 
 export interface AttachRequestArguments extends DebugProtocol.AttachRequestArguments {
 	cwd: string;
+	process_id: string;
+	ixscript: string;
 	solibs: string;
 	target: string;
 	gdbpath: string;
@@ -174,7 +176,7 @@ class GDBDebugSession extends MI2DebugSession {
 					iexclause = args.solibs + ":.";
 				}
 
-				this.miDebugger.attach(args.cwd, args.executable, args.target, iexclause).then(() => {
+				this.miDebugger.attach(args.cwd, args.executable, args.process_id, iexclause,args.ixscript).then(() => {
 					if (args.autorun)
 						args.autorun.forEach(command => {
 							this.miDebugger.sendUserInput(command);

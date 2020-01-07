@@ -5,24 +5,37 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Attach to debugServer",
+            "name": "Run Script",
+            "type": "cbl-gdb",
+            "request": "attach",
+            "cwd": "${workspaceFolder}",
+            "ixscript": "/home/bob/.prim_debug/gdb_launcher",
+        },
+        {
+            "name": "Attach to PID",
+            "type": "cbl-gdb",
+            "request": "attach",
+            "cwd": "${workspaceFolder}",
+            "solibs":"${env:PRIM_LIBRARY_PATH}",
+            "process_id": "${input:attachtopid}",
+        },
+        {
+            "name": "Script Server",
             "type": "node",
             "request": "attach",
             "cwd": "${workspaceFolder}",
-            "preLaunchTask": "setvar",
+            "ixscript": "/home/bob/.prim_debug/gdb_launcher",
             "debugServer": 4711,
-            "solibs":"${env:PRIM_LIBRARY_PATH}",
-            "target": "${input:attachtopid}",
         },
         {
-            "name": "Attach to COBOL debugger",
-            "type": "cbl-gdb",
+            "name": "PID Server",
+            "type": "node",
             "request": "attach",
-            "cwd":"${workspaceFolder}",
-            "preLaunchTask": "setvar",
+            "cwd": "${workspaceFolder}",
             "solibs":"${env:PRIM_LIBRARY_PATH}",
-            "target": "${input:attachtopid}",
-        }
+            "process_id": "${input:attachtopid}",
+            "debugServer": 4711,
+        },
     ],
     "inputs": [
         {

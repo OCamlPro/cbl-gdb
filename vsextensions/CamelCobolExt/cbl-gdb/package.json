@@ -7,7 +7,7 @@
 		"COBOL",
 		"debug"
 	],
-	"version": "0.8.7",
+	"version": "0.8.8",
 	"publisher": "CamelianSystems",
 	"icon": "images/CamelianCobol.png",
 	"engines": {
@@ -46,10 +46,10 @@
 				"configurationAttributes": {
 					"launch": {
 						"required": [
-							"target"
+							"program"
 						],
 						"properties": {
-							"target": {
+							"program": {
 								"type": "string",
 								"description": "Path of executable"
 							},
@@ -173,13 +173,14 @@
 						}
 					},
 					"attach": {
-						"required": [
-							"target"
-						],
 						"properties": {
-							"target": {
+							"process_id": {
 								"type": "string",
 								"description": "PID of running program or program name or connection arguments (eg :2345) if remote is true"
+							},
+							"ixscript": {
+								"type": "string",
+								"description": "Script to be executed by the GDB -ix switch"
 							},
 							"solibs":{
 								"type": "string",

@@ -12,15 +12,18 @@
             "preLaunchTask": "make",
             "program": "${workspaceRoot}/optfde01",
             "cwd": "${workspaceFolder}",
+            "arguments": "",
             "debugServer": 4711
         },
         {
-            "name": "Build ${file} with cobc.cobst/obmod, debug with gdb",
+            "name": "cobc/cobst/obmod build and debug",
             "type": "cbl-gdb",
             "request": "launch",
             "preLaunchTask": "make",
-            "program": "${workspaceRoot}/optfde01",
-            "cwd": "${workspaceFolder}"
-        }        
+            "program": "${workspaceFolder}/optfde01",
+            "cwd": "${workspaceFolder}",
+            "arguments": ""
+        }
+        
     ]
 }

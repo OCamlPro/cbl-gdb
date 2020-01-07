@@ -203,15 +203,17 @@ export class MI2 extends EventEmitter implements IBackend {
 		return cmds;
 	}
 
-	attach(cwd: string, executable: string, target: string, iexclause: string): Thenable<any> {
+	attach(cwd: string, executable: string, target: string, iexclause: string, ixscript:string): Thenable<any> {
 		return new Promise((resolve, reject) => {
 			let args = [];
-			if (executable && !nativePath.isAbsolute(executable))
+			if (executable && !nativePath.isAbsolute(executable)) {
 				executable = nativePath.join(cwd, executable);
-			if (!executable)
+			}
+			if (!executable && target) {
 				executable = "-p";
+			}
 			let isExtendedRemote = false;
-			if (target.startsWith("extended-remote")) {
+			if (target && target.startsWith("extended-remote")) {
 				isExtendedRemote = true;
 				args = this.preargs;
 			} else{
@@ -219,7 +221,18 @@ export class MI2 extends EventEmitter implements IBackend {
 					args = args.concat("-iex");
 					args = args.concat("set 'solib-search-path " + iexclause + "'")
 				}
-				args = args.concat([executable, target], this.preargs);
+
+				if( ixscript ) {
+					args = args.concat("-ix");
+					args = args.concat(ixscript);
+				}
+				if (executable) {
+					args = args.concat(executable);
+				}
+				if (target) {
+					args = args.concat(target);
+				}
+				args = args.concat(this.preargs);
 			}
 			this.process = ChildProcess.spawn(this.application, args, { cwd: cwd, env: this.procEnv });
 			this.process.stdout.on("data", this.stdout.bind(this));

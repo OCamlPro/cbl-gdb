@@ -4,8 +4,8 @@ project = elbarco
 .SUFFIXES:
 
 COBC = cobc
-COBST = cobst
-OBMOD = obmod
+COBST = ../../../../cobst/cobst
+OBMOD = ../../../../obmod/obmod
 
 .PHONY : all clean pregit stubby
 

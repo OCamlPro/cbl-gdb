@@ -7,6 +7,8 @@ all:
 	$(MAKE) -C samples
 	$(MAKE) -C picgen
 	$(MAKE) -C selfcheck
+	$(MAKE) -C optfde01
+	$(MAKE) -C vsextensions
 
 .PHONY : clean
 clean:
@@ -15,6 +17,8 @@ clean:
 	$(MAKE) -C samples clean
 	$(MAKE) -C picgen
 	$(MAKE) -C selfcheck clean
+	$(MAKE) -C optfde01 clean
+	$(MAKE) -C vsextensions clean
 
 .PHONY : install
 install:
