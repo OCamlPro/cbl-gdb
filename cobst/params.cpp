@@ -177,7 +177,7 @@ void OpenOrFail(std::ifstream &ifs,const std::string &fname,std::ios_base::openm
 {
     ifs.open(fname,mode);
     if(!ifs.is_open()) {
-        cerr << "Failed to open \"" << fname << "\"" << endl;
+        cerr << "Failed to open input file \"" << fname << "\"" << endl;
         cerr << "Error: " << strerror(errno) << endl;
         exit(1);
     }
@@ -187,7 +187,7 @@ void OpenOrFail(std::ofstream &ofs,const std::string &fname,std::ios_base::openm
 {
     ofs.open(fname,mode);
     if(!ofs.is_open()) {
-        cerr << "Failed to open \"" << fname << "\"" << endl;
+        cerr << "Failed to open output file \"" << fname << "\"" << endl;
         cerr << "Error: " << strerror(errno) << endl;
         exit(1);
     }
@@ -209,10 +209,12 @@ PARAMETERS GetParameters(int argc, char *argv[])
         switch (c) {
         case 'q':
             retval.quiet = true;
+            break;
         case 'v':
             cerr << "cobst: Cobol Symbol Table generator version: "
                  << VERSION << endl;
             exit(0);
+            break;
         case '?':
             fprintf (stderr, "Unknown option '-%c'.\n", optopt);
             exit(1);

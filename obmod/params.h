@@ -4,7 +4,7 @@
 #include <fstream>
 #include <vector>
 
-#define VERSION "0.8.8"
+#define VERSION "0.8.9"
 
 class FILENAME
 {

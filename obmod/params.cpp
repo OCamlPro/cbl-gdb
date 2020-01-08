@@ -187,7 +187,7 @@ void OpenOrFail(std::ifstream &ifs,const std::string &fname,std::ios_base::openm
 {
     ifs.open(fname,mode);
     if(!ifs.is_open()) {
-        cerr << "Failed to open \"" << fname << "\"" << endl;
+        cerr << "Failed to open input file \"" << fname << "\"" << endl;
         exit(1);
     }
 }
@@ -196,7 +196,7 @@ void OpenOrFail(std::ofstream &ofs,const std::string &fname,std::ios_base::openm
 {
     ofs.open(fname,mode);
     if(!ofs.is_open()) {
-        cerr << "Failed to open \"" << fname << "\"" << endl;
+        cerr << "Failed to open output file \"" << fname << "\"" << endl;
         exit(1);
     }
 }
