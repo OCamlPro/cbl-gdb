@@ -1,13 +1,1 @@
-*.c
-*.h
-*.lst
-*.cbl.lst
-*.txt
-*.i
-*.o
-*.tab
-*.x
-*.s
-rtest
-optfde01/optfde01
-optfde01/dd_output
+
