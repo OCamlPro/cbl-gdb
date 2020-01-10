@@ -5,9 +5,9 @@ free =
 # disable built-in rules:
 .SUFFIXES:
 
-COBC = /usr/local/bin/cobc
-COBST = /usr/local/bin/cobst
-OBMOD = /usr/local/bin/obmod
+COBC = cobc
+COBST = ../cobst/cobst
+OBMOD = ../obmod/obmod
 
 all: $(project) 
 
