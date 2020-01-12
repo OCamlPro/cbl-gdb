@@ -49,6 +49,7 @@ int main(int argc, char **argv)
     elf.InsertDebugScript("cprint.py");
 
     // Put the COBOL symbols into the elf segments
+
     elf.AugmentSymbolTable();
 
 #if 0

@@ -1386,14 +1386,18 @@ IndirectFormProcessing:
     return pdata - pdata_start;
 }
 
-size_t ELF::BuildAndInsertDie( size_t start_of_hole,
-                               size_t &form_strp_offset,
+size_t ELF::BuildAndAppendDie( size_t &form_strp_offset,
                                size_t &form_exprloc_offset,
                                SECTION_HEADER *debug_info,
                                SECTION_HEADER *relocs,
                                ULONGLONG abbreviation_index,
                                ...)
 {
+
+
+    // The DIE we create will replace the final zero entry;
+    size_t start_of_hole = debug_info->section_header.sh_size-1;
+
     CPROFILER;
     va_list valist;
     va_start(valist,abbreviation_index);
@@ -1421,155 +1425,19 @@ size_t ELF::BuildAndInsertDie( size_t start_of_hole,
     // .debug_info section.
 
     // Expand the .debug_info section by that many bytes.
-    // (ach[] is unimportant here; we'll copy those bytes to the end,
-    // but the next instruction will overwrite them)
     debug_info->AppendToRawData(ach,size_of_hole);
 
-    // Now, punch the hole into the middle of .debug_info:
-    memmove(debug_info->RawData()+end_of_hole,
-            debug_info->RawData()+start_of_hole,
-            debug_info->section_header.sh_size - end_of_hole
-           );
+    // Append a zero to our DIE, to replace the final zero DIE that we
+    // are about to overwrite
+    ach[size_of_hole+1] = 0;
 
-    // Fill that hole with the data we've just created:
+    // Copy our DIE (pluse one extra zero byte) over the existing
+    // final zero entry:
     memcpy(debug_info->RawData()+start_of_hole,
            ach,
-           size_of_hole);
-
-    // Here's where the code gets interesting.  We have to walk the
-    // entire .debug_info data block, DIE by DIE, looking for references
-    // like DW_AT_name, DW_AT_sibling, and DW_AT_abstract_origin, which
-    // refer to relative locations inside .debug_line.  When we find them,
-    // we have to adjust them.
-
-    // So, commence walking the debug_info data
-    CPCHAR cpdata = debug_info->RawData();
-
-    bDwarfIs64; // This will be re-established by GetSectionLength
-    ULONGLONG section_length = GetSectionLength(cpdata,bDwarfIs64);
-
-    CPCHAR cpdata_end = cpdata + section_length;
-    USHORT version = GetUshort(cpdata);
-    ULONGLONG debug_abbrev_offset = GetOffset(bDwarfIs64,cpdata);
-
-    UBYTE debug_info_address_size = GetUbyte(cpdata);
-
-    int nLevel = 0;
-    while(cpdata < cpdata_end) {
-        DIE die = GetNextDie(nLevel,cpdata,bDwarfIs64);
-
-        for(size_t i=0; i<die.Size(); i++) {
-            ATTRIBUTE_FORMAT_PAIR afp = die[i];
-            switch(afp.GetAT()) {
-            // These are the types we need to modify
-            case DW_AT_type:
-            case DW_AT_sibling:
-            case DW_AT_abstract_origin: {
-                switch(afp.GetForm()) {
-                // This is a type that might need modification
-                case DW_FORM_ref4: {
-                    ULONG *ploc = (ULONG *)(debug_info->RawData() + afp.GetLocationOfPayload());
-                    ULONG loc = *ploc;
-
-                    if( loc >= start_of_hole ) {
-                        // The specified location is at or after the
-                        // beginning of the hole we just made.  So,
-                        // we have to add the size of the hole to it.
-                        loc += (ULONG)size_of_hole;
-                        *ploc = loc;
-                    }
-
-                    break;
-                }
-                default:
-                    cout << "Forgive us, for we know not what we do!\n";
-                    break;
-                }
-                break;
-            }
-            }
-        }
-    }
+           size_of_hole+1);
 
     va_end(valist);
-
-#if 0
-    /*  Development note:  The following code allows for the insertion
-        of a DIE in the middle of the list of DIEs, because it modifies
-        the .rela.debug_info entries to match.  But if you do that, the
-        c_sym_to_relocation mapping in AugmentSymbolTable() has to be
-        modified as well.  Since at this writing I am trying to do away
-        with the need to insert in the middle (as opposed to just at the
-        very end) I have commented all this code out.  If everything works,
-        this code never be re-enabled.
-        */
-
-    // At this point, we calculated a new DIE of size_of_data, running from
-    // offset to end_of_hole.  Every DIE relative address pointing to something
-    // >= offset has been incremented by size_of_data.  And if there was a
-    // relocation in the new DIE, that's in relocs.
-
-    // So, now we need to scan the relocs entries and do the same kind of
-    // of compensation for the movement of the DIE entries, changing
-
-    Elf64_Rela *relocation_entry = (Elf64_Rela *)relocs->RawData();
-    Elf64_Rela *last_entry
-        = (Elf64_Rela *)(relocs->RawData() + relocs->section_header.sh_size);
-    while( relocation_entry < last_entry ) {
-        if( relocation_entry->r_offset >= end_of_hole ) {
-            size_t type = ELF64_R_TYPE(relocation_entry->r_info);
-            switch(type) {
-            case 0x0A: {
-                cout << "Type A - ";
-                ULONG *ptarget = (ULONG *)(debug_info->RawData() + relocation_entry->r_offset + size_of_hole);
-
-                if( relocation_entry->r_addend != *ptarget) {
-                    exit(1);
-                }
-
-                cout << "Modifying " << hex << relocation_entry->r_offset
-                     << " to be " << relocation_entry->r_offset + size_of_hole
-                     << " (" << relocation_entry->r_addend << ") ";
-                cout << hex << *ptarget;
-                cout << endl;
-
-                if( relocation_entry->r_addend != *ptarget) {
-                    exit(1);
-                }
-                relocation_entry->r_offset += size_of_hole;
-                break;
-            }
-            case 0x01: {
-                cout << "Type 1 - ";
-                ULONGLONG *ptarget = (ULONGLONG *)(debug_info->RawData() + relocation_entry->r_offset + size_of_hole);
-
-                if( relocation_entry->r_addend != *ptarget) {
-                    exit(1);
-                }
-
-                cout << "Modifying " << hex << relocation_entry->r_offset
-                     << " to be " << relocation_entry->r_offset + size_of_hole
-                     << " (" << relocation_entry->r_addend << ") ";
-                cout << hex << *ptarget;
-                cout << endl;
-
-                if( relocation_entry->r_addend != *ptarget) {
-                    exit(1);
-                }
-                relocation_entry->r_offset += size_of_hole;
-                break;
-            }
-            default:
-                cout << "What in tarnation? " << type << endl;
-                exit(1);
-                break;
-
-            }
-
-        }
-        relocation_entry++;
-    }
-#endif
 
     return start_of_hole;
 }
@@ -1585,27 +1453,39 @@ void ELF::CreateRelocationFor(SECTION_HEADER *debug_info,
     // location_of_at_location, and duplicates it as pointing to
     // form_exprloc_offset
 
-    // Easy-peasy. Slowish, but easy-peasy.  When optimization is no longer
-    // premature, consider hashing the relocation entry offsets to speed
-    // this sucker up!
-
-    if( *(UBYTE *)(debug_info->RawData() + location_of_at_location) EQ 9 ) {
-        // Okay, so that was magical.  We only know how to handle the
-        // 9-byte 0x03 positive eight-byte number entries
-
-        location_of_at_location += 2;   // Skip past the 0x09 and 0x03
-
+    // In order to avoid an O(n x m) situation, we're going to use
+    // a hash table of relocation entries by rel_entry.r_offset
+    if( hash_by_r_offset.size() EQ 0  ) {
+        // First time through here, build the hash table
         Elf64_Rela *relocation_entries = (Elf64_Rela *)relocs->RawData();
         size_t relocation_entry_count
             = relocs->section_header.sh_size/relocs->section_header.sh_entsize;
         size_t relocation_index;
         for(relocation_index=0; relocation_index<relocation_entry_count; relocation_index++ ) {
             Elf64_Rela rel_entry = relocation_entries[relocation_index];
-            if( rel_entry.r_offset EQ location_of_at_location) {
-                rel_entry.r_offset = form_exprloc_offset;
-                rel_entry.r_addend += additional_offset;
-                relocs->AppendToRawData((const char *)&rel_entry,sizeof(rel_entry));
-            }
+            hash_by_r_offset[rel_entry.r_offset] = relocation_index;
+        }
+    }
+
+    if( *(UBYTE *)(debug_info->RawData() + location_of_at_location) EQ 9 ) {
+        // Okay, so this is magical.  We only know how to handle the
+        // 9-byte 0x03 positive eight-byte number entries.
+
+        // But we handle them *beautifully*.
+
+        location_of_at_location += 2;   // Skip past the 0x09 and 0x03
+
+        std::unordered_map<Elf64_Addr,size_t>::const_iterator it =
+            hash_by_r_offset.find(location_of_at_location);
+
+        if( it != hash_by_r_offset.end() ) {
+            size_t relocation_index = it->second;
+
+            Elf64_Rela *relocation_entries = (Elf64_Rela *)relocs->RawData();
+            Elf64_Rela rel_entry = relocation_entries[relocation_index];
+            rel_entry.r_offset = form_exprloc_offset;
+            rel_entry.r_addend += additional_offset;
+            relocs->AppendToRawData((const char *)&rel_entry,sizeof(rel_entry));
         }
     }
 }
@@ -1903,8 +1783,7 @@ void ELF::AugmentSymbolTable()
     size_t form_exprloc_offset;
 
     size_t offset_of_base_type
-        = BuildAndInsertDie(debug_info->section_header.sh_size-1,   // Insert before final zero entry
-                            form_strp_offset,
+        = BuildAndAppendDie(form_strp_offset,
                             form_exprloc_offset,
                             debug_info,
                             relocs,
@@ -1946,8 +1825,7 @@ void ELF::AugmentSymbolTable()
                     = AddToStringTable(string_section,full_name);
 
                 size_t die_location
-                    = BuildAndInsertDie(debug_info->section_header.sh_size-1, // Insert before final zero entry
-                                        form_strp_offset,
+                    = BuildAndAppendDie(form_strp_offset,
                                         form_exprloc_offset,
                                         debug_info,
                                         relocs,
@@ -1993,8 +1871,7 @@ void ELF::AugmentSymbolTable()
                     = AddToStringTable(string_section,full_name);
 
                 size_t die_location
-                    = BuildAndInsertDie(debug_info->section_header.sh_size-1, // Insert before final zero entry
-                                        form_strp_offset,
+                    = BuildAndAppendDie(form_strp_offset,
                                         form_exprloc_offset,
                                         debug_info,
                                         relocs,
@@ -2026,8 +1903,7 @@ void ELF::AugmentSymbolTable()
                 = AddToStringTable(string_section,full_name);
 
             size_t die_location
-                = BuildAndInsertDie(debug_info->section_header.sh_size-1, // Insert before final zero entry
-                                    form_strp_offset,
+                = BuildAndAppendDie(form_strp_offset,
                                     form_exprloc_offset,
                                     debug_info,
                                     relocs,

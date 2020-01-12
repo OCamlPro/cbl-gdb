@@ -127,6 +127,7 @@ private:
     LNS_STATE_MACHINE lns_state_machine;
     COBST_SYMBOLS cobst_symbols;
     DIES debug_info_dies;
+    std::unordered_map<Elf64_Addr,size_t>hash_by_r_offset;
 
     void ReadInElfHeader(std::ifstream &ifs);
     void ReadInSectionHeaders(std::ifstream &ifs);
@@ -142,8 +143,7 @@ private:
                     size_t abbreviation_index,
                     bool   bDwarfIs64,
                     va_list valist);
-    size_t BuildAndInsertDie( size_t start_of_hole,
-                              size_t &form_strp_offset,
+    size_t BuildAndAppendDie( size_t &form_strp_offset,
                               size_t &form_exprloc_offset,
                               SECTION_HEADER *debug_info,
                               SECTION_HEADER *relocs,
