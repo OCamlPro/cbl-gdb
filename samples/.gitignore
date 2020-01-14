@@ -1,4 +1,5 @@
 *.c
+*.c.*
 *.h
 *.lst
 *.cbl.lst

@@ -39,7 +39,7 @@ all: $(project).x $(project) $(project).s
 # (Note: COBST and OBMOD need to be here for development, not production)
 $(project) : $(project).cbl $(OBMOD) $(COBST)
 	@# cobc creates the initial relocatable .o ELF file
-	COB_CFLAGS="-Wa,-L,-anchls=$(project).lst" cobc -c -x -d -g $(free) \
+	COB_CFLAGS="-gdwarf-4 -Wa,-L,-anchls=$(project).lst" $(COBC) -c -x -d -g $(free) \
 		-T$(project).cbl.lst --tlines=0 --tsymbols $(project).cbl
 
 	@# cobst creates the project.tab file from the cobc output files that are
@@ -60,7 +60,7 @@ $(project) : $(project).cbl $(OBMOD) $(COBST)
 # will thus point to the intermediate .c code
 # information pointing to the intermediate .c code
 $(project).x : $(project).cbl
-	COB_CFLAGS="-Wa,-L,-anchls=$(project).lst" cobc -c -x -d -g $(free) \
+	COB_CFLAGS="-gdwarf-4 -Wa,-L,-anchls=$(project).lst" cobc -c -x -d -g $(free) \
 		-T$(project).cbl.lst --tlines=0 --tsymbols $(project).cbl
 
 	$(COBC) -x -o $(project).x $(project).o
@@ -68,7 +68,7 @@ $(project).x : $(project).cbl
 # cobc -S causes the processing to stop after gcc creates the .s assembly
 # language file. As of this writing, I have found no use for it.
 $(project).s : $(project).cbl 
-	COB_CFLAGS="-Wa,-L,-anchls=$(project).lst" cobc -S -x -d -g $(free) \
+	COB_CFLAGS="-gdwarf-4 -Wa,-L,-anchls=$(project).lst" cobc -S -x -d -g $(free) \
 		$(project).cbl
 
 # This cleans up the various project files, along with any additional

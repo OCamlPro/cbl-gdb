@@ -18,7 +18,7 @@ all: $(project)
 # compile .cbl sources for gdb debugging
 $(project) : $(project).cbl 
 	@# cobc creates the initial relocatable .o ELF file
-	COB_CFLAGS="-Wa,-L,-anchls=$(project).lst" cobc -c -x -d -g $(free) \
+	COB_CFLAGS="-gdwarf-4 -Wa,-L,-anchls=$(project).lst" cobc -c -x -d -g $(free) \
 		-T$(project).cbl.lst --tlines=0 --tsymbols $(project).cbl
 
 	@# cobst creates the project.tab file from the cobc output files that are
