@@ -80,7 +80,7 @@ void LNS_STATE_MACHINE::ReadProgramHeader(CPCHAR pdata)
     unit_length = GetSectionLength(pdata,bIs64);
     line_program_data_end = pdata + unit_length;
 
-    USHORT version = GetUshort(pdata);
+    section_version = GetUshort(pdata);
 
     /*  Line Program Versions 2, 3, 4, and 5 are, basically, not compatible.  There are similarities,
     and some minor attempts at backwards compatibility, but, in general, the DWARF
@@ -89,7 +89,11 @@ void LNS_STATE_MACHINE::ReadProgramHeader(CPCHAR pdata)
 
     At this point in time, setting gcc 7.4.0 to --dwarf-4 seems to result in a Line Program Version
     of 2.  So, I will assume that level, whilst also making some nods to versions 3 and 4, in the hope
-    that will ease any future migration. RJD 2019-06-25 */
+    that will ease any future migration. RJD 2019-06-25
+
+    Later point in time:  At least some versions GCC-9 produce a section header of DWARF 3 instead
+    of DWARF 2.  Setting -gdwarf-2 does nothing; DWARF-3 is still emitted.  This
+    code is going to try to handle either 2 or 3 */
 
     ULONGLONG header_length;
     if(bIs64) {
@@ -101,8 +105,8 @@ void LNS_STATE_MACHINE::ReadProgramHeader(CPCHAR pdata)
     line_program_data = pdata + header_length;
 
     minimum_instruction_length = GetUbyte(pdata);
-    maximum_operations_per_instruction = 1;
-    if(version > 2) {
+    maximum_operations_per_instruction = minimum_instruction_length;
+    if(section_version >= 4) {
         maximum_operations_per_instruction = GetUbyte(pdata);
     }
     default_is_stmt = GetUbyte(pdata) != 0;
@@ -533,9 +537,17 @@ void LNS_STATE_MACHINE::Run(char *line_data, bool show_your_work)
     }
 }
 
-void LNS_BUILDER::SetParams(UBYTE ml, UBYTE mopi, BYTE lb, UBYTE lr, UBYTE ob, bool def_is_stmt, const UBYTE *sol)
+void LNS_BUILDER::SetParams(USHORT sec_ver,
+                            UBYTE ml,
+                            UBYTE mopi,
+                            BYTE lb,
+                            UBYTE lr,
+                            UBYTE ob,
+                            bool def_is_stmt,
+                            const UBYTE *sol)
 {
     CPROFILER;
+    section_version = sec_ver;
     minimum_instruction_length = ml;
     maximum_operations_per_instruction = mopi;
     line_base = lb;

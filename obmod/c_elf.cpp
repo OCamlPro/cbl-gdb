@@ -630,6 +630,8 @@ void ELF::RunLineStateMachine(bool show_your_work)
 {
     CPROFILER;
     lns_state_machine.Run(section_headers[GetSectionHeaderIndex(".debug_line")].RawData(),show_your_work);
+    section_version = lns_state_machine.GetSectionVersion();
+    section_64 =      lns_state_machine.GetDwarf64();
 }
 
 void ELF::ApplyRelocations(int plus_or_minus)
@@ -835,7 +837,8 @@ void ELF::ReplaceDebugLineSection()
     // usually being 1, and there are fairly large jumps in relative address.
     // Hence the choice of 0,2, below, which gives us operation_advance of 0 through 121
     // with a line advance of 0 or 1
-    lns_builder.SetParams(  1,      // minimum_instruction_length;
+    lns_builder.SetParams(  section_version,
+                            1,      // minimum_instruction_length;
                             1,      // maximum_operations_per_instruction
                             0,      // line_bound 0
                             2,      // line_range 2

@@ -119,7 +119,10 @@ class ELF
 {
 private:
     Elf64_Ehdr elf_header;
-    bool bTargetIs64;
+
+    USHORT section_version;
+    bool   section_64;
+    bool   bTargetIs64;
 
     VSECTION_HEADER section_headers;
     std::unordered_map<std::string,size_t> location_of_section_header_by_name;

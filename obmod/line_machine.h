@@ -97,7 +97,7 @@ private:
 
     // ***************** The following values come from the Line Number Program Header
     ULONGLONG   unit_length;
-    USHORT      version;
+    USHORT      section_version;
     ULONGLONG   header_length;
     UBYTE       minimum_instruction_length;
     UBYTE       maximum_operations_per_instruction;
@@ -119,7 +119,6 @@ private:
 public:
     LNS_STATE_MACHINE()
     {
-        version = 2;
         opcode_base = 9;
         minimum_instruction_length = 1;
         maximum_operations_per_instruction = 1;
@@ -134,6 +133,14 @@ public:
     const UBYTE *StandardOpcodeLengths() const
     {
         return standard_opcode_lengths;
+    }
+    USHORT GetSectionVersion() const
+    {
+        return section_version;
+    }
+    bool GetDwarf64() const
+    {
+        return bIs64;
     }
 
     static LONGLONG ProcessSingleExpression(CPCHAR &p,bool bIsTarget64);
@@ -159,7 +166,7 @@ private:
 
     // The following values come from the Line Number Program Header
     ULONGLONG   unit_length;
-    USHORT      version;
+    USHORT      section_version;
     ULONGLONG   header_length;
     UBYTE       minimum_instruction_length;
     UBYTE       maximum_operations_per_instruction;
@@ -184,13 +191,14 @@ public:
     void PushULEB128(ULONGLONG v);
     void PushLEB128(LONGLONG v);
 
-    void SetParams(UBYTE   min_inst_length
-                   ,    UBYTE   max_ops_per_instr
-                   ,    BYTE    line_base
-                   ,    UBYTE   line_range
-                   ,    UBYTE   opcode_base
-                   ,    bool    default_is_stmt
-                   ,    const UBYTE *standard_opcode_lengths
+    void SetParams(     USHORT   section_version
+                        ,    UBYTE   min_inst_length
+                        ,    UBYTE   max_ops_per_instr
+                        ,    BYTE    line_base
+                        ,    UBYTE   line_range
+                        ,    UBYTE   opcode_base
+                        ,    bool    default_is_stmt
+                        ,    const UBYTE *standard_opcode_lengths
                   );
     int AddFile(const std::string &filename);
 
