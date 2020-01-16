@@ -651,8 +651,8 @@ vector<UBYTE> LNS_BUILDER::BuildProgram()
     size_t total_length_address = line_program.size();
     PushValue((ULONG)0);    // total_length.  Assume for now, files less than 2^32 bytes in length
 
-    // Assume we are doing version 2 line address programming
-    PushValue((USHORT)(2)); // As I said:  Version 2
+    // This is the section_version copied from the input .o
+    PushValue((USHORT)(section_version)); // As I said:  Version 2
 
     // Stash the location of the prologue length; we'll be filling it in later
     size_t prologue_length_address = line_program.size();  // We'll fill this length in later
@@ -661,8 +661,12 @@ vector<UBYTE> LNS_BUILDER::BuildProgram()
     // Use the minimum instruction length we were given
     PushValue(minimum_instruction_length);
 
-    // DWARF-2 assumes that maximum_operations_per_instruction is 1
-    // DWARF-3 introduces that value as something other than 1.
+    // DWARF-2 & -33 assumes that maximum_operations_per_instruction is 1
+    // DWARF-4 introduces that value as something other than 1.
+
+    if( section_version >= 4 ) {
+        PushValue(maximum_operations_per_instruction);
+    }
 
     // Establish the default is_stmt value
     PushValue( (UBYTE)(default_is_stmt ? 1 : 0) );
