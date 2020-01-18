@@ -22,6 +22,11 @@
 # disable built-in rules:
 .SUFFIXES:
 
+# Find the location of gcc's cc1 compiler, and assembler, and loader:
+CC1=$(shell gcc --print-prog-name cc1)
+ASSEMBLER=$(shell gcc --print-prog-name as)
+LOADER=$(shell gcc --print-prog-name ld)
+
 COBC = cobc
 # These paths are established for local debugging.  Most likely the cobst and 
 # obmod executables will find their way into /usr/local/bin/ for production
@@ -99,6 +104,50 @@ check:
 			exit 64; \
 		fi
 
+.PHONY : steps
+steps :
+	@echo " "
+	@echo "*****************************"
+	@echo "Compile from COBOL -> C"
+	@echo "*****************************"
+	COB_CFLAGS="-Wa,-L,-anchls=$(project).lst" $(COBC) -c -x -d -g $(free) \
+		-T$(project).cbl.lst --tlines=0 --tsymbols $(project).cbl
 
+	@echo " "
+	@echo "*****************************"
+	@echo "Generate symbols cross-reference"
+	@echo "*****************************"
+	$(COBST) $(project).cbl
+
+	@echo " "
+	@echo "*****************************"
+	@echo "Compile from C -> S"
+	@echo "*****************************"
+
+	$(CC1) -quiet -imultiarch x86_64-linux-gnu \
+	-D PIC $(project).c -quiet -dumpbase $(project).c -mtune=generic \
+	-march=x86-64 -auxbase-strip $(project).o -g -fPIC \
+	-fstack-protector-strong -Wformat -Wformat-security -o $(project).s
+
+	@echo " "
+	@echo "*****************************"
+	@echo "Assemble from S -> O"
+	@echo "*****************************"
+
+	$(ASSEMBLER) --64 -L -anchls=$(project).lst -o $(project).o $(project).s
+
+	@echo " "
+	@echo "*****************************"
+	@echo "Do Dubner's modifications to O"
+	@echo "*****************************"
+
+	$(OBMOD) -i $(project).o -t $(project).tab -o $(project).cbl.o
+
+	@echo " "
+	@echo "*****************************"
+	@echo "Load from O into executable"
+	@echo "*****************************"
+
+	$(COBC) -x -o $(project) $(project).cbl.o
 
 

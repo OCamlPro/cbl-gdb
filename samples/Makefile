@@ -2,6 +2,7 @@ sample_dirs = $(sort $(dir $(wildcard */)))
 sample_dirs_clean = $(addsuffix .clean, $(sample_dirs))
 sample_dirs_ref = $(addsuffix .ref,$(sample_dirs))
 sample_dirs_check = $(addsuffix .check,$(sample_dirs))
+sample_dirs_steps = $(addsuffix .steps,$(sample_dirs))
 
 .PHONY: samples $(sample_dirs)
 samples: $(sample_dirs)
@@ -24,5 +25,9 @@ check: $(sample_dirs_check)
 $(sample_dirs_check):
 	$(MAKE) -C $(subst .check,,$@) check
 	
+.PHONY: steps
+steps: $(sample_dirs_steps)
+$(sample_dirs_steps):
+	$(MAKE) -C $(subst .steps,,$@) steps
 	
 
