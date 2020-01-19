@@ -3,6 +3,7 @@ boat.o
 launchso.o
 launchso
 elbarco.c
+elbarco.sym.c
 elbarco.c.h
 elbarco.c.l.h
 elbarco.c.l1.h

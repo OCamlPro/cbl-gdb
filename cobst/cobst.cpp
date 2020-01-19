@@ -426,13 +426,8 @@ CreateCModule(PARAMETERS &params,
     params.csym << "// the COBST program.\n";
     params.csym << "// For safety's sake, compile with -O0 'no optimization' switch\n";
     params.csym << endl;
-    params.csym << "typedef struct"            << endl;
-    params.csym << "    {"                     << endl;
-    params.csym << "    char const * const p;" << endl;
-    params.csym << "    } ENTRY;"              << endl;
-    params.csym << endl;
     // Build an oddball name, to zeroize collision possibilities
-    params.csym << "volatile ENTRY " << params.cbl_filename.GetFname()
+    params.csym << "volatile char *" << params.cbl_filename.GetFname()
                 << "_o0O0o_Symbols[] = {" << endl;
 
     //  You can't change the order of things here unless you also change
@@ -468,11 +463,11 @@ CreateCModule(PARAMETERS &params,
             s.replace(n,3,"||");
         }
 
-        params.csym << "    ENTRY{\"" << s << "\"}," << endl;
+        params.csym << "    \"" << s << "\"," << endl;
     }
 
-    params.csym << "    ENTRY{NULL}" << endl;
-    params.csym << "    };"          << endl;
+    params.csym << "    (char *)(0)" << endl;
+    params.csym << "    };"            << endl;
     params.csym << endl;
 
 }

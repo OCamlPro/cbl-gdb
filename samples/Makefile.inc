@@ -28,9 +28,9 @@ ASSEMBLER=$(shell gcc --print-prog-name as)
 LOADER=$(shell gcc --print-prog-name ld)
 
 COBC = cobc
-# These paths are established for local debugging.  Most likely the cobst and 
+# These paths are established for local debugging.	Most likely the cobst and 
 # obmod executables will find their way into /usr/local/bin/ for production
-# purposes.  You Have Been Warned.
+# purposes.	 You Have Been Warned.
 COBST = ../../cobst/cobst
 OBMOD = ../../obmod/obmod
 
@@ -51,14 +51,18 @@ $(project) : $(project).cbl $(OBMOD) $(COBST)
 	@# used by obmod and 
 	$(COBST) $(project).cbl
 	
+	@# Compile the cobst-generated .sym.c file
+	gcc -O0 -c -o $(project).sym.o $(project).sym.c 
+	
+	
 	@# obmod creates a modified relocatable .o ELF file from project.tab and
 	@# the .o file created by cobc
 	$(OBMOD) -i $(project).o -t $(project).tab -o $(project).cbl.o
 	
 	@# This second invocation of cobc creates the modified ELF executable from 
 	@# the modified .o ELF relocatable
+	#$(COBC) -x -o $(project) $(project).cbl.o $(project).sym.o
 	$(COBC) -x -o $(project) $(project).cbl.o
-
 
 # This rule creates project.x, which is an unmodified ELF executable created
 # with all the same switches as the modified one.  The debugging information
@@ -81,7 +85,7 @@ $(project).s : $(project).cbl
 # .txt files that might be lying around; I often create .txt files
 # from dwarfdump and hexdump.
 .PHONY : clean
-suffixes = .c .s *.h .i .lst .cbl.lst .full.tab .tab .o .cbl.o .x
+suffixes = .c .s *.h .i .lst .cbl.lst .full.tab .tab .o .cbl.o .x .sym.c .sym.o
 clean:
 	rm -f $(addprefix $(project),$(suffixes)) $(project) *.txt $(CLEAN)
 
