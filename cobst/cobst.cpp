@@ -415,6 +415,7 @@ CreateCSV(PARAMETERS &params,
 
 static void
 CreateCModule(PARAMETERS &params,
+              const COB_LABELS &cob_labels,
               const VARIABLE_TREE &var_tree)
 {
     /*  This routine puts the COBOL-identifier/C-identifier cross-reference
@@ -430,6 +431,32 @@ CreateCModule(PARAMETERS &params,
     params.csym << "volatile char *" << params.cbl_filename.GetFname()
                 << "_o0O0o_Symbols[] = {" << endl;
 
+    // Do the line/address information from the .text in the minimal form
+    // used by cprint.py to figure out which program a trap has occurred in.
+    string current_program = "";
+    for(int i=0; i<cob_labels.size(); i++) {
+        COB_LABEL cs = cob_labels[i];
+
+        if( cs.section EQ "Linkage" ) {
+            // This information was previously transferred to the
+            // data_description information, so don't put it out here because
+            // it's potentially confusing.
+            continue;
+            }
+
+        stringstream ss;
+        ios_base::fmtflags deflags = ss.flags();
+
+        if( cs.program != current_program)
+            {
+            current_program = cs.program;
+            ss << "P|";
+            ss << cs.line_number << "|";
+            ss << cs.program << "|";
+            params.csym << "    \"" << ss.str() << "\"," << endl;
+            }
+        }
+
     //  You can't change the order of things here unless you also change
     //  the ordering in cprint.py  They are tightly linked, and that's that!
 
@@ -437,6 +464,7 @@ CreateCModule(PARAMETERS &params,
         const VAR_NODE var = var_tree[i];
         stringstream ss;
 
+        ss << "D|";
         ss << var.GetSection().substr(0,2) << "|";
         ss << var.GetLevel() << "|" ;
         ss << var.GetCanonicalName() << "|" ;
@@ -562,7 +590,7 @@ int main(int argc, char *argv[])
     CreateCSV(params,cob_labels,variable_tree);
 
     // Create our C-code cross-reference module
-    CreateCModule(params,variable_tree);
+    CreateCModule(params,cob_labels,variable_tree);
 
 
     return 0;

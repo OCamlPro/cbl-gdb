@@ -195,7 +195,8 @@ public:
     void DumpEntireDebugInfoDieTree();
     void RunLineStateMachine(bool show_your_work);
     void ReplaceDebugLineSection();
-    void InsertDebugScript(const std::string &python_script);
+    std::string SymbolString();
+    void InsertDebugScript(const std::string &python_script, const std::string &sname);
     void AugmentSymbolTable();
 
     SECTION_HEADER *GetSectionHeaderDangerous(const std::string secname)

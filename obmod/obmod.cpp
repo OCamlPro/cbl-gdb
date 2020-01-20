@@ -5,13 +5,14 @@
 using namespace std;
 
 int main(int argc, char **argv)
-{
+    {
     PROFILER;
 
     PARAMETERS params = GetParameters(argc, argv);
-    if(!params.quiet) {
+    if(!params.quiet)
+        {
         cout << "obmod version " << VERSION << endl;
-    }
+        }
 
     ELF elf;
 
@@ -46,7 +47,7 @@ int main(int argc, char **argv)
     // Run the line number state machine to see our replacements
     elf.RunLineStateMachine(false);
 
-    elf.InsertDebugScript("cprint.py");
+    elf.InsertDebugScript("cprint.py",params.o_input_filename.GetFname());
 
     // Put the COBOL symbols into the elf segments
     // Took this out in January 2020; it was corrupting more complex
@@ -63,5 +64,5 @@ int main(int argc, char **argv)
     // Put the headers and sections back together, and writes them out to a
     // file.
     elf.WriteTo(params.o_output_filename.WholePath());
-}
+    }
 

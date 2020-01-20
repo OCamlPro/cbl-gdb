@@ -951,6 +951,79 @@ void ELF::CreateSection(const std::string &sec_name,
     }
 }
 
+static string ZeroIsNull(const LONGLONG &v)
+    {
+    stringstream ss;
+    if( v != 0 )
+        {
+        ss << v;
+        }
+    return ss.str();
+    }
+
+string ELF::SymbolString()
+    {
+    /*  This routine puts the COBOL-identifier/C-identifier cross-reference
+    information into a single string that will be prepended, as a string
+    variable, to the cprint.py module embedded in the executable as a
+    .debug_script
+    */
+
+    stringstream ss;
+    ss << "VARIABLE_STRING=\"";
+
+    // Do the line/address information from the .text in the minimal form
+    // used by cprint.py to figure out which program a trap has occurred in.
+    string current_program = "";
+    for(int i=0; i<cobst_symbols.size(); i++) 
+        {
+        COBST_SYMBOL cs = cobst_symbols[i];
+        if( cs.division EQ "Procedure")
+            {
+            if( cs.section EQ "Linkage" ) {
+                // This information was previously transferred to the
+                // data_description information, so don't put it out here because
+                // it's potentially confusing.
+                continue;
+                }
+
+            if( cs.program != current_program)
+                {
+                current_program = cs.program;
+                ss << "P|";
+                ss << cs.line_number << "|";
+                ss << cs.program;
+                ss << "~";
+                continue;
+                }
+            }
+        }
+    for(int i=0; i<cobst_symbols.size(); i++) 
+        {
+        COBST_SYMBOL cs = cobst_symbols[i];
+        if( cs.division EQ "Data")
+            {
+            ss << "D|";
+            ss << cs.section.substr(0,2) << "|";
+            ss << ZeroIsNull(cs.level) << "|" ;
+            ss << cs.full_name << "|" ;
+            ss << cs.base_symbol << "|" ;
+            ss << ZeroIsNull(cs.offset) << "|" ;
+            ss << cs.list_type.substr(0,1) << "|" ;
+            ss << ZeroIsNull(cs.list_size) << "|" ;
+            ss << cs.picture << "|" ;
+            ss << ZeroIsNull(cs.occurs) << "|" ;
+            ss << ZeroIsNull(cs.attr_type) << "|" ;
+            ss << ZeroIsNull(cs.attr_digits) << "|" ;
+            ss << ZeroIsNull(cs.attr_scale) << "|" ;
+            ss << ZeroIsNull(cs.attr_flags) << "~";
+            }
+        }
+
+    ss << "\"";
+    return ss.str();
+    }
+
 #if 0
 void ELF::InsertDebugScript(const std::string &python_script)
 {
@@ -966,7 +1039,7 @@ void ELF::InsertDebugScript(const std::string &python_script)
     AddToStringTable(script_sec,strange_string);
 }
 #else
-void ELF::InsertDebugScript(const std::string &python_script)
+void ELF::InsertDebugScript(const std::string &python_script,const std::string &sname)
 {
     CPROFILER;
     // This version embeds the entire cprint.py program as a text string
@@ -977,10 +1050,14 @@ void ELF::InsertDebugScript(const std::string &python_script)
     memcpy(embedded,___python_cprint_py,___python_cprint_py_len);
     embedded[___python_cprint_py_len] = '\0';
 
+    string symbol_string = SymbolString();
+
     // Make sure we have a section
     CreateSection(script_sec,SHT_PROGBITS,0);
     string strange_string = "\x04";
     strange_string += python_script;
+    strange_string += "\n";
+    strange_string += symbol_string;
     strange_string += "\n";
     strange_string += embedded;
     AddToStringTable(script_sec,strange_string);
