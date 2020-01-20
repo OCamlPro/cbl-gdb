@@ -86,10 +86,13 @@ void COBST_SYMBOLS::ReadFrom(const string &cobst_filename)
         } else {
             cobst_symbol.section    = values[header_columns[SECTION]];
             if( cobst_symbol.section EQ "WORKING-STORAGE"
+                    OR cobst_symbol.section EQ "INPUT-OUTPUT"
                     OR cobst_symbol.section EQ "LOCAL-STORAGE"
                     OR cobst_symbol.section EQ "LINKAGE" ) {
+                cobst_symbol.program    = values[header_columns[PROGRAM_NAME]];
                 cobst_symbol.full_name = values[header_columns[FULL_NAME]];
                 cobst_symbol.level = stoi(values[header_columns[LEVEL]]);
+                cobst_symbol.division   = values[header_columns[DIVISION]];
                 cobst_symbol.base_symbol = values[header_columns[BASE_SYMBOL]];
                 cobst_symbol.offset = stoull(values[header_columns[OFFSET]]);
                 cobst_symbol.list_type = values[header_columns[LIST_TYPE]];
@@ -100,7 +103,7 @@ void COBST_SYMBOLS::ReadFrom(const string &cobst_filename)
                 cobst_symbol.attr_digits = (USHORT)stoul(values[header_columns[ATTR_DIGITS]]);
                 cobst_symbol.attr_scale = (SHORT)stoi(values[header_columns[ATTR_SCALE]]);
                 cobst_symbol.attr_flags = (USHORT)stoul(values[header_columns[ATTR_FLAGS]]);
-                }
+            }
 
             cobst_symbols.push_back(cobst_symbol);
             prior = cobst_symbol;

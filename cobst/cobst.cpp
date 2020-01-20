@@ -442,20 +442,19 @@ CreateCModule(PARAMETERS &params,
             // data_description information, so don't put it out here because
             // it's potentially confusing.
             continue;
-            }
+        }
 
         stringstream ss;
         ios_base::fmtflags deflags = ss.flags();
 
-        if( cs.program != current_program)
-            {
+        if( cs.program != current_program) {
             current_program = cs.program;
             ss << "P|";
             ss << cs.line_number << "|";
             ss << cs.program << "|";
             params.csym << "    \"" << ss.str() << "\"," << endl;
-            }
         }
+    }
 
     //  You can't change the order of things here unless you also change
     //  the ordering in cprint.py  They are tightly linked, and that's that!

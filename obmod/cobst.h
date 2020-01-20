@@ -24,7 +24,7 @@ public:
     int         level;      //  COBOL symbol level
     std::string base_symbol;//  C-code base symbol for the COBOL symbol
     ULONGLONG   offset;     //  offset from the base address
-    std::string list_type;  //  
+    std::string list_type;  //
     size_t      list_size;  // Length of data
     std::string picture;
     int         occurs;

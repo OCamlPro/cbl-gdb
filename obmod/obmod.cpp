@@ -5,14 +5,13 @@
 using namespace std;
 
 int main(int argc, char **argv)
-    {
+{
     PROFILER;
 
     PARAMETERS params = GetParameters(argc, argv);
-    if(!params.quiet)
-        {
+    if(!params.quiet) {
         cout << "obmod version " << VERSION << endl;
-        }
+    }
 
     ELF elf;
 
@@ -64,5 +63,5 @@ int main(int argc, char **argv)
     // Put the headers and sections back together, and writes them out to a
     // file.
     elf.WriteTo(params.o_output_filename.WholePath());
-    }
+}
 
