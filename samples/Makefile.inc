@@ -54,15 +54,13 @@ $(project) : $(project).cbl $(OBMOD) $(COBST)
 	@# Compile the cobst-generated .sym.c file
 	gcc -O0 -c -o $(project).sym.o $(project).sym.c 
 	
-	
 	@# obmod creates a modified relocatable .o ELF file from project.tab and
 	@# the .o file created by cobc
 	$(OBMOD) -i $(project).o -t $(project).tab -o $(project).cbl.o
 	
 	@# This second invocation of cobc creates the modified ELF executable from 
 	@# the modified .o ELF relocatable
-	#$(COBC) -x -o $(project) $(project).cbl.o $(project).sym.o
-	$(COBC) -x -o $(project) $(project).cbl.o
+	$(COBC) -x -o $(project) $(project).cbl.o $(project).sym.o
 
 # This rule creates project.x, which is an unmodified ELF executable created
 # with all the same switches as the modified one.  The debugging information

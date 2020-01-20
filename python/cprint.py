@@ -221,31 +221,14 @@ class VarTrie() :
 
         # and we are done
 
-    def ReadFromFile(self,filename) :
+    def ReadFromFile(self,tab_file) :
         # Clear us out
         self.storage_list = []
         self.storage_trie = VarTrieNode()
         self.program_ids = set()
-        
-        # current_source_file is probably something.cbl
-        # convert it to something.tab
 
-        # bust up the filename on "."
-        split_file_name = filename.split('.')
-        split_symbol_file = split_file_name
-
-        # throw away the final extension
-        split_symbol_file.pop()
-
-        # replace it with .tab
-        split_symbol_file.append("tab")
-        symbol_table_file = ".".join(split_symbol_file)
-
-        try :
-            tab_file = open(symbol_table_file,"r")
-        except :
-            print(symbol_table_file, "doesn't exist")
-            return
+        # Rewind the tab file
+        tab_file.seek(0)
 
         line = tab_file.readline()
 
@@ -331,8 +314,6 @@ class VarTrie() :
                     if len(name_pieces) >= 1 :
                         name_piece = name_pieces.pop()
                         self.program_ids.add(name_piece)
-
-        tab_file.close()
 
     def TokenizeCanonicalName(self,desired) :
         # We allow "A of B in C", where [of|in] is not case sensitive
@@ -541,27 +522,9 @@ class LineList() :
 
         return self.line_list[middle][1]
 
-    def ReadFromFile(self,filename) :
-        # current_source_file is probably something.cbl
-        # convert it to something.tab
+    def ReadFromFile(self,tab_file) :
 
-        # bust up the filename on "."
-        split_file_name = filename.split('.')
-        split_symbol_file = split_file_name
-
-        # throw away the final extension
-        split_symbol_file.pop()
-
-        # replace it with .tab
-        split_symbol_file.append("tab")
-        symbol_table_file = ".".join(split_symbol_file)
-
-        try :
-            tab_file = open(symbol_table_file,"r")
-        except :
-            print(symbol_table_file, "doesn't exist")
-            return
-
+        tab_file.seek(0)
         line = tab_file.readline()
 
         # Break up the header line by the separating tabs:
@@ -2706,56 +2669,12 @@ class CobolVariable() :
 
         return value, pic;
 
-# Note on the program structure:
-#
-# The Python extension to gdb is plenty powerful, but it is infuriating
-# in one regard: Debugging.  I've gotten used to source level debugging, and
-# the irony of having to do print-level debugging in an extension to a source-
-# level debugger is delicious, but mainly in the sense that some people like 
-# the taste of beetles.  So, I have jumped through some hoops so that I could
-# do at least *some* debugging in Visual Studio even though the gdb object
-# isn't available.  Bob Dubner, 2019-07-23
-
-class CPrintWorker() :
-    """Does most of the non-gdb work of CPrint()"""
-
-    # By creating this worker, we can use a Python debugging package to
-    # handle everything that doesn't actually need the gdb object
-    def __init__(self):
+class TabFileInformation() :
+    def __init__(self) :
         self.var_trie = VarTrie()
-        self.current_source_file = ""
-        self.current_trapped_routine = ""
-        self.short_term_memory = []
         self.line_list = LineList()
-        self.sticky_display_mode = os.environ.get('CPRINT_V', '0')
-        self.current_display_mode = self.sticky_display_mode
-        self.machine_interface_mode = False
-
-    def ProcessInfoSource(self, info_source) :
-        # This routine is given the results of the gdb "info source" command
-
-        info_source = info_source.replace('\n',' |')
-        # A valid response starts with "Located in /path/to/NC101A.cbl"
-        result = re.search("\|Located in (.+?) ", info_source)
-
-        if result:
-            source_file = result.group(1)
-            if source_file != self.current_source_file:
-                # We've been given a new source file name, so look up
-                # the COBOL identifiers in it:
-                self.current_source_file = source_file
-
-                # Load the new tables
-                self.var_trie = VarTrie()
-                self.var_trie.ReadFromFile(source_file)
-
-                # Load the new line list:
-                self.line_list = LineList()
-                self.line_list.ReadFromFile(source_file)
-
-        else :
-            # There isn't a current source file.
-            self.current_source_file = ""
+        self.current_tab_file = ""
+        self.current_trapped_routine = ""
 
     def ProcessInfoStack(self, info_stack) :
         """ Figures out which routine we are currently trapped in"""
@@ -2779,6 +2698,98 @@ class CPrintWorker() :
                     break;
                 # Keep looking
                 self.current_trapped_routine = xxx[1]
+
+    def ReadTabFile(self) :
+        # Get the list of all source files
+        info_source = gdb.execute("info source",False,True)
+        original_info_stack = gdb.execute("info stack",False,True)
+
+        nfound = info_source.find("Compilation directory is ")
+        if nfound > -1 :
+            compilation_directory = info_source[nfound+25:]
+            nfound = compilation_directory.find("\n")
+            if nfound > -1 :
+                compilation_directory = compilation_directory[:nfound]
+
+                # We have the compilation directory.  Now look at the stack
+                # and get the list of files that hold the backtrace:
+
+                info_stack = original_info_stack.split("\n")
+
+                tab_file = None
+                for stack_entry in info_stack :
+                    nfound = stack_entry.find(" at ")
+                    if nfound > -1 :
+                        stack_entry = stack_entry[nfound+4:]
+                        nfound = stack_entry.find(":")
+                        if nfound > -1 :
+                            stack_entry = compilation_directory + "/" + stack_entry[:nfound]
+
+                            # current_source_file is probably something.cbl
+                            # or something.cob.  (It better have an extension,
+                            # or this next bit of code will fail.)
+
+                            # convert it to something.tab
+
+                            # bust up the filename on "."
+                            split_symbol_file = stack_entry.split('.')
+
+                            # throw away the final extension
+                            split_symbol_file.pop()
+
+                            # replace it with .tab
+                            split_symbol_file.append("tab")
+                            symbol_table_file = ".".join(split_symbol_file)
+
+                            try :
+                                tab_file = open(symbol_table_file,"r")
+                                break;
+                            except :
+                                continue
+                # Either tab_file is open, or it is not
+                if tab_file != None :
+                    if self.current_tab_file != symbol_table_file :
+                        # We have a new file, so read it in
+                        self.current_tab_file = symbol_table_file 
+
+                        # Load the new tables
+                        self.var_trie = VarTrie()
+                        self.var_trie.ReadFromFile(tab_file)
+
+                        # Load the new line list:
+                        self.line_list = LineList()
+                        self.line_list.ReadFromFile(tab_file)
+
+                    tab_file.close();
+                else :
+                    current_tab_file = None
+
+        # Whether we read in a new tab file, or not, we should look for the
+        # COBOL routine we are trapped in based on the information in the
+        # "info stack"
+        self.ProcessInfoStack(original_info_stack)
+
+# Note on the program structure:
+#
+# The Python extension to gdb is plenty powerful, but it is infuriating
+# in one regard: Debugging.  I've gotten used to source level debugging, and
+# the irony of having to do print-level debugging in an extension to a source-
+# level debugger is delicious, but mainly in the sense that some people like 
+# the taste of beetles.  So, I have jumped through some hoops so that I could
+# do at least *some* debugging in Visual Studio even though the gdb object
+# isn't available.  Bob Dubner, 2019-07-23
+
+class CPrintWorker() :
+    """Does most of the non-gdb work of CPrint()"""
+
+    # By creating this worker, we can use a Python debugging package to
+    # handle everything that doesn't actually need the gdb object
+    def __init__(self):
+        self.current_source_file = ""
+        self.short_term_memory = []
+        self.sticky_display_mode = os.environ.get('CPRINT_V', '0')
+        self.current_display_mode = self.sticky_display_mode
+        self.machine_interface_mode = False
 
     def ProcessDisplayMode(self,args) :
         self.machine_interface_mode = False
@@ -2856,7 +2867,7 @@ class CPrintWorker() :
             payload.ShowFields()
             pass
 
-    def ProcessArguments(self, arguments) :
+    def ProcessArguments(self, TabFile, arguments) :
         # The command is typically "cp A B C" or "cp/d A B C"
         # There is also the possibility of an '=' character, whereby the
         # value after the '=' is assigned to the variable described to the left
@@ -2879,7 +2890,7 @@ class CPrintWorker() :
                 pstar = True
                 # If the single argument is an asterisk, then
                 # he is asking for a list of variables and values:
-                args[0] = self.current_trapped_routine
+                args[0] = TabFile.current_trapped_routine
             
             elif args[0].isdigit() :
                 # if the single argument is a number, then he is looking
@@ -2905,7 +2916,7 @@ class CPrintWorker() :
             if payload_number == None :
                 # There are one or more arguments.  Use our clever routine
                 # to come up with the possibilities:
-                possibilities = self.var_trie.GetListOfPossibilities(args)
+                possibilities = TabFile.var_trie.GetListOfPossibilities(args)
                 if len(possibilities) == 1 and not pstar:
                     # There's only one possibility, and it wasn't a star. 
                     # This is nice and simple.
@@ -2924,8 +2935,8 @@ class CPrintWorker() :
 
                         s = "variables=["
                         for payload_index in possibilities :
-                            payload = self.var_trie.storage_list[payload_index]
-                            payload.FetchVariableData(self.line_list , False)
+                            payload = TabFile.var_trie.storage_list[payload_index]
+                            payload.FetchVariableData(TabFile.line_list , False)
 
                             name = ""
                             name += payload.display_name;
@@ -2967,8 +2978,8 @@ class CPrintWorker() :
                         # and show them to our user
                         line_counter = 1
                         for payload_index in possibilities :
-                            payload = self.var_trie.storage_list[payload_index]
-                            payload.FetchVariableData(self.line_list , False)
+                            payload = TabFile.var_trie.storage_list[payload_index]
+                            payload.FetchVariableData(TabFile.line_list , False)
                             s = "{0:2} : ".format(line_counter)
                             s += payload.display_name
                             s += " : "
@@ -2983,14 +2994,14 @@ class CPrintWorker() :
             # print("Payload number is ", payload_number)
 
             # Pick up the payload from the list
-            payload = self.var_trie.storage_list[payload_number]
+            payload = TabFile.var_trie.storage_list[payload_number]
             
             if rside :
-                payload.SetToRside(self.line_list, rside)
+                payload.SetToRside(TabFile.line_list, rside)
 
             # Fetch the data again, just in case he executed some instructions
             # since short-term-memory was established
-            payload.FetchVariableData(self.line_list , True)
+            payload.FetchVariableData(TabFile.line_list , True)
 
             if self.machine_interface_mode :
                 body , body_length = MachineInterfaceBody(payload.display_body)
@@ -3006,11 +3017,7 @@ class CWatchWorker() :
     """Does most of the non-gdb work of CWatch()"""
 
     def __init__(self):
-        self.var_trie = VarTrie()
-        self.current_source_file = ""
-        self.current_trapped_routine = ""
         self.short_term_memory = []
-        self.line_list = LineList()
         self.current_display_mode = "0"
 
     def ProcessDisplayModeW(self,args) :
@@ -3046,57 +3053,8 @@ class CWatchWorker() :
 
         return args
 
-    def ProcessInfoSourceW(self, info_source) :
-        # This routine is given the results of the gdb "info source" command
-
-        info_source = info_source.replace('\n',' |')
-        # A valid response starts with "Located in /path/to/NC101A.cbl"
-        result = re.search("\|Located in (.+?) ", info_source)
-
-        if result:
-            source_file = result.group(1)
-            if source_file != self.current_source_file:
-                # We've been given a new source file name, so look up
-                # the COBOL identifiers in it:
-                self.current_source_file = source_file
-
-                # Load the new tables
-                self.var_trie = VarTrie()
-                self.var_trie.ReadFromFile(source_file)
-
-                # Load the new line list:
-                self.line_list = LineList()
-                self.line_list.ReadFromFile(source_file)
-
-        else :
-            # There isn't a current source file.
-            self.current_source_file = ""
-
-    def ProcessInfoStackW(self, info_stack) :
-        """ Figures out which routine we are currently trapped in"""
-
-        # Info line should start with "Line xxx "
-        self.current_trapped_routine = ""
-
-        m = info_stack.find('\n')
-        if m > -1 :
-            info_stack = info_stack[:m]
-
-        m = info_stack.find(':')
-        if(m > -1) :
-            # So far we are well formed
-            line_number = int(info_stack[m+1:])
-
-            for xxx in self.line_list.line_list :
-                if xxx[0] > line_number :
-                    # We've gotten past line_number, so the prior entry
-                    # was the one we wanted
-                    break;
-                # Keep looking
-                self.current_trapped_routine = xxx[1]
-
-    def SetTheWatchpoint(self,payload : CobolVariable()) :
-        the_address = payload.GetTheAddress(self.line_list)
+    def SetTheWatchpoint(self, TabFile:TabFileInformation(), payload : CobolVariable()) :
+        the_address = payload.GetTheAddress(TabFile.line_list)
 
         if not the_address and not 'gdb' in sys.modules :
             the_address = 0x12345678
@@ -3114,7 +3072,7 @@ class CWatchWorker() :
         else :
             print(command)
 
-    def ProcessArgumentsW(self, arguments) :
+    def ProcessArgumentsW(self, TabFile, arguments) :
         # The command is typically "cw A 
         
         args = arguments.split()
@@ -3125,7 +3083,7 @@ class CWatchWorker() :
             if args[0] == '*' :
                 # If the single argument is an asterisk, then
                 # he's looking for a list of variables
-                args[0] = list(self.current_trapped_routine)
+                args[0] = list(TabFile.current_trapped_routine)
             
             elif args[0].isdigit() :
                 # if the single argument is a number, then he is looking
@@ -3151,7 +3109,7 @@ class CWatchWorker() :
             if payload_number == None :
                 # There are one or more arguments.  Use our clever routine
                 # to come up with the possibilities:
-                possibilities = self.var_trie.GetListOfPossibilities(args)
+                possibilities = TabFile.var_trie.GetListOfPossibilities(args)
                 if len(possibilities) == 1 :
                     # There's only one possibility, which is nice and simple.
                     # We'll just move ahead and process it.
@@ -3164,8 +3122,8 @@ class CWatchWorker() :
                     # and show them to our user
                     line_counter = 1
                     for payload_index in possibilities :
-                        payload = self.var_trie.storage_list[payload_index]
-                        payload.FetchVariableData(self.line_list , False)
+                        payload = TabFile.var_trie.storage_list[payload_index]
+                        payload.FetchVariableData(TabFile.line_list , False)
                         s = "{0:2} : ".format(line_counter)
                         s += payload.display_name
                         s += " : "
@@ -3179,10 +3137,10 @@ class CWatchWorker() :
             #print("Watch Payload number is ", payload_number)
 
             # Pick up the payload from the list
-            payload = self.var_trie.storage_list[payload_number]
+            payload = TabFile.var_trie.storage_list[payload_number]
 
             # And go set the Watchpoint
-            self.SetTheWatchpoint(payload)
+            self.SetTheWatchpoint(TabFile, payload)
 
 if 'gdb' in sys.modules :
     class CPrint (gdb.Command) :
@@ -3190,16 +3148,14 @@ if 'gdb' in sys.modules :
 
         def __init__ (self):
             super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
-            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 0.9.1]')
+            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 0.10.1]')
             self.Worker = CPrintWorker()
+            self.TabFile = TabFileInformation();
 
         def invoke (self, arguments, from_tty):
             # pick up the name of the current source file
-            info_source = gdb.execute("info source",False,True)
-            self.Worker.ProcessInfoSource(info_source)
-            info_stack = gdb.execute("info stack",False,True)
-            self.Worker.ProcessInfoStack(info_stack)
-            self.Worker.ProcessArguments(arguments)
+            self.TabFile.ReadTabFile() # There is an implicit "if necessary"
+            self.Worker.ProcessArguments(self.TabFile,arguments)
 
     class CWatch (gdb.Command) :
         """Used for creating COBOL-NAMED watchpoints when debugging cobst/obmod processed object files."""
@@ -3208,27 +3164,24 @@ if 'gdb' in sys.modules :
             super (CWatch, self).__init__ ("cwatch", gdb.COMMAND_USER)
             print('registering CWatch (Usage is "cwatch <COBOL identifier>")')
             self.Worker = CWatchWorker()
+            self.TabFile = TabFileInformation();
 
         def invoke (self, arguments, from_tty):
-            # pick up the name of the current source file
-            info_source = gdb.execute("info source",False,True)
-            self.Worker.ProcessInfoSourceW(info_source)
-            info_stack = gdb.execute("info stack",False,True)
-            self.Worker.ProcessInfoStackW(info_stack)
-            self.Worker.ProcessArgumentsW(arguments)
+            self.TabFile.ReadTabFile() # There is an implicit "if necessary"
+            self.Worker.ProcessArgumentsW(self.TabFile,arguments)
             
 if 'gdb' not in sys.modules:
     # I debug with Visual Studio in Windows, which doesn't provide a gdb object.
     # Test code goes here
-    Worker = CPrintWorker()
+    #Worker = CPrintWorker()
     #Worker.ProcessInfoSource("|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
     #Worker.ProcessInfoSource("|Located in Y:\cobol\cbl-gdb\selfcheck\program_under_test.cbl ")
     #Worker.ProcessInfoSource("|Located in Y:\cobol\cbl-gdb\samples\ref_test_1\rtest.cbl ")
     #Worker.ProcessInfoStack("Line 60 ")
-    Worker.ProcessInfoSource("|Located in Y:/cobol/cbl-gdb/samples/ref_test_0/rtest.cbl ")
-    Worker.ProcessInfoStack("Line:4\n")
-    Worker.ProcessArguments("*")
-    Worker.ProcessArguments("/m *")
+    #Worker.ProcessInfoSource("|Located in Y:/cobol/cbl-gdb/samples/ref_test_0/rtest.cbl ")
+    #Worker.ProcessInfoStack("Line:4\n")
+    #Worker.ProcessArguments("*")
+    #Worker.ProcessArguments("/m *")
 
 #    Worker.ProcessArguments("*")
 #    Worker.ProcessArguments("/m *")
