@@ -292,7 +292,7 @@ class VarTrie() :
                     payload.Section = "WORKING-STORAGE"
                 elif payload.Section == "LO" :
                     payload.Section = "LOCAL-STORAGE"
-                elif payload.Section == "L" :
+                elif payload.Section == "LI" :
                     payload.Section = "LINKAGE"
 
                 if payload.ListType == "A" :
