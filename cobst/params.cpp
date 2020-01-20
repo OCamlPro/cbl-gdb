@@ -234,7 +234,6 @@ PARAMETERS GetParameters(int argc, char *argv[])
     retval.cbl_lst_filename.Decode(retval.cbl_filename.Stem() + ".cbl.lst");
     retval.full_csv_filename.Decode(retval.cbl_filename.Stem() + ".full.tab");
     retval.csv_filename.Decode(retval.cbl_filename.Stem() + ".tab");
-    retval.csym_filename.Decode(retval.cbl_filename.Stem() + ".sym.c");
 
     OpenOrFail(retval.cbl,retval.cbl_filename.WholePath());
     OpenOrFail(retval.i,retval.i_filename.WholePath());
@@ -243,7 +242,6 @@ PARAMETERS GetParameters(int argc, char *argv[])
     OpenOrFail(retval.cbl_lst,retval.cbl_lst_filename.WholePath());
     OpenOrFail(retval.full_csv,retval.full_csv_filename.WholePath());
     OpenOrFail(retval.csv,retval.csv_filename.WholePath());
-    OpenOrFail(retval.csym,retval.csym_filename.WholePath());
 
     return retval;
 }

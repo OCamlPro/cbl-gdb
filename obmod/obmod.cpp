@@ -48,9 +48,11 @@ int main(int argc, char **argv)
 
     elf.InsertDebugScript("cprint.py",params.o_input_filename.GetFname());
 
-    // Put the COBOL symbols into the elf segments
-    // Took this out in January 2020; it was corrupting more complex
-    // source files like NC101A and NC250A
+    // Put the COBOL symbols into the elf segments.
+    // This was an experimental effort to figure out how to insert symbols
+    // into the ELF relocatable.  They weren't used for anything.
+    // I took it out in January 2020 because it was corrupting more complex
+    // source files like NC101A and NC250A.
     // elf.AugmentSymbolTable();
 
 #if 0

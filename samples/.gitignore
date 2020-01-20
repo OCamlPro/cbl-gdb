@@ -1,6 +1,4 @@
 *.c
-*.sym.c
-*.c.*
 *.h
 *.lst
 *.cbl.lst
