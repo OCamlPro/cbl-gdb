@@ -2760,6 +2760,9 @@ class TabFileInformation() :
                         self.line_list = LineList()
                         self.line_list.ReadFromFile(tab_file)
 
+                        # Because we are in a new file, wipe out
+                        GV_ShortTermMemory = ShortTermMemory()
+
                     tab_file.close();
                 else :
                     current_tab_file = None
@@ -2768,6 +2771,12 @@ class TabFileInformation() :
         # COBOL routine we are trapped in based on the information in the
         # "info stack"
         self.ProcessInfoStack(original_info_stack)
+
+class ShortTermMemory() :
+    def __init__(self) :
+        self.short_term_memory = []
+
+GV_ShortTermMemory = ShortTermMemory()
 
 # Note on the program structure:
 #
@@ -2786,7 +2795,6 @@ class CPrintWorker() :
     # handle everything that doesn't actually need the gdb object
     def __init__(self):
         self.current_source_file = ""
-        self.short_term_memory = []
         self.sticky_display_mode = os.environ.get('CPRINT_V', '0')
         self.current_display_mode = self.sticky_display_mode
         self.machine_interface_mode = False
@@ -2867,7 +2875,7 @@ class CPrintWorker() :
             payload.ShowFields()
             pass
 
-    def ProcessArguments(self, TabFile, arguments) :
+    def ProcessArguments(self, TabFile, ShortTermMemory, arguments) :
         # The command is typically "cp A B C" or "cp/d A B C"
         # There is also the possibility of an '=' character, whereby the
         # value after the '=' is assigned to the variable described to the left
@@ -2901,12 +2909,12 @@ class CPrintWorker() :
                 # Pick up the value indexed by the argument:
                 index = int(args[0])
 
-                if index > 0 and index <= len(self.short_term_memory) :
+                if index > 0 and index <= len(ShortTermMemory.short_term_memory) :
                     # If index is valid, pick up the short-term memory entry
-                    short_term_entry = self.short_term_memory[index-1]
+                    short_term_entry = ShortTermMemory.short_term_memory[index-1]
                     if isinstance(short_term_entry, int) :
                         # It is an integer; look up the payload number:
-                        payload_number = self.short_term_memory[index-1]
+                        payload_number = ShortTermMemory.short_term_memory[index-1]
                     else :
                         # It is text, meaning it is a program-id.  Pass it
                         # along for expansion
@@ -2926,7 +2934,7 @@ class CPrintWorker() :
                     # There are multiple possibilities, or there is one 
                     # possibility found via a 'p *'.
                     # Load them into short-term memory:
-                    self.short_term_memory = possibilities
+                    ShortTermMemory.short_term_memory = possibilities
 
                     if self.machine_interface_mode :
                         # This is machine interface mode
@@ -3017,7 +3025,6 @@ class CWatchWorker() :
     """Does most of the non-gdb work of CWatch()"""
 
     def __init__(self):
-        self.short_term_memory = []
         self.current_display_mode = "0"
 
     def ProcessDisplayModeW(self,args) :
@@ -3072,18 +3079,20 @@ class CWatchWorker() :
         else :
             print(command)
 
-    def ProcessArgumentsW(self, TabFile, arguments) :
+    def ProcessArgumentsW(self, TabFile, ShortTermMemory, arguments) :
         # The command is typically "cw A 
         
         args = arguments.split()
         args = self.ProcessDisplayModeW(args)
 
         payload_number = None
+        pstar = False
         if len(args) == 1 :
             if args[0] == '*' :
+                pstar = True
                 # If the single argument is an asterisk, then
-                # he's looking for a list of variables
-                args[0] = list(TabFile.current_trapped_routine)
+                # he is asking for a list of variables and values:
+                args[0] = TabFile.current_trapped_routine
             
             elif args[0].isdigit() :
                 # if the single argument is a number, then he is looking
@@ -3094,12 +3103,12 @@ class CWatchWorker() :
                 # Pick up the value indexed by the argument:
                 index = int(args[0])
 
-                if index > 0 and index <= len(self.short_term_memory) :
+                if index > 0 and index <= len(ShortTermMemory.short_term_memory) :
                     # If index is valid, pick up the short-term memory entry
-                    short_term_entry = self.short_term_memory[index-1]
+                    short_term_entry = ShortTermMemory.short_term_memory[index-1]
                     if isinstance(short_term_entry, int) :
                         # It is an integer; look up the payload number:
-                        payload_number = self.short_term_memory[index-1]
+                        payload_number = ShortTermMemory.short_term_memory[index-1]
                     else :
                         # It is text, meaning it is a program-id.  Pass it
                         # along for expansion
@@ -3117,7 +3126,7 @@ class CWatchWorker() :
                 elif len(possibilities) > 1 :
                     # There are multiple possibilities.  Load them into
                     # short-term memory:
-                    self.short_term_memory = possibilities
+                    ShortTermMemory.short_term_memory = possibilities
 
                     # and show them to our user
                     line_counter = 1
@@ -3142,6 +3151,8 @@ class CWatchWorker() :
             # And go set the Watchpoint
             self.SetTheWatchpoint(TabFile, payload)
 
+
+
 if 'gdb' in sys.modules :
     class CPrint (gdb.Command) :
         """Prints COBOL-NAMED variables when debugging cobst/obmod processed object files."""
@@ -3155,7 +3166,7 @@ if 'gdb' in sys.modules :
         def invoke (self, arguments, from_tty):
             # pick up the name of the current source file
             self.TabFile.ReadTabFile() # There is an implicit "if necessary"
-            self.Worker.ProcessArguments(self.TabFile,arguments)
+            self.Worker.ProcessArguments(self.TabFile,GV_ShortTermMemory,arguments)
 
     class CWatch (gdb.Command) :
         """Used for creating COBOL-NAMED watchpoints when debugging cobst/obmod processed object files."""
@@ -3168,7 +3179,7 @@ if 'gdb' in sys.modules :
 
         def invoke (self, arguments, from_tty):
             self.TabFile.ReadTabFile() # There is an implicit "if necessary"
-            self.Worker.ProcessArgumentsW(self.TabFile,arguments)
+            self.Worker.ProcessArgumentsW(self.TabFile,GV_ShortTermMemory,arguments)
             
 if 'gdb' not in sys.modules:
     # I debug with Visual Studio in Windows, which doesn't provide a gdb object.
