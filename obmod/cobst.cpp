@@ -39,6 +39,7 @@ void COBST_SYMBOLS::ReadFrom(const string &cobst_filename)
     const string LEVEL              = "Level";
     const string BASE_SYMBOL        = "Base Symbol";
     const string OFFSET             = "Offset";
+    const string USAGE              = "Usage";
     const string LIST_TYPE          = "List Type";
     const string LIST_SIZE          = "List Size";
     const string PICTURE            = "Picture";
@@ -98,6 +99,7 @@ void COBST_SYMBOLS::ReadFrom(const string &cobst_filename)
                 cobst_symbol.list_type = values[header_columns[LIST_TYPE]];
                 cobst_symbol.list_size = stoull(values[header_columns[LIST_SIZE]]);
                 cobst_symbol.picture = values[header_columns[PICTURE]];
+                cobst_symbol.usage = values[header_columns[USAGE]];
                 cobst_symbol.occurs = stoi(values[header_columns[OCCURS]]);
                 cobst_symbol.attr_type = (USHORT)stoul(values[header_columns[ATTR_TYPE]]);
                 cobst_symbol.attr_digits = (USHORT)stoul(values[header_columns[ATTR_DIGITS]]);

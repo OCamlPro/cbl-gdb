@@ -1006,6 +1006,7 @@ string ELF::SymbolString()
             ss << cs.list_type.substr(0,1) << "|" ;
             ss << ZeroIsNull(cs.list_size) << "|" ;
             ss << cs.picture << "|" ;
+            ss << cs.usage << "|" ;
             ss << ZeroIsNull(cs.occurs) << "|" ;
             ss << ZeroIsNull(cs.attr_type) << "|" ;
             ss << ZeroIsNull(cs.attr_digits) << "|" ;

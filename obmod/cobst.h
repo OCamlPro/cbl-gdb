@@ -27,6 +27,7 @@ public:
     std::string list_type;  //
     size_t      list_size;  // Length of data
     std::string picture;
+    std::string usage;  
     int         occurs;
     USHORT      attr_type;
     USHORT      attr_digits;
