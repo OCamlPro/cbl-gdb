@@ -173,56 +173,56 @@ DISPLAY " "
 
 DISPLAY header
 DISPLAY withpic
-DISPLAY "def-BINARY-CHAR             " def-BINARY-CHAR            
-DISPLAY "def-BINARY-CHAR-SIGNED      " def-BINARY-CHAR-SIGNED     
-DISPLAY "def-BINARY-CHAR-UNSIGNED    " def-BINARY-CHAR-UNSIGNED   
-DISPLAY "def-BINARY-C-LONG           " def-BINARY-C-LONG          
-DISPLAY "def-BINARY-C-LONG-SIGNED    " def-BINARY-C-LONG-SIGNED   
-DISPLAY "def-BINARY-C-LONG-UNSIGNED  " def-BINARY-C-LONG-UNSIGNED 
-DISPLAY "def-BINARY-DOUBLE           " def-BINARY-DOUBLE          
-DISPLAY "def-BINARY-DOUBLE-SIGNED    " def-BINARY-DOUBLE-SIGNED   
-DISPLAY "def-BINARY-DOUBLE-UNSIGNED  " def-BINARY-DOUBLE-UNSIGNED 
-DISPLAY "def-BINARY-INT              " def-BINARY-INT             
-DISPLAY "def-BINARY-LONG             " def-BINARY-LONG            
-DISPLAY "def-BINARY-LONG-SIGNED      " def-BINARY-LONG-SIGNED     
-DISPLAY "def-BINARY-LONG-UNSIGNED    " def-BINARY-LONG-UNSIGNED   
-DISPLAY "def-BINARY-LONG-LONG        " def-BINARY-LONG-LONG       
-DISPLAY "def-BINARY-SHORT            " def-BINARY-SHORT           
-DISPLAY "def-BINARY-SHORT-SIGNED     " def-BINARY-SHORT-SIGNED    
-DISPLAY "def-BINARY-SHORT-UNSIGNED   " def-BINARY-SHORT-UNSIGNED  
-DISPLAY "def-COMPUTATIONAL           " def-COMPUTATIONAL        
-DISPLAY "def-COMP-1                  " def-COMP-1                 
-DISPLAY "def-COMP-2                  " def-COMP-2                 
-DISPLAY "def-COMPUTATIONAL-1         " def-COMPUTATIONAL-1        
-DISPLAY "def-COMPUTATIONAL-2         " def-COMPUTATIONAL-2        
-DISPLAY "def-FLOAT-DECIMAL-16        " def-FLOAT-DECIMAL-16       
-DISPLAY "def-FLOAT-DECIMAL-34        " def-FLOAT-DECIMAL-34       
-DISPLAY "def-FLOAT-LONG              " def-FLOAT-LONG             
-DISPLAY "def-FLOAT-SHORT             " def-FLOAT-SHORT            
-DISPLAY "def-INDEX                   " def-INDEX                  
-DISPLAY "def-SIGNED-INT              " def-SIGNED-INT             
-DISPLAY "def-SIGNED-LONG             " def-SIGNED-LONG            
-DISPLAY "def-SIGNED-SHORT            " def-SIGNED-SHORT           
-DISPLAY "def-UNSIGNED-INT            " def-UNSIGNED-INT           
-DISPLAY "def-UNSIGNED-LONG           " def-UNSIGNED-LONG          
-DISPLAY "def-UNSIGNED-SHORT          " def-UNSIGNED-SHORT         
-DISPLAY "def-COMP-3                  " def-COMP-3                 
-DISPLAY "def-COMPUTATIONAL-3         " def-COMPUTATIONAL-3    
-DISPLAY "def-PACKED-DECIMAL          " def-PACKED-DECIMAL     
-DISPLAY "def-PACKED-DECIMAL-S        " def-PACKED-DECIMAL-S   
-DISPLAY "def-BINARY                  " def-BINARY             
-DISPLAY "def-BINARY-S                " def-BINARY-S           
-DISPLAY "def-COMP                    " def-COMP               
-DISPLAY "def-COMPUTATIONAL           " def-COMPUTATIONAL      
-DISPLAY "def-COMP-4                  " def-COMP-4             
-DISPLAY "def-COMPUTATIONAL-4         " def-COMPUTATIONAL-4    
-DISPLAY "def-COMP-5                  " def-COMP-5             
-DISPLAY "def-COMPUTATIONAL-5         " def-COMPUTATIONAL-5    
-DISPLAY "def-COMP-6                  " def-COMP-6             
-DISPLAY "def-COMP-X                  " def-COMP-X             
-DISPLAY "def-COMPUTATIONAL-X         " def-COMPUTATIONAL-X    
-DISPLAY "def-COMP-XX                 " def-COMP-XX            
-DISPLAY "def-DISPLAY                 " def-DISPLAY     
+DISPLAY def-BINARY-CHAR            "   def-BINARY-CHAR             " 
+DISPLAY def-BINARY-CHAR-SIGNED     "   def-BINARY-CHAR-SIGNED      " 
+DISPLAY def-BINARY-CHAR-UNSIGNED   "   def-BINARY-CHAR-UNSIGNED    " 
+DISPLAY def-BINARY-C-LONG          "   def-BINARY-C-LONG           " 
+DISPLAY def-BINARY-C-LONG-SIGNED   "   def-BINARY-C-LONG-SIGNED    " 
+DISPLAY def-BINARY-C-LONG-UNSIGNED "   def-BINARY-C-LONG-UNSIGNED  " 
+DISPLAY def-BINARY-DOUBLE          "   def-BINARY-DOUBLE           " 
+DISPLAY def-BINARY-DOUBLE-SIGNED   "   def-BINARY-DOUBLE-SIGNED    " 
+DISPLAY def-BINARY-DOUBLE-UNSIGNED "   def-BINARY-DOUBLE-UNSIGNED  " 
+DISPLAY def-BINARY-INT             "   def-BINARY-INT              " 
+DISPLAY def-BINARY-LONG            "   def-BINARY-LONG             " 
+DISPLAY def-BINARY-LONG-SIGNED     "   def-BINARY-LONG-SIGNED      " 
+DISPLAY def-BINARY-LONG-UNSIGNED   "   def-BINARY-LONG-UNSIGNED    " 
+DISPLAY def-BINARY-LONG-LONG       "   def-BINARY-LONG-LONG        " 
+DISPLAY def-BINARY-SHORT           "   def-BINARY-SHORT            " 
+DISPLAY def-BINARY-SHORT-SIGNED    "   def-BINARY-SHORT-SIGNED     " 
+DISPLAY def-BINARY-SHORT-UNSIGNED  "   def-BINARY-SHORT-UNSIGNED   " 
+DISPLAY def-COMPUTATIONAL          "   def-COMPUTATIONAL           " 
+DISPLAY def-COMP-1                 "   def-COMP-1                  " 
+DISPLAY def-COMP-2                 "   def-COMP-2                  " 
+DISPLAY def-COMPUTATIONAL-1        "   def-COMPUTATIONAL-1         " 
+DISPLAY def-COMPUTATIONAL-2        "   def-COMPUTATIONAL-2         " 
+DISPLAY def-FLOAT-DECIMAL-16       "   def-FLOAT-DECIMAL-16        " 
+DISPLAY def-FLOAT-DECIMAL-34       "   def-FLOAT-DECIMAL-34        " 
+DISPLAY def-FLOAT-LONG             "   def-FLOAT-LONG              " 
+DISPLAY def-FLOAT-SHORT            "   def-FLOAT-SHORT             " 
+DISPLAY def-INDEX                  "   def-INDEX                   " 
+DISPLAY def-SIGNED-INT             "   def-SIGNED-INT              " 
+DISPLAY def-SIGNED-LONG            "   def-SIGNED-LONG             " 
+DISPLAY def-SIGNED-SHORT           "   def-SIGNED-SHORT            " 
+DISPLAY def-UNSIGNED-INT           "   def-UNSIGNED-INT            " 
+DISPLAY def-UNSIGNED-LONG          "   def-UNSIGNED-LONG           " 
+DISPLAY def-UNSIGNED-SHORT         "   def-UNSIGNED-SHORT          " 
+DISPLAY def-COMP-3                 "   def-COMP-3                  " 
+DISPLAY def-COMPUTATIONAL-3        "   def-COMPUTATIONAL-3         " 
+DISPLAY def-PACKED-DECIMAL         "   def-PACKED-DECIMAL          " 
+DISPLAY def-PACKED-DECIMAL-S       "   def-PACKED-DECIMAL-S        " 
+DISPLAY def-BINARY                 "   def-BINARY                  " 
+DISPLAY def-BINARY-S               "   def-BINARY-S                " 
+DISPLAY def-COMP                   "   def-COMP                    " 
+DISPLAY def-COMPUTATIONAL          "   def-COMPUTATIONAL           " 
+DISPLAY def-COMP-4                 "   def-COMP-4                  " 
+DISPLAY def-COMPUTATIONAL-4        "   def-COMPUTATIONAL-4         " 
+DISPLAY def-COMP-5                 "   def-COMP-5                  " 
+DISPLAY def-COMPUTATIONAL-5        "   def-COMPUTATIONAL-5         " 
+DISPLAY def-COMP-6                 "   def-COMP-6                  " 
+DISPLAY def-COMP-X                 "   def-COMP-X                  " 
+DISPLAY def-COMPUTATIONAL-X        "   def-COMPUTATIONAL-X         " 
+DISPLAY def-COMP-XX                "   def-COMP-XX                 " 
+DISPLAY def-DISPLAY                "   def-DISPLAY                 " 
 
 
 STOP RUN.
