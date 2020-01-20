@@ -91,6 +91,14 @@ import re
 import sys
 import os
 
+def NoNulls(s) :
+    ss = ""
+    for ch in s:
+        if ord(ch) < 32 or ord(ch) >= 128 :
+            ch = '.'
+        ss += ch
+    return ss
+
 def LeftRight(s,splitchar) :
     """Splits what is presumably a numeric string with a possible
     splitting character into left and right pieces"""
@@ -286,7 +294,7 @@ class VarTrie() :
                 # identify ALPHANUMERICS:
 
                 if payload.ListType in ("ALPHABETIC","ALPHANUMERIC") :
-                    payload.AttrType = 33 ;
+                    payload.AttrType = COB_TYPE_ALPHANUMERIC ;
 
                 # Save the location of this payload in the _storage
                 # list.  It's ordered, so we can make use of that when
@@ -2873,7 +2881,7 @@ class CPrintWorker() :
                         if s[-1] == ',' :
                             s = s[:-1]  # Strip off final comma
                         s += ']'
-                        print(s)
+                        print(NoNulls(s))
 
                     else :
                         # This is human-interactive mode
@@ -2886,7 +2894,7 @@ class CPrintWorker() :
                             s += payload.display_name
                             s += " : "
                             s += payload.display_body
-                            print(s)
+                            print(NoNulls(s))
                             line_counter += 1
                     payload_number = None
 
@@ -3033,7 +3041,7 @@ class CWatchWorker() :
                         s += payload.display_name
                         s += " : "
                         s += payload.display_body
-                        print(s)
+                        print(NoNulls(s))
                         line_counter += 1
 
         # At this point, if we have a single payload, it's time to show
