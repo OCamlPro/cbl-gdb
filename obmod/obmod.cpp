@@ -31,20 +31,23 @@ int main(int argc, char **argv)
     elf.DumpEntireDebugInfoDieTree();
 #endif
 
-    // Run the line number state machine to get the original information
-    // from cobc.  We need to do this because we copy certain information
-    // over from, for instance, the DWARF .debug_line_info header.
-    elf.RunLineStateMachine(false);
+    if( !params.suppress_lines )
+        {
+        // Run the line number state machine to get the original information
+        // from cobc.  We need to do this because we copy certain information
+        // over from, for instance, the DWARF .debug_line_info header.
+        elf.RunLineStateMachine(false);
 
-    // This is meat and potatoes stuff:  Discard the .debug_line information
-    // that gcc-as generated for the cobc-generated .c version of the COBOL
-    // program, and replace it with .debug_line information created with the
-    // relative-address/COBOL-line-number pairs extracted from the
-    // mixed-language c/asm .lst file by the cobst program.
-    elf.ReplaceDebugLineSection();
+        // This is meat and potatoes stuff:  Discard the .debug_line information
+        // that gcc-as generated for the cobc-generated .c version of the COBOL
+        // program, and replace it with .debug_line information created with the
+        // relative-address/COBOL-line-number pairs extracted from the
+        // mixed-language c/asm .lst file by the cobst program.
+        elf.ReplaceDebugLineSection();
 
-    // Run the line number state machine to see our replacements
-    elf.RunLineStateMachine(false);
+        // Run the line number state machine to see our replacements
+        //elf.RunLineStateMachine(false);
+        }
 
     elf.InsertDebugScript("cprint.py",params.o_input_filename.GetFname());
 
