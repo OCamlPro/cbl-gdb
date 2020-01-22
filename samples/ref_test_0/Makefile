@@ -1,6 +1,7 @@
 project=rtest
 
-free = --free
-#free = 
+free=--free
+export COBCDFLAGS=--free
+#free= 
 
 include ../Makefile.inc

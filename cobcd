@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# This script, nominally named cobcd, packages up the process of compiling
+# a single COBOL source module and processing it so that gdb can be used for
+# source-level debugging of that module. Found in the root folder of the
+# cbl-gdb repository, it is designed to operate there pointing at the development
+# versions of the processing programs as controlled by the external environment
+# variables COBCDEVEL and COBCDNOCLEAN.	 Once installed in, say, /usr/local/bin,
+# it will use production versions of the processing programs
+#
+# Standard disclaimer: Your author is neither pyschic nor omnipotent, so please,
+# blame him not if you can't make this script do what you need. Edit it as
+# necessary, with his blessing.
+#
+# Usage:
+# path_to/cobcd source.cbl ## Uses production toolchain
+# COBCDEVEL=1 path_to/cobcd source.cbl ## Uses development toolchain
+# COBCDNOCLEAN=1 path_to/cobcd source.cbl ## Uses production toolchain, leaves behind the intermediate files
+# COBCDEVEL=1 COBCDNOCLEAN=1 path_to/cobcd source.cbl ## Make an inference.	 Go ahead.	You can do it
+#
+# It is hardwired with -x parameters, since it is designed for standalone
+# COBOL programs consisting of a single source code module.
+#
+# Other environment variables:
+# COBCDFLAGS is passed to the cobc compiler in the first stage.	 
+#			 it's intended for things like -free, and so on.
+
+#set -x ## This turns on echoing
+#ECHO=1
+
+# Courtesy of stackoverflow, a script to find the directory of the script
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+
+GCC=gcc
+COBC=cobc
+CC1=`$GCC --print-prog-name cc1`
+ASSEMBLER=`$GCC --print-prog-name as`
+LOADER=`$GCC --print-prog-name ld`
+
+if [[ $COBCDEVEL != "" ]]; then
+	COBST=$DIR/cobst/cobst
+	SFIX=$DIR/sfix/sfix
+else
+	COBST=cobst
+	SFIX=sfix
+	fi
+
+SOURCEFILE=$1
+EXT="${SOURCEFILE##*.}"
+BASENAME=`basename $1 .$EXT`
+
+if [[ $ECHO != "" ]]; then
+	echo GCC          $GCC
+	echo CC1          $CC1
+	echo ASSEMBLER    $ASSEMBLER
+	echo LOADER       $LOADER
+	echo COBC         $COBC
+	echo COBST        $COBST
+	echo SFIX         $SFIX
+	echo COBCDEVEL    $COBCDEVEL
+	echo COBCDNOCLEAN $COBCDNOCLEAN
+	echo COBCDFLAGS   $COBCDFLAGS
+	echo $1           $1
+	echo SOURCEFILE   $SOURCEFILE
+	echo BASENAME     $BASENAME
+	fi
+
+# Build .o and the files that cobst needs:
+COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c -x -d -g \
+	--fgen-c-line-directives --fgen-c-labels \
+	-T$BASENAME.cbl.lst --tlines=0 --tsymbols $SOURCEFILE
+
+## Build the BASENAME.sym.c file
+$COBST -q $SOURCEFILE
+
+# Compile the .sym.c file, creating a .sym.o file containing the 
+# .debug_gdb_scripts section with the VARIABLE_STRING and cprint.py script
+$GCC -c -o $BASENAME.sym.o $BASENAME.sym.c 
+
+# Create the .s file from the .c file
+	$CC1 -quiet -imultiarch x86_64-linux-gnu \
+	-D PIC $BASENAME.c -quiet -dumpbase $BASENAME.c -mtune=generic \
+	-march=x86-64 -auxbase-strip $BASENAME.o -g -fPIC \
+	-fstack-protector-strong -Wformat -Wformat-security -o $BASENAME.s
+	
+# Modify the .s file, removing all .loc references to
+# BASENAME.c and any .h files.	
+$SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
+
+# Assemble the modified .s file into a replacement .o file:
+$ASSEMBLER --64 -L -anchls=$BASENAME-2.lst -o $BASENAME-2.o $BASENAME-2.s
+
+# Combine the two .o files to create the executable
+$COBC -x -o $BASENAME $BASENAME-2.o $BASENAME.sym.o
+
+if [[ $COBCDNOCLEAN = "" ]]; then
+	rm -fr = $BASENAME.c $BASENAME.s $BASENAME*.h $BASENAME.i $BASENAME.lst \
+	$BASENAME.cbl.lst $BASENAME.full.tab $BASENAME.tab $BASENAME.o \
+	$BASENAME.cbl.o $BASENAME-2.lst $BASENAME.sym.c $BASENAME.sym.o \
+	$BASENAME-2.s $BASENAME-2.o
+	fi
+
+
+
+
+

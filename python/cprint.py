@@ -3061,7 +3061,7 @@ if 'gdb' in sys.modules :
 
         def __init__ (self):
             super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
-            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 0.10.1]')
+            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 1.0.1]')
             self.Worker = CPrintWorker()
             self.TabFile = TabFileInformation();
 

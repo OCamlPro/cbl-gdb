@@ -204,7 +204,7 @@ void OpenOrFail(std::ofstream &ofs,const std::string &fname,std::ios_base::openm
 
 PARAMETERS GetParameters(int argc, char *argv[])
 {
-    if(argc != 5) {
+    if(argc < 5) {
         Usage();
         exit(1);
     }
