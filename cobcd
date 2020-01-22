@@ -107,8 +107,7 @@ $ASSEMBLER --64 -L -anchls=$BASENAME-2.lst -o $BASENAME-2.o $BASENAME-2.s
 if [[ $COBCDXM	== "-x" ]]; then
 	$COBC $COBCDXM -o $BASENAME $BASENAME-2.o $BASENAME.sym.o
 else
-	$COBC $BASENAME-2.o $BASENAME.sym.o
-	mv $BASENAME-2.so $BASENAME.so
+	$GCC -shared -o $BASENAME.so $BASENAME-2.o $BASENAME.sym.o -lcob
 	fi
 
 if [[ $COBCDNOCLEAN = "" ]]; then

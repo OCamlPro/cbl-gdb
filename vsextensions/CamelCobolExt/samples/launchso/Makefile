@@ -15,13 +15,13 @@ launchso : launchso.o
 	gcc -export-dynamic launchso.o -o launchso -ldl `cob-config --libs`
 
 launchso.o : launchso.c
-	gcc -g -c launchso.c -o launchso.o
+	gcc -c launchso.c -o launchso.o
 
 libboat.so : boat.o
 	gcc -shared boat.o -o libboat.so
 
 boat.o:
-	gcc -g -c -fPIC boat.c -o boat.o
+	gcc -c -fPIC boat.c -o boat.o
 	
 clean:
 	rm -f boat.o libboat.so launchso.o launchso elbarco.so elbarco.tab
@@ -38,7 +38,4 @@ pregit:
 $(project).so : $(project).cbl
 	COBCDEVEL=1 COBCDNOCLEAN=2 COBCDFLAGS=$(COBCDFLAGS) COBCDXM=-m ../../../../cobcd $< 
 
-stubby: 
-	COB_CFLAGS="-Wa,-L,-anchls=$(project).lst" cobc -g $(free) \
-		-T$(project).cbl.lst --tlines=0 --tsymbols $(project).cbl
 	

@@ -16,3 +16,9 @@ elbarco.o
 elbarco.so
 elbarco.tab
 elbarco.cbl.lst
+elbarco-2.lst
+elbarco-2.o
+elbarco-2.s
+elbarco.s
+elbarco.sym.c
+elbarco.sym.o
