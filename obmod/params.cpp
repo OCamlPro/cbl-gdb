@@ -215,7 +215,8 @@ PARAMETERS GetParameters(int argc, char *argv[])
     string cobst_parameter;
     int c;
     retval.quiet = false;
-    while ((c = getopt (argc, argv, "i:o:t:vq")) != -1) {
+    retval.suppress_lines = false;
+    while ((c = getopt (argc, argv, "i:o:t:vqx")) != -1) {
         switch (c) {
         case 'v':
             Version();
@@ -231,6 +232,9 @@ PARAMETERS GetParameters(int argc, char *argv[])
             break;
         case 'q':
             retval.quiet = true;
+            break;
+        case 'x':
+            retval.suppress_lines = true;
             break;
 
         case '?':

@@ -4,7 +4,7 @@
 #include <fstream>
 #include <vector>
 
-#define VERSION "0.10.1"
+#define VERSION "1.0.1"
 
 class FILENAME
 {
@@ -76,6 +76,7 @@ public:
     FILENAME    cobst_filename;		// symbol table information generated
     // by the `cobst` program.
     bool        quiet;
+    bool        suppress_lines;
 };
 
 std::vector<std::string> DirectoryScan(const std::string &path,

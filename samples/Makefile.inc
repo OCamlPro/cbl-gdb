@@ -34,6 +34,8 @@ COBC = cobc
 COBST = ../../cobst/cobst
 OBMOD = ../../obmod/obmod
 
+ifndef STEPS
+
 all: $(project).x $(project) $(project).s
 
 # This rule creates a cbl-gdb modified executable.	The debugging information
@@ -80,7 +82,7 @@ $(project).s : $(project).cbl
 # .txt files that might be lying around; I often create .txt files
 # from dwarfdump and hexdump.
 .PHONY : clean
-suffixes = .c .s *.h .i .lst .cbl.lst .full.tab .tab .o .cbl.o .x
+suffixes = .c .s *.h .i .lst .cbl.lst .full.tab .tab .o .cbl.o .x -2.lst
 clean:
 	rm -f $(addprefix $(project),$(suffixes)) $(project) *.txt $(CLEAN)
 
@@ -102,6 +104,66 @@ check:
 			echo "checking: $(project).tab $(project).ref are different"; \
 			exit 64; \
 		fi
+endif  ## ifndef $(STEPS)
+
+ifdef STEPS
+
+all : $(project)
+
+$(project).c $(project).lst : $(project).cbl
+	@echo " "
+	@echo "*****************************"
+	@echo "Compile from COBOL -> C"
+	@echo "*****************************"
+	COB_CFLAGS="-Wa,-L,-anchls=$(project).lst" $(COBC) -c -x -d -g $(free) \
+		--fgen-c-line-directives --fgen-c-labels \
+		-T$(project).cbl.lst --tlines=0 --tsymbols $(project).cbl
+
+$(project).tab : $(project).lst
+	@echo " "
+	@echo "*****************************"
+	@echo "Generate symbols cross-reference"
+	@echo "*****************************"
+	$(COBST) $(project).cbl
+
+$(project).s : $(project).c
+	@echo " "
+	@echo "*****************************"
+	@echo "Compile from C -> S"
+	@echo "*****************************"
+
+	$(CC1) -quiet -imultiarch x86_64-linux-gnu \
+	-D PIC $(project).c -quiet -dumpbase $(project).c -mtune=generic \
+	-march=x86-64 -auxbase-strip $(project).o -g -fPIC \
+	-fstack-protector-strong -Wformat -Wformat-security -o $(project).s
+
+$(project).o : $(project).s
+	@echo " "
+	@echo "*****************************"
+	@echo "Assemble from S -> O"
+	@echo "*****************************"
+
+	$(ASSEMBLER) --64 -L -anchls=$(project)-2.lst -o $(project).o $(project).s
+
+$(project).cbl.o : $(project).tab $(project).o
+	@echo " "
+	@echo "*****************************"
+	@echo "Do Dubner's modifications to O"
+	@echo "*****************************"
+
+	$(OBMOD) -x -i $(project).o -t $(project).tab -o $(project).cbl.o
+
+	@echo " "
+	@echo "*****************************"
+	@echo "Load from O into executable"
+	@echo "*****************************"
+
+$(project) : $(project).cbl.o
+	$(COBC) -x -o $(project) $(project).cbl.o
+
+
+
+endif # ifdef $(STEPS)
 
 .PHONY : steps
 steps :
