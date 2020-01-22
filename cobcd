@@ -23,7 +23,8 @@
 #
 # Other environment variables:
 # COBCDFLAGS is passed to the cobc compiler in the first stage.	 
-#			 it's intended for things like -free, and so on.
+#            it's intended for things like -free, and so on.
+# COBCDXM    is -x to create an executable with main(), -m for .so shared library
 
 #set -x ## This turns on echoing
 #ECHO=1
@@ -66,13 +67,18 @@ if [[ $ECHO != "" ]]; then
 	echo COBCDEVEL    $COBCDEVEL
 	echo COBCDNOCLEAN $COBCDNOCLEAN
 	echo COBCDFLAGS   $COBCDFLAGS
+	echo COBCDXM      $COBCDXM
 	echo $1           $1
 	echo SOURCEFILE   $SOURCEFILE
 	echo BASENAME     $BASENAME
 	fi
+	
+if [[ $COBCDXM	== "" ]]; then
+	COBC=-m
+	fi
 
 # Build .o and the files that cobst needs:
-COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c -x -d -g \
+COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
 	--fgen-c-line-directives --fgen-c-labels \
 	-T$BASENAME.cbl.lst --tlines=0 --tsymbols $SOURCEFILE
 
@@ -97,7 +103,13 @@ $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
 $ASSEMBLER --64 -L -anchls=$BASENAME-2.lst -o $BASENAME-2.o $BASENAME-2.s
 
 # Combine the two .o files to create the executable
-$COBC -x -o $BASENAME $BASENAME-2.o $BASENAME.sym.o
+
+if [[ $COBCDXM	== "-x" ]]; then
+	$COBC $COBCDXM -o $BASENAME $BASENAME-2.o $BASENAME.sym.o
+else
+	$COBC $BASENAME-2.o $BASENAME.sym.o
+	mv $BASENAME-2.so $BASENAME.so
+	fi
 
 if [[ $COBCDNOCLEAN = "" ]]; then
 	rm -fr = $BASENAME.c $BASENAME.s $BASENAME*.h $BASENAME.i $BASENAME.lst \

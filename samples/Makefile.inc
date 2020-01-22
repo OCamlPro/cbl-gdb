@@ -43,8 +43,7 @@ $(project) : $(project).cbl
 # This rule creates a cbl-gdb modified executable.	The debugging information
 # in the modified executable will point to the project.cbl source code.
 #
-#	COBCDEVEL=1 COBCDNOCLEAN=2 ../../cobcd $< 
-	COBCDEVEL=1 COBCDFLAGS=$(COBCDFLAGS) ../../cobcd $< 
+	COBCDEVEL=1 COBCDNOCLEAN=2 COBCDFLAGS=$(COBCDFLAGS) COBCDXM=-x ../../cobcd $< 
 
 # This cleans up the various project files, along with any additional
 # $(CLEAN) files specified by the parent Makefile It also clobbers any
@@ -55,26 +54,8 @@ suffixes = .c .s *.h .i .lst .cbl.lst .full.tab .tab .o .cbl.o .x -2.lst \
 			.sym.c .sym.o -2.s -2.o
 clean:
 	@rm -f $(addprefix $(project),$(suffixes)) $(project) *.txt $(CLEAN)
-
-# For regression testing of cobst, this rule establishes a known .ref
-# version of .tab
-.PHONY : ref
-ref:
-	cp -f $(project).tab $(project).ref
-
-# As part of regression testing, this rule checks a
-# previously.established .ref against the current .tab
-.PHONY : check
-check:
-	@cmp -s $(project).tab $(project).ref; \
-		RETVAL=$$?; \
-		if [ $$RETVAL -eq 0 ]; then \
-			echo "checking: $(project).tab $(project).ref are the same"; \
-		else \
-			echo "checking: $(project).tab $(project).ref are different"; \
-			exit 64; \
-		fi
-endif  ## ifndef $(STEPS)
+    
+endif
 
 ifdef STEPS
 
@@ -131,8 +112,6 @@ $(project) : $(project).o $(project).sym.o
 	@echo "Load from O into executable"
 	@echo "*****************************"
 	$(COBC) -x -o $(project) $(project).o $(project).sym.o
-
-
 
 endif # ifdef $(STEPS)
 
