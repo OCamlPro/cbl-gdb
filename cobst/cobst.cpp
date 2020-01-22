@@ -512,6 +512,7 @@ CreateSymc(PARAMETERS &params,
     params.symc << "asm(" << endl;
     params.symc << "\".pushsection \\\".debug_gdb_scripts\\\", \\\"MS\\\",@progbits,1\\n\"" << endl;
     params.symc << "\".byte 4\\n\"" << endl;
+    params.symc << "\".ascii \\\"gdb.inlined-script\\\\n\\\"\\n\"";
 
     int char_count = 0;
     size_t i = 0;
