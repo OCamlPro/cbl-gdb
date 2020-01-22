@@ -33,6 +33,7 @@ COBC = cobc
 # purposes.	 You Have Been Warned.
 COBST = ../../cobst/cobst
 OBMOD = ../../obmod/obmod
+SFIX = ../../sfix/sfix
 
 ifndef STEPS
 
@@ -136,6 +137,8 @@ $(project).s : $(project).c
 	-D PIC $(project).c -quiet -dumpbase $(project).c -mtune=generic \
 	-march=x86-64 -auxbase-strip $(project).o -g -fPIC \
 	-fstack-protector-strong -Wformat -Wformat-security -o $(project).s
+	$(SFIX) $(project).s $(project).s $(project).c $(project).cbl
+
 
 $(project).o : $(project).s
 	@echo " "
@@ -189,6 +192,7 @@ steps :
 	-D PIC $(project).c -quiet -dumpbase $(project).c -mtune=generic \
 	-march=x86-64 -auxbase-strip $(project).o -g -fPIC \
 	-fstack-protector-strong -Wformat -Wformat-security -o $(project).s
+	$(SFIX) $(project).s $(project).s $(project).c $(project).cbl
 
 	@echo " "
 	@echo "*****************************"

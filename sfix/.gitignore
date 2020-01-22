@@ -1,7 +1,7 @@
 *.o
 *.d
-obmod
-odbmod.exe
+sfix
+sfix.exe
 /Debug
 /Release
 /x64

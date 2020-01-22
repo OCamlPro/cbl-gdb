@@ -4,6 +4,7 @@ export CXXFLAGS
 all:
 	$(MAKE) -C cobst
 	$(MAKE) -C obmod
+	$(MAKE) -C sfix
 	$(MAKE) -C samples
 	$(MAKE) -C picgen
 	$(MAKE) -C selfcheck
@@ -14,6 +15,7 @@ all:
 clean:
 	$(MAKE) -C cobst clean
 	$(MAKE) -C obmod clean
+	$(MAKE) -C sfix clean
 	$(MAKE) -C samples clean
 	$(MAKE) -C picgen
 	$(MAKE) -C selfcheck clean
@@ -24,6 +26,7 @@ clean:
 install:
 	$(MAKE) -C cobst install
 	$(MAKE) -C obmod install
+	$(MAKE) -C sfix install
 	$(MAKE) -C python install
 
 # Dubner likes to work in Windows, using Visual Studio.  This can result in
@@ -35,6 +38,7 @@ install:
 pregit:
 	$(MAKE) -C cobst pregit
 	$(MAKE) -C obmod pregit
+	$(MAKE) -C sfix pregit
 	$(MAKE) -C python pregit
 	$(MAKE) -C picgen
 	$(MAKE) -C selfcheck pregit
