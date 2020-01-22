@@ -59,11 +59,19 @@ FigureOutReplacements(const PARAMETERS &params,
         {
         if( it->first EQ params.c_filename )
             {
+            // Skip over the cobc-generated .c file
+            retval[it->second] = 0;
+            continue;
+            }
+        if( it->first.substr(it->first.length()-2) EQ ".h" )
+            {
+            // Skip over any xxxx.h file
             retval[it->second] = 0;
             continue;
             }
         if( it->first EQ params.cbl_filename )
             {
+            // Force the COBOL source file to be #1
             retval[it->second] = 1;
             continue;
             }
