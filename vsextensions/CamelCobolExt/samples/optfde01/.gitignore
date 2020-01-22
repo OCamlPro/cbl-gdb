@@ -12,3 +12,5 @@ optfde01.o
 optfde01.s
 optfde01.tab
 optfde01.x
+optfde01.sym.c
+optfde01.sym.o

@@ -35,7 +35,8 @@ $(project) : $(project).cbl
 	
 	@# Get rid of intermediate files, leaving behind the .tab file needed by gdb
 	rm -f $(project).c $(project).o $(project).cbl.o $(project)*.h $(project).i \
-		$(project).lst $(project).cbl.lst $(project).full.tab $(project).tab 
+		$(project).lst $(project).cbl.lst $(project).full.tab $(project).tab \
+		$(project).sym.c $(project).sym.o
 
 # This cleans up the various project files, along with any additional
 # $(CLEAN) files specified by the parent Makefile It also clobbers any

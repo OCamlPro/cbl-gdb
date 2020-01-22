@@ -83,7 +83,7 @@ $(project).s : $(project).cbl
 # .txt files that might be lying around; I often create .txt files
 # from dwarfdump and hexdump.
 .PHONY : clean
-suffixes = .c .s *.h .i .lst .cbl.lst .full.tab .tab .o .cbl.o .x -2.lst
+suffixes = .c .s *.h .i .lst .cbl.lst .full.tab .tab .o .cbl.o .x -2.lst .sym.c .sym.o
 clean:
 	rm -f $(addprefix $(project),$(suffixes)) $(project) *.txt $(CLEAN)
 
@@ -120,12 +120,13 @@ $(project).c $(project).lst : $(project).cbl
 		--fgen-c-line-directives --fgen-c-labels \
 		-T$(project).cbl.lst --tlines=0 --tsymbols $(project).cbl
 
-$(project).tab : $(project).lst
+$(project).sym.o : $(project).lst
 	@echo " "
 	@echo "*****************************"
 	@echo "Generate symbols cross-reference"
 	@echo "*****************************"
 	$(COBST) $(project).cbl
+	gcc -c -o $(project).sym.o $(project).sym.c 
 
 $(project).s : $(project).c
 	@echo " "
@@ -148,21 +149,19 @@ $(project).o : $(project).s
 
 	$(ASSEMBLER) --64 -L -anchls=$(project)-2.lst -o $(project).o $(project).s
 
-$(project).cbl.o : $(project).tab $(project).o
-	@echo " "
-	@echo "*****************************"
-	@echo "Do Dubner's modifications to O"
-	@echo "*****************************"
+#$(project).cbl.o : $(project).tab $(project).o
+#	@echo " "
+#	@echo "*****************************"
+#	@echo "Do Dubner's modifications to O"
+#	@echo "*****************************"
+#	$(OBMOD) -x -i $(project).o -t $(project).tab -o $(project).cbl.o
 
-	$(OBMOD) -x -i $(project).o -t $(project).tab -o $(project).cbl.o
-
+$(project) : $(project).o $(project).sym.o
 	@echo " "
 	@echo "*****************************"
 	@echo "Load from O into executable"
 	@echo "*****************************"
-
-$(project) : $(project).cbl.o
-	$(COBC) -x -o $(project) $(project).cbl.o
+	$(COBC) -x -o $(project) $(project).o $(project).sym.o
 
 
 

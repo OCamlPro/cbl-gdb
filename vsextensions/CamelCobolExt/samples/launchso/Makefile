@@ -26,7 +26,8 @@ boat.o:
 clean:
 	rm -f boat.o libboat.so launchso.o launchso elbarco.so elbarco.tab
 	rm -f $(project).c $(project).cbl.lst $(project).cbl.o $(project).c*.h \
-	$(project).full.tab $(project).i $(project).lst $(project).o 
+	$(project).full.tab $(project).i $(project).lst $(project).o \
+	$(project).sym.c $(project).sym.o 
 	
 pregit:
 #	astyle -n --style=kr *.h
@@ -51,7 +52,8 @@ $(project).so : $(project).cbl
 	
 	@# Get rid of the intermediate files:
 	rm -f $(project).c $(project).cbl.lst $(project).cbl.o $(project).c*.h \
-	$(project).full.tab $(project).i $(project).lst $(project).o 
+	$(project).full.tab $(project).i $(project).lst $(project).o \
+	$(project).sym.c $(project).sym.o 
 
 stubby: 
 	COB_CFLAGS="-Wa,-L,-anchls=$(project).lst" cobc -g $(free) \

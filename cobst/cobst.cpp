@@ -521,8 +521,8 @@ CreateSymc(PARAMETERS &params,
             char_count = 10 ;
         }
         if( char_count >= 120 ) {
-            params.symc << "\\n\"" << endl;
-            char_count = 0;
+            params.symc << "\"" << endl << "\"";
+            char_count = 1;
             continue;
         }
         char ch = s[i++];
@@ -532,7 +532,7 @@ CreateSymc(PARAMETERS &params,
             continue;
         }
         if( ch EQ '\\' OR ch EQ '\"' ) {
-            params.symc << "\\";
+            params.symc << "\\\\\\";
             char_count += 1;
         }
         params.symc << ch;
