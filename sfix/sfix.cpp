@@ -18,79 +18,70 @@ using namespace std;
 
 map<string,int>
 GetInputFileMappings(const string &filename)
-    {
+{
     map<string,int> retval;
 
     FILE *f = fopen(filename.c_str(), "r");
-    if( !f )
-        {
+    if( !f ) {
         cerr << "Couldn't open input file " << filename << endl;
-        }
+    }
 
     char ach[16384];
-    while(fgets(ach,sizeof(ach),f))
-        {
-        if( strstr(ach,".file") )
-            {
+    while(fgets(ach,sizeof(ach),f)) {
+        if( strstr(ach,".file") ) {
             string s = Trim(ach);
             VSTRING tokens = Split(s,"\t ");
-            if( tokens[0] EQ ".file" AND isdigit(tokens[1][0]) )
-                {
+            if( tokens[0] EQ ".file" AND isdigit(tokens[1][0]) ) {
                 int nfile = stoi(tokens[1]);
                 string file = StripQuotes(tokens[2]);
                 retval[file] = nfile;
-                }
             }
         }
+    }
     fclose(f);
     return retval;
-    }
+}
 
 map<int,int>
 FigureOutReplacements(const PARAMETERS &params,
                       const map<string,int> &input_file_mappings)
-    {
+{
     map<int,int> retval;
 
     int next=2;
     for( map<string,int>::const_iterator it=input_file_mappings.begin();
-        it != input_file_mappings.end();
-        it ++)
-        {
-        if( it->first EQ params.c_filename )
-            {
+            it != input_file_mappings.end();
+            it ++) {
+        if( it->first EQ params.c_filename ) {
             // Skip over the cobc-generated .c file
             retval[it->second] = 0;
             continue;
-            }
-        if( it->first.substr(it->first.length()-2) EQ ".h" )
-            {
+        }
+        if( it->first.substr(it->first.length()-2) EQ ".h" ) {
             // Skip over any xxxx.h file
             retval[it->second] = 0;
             continue;
-            }
-        if( it->first EQ params.cbl_filename )
-            {
+        }
+        if( it->first EQ params.cbl_filename ) {
             // Force the COBOL source file to be #1
             retval[it->second] = 1;
             continue;
-            }
-        retval[it->second] = next++;
         }
-
-    return retval;
+        retval[it->second] = next++;
     }
 
-int 
+    return retval;
+}
+
+int
 main(int argc, char **argv)
-    {
+{
     PROFILER;
 
     PARAMETERS params = GetParameters(argc, argv);
-    if(!params.quiet) 
-        {
+    if(!params.quiet) {
         cout << "sfix version " << VERSION << endl;
-        }
+    }
 
     map<string,int>input_file_mappings = GetInputFileMappings(params.s_input_filename.WholePath());
 
@@ -110,48 +101,40 @@ main(int argc, char **argv)
     fgets(ach,sizeof(ach),f);
 
     // Now, do the line-by-line stuff:
-    while(fgets(ach,sizeof(ach),f))
-        {
-        if( strstr(ach,".file ") OR strstr(ach,".loc ") )
-            {
+    while(fgets(ach,sizeof(ach),f)) {
+        if( strstr(ach,".file ") OR strstr(ach,".loc ") ) {
             string s = Trim(ach);
             VSTRING tokens = Split(s,"\t ");
             int nfile = stoi(tokens[1]);
             map<int,int>::const_iterator it = replacements.find(nfile);
-            if( it != replacements.end() )
-                {
+            if( it != replacements.end() ) {
                 int newfile = it->second;
-                if( newfile != 0 )
-                    {
+                if( newfile != 0 ) {
                     ss << "\t";
                     ss << tokens[0];
                     ss << " ";
                     ss << newfile;
                     size_t index = 2;
-                    while( index < tokens.size() )
-                        {
+                    while( index < tokens.size() ) {
                         ss << " ";
                         ss << tokens[index++];
-                        }
-                    ss << endl;
                     }
+                    ss << endl;
                 }
             }
-        else
-            {
+        } else {
             ss << ach;
-            }
         }
+    }
     fclose(f);
 
     f = fopen(params.s_output_filename.WholePath().c_str(),"w");
-    if( !f )
-        {
+    if( !f ) {
         cerr << "Couldn't open input file " << params.s_output_filename.WholePath() << endl;
         exit(1);
-        }
+    }
     fprintf(f,"%s",ss.str().c_str());
     fclose(f);
     return 0;
-    }
+}
 

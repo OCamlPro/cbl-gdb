@@ -85,6 +85,8 @@ public:
     //                              // we know in it.
     FILENAME    csv_filename;       // Our output file, destined to be read
     //                              // downstream
+    FILENAME    symc_filename;      // The source file for the .debug_gdb_scrips
+    //                              //
 
     std::ifstream cbl;              // Streams for the above files
     std::ifstream cbl_lst;
@@ -93,6 +95,7 @@ public:
     std::ifstream lst;
     std::ofstream full_csv;
     std::ofstream csv;
+    std::ofstream symc;
 
     bool quiet;
 };

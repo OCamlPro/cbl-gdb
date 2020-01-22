@@ -10,6 +10,7 @@
 #include "input_scan.h"
 #include "profiler.h"
 #include "vartree.h"
+#include "cprint_py.h"
 
 #define EQ ==
 #define AND &&
@@ -412,6 +413,139 @@ CreateCSV(PARAMETERS &params,
     csv.Generate(params.csv);
 }
 
+static string ZeroIsNull(const LONGLONG &v)
+{
+    stringstream ss;
+    if( v != 0 ) {
+        ss << v;
+    }
+    return ss.str();
+}
+
+static void
+CreateSymc(PARAMETERS &params,
+           const COB_LABELS &cob_labels,
+           const VARIABLE_TREE &var_tree)
+{
+    /*  This routine puts the COBOL-identifier/C-identifier cross-reference
+    information into a single string that will be prepended, as a string
+    variable, to the cprint.py module embedded in the executable as a
+    .debug_script
+    */
+
+    stringstream ss;
+    ss << "VARIABLE_STRING=\"";
+
+    // Do the line/address information from the .text in the minimal form
+    // used by cprint.py to figure out which program a trap has occurred in.
+    string current_program = "";
+    for(int i=0; i<cob_labels.size(); i++) {
+        COB_LABEL cs = cob_labels[i];
+        if( cs.section EQ "Linkage" ) {
+            // This information was previously transferred to the
+            // data_description information, so don't put it out here because
+            // it's potentially confusing.
+            continue;
+        }
+
+        if( cs.program != current_program) {
+            current_program = cs.program;
+            ss << "P|";
+            ss << cs.line_number << "|";
+            ss << cs.program;
+            ss << "~";
+            continue;
+        }
+    }
+    for(int i=0; i<var_tree.size(); i++) {
+        VAR_NODE cs = var_tree[i];
+        ss << "D|";
+        ss << cs.GetSection().substr(0,2) << "|";
+        ss << ZeroIsNull(cs.GetLevel()) << "|" ;
+        ss << cs.GetCanonicalName() << "|" ;
+        ss << cs.GetBaseSymbol() << "|" ;
+        ss << ZeroIsNull(cs.GetOffset()) << "|" ;
+        ss << cs.GetType().substr(0,1) << "|" ;
+        ss << ZeroIsNull(cs.GetSize()) << "|" ;
+        ss << cs.GetPicture() << "|" ;
+        ss << cs.GetUsage() << "|" ;
+        ss << ZeroIsNull(cs.GetOccurs()) << "|" ;
+        ss << ZeroIsNull(cs.GetAttrType()) << "|" ;
+        ss << ZeroIsNull(cs.GetAttrDigits()) << "|" ;
+        ss << ZeroIsNull(cs.GetAttrScale()) << "|" ;
+        ss << ZeroIsNull(cs.GetAttrFlags()) << "~";
+    }
+    ss << "\"";
+    ss << "\n";
+
+    // Copy over the Python script
+    char *py = new char[___python_cprint_py_len+1];
+    memcpy(py, ___python_cprint_py,___python_cprint_py_len);
+    py[___python_cprint_py_len] = '\0';
+    ss <<  py;
+    ss << "\n";
+
+    delete[] py;
+
+    /*  As per https://sourceware.org/gdb/current/onlinedocs/gdb/dotdebug_005fgdb_005fscripts-section.html,
+        we are going to format that string in a way that reflects this example:
+
+        #include "symcat.h"
+        #include "gdb/section-scripts.h"
+        asm(
+        ".pushsection \".debug_gdb_scripts\", \"MS\",@progbits,1\n"
+        ".byte " XSTRING (SECTION_SCRIPT_ID_PYTHON_TEXT) "\n"
+        ".ascii \"gdb.inlined-script\\n\"\n"
+        ".ascii \"class test_cmd (gdb.Command):\\n\"\n"
+        ".ascii \"  def __init__ (self):\\n\"\n"
+        ".ascii \"    super (test_cmd, self).__init__ (\\\"test-cmd\\\", gdb.COMMAND_OBSCURE)\\n\"\n"
+        ".ascii \"  def invoke (self, arg, from_tty):\\n\"\n"
+        ".ascii \"    print (\\\"test-cmd output, arg = %s\\\" % arg)\\n\"\n"
+        ".ascii \"test_cmd ()\\n\"\n"
+        ".byte 0\n"
+        ".popsection\n"
+        );
+    */
+
+    string s = ss.str();
+
+    params.symc << "asm(" << endl;
+    params.symc << "\".pushsection \\\".debug_gdb_scripts\\\", \\\"MS\\\",@progbits,1\\n\"" << endl;
+    params.symc << "\".byte 4\\n\"" << endl;
+
+    int char_count = 0;
+    size_t i = 0;
+    while( i < s.size() ) {
+        if(char_count EQ 0) {
+            params.symc << "\".ascii \\\"";
+            char_count = 10 ;
+        }
+        if( char_count >= 120 ) {
+            params.symc << "\\n\"" << endl;
+            char_count = 0;
+            continue;
+        }
+        char ch = s[i++];
+        if( ch EQ '\n' ) {
+            params.symc << "\\\\n\\\"\\n\"" << endl;
+            char_count = 0;
+            continue;
+        }
+        if( ch EQ '\\' OR ch EQ '\"' ) {
+            params.symc << "\\";
+            char_count += 1;
+        }
+        params.symc << ch;
+        char_count += 1;
+    }
+
+    params.symc << "\".byte 0\\n\"" << endl;
+    params.symc << "\".popsection\\n\"" << endl;
+    params.symc << ");" << endl;
+
+    return;
+}
+
 int main(int argc, char *argv[])
 {
     PROFILER;
@@ -500,5 +634,26 @@ int main(int argc, char *argv[])
     // Create our actual useful .TAB file.
     CreateCSV(params,cob_labels,variable_tree);
 
+    // Create the .sym.c file that will be compiled and linked into the
+    // executable, providing the text that will become the executable's
+    // .debug_gdb_scripts section
+    CreateSymc(params,cob_labels,variable_tree);
+
     return 0;
 }
+
+/*
+
+#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
+#define STRINGX(s) #s
+#else
+#define STRINGX(s) "s"
+#endif
+
+#define XSTRING(s) STRINGX(s)
+#define SECTION_SCRIPT_ID_PYTHON_TEXT 4
+
+
+
+
+*/

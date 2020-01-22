@@ -161,6 +161,7 @@
     <ClCompile Include="vartree.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cprint_py.h" />
     <ClInclude Include="csv.h" />
     <ClInclude Include="getopt.h" />
     <ClInclude Include="input_scan.h" />

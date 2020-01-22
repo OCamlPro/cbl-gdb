@@ -60,30 +60,26 @@ char const * optarg;    /* argument associated with option */
 #define    EMSG    ""
 
 int getopt(int nargc, char * const * nargv, const char * ostr)
-    {
+{
     static char *progname = *nargv;
     static char const * place = EMSG;        /* option letter processing */
     const char *oli;                /* option letter list index */
 
-    if (optreset || !*place)
-        {
+    if (optreset || !*place) {
         /* update scanning pointer */
         optreset = 0;
-        if (optind >= nargc || *(place = nargv[optind]) != '-')
-            {
+        if (optind >= nargc || *(place = nargv[optind]) != '-') {
             place = EMSG;
             return (EOF);
-            }
-        if (place[1] && *++place == '-')
-            {
+        }
+        if (place[1] && *++place == '-') {
             /* found "--" */
             ++optind;
             place = EMSG;
             return (EOF);
-            }
-        }                    /* option letter okay? */
-    if ((optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, optopt)))
-        {
+        }
+    }                    /* option letter okay? */
+    if ((optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, optopt))) {
         /*
         * if the user didn't specify '-' as an option,
         * assume it means EOF.
@@ -95,38 +91,32 @@ int getopt(int nargc, char * const * nargv, const char * ostr)
         if (opterr && *ostr != ':')
             (void)fprintf(stderr,"%s: illegal option -- %c\n", progname, optopt);
         return (BADCH);
-        }
-    if (*++oli != ':')
-        {
+    }
+    if (*++oli != ':') {
         /* don't need argument */
         optarg = NULL;
         if (!*place)
             ++optind;
-        }
-    else
-        {
+    } else {
         /* need an argument */
         if (*place)            /* no white space */
             optarg = place;
-        else if (nargc <= ++optind)      /* no arg */
-            {
+        else if (nargc <= ++optind) {    /* no arg */
             place = EMSG;
             if (*ostr == ':')
                 return (BADARG);
             if (opterr)
                 (void)fprintf(stderr,"%s: option requires an argument -- %c\n",progname, optopt);
             return (BADCH);
-            }
-        else
-            {
+        } else {
             /* white space */
             optarg = nargv[optind];
-            }
+        }
         place = EMSG;
         ++optind;
-        }
-    return (optopt);            /* dump back option letter */
     }
+    return (optopt);            /* dump back option letter */
+}
 
 //#define TESTING_GETOPT
 #ifdef TESTING_GETOPT
@@ -137,7 +127,7 @@ int getopt(int nargc, char * const * nargv, const char * ostr)
 #include "getopt.h"
 
 void testopt(int argc, char **argv)
-    {
+{
     int aflag = 0;
     int bflag = 0;
     char *cvalue = NULL;
@@ -148,45 +138,43 @@ void testopt(int argc, char **argv)
     optind = 1;    // Only needed for repetitive starts
 
     printf("Input: testop ");
-    for(int i=1; i<argc; i++)
-        {
+    for(int i=1; i<argc; i++) {
         printf("%s ",argv[i]);
-        }
+    }
     printf("\n");
 
     while ((c = getopt (argc, argv, "abc:")) != -1)
-        switch (c)
-            {
-            case 'a':
-                aflag = 1;
-                break;
-            case 'b':
-                bflag = 1;
-                break;
-            case 'c':
-                cvalue = optarg;
-                break;
-            case '?':
-                if (optopt == 'c')
-                    fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-                else if (isprint (optopt))
-                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-                else
-                    fprintf (stderr,"Unknown option character `\\x%x'.\n",optopt);
-                return;
-            default:
-                abort ();
-            }
+        switch (c) {
+        case 'a':
+            aflag = 1;
+            break;
+        case 'b':
+            bflag = 1;
+            break;
+        case 'c':
+            cvalue = optarg;
+            break;
+        case '?':
+            if (optopt == 'c')
+                fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+            else if (isprint (optopt))
+                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+            else
+                fprintf (stderr,"Unknown option character `\\x%x'.\n",optopt);
+            return;
+        default:
+            abort ();
+        }
 
     printf ("aflag = %d, bflag = %d, cvalue = %s\n",aflag, bflag, cvalue);
 
     for (index = optind; index < argc; index++)
         printf ("Non-option argument %s\n", argv[index]);
     printf("\n");
-    }
+}
 
 int main()
-    {
+{
     char *test1[]  = {"x"};
     char *test2[]  = {"x","-a","-b"};
     char *test3[]  = {"x","-ab"};
@@ -210,7 +198,7 @@ int main()
     testopt(sizeof(test10)/sizeof(test10[0]),test10);
 
     return 0;
-    }
+}
 
 /* This is what should be the output of the testing routine:
 

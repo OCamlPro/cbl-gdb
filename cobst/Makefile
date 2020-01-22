@@ -14,6 +14,11 @@ $(project) : $(obj)
 # (see man cpp for details on the -MM and -MT options)
 %.d: %.cpp
 	@$(CPP) $(CFLAGS) $< -MM -MT $(@:.d=.o) >$@
+	
+cobst.cpp : cprint_py.h
+	
+cprint_py.h : ../python/cprint.py
+	xxd -i ../python/cprint.py >cprint_py.h
 
 .PHONY: clean
 clean:

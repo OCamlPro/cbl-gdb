@@ -2,6 +2,7 @@
 *.d
 cobst
 cobst.exe
+cprint_py.h
 /Debug
 /Release
 /x64

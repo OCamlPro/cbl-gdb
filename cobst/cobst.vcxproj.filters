@@ -59,5 +59,8 @@
     <ClInclude Include="vartree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cprint_py.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

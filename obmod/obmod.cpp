@@ -31,8 +31,7 @@ int main(int argc, char **argv)
     elf.DumpEntireDebugInfoDieTree();
 #endif
 
-    if( !params.suppress_lines )
-        {
+    if( !params.suppress_lines ) {
         // Run the line number state machine to get the original information
         // from cobc.  We need to do this because we copy certain information
         // over from, for instance, the DWARF .debug_line_info header.
@@ -47,7 +46,7 @@ int main(int argc, char **argv)
 
         // Run the line number state machine to see our replacements
         //elf.RunLineStateMachine(false);
-        }
+    }
 
     elf.InsertDebugScript("cprint.py",params.o_input_filename.GetFname());
 
