@@ -15,21 +15,15 @@ using namespace std;
 #define AND &&
 #define OR ||
 
+typedef vector<size_t> VINT;
 
 map<string,int>
-GetInputFileMappings(const string &filename)
+GetInputFileMappings(const VSTRING &input_file)
 {
     map<string,int> retval;
 
-    FILE *f = fopen(filename.c_str(), "r");
-    if( !f ) {
-        cerr << "Couldn't open input file " << filename << endl;
-    }
-
-    char ach[16384];
-    while(fgets(ach,sizeof(ach),f)) {
-        if( strstr(ach,".file") ) {
-            string s = Trim(ach);
+    for(string s : input_file) {
+        if( s.find(".file ") != string::npos) {
             VSTRING tokens = Split(s,"\t ");
             if( tokens[0] EQ ".file" AND isdigit(tokens[1][0]) ) {
                 int nfile = stoi(tokens[1]);
@@ -38,7 +32,23 @@ GetInputFileMappings(const string &filename)
             }
         }
     }
-    fclose(f);
+    return retval;
+}
+
+VINT
+FindFunctionReferences(const VSTRING &input_file)
+{
+    VINT retval;
+    int nline = 0;
+    for(string s : input_file) {
+        if( s.find("@function") != string::npos) {
+            VSTRING tokens = Split(s,"\t ");
+            if( tokens[0] EQ ".type" AND tokens[2] EQ "@function" ) {
+                retval.push_back(nline);
+            }
+        }
+        nline += 1;
+    }
     return retval;
 }
 
@@ -73,6 +83,25 @@ FigureOutReplacements(const PARAMETERS &params,
     return retval;
 }
 
+VSTRING
+ReadEntireFile(string filename)
+{
+    VSTRING retval;
+    FILE *f = fopen(filename.c_str(), "r");
+    if( !f ) {
+        cerr << "Couldn't open input file " << filename << endl;
+    }
+
+    char ach[16384];
+    while(fgets(ach,sizeof(ach),f)) {
+        string s = Trim(ach);
+        retval.push_back(s);
+    }
+    fclose(f);
+    return retval;
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -83,9 +112,10 @@ main(int argc, char **argv)
         cout << "sfix version " << VERSION << endl;
     }
 
-    map<string,int>input_file_mappings = GetInputFileMappings(params.s_input_filename.WholePath());
-
+    VSTRING input_file = ReadEntireFile(params.s_input_filename.WholePath());
+    map<string,int>input_file_mappings = GetInputFileMappings(input_file);
     map<int,int>replacements = FigureOutReplacements(params,input_file_mappings);
+    VINT function_references = FindFunctionReferences(input_file);
 
     // Let's hang around here and do the hard work:
 
@@ -94,41 +124,92 @@ main(int argc, char **argv)
     // Start the file off with our filename:
     ss << "\t.file\t\"" << params.cbl_filename << "\"" << endl;
 
-    FILE *f = fopen(params.s_input_filename.WholePath().c_str(),"r");
+    // And then, let's put the modified list of filenames right at the beginning:
 
-    // Skip the first line
-    char ach[16384];
-    fgets(ach,sizeof(ach),f);
-
-    // Now, do the line-by-line stuff:
-    while(fgets(ach,sizeof(ach),f)) {
-        if( strstr(ach,".file ") OR strstr(ach,".loc ") ) {
-            string s = Trim(ach);
-            VSTRING tokens = Split(s,"\t ");
-            int nfile = stoi(tokens[1]);
-            map<int,int>::const_iterator it = replacements.find(nfile);
-            if( it != replacements.end() ) {
-                int newfile = it->second;
-                if( newfile != 0 ) {
-                    ss << "\t";
-                    ss << tokens[0];
-                    ss << " ";
-                    ss << newfile;
-                    size_t index = 2;
-                    while( index < tokens.size() ) {
-                        ss << " ";
-                        ss << tokens[index++];
-                    }
-                    ss << endl;
-                }
-            }
-        } else {
-            ss << ach;
+    for(map<string,int>::const_iterator it=input_file_mappings.begin();
+            it != input_file_mappings.end();
+            it++
+       ) {
+        int oldnum = it->second;
+        int newnum = replacements[oldnum];
+        if( newnum ) {
+            ss << "\t.file " << newnum << " \"" << it->first << "\"" << endl;
         }
     }
-    fclose(f);
 
-    f = fopen(params.s_output_filename.WholePath().c_str(),"w");
+    int next_function_reference_index = 0;
+    size_t interject_line_number = -1;
+    string interject_line = "";
+    for( size_t i=0; i<input_file.size(); i++ ) {
+        if( i EQ interject_line_number ) {
+            ss << interject_line;
+        }
+        VSTRING tokens = Split(input_file[i]," \t");
+        if( tokens[0] EQ ".file" ) {
+            // We've already taken care of all .file lines
+            continue;
+        }
+        if( tokens[0] EQ ".loc" ) {
+            // We need to replace the old file number with the new one
+            int oldnum = stoi(tokens[1]);
+            int newnum = replacements[oldnum];
+            if( newnum != 0 ) {
+                // Rebuild the .loc line
+                ss << "\t";
+                ss << tokens[0];
+                ss << " ";
+                ss << newnum;
+                size_t index = 2;
+                while( index < tokens.size() ) {
+                    ss << " ";
+                    ss << tokens[index++];
+                }
+                ss << endl;
+            }
+            continue;
+        }
+        if(next_function_reference_index < function_references.size()
+                && i EQ function_references[next_function_reference_index] ) {
+            // We have found a match.
+            next_function_reference_index += 1;
+
+            // We are going to look ahead for the next valid .loc:
+
+            size_t ii = i+4;
+            while(ii < input_file.size() ) {
+                VSTRING tokens = Split(input_file[ii]," \t");
+                if( tokens[0] EQ ".loc" ) {
+                    // We need to replace the old file number with the new one
+                    int old_num = stoi(tokens[1]);
+                    int new_num = replacements[old_num];
+                    if( new_num != 0 ) {
+                        // Build the replacement line:
+                        int new_line = stoi(tokens[2])-1;
+                        stringstream ss;
+
+                        ss << "\t.loc";
+                        ss << " " << new_num ;
+                        ss << " " << new_line ;
+                        size_t index = 4;
+                        while( index < tokens.size() ) {
+                            ss << " ";
+                            ss << tokens[index++];
+                        }
+                        ss << endl;
+
+                        interject_line = ss.str();
+                        interject_line_number = i+4;
+                        break;
+                    }
+                }
+
+                ii += 1;
+            }
+        }
+        ss << input_file[i] << endl;
+    }
+
+    FILE *f = fopen(params.s_output_filename.WholePath().c_str(),"w");
     if( !f ) {
         cerr << "Couldn't open input file " << params.s_output_filename.WholePath() << endl;
         exit(1);
