@@ -25,7 +25,7 @@
 all: $(project)
 
 $(project) : $(project).cbl 
-	COBCDEVEL=1 COBCDFLAGS=$(COBCDFLAGS) ../../../../cobcd $< 
+	COBCDEVEL=1 COBCDFLAGS=$(COBCDFLAGS) COBCDXM=-x ../../../../cobcd $< 
 	
 # This cleans up the various project files, along with any additional
 # $(CLEAN) files specified by the parent Makefile It also clobbers any

@@ -74,7 +74,8 @@ if [[ $ECHO != "" ]]; then
 	fi
 	
 if [[ $COBCDXM	== "" ]]; then
-	COBC=-m
+	# Let's assume that a missing parameter means a standalone program
+	COBCDXM=-x
 	fi
 
 # Build .o and the files that cobst needs:
