@@ -12,7 +12,7 @@ OBMOD = ../../../../obmod/obmod
 all : launchso libboat.so $(project).so
 
 launchso : launchso.o 
-	gcc -export-dynamic launchso.o -o launchso -ldl `cob-config --libs`
+	gcc -export-dynamic launchso.o -o launchso -Wl,-rpath,. -ldl `cob-config --libs`
 
 launchso.o : launchso.c
 	gcc -c launchso.c -o launchso.o
