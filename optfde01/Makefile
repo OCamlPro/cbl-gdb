@@ -5,6 +5,8 @@ free =
 # disable built-in rules:
 .SUFFIXES:
 
+COBCD=cobcd
+
 all: $(project) 
 # This rule creates a cbl-gdb modified executable.	The debugging information
 # in the modified executable will point to the project.cbl source code.
@@ -12,7 +14,7 @@ all: $(project)
 # Note that it is this srule/script that will have to be copied elsewhere to
 # compile .cbl sources for gdb debugging
 $(project) : $(project).cbl 
-	COBCDEVEL=1 COBCDXM=-x ../cobcd $< 
+	COBCDXM=-x $(COBCD) $< 
 
 # This cleans up the various project files, along with any additional
 # $(CLEAN) files specified by the parent Makefile It also clobbers any

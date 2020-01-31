@@ -1,3 +1,10 @@
-This folder is a test & demonstration platform for Visual Studio Code
+This folder is a test & demonstration platform for both standalone
+GDB command-line debugging and for Visual Studio Code debugging.  As such,
+it demonstrates the production environment, rather than the development
+environment.
 
-Bob Dubner, 2019-08-14
+So, in order for make to work properly, you first need to go to the cbl-gdb
+folder and run "make && sudo make install", because this Makefile goes for
+/usr/local/bin/ rather than the cbl-gdb/ development executables.
+
+Bob Dubner, 2020-01-31
