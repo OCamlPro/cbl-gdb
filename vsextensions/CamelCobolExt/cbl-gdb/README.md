@@ -12,7 +12,7 @@ You probably found this README along with a file named cbl-gdb-x.y.z.vsix, which
 
 - From inside Visual Studio Code, use the Command Palette (Ctrl+Shift+P) to find "Extensions: Load extension from VSIX..."  Select that, and point it at the .VSIX file
 
-- From the command line, execute `code --install-extension cbl-gdb-x.y.z.vsix1`
+- From the command line, execute `code --install-extension cbl-gdb-x.y.z.vsix`
 
 ## Additional extensions
 
