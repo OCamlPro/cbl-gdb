@@ -9,7 +9,7 @@
             "type": "cbl-gdb",
             "request": "attach",
             "cwd": "${workspaceFolder}",
-            "ixscript": "/home/bob/.prim_debug/gdb_launcher",
+            "primdebug": "${env:PRIM_DEBUG_PID}",
         },
         {
             "name": "Attach to PID",
@@ -24,7 +24,7 @@
             "type": "node",
             "request": "attach",
             "cwd": "${workspaceFolder}",
-            "ixscript": "/home/bob/.prim_debug/gdb_launcher",
+            "primdebug": "${env:PRIM_DEBUG_PID}",
             "debugServer": 4711,
         },
         {

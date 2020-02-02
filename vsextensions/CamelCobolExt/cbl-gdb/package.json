@@ -7,7 +7,7 @@
 		"COBOL",
 		"debug"
 	],
-	"version": "0.8.8",
+	"version": "1.1.0",
 	"publisher": "CamelianSystems",
 	"icon": "images/CamelianCobol.png",
 	"engines": {
@@ -181,6 +181,10 @@
 							"ixscript": {
 								"type": "string",
 								"description": "Script to be executed by the GDB -ix switch"
+							},
+							"primdebug": {
+								"type": "string",
+								"description": "Path to file/fifo containing 'PID appname' information"
 							},
 							"solibs":{
 								"type": "string",

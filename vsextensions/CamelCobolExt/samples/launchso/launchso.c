@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <limits.h>
 #include <libgen.h>
+#include <fcntl.h>
 
 #define LAUNCH_DEBUGGER 1
 #define DONT_LAUNCH_DEBUGGER 0
@@ -86,16 +87,50 @@ void CreateGdbLaunchFile(int pid,
                          const char *directory_of_library, 
                          const char *breakpoint)
     {
-    // Create a text file that will be fed to a gdb session.
-    char * const filename = BuildFilename(gdb_filename);
-    FILE *f = OpenOrFail(filename);
-    fprintf(f,"set solib-search-path %s\n",directory_of_library);
-    fprintf(f,"attach %d\n",pid);
-    fprintf(f,"b %s\n",breakpoint);     // Set a breakpoint in the .so
-    fprintf(f,"signal SIGCONT\n");      // Release the executable
-    fclose( f );
-    printf("Attach command-line debugger with `gdb -q -x %s`\n",filename);
-    free(filename);
+        {
+        // Create a text file that will be fed to a gdb session.
+        char * const filename = BuildFilename(gdb_filename);
+        FILE *f = OpenOrFail(filename);
+        fprintf(f,"set solib-search-path %s\n",directory_of_library);
+        fprintf(f,"attach %d\n",pid);
+        fprintf(f,"b %s\n",breakpoint);     // Set a breakpoint in the .so
+        fprintf(f,"signal SIGCONT\n");      // Release the executable
+        fclose( f );
+        printf("Attach command-line debugger with `gdb -q -x %s`\n",filename);
+        free(filename);
+        }
+
+        {
+        // Create a FIFO that will get picked up by the gdb launcher
+        const char *fifo_name = getenv("PRIM_DEBUG_PID");
+        if( fifo_name )
+            {
+            // NOTE: this open() will block until somebody else opens the
+            // FIFO for reading.
+            printf("Or you can use the %s fifo to get the debug information\n",fifo_name);
+            int fd = open(fifo_name, O_WRONLY);
+            if( fd != -1 )
+                {
+                // Wipe out the final underscore; the debugger launch will
+                // put it back.
+                char appname[PATH_MAX];
+                strcpy(appname,breakpoint);
+                int n = strlen(appname);
+                if( n )
+                    {
+                    appname[n-1] = '\0';
+                    }
+                dprintf(fd, "%d\t%s\n", getpid(), appname);
+                close(fd);
+                }
+            }
+        else
+            {
+            printf("There isn't any environment variable PRIM_DEBUG_PID.n");
+            printf("There really should be.\n");
+            exit(1);
+            }
+        }
     }
 
 void *DlopenOrFail(const char *library_name, int flag)
@@ -230,9 +265,6 @@ void LaunchSo(const char *library_name,
         printf("Calling %s(\"N\"):\n",breakpoint);
         (*CharReturningVoid)(No);
         printf("back from %s()\n",breakpoint);
-        //printf("Calling %s(\"Y\"), with internal pause(), :\n",breakpoint);
-        //(*CharReturningVoid)(Yes);
-        //printf("back from %s()\n",breakpoint);
         dlclose(handle);    // We're done with the handle
         }
     }

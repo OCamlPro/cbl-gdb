@@ -203,9 +203,10 @@ export class MI2 extends EventEmitter implements IBackend {
 		return cmds;
 	}
 
-	attach(cwd: string, executable: string, target: string, iexclause: string, ixscript:string): Thenable<any> {
+	attach(cwd: string, executable: string, target: string, iexclause: string, ixscript:string, primdebug:string): Thenable<any> {
 		return new Promise((resolve, reject) => {
 			let args = [];
+			args = args.concat(this.preargs);
 			if (executable && !nativePath.isAbsolute(executable)) {
 				executable = nativePath.join(cwd, executable);
 			}
@@ -226,13 +227,42 @@ export class MI2 extends EventEmitter implements IBackend {
 					args = args.concat("-ix");
 					args = args.concat(ixscript);
 				}
+				if ( primdebug ){
+					//  One of the numerous possibilities is that the user has supplied us
+					//  with a path to a file, or fifo, containing a single line:
+					//      PID appname\n
+					//
+					//  We need to read that file, and turn it into -ex commands:
+					//
+					// Get the contents of the file
+					try {
+						var primdebugstring:string = fs.readFileSync(primdebug,"UTF-8");
+						// Strip off the newline at the end
+						primdebugstring = primdebugstring.slice(0,-1);
+						var tokens = primdebugstring.split("\t");
+						if( tokens.length == 2 ){
+							// Put in the -p PID
+							args = args.concat("-p");
+							args = args.concat(tokens[0]);
+							// Put in the -ex 'b app_'
+
+							args = args.concat("-ex");
+							args = args.concat("b " + tokens[1] + "_");
+							
+							// Put in the -ex 'signal SIGCONT'
+							args = args.concat("-ex");
+							args = args.concat("signal SIGCONT");
+						}
+					}
+					catch(error){
+					}
+				}
 				if (executable) {
 					args = args.concat(executable);
 				}
 				if (target) {
 					args = args.concat(target);
 				}
-				args = args.concat(this.preargs);
 			}
 			this.process = ChildProcess.spawn(this.application, args, { cwd: cwd, env: this.procEnv });
 			this.process.stdout.on("data", this.stdout.bind(this));

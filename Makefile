@@ -28,6 +28,7 @@ install:
 	$(MAKE) -C obmod install
 	$(MAKE) -C sfix install
 	$(MAKE) -C python install
+	$(MAKE) -C vsextensions install
 	cp cobcd /usr/local/bin/
 
 # Dubner likes to work in Windows, using Visual Studio.  This can result in
