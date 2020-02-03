@@ -26,6 +26,7 @@
 #            it's intended for things like -free, and so on.
 # COBCDXM    is -x to create an executable with main(), -m for .so shared library
 
+set -e
 #set -x ## This turns on echoing
 #ECHO=1
 
@@ -51,10 +52,61 @@ else
 	COBST=cobst
 	SFIX=sfix
 	fi
+	
+#
+# We need to do some processing on the input parameters. 
+#
+# 1) We are going to make the assumption that the cobol module 
+#    has the extension .cbl.  
+# 2) We are going to assume that any -o option is followed by the executable
+#    target name; we'll handle that with a final filemove
+# 3) Any other options that appear before the filename will be accumulated
+#    into PREOPTIONS
+# 4) Any other options that appear after the filename will be accumulated
+#    into POSTOPTIONS
+#
+# I am operating under an assumption that in the simple case, all options
+# will appear before the final entry, which will be the COBOL source code
+# module name.  But I am also envisioning the need to link in additional
+# libraries in the final link step, and maybe the POSTOPTIONS will give us
+# a way to do that.  
 
-SOURCEFILE=$1
-EXT="${SOURCEFILE##*.}"
-BASENAME=`basename $1 .$EXT`
+SOURCEFILE=""
+BASENAME=""
+TARGET=""
+PREOPTIONS=""
+POSTOPTIONS=""
+
+while (( $# )) ; do	
+	# Extract any extension
+	EXT="${1##*.}"
+	LEXT=""
+	
+	if [[ $EXT != $1 ]] ; then
+		# Extract the basename
+		BASE=`basename $1 .$EXT`
+		# Convert EXT to lowercase:
+		LEXT="${EXT,,}";
+		fi
+	
+	if [[ $1 == "-o" ]] ; then
+		# First, check for a -o parameter:
+		shift
+		TARGET=$1 ;
+	elif [[ $LEXT == "cbl" ]] || [[ $LEXT == "cob" ]] ; then 
+		# Check for a COBOL source module name
+		SOURCEFILE=$1
+		BASENAME=$BASE;
+	else
+		# Otherwise, add to PRE or POST options
+		if [[ $SOURCEFILE == "" ]] ; then
+			PREOPTIONS="$PREOPTIONS $1" ;
+		else
+			POSTOPTIONS="$POSTOPTIONS $1" ;
+			fi
+		fi
+	shift ;
+	done
 
 if [[ $ECHO != "" ]]; then
 	echo GCC          $GCC
@@ -68,12 +120,14 @@ if [[ $ECHO != "" ]]; then
 	echo COBCDNOCLEAN $COBCDNOCLEAN
 	echo COBCDFLAGS   $COBCDFLAGS
 	echo COBCDXM      $COBCDXM
-	echo $1           $1
+	echo PREOPTIONS   $PREOPTIONS
 	echo SOURCEFILE   $SOURCEFILE
 	echo BASENAME     $BASENAME
+	echo POSTOPTIONS  $POSTOPTIONS
+	echo TARGET       $TARGET
 	fi
 	
-if [[ $COBCDXM	== "" ]]; then
+if [[ $COBCDXM	== "" ]] ; then
 	# Let's assume that a missing parameter means a standalone program
 	COBCDXM=-x
 	fi
@@ -81,7 +135,7 @@ if [[ $COBCDXM	== "" ]]; then
 # Build .o and the files that cobst needs:
 COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
 	--fgen-c-line-directives --fgen-c-labels \
-	-T$BASENAME.cbl.lst --tlines=0 --tsymbols $SOURCEFILE
+	-T$BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
 
 ## Build the BASENAME.sym.c file
 $COBST -q $SOURCEFILE
@@ -107,8 +161,14 @@ $ASSEMBLER --64 -L -anchls=$BASENAME-2.lst -o $BASENAME-2.o $BASENAME-2.s
 
 if [[ $COBCDXM	== "-x" ]]; then
 	$COBC $COBCDXM -o $BASENAME $BASENAME-2.o $BASENAME.sym.o
+	if [[ $TARGET != "" ]] ; then
+		mv $BASENAME $TARGET ;
+		fi
 else
 	$GCC -shared -o $BASENAME.so $BASENAME-2.o $BASENAME.sym.o -lcob
+	if [[ $TARGET != "" ]] ; then
+		mv $BASENAME.so $TARGET ;
+		fi
 	fi
 
 if [[ $COBCDNOCLEAN = "" ]]; then
@@ -117,8 +177,3 @@ if [[ $COBCDNOCLEAN = "" ]]; then
 	$BASENAME.cbl.o $BASENAME-2.lst $BASENAME.sym.c $BASENAME.sym.o \
 	$BASENAME-2.s $BASENAME-2.o
 	fi
-
-
-
-
-
