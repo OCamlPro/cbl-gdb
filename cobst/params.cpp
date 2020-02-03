@@ -236,7 +236,7 @@ PARAMETERS GetParameters(int argc, char *argv[])
     retval.csv_filename.Decode(retval.cbl_filename.Stem() + ".tab");
     retval.symc_filename.Decode(retval.cbl_filename.Stem() + ".sym.c");
 
-    OpenOrFail(retval.cbl,retval.cbl_filename.WholePath());
+    //OpenOrFail(retval.cbl,retval.cbl_filename.WholePath());
     OpenOrFail(retval.i,retval.i_filename.WholePath());
     OpenOrFail(retval.c,retval.c_filename.WholePath());
     OpenOrFail(retval.lst,retval.lst_filename.WholePath());

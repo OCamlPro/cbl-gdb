@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 
-#define VERSION "1.1.0"
+#define VERSION "1.1.1"
 
 class FILENAME
 {
@@ -88,7 +88,7 @@ public:
     FILENAME    symc_filename;      // The source file for the .debug_gdb_scrips
     //                              //
 
-    std::ifstream cbl;              // Streams for the above files
+    //std::ifstream cbl;              // Streams for the above files
     std::ifstream cbl_lst;
     std::ifstream i;
     std::ifstream c;
