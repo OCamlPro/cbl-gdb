@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "cobc/cobst/obmod build and debug",
+            "name": "cobc build and debug",
             "type": "cbl-gdb",
             "request": "launch",
             "preLaunchTask": "make",

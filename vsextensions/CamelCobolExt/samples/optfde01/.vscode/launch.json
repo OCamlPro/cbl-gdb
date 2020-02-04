@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Build ${file} with cobc.cobst/obmod, debug with debugServer",
+            "name": "Build ${file} with cobc/cobst, debug with debugServer",
             "type": "node",
             "request": "launch",
             "skipFiles": ["<node_internals>/**"],
@@ -16,7 +16,7 @@
             "debugServer": 4711
         },
         {
-            "name": "cobc/cobst/obmod build and debug",
+            "name": "cobc/cobst build and debug",
             "type": "cbl-gdb",
             "request": "launch",
             "preLaunchTask": "make",

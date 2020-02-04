@@ -5,7 +5,6 @@ project = elbarco
 
 COBC = cobc
 COBST = ../../../../cobst/cobst
-OBMOD = ../../../../obmod/obmod
 
 .PHONY : all clean pregit stubby
 

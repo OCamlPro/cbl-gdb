@@ -180,7 +180,7 @@ static void Usage()
 
 static void Version()
 {
-    cerr << "obmod version " VERSION "\n";
+    cerr << "sfix version " VERSION "\n";
     exit(1);
 }
 

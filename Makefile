@@ -3,29 +3,22 @@ export CXXFLAGS
 
 all:
 	$(MAKE) -C cobst
-	$(MAKE) -C obmod
 	$(MAKE) -C sfix
 	$(MAKE) -C samples
-	$(MAKE) -C picgen
-	$(MAKE) -C selfcheck
 	$(MAKE) -C optfde01
 	$(MAKE) -C vsextensions
 
 .PHONY : clean
 clean:
 	$(MAKE) -C cobst clean
-	$(MAKE) -C obmod clean
 	$(MAKE) -C sfix clean
 	$(MAKE) -C samples clean
-	$(MAKE) -C picgen
-	$(MAKE) -C selfcheck clean
 	$(MAKE) -C optfde01 clean
 	$(MAKE) -C vsextensions clean
 
 .PHONY : install
 install:
 	$(MAKE) -C cobst install
-	$(MAKE) -C obmod install
 	$(MAKE) -C sfix install
 	$(MAKE) -C python install
 	$(MAKE) -C vsextensions install
@@ -39,8 +32,6 @@ install:
 .PHONY : pregit
 pregit:
 	$(MAKE) -C cobst pregit
-	$(MAKE) -C obmod pregit
 	$(MAKE) -C sfix pregit
 	$(MAKE) -C python pregit
-	$(MAKE) -C picgen
-	$(MAKE) -C selfcheck pregit
+	

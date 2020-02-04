@@ -240,9 +240,7 @@ CreateCSV(PARAMETERS &params,
 
         The first section contains line/address information, specifically
         .CBL source code line numbers associated with .text assembler
-        relative addresses.  Those pairs are used by the obmod program
-        to modify the relocatable .o module's DWARF line number information
-        to enable breakpoints by line number.
+        relative addresses.
 
         The second section is read by the cprint.py Python extension to
         gdb.  It contains the information needed to map canonical COBOL
@@ -252,7 +250,7 @@ CreateCSV(PARAMETERS &params,
         The structure of the columns can be changed by moving them
         around or adding columns.  But the column header text is
         read by the downstream programs, so if you change the headers
-        you'll have to change the matching code in obmod and cprint.py
+        you'll have to change the matching code in cprint.py
         */
 
 
@@ -287,9 +285,7 @@ CreateCSV(PARAMETERS &params,
         ATTR_FLAGS,
     };
 
-    // This  group is largely used by the obmod program.  It describes
-    // line numbers and their relative addresses; obmod passes that information
-    // along to gdb (by modifying the relocatable object file)
+    // This group describes line numbers and their relative addresses
     csv.AddColumn(SOURCE,          "Source File");
     csv.AddColumn(LINE,            "Line Number");
     csv.AddColumn(SENTENCE,        "Sentence Number");

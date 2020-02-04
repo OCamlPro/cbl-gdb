@@ -67,8 +67,8 @@ FigureOutReplacements(const PARAMETERS &params,
             retval[it->second] = 0;
             continue;
         }
-        if( it->first.substr(it->first.length()-2) EQ ".h" 
-           OR it->first.substr(it->first.length()-2) EQ ".c") {
+        if( it->first.substr(it->first.length()-2) EQ ".h"
+                OR it->first.substr(it->first.length()-2) EQ ".c") {
             // Skip over any xxxx.h file
             retval[it->second] = 0;
             continue;

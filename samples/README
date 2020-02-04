@@ -1,4 +1,4 @@
-These sample folders are for cobst/obmod/cprint.py exploration and development 
+These sample folders are for cobst/cprint.py exploration and development 
 purposes.  
 
 The Makefile & Makefile.inc combination works with the individual Makefiles 
@@ -12,9 +12,9 @@ production environment to produce results that look like what happens here.
 
 Specifically, the current process is 
     cobc produces relocatable .o files and several listing files
-    cobst reads the listing files and produces the .tab file
-    obmod reads the .o file and modifies it into .cbl.o by modifying the .debug
-            line table, and by embedding cprint.py
+    cobst reads the listing files and produces the .tab file along with 
+          the .C module that contains the symbol information and the cprint.py
+          script
     cobc then converts .cbl.o into an executable.
 
 In production, everything except the executable and .tab can be deleted.  The
