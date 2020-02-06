@@ -5,7 +5,11 @@ free =
 # disable built-in rules:
 .SUFFIXES:
 
-COBCD=cobcd
+# In production, you will want to just find cobcd in /usr/local/bin/
+# COBCD=cobcd
+
+# This project is in the development environment
+COBCD="../cobcd"
 
 all: $(project) 
 # This rule creates a cbl-gdb modified executable.	The debugging information
