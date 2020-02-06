@@ -1,11 +1,18 @@
 CXXFLAGS = -std=c++11
 export CXXFLAGS
 
+# Don't try to build the optfde01 example until the cobcd script
+# can be found in /usr/local/bin/
+COBCDEXISTS=$(wildcard /usr/local/bin/cobcd)
+COBCD=/usr/local/bin/cobcd
+
 all:
 	$(MAKE) -C cobst
 	$(MAKE) -C sfix
 	$(MAKE) -C samples
+ifeq ($(COBCDEXISTS), $(COBCD))
 	$(MAKE) -C optfde01
+endif
 	$(MAKE) -C vsextensions
 
 .PHONY : clean

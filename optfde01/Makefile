@@ -5,11 +5,12 @@ free =
 # disable built-in rules:
 .SUFFIXES:
 
-# In production, you will want to just find cobcd in /usr/local/bin/
-# COBCD=cobcd
+#
+# This is a sample of a development environment.  The make won't work until
+# a cbl-gdb/ "make install" is performed, because prior to that the cobcd
+# script won't be available in /usr/local/bin/
 
-# This project is in the development environment
-COBCD="../cobcd"
+COBCD=cobcd
 
 all: $(project) 
 # This rule creates a cbl-gdb modified executable.	The debugging information
