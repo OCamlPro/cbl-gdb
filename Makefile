@@ -13,7 +13,6 @@ all:
 ifeq ($(COBCDEXISTS), $(COBCD))
 	$(MAKE) -C optfde01
 endif
-	$(MAKE) -C vsextensions
 
 .PHONY : clean
 clean:
@@ -21,15 +20,14 @@ clean:
 	$(MAKE) -C sfix clean
 	$(MAKE) -C samples clean
 	$(MAKE) -C optfde01 clean
-	$(MAKE) -C vsextensions clean
 
 .PHONY : install
 install:
 	$(MAKE) -C cobst install
 	$(MAKE) -C sfix install
 	$(MAKE) -C python install
-	$(MAKE) -C vsextensions install
-	cp cobcd /usr/local/bin/
+	$(MAKE) -C vsdistrib install
+	install cobcd /usr/local/bin/
 
 # Dubner likes to work in Windows, using Visual Studio.  This can result in
 # Windows-style CRLF line endings.  He also likes to work with C++ code 
