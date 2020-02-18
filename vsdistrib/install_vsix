@@ -2,6 +2,15 @@
 
 set -e
 
+# Slightly unbelievably, the devtoolset-7 authors managed to replace sudo
+# with a script that includes, slightly unbelievably, the notation:
+#        # TODO: parse & pass-through sudo options from $@
+# This is of faint comfort to me, <flame ON!> BECAUSE I NEED THE OPTIONS TO 
+# PASS THROUGH<flame off>
+#
+# Hence:
+SUDO=/usr/bin/sudo
+
 # Find the most recent VSIX package, and install it
 if [[ -x `command -v code` ]] ; then
 	VSIXES=`ls --sort=time cbl-gdb*.vsix`
@@ -9,7 +18,7 @@ if [[ -x `command -v code` ]] ; then
 		read -ra VSIX <<< "$VSIXES"
 		if [[ -e ${VSIX[0]} ]] ; then 
 			echo "Installing ${VSIX[0]}"
-			sudo -u $SUDO_USER code --install-extension "${VSIX[0]}"
+			$SUDO -u $SUDO_USER code --install-extension "${VSIX[0]}"
 			fi
 		fi
 	fi
