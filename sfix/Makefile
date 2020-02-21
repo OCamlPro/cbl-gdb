@@ -30,5 +30,5 @@ pregit:
 
 .PHONY : install
 install :
-	install $(project) /usr/local/bin/
+	sudo install $(project) /usr/local/bin/
 	
