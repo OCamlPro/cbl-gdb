@@ -4,18 +4,23 @@ set -e
 
 SUDO=sudo
 
-# Find the most recent VSIX package, and install it
-if test -x `command -v code` ; then
-	VSIX=`ls --sort=time cbl-gdb*.vsix | head -n1`
-	if test "X"$VSIX != "X" ; then 
-		echo "Installing $VSIX"
-		if test "X"$SUDO_USER != "X" ; then
-			# They must be running as 'sudo make install'
-			$SUDO -u $SUDO_USER code --install-extension $VSIX
-		else
-			# They must simply be running as 'make install', meaning that
-			# the user must've taken ownership of /usr/local/
-			code --install-extension $VSIX
+# For reasons I don't understand, this routine fails when run as part of 
+# a Debian package build. When it got tedious, I just decided to elmininate it.
+
+if "X"$DESTDIR = "X" ; then
+	# Find the most recent VSIX package, and install it
+	if test -x `command -v code` ; then
+		VSIX=`ls --sort=time cbl-gdb*.vsix | head -n1`
+		if test "X"$VSIX != "X" ; then 
+			echo "Installing $VSIX"
+			if test "X"$SUDO_USER != "X" ; then
+				# They must be running as 'sudo make install'
+				$SUDO -u $SUDO_USER code --install-extension $VSIX
+			else
+				# They must simply be running as 'make install', meaning that
+				# the user must've taken ownership of /usr/local/
+				code --install-extension $VSIX
+				fi
 			fi
 		fi
 	fi

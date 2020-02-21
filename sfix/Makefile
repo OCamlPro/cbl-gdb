@@ -31,7 +31,8 @@ pregit:
 .PHONY : install
 install :
 ifdef DESTDIR
-	sudo install -d $(project) $(DESTDIR)/bin/
+	mkdir -p $(DESTDIR)/bin/
+	sudo install $(project) $(DESTDIR)/bin/
 else
 	sudo install $(project) /usr/local/bin/
 endif
