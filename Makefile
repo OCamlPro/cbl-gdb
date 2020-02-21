@@ -37,7 +37,11 @@ install:
 	$(MAKE) -C sfix install
 	$(MAKE) -C python install
 	$(MAKE) -C vsdistrib install
+ifdef DESTDIR
+	install cobcd $(DESTDIR)/bin/
+else
 	install cobcd /usr/local/bin/
+endif
 	
 #	copy cbl-gdb to cblgdb-x.y, tarball the copy, and delete the copy
 .PHONY : package
