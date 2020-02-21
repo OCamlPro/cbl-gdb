@@ -5,6 +5,10 @@ export CXXFLAGS
 # can be found in /usr/local/bin/
 COBCDEXISTS=$(wildcard /usr/local/bin/cobcd)
 COBCD=/usr/local/bin/cobcd
+CWD=$(shell basename `pwd`)
+
+# Yes, this next thing needs to be done in a better way
+VERSION=1.1
 
 .PHONY : all
 all:
@@ -34,6 +38,14 @@ install:
 	$(MAKE) -C python install
 	$(MAKE) -C vsdistrib install
 	install cobcd /usr/local/bin/
+	
+#	copy cbl-gdb to cblgdb-x.y, tarball the copy, and delete the copy
+.PHONY : package
+package :
+	cd .. && \
+	cp -r $(CWD)/ cblgdb-$(VERSION)/ && \
+	tar --exclude=.git --exclude=.legacy -czf cblgdb-$(VERSION).tar.gz cblgdb-$(VERSION) && \
+	rm -fr cblgdb-$(VERSION)/
 
 # Dubner likes to work in Windows, using Visual Studio.  This can result in
 # Windows-style CRLF line endings.  He also likes to work with C++ code 
