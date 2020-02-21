@@ -6,7 +6,13 @@ export CXXFLAGS
 COBCDEXISTS=$(wildcard /usr/local/bin/cobcd)
 COBCD=/usr/local/bin/cobcd
 
+.PHONY : all
 all:
+	$(MAKE) -C cobst
+	$(MAKE) -C sfix
+
+.PHONY : test
+test:
 	$(MAKE) -C cobst
 	$(MAKE) -C sfix
 	$(MAKE) -C samples

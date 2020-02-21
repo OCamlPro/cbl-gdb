@@ -1,24 +1,21 @@
-#! /bin/bash
+#! /bin/sh
 
 set -e
 
-# Slightly unbelievably, the devtoolset-7 authors managed to replace sudo
-# with a script that includes, slightly unbelievably, the notation:
-#        # TODO: parse & pass-through sudo options from $@
-# This is of faint comfort to me, <flame ON!> BECAUSE I NEED THE OPTIONS TO 
-# PASS THROUGH<flame off>
-#
-# Hence:
-SUDO=/usr/bin/sudo
+SUDO=sudo
 
 # Find the most recent VSIX package, and install it
-if [[ -x `command -v code` ]] ; then
-	VSIXES=`ls --sort=time cbl-gdb*.vsix`
-	if (( ${#VSIXES[@]} >= 1 )) ; then 
-		read -ra VSIX <<< "$VSIXES"
-		if [[ -e ${VSIX[0]} ]] ; then 
-			echo "Installing ${VSIX[0]}"
-			$SUDO -u $SUDO_USER code --install-extension "${VSIX[0]}"
+if test -x `command -v code` ; then
+	VSIX=`ls --sort=time cbl-gdb*.vsix | head -n1`
+	if test "X"$VSIX != "X" ; then 
+		echo "Installing $VSIX"
+		if test "X"$SUDO_USER != "X" ; then
+			# They must be running as 'sudo make install'
+			$SUDO -u $SUDO_USER code --install-extension $VSIX
+		else
+			# They must simply be running as 'make install', meaning that
+			# the user must've taken ownership of /usr/local/
+			code --install-extension $VSIX
 			fi
 		fi
 	fi
