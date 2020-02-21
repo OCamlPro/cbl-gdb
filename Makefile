@@ -38,7 +38,7 @@ install:
 	$(MAKE) -C python install
 	$(MAKE) -C vsdistrib install
 ifdef DESTDIR
-	install cobcd $(DESTDIR)/bin/
+	install -d cobcd $(DESTDIR)/bin/
 else
 	install cobcd /usr/local/bin/
 endif
