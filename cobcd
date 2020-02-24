@@ -27,9 +27,25 @@
 # COBCDXM    is -x to create an executable with main(), -m for .so shared library.
 #            It can be overridden with -x or -m as a command line parameter.
 
+set +x
 set -e
 #set -x ## This turns on echoing
 #ECHO=1
+
+if grep -q debian /etc/os-release ; then
+	os_name=debian
+	fi
+if grep -q centos /etc/os-release ; then
+	os_name=centos
+	fi
+
+if	uname -a | grep -q x86_64 ; then
+	platform=x86_64
+	fi
+
+if	uname -a | grep -q arm ; then
+	platform=arm
+	fi
 
 # Courtesy of stackoverflow, a script to find the directory of the script
 SOURCE="${BASH_SOURCE[0]}"
@@ -120,7 +136,6 @@ while (( $# )) ; do
 # rid of them.  The cobc compiler, with the -debug flag turned on, puts all
 # of its files into the current working directory.	
 BASENAME="${BASENAME##/*}"
-	
 
 if [[ $ECHO != "" ]]; then
 	echo GCC          $GCC
@@ -159,17 +174,33 @@ $COBST -q $BASENAME.$EXT
 $GCC -c -o $BASENAME.sym.o $BASENAME.sym.c 
 
 # Create the .s file from the .c file
+if test X$platform = Xx86_64 ; then
 	$CC1 -quiet -imultiarch x86_64-linux-gnu \
 	-D PIC $BASENAME.c -quiet -dumpbase $BASENAME.c -mtune=generic \
 	-march=x86-64 -auxbase-strip $BASENAME.o -g -fPIC \
 	-fstack-protector-strong -Wformat -Wformat-security -o $BASENAME.s
-	
+	fi
+
+if test X$platform = Xarm ; then
+	# This worked on a Raspberry Pi 3 running buster
+	$CC1 -quiet -imultilib . -imultiarch arm-linux-gnueabihf $BASENAME.c \
+	-quiet -mfloat-abi=hard -mfpu=vfp -mtls-dialect=gnu -marm -march=armv6+fp \
+	 -g -fPIC -o $BASENAME.s
+	fi
+
 # Modify the .s file, removing all .loc references to
-# BASENAME.c and any .h files.	
+# BASENAME.c and any .h files.
 $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
 
 # Assemble the modified .s file into a replacement .o file:
-$ASSEMBLER --64 -L -anchls=$BASENAME-2.lst -o $BASENAME-2.o $BASENAME-2.s
+if test X$platform = Xx86_64 ; then
+	$ASSEMBLER --64 -L -anchls=$BASENAME-2.lst -o $BASENAME-2.o $BASENAME-2.s
+	fi
+
+if test X$platform = Xarm ; then
+	# This worked on a Raspberry Pi 3 running buster
+	$ASSEMBLER -march=armv6 -mfloat-abi=hard -mfpu=vfp -meabi=5 -o $BASENAME-2.o $BASENAME-2.s
+	fi
 
 # Combine the two .o files to create the executable
 
