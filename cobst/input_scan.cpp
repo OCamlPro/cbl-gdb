@@ -66,10 +66,13 @@ void GAS_SYMBOLS::GetSymbolsFromFile(const string &source, const string &scope, 
 
         // The regex will split out the line number, the section, the hex relative location, and the symbol
 
+        // x86_64 has 64-bit constants:
+        static const regex symbol32("[^:]+:([0-9]+)[ ]+([^:]+):([0-9a-fA-F]{16})[ ]+(.*)$");
 
-        static const regex symbol("[^:]+:([0-9]+)[ ]+([^:]+):([0-9a-gA-F]{16})[ ]+(.*)$");
+        // But the armv7 has 32-bit constants 
+        static const regex symbol16("[^:]+:([0-9]+)[ ]+([^:]+):([0-9a-fA-F]{8})[ ]+(.*)$");
         smatch sm;
-        if(regex_match(input,sm,symbol)) {
+        if(regex_match(input,sm,symbol32) OR regex_match(input,sm,symbol16)) {
             GAS_SYMBOL gs;
             gs.gas_section = sm[2];
             gs.line_number = stoi(sm[1]);
