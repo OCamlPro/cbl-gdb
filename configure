@@ -53,14 +53,10 @@ sudo apt-get update
 sudo apt-get -y upgrade
 
 base=""
-#base="$base subversion git"
-#base="$base g++"
-#base="$base emacs groff make bmake gdb libcap-dev libdb-dev"
-#base="$base flex bison libbsd-dev pax tcl python3-pip"
-#base="$base make-doc gdb-doc flex-doc bison-doc autoconf sqlite3 libsqlite3-dev"
-#base="$base libgmp3-dev libncurses5 libncurses5-dev help2man texinfo curl astyle"
+base="$base make subversion autoconf g++ libgmp-dev libdb-dev help2man"
+base="$base bison flex texinfo"
 
-#sudo apt-get -q -y install $base
+sudo apt-get -q -y install $base
 
 #
 # We need to build the cobol compiler, unless we already have 3.1-dev or later
