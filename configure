@@ -53,10 +53,8 @@ sudo apt-get update
 sudo apt-get -y upgrade
 
 base=""
-base="$base make subversion autoconf g++ libgmp-dev libdb-dev help2man"
-base="$base bison flex texinfo"
 
-sudo apt-get -q -y install $base
+#sudo apt-get -q -y install $base
 
 #
 # We need to build the cobol compiler, unless we already have 3.1-dev or later
@@ -97,6 +95,12 @@ if test $LOAD_COBC = "no" ; then
 	fi
 
 if test $LOAD_COBC = "yes" ; then
+  base=""
+  base="$base make subversion autoconf g++ libgmp-dev libdb-dev help2man"
+  base="$base bison flex texinfo"
+
+  sudo apt-get -q -y install $base
+
   echo "   Downloading and building cobc 3.x (or greater)"
   cd ~
   mkdir -p builds
