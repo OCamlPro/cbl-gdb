@@ -158,17 +158,8 @@ sudo yum -y upgrade
 #sudo yum -y debuginfo-install gmp libdb openssl zlib
 
 base=""
-#base="$base subversion git nano vim-common"
-#base="$base wget gcc-c++ automake"
-#base="$base emacs make gdb libcap-devel libdb-devel"
-#base="$base flex bison spax tcl python3-devel python3-pip"
-#base="$base gdb-doc flex-doc autoconf sqlite-devel"
-#base="$base gmp-devel ncurses-devel curl ghostscript"
-#sudo yum -y install $base
-
-#sudo dnf -y --enablerepo=PowerTools install help2man
-#sudo dnf -y --enablerepo=PowerTools install texinfo
-
+base="$base make gcc-c++ vim-common gmp-devel gdb"
+sudo yum -y install $base
 
 #
 # We need to build the cobol compiler, unless we already have 3.1-dev or later
