@@ -31,16 +31,15 @@ if grep -q debian /etc/os-release ; then
 if grep -q centos /etc/os-release ; then
 	os_name=centos
 	fi
-	
+
 if	uname -a | grep -q x86_64 ; then
 	platform=x86_64
 	fi
-	
+
 if	uname -a | grep -q arm ; then
 	platform=arm
 	fi
-	
-	
+
 echo Configure for $os_name on $platform
 
 if test X"$os_name" = X"debian" ; then
@@ -211,6 +210,12 @@ if test $LOAD_COBC = "no" ; then
 
 if test $LOAD_COBC = "yes" ; then
   echo "   Downloading and building cobc 3.x (or greater)"
+  base=""
+  base="$base subversion autoconf automake make gcc gmp-devel libdb-devel bison flex"
+  sudo yum -y install $base
+  sudo dnf -y --enablerepo=PowerTools install help2man
+  sudo dnf -y --enablerepo=PowerTools install texinfo
+
   cd ~
   mkdir -p builds
   cd builds
