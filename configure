@@ -1,0 +1,275 @@
+#! /bin/sh
+
+set -x
+set -e
+
+if test "$SUDO_USER" != "" ; then
+  echo "It is a bad thing to run this script as SUDO".
+  echo '(You want $HOME to be /home/you, and not /root.)'
+  echo "It will ask you for permission when necessary."
+  exit 1
+  fi
+
+#
+# This script is designed to install everything one needs to compile prim
+# and the cbl-gdb packages.
+#
+# It also modifies /etc/sysctl.d/10-ptrace.conf if necessary to make sure
+# /sys/kernel/yama/ptrace_scope is set to zero on subsequent machine boots,
+# That configuration (the default value is 1) is necessary for debugging
+# prim applications.
+#
+# This script is intended to be idempotent.  That is, running it a second time
+# should be harmless.
+
+os_name=""
+platform=""
+
+if grep -q debian /etc/os-release ; then
+	os_name=debian
+	fi
+if grep -q centos /etc/os-release ; then
+	os_name=centos
+	fi
+	
+if	uname -a | grep -q x86_64 ; then
+	platform=x86_64
+	fi
+	
+if	uname -a | grep -q arm ; then
+	platform=arm
+	fi
+	
+	
+echo $os_name on $platform
+
+if test X"$os_name" = X"debian" ; then
+
+#
+# It is time to install many things
+#
+
+sudo apt-get update
+sudo apt-get -y upgrade
+
+base=""
+#base="$base subversion git"
+#base="$base g++"
+#base="$base emacs groff make bmake gdb libcap-dev libdb-dev"
+#base="$base flex bison libbsd-dev pax tcl python3-pip"
+#base="$base make-doc gdb-doc flex-doc bison-doc autoconf sqlite3 libsqlite3-dev"
+#base="$base libgmp3-dev libncurses5 libncurses5-dev help2man texinfo curl astyle"
+
+#sudo apt-get -q -y install $base
+
+#
+# We need to build the cobol compiler, unless we already have 3.1-dev or later
+#
+echo "Checking COBOL compiler..."
+LOAD_COBC=no
+if test $LOAD_COBC = "no" && ! test -x "$(command -v cobc)" ; then
+	LOAD_COBC=yes
+	fi
+if test $LOAD_COBC = "no" ; then
+	COBCVER=`cobc --version | head -n 1`
+
+	VER=$(expr "$COBCVER" : '.* \([0-9][^ \t\n]*\).*')
+	MAJOR_VER=$(echo "$VER" | cut -d'.' -f1)
+	MINOR_VER=$(echo "$VER" | cut -d'.' -f2)
+	MINOR_DIG=$(echo "$MINOR_VER" | cut -c 1)
+	if test $MAJOR_VER -lt 3 ; then
+		# Less than version 3., so we need a new one
+		LOAD_COBC=yes
+	elif test $MAJOR_VER -gt 3 ; then
+		# Greater than 3., so leave it be
+		LOAD_COBC=no
+	else
+		if test $MINOR_DIG -lt 1 ; then
+			# Minor is less than version 3.1, so we need a new one
+			LOAD_COBC=yes
+		elif test $MINOR_DIG -gt 1 ; then
+			# Minor is equal or greater than version 3.2, so we need a new one
+			LOAD_COBC=no
+		elif test $MINOR_VER = "1-dev" ; then
+			# If we already have dev, we are okay
+			LOAD_COBC=no
+		else
+			# Not dev, so we need to reload
+			LOAD_COBC=yes
+			fi
+		fi
+	fi
+
+if test $LOAD_COBC = "yes" ; then
+  echo "   Downloading and building cobc 3.x (or greater)"
+  cd ~
+  mkdir -p builds
+  cd builds
+  mkdir -p cobc
+  cd cobc
+  rm -fr gnucobol-3.x
+  svn checkout https://svn.code.sf.net/p/open-cobol/code/branches/gnucobol-3.x
+  cd gnucobol-3.x
+  ./autogen.sh
+  mkdir build
+  cd build
+  ../configure
+  make
+  sudo make install
+  sudo ldconfig
+  fi
+
+echo "Checking for /proc/sys/kernel/yama/ptrace_scope == 0..."
+if ! grep -q 0 /proc/sys/kernel/yama/ptrace_scope; then
+  echo "   This is a debugging machine, so we're setting ptrace_scope to zero."
+
+  # Make it zero for this session
+  echo "0" | sudo tee /proc/sys/kernel/yama/ptrace_scope
+
+  # And arrange for it to be set to zero on subsequent boots;
+  sudo mv /etc/sysctl.d/10-ptrace.conf /etc/sysctl.d/10-ptrace.conf.bak
+  echo "kernel.yama.ptrace_scope = 0" | sudo tee /etc/sysctl.d/10-ptrace.conf
+  fi
+
+echo "Checking for ~/.gdbinit..."
+DOIT=no
+if ! test -f ~/.gdbinit  ; then
+	DOIT=yes ;
+else
+	if ! grep -q auto-load ~/.gdbinit; then
+		DOIT=yes ;
+		fi;
+	fi
+if test $DOIT = "yes"  ; then
+	echo "   Creating (or modifying) ~/.gdbinit"
+	cat >> ~/.gdbinit <<-EndOfText
+		set auto-load safe-path /
+		set auto-load python-scripts on
+		EndOfText
+	fi
+
+fi ## Up there was the Debian processing
+
+if test X"$os_name" = X"centos" ; then
+
+sudo yum update
+sudo yum -y upgrade
+
+#sudo yum -y debuginfo-install gmp libdb openssl zlib
+
+base=""
+#base="$base subversion git nano vim-common"
+#base="$base wget gcc-c++ automake"
+#base="$base emacs make gdb libcap-devel libdb-devel"
+#base="$base flex bison spax tcl python3-devel python3-pip"
+#base="$base gdb-doc flex-doc autoconf sqlite-devel"
+#base="$base gmp-devel ncurses-devel curl ghostscript"
+#sudo yum -y install $base
+
+#sudo dnf -y --enablerepo=PowerTools install help2man
+#sudo dnf -y --enablerepo=PowerTools install texinfo
+
+
+#
+# We need to build the cobol compiler, unless we already have 3.1-dev or later
+#
+echo "Checking COBOL compiler..."
+LOAD_COBC=no
+if test $LOAD_COBC = "no" && ! test -x "$(command -v cobc)" ; then
+	LOAD_COBC=yes
+	fi
+if test $LOAD_COBC = "no" ; then
+	COBCVER=`cobc --version | head -n 1`
+
+	VER=$(expr "$COBCVER" : '.* \([0-9][^ \t\n]*\).*')
+	MAJOR_VER=$(echo "$VER" | cut -d'.' -f1)
+	MINOR_VER=$(echo "$VER" | cut -d'.' -f2)
+	MINOR_DIG=$(echo "$MINOR_VER" | cut -c 1)
+	if test $MAJOR_VER -lt 3 ; then
+		# Less than version 3., so we need a new one
+		LOAD_COBC=yes
+	elif test $MAJOR_VER -gt 3 ; then
+		# Greater than 3., so leave it be
+		LOAD_COBC=no
+	else
+		if test $MINOR_DIG -lt 1 ; then
+			# Minor is less than version 3.1, so we need a new one
+			LOAD_COBC=yes
+		elif test $MINOR_DIG -gt 1 ; then
+			# Minor is equal or greater than version 3.2, so we need a new one
+			LOAD_COBC=no
+		elif test $MINOR_VER = "1-dev" ; then
+			# If we already have dev, we are okay
+			LOAD_COBC=no
+		else
+			# Not dev, so we need to reload
+			LOAD_COBC=yes
+			fi
+		fi
+	fi
+
+if test $LOAD_COBC = "yes" ; then
+  echo "   Downloading and building cobc 3.x (or greater)"
+  cd ~
+  mkdir -p builds
+  cd builds
+  mkdir -p cobc
+  cd cobc
+  rm -fr gnucobol-3.x
+  svn checkout https://svn.code.sf.net/p/open-cobol/code/branches/gnucobol-3.x
+  cd gnucobol-3.x
+  ./autogen.sh
+  mkdir build
+  cd build
+  ../configure
+  make
+  sudo make install
+  #
+  # Red Hat doesn't put /usr/local/lib into the ld.so.conf.d/ entries.
+  # Some regard this as a bug.  Others don't, claiming that the -rpath option
+  # should be included at compile time.  But with /usr/local/lib as the
+  # recommended location for usr-installed software, it seems to me that it
+  # ought to be there.
+  cat>temp$$ <<-EndOfText
+	/usr/local/lib
+	EndOfText
+  sudo cp temp$$ /etc/ld.so.conf.d/usr_local_lib.conf
+  rm temp$$
+  sudo ldconfig
+  fi
+
+echo "Checking for /proc/sys/kernel/yama/ptrace_scope == 0..."
+if ! grep -q 0 /proc/sys/kernel/yama/ptrace_scope; then
+  echo "   This is a debugging machine, so we're setting ptrace_scope to zero."
+
+  # Make it zero for this session
+  echo "0" | sudo tee /proc/sys/kernel/yama/ptrace_scope
+
+  # And arrange for it to be set to zero on subsequent boots;
+  sudo mv /etc/sysctl.d/10-ptrace.conf /etc/sysctl.d/10-ptrace.conf.bak
+  echo "kernel.yama.ptrace_scope = 0" | sudo tee /etc/sysctl.d/10-ptrace.conf
+  fi
+
+echo "Checking for ~/.gdbinit..."
+DOIT=no
+if ! test -f ~/.gdbinit  ; then
+	DOIT=yes ;
+else
+	if ! grep -q auto-load ~/.gdbinit; then
+		DOIT=yes ;
+		fi;
+	fi
+if test $DOIT = "yes"  ; then
+	echo "   Creating (or modifying) ~/.gdbinit"
+	cat >> ~/.gdbinit <<-EndOfText
+		set auto-load safe-path /
+		set auto-load python-scripts on
+		EndOfText
+	fi
+
+fi  ## Up there was the CentOS processing
+
+
+
+
+

@@ -46,7 +46,7 @@ endif
 	
 #	copy cbl-gdb to cblgdb-x.y, tarball the copy, and delete the copy
 .PHONY : package
-package :
+package : clean
 	cd .. && \
 	cp -r $(CWD)/ cblgdb-$(VERSION)/ && \
 	tar --exclude=.git --exclude=.legacy -czf cblgdb-$(VERSION).tar.gz cblgdb-$(VERSION) && \
