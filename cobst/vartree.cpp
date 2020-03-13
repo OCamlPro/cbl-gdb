@@ -667,6 +667,21 @@ void VARIABLE_TREE::Dump(ostream &sout)
     DumpNode(sout, root);
 }
 
+static VAR_NODE *FindNameIn(VAR_NODE *node,const string &name)
+{
+    if( node->GetLevel() != LEVEL_66 AND node->GetName() EQ name ) {
+        return node;
+    }
+    VAR_NODE *retval = NULL;
+    for( size_t i=0; i<node->GetChildren().size(); i++ ) {
+        retval = FindNameIn(node->GetChildren()[i],name);
+        if( retval ) {
+            break;
+        }
+    }
+    return retval;
+}
+
 void VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
 {
     /*  We are going to take our variable tree, with its basic structure
@@ -724,6 +739,18 @@ void VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
         Grab your abacus; we're gonna do some calculating:
         */
 
+#if 0
+    cout << var_node->program << " " ;
+    cout << var_node->section << " " ;
+    cout << var_node->type << " " ;
+    cout << var_node->level << " " ;
+    cout << var_node->name << " " ;
+    if( !var_node->redefines.empty() ) {
+        cout << "REDEFINES:" << var_node->redefines << " " ;
+    }
+    cout << endl;
+#endif
+
     if(var_node->level >= LEVEL_FILE) {
         VAR_NODE *parent = var_node->parent;
         int brother_index = -1;
@@ -738,11 +765,90 @@ void VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
             }
         }
 
-        if(!var_node->redefines.empty()) {
+        if( var_node->level EQ LEVEL_66 ) {
+            // A level 66 variable is like an 01 or 77: it's a top-level
+            // variable that comes right off of the root.  It points, however,
+            // to a previously-defined memory location within the same
+            // level 01 object that we are in.
+            //
+            // We need to find that memory location.  It might be one of
+            // our parent's siblings.
+            //
+            /* We have a theoretical problem.  Consider this code:
+
+            01 TESTER.
+              02 TESTER-02.
+                10 TEST-1.
+                   20 BOB  PIC 9(9).
+                10 TEST-2.
+                   20 BOB  PIC 9(9).
+                      66 BILL RENAMES BOB OF TEST-2.
+
+            The .cbl.lst output for the case of "OF TEST-2" and "OF-TEST1"
+            is the same in both cases:
+
+            00018 GROUP          01   TESTER
+            00018 GROUP          02   TESTER-02
+            00009 GROUP          10   TEST-1
+            00009 NUMERIC        20   BOB                            9(9)
+            00009 GROUP          10   TEST-2
+            00009 NUMERIC        20   BOB                            9(9)
+            00009 ALPHANUMERIC   66   BILL                           9(9), REDEFINES BOB
+
+            From a theoretical standpoint, one could argue that the COBC output
+            should be refined.  Another argument is that COBST should parse
+            the original code, rather than the COBC output.
+
+            From a practical standpoint, when I first encountered this and discussed
+            it with Marty, he had this to say:
+
+            “The RENAMES [level 66] clause is rarely used and it is not covered in any detail in this book.”
+            (SAMS Teach Yourself COBOL.) THE ONLY REFERENCE in 3 books and the IBM COBOL F (1960s) manual.
+
+            So, I am just going to look through our ancestors (in reverse order on
+            each level) and snag the first one with a matching name.
+
+            */
+
+            // back up to level 1 :
+            VAR_NODE *grampa = parent->parent;
+            while( grampa->level > LEVEL_01 ) {
+                grampa = grampa->parent;
+            }
+
+            VAR_NODE *source = FindNameIn(grampa,var_node->redefines);
+            if( !source ) {
+                cerr << "HULL BREACH in cobst! A RENAMES variable doesn't seem to have an ancestor!\n";
+                cerr << "This is in VARIABLE_TREE::BuildCanonicalName()\n";
+                exit(1);
+            }
+
+            // We have now found the source of our RENAME:
+            var_node->offset = source->offset;
+
+            // Let the source know they will have to update us later, once
+            // the base_names start getting assigned:
+            source->renamed_by.push_back(var_node);
+
+            // This is a level 66 variable, so it needs to be moved up to
+            // the same level that grampa is on.
+
+            var_node->parent = grampa->parent;
+            grampa->parent->children.push_back(var_node);
+
+            // We need to eliminate ourself one from our parent's level.
+            // We will find ourself, and just null out the pointer:
+
+            for(size_t i=0; i<var_node->parent->children.size(); i++) {
+                if( var_node->parent->children[i] EQ var_node ) {
+                    var_node->parent->children[i] = NULL;
+                }
+            }
+        } else if( !var_node->redefines.empty() ) {
             // This is case 1:  We are a REDEFINES record.
             if( brother_index EQ -1) {
-                cerr << "HULL BREACH! A REDEFINES variables has no older brother!\n";
-                cerr << "This is in VARIABLE_TREE::BuildCanonicalName\n";
+                cerr << "HULL BREACH in cobst! A REDEFINES variable has no older brother!\n";
+                cerr << "This is in VARIABLE_TREE::BuildCanonicalName()\n";
                 exit(1);
             }
             // And our brother's offset is our offset
@@ -770,7 +876,7 @@ void VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
             // This is case 4:  We are a level 77 or level 01 identifier,
             // and so our offset should be zero.
             if( parent->offset != 0) {
-                cerr << "HULL BREACH! A LEVEL_SECTION parent has a non-zero\n";
+                cerr << "HULL BREACH in cobst! A LEVEL_SECTION parent has a non-zero\n";
                 cerr << "offset in VARIABLE_TREE::BuildCanonicalName\n";
                 exit(1);
             }
@@ -800,12 +906,16 @@ void VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
         }
     }
 
-    // Now it's time to build the canonical name
-    // Walk down to the bottom of the variable nodes:
-    for(VVAR_NODES::const_iterator child=var_node->children.begin();
-            child!=var_node->children.end();
-            child++) {
-        BuildCanonicalName(*child);
+    if( var_node->level != LEVEL_66 ) {
+        // Now it's time to build the canonical name
+        // Walk down to the bottom of the variable nodes:
+        for(VVAR_NODES::const_iterator child=var_node->children.begin();
+                child!=var_node->children.end();
+                child++) {
+            if( *child != NULL ) {
+                BuildCanonicalName(*child);
+            }
+        }
     }
 
     //  Look back up through our ancestors, building up the canonical
@@ -817,12 +927,12 @@ void VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
         // Only start processing if we've above the program level.
         for(;;) {
             bool add_IN = false;
-            if(     walker->level > LEVEL_SECTION ) {
+            if( walker->level > LEVEL_SECTION ) {
                 var_node->canonical_name += walker->name;
                 add_IN = true;
             }
 
-            if( walker->level EQ LEVEL_PROGRAM) {
+            if( walker->level EQ LEVEL_PROGRAM ) {
                 var_node->canonical_name += walker->program;
                 //  We just added the PROGRAM name, so we're done walking back
                 //  this node:
@@ -836,8 +946,6 @@ void VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
             walker = walker->parent;
         }
     }
-
-
 }
 
 void VARIABLE_TREE::BuildCanonicalName()
@@ -849,6 +957,11 @@ void VARIABLE_TREE::AssignBaseSymbol(VAR_NODE *node,const MPSS &symmap)
 {
     // Walk the whole trie, seeing if node can be modified
     // with the information in symmap
+
+    if( node EQ NULL ) {
+        // This one must've been moved by a RENAMES clause
+        return;
+    }
 
     PSS prog_var_pair;
     string name_to_try = node->redefines;
@@ -872,6 +985,13 @@ void VARIABLE_TREE::AssignBaseSymbol(VAR_NODE *node,const MPSS &symmap)
             if(it != symmap.end()) {
                 // If so, assign the b_symbol
                 node->base_symbol = it->second;
+
+                // If anybody referenced us in a 66/RENAMES variable, now is
+                // when we have to apply the base_symbol to that node, as
+                // well as ourselves:
+                for( size_t i=0; i<node->renamed_by.size(); i++) {
+                    node->renamed_by[i]->base_symbol = it->second;
+                }
             }
         }
     }
@@ -930,6 +1050,10 @@ void VARIABLE_TREE::AssignBaseSymbol(VAR_NODE *node,
 
 void VARIABLE_TREE::BuildBaseOffsetPointers(VAR_NODE *node,VBOP &vbop)
 {
+    if( node EQ NULL ) {
+        // This one must've been moved by a RENAMES clause
+        return;
+    }
     BOP base_offset_pointer;
 
     if(node->canonical_name.find("/") != string::npos) {
@@ -948,6 +1072,10 @@ void VARIABLE_TREE::BuildBaseOffsetPointers(VAR_NODE *node,VBOP &vbop)
 
 void VARIABLE_TREE::BuildFlatList(VAR_NODE *node,VVAR_NODES &flat)
 {
+    if( node EQ NULL ) {
+        // This one must've been moved by a RENAMES clause
+        return;
+    }
     if(node->level >= LEVEL_FILE) {
         flat.push_back(node);
     }

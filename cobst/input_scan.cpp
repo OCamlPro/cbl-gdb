@@ -99,7 +99,7 @@ void GAS_SYMBOLS::GetSymbolsFromFile(const string &source, const string &scope, 
         // x86_64 has 64-bit constants:
         static const regex symbol32("[^:]+:([0-9]+)[ ]+([^:]+):([0-9a-fA-F]{16})[ ]+(.*)$");
 
-        // But the armv7 has 32-bit constants 
+        // But the armv7 has 32-bit constants
         static const regex symbol16("[^:]+:([0-9]+)[ ]+([^:]+):([0-9a-fA-F]{8})[ ]+(.*)$");
         smatch sm;
         if(regex_match(input,sm,symbol32) OR regex_match(input,sm,symbol16)) {

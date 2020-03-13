@@ -79,6 +79,7 @@ constexpr int LEVEL_PROGRAM = -2;
 constexpr int LEVEL_SECTION = -1;
 constexpr int LEVEL_FILE    = 0;    // Special handling for the FILE type
 constexpr int LEVEL_01      = 01;   // Just to avoid magic numbers;
+constexpr int LEVEL_66      = 66;   // ibid.;
 constexpr int LEVEL_77      = 77;   // ibid.;
 constexpr char SECTION_INPUT_OUTPUT[]= "INPUT-OUTPUT";
 
@@ -118,6 +119,9 @@ private:
     // Here we keep track of the tree
     VAR_NODE *parent;
     VVAR_NODES children;
+    VVAR_NODES renamed_by;          // When somebody cites us as an 66/RENAMES,
+    //                              // we save them here so we can update
+    //                              // them later
 
     // This is stuff we build once we've created the tree
     std::string canonical_name;     // The full COBOL A in B in C identifier
