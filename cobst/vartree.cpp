@@ -419,19 +419,36 @@ void VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             // 'it' points to OCCURS:
             auto index = it - tokens.begin();
 
-            // Get rid of the comma at the end of index-1:
+            // Get rid of any comma at the end of index-1:
             size_t n = tokens[index-1].find_last_of(',');
             if( n != string::npos ) {
                 tokens[index-1] = tokens[index-1].substr(0,n);
             }
 
-            // Pick up the name of the referenced variable:
-            new_node->occurs = stoi(tokens[index+1]);
+            // There are at least two possibilities
+            // OCCURS 4
+            // OCCURS 1 TO 15
 
-            // And now remove index, index-1 from the tokens:
-            vector<string>::iterator it1 = tokens.begin() + index;
-            vector<string>::iterator it2 = tokens.begin() + index + 2;
-            tokens.erase(it1,it2);
+
+            if( tokens.size() >= index+2 AND tokens[index+2] EQ "TO" ) {
+                // Pick up the maximum number of occurrences
+                new_node->occurs = stoi(tokens[index+3]);
+
+                // Remove "OCCURS 1 TO 15" from the tokens
+                vector<string>::iterator it1 = tokens.begin() + index;
+                vector<string>::iterator it2 = tokens.begin() + index + 4;
+                tokens.erase(it1,it2);
+            } else {
+                // Assume "OCCURS 10"
+                // Pick up the number of occurrences
+                new_node->occurs = stoi(tokens[index+1]);
+
+                // And now remove "OCCURS 10" from the tokens:
+                vector<string>::iterator it1 = tokens.begin() + index;
+                vector<string>::iterator it2 = tokens.begin() + index + 2;
+                tokens.erase(it1,it2);
+            }
+
 
             // And now we can proceed
         }
