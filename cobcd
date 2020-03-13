@@ -5,7 +5,7 @@
 # source-level debugging of that module. Found in the root folder of the
 # cbl-gdb repository, it is designed to operate there pointing at the development
 # versions of the processing programs as controlled by the external environment
-# variables COBCDEVEL and COBCDNOCLEAN.	 Once installed in, say, /usr/local/bin,
+# variables COBCDEVEL and COBCDNOCLEAN.  Once installed in, say, /usr/local/bin,
 # it will use production versions of the processing programs
 #
 # Standard disclaimer: Your author is neither pyschic nor omnipotent, so please,
@@ -13,46 +13,58 @@
 # necessary, with his blessing.
 #
 # Usage:
-# path_to/cobcd source.cbl ## Uses production toolchain
-# COBCDEVEL=1 path_to/cobcd source.cbl ## Uses development toolchain
-# COBCDNOCLEAN=1 path_to/cobcd source.cbl ## Uses production toolchain, leaves behind the intermediate files
-# COBCDEVEL=1 COBCDNOCLEAN=1 path_to/cobcd source.cbl ## Make an inference.	 Go ahead.	You can do it
+# cobcd source.cbl ## Uses production toolchain.  Any switches before the source
+# module are incorporated in the part of the process that creates the .C module,
+# and any switches after the source module are included in the final link.
 #
+# Recall that this script is good for compiling a single source module; at this
+# writing we don't handle executables created from multiple source modules.
+#
+# Environment variable control:
+# COBCDEVEL=1 ## Causes the use of the development toolchain rather than the
+#             ## production toolchain.
+#
+# COBCDNOCLEAN=1 ## For development. The intermediate files will find their way
+#                ## into the current working directory, instead of being
+#                ## deleted after the compilation is complete.
+#
+# COBCDFLAGS ## Use for things like --free
+#
+# COBCDXM=[-x|-m] ## cobc assumes a default of -m, to create a .so module. I
+#                 ## think that's nuts, so I will default to -x, for a stand-
+#                 ## alone executable.  But this variable can be externally
+#                 ## set to override my default.  You can also use -x or -m
+#                 ## specifically in the command string.
+
 # It is hardwired with -x parameters, since it is designed for standalone
 # COBOL programs consisting of a single source code module.
 #
-# Other environment variables:
-# COBCDFLAGS is passed to the cobc compiler in the first stage.	 
-#            It's intended for things like -free, and so on.
-# COBCDXM    is -x to create an executable with main(), -m for .so shared library.
-#            It can be overridden with -x or -m as a command line parameter.
 
-set +x
 set -e
-#set -x ## This turns on echoing
-#ECHO=1
+#set -x ## This turns on shell echoing
+#ECHO=1 ## This turns on *my* echoing
 
 if grep -q debian /etc/os-release ; then
-	os_name=debian
-	fi
+  os_name=debian
+  fi
 if grep -q centos /etc/os-release ; then
-	os_name=centos
-	fi
+  os_name=centos
+  fi
 
-if	uname -a | grep -q x86_64 ; then
-	platform=x86_64
-	fi
+if  uname -a | grep -q x86_64 ; then
+  platform=x86_64
+  fi
 
-if	uname -a | grep -q arm ; then
-	platform=arm
-	fi
+if  uname -a | grep -q arm ; then
+  platform=arm
+  fi
 
 # Courtesy of stackoverflow, a script to find the directory of the script
 SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+while [ -h "$SOURCE" ] ; do # resolve $SOURCE until the file is no longer a symlink
   DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
   SOURCE="$(readlink "$SOURCE")"
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+  [[ X$SOURCE != X/* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 
@@ -61,20 +73,28 @@ COBC=cobc
 CC1=`$GCC --print-prog-name cc1`
 ASSEMBLER=`$GCC --print-prog-name as`
 LOADER=`$GCC --print-prog-name ld`
+CWD=`pwd`
 
-if [[ $COBCDEVEL != "" ]]; then
-	COBST=$DIR/cobst/cobst
-	SFIX=$DIR/sfix/sfix
+#
+# We are going to put temporary files in /tmp rather than defaulting to the
+# current working directory:
+#
+TEMPDIR=/tmp/cobcd$$
+mkdir -p $TEMPDIR
+
+if [[ X$COBCDEVEL != X"" ]] ; then
+  COBST=$DIR/cobst/cobst
+  SFIX=$DIR/sfix/sfix
 else
-	COBST=cobst
-	SFIX=sfix
-	fi
-	
+  COBST=cobst
+  SFIX=sfix
+  fi
+
 #
-# We need to do some processing on the input parameters. 
+# We need to do some processing on the input parameters.
 #
-# 1) We are going to make the assumption that the cobol module 
-#    has the extension .cbl.  
+# 1) We are going to make the assumption that the cobol module
+#    has the extension .cbl.
 # 2) We are going to assume that any -o option is followed by the executable
 #    target name; we'll handle that with a final filemove
 # 3) Any other options that appear before the filename will be accumulated
@@ -83,142 +103,219 @@ else
 #    into POSTOPTIONS.  Post options go at the end of the second call to
 #    COBC, which links object files into executables
 #
-# I am operating under an assumption that in the simple case, all options
-# will appear before the final entry, which will be the COBOL source code
-# module name.  But I am also envisioning the need to link in additional
-# libraries in the final link step, and maybe the POSTOPTIONS will give us
-# a way to do that.  
+# We are also going to maintain a copy of the original command sequence. We
+# will be running that separately just be sure that if the user wants something
+# I have been unable to anticipate, that it gets done properly.
 
+ORIGINAL=""
 SOURCEFILE=""
 BASENAME=""
 TARGET=""
 PREOPTIONS=""
 POSTOPTIONS=""
 
-while (( $# )) ; do	
-	LEXT=""
-	PARM=$1
-	FIRSTCHAR="${PARM:0:1}"
+#
+# Because we need to have control over the intermediate files, and because
+# the -save-temps switch works by creating the intermediate files locally and
+# then moving them, and because the -g switch prevents the -save-temps switch
+# from working properly, we have a problem.  For our purposes, all of those
+# things are bad things.  We don't know exactly what the user might have in
+# mind, and all of that creating and moving can result in our tripping on
+# ourselves.  For example, I ran into trouble when one of the COBOL85 test
+# programs provided by GnuCOBOL added a '-t something.lst' switch, which
+# produced a compile error because I also have a '-T switch'.
+#
+# So, I am going to create a temporary directory, and do the compilation there,
+# without using -save-temps.  For that to work, anything that looks like a
+# file has to have $DIR/ prepended to it if it doesn't already start with a '/'.
+#
 
-	if [[ $FIRSTCHAR != "-" ]] ; then
-		# Extract any extension
-		EXT="${1##*.}"
-		# Extract the basename
-		BASE=`basename $1 .$EXT`
-		# Convert EXT to lowercase:
-		LEXT="${EXT,,}";
-		fi
-	
-	if [[ $1 == "-o" ]] ; then
-		# First, check for a -o parameter:
-		shift
-		TARGET=$1 ;
-	elif [[ $1 == "-x" ]] || [[ $1 == "-m" ]] ; then
-		# A command-line parameter overwhelms anything
-		# we inherited
-		COBCDXM=$1;
-	elif [[ $LEXT == "cbl" ]] || [[ $LEXT == "cob" ]] ; then 
-		# Check for a COBOL source module name
-		SOURCEFILE=$1
-		BASENAME=$BASE;
-	else
-		# Otherwise, add to PRE or POST options
-		if [[ $SOURCEFILE == "" ]] ; then
-			PREOPTIONS="$PREOPTIONS $1" ;
-		else
-			POSTOPTIONS="$POSTOPTIONS $1" ;
-			fi
-		fi
-	shift ;
-	done
+while (( $# )) ; do
+  LEXT=""
+  PARM=$1
+  FIRSTCHAR="${PARM:0:1}"
+  ORIGINAL="$ORIGINAL $1"
 
-# If the path to the cobol module includes subdirectories, we need to get
-# rid of them.  The cobc compiler, with the -debug flag turned on, puts all
-# of its files into the current working directory.	
+  # If this is a non-switch, then it might be a source-file name.  Pull it
+  # apart so that we can work with the pieces:
+  if [[ X$FIRSTCHAR != X"-" ]] ; then
+    # Prepend this directory to create an absolute path, if it isn't already
+    # an absolute path:
+    if [[ X$FIRSTCHAR != X"/" ]] ; then
+      PARM="$CWD/$PARM"
+      fi
+    # Extract any extension
+    EXT="${1##*.}"
+    # Extract the basename
+    BASE=`basename $PARM .$EXT`
+
+    # Convert EXT to lowercase:
+    LEXT="${EXT,,}"
+    fi
+
+  if [[ X$PARM = X"-o" ]] ; then
+    # This is a -o switch.
+    # Save the parameter as our ultimate target
+    shift
+    TARGET=$PARM
+  elif [[ X$PARM = X"-t" ]] ; then
+    # We know a -t switch will break our compilation, so get rid of it and
+    # the parameter that follows
+    shift
+  elif [[ X$PARM = X"-T" ]] ; then
+    # We know a -T switch will break our compilation, so get rid of it and
+    # the parameter that follows
+    shift
+  elif [[ X$PARM = X"-x" ]] || [[ X$PARM = X"-m" ]] ; then
+    # A command-line parameter overwhelms anything
+    # we inherited
+    COBCDXM=$PARM
+  elif [[ X$LEXT = X"cbl" ]] || [[ X$LEXT = X"cob" ]] ; then
+    # Check for a COBOL source module name
+    SOURCEFILE=$PARM
+    BASENAME=$BASE
+  else
+    # Otherwise, add to PRE or POST options
+    if [[ X$SOURCEFILE = X"" ]] ; then
+      PREOPTIONS="$PREOPTIONS $PARM"
+    else
+      POSTOPTIONS="$POSTOPTIONS $PARM"
+      fi
+    fi
+  shift
+  done
+
+if [[ X$COBCDXM  = X"" ]] ; then
+  # Our default is -x, which means a standalone program.  Note
+  # that cobc assumes -m rather than -x.  I should do the same, but I just
+  # can't bring myself to do that.
+  COBCDXM=-x
+  fi
+
+# For our purposes, we need to strike any leading path from the BASENAME:
 BASENAME="${BASENAME##/*}"
 
-if [[ $ECHO != "" ]]; then
-	echo GCC          $GCC
-	echo CC1          $CC1
-	echo ASSEMBLER    $ASSEMBLER
-	echo LOADER       $LOADER
-	echo COBC         $COBC
-	echo COBST        $COBST
-	echo SFIX         $SFIX
-	echo COBCDEVEL    $COBCDEVEL
-	echo COBCDNOCLEAN $COBCDNOCLEAN
-	echo COBCDFLAGS   $COBCDFLAGS
-	echo COBCDXM      $COBCDXM
-	echo PREOPTIONS   $PREOPTIONS
-	echo SOURCEFILE   $SOURCEFILE
-	echo BASENAME     $BASENAME
-	echo POSTOPTIONS  $POSTOPTIONS
-	echo TARGET       $TARGET
-	fi
-	
-if [[ $COBCDXM	== "" ]] ; then
-	# Let's assume that a missing parameter means a standalone program
-	COBCDXM=-x
-	fi
+# If there is no specific target, create one based on the source file name;
+# it'll be put in the current working directory
+if [[ X$TARGET = X ]] ; then
+  TARGET=$BASENAME
+  if [[ X$COBCDXM = X-m ]] ; then
+    TARGET=$TARGET.so
+  fi
 
-# Build .o and the files that cobst needs:
+if [[ X$ECHO != X"" ]] ; then
+  echo GCC          $GCC
+  echo CC1          $CC1
+  echo ASSEMBLER    $ASSEMBLER
+  echo LOADER       $LOADER
+  echo COBC         $COBC
+  echo COBST        $COBST
+  echo SFIX         $SFIX
+  echo COBCDEVEL    $COBCDEVEL
+  echo COBCDNOCLEAN $COBCDNOCLEAN
+  echo COBCDXM      $COBCDXM
+  echo ORIGINAL     $ORIGINAL
+  echo PREOPTIONS   $PREOPTIONS
+  echo SOURCEFILE   $SOURCEFILE
+  echo BASENAME     $BASENAME
+  echo POSTOPTIONS  $POSTOPTIONS
+  echo TARGET       $TARGET
+  fi
+
+#
+# First, we execute the original command, unaltered. The need for this became
+# clear when replaced the 'cobc' command in the GnuCOBOL 'make tests' chain and
+# saw a number of errors in the COBOL85 test suite.  The generated code was
+# okay, but there were some tests of the compiler being done as well, and it's
+# easier to just run the original command than it is to parse everything out
+# and try to duplicate it:
+$COBC $COBCDFLAGS $ORIGINAL
+
+#
+# So, at this point, any ancillary stuff that the user expected is in place.
+#
+# What we do now is switch to our temporary directory, and we do our compilation
+# there.
+
+# This first step builds the intermediate files that COBST needs.  Those files
+# include the .h files, the mixed-language
+cd $TEMPDIR
 COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
-	--fgen-c-line-directives --fgen-c-labels \
-	-T$BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
+  --fgen-c-line-directives --fgen-c-labels \
+  -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS -I $CWD $SOURCEFILE
+cd $CWD
 
 ## Build the BASENAME.sym.c file
-$COBST -q $BASENAME.$EXT
+cd $TEMPDIR
+$COBST -q $BASENAME
+cd $CWD
 
-# Compile the .sym.c file, creating a .sym.o file containing the 
+# Compile the .sym.c file, creating a .sym.o file containing the
 # .debug_gdb_scripts section with the VARIABLE_STRING and cprint.py script
-$GCC -c -o $BASENAME.sym.o $BASENAME.sym.c 
+cd $TEMPDIR
+$GCC -c -o $BASENAME.sym.o $BASENAME.sym.c
+cd $CWD
 
 # Create the .s file from the .c file
 if test X$platform = Xx86_64 ; then
-	$CC1 -quiet -imultiarch x86_64-linux-gnu \
-	-D PIC $BASENAME.c -quiet -dumpbase $BASENAME.c -mtune=generic \
-	-march=x86-64 -auxbase-strip $BASENAME.o -g -fPIC \
-	-fstack-protector-strong -Wformat -Wformat-security -o $BASENAME.s
-	fi
+  cd $TEMPDIR
+  $CC1 -quiet -imultiarch x86_64-linux-gnu \
+    -D PIC $BASENAME.c -quiet -mtune=generic -march=x86-64 -g -fPIC \
+    -fstack-protector-strong -Wformat -Wformat-security -o $BASENAME.s
+  cd $CWD
+  fi
 
 if test X$platform = Xarm ; then
-	# This worked on a Raspberry Pi 3 running buster
-	$CC1 -quiet -imultilib . -imultiarch arm-linux-gnueabihf $BASENAME.c \
-	-quiet -mfloat-abi=hard -mfpu=vfp -mtls-dialect=gnu -marm -march=armv6+fp \
-	 -g -fPIC -o $BASENAME.s
-	fi
+  # This worked on a Raspberry Pi 3 running buster
+  cd $TEMPDIR
+  $CC1 -quiet -imultilib . -imultiarch arm-linux-gnueabihf \
+    $BASENAME.c -quiet -mfloat-abi=hard -mfpu=vfp -mtls-dialect=gnu \
+    -marm -march=armv6+fp -g -fPIC -o $BASENAME.s
+  cd $CWD
+  fi
 
 # Modify the .s file, removing all .loc references to
 # BASENAME.c and any .h files.
-$SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
+cd $TEMPDIR
+$SFIX -q $BASENAME.s $BASENAME-2.s \
+  $BASENAME.c $SOURCEFILE
+cd $CWD
 
 # Assemble the modified .s file into a replacement .o file:
 if test X$platform = Xx86_64 ; then
-	$ASSEMBLER --64 -L -anchls=$BASENAME-2.lst -o $BASENAME-2.o $BASENAME-2.s
-	fi
+  cd $TEMPDIR
+  $ASSEMBLER --64 -L -anchls=$BASENAME-2.lst \
+    -o $BASENAME-2.o $BASENAME-2.s
+  cd $CWD
+  fi
 
 if test X$platform = Xarm ; then
-	# This worked on a Raspberry Pi 3 running buster
-	$ASSEMBLER -march=armv6 -mfloat-abi=hard -mfpu=vfp -meabi=5 -o $BASENAME-2.o $BASENAME-2.s
-	fi
+  # This worked on a Raspberry Pi 3 running buster
+  cd $TEMPDIR
+  $ASSEMBLER -march=armv6 -mfloat-abi=hard -mfpu=vfp -meabi=5 \
+    -o $BASENAME-2.o $BASENAME-2.s
+  cd $CWD
+  fi
 
 # Combine the two .o files to create the executable
+# Stay in the original directory so that $TARGET, if relative, ends up in
+# the right place.
 
-if [[ $COBCDXM	== "-x" ]]; then
-	$COBC $COBCDXM -o $BASENAME $BASENAME-2.o $BASENAME.sym.o $POSTOPTIONS
-	if [[ $TARGET != "" ]] ; then
-		mv $BASENAME $TARGET ;
-		fi
+if [[ X$COBCDXM = X"-x" ]] ; then
+  pwd
+  $COBC $COBCDXM -o $TARGET $TEMPDIR/$BASENAME-2.o \
+    $TEMPDIR/$BASENAME.sym.o $POSTOPTIONS
+  fi
 else
-	$GCC -shared -o $BASENAME.so $BASENAME-2.o $BASENAME.sym.o -lcob $POSTOPTIONS
-	if [[ $TARGET != "" ]] ; then
-		mv $BASENAME.so $TARGET ;
-		fi
-	fi
+  $GCC -shared -o $TARGET $TEMPDIR/$BASENAME-2.o $TEMPDIR/$BASENAME.sym.o \
+    -lcob $POSTOPTIONS
+  fi
 
-if [[ $COBCDNOCLEAN = "" ]]; then
-	rm -fr = $BASENAME.c $BASENAME.s $BASENAME*.h $BASENAME.i $BASENAME.lst \
-	$BASENAME.cbl.lst $BASENAME.full.tab $BASENAME.tab $BASENAME.o \
-	$BASENAME.cbl.o $BASENAME-2.lst $BASENAME.sym.c $BASENAME.sym.o \
-	$BASENAME-2.s $BASENAME-2.o
-	fi
+if [[ X$COBCDNOCLEAN != X"" ]] ; then
+  cp $TEMPDIR/* .
+  fi
+
+#
+# We are done with the temporary directory, so cast it into the flames:
+#
+rm -fr $TEMPDIR
