@@ -30,15 +30,7 @@
 #
 # COBCDFLAGS ## Use for things like --free
 #
-# COBCDXM=[-x|-m] ## cobc assumes a default of -m, to create a .so module. I
-#                 ## think that's nuts, so I will default to -x, for a stand-
-#                 ## alone executable.  But this variable can be externally
-#                 ## set to override my default.  You can also use -x or -m
-#                 ## specifically in the command string.
-
-# It is hardwired with -x parameters, since it is designed for standalone
-# COBOL programs consisting of a single source code module.
-#
+# COBCDXM=[-x|-m] ## cobc assumes a default of -m
 
 set -e
 #set -x ## This turns on shell echoing
@@ -186,10 +178,8 @@ while (( $# )) ; do
   done
 
 if [[ X$COBCDXM  = X"" ]] ; then
-  # Our default is -x, which means a standalone program.  Note
-  # that cobc assumes -m rather than -x.  I should do the same, but I just
-  # can't bring myself to do that.
-  COBCDXM=-x
+  # If it wasn't specified, explicitly match the COBC default of -m
+  COBCDXM=-m
   fi
 
 # For our purposes, we need to strike any leading path from the BASENAME:
@@ -229,7 +219,7 @@ if [[ X$ECHO != X"" ]] ; then
 # okay, but there were some tests of the compiler being done as well, and it's
 # easier to just run the original command than it is to parse everything out
 # and try to duplicate it:
-$COBC $COBCDFLAGS $ORIGINAL
+$COBC $COBCDXM $COBCDFLAGS $ORIGINAL
 
 #
 # So, at this point, any ancillary stuff that the user expected is in place.
