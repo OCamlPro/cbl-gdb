@@ -48,9 +48,25 @@ using namespace std;
 typedef vector<size_t> VINT;
 
 map<string,int>
-GetInputFileMappings(const VSTRING &input_file)
+GetInputFileMappings(const VSTRING &input_file, const string &primary_file)
 {
     map<string,int> retval;
+
+    // Prime the pump with the primary COBOL source file name.  We absolutely
+    // want this reference to be in there, but it might not actually be in the
+    // .s file, as can happen when the primary COBOL source file doesn't
+    // actually have any executable instructions in it, but is merely a
+    // container for copybook includes.
+    //
+    // We'll start it with a value of negative one.  When (as is usually the
+    // case) there is a .file reference to primary_file in the .s module,
+    // the -1 will be replaced, and all will be well.
+    //
+    // Otherwise, FigureOutReplacements will end up replacing the -1 with
+    // 1.  The generated .s file will have primary_file as ".file 1", which
+    // will be peachy even if there aren't any actual ".loc 1" references.
+
+    retval[primary_file] = -1;
 
     for(string s : input_file) {
         if( s.find(".file ") != string::npos) {
@@ -144,7 +160,9 @@ main(int argc, char **argv)
     }
 
     VSTRING input_file = ReadEntireFile(params.s_input_filename.WholePath());
-    map<string,int>input_file_mappings = GetInputFileMappings(input_file);
+    map<string,int>input_file_mappings = GetInputFileMappings(
+            input_file
+            , params.cbl_filename);
     map<int,int>replacements = FigureOutReplacements(params,input_file_mappings);
     VINT function_references = FindFunctionReferences(input_file);
 
