@@ -199,8 +199,8 @@ static void Usage()
     cerr << "\n";
     cerr << "usage: sfix input.s output.s file.c file.cbl";
     cerr << "\n";
-    cerr << "   Reads input.s and writes output.s (they can be the same),\n";
-    cerr << "   removing references to file.c and making file.cbl the\n";
+    cerr << "   Reads input.s and writes output.s (they can be the same).\n";
+    cerr << "   It removes references to file.c.  It makes file.cbl the\n";
     cerr << "   primary source file\n";
     cerr << "\n";
     cerr << "   -q quiet (suppresses version display on entry)\n";
