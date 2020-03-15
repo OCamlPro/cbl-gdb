@@ -430,7 +430,7 @@ void VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             // OCCURS 1 TO 15
 
 
-            if( tokens.size() >= index+2 AND tokens[index+2] EQ "TO" ) {
+            if( tokens.size() > index+2 AND tokens[index+2] EQ "TO" ) {
                 // Pick up the maximum number of occurrences
                 new_node->occurs = stoi(tokens[index+3]);
 

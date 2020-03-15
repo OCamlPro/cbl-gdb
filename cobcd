@@ -34,7 +34,7 @@
 
 set -e
 #set -x ## This turns on shell echoing
-#ECHO=1 ## This turns on *my* echoing
+ECHO=1 ## This turns on *my* echoing
 
 if grep -q debian /etc/os-release ; then
   os_name=debian
@@ -74,7 +74,7 @@ CWD=`pwd`
 TEMPDIR=/tmp/cobcd$$
 mkdir -p $TEMPDIR
 
-if [[ X$COBCDEVEL != X"" ]] ; then
+if test X"$COBCDEVEL" != X"" ; then
   COBST=$DIR/cobst/cobst
   SFIX=$DIR/sfix/sfix
 else
@@ -122,63 +122,113 @@ POSTOPTIONS=""
 # file has to have $DIR/ prepended to it if it doesn't already start with a '/'.
 #
 
+JUSTPUSH="no"
 while (( $# )) ; do
-  LEXT=""
-  PARM=$1
-  FIRSTCHAR="${PARM:0:1}"
+  # Append the unaltered parameter to the list of original parameters.
   ORIGINAL="$ORIGINAL $1"
 
-  # If this is a non-switch, then it might be a source-file name.  Pull it
-  # apart so that we can work with the pieces:
-  if [[ X$FIRSTCHAR != X"-" ]] ; then
+  PARM=$1  ## Our version of the parameter; we might modify it
+  LEXT=""  ## This will be the lower-case extension of the source file name
+  FIRSTCHAR="${PARM:0:1}"
+  FIRSTTHREE="${PARM:0:3}"
+
+  if test X$FIRSTCHAR != X"-" ; then
+    # The first character is not a '-', so this is not a switch.
+
+    # If you get here, the parameter is a file  # or directory.  (Special
+    # processing for the accursed -ext parameter, which is *not* a file name,
+    # is seen down below.)
+
+    # If it isn't already an absolute path, make it one.  We are going to
+    # switch to a temporary directory to do the compilation, so we need
+    # absolute paths.
+
     # Prepend this directory to create an absolute path, if it isn't already
     # an absolute path:
-    if [[ X$FIRSTCHAR != X"/" ]] ; then
+    if test X$FIRSTCHAR != X"/" ; then
       PARM="$CWD/$PARM"
       fi
-    # Extract any extension
-    EXT="${1##*.}"
-    # Extract the basename
-    BASE=`basename $PARM .$EXT`
 
-    # Convert EXT to lowercase:
-    LEXT="${EXT,,}"
-    fi
+    # In the case where the filename is part of an double-entry switch (e.g.,
+    # "-L <directory>" we will have set JUSTPUSH to "yes"
 
-  if [[ X$PARM = X"-o" ]] ; then
-    # This is a -o switch.
-    # Save the parameter as our ultimate target
-    shift
-    TARGET=$PARM
-  elif [[ X$PARM = X"-t" ]] ; then
-    # We know a -t switch will break our compilation, so get rid of it and
-    # the parameter that follows
-    shift
-  elif [[ X$PARM = X"-T" ]] ; then
-    # We know a -T switch will break our compilation, so get rid of it and
-    # the parameter that follows
-    shift
-  elif [[ X$PARM = X"-x" ]] || [[ X$PARM = X"-m" ]] ; then
-    # A command-line parameter overwhelms anything
-    # we inherited
-    COBCDXM=$PARM
-  elif [[ X$LEXT = X"cbl" ]] || [[ X$LEXT = X"cob" ]] ; then
-    # Check for a COBOL source module name
-    SOURCEFILE=$PARM
-    BASENAME=$BASE
-  else
-    # Otherwise, add to PRE or POST options
-    if [[ X$SOURCEFILE = X"" ]] ; then
-      PREOPTIONS="$PREOPTIONS $PARM"
+    if test X$JUSTPUSH = X"yes" ; then
+      JUSTPUSH="no"
+      # Put the parameter into the right list:
+      if test X$SOURCEFILE = X"" ; then
+        PREOPTIONS="$PREOPTIONS $PARM"
+      else
+        POSTOPTIONS="$POSTOPTIONS $PARM"
+        fi
     else
-      POSTOPTIONS="$POSTOPTIONS $PARM"
+      # If you get here, then you have a file name, and it wasn't preceded by
+      # any switch explaining what to do with it.  So, in our simple universe
+      # (of executables made up of single source modules) it must be the
+      # the primary source code module:
+      SOURCEFILE=$PARM
+
+      # Extract any extension
+      EXT="${1##*.}"
+
+      # Extract the basename
+      BASENAME=`basename $PARM .$EXT`
+
+      # Convert EXT to lowercase:
+      LEXT="${EXT,,}"
+      fi
+  else
+    # The first character is a '-', so this is a switch
+    if test X$PARM = X"-o" ; then
+      # This is a -o switch.
+      # Save the parameter as our ultimate target
+      shift
+      TARGET=$PARM
+    elif test X$FIRSTTHREE = X"-t=" || test X$FIRSTTHREE = X"-T=" ; then
+      # We know a -t=this or -T=that switch will break our compilation, so just ignore it
+      echo nothing >/dev/null 
+    elif test X$PARM = X"-t" || test X$PARM = X"-T" ; then
+      # We know a -t <file> or -T <file> switch will break our compilation, so 
+      # ignore the switch and the following parameter
+      shift 
+    elif test X$PARM = X"-x" || test X$PARM = X"-m" ; then
+      # A command-line parameter overwhelms anything
+      # we inherited
+      COBCDXM=$PARM
+    elif test X$PARM = X"-I" || X$PARM = X"-L" || test X$PARM = X"-l" || test X$PARM = X"-D" || \
+         test X$PARM = X"-A" || test X$PARM = X"-Q" || test X$PARM = X"-K" ; then
+      # We need this switch...
+      if test X$SOURCEFILE = X"" ; then
+        PREOPTIONS="$PREOPTIONS $PARM"
+      else
+        POSTOPTIONS="$POSTOPTIONS $PARM"
+        fi
+      # ...and the parameter that follows
+      JUSTPUSH="yes"
+    elif test X$PARM = X"-ext" ; then
+      # The -ext switch is followed by <extension>.  I don't know what this actually
+      # is supposed to do, but I do know that we can't let the non-switch
+      # processing up above turn it into an absolute path.  So, we just handle
+      # both "-ext <externsion> here:
+      shift
+      if test X$SOURCEFILE = X"" ; then
+        PREOPTIONS="$PREOPTIONS $PARM $1"
+      else
+        POSTOPTIONS="$POSTOPTIONS $PARM $1"
+        fi
+    else
+      # Otherwise, add to PRE or POST options
+      if test X$SOURCEFILE = X"" ; then
+        PREOPTIONS="$PREOPTIONS $PARM"
+      else
+        POSTOPTIONS="$POSTOPTIONS $PARM"
+        fi
       fi
     fi
   shift
   done
 
-if [[ X$COBCDXM  = X"" ]] ; then
-  # If it wasn't specified, explicitly match the COBC default of -m
+if test X$COBCDXM = X"" ; then
+  # If neither -x nor -m was specified, explicitly match the COBC default of -m
   COBCDXM=-m
   fi
 
@@ -187,13 +237,13 @@ BASENAME="${BASENAME##/*}"
 
 # If there is no specific target, create one based on the source file name;
 # it'll be put in the current working directory
-if [[ X$TARGET = X ]] ; then
+if test X$TARGET = X"" ; then
   TARGET=$BASENAME
-  if [[ X$COBCDXM = X-m ]] ; then
+  if test X$COBCDXM = X"-m" ; then
     TARGET=$TARGET.so
   fi
 
-if [[ X$ECHO != X"" ]] ; then
+if test X$ECHO != X"" ; then
   echo GCC          $GCC
   echo CC1          $CC1
   echo ASSEMBLER    $ASSEMBLER
@@ -219,7 +269,16 @@ if [[ X$ECHO != X"" ]] ; then
 # okay, but there were some tests of the compiler being done as well, and it's
 # easier to just run the original command than it is to parse everything out
 # and try to duplicate it:
-$COBC $COBCDXM $COBCDFLAGS $ORIGINAL
+if test X$ECHO != X"" ; then
+  echo $COBC $COBCDXM $COBCDFLAGS $ORIGINAL
+  fi
+#  $COBC $COBCDXM $COBCDFLAGS $ORIGINAL
+
+if test X$BASENAME = X"" ; then
+    echo "There doesn't seem to be a source file specified."
+    echo "We can't proceed the the debug-capable build."
+    exit 1
+    fi
 
 #
 # So, at this point, any ancillary stuff that the user expected is in place.
@@ -230,6 +289,11 @@ $COBC $COBCDXM $COBCDFLAGS $ORIGINAL
 # This first step builds the intermediate files that COBST needs.  Those files
 # include the .h files, the mixed-language
 cd $TEMPDIR
+if test X$ECHO != X"" ; then
+  echo COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
+  --fgen-c-line-directives --fgen-c-labels \
+  -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $CWD $SOURCEFILE
+  fi
 COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
   --fgen-c-line-directives --fgen-c-labels \
   -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS -I $CWD $SOURCEFILE
@@ -237,6 +301,9 @@ cd $CWD
 
 ## Build the BASENAME.sym.c file
 cd $TEMPDIR
+if test X$ECHO != X"" ; then
+  echo $COBST -q $BASENAME
+  fi
 $COBST -q $BASENAME
 cd $CWD
 
@@ -249,6 +316,11 @@ cd $CWD
 # Create the .s file from the .c file
 if test X$platform = Xx86_64 ; then
   cd $TEMPDIR
+if test X$ECHO != X"" ; then
+  echo   $CC1 -quiet -imultiarch x86_64-linux-gnu \
+    -D PIC $BASENAME.c -quiet -mtune=generic -march=x86-64 -g -fPIC \
+    -fstack-protector-strong -Wformat -Wformat-security -o $BASENAME.s
+  fi
   $CC1 -quiet -imultiarch x86_64-linux-gnu \
     -D PIC $BASENAME.c -quiet -mtune=generic -march=x86-64 -g -fPIC \
     -fstack-protector-strong -Wformat -Wformat-security -o $BASENAME.s
@@ -267,8 +339,10 @@ if test X$platform = Xarm ; then
 # Modify the .s file, removing all .loc references to
 # BASENAME.c and any .h files.
 cd $TEMPDIR
-$SFIX -q $BASENAME.s $BASENAME-2.s \
-  $BASENAME.c $SOURCEFILE
+if test X$ECHO != X"" ; then
+  echo $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
+  fi
+$SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
 cd $CWD
 
 # Assemble the modified .s file into a replacement .o file:
@@ -291,7 +365,7 @@ if test X$platform = Xarm ; then
 # Stay in the original directory so that $TARGET, if relative, ends up in
 # the right place.
 
-if [[ X$COBCDXM = X"-x" ]] ; then
+if test X$COBCDXM = X"-x" ; then
   pwd
   $COBC $COBCDXM -o $TARGET $TEMPDIR/$BASENAME-2.o \
     $TEMPDIR/$BASENAME.sym.o $POSTOPTIONS
@@ -301,7 +375,7 @@ else
     -lcob $POSTOPTIONS
   fi
 
-if [[ X$COBCDNOCLEAN != X"" ]] ; then
+if test X$COBCDNOCLEAN != X"" ; then
   cp $TEMPDIR/* .
   fi
 
