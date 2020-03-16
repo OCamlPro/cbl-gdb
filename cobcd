@@ -34,7 +34,9 @@
 
 set -e
 #set -x ## This turns on shell echoing
-#ECHO=1 ## This turns on *my* echoing
+ECHO=1 ## This turns on *my* echoing
+
+unset COB_SWITCH_1
 
 if grep -q debian /etc/os-release ; then
   os_name=debian
@@ -65,14 +67,6 @@ COBC=cobc
 CC1=`$GCC --print-prog-name cc1`
 ASSEMBLER=`$GCC --print-prog-name as`
 LOADER=`$GCC --print-prog-name ld`
-CWD=`pwd`
-
-#
-# We are going to put temporary files in /tmp rather than defaulting to the
-# current working directory:
-#
-TEMPDIR=/tmp/cobcd$$
-mkdir -p $TEMPDIR
 
 if test X"$COBCDEVEL" != X"" ; then
   COBST=$DIR/cobst/cobst
@@ -105,6 +99,7 @@ BASENAME=""
 TARGET=""
 PREOPTIONS=""
 POSTOPTIONS=""
+ORIGINALRUN="no"
 
 #
 # Because we need to have control over the intermediate files, and because
@@ -117,9 +112,12 @@ POSTOPTIONS=""
 # programs provided by GnuCOBOL added a '-t something.lst' switch, which
 # produced a compile error because I also have a '-T switch'.
 #
-# So, I am going to create a temporary directory, and do the compilation there,
-# without using -save-temps.  For that to work, anything that looks like a
-# file has to have $DIR/ prepended to it if it doesn't already start with a '/'.
+# I tried creating a temporary directory and compiling from there, but ran
+# into a NIST test case that had a COPY SOMEBOOK IN ../ELSEWHERE.  So, instead
+# of that, I am now copying SOURCE.CBL into SOURCE-=-$PID.CBL.  Even though
+# the intermediate files get created in the current directory, I have control
+# over them and (unless I get lottery-winning unlucky) they won't interfere
+# with anything else the user has in mind.
 #
 
 JUSTPUSH="no"
@@ -128,26 +126,11 @@ while (( $# )) ; do
   ORIGINAL="$ORIGINAL $1"
 
   PARM=$1  ## Our version of the parameter; we might modify it
-  LEXT=""  ## This will be the lower-case extension of the source file name
   FIRSTCHAR="${PARM:0:1}"
   FIRSTTHREE="${PARM:0:3}"
 
   if test X$FIRSTCHAR != X"-" ; then
     # The first character is not a '-', so this is not a switch.
-
-    # If you get here, the parameter is a file  # or directory.  (Special
-    # processing for the accursed -ext parameter, which is *not* a file name,
-    # is seen down below.)
-
-    # If it isn't already an absolute path, make it one.  We are going to
-    # switch to a temporary directory to do the compilation, so we need
-    # absolute paths.
-
-    # Prepend this directory to create an absolute path, if it isn't already
-    # an absolute path:
-    if test X$FIRSTCHAR != X"/" ; then
-      PARM="$CWD/$PARM"
-      fi
 
     # In the case where the filename is part of an double-entry switch (e.g.,
     # "-L <directory>" we will have set JUSTPUSH to "yes"
@@ -163,7 +146,7 @@ while (( $# )) ; do
     else
       # If you get here, then you have a file name, and it wasn't preceded by
       # any switch explaining what to do with it.  So, in our simple universe
-      # (of executables made up of single source modules) it must be the
+      # of an executable built from a single source modules) it must be the
       # the primary source code module:
       SOURCEFILE=$PARM
 
@@ -173,8 +156,6 @@ while (( $# )) ; do
       # Extract the basename
       BASENAME=`basename $PARM .$EXT`
 
-      # Convert EXT to lowercase:
-      LEXT="${EXT,,}"
       fi
   else
     # The first character is a '-', so this is a switch
@@ -185,18 +166,19 @@ while (( $# )) ; do
       TARGET=$PARM
     elif test X$FIRSTTHREE = X"-t=" || test X$FIRSTTHREE = X"-T=" ; then
       # We know a -t=this or -T=that switch will break our compilation, so just ignore it
-      echo nothing >/dev/null 
+      ORIGINALRUN="yes"
     elif test X$PARM = X"-t" || test X$PARM = X"-T" ; then
-      # We know a -t <file> or -T <file> switch will break our compilation, so 
+      # We know a -t <file> or -T <file> switch will break our compilation, so
       # ignore the switch and the following parameter
-      shift 
+      ORIGINALRUN="yes"
+      shift
     elif test X$PARM = X"-x" || test X$PARM = X"-m" ; then
       # A command-line parameter overwhelms anything
       # we inherited
       COBCDXM=$PARM
     elif test X$PARM = X"-I" || test X$PARM = X"-L" || test X$PARM = X"-l" || \
          test X$PARM = X"-D" || test X$PARM = X"-A" || test X$PARM = X"-Q" || \
-         test X$PARM = X"-K" ; then
+         test X$PARM = X"-K" || test X$PARM = X"-ext"; then
       # We need this switch...
       if test X$SOURCEFILE = X"" ; then
         PREOPTIONS="$PREOPTIONS $PARM"
@@ -205,17 +187,6 @@ while (( $# )) ; do
         fi
       # ...and the parameter that follows
       JUSTPUSH="yes"
-    elif test X$PARM = X"-ext" ; then
-      # The -ext switch is followed by <extension>.  I don't know what this actually
-      # is supposed to do, but I do know that we can't let the non-switch
-      # processing up above turn it into an absolute path.  So, we just handle
-      # both "-ext <externsion> here:
-      shift
-      if test X$SOURCEFILE = X"" ; then
-        PREOPTIONS="$PREOPTIONS $PARM $1"
-      else
-        POSTOPTIONS="$POSTOPTIONS $PARM $1"
-        fi
     else
       # Otherwise, add to PRE or POST options
       if test X$SOURCEFILE = X"" ; then
@@ -245,6 +216,13 @@ if test X$TARGET = X"" ; then
     fi
   fi
 
+TEMPEST="xXx12345"
+TRUEBASENAME=$BASENAME
+TRUESOURCEFILE=$SOURCEFILE
+SOURCEFILE=$(echo $SOURCEFILE | sed "s/$TRUEBASENAME/$TRUEBASENAME$TEMPEST/")
+BASENAME=$(echo $BASENAME | sed "s/$TRUEBASENAME/$TRUEBASENAME$TEMPEST/")
+cp $TRUESOURCEFILE $SOURCEFILE
+
 if test X$ECHO != X"" ; then
   echo GCC          $GCC
   echo CC1          $CC1
@@ -258,6 +236,8 @@ if test X$ECHO != X"" ; then
   echo COBCDXM      $COBCDXM
   echo ORIGINAL     $ORIGINAL
   echo PREOPTIONS   $PREOPTIONS
+  echo TRUESOURCEFILE $TRUESOURCEFILE
+  echo TRUEBASENAME $TRUEBASENAME
   echo SOURCEFILE   $SOURCEFILE
   echo BASENAME     $BASENAME
   echo POSTOPTIONS  $POSTOPTIONS
@@ -266,16 +246,18 @@ if test X$ECHO != X"" ; then
   fi
 
 #
-# First, we execute the original command, unaltered. The need for this became
-# clear when replaced the 'cobc' command in the GnuCOBOL 'make tests' chain and
-# saw a number of errors in the COBOL85 test suite.  The generated code was
-# okay, but there were some tests of the compiler being done as well, and it's
-# easier to just run the original command than it is to parse everything out
-# and try to duplicate it:
-if test X$ECHO != X"" ; then
-  echo $COBC $COBCDXM $COBCDFLAGS $ORIGINAL
+# First, we sometimes execute the original command, unaltered. The need for this
+# became clear when replaced the 'cobc' command in the GnuCOBOL 'make tests'
+# chain and saw a number of errors in the COBOL85 test suite.  The generated
+# code was okay, but there were some tests of the compiler being done as well,
+# and it's easier to just run the original command than it is to parse
+# everything out and try to duplicate it:
+if test X$ORIGINALRUN = X"yes" ; then
+  if test X$ECHO != X"" ; then
+    echo $COBC $COBCDFLAGS $ORIGINAL
+    fi
+  $COBC $COBCDFLAGS $ORIGINAL
   fi
-#  $COBC $COBCDXM $COBCDFLAGS $ORIGINAL
 
 if test X$BASENAME = X"" ; then
     echo "There doesn't seem to be a source file specified."
@@ -291,77 +273,61 @@ if test X$BASENAME = X"" ; then
 
 # This first step builds the intermediate files that COBST needs.  Those files
 # include the .h files, the mixed-language
-cd $TEMPDIR
 if test X$ECHO != X"" ; then
   echo COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
   --fgen-c-line-directives --fgen-c-labels \
-  -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $CWD $SOURCEFILE
+  -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
   fi
 COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
   --fgen-c-line-directives --fgen-c-labels \
-  -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS -I $CWD $SOURCEFILE
-cd $CWD
+  -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
 
 ## Build the BASENAME.sym.c file
-cd $TEMPDIR
 if test X$ECHO != X"" ; then
   echo $COBST -q $BASENAME
   fi
 $COBST -q $BASENAME
-cd $CWD
 
 # Compile the .sym.c file, creating a .sym.o file containing the
 # .debug_gdb_scripts section with the VARIABLE_STRING and cprint.py script
-cd $TEMPDIR
 $GCC -c -o $BASENAME.sym.o $BASENAME.sym.c
-cd $CWD
 
 # Create the .s file from the .c file
 if test X$platform = Xx86_64 ; then
-  cd $TEMPDIR
-if test X$ECHO != X"" ; then
-  echo   $CC1 -quiet -imultiarch x86_64-linux-gnu \
-    -D PIC $BASENAME.c -quiet -mtune=generic -march=x86-64 -g -fPIC \
-    -fstack-protector-strong -Wformat -Wformat-security -o $BASENAME.s
-  fi
+  if test X$ECHO != X"" ; then
+    echo   $CC1 -quiet -imultiarch x86_64-linux-gnu \
+      -D PIC $BASENAME.c -quiet -mtune=generic -march=x86-64 -g -fPIC \
+      -fstack-protector-strong -Wformat -Wformat-security -o $BASENAME.s
+    fi
   $CC1 -quiet -imultiarch x86_64-linux-gnu \
     -D PIC $BASENAME.c -quiet -mtune=generic -march=x86-64 -g -fPIC \
     -fstack-protector-strong -Wformat -Wformat-security -o $BASENAME.s
-  cd $CWD
   fi
 
 if test X$platform = Xarm ; then
   # This worked on a Raspberry Pi 3 running buster
-  cd $TEMPDIR
   $CC1 -quiet -imultilib . -imultiarch arm-linux-gnueabihf \
     $BASENAME.c -quiet -mfloat-abi=hard -mfpu=vfp -mtls-dialect=gnu \
     -marm -march=armv6+fp -g -fPIC -o $BASENAME.s
-  cd $CWD
   fi
 
 # Modify the .s file, removing all .loc references to
 # BASENAME.c and any .h files.
-cd $TEMPDIR
 if test X$ECHO != X"" ; then
   echo $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
   fi
 $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
-cd $CWD
 
 # Assemble the modified .s file into a replacement .o file:
 if test X$platform = Xx86_64 ; then
-  cd $TEMPDIR
   $ASSEMBLER --64 -L -anchls=$BASENAME-2.lst \
     -o $BASENAME-2.o $BASENAME-2.s
-  cd $CWD
   fi
 
 if test X$platform = Xarm ; then
   # This worked on a Raspberry Pi 3 running buster
-  cd $TEMPDIR
   $ASSEMBLER -march=armv6 -mfloat-abi=hard -mfpu=vfp -meabi=5 \
     -o $BASENAME-2.o $BASENAME-2.s
-  cd $CWD
   fi
 
 # Combine the two .o files to create the executable
@@ -369,23 +335,32 @@ if test X$platform = Xarm ; then
 # the right place.
 
 if test X$COBCDXM = X"-x" ; then
-  pwd
   if test X$ECHO != X"" ; then
-    echo $COBC $COBCDXM -o $TARGET $TEMPDIR/$BASENAME-2.o $TEMPDIR/$BASENAME.sym.o $POSTOPTIONS
+    echo $COBC $COBCDXM -o $TARGET $BASENAME-2.o $BASENAME.sym.o $POSTOPTIONS
     fi
-  $COBC $COBCDXM -o $TARGET $TEMPDIR/$BASENAME-2.o $TEMPDIR/$BASENAME.sym.o $POSTOPTIONS
+  $COBC $COBCDXM -o $TARGET $BASENAME-2.o $BASENAME.sym.o $POSTOPTIONS
 else
   if test X$ECHO != X"" ; then
-    echo $GCC -shared -o $TARGET $TEMPDIR/$BASENAME-2.o $TEMPDIR/$BASENAME.sym.o -lcob $POSTOPTIONS
+    echo $GCC -shared -o $TARGET $BASENAME-2.o $BASENAME.sym.o -lcob $POSTOPTIONS
     fi
-  $GCC -shared -o $TARGET $TEMPDIR/$BASENAME-2.o $TEMPDIR/$BASENAME.sym.o -lcob $POSTOPTIONS
+  $GCC -shared -o $TARGET $BASENAME-2.o $BASENAME.sym.o -lcob $POSTOPTIONS
   fi
+
+rm $SOURCEFILE
 
 if test X$COBCDNOCLEAN != X"" ; then
-  cp $TEMPDIR/* .
+  # We are going to keep the intermediate files; give them the right names
+  files=`find . -maxdepth 1 -name "$TRUEBASENAME*"`
+  for file in $files ; do
+    newname=$(echo $file | sed "s/$TRUEBASENAME$TEMPEST/$TRUEBASENAME/")
+    if test X$file != X$newname ; then
+      mv $file $newname
+      fi
+    done
+else
+  # They want to delete the intermediate files...
+  files=`find . -maxdepth 1 -name "$TRUEBASENAME$TEMPEST*"`
+  for file in $files ; do
+    rm $file
+    done
   fi
-
-#
-# We are done with the temporary directory, so cast it into the flames:
-#
-rm -fr $TEMPDIR
