@@ -34,7 +34,7 @@
 
 set -e
 #set -x ## This turns on shell echoing
-ECHO=1 ## This turns on *my* echoing
+#ECHO=1 ## This turns on *my* echoing
 
 if grep -q debian /etc/os-release ; then
   os_name=debian
@@ -194,8 +194,9 @@ while (( $# )) ; do
       # A command-line parameter overwhelms anything
       # we inherited
       COBCDXM=$PARM
-    elif test X$PARM = X"-I" || X$PARM = X"-L" || test X$PARM = X"-l" || test X$PARM = X"-D" || \
-         test X$PARM = X"-A" || test X$PARM = X"-Q" || test X$PARM = X"-K" ; then
+    elif test X$PARM = X"-I" || test X$PARM = X"-L" || test X$PARM = X"-l" || \
+         test X$PARM = X"-D" || test X$PARM = X"-A" || test X$PARM = X"-Q" || \
+         test X$PARM = X"-K" ; then
       # We need this switch...
       if test X$SOURCEFILE = X"" ; then
         PREOPTIONS="$PREOPTIONS $PARM"
@@ -241,6 +242,7 @@ if test X$TARGET = X"" ; then
   TARGET=$BASENAME
   if test X$COBCDXM = X"-m" ; then
     TARGET=$TARGET.so
+    fi
   fi
 
 if test X$ECHO != X"" ; then
@@ -260,6 +262,7 @@ if test X$ECHO != X"" ; then
   echo BASENAME     $BASENAME
   echo POSTOPTIONS  $POSTOPTIONS
   echo TARGET       $TARGET
+  set | grep COB
   fi
 
 #
@@ -367,12 +370,15 @@ if test X$platform = Xarm ; then
 
 if test X$COBCDXM = X"-x" ; then
   pwd
-  $COBC $COBCDXM -o $TARGET $TEMPDIR/$BASENAME-2.o \
-    $TEMPDIR/$BASENAME.sym.o $POSTOPTIONS
-  fi
+  if test X$ECHO != X"" ; then
+    echo $COBC $COBCDXM -o $TARGET $TEMPDIR/$BASENAME-2.o $TEMPDIR/$BASENAME.sym.o $POSTOPTIONS
+    fi
+  $COBC $COBCDXM -o $TARGET $TEMPDIR/$BASENAME-2.o $TEMPDIR/$BASENAME.sym.o $POSTOPTIONS
 else
-  $GCC -shared -o $TARGET $TEMPDIR/$BASENAME-2.o $TEMPDIR/$BASENAME.sym.o \
-    -lcob $POSTOPTIONS
+  if test X$ECHO != X"" ; then
+    echo $GCC -shared -o $TARGET $TEMPDIR/$BASENAME-2.o $TEMPDIR/$BASENAME.sym.o -lcob $POSTOPTIONS
+    fi
+  $GCC -shared -o $TARGET $TEMPDIR/$BASENAME-2.o $TEMPDIR/$BASENAME.sym.o -lcob $POSTOPTIONS
   fi
 
 if test X$COBCDNOCLEAN != X"" ; then
