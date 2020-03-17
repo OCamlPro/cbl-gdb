@@ -217,7 +217,7 @@ if test X$TARGET = X"" ; then
     fi
   fi
 
-TEMPEST="xXx12345"
+TEMPEST="---"$$
 TRUEBASENAME=$BASENAME
 TRUESOURCEFILE=$SOURCEFILE
 SOURCEFILE=$(echo $SOURCEFILE | sed "s/$TRUEBASENAME/$TRUEBASENAME$TEMPEST/")
@@ -253,14 +253,20 @@ if test X$ECHO != X"" ; then
 # code was okay, but there were some tests of the compiler being done as well,
 # and it's easier to just run the original command than it is to parse
 # everything out and try to duplicate it:
-if test X$ORIGINALRUN = X"yes" ; then
-  if test X$ECHO != X"" ; then
-    echo $COBC $COBCDFLAGS $ORIGINAL
+
+result="0"
+
+if test X$result = X"0" ; then
+  if test X$ORIGINALRUN = X"yes" ; then
+    if test X$ECHO != X"" ; then
+      echo $COBC $COBCDFLAGS $ORIGINAL
+      fi
+    $COBC $COBCDFLAGS $ORIGINAL
+    result=$?
     fi
-  $COBC $COBCDFLAGS $ORIGINAL
   fi
 
-if test X$? = X"0" ; then
+if test X$result = X"0" ; then
   if test X$BASENAME = X"" ; then
       echo "There doesn't seem to be a source file specified."
       echo "We can't proceed the the debug-capable build."
@@ -268,13 +274,7 @@ if test X$? = X"0" ; then
       fi
   fi
 
-if test X$? = X"0" ; then
-  #
-  # So, at this point, any ancillary stuff that the user expected is in place.
-  #
-  # What we do now is switch to our temporary directory, and we do our compilation
-  # there.
-
+if test X$result = X"0" ; then
   # This first step builds the intermediate files that COBST needs.  Those files
   # include the .h files, the mixed-language
   if test X$ECHO != X"" ; then
@@ -285,21 +285,29 @@ if test X$? = X"0" ; then
   COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
     --fgen-c-line-directives --fgen-c-labels \
     -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
-
-  if test X$? = X"0" ; then
-    ## Build the BASENAME.sym.c file
-    if test X$ECHO != X"" ; then
-      echo $COBST -q $BASENAME
-      fi
-    $COBST -q $BASENAME
+  result=$?
+  fi
+  
+if test X$result = X"0" ; then
+  ## Build the BASENAME.sym.c file
+  if test X$ECHO != X"" ; then
+    echo $COBST -q $BASENAME
     fi
+  $COBST -q $BASENAME
+  result=$?
   fi
 
-if test X$? = X"0" ; then
+if test X$result = X"0" ; then
   # Compile the .sym.c file, creating a .sym.o file containing the
   # .debug_gdb_scripts section with the VARIABLE_STRING and cprint.py script
+  if test X$ECHO != X"" ; then
+    echo $GCC -c -o $BASENAME.sym.o $BASENAME.sym.c
+    fi
   $GCC -c -o $BASENAME.sym.o $BASENAME.sym.c
+  result=$?
+  fi
 
+if test X$result = X"0" ; then
   # Create the .s file from the .c file
   if test X$platform = Xx86_64 ; then
     if test X$ECHO != X"" ; then
@@ -310,44 +318,53 @@ if test X$? = X"0" ; then
     $CC1 -quiet -imultiarch x86_64-linux-gnu \
       -D PIC $BASENAME.c -quiet -mtune=generic -march=x86-64 -g -fPIC \
       -fstack-protector-strong -Wformat -Wformat-security -o $BASENAME.s
+    result=$?
     fi
   fi
 
-if test X$? = X"0" ; then
+if test X$result = X"0" ; then
   if test X$platform = Xarm ; then
     # This worked on a Raspberry Pi 3 running buster
     $CC1 -quiet -imultilib . -imultiarch arm-linux-gnueabihf \
       $BASENAME.c -quiet -mfloat-abi=hard -mfpu=vfp -mtls-dialect=gnu \
       -marm -march=armv6+fp -g -fPIC -o $BASENAME.s
+    result=$?
     fi
   fi
 
-if test X$? = X"0" ; then
+if test X$result = X"0" ; then
   # Modify the .s file, removing all .loc references to
   # BASENAME.c and any .h files.
   if test X$ECHO != X"" ; then
     echo $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
     fi
   $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
+  result=$?
   fi
 
-if test X$? = X"0" ; then
+if test X$result = X"0" ; then
   # Assemble the modified .s file into a replacement .o file:
   if test X$platform = Xx86_64 ; then
+    if test X$ECHO != X"" ; then
+      echo $ASSEMBLER --64 -L -anchls=$BASENAME-2.lst \
+           -o $BASENAME-2.o $BASENAME-2.s
+      fi
     $ASSEMBLER --64 -L -anchls=$BASENAME-2.lst \
-      -o $BASENAME-2.o $BASENAME-2.s
+               -o $BASENAME-2.o $BASENAME-2.s
+    result=$?
     fi
   fi
 
-if test X$? = X"0" ; then
+if test X$result = X"0" ; then
   if test X$platform = Xarm ; then
     # This worked on a Raspberry Pi 3 running buster
     $ASSEMBLER -march=armv6 -mfloat-abi=hard -mfpu=vfp -meabi=5 \
       -o $BASENAME-2.o $BASENAME-2.s
+    result=$?
     fi
   fi
 
-if test X$? = X"0" ; then
+if test X$result = X"0" ; then
   # Combine the two .o files to create the executable
   # Stay in the original directory so that $TARGET, if relative, ends up in
   # the right place.
