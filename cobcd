@@ -217,12 +217,12 @@ if test X$TARGET = X"" ; then
     fi
   fi
 
-TEMPEST="---"$$
+#TEMPEST="---"$$                    ## This is part of the failed "compile elsewhere" effort
 TRUEBASENAME=$BASENAME
 TRUESOURCEFILE=$SOURCEFILE
 SOURCEFILE=$(echo $SOURCEFILE | sed "s/$TRUEBASENAME/$TRUEBASENAME$TEMPEST/")
 BASENAME=$(echo $BASENAME | sed "s/$TRUEBASENAME/$TRUEBASENAME$TEMPEST/")
-cp $TRUESOURCEFILE $SOURCEFILE
+#cp $TRUESOURCEFILE $SOURCEFILE    	## This is part of the failed "compile elsewhere" effort
 
 if test X$ECHO != X"" ; then
   echo GCC          $GCC
@@ -382,21 +382,28 @@ if test X$result = X"0" ; then
     fi
   fi
 
-rm $SOURCEFILE
+#   rm $SOURCEFILE  ## This is part of the failed "compile elsewhere" effort
+#if test X$COBCDNOCLEAN != X"" ; then
+#  # We are going to keep the intermediate files; give them the right names
+#  files=`find . -maxdepth 1 -name "$TRUEBASENAME*"`
+#  for file in $files ; do
+#    newname=$(echo $file | sed "s/$TRUEBASENAME$TEMPEST/$TRUEBASENAME/")
+#    if test X$file != X$newname ; then
+#      mv $file $newname
+#      fi
+#    done
+#else
+#  # They want to delete the intermediate files...
+#  files=`find . -maxdepth 1 -name "$TRUEBASENAME$TEMPEST*"`
+#  for file in $files ; do
+#    rm $file
+#    done
+#  fi
 
-if test X$COBCDNOCLEAN != X"" ; then
-  # We are going to keep the intermediate files; give them the right names
-  files=`find . -maxdepth 1 -name "$TRUEBASENAME*"`
-  for file in $files ; do
-    newname=$(echo $file | sed "s/$TRUEBASENAME$TEMPEST/$TRUEBASENAME/")
-    if test X$file != X$newname ; then
-      mv $file $newname
-      fi
-    done
-else
-  # They want to delete the intermediate files...
-  files=`find . -maxdepth 1 -name "$TRUEBASENAME$TEMPEST*"`
-  for file in $files ; do
-    rm $file
-    done
-  fi
+if test X$COBCDNOCLEAN = X"" ; then
+	rm -fr = $BASENAME.c $BASENAME.s $BASENAME*.h $BASENAME.i $BASENAME.lst \
+	$BASENAME.cbl.lst $BASENAME.full.tab $BASENAME.tab $BASENAME.o \
+	$BASENAME.cbl.o $BASENAME-2.lst $BASENAME.sym.c $BASENAME.sym.o \
+	$BASENAME-2.s $BASENAME-2.o
+	fi
+

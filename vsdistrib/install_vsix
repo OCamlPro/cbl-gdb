@@ -2,6 +2,28 @@
 
 set -e
 
+#
+# This script used to work, and then it stopped, apparently because
+# Microsoft changed something in VSCode, or maybe because something
+# changed in X, probably as a security measure.  The error message
+# is
+# /usr/lib/xorg/Xorg.wrap: Only console users are allowed to run the X server
+# 
+# So, until I can sort that out, the extension will have to be installed
+# manually.
+
+VSIX=`ls --sort=time cbl-gdb*.vsix | head -n1`
+
+echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+echo ""
+echo "Please run the following command manually:  (The X server won't"
+echo "run it from a script.)"
+echo ""
+echo code --install-extension vsdistrib/$VSIX
+echo ""
+echo !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+exit 0
+
 SUDO=sudo
 
 # For reasons I don't understand, this routine fails when run as part of 
@@ -10,16 +32,15 @@ SUDO=sudo
 if "X"$DESTDIR = "X" ; then
 	# Find the most recent VSIX package, and install it
 	if test -x `command -v code` ; then
-		VSIX=`ls --sort=time cbl-gdb*.vsix | head -n1`
 		if test "X"$VSIX != "X" ; then 
 			echo "Installing $VSIX"
 			if test "X"$SUDO_USER != "X" ; then
 				# They must be running as 'sudo make install'
-				$SUDO -u $SUDO_USER code --install-extension $VSIX
+				$SUDO -u $SUDO_USER code --force --install-extension $VSIX
 			else
 				# They must simply be running as 'make install', meaning that
 				# the user must've taken ownership of /usr/local/
-				code --install-extension $VSIX
+				code --force --install-extension $VSIX
 				fi
 			fi
 		fi

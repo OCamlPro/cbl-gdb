@@ -33,16 +33,16 @@ clean:
 
 .PHONY : install
 install:
-	$(MAKE) -C cobst install
-	$(MAKE) -C sfix install
-	$(MAKE) -C python install
-	$(MAKE) -C vsdistrib install
 ifdef DESTDIR
 	mkdir -p $(DESTDIR)/bin/
 	install cobcd $(DESTDIR)/bin/
 else
 	install cobcd /usr/local/bin/
 endif
+	$(MAKE) -C cobst install
+	$(MAKE) -C sfix install
+	$(MAKE) -C python install
+	$(MAKE) -C vsdistrib install
 	
 #	copy cbl-gdb to cblgdb-x.y, tarball the copy, and delete the copy
 .PHONY : package
