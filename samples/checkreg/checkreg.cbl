@@ -18,51 +18,15 @@
         FD trans-raw-file.
             01 trans-raw. *> 92 characters
                 05 trans-seq PIC 9999 .
-                05 FILLER PIC X.
-                05 trans-date.
-                    10 trans-date-year PIC 9999 .
-                    10 FILLER PIC X.
-                    10 trans-date-month PIC 99 .
-                    10 FILLER PIC X.
-                    10 trans-date-day PIC 99 . 
-                05 FILLER        PIC X.
-                05 trans-type    PIC X(11) .
-                05 FILLER        PIC X.
-                05 trans-desc    PIC X(27) .
-                05 FILLER        PIC X.
-                05 trans-debit   PIC 999999.99 .
-                05 FILLER        PIC X.
-                05 trans-credit  PIC 999999.99 .
-                05 FILLER        PIC X.
-                05 trans-checkno PIC 9(6) .
-                05 FILLER        PIC X.
-                05 trans-runbal  PIC 999999.99 .
-      *
-        FD trans-input-file.
-            01 trans-input. *> 92 characters
-                05 trans-seq PIC 9999 .
-                05 FILLER PIC X.
-                05 trans-date.
-                    10 trans-date-year PIC 9999 .
-                    10 FILLER PIC X.
-                    10 trans-date-month PIC 99 .
-                    10 FILLER PIC X.
-                    10 trans-date-day PIC 99 . 
-                05 FILLER        PIC X.
-                05 trans-type    PIC X(11) .
-                05 FILLER        PIC X.
-                05 trans-desc    PIC X(27) .
-                05 FILLER        PIC X.
-                05 trans-debit   PIC 999999.99 .
-                05 FILLER        PIC X.
-                05 trans-credit  PIC 999999.99 .
-                05 FILLER        PIC X.
-                05 trans-checkno PIC 9(6) .
-                05 FILLER        PIC X.
-                05 trans-runbal  PIC 999999.99 .
+                05 FILLER PIC X(88).
       *
         SD trans-work-file.
             01 trans-work. *> 92 characters
+                05 trans-seq PIC 9999 .
+                05 FILLER PIC X(88).
+      *
+        FD trans-input-file.
+            01 trans-input. *> 92 characters
                 05 trans-seq PIC 9999 .
                 05 FILLER PIC X.
                 05 trans-date.
@@ -98,13 +62,7 @@
             05 FILLER PIC X(10) VALUE SPACES.
             05 FILLER PIC X(122) VALUE "This is fixed boilerplate text t"
       -        "hat we want at the top of each page".
-      *> MARTY ADD - This "record" has the same field names for the 
-      *>    numeric fields in trans-input vut the PIC fields have "V"
-      *>    instead of "." so they can be used directly for computation.
-      *>    down in 2200-DEBIT I do the "MOVE CORRESPONDING" and then
-      *>    eliminate the "FUNCTION NUMVAL" calls.  This is common in
-      *>    COBOL code. 
-        01 mh-vars.
+        01 trans-vars.
                 05 trans-debit   PIC 999999v99 .
                 05 trans-credit  PIC 999999v99 .
                 05 trans-checkno PIC 9(6) .
@@ -156,9 +114,7 @@
                 AT END SET END-OF-FILE TO TRUE.
       *
         2000-process.
-      *> following line backed up to put * in col 7 (syntax coloring
-      *     fail)
-      *> DISPLAY trans-input.
+      *>      DISPLAY trans-input.
             EVALUATE trans-type IN trans-input
                 WHEN "BALSTART" 
                     PERFORM 2100-balance-start
@@ -189,26 +145,18 @@
             PERFORM write-line 2 times.
       *
         2200-debit.
-      *     ADD FUNCTION NUMVAL(trans-debit IN trans-input)
-      *     MARTY REMOVED IT and continued the changes here
-      *     The move CORRESPONDING moves the DISPLAY data from the 
-      *        trans-input into computational (character) variables
-      *        in mh-vars. This eliminates the need for FUNCTION
-      *        NUMVAL. Not a huge deal but it makes the code cleaner.
-            MOVE CORRESPONDING trans-input to mh-vars.
-            ADD trans-debit IN mh-vars TO running-debits.
-            SUBTRACT trans-debit IN mh-vars FROM running-balance.
-            MOVE trans-debit IN mh-vars TO running-amount.
-            MULTIPLY running-amount BY -1 GIVING running-amount.
+            MOVE CORRESPONDING trans-input to trans-vars.
+            ADD trans-debit IN trans-vars TO running-debits.
+            SUBTRACT trans-debit IN trans-vars FROM running-balance.
+            MOVE trans-debit IN trans-vars TO running-amount.
+            SUBTRACT running-amount FROM ZERO GIVING running-amount.
             PERFORM 2350-running-balance.
       *
         2300-credit.
-            ADD FUNCTION NUMVAL(trans-credit IN trans-input)
-                TO running-credits.
-            ADD FUNCTION NUMVAL(trans-credit IN trans-input)
-                TO running-balance.
-            MOVE FUNCTION NUMVAL(trans-credit IN trans-input)
-                TO running-amount.
+            MOVE CORRESPONDING trans-input to trans-vars.
+            ADD trans-credit IN trans-vars TO running-credits.
+            ADD trans-credit IN trans-vars TO running-balance.
+            MOVE trans-credit IN trans-vars TO running-amount.
             PERFORM 2350-running-balance.
       *
         2350-running-balance.
