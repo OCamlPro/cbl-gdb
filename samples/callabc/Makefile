@@ -6,7 +6,7 @@
 # a cbl-gdb/ "make install" is performed, because prior to that the cobcd
 # script won't be available in /usr/local/bin/
 
-COBCD=cobcd
+COBCD=../../cobcd
 
 .PHONY : all
 all:
