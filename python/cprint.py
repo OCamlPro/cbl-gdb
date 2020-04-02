@@ -31,7 +31,7 @@
 
 #   This module implements the gdb extension command cprint
 #
-#   This script is read by the COBST program and incorporated into a 
+#   This script is read by the COBST program and incorporated into a
 #   C module that gets compiled and linked into the final executable
 #
 #   Decoding a COBOL variable will require the following information,
@@ -39,7 +39,7 @@
 #
 #   This structure will have an f_ symbol pointing to it.
 #
-#       typedef struct __cob_field 
+#       typedef struct __cob_field
 #           {
 #           size_t                  size;       /* Field size */
 #           unsigned char           *data;      /* Pointer to field data */
@@ -112,6 +112,7 @@ COB_FLAG_CONSTANT       = (1 << 12)  # /* 0x1000 */
 import re
 import sys
 import os
+import traceback
 
 def NoNulls(s) :
     ss = ""
@@ -187,12 +188,12 @@ def MachineInterfaceBody(s) :
     # Strip off leading and trailing square brackets, which is what sometimes
     # get before some variable types (e.g., file records) are initialized
     #if len(body) >=2 and body[0] == '[' :
-    #    body = body[1:-1]   
+    #    body = body[1:-1]
 
     # Strip off leading and trailing double-quotes
     if len(body) >=2 and body[0] == '"' :
         is_quoted = True
-        body = body[1:-1]   
+        body = body[1:-1]
 
     # Whatever is left is now the actual number of characters
     body_length = len(body)
@@ -221,6 +222,29 @@ def BlankIsZero(v) :
     if len(v) == 0 :
         v = "0"
     return int(v)
+
+def GetAddressOf(variable:str) :
+    if 'gdb' in sys.modules :
+        try :
+            command = "info address " + variable
+            address_string = gdb.execute(command,False,True)
+
+            nfound = address_string.find(" 0x")
+            if nfound == -1 :
+                print("No match in GetAddressOf()", command)
+                return None
+            else :
+                address_string = address_string[nfound+3:]
+                nfound = address_string.find(' ')
+                address_string = address_string[0:nfound]
+                address:int = int(address_string,16)
+                return address
+        except gdb.error:
+            print("gdb.execute failed:",command)
+            return None
+    else :
+        # We are running off-line
+        return None
 
 class VarTrie() :
     def __init__(self):
@@ -311,7 +335,7 @@ class VarTrie() :
 
                 # If the COBOL source code doesn't refer to a variable,
                 # then we don't have much information about it.  But
-                # we can look at the payload.ListType and at least 
+                # we can look at the payload.ListType and at least
                 # identify ALPHANUMERICS:
 
                 if payload.ListType in ("ALPHABETIC","ALPHANUMERIC") :
@@ -342,7 +366,7 @@ class VarTrie() :
                 break
             else :
                 desired = match.group(1) + " " + match.group(3)
-        
+
         desired = desired.replace("."," ")
         desired = desired.replace("/"," ")
         retval = desired.split()
@@ -354,8 +378,8 @@ class VarTrie() :
                     trie:VarTrieNode,
                     paths:[]) :
         # Nomenclature:  We have a list of lost_boys: A/B/C
-        # We have a forest, where some of the trees are labeled.  
-        # The labels might be 
+        # We have a forest, where some of the trees are labeled.
+        # The labels might be
         # A.B.C (Just one valid path)
         # X.A.B.C.Y (Just one valid path)
         # A.B.C.X.Y.Z (Just one valid path)
@@ -363,7 +387,7 @@ class VarTrie() :
         # A.B.C.X and A.B.C.Y (two valid paths)
         # A.B.X.C and A.B.Y.C (two valid paths)
         # And so on.
-        # 
+        #
         # We want to wander through the forest, creating a list of paths that
         # leave off each boy at his own tree.
         #
@@ -374,7 +398,7 @@ class VarTrie() :
         # The intent is for this to be unimportant to the user.  It should
         # just work *right*.  If the user asks "show me FRED" and there is
         # only one possibility, then the user gets that.  If there are two
-        # possibilities, then the user gets shown those possibilities with a 
+        # possibilities, then the user gets shown those possibilities with a
         # simple option for selecting one.
         #
         if boy_index < len(boys) :
@@ -400,7 +424,7 @@ class VarTrie() :
                 # and terminate.
                 return
         else :
-            # we have dropped off the whole string of boys.  Now it's a 
+            # we have dropped off the whole string of boys.  Now it's a
             # question of finding every possible path to the edge of the
             # forest from that point.
             if len(trie.children) > 0 :
@@ -467,7 +491,7 @@ class VarTrie() :
             pattern2 = re.compile(".+" + fragment)
             pattern3 = re.compile("^"  + fragment,re.IGNORECASE)
             pattern4 = re.compile(".+" + fragment,re.IGNORECASE)
-            
+
             set1 = set()  # same case, from the beginning
             set2 = set()  # case-insensitive, from the beginning
             set3 = set()  # same case, anywhere
@@ -502,20 +526,20 @@ class LineList() :
     # which COBOL routine the trap occurred in.  We can't just look at the
     # information from the gdb "frame" command, because the .c code doesn't
     # use the exact same name. It's similar, but it's transmogrified.  But
-    # we can know the line number where the trap occurred, and scanning 
+    # we can know the line number where the trap occurred, and scanning
     # the .tab file lets us convert line numbers to the original COBOL
     # program-id
 
     def __init__(self) :
         self.line_list = [] # This will be a list of (int,str) tuples
-        self.EndOfTheWorld = 1000000
+        self.EndOfTheWorld = 10000000
 
     def Insert(self,line_number : int, program_id : str) :
         self.line_list.append( (line_number,program_id) )
 
     def Find(self,line_number : int) :
         # returns the program-id that covers line_number
-        
+
         if len(self.line_list) == 0 :
             return ""
 
@@ -550,24 +574,24 @@ class CobolVariable() :
     """Manages the field, attributes, flags, and pointers of a GnuCOBOL COBOL variable"""
     def __init__ (self) :
         self.index      = None
-        self.Program    = ""  
-        self.Section    = ""  
-        self.Name       = ""     
-        self.Level      = -1     
-        self.Base       = ""     
-        self.Field      = ""    
-        self.Attr       = ""    
-        self.Offset     = 0   
-        self.ListType   = "" 
-        self.ListSize   = 0 
-        self.Picture    = "" 
-        self.Usage      = "" 
-        self.Occurs     = 0  
+        self.Program    = ""
+        self.Section    = ""
+        self.Name       = ""
+        self.Level      = -1
+        self.Base       = ""
+        self.Field      = ""
+        self.Attr       = ""
+        self.Offset     = 0
+        self.ListType   = ""
+        self.ListSize   = 0
+        self.Picture    = ""
+        self.Usage      = ""
+        self.Occurs     = 0
         self.FieldSize  = 0
-        self.AttrType   = 0 
+        self.AttrType   = 0
         self.AttrDigits = 0
         self.AttrScale  = 0
-        self.AttrFlags  = 0 
+        self.AttrFlags  = 0
 
         self.location   = ""            # This is Base + Offset as reported by GDB
         self.data       = []            # list of ListSize bytes
@@ -592,7 +616,7 @@ class CobolVariable() :
         self.ldigits = -1          # this integer is AttrDigits - AttrScale
         self.rdigits = -1          # this integer is AttrScale...
         #                          # ...but see self.CleanAndScale
-        
+
     def CleanTokens(self,execute_result) :
         # (This was created during initial development.  During refactoring
         #  to use cobst data rather than collecting field and attribute
@@ -643,7 +667,7 @@ class CobolVariable() :
 
     def CleanAndScale(self,rside) :
         """ Returns False if the number could not be CleanedAndScaled """
-        # rside is the raw data from the user.  
+        # rside is the raw data from the user.
         self.rvalue = rside
 
         # Expand 9(6)V9(5) to 999999V99999
@@ -679,7 +703,7 @@ class CobolVariable() :
         self.rdigits = self.AttrScale
         self.ldigits = self.AttrDigits - self.rdigits
 
-        # We need to handle the possibility of  
+        # We need to handle the possibility of
         # scaling 'P' characters in the PICTURE clause.
 
         # Canonical examples:
@@ -703,7 +727,7 @@ class CobolVariable() :
 
                 # There is, therefore, no right string
                 self.rdigits = 0
-                rstr = ""   
+                rstr = ""
 
                 # We lop off the rightmost -ldigits from lstr
                 for i in range(pcount) :
@@ -806,7 +830,7 @@ class CobolVariable() :
             #print("We've GotData: self.data")
             #print(' '.join(format(x, '02x') for x in self.data))
 
-            # We've got self.ListSize bytes in self.data 
+            # We've got self.ListSize bytes in self.data
             # Put them into memory
 
             the_address = self.GetTheAddress(line_list)
@@ -840,7 +864,7 @@ class CobolVariable() :
                         return address
 
                 except gdb.error:
-                    # This exception is thrown when you ask for a LINKAGE 
+                    # This exception is thrown when you ask for a LINKAGE
                     # variable and it's not available because you aren't
                     # trapped inside the referring routine.
                     self.not_in_context = True
@@ -851,15 +875,15 @@ class CobolVariable() :
         elif self.Section == "LOCAL-STORAGE" :
             if 'gdb' in sys.modules :
                 try :
-                    # Okay.  
+                    # Okay.
                     #
                     # We are looking for something in LOCAL-STORAGE.  Local
                     # storage is kept in a calloc-ed memory location named
                     # cob_local_ptr.  The complication is that if we have
                     # several program-ids that each have their own cob_local_ptr
-                    # we have to make sure we know which one we are dealing 
+                    # we have to make sure we know which one we are dealing
                     # with.
-                    
+
                     # Pick up the decimal line number where we are trapped
                     line_number = -1
                     frame_string = gdb.execute("frame",False,True)
@@ -879,7 +903,7 @@ class CobolVariable() :
                     # Look up the program-id of that line_number
                     program_id = line_list.Find(line_number)
                     #print("in :", program_id)
-                    
+
                     # Okay again.
                     #
                     # program-id is where the program-under-test is
@@ -892,7 +916,7 @@ class CobolVariable() :
                     if split_name[-1] == program_id :
                         # Everything seems to match up, so we can try
                         # to get this variable's data:
-                        
+
                         command = "info address cob_local_ptr"
                         address_string = gdb.execute(command,False,True)
                         #print(command)
@@ -914,7 +938,7 @@ class CobolVariable() :
                     return None
         else :
             return None
-        
+
     def FetchVariableData(self, line_list : LineList(), show_failure ) :
         data_string = None
         self.location = ""
@@ -939,7 +963,7 @@ class CobolVariable() :
                     #print(command)
                     data_string = gdb.execute(command,False,True)
                 except gdb.error:
-                    # This exception is thrown when you ask for a LINKAGE 
+                    # This exception is thrown when you ask for a LINKAGE
                     # variable and it's not available because you aren't
                     # trapped inside the referring routine.
                     self.not_in_context = True
@@ -952,15 +976,15 @@ class CobolVariable() :
         elif self.Section == "LOCAL-STORAGE" :
             if 'gdb' in sys.modules :
                 try :
-                    # Okay.  
+                    # Okay.
                     #
                     # We are looking for something in LOCAL-STORAGE.  Local
                     # storage is kept in a calloc-ed memory location named
                     # cob_local_ptr.  The complication is that if we have
                     # several program-ids that each have their own cob_local_ptr
-                    # we have to make sure we know which one we are dealing 
+                    # we have to make sure we know which one we are dealing
                     # with.
-                    
+
                     # Pick up the decimal line number where we are trapped
                     line_number = -1
                     frame_string = gdb.execute("frame",False,True)
@@ -980,7 +1004,7 @@ class CobolVariable() :
                     # Look up the program-id of that line_number
                     program_id = line_list.Find(line_number)
                     #print("in :", program_id)
-                    
+
                     # Okay again.
                     #
                     # program-id is where the program-under-test is
@@ -993,8 +1017,8 @@ class CobolVariable() :
                     if split_name[-1] == program_id :
                         # Everything seems to match up, so we can try
                         # to get this variable's data:
-                        
-                        command = "x/" + str(self.ListSize) + "xb " 
+
+                        command = "x/" + str(self.ListSize) + "xb "
                         command += "cob_local_ptr"
                         if self.Offset > 0 :
                             command += "+"
@@ -1031,7 +1055,7 @@ class CobolVariable() :
 
             for byte in bytes :
                 if len(byte) != 4 :
-                    # We are ignoring anything that's not a single-byte 0x.. 
+                    # We are ignoring anything that's not a single-byte 0x..
                     # hex value
                     continue
                 self.data.append(int(byte,0))
@@ -1054,7 +1078,7 @@ class CobolVariable() :
             storage_type = "L-S"
         elif self.Section == "LINKAGE" :
             storage_type = "LNK"
-        
+
         s = "{1:02} {2} [{0}]".format(storage_type,self.Level,self.Name)
         return s
 
@@ -1121,7 +1145,7 @@ class CobolVariable() :
         print("AttrScale:  " , self.AttrScale       )
 
         print("AttrFlags:  " , hex(self.AttrFlags)  , end = '')
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN     ) != 0 : 
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN     ) != 0 :
             print(" HAVE_SIGN", end = '')
         if (self.AttrFlags & COB_FLAG_SIGN_SEPARATE ) != 0 :
             print(" SIGN_SEPARATE", end = '')
@@ -1427,7 +1451,7 @@ class CobolVariable() :
                     sign = 0
 
                 astring = "{0:24.18e}".format(fpnumber)
-                    
+
                 eloc = astring.find("e")
                 point10 = -1 # Just to the right of the leftmost digit
                 lside = astring[0]
@@ -1535,7 +1559,7 @@ class CobolVariable() :
                     sigbits = '1' + sigbits
                     sigbits = sigbits[0:fraction_bits+1]
                     binary_point += 1
-                    
+
                 # If the number is >= 1, it's already normalized.
 
                 # Otherwise, strip off leading zeroes while adjusting the
@@ -1558,7 +1582,7 @@ class CobolVariable() :
                     exponent = 0
                     significand = 0
                 elif exponent >= (1<<exponent_bits)-1 :
-                    # The number is too big for this IEEE format.  
+                    # The number is too big for this IEEE format.
                     # Make it infinite
                     exponent = (1<<exponent_bits)-1
                     significand = 0
@@ -1851,7 +1875,7 @@ class CobolVariable() :
         #                  0x0F = unsigned
 
         has_sign_nybble = (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0
-        signed = (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 
+        signed = (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0
 
         negative = False
         if has_sign_nybble :
@@ -1896,7 +1920,7 @@ class CobolVariable() :
 
         if negative :
             body = '-' + body
-        
+
         if signed and not negative :
             body = '+' + body
 
@@ -1911,7 +1935,7 @@ class CobolVariable() :
         pic += str(self.AttrScale)
         pic += ") ]"
         return body, pic
-    
+
     def StringToPackedDecimal(self,rside) :
         self.data = bytearray()
         if self.CleanAndScale(rside) :
@@ -2030,7 +2054,7 @@ class CobolVariable() :
         # or big-endian.  We will operated little-endian
         our_bytes = self.data
 
-        #our_bytes = [0x00, 0xb4, 0x21, 0x50, 0x1f, 0x01, 0x00, 0x00] 
+        #our_bytes = [0x00, 0xb4, 0x21, 0x50, 0x1f, 0x01, 0x00, 0x00]
         #our_bytes.reverse();
 
         if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
@@ -2129,7 +2153,7 @@ class CobolVariable() :
         # or big-endian.  We will operated little-endian
         our_bytes = self.data
 
-        #our_bytes = [0x00, 0xb4, 0x21, 0x50, 0x1f, 0x01, 0x00, 0x00] 
+        #our_bytes = [0x00, 0xb4, 0x21, 0x50, 0x1f, 0x01, 0x00, 0x00]
         #our_bytes.reverse();
 
         if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
@@ -2324,7 +2348,7 @@ class CobolVariable() :
             for ch in self.expanded_picture :
                 if ch != self.comma_separator :
                     pic_without_commas += ch
-               
+
             floating_insertion = None
             floating_insertion_start = None
             floating_insertion_end = None
@@ -2345,7 +2369,7 @@ class CobolVariable() :
                             floating_insertion_start = i
                         floating_insertion_end = i
 
-            # We need to convert leading zeroes to the 'z' character:            
+            # We need to convert leading zeroes to the 'z' character:
             input = self.cleaned_rvalue
 
             # zero-flag the integer portion
@@ -2455,7 +2479,7 @@ class CobolVariable() :
                 inside_floating = False
                 if floating_insertion_start != None :
                     inside_floating = (pindex+1 >= floating_insertion_start and pindex+1 <= floating_insertion_end)
-                
+
                 include_literal = "B0/,."
                 if not inside_floating:
                     include_literal += self.currency_symbol
@@ -2493,13 +2517,13 @@ class CobolVariable() :
                         dch = '*'
                     body += dch
                     continue
-            
+
             # We've built body.  Flip it right-side around
             body = body[::-1]
 
             # Depending on the numbers, we could have some interesting
             # entries.  Let's just power through them.
-            
+
             # Get rid of commas preceded by spaces
             wipe_me = ' ' + self.comma_separator
             while True :
@@ -2540,7 +2564,7 @@ class CobolVariable() :
             if body.strip() == self.decimal_point :
                 i = body.find(self.decimal_point)
                 body = body[:i] + ' ' + body[i+1:]
-            
+
             self.data = bytearray(body.encode("utf8"))
 
     def DataToString(self) :
@@ -2646,44 +2670,59 @@ class TabFileInformation() :
     def __init__(self) :
         self.var_trie = VarTrie()
         self.line_list = LineList()
-        self.current_variable_string = ""
-        self.current_trapped_routine = ""
+        self.current_variable_string:str = ""
+        self.current_trapped_routine:str = ""
+        self.current_trapped_file:str = ""
+        self.current_trapped_line:int = 0
 
     def ProcessInfoStack(self, info_stack) :
         """ Figures out which routine we are currently trapped in"""
 
-        # Info line should start with "Line xxx "
-        self.current_trapped_routine = ""
-
+        # What we need to know is on the very first line:
         m = info_stack.find('\n')
         if m > -1 :
             info_stack = info_stack[:m]
+        tokens = info_stack.split(' ')
 
-        m = info_stack.find(':')
-        if(m > -1) :
-            # So far we are well formed
-            line_number = int(info_stack[m+1:])
+        # That line looks like this:
+        #
+        # #0  optfde01_ (entry=0) at optfde01.cbl:59
+        #
+        # We need the information from the final token:
 
-            for xxx in self.line_list.line_list :
-                if xxx[0] > line_number :
-                    # We've gotten past line_number, so the prior entry
-                    # was the one we wanted
+        file_and_line = tokens[-1].split(':')
+        self.current_trapped_line = int(file_and_line[1])
+
+        if file_and_line[0] != self.current_trapped_file :
+            # We are in a new file
+            self.current_trapped_file = file_and_line[0]
+
+            # Find the address of the VARIABLE_STRING for this file
+            name_root = self.current_trapped_file.split('.')
+            string_name = "VARIABLE_STRING_" + name_root[0].upper();
+            the_address = GetAddressOf(string_name)
+
+            # And pick up that string, byte by laborious byte:
+            self.current_variable_string = ""
+            while True :
+                command = "x/1xb " + str(the_address)
+                the_byte_string = gdb.execute(command,False,True)
+                nfound = the_byte_string[2:].find("0x")
+                the_byte = int(the_byte_string[nfound+2:],16)
+                if the_byte == 0 :
+                    # This is the end of a C-string
                     break;
-                # Keep looking
-                self.current_trapped_routine = xxx[1]
+                the_address += 1
+                self.current_variable_string += chr(the_byte)
 
-    def ReadSymbolTableText(self) :
-        if self.current_variable_string != VARIABLE_STRING :
-
-            # Establish this as the one we are using
-            self.current_variable_string = VARIABLE_STRING
-            
+            # We have us a new variable string
             # Clear out the tables:
             # Load the new tables
             self.var_trie = VarTrie()
             self.line_list = LineList()
 
-            variable_lines = VARIABLE_STRING.split("~")
+            # Pull apart the variable_string
+            variable_lines = self.current_variable_string.split("~")
             for variable_line in variable_lines :
                 self.line_list.LoadFromLine(variable_line)
                 self.var_trie.LoadFromLine(variable_line)
@@ -2691,10 +2730,26 @@ class TabFileInformation() :
             # Put a fencepost at the end of the line_list
             self.line_list.Insert(self.line_list.EndOfTheWorld,"Ragnarök")
 
-        # Now that we have processed everything, we can figure out where
-        # in the program we are trapped:
-        original_info_stack = gdb.execute("info stack",False,True)
-        self.ProcessInfoStack(original_info_stack)
+    def ReadSymbolTableText(self) :
+
+        # Figure out where we are
+        try :
+            original_info_stack = gdb.execute("info stack",False,True)
+            self.ProcessInfoStack(original_info_stack)
+
+            # And now figure out what routine we are trapped in, from
+            # the line number
+            for line in self.line_list.line_list :
+               if line[0] > self.current_trapped_line :
+                   # We've gotten past self.current_trapped_line, so the prior entry
+                   # was the one we wanted
+                   break;
+               # Keep looking
+               self.current_trapped_routine = line[1]
+
+        except :
+            #traceback.print_exc()
+            print( "No stack.")
 
 class ShortTermMemory() :
     def __init__(self) :
@@ -2707,7 +2762,7 @@ GV_ShortTermMemory = ShortTermMemory()
 # The Python extension to gdb is plenty powerful, but it is infuriating
 # in one regard: Debugging.  I've gotten used to source level debugging, and
 # the irony of having to do print-level debugging in an extension to a source-
-# level debugger is delicious, but mainly in the sense that some people like 
+# level debugger is delicious, but mainly in the sense that some people like
 # the taste of beetles.  So, I have jumped through some hoops so that I could
 # do at least *some* debugging in Visual Studio even though the gdb object
 # isn't available.  Bob Dubner, 2019-07-23
@@ -2726,7 +2781,7 @@ class CPrintWorker() :
     def ProcessDisplayMode(self,args) :
         self.machine_interface_mode = False
         # Make sure the current display mode is the same as the session mode
-        self.current_display_mode = self.sticky_display_mode 
+        self.current_display_mode = self.sticky_display_mode
 
         # Now see if he wants to change it
         if len(args) >= 1 :
@@ -2803,13 +2858,13 @@ class CPrintWorker() :
         # The command is typically "cp A B C" or "cp/d A B C"
         # There is also the possibility of an '=' character, whereby the
         # value after the '=' is assigned to the variable described to the left
-        
+
         preargs = arguments.split('=',1)
-        
+
         rside = None
         if len(preargs) > 1  :
             rside = preargs[1]
-        
+
         # The variable name side is to the left of any '=' character
         args = preargs[0].split()
 
@@ -2823,9 +2878,10 @@ class CPrintWorker() :
                 # If the single argument is an asterisk, then
                 # he is asking for a list of variables and values:
                 args[0] = TabFile.current_trapped_routine
+
             elif args[0].isdigit() :
                 # if the single argument is a number, then he is looking
-                # for a short_term_memory entry.  If the short-term entry is 
+                # for a short_term_memory entry.  If the short-term entry is
                 # alphabetic, then it is a reference to a program-id.  If it
                 # is numeric, it's a payload number
 
@@ -2849,56 +2905,56 @@ class CPrintWorker() :
                 # to come up with the possibilities:
                 possibilities = TabFile.var_trie.GetListOfPossibilities(args)
                 if len(possibilities) == 1 and not pstar:
-                    # There's only one possibility, and it wasn't a star. 
+                    # There's only one possibility, and it wasn't a star.
                     # This is nice and simple.
                     # We'll just move ahead and process it.
                     payload_number = possibilities[0]
                 elif len(possibilities) > 1 or (len(possibilities) > 0 and pstar) :
-                    # There are multiple possibilities, or there is one 
+                    # There are multiple possibilities, or there is one
                     # possibility found via a 'p *'.
                     # Load them into short-term memory:
                     ShortTermMemory.short_term_memory = possibilities
 
                     if self.machine_interface_mode :
                         # This is machine interface mode
-                        # Our mission is to emulate the 
+                        # Our mission is to emulate the
                         # '-stack-list-variables --simple-values'
 
                         s = "variables=["
                         for payload_index in possibilities :
                             payload = TabFile.var_trie.storage_list[payload_index]
                             payload.FetchVariableData(TabFile.line_list , False)
+                            if not payload.not_in_context :
+                                name = ""
+                                name += payload.display_name;
+                                n = name.find(' ')
+                                if n > -1 :
+                                    name = name[:n] + '-' + name[n+1:]
+                                n = name.find(' ')
+                                if n > -1 :
+                                    name = name[:n]
 
-                            name = ""
-                            name += payload.display_name;
-                            n = name.find(' ')
-                            if n > -1 :
-                                name = name[:n] + '-' + name[n+1:]
-                            n = name.find(' ')
-                            if n > -1 :
-                                name = name[:n]
+                                # Everything after the final slash is the program
+                                # name, which is redundant and takes up valuable
+                                # screen real estate.  Clear it out.
 
-                            # Everything after the final slash is the program
-                            # name, which is redundant and takes up valuable
-                            # screen real estate.  Clear it out.
+                                n = name.rfind('/')
+                                if n > -1 :
+                                    name = name[:n]
 
-                            n = name.rfind('/')
-                            if n > -1 :
-                                name = name[:n]
+                                body , body_length = MachineInterfaceBody(payload.display_body)
 
-                            body , body_length = MachineInterfaceBody(payload.display_body)
+                                s += '{name="'
+                                s += name
+                                s += '"'
 
-                            s += '{name="'
-                            s += name
-                            s += '"'
+                                s += ',type="char *"'
 
-                            s += ',type="char *"'
-
-                            s += r',value="'
-                            s += payload.location 
-                            s += r' \"'
-                            s += body
-                            s += r'\""},'
+                                s += r',value="'
+                                s += payload.location
+                                s += r' \"'
+                                s += body
+                                s += r'\""},'
                         if s[-1] == ',' :
                             s = s[:-1]  # Strip off final comma
                         s += ']'
@@ -2911,12 +2967,13 @@ class CPrintWorker() :
                         for payload_index in possibilities :
                             payload = TabFile.var_trie.storage_list[payload_index]
                             payload.FetchVariableData(TabFile.line_list , False)
-                            s = "{0:2} : ".format(line_counter)
-                            s += payload.display_name
-                            s += " : "
-                            s += payload.display_body
-                            print(NoNulls(s))
-                            line_counter += 1
+                            if not payload.not_in_context :
+                                s = "{0:2} : ".format(line_counter)
+                                s += payload.display_name
+                                s += " : "
+                                s += payload.display_body
+                                print(NoNulls(s))
+                                line_counter += 1
                     payload_number = None
 
         # At this point, if we have a single payload, it's time to show
@@ -2926,7 +2983,7 @@ class CPrintWorker() :
 
             # Pick up the payload from the list
             payload = TabFile.var_trie.storage_list[payload_number]
-            
+
             if rside :
                 payload.SetToRside(TabFile.line_list, rside)
 
@@ -2993,7 +3050,7 @@ class CWatchWorker() :
 
         command = "watch *(char(*)"
         command += '[' + str(payload.ListSize) +'])'
-        command += '(' + hex(the_address) + ')' 
+        command += '(' + hex(the_address) + ')'
 
         if 'gdb' in sys.modules :
             #print("The command is:",command)
@@ -3003,8 +3060,8 @@ class CWatchWorker() :
             print(command)
 
     def ProcessArgumentsW(self, TabFile, ShortTermMemory, arguments) :
-        # The command is typically "cw A 
-        
+        # The command is typically "cw A
+
         args = arguments.split()
         args = self.ProcessDisplayModeW(args)
 
@@ -3016,10 +3073,10 @@ class CWatchWorker() :
                 # If the single argument is an asterisk, then
                 # he is asking for a list of variables and values:
                 args[0] = TabFile.current_trapped_routine
-            
+
             elif args[0].isdigit() :
                 # if the single argument is a number, then he is looking
-                # for a short_term_memory entry.  If the short-term entry is 
+                # for a short_term_memory entry.  If the short-term entry is
                 # alphabetic, then it is a reference to a program-id.  If it
                 # is numeric, it's a payload number
 
@@ -3043,12 +3100,12 @@ class CWatchWorker() :
                 # to come up with the possibilities:
                 possibilities = TabFile.var_trie.GetListOfPossibilities(args)
                 if len(possibilities) == 1 and not pstar:
-                    # There's only one possibility, and it wasn't a star. 
+                    # There's only one possibility, and it wasn't a star.
                     # This is nice and simple.
                     # We'll just move ahead and process it.
                     payload_number = possibilities[0]
                 elif len(possibilities) > 1 or (len(possibilities) > 0 and pstar) :
-                    # There are multiple possibilities, or there is one 
+                    # There are multiple possibilities, or there is one
                     # possibility found via a 'p *'.
                     # Load them into short-term memory:
                     ShortTermMemory.short_term_memory = possibilities
@@ -3058,12 +3115,13 @@ class CWatchWorker() :
                     for payload_index in possibilities :
                         payload = TabFile.var_trie.storage_list[payload_index]
                         payload.FetchVariableData(TabFile.line_list , False)
-                        s = "{0:2} : ".format(line_counter)
-                        s += payload.display_name
-                        s += " : "
-                        s += payload.display_body
-                        print(NoNulls(s))
-                        line_counter += 1
+                        if not payload.not_in_context :
+                            s = "{0:2} : ".format(line_counter)
+                            s += payload.display_name
+                            s += " : "
+                            s += payload.display_body
+                            print(NoNulls(s))
+                            line_counter += 1
 
         # At this point, if we have a single payload, it's time to show
         # that to our user:
@@ -3082,7 +3140,7 @@ if 'gdb' in sys.modules :
 
         def __init__ (self):
             super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
-            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 1.1.1]')
+            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 1.3.1]')
             self.Worker = CPrintWorker()
             self.TabFile = TabFileInformation();
 
@@ -3103,7 +3161,7 @@ if 'gdb' in sys.modules :
         def invoke (self, arguments, from_tty):
             self.TabFile.ReadSymbolTableText()
             self.Worker.ProcessArgumentsW(self.TabFile,GV_ShortTermMemory,arguments)
-            
+
 if 'gdb' not in sys.modules:
     # I debug with Visual Studio in Windows, which doesn't provide a gdb object.
     # Test code goes here
@@ -3127,7 +3185,7 @@ if 'gdb' not in sys.modules:
 #    Worker.ProcessInfoStackW("Line 34 ")
 #    WWorker.ProcessArgumentsW("*")
     pass
-else:                
+else:
     CPrint()
     CWatch()
 
