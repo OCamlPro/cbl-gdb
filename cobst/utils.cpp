@@ -48,8 +48,23 @@ string Trim(const string &s)
         retval = retval.substr(0,nfound);
     }
     nfound = retval.find_first_not_of(WHITESPACE);
-    if(nfound != string::npos && nfound > 0) {
+    if(nfound != string::npos) {
         retval = retval.substr(nfound);
+    } else {
+        retval = "";
+    }
+    return retval;
+}
+
+string RTrim(const string &s)
+{
+    PROFILER;
+    string retval=s;
+    static const string WHITESPACE = " \t\r\n\f";
+    size_t nfound = retval.find_last_not_of(WHITESPACE);
+    if(nfound != string::npos) {
+        nfound += 1;
+        retval = retval.substr(0,nfound);
     }
     return retval;
 }
@@ -106,6 +121,15 @@ string Replace(const string &s,const char was, const char is)
             ch = is;
         }
         retval += ch;
+    }
+    return retval;
+}
+
+string Upper(const string &s)
+{
+    string retval;
+    for(char ch : s) {
+        retval += toupper(ch);
     }
     return retval;
 }

@@ -417,7 +417,7 @@ void VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
         it = find(tokens.begin(),tokens.end(),"OCCURS");
         if( it != tokens.end() ) {
             // 'it' points to OCCURS:
-            auto index = it - tokens.begin();
+            size_t index = it - tokens.begin();
 
             // Get rid of any comma at the end of index-1:
             size_t n = tokens[index-1].find_last_of(',');

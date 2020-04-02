@@ -453,14 +453,18 @@ CreateSymc(PARAMETERS &params,
            const COB_LABELS &cob_labels,
            const VARIABLE_TREE &var_tree)
 {
-    /*  This routine puts the COBOL-identifier/C-identifier cross-reference
-    information into a single string that will be prepended, as a string
-    variable, to the cprint.py module embedded in the executable as a
-    .debug_script
+    /*  This routine creates the .sym.c file, which contains a global
+        variable comprising the cross-reference information, followed
+        by the magical construction that puts the cprint.py script
+        into the .debug_script section of the object file created by
+        compiling .sym.c
     */
 
+    // First, the cross-reference string:
+
+    string fname = params.cbl_filename.GetFname();
+
     stringstream ss;
-    ss << "VARIABLE_STRING=\"";
 
     // Do the line/address information from the .text in the minimal form
     // used by cprint.py to figure out which program a trap has occurred in.
@@ -501,13 +505,58 @@ CreateSymc(PARAMETERS &params,
         ss << ZeroIsNull(cs.GetAttrScale()) << "|" ;
         ss << ZeroIsNull(cs.GetAttrFlags()) << "~";
     }
-    ss << "\"";
-    ss << "\n";
+    // At this point, ss contains a potentially huge literal string.
+    // We're going to bust it up into smaller pieces.
 
-    // Copy over the Python script
+    string s = ss.str();
+    ss.str("");
+
+    ss << "char VARIABLE_STRING_" << Upper(fname) << "[]=" << endl;
+
+    const int SEGMENT_LENGTH = 78;
+    while(s.length() > SEGMENT_LENGTH) {
+        ss << "\"" << s.substr(0,SEGMENT_LENGTH) << "\"" << endl;
+        s = s.substr(SEGMENT_LENGTH);
+    }
+    if( s.length() ) {
+        ss << "\"" << s << "\"" << endl;
+    }
+    ss << ";" << endl << endl;
+    params.symc << ss.str();
+
+    ss.str("");
+    // Copy over the Python script, line by line, getting rid of comments
     char *py = new char[___python_cprint_py_len+1];
-    memcpy(py, ___python_cprint_py,___python_cprint_py_len);
-    py[___python_cprint_py_len] = '\0';
+    py[0] = '\0';
+    size_t index=0;
+    while(index < ___python_cprint_py_len) {
+        string seg;
+        while(index < ___python_cprint_py_len) {
+            char ch = ___python_cprint_py[index++];
+            if(ch EQ '\n') {
+                break;
+            }
+            seg += ch;
+        }
+        size_t nfound_comment = seg.find("#");
+        if( nfound_comment != string::npos ) {
+            // There is a pound sign, which is the Python comment signal
+            size_t nfound_quote = seg.find_first_of("'\"");
+            if( nfound_quote > nfound_comment ) {
+                seg = seg.substr(0,nfound_comment);
+                seg = RTrim(seg);
+            }
+        }
+
+        if( !Trim(seg).empty() ) {
+            seg += '\n';
+            size_t t = strlen(py);
+            strcpy(py+t,seg.c_str());
+        }
+    }
+
+//    memcpy(py, ___python_cprint_py,___python_cprint_py_len);
+//    py[___python_cprint_py_len] = '\0';
     ss <<  py;
     ss << "\n";
 
@@ -533,7 +582,7 @@ CreateSymc(PARAMETERS &params,
         );
     */
 
-    string s = ss.str();
+    s = ss.str();
 
     params.symc << "asm(" << endl;
     params.symc << "\".pushsection \\\".debug_gdb_scripts\\\", \\\"MS\\\",@progbits,1\\n\"" << endl;
