@@ -8,6 +8,7 @@
 *.tab
 *.x
 *.s
+*.so
 rtest
 optfde01/optfde01
 optfde01/dd_output
