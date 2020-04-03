@@ -18,3 +18,6 @@ all:
 #	mv *.so library
 	COB_LIBRARY_PATH=./library ./MAIN
 
+.PHONY : clean
+clean:
+	rm -fr library *.so MAIN
