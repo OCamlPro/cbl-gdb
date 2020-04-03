@@ -26,8 +26,8 @@ pregit:
 	dos2unix *.cpp
 	dos2unix Makefile
 	dos2unix .gitignore
-	astyle -n --style=kr *.h
-	astyle -n --style=kr *.cpp
+	astyle -n --style=kr --indent=spaces=4 --break-return-type *.h
+	astyle -n --style=kr --indent=spaces=4 --break-return-type *.cpp
 
 #.PHONY : install
 #install :

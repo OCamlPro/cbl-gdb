@@ -59,7 +59,8 @@ char const * optarg;    /* argument associated with option */
 #undef    EMSG
 #define    EMSG    ""
 
-int getopt(int nargc, char * const * nargv, const char * ostr)
+int
+getopt(int nargc, char * const * nargv, const char * ostr)
 {
     static char *progname = *nargv;
     static char const * place = EMSG;        /* option letter processing */
@@ -126,7 +127,8 @@ int getopt(int nargc, char * const * nargv, const char * ostr)
 #include <ctype.h>
 #include "getopt.h"
 
-void testopt(int argc, char **argv)
+void
+testopt(int argc, char **argv)
 {
     int aflag = 0;
     int bflag = 0;
@@ -173,7 +175,8 @@ void testopt(int argc, char **argv)
     printf("\n");
 }
 
-int main()
+int
+main()
 {
     char *test1[]  = {"x"};
     char *test2[]  = {"x","-a","-b"};

@@ -46,14 +46,16 @@ private:
 
 public:
     void Decode(const std::string &filename);
-    std::string Stem() const
+    std::string
+    Stem() const
     {
         std::string retval = drive;
         retval += path;
         retval += fname;
         return retval;
     }
-    void SetExtension(const std::string &ex)
+    void
+    SetExtension(const std::string &ex)
     {
         if(ex.size() >= 1 && ex[0] != '.') {
             ext = '.';
@@ -62,16 +64,19 @@ public:
             ext = ex;
         }
     }
-    std::string GetFname() const
+    std::string
+    GetFname() const
     {
         return fname;
     }
-    std::string GetExt() const
+    std::string
+    GetExt() const
     {
         return ext;
     }
 
-    std::string GetFandExt() const
+    std::string
+    GetFandExt() const
     {
         std::string retval;
         retval = fname + ext;
@@ -79,17 +84,20 @@ public:
         return retval;
     }
 
-    std::string WholePath() const
+    std::string
+    WholePath() const
     {
         return drive + path + fname + ext;
     }
 
-    std::string PathToRoot() const
+    std::string
+    PathToRoot() const
     {
         return drive + path + fname;
     }
 
-    std::string Path() const
+    std::string
+    Path() const
     {
         return drive + path;
     }

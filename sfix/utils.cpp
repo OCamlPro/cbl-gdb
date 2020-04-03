@@ -37,7 +37,8 @@
 
 using namespace std;
 
-string Trim(const string &s)
+string
+Trim(const string &s)
 {
     PROFILER;
     string retval=s;
@@ -54,7 +55,8 @@ string Trim(const string &s)
     return retval;
 }
 
-string StripQuotes(const string &s)
+string
+StripQuotes(const string &s)
 {
     PROFILER;
     string retval=s;
@@ -67,7 +69,8 @@ string StripQuotes(const string &s)
     return retval;
 }
 
-vector<string> Split(const string &s,const string &delimiters)
+vector<string>
+Split(const string &s,const string &delimiters)
 {
     PROFILER;
     vector<string>retval;
@@ -94,7 +97,8 @@ next_c:
     return retval;
 }
 
-string Replace(const string &s,const char was, const char is)
+string
+Replace(const string &s,const char was, const char is)
 {
     PROFILER;
     string retval;
