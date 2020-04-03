@@ -63,7 +63,8 @@ private:
     std::vector<CSV_COLUMN> columns;
     std::unordered_map<int,size_t> id_to_column;
 
-    std::string Linify(const std::string &s)
+    std::string
+    Linify(const std::string &s)
     {
 #if 0 // This code was for quotes and commas
         std::string retval = "\"";
@@ -78,7 +79,8 @@ private:
         return s;
     }
 
-    bool IsConsistent()
+    bool
+    IsConsistent()
     {
         bool okay = true;
         size_t rows = 0;
@@ -103,7 +105,8 @@ private:
     }
 
 public:
-    void AddColumn(int id, std::string header)
+    void
+    AddColumn(int id, std::string header)
     {
         if(id_to_column.find(id) != id_to_column.end()) {
             std::cerr << "You are trying to reuse a column identifier in CSV_GENERATOR::AddColumn().\n";
@@ -115,7 +118,8 @@ public:
         id_to_column[id] = columns.size()-1;
     }
 
-    void AddData(int id, std::string data)
+    void
+    AddData(int id, std::string data)
     {
         if(id_to_column.find(id) == id_to_column.end()) {
             std::cerr << "You are trying to use unknown ID " << id << " in CSV_GENERATOR::AddData()" << std::endl;
@@ -124,7 +128,8 @@ public:
         columns[id_to_column[id]].data.push_back(data);
     }
 
-    void Generate(std::ofstream &ofs)
+    void
+    Generate(std::ofstream &ofs)
     {
         IsConsistent();
         const int ncolumns = static_cast<int>(columns.size());
@@ -152,7 +157,8 @@ public:
         }
     }
 
-    void Normalize()
+    void
+    Normalize()
     {
         const int ncolumns = static_cast<int>(columns.size());
         size_t max_entries = 0;
@@ -167,7 +173,8 @@ public:
         }
     }
 
-    void Generate(const std::string &filename)
+    void
+    Generate(const std::string &filename)
     {
         IsConsistent();
 

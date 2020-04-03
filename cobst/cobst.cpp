@@ -48,7 +48,8 @@
 
 using namespace std;
 
-void scan_test(const string &filename)
+void
+scan_test(const string &filename)
 {
     PROFILER;
     ifstream ifs;
@@ -83,10 +84,11 @@ void scan_test(const string &filename)
     fclose(f);
 }
 
-void CreateFullCSV(PARAMETERS &params,
-                   const COB_LABELS &cob_labels,
-                   const DATA_DESCRIPTIONS &data_description
-                  )
+void
+CreateFullCSV(PARAMETERS &params,
+              const COB_LABELS &cob_labels,
+              const DATA_DESCRIPTIONS &data_description
+             )
 {
     /*  During development, I created this all-encompassing output file that
         includes everything I had found up to the point where I started
@@ -439,7 +441,8 @@ CreateCSV(PARAMETERS &params,
     csv.Generate(params.csv);
 }
 
-static string ZeroIsNull(const LONGLONG &v)
+static string
+ZeroIsNull(const LONGLONG &v)
 {
     stringstream ss;
     if( v != 0 ) {
@@ -622,7 +625,8 @@ CreateSymc(PARAMETERS &params,
     return;
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     PROFILER;
 

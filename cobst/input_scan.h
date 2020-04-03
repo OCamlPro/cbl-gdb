@@ -75,14 +75,16 @@ protected:
     std::unordered_map<std::string,size_t>gas_undecorated_symbol_location;
     std::unordered_map<std::string,size_t> reverse_gas_symbol_location;
 
-    std::string SectionValueCombiner(const std::string &section,LONGLONG value) const
+    std::string
+    SectionValueCombiner(const std::string &section,LONGLONG value) const
     {
         std::stringstream ss;
         ss<<value;
         return section + ":" + ss.str();
     }
 
-    void SectionValueSplitter(const std::string &combined,std::string &section, LONGLONG &value)
+    void
+    SectionValueSplitter(const std::string &combined,std::string &section, LONGLONG &value)
     {
         section.clear();
         value = 0;
@@ -96,7 +98,8 @@ protected:
 public:
     void GetSymbolsFromFile(const std::string &source, const std::string &scope, std::ifstream &ifs);
 
-    GAS_SYMBOL FindGasSymbol(const std::string &sym) const
+    GAS_SYMBOL
+    FindGasSymbol(const std::string &sym) const
     {
         GAS_SYMBOL retval;
         if(!sym.empty()) {
@@ -108,7 +111,8 @@ public:
         return retval;
     }
 
-    GAS_SYMBOL FindGasValue(const std::string &section,LONGLONG value) const
+    GAS_SYMBOL
+    FindGasValue(const std::string &section,LONGLONG value) const
     {
         GAS_SYMBOL retval;
         const std::string sectionvalue = SectionValueCombiner(section,value);
@@ -123,12 +127,14 @@ public:
     void UpdateBaseOffset(std::string symbol, std::string base, std::string offset);
 
 
-    int size() const
+    int
+    size() const
     {
         return static_cast<int>(symbols.size());
     }
 
-    const GAS_SYMBOL & operator[](int n) const
+    const GAS_SYMBOL &
+    operator[](int n) const
     {
         return symbols[n];
     }
@@ -168,12 +174,14 @@ public:
     void GetSymbolsFromFile(const std::string &source, const std::string &scope, std::ifstream &ifs, GAS_SYMBOLS &gas_symbol_table);
     void MergeGasSymbols(const GAS_SYMBOLS &gas_symbol_table);
 
-    int size() const
+    int
+    size() const
     {
         return static_cast<int>(symbols.size());
     }
 
-    const COB_LABEL & operator[](int n) const
+    const COB_LABEL &
+    operator[](int n) const
     {
         return symbols[n];
     }
@@ -240,17 +248,20 @@ public:
 
     void MergeGasSymbols(const GAS_SYMBOLS &gas_symbol_table);
 
-    int size() const
+    int
+    size() const
     {
         return static_cast<int>(symbols.size());
     }
 
-    const DATA_DESCRIPTION & operator[](int n) const
+    const DATA_DESCRIPTION &
+    operator[](int n) const
     {
         return symbols[n];
     }
 
-    int IndexOfSymbol(const std::string &symbol) const
+    int
+    IndexOfSymbol(const std::string &symbol) const
     {
         std::unordered_map<std::string,size_t>::const_iterator it =
             location_of_gas_symbol.find(symbol);
@@ -260,7 +271,8 @@ public:
         return static_cast<int>(it->second);
     }
 
-    std::string WeveSeen(const std::string &b_sym) const
+    std::string
+    WeveSeen(const std::string &b_sym) const
     {
         std::string retval;
         std::unordered_map<std::string,std::string>::const_iterator it

@@ -48,7 +48,8 @@
 
 using namespace std;
 
-void FILENAME::Decode(const string &filename_)
+void
+FILENAME::Decode(const string &filename_)
 {
     drive.clear();
     path.clear();
@@ -148,7 +149,8 @@ void FILENAME::Decode(const string &filename_)
 }
 
 #ifdef _DEBUG
-void DecodeTest()
+void
+DecodeTest()
 {
     vector<string>tests = {
         "",
@@ -193,7 +195,8 @@ void DecodeTest()
 }
 #endif
 
-static void Usage()
+static void
+Usage()
 {
     cerr << "cobst: Cobol Symbol Table generator version: " << VERSION << endl;
     cerr << "cobst [-v] [-q] FileName.CBL\n";
@@ -203,7 +206,8 @@ static void Usage()
     cerr << "-v generates the one-line version announcement and exits\n";
 }
 
-void OpenOrFail(std::ifstream &ifs,const std::string &fname,std::ios_base::openmode mode/* = std::ifstream::in*/)
+void
+OpenOrFail(std::ifstream &ifs,const std::string &fname,std::ios_base::openmode mode/* = std::ifstream::in*/)
 {
     ifs.open(fname,mode);
     if(!ifs.is_open()) {
@@ -213,7 +217,8 @@ void OpenOrFail(std::ifstream &ifs,const std::string &fname,std::ios_base::openm
     }
 }
 
-void OpenOrFail(std::ofstream &ofs,const std::string &fname,std::ios_base::openmode mode/* = std::ofstream::out*/)
+void
+OpenOrFail(std::ofstream &ofs,const std::string &fname,std::ios_base::openmode mode/* = std::ofstream::out*/)
 {
     ofs.open(fname,mode);
     if(!ofs.is_open()) {
@@ -223,7 +228,8 @@ void OpenOrFail(std::ofstream &ofs,const std::string &fname,std::ios_base::openm
     }
 }
 
-PARAMETERS GetParameters(int argc, char *argv[])
+PARAMETERS
+GetParameters(int argc, char *argv[])
 {
     if(argc < 2) {
         Usage();
@@ -278,7 +284,8 @@ PARAMETERS GetParameters(int argc, char *argv[])
     return retval;
 }
 
-vector<string>DirectoryScan(const string &path,const string &fname,const string &wildcard)
+vector<string>
+DirectoryScan(const string &path,const string &fname,const string &wildcard)
 {
     vector<string>retval;
 #ifdef _WIN32

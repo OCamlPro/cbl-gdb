@@ -142,84 +142,104 @@ public:
     VAR_NODE();
 
     void AddChild(VAR_NODE *new_node);
-    std::string GetProgram() const
+    std::string
+    GetProgram() const
     {
         return program;
     }
-    std::string GetSection() const
+    std::string
+    GetSection() const
     {
         return section;
     }
-    std::string GetCanonicalName() const
+    std::string
+    GetCanonicalName() const
     {
         return canonical_name;
     }
-    std::string GetName() const
+    std::string
+    GetName() const
     {
         return name;
     }
-    std::string GetBaseSymbol() const
+    std::string
+    GetBaseSymbol() const
     {
         return base_symbol;
     }
-    std::string GetFieldSymbol() const
+    std::string
+    GetFieldSymbol() const
     {
         return field_symbol;
     }
-    std::string GetAttributeSymbol() const
+    std::string
+    GetAttributeSymbol() const
     {
         return attr_symbol;
     }
-    std::string GetType() const
+    std::string
+    GetType() const
     {
         return type;
     }
-    std::string GetPicture() const
+    std::string
+    GetPicture() const
     {
         return picture;
     }
-    std::string GetUsage() const
+    std::string
+    GetUsage() const
     {
         return usage;
     }
-    int GetOccurs() const
+    int
+    GetOccurs() const
     {
         return occurs;
     }
-    int GetSize() const
+    int
+    GetSize() const
     {
         return size;
     }
-    int GetLevel() const
+    int
+    GetLevel() const
     {
         return level;
     }
-    int GetOffset() const
+    int
+    GetOffset() const
     {
         return offset;
     }
-    int GetFieldSize() const
+    int
+    GetFieldSize() const
     {
         return field_size;
     }
-    int GetAttrType() const
+    int
+    GetAttrType() const
     {
         return attr_type;
     }
-    int GetAttrDigits() const
+    int
+    GetAttrDigits() const
     {
         return attr_digits;
         ;
     }
-    int GetAttrScale() const
+    int
+    GetAttrScale() const
     {
         return attr_scale;
     }
-    int GetAttrFlags() const
+    int
+    GetAttrFlags() const
     {
         return attr_flags;
     }
-    VVAR_NODES GetChildren()
+    VVAR_NODES
+    GetChildren()
     {
         return children;
     }
@@ -263,12 +283,14 @@ public:
     void Dump(std::ostream &s = std::cout);
     void Merge(const DATA_DESCRIPTIONS &data_description);
 
-    int size() const
+    int
+    size() const
     {
         return (int)flat_list.size();
     }
 
-    VAR_NODE operator[](int i) const
+    VAR_NODE
+    operator[](int i) const
     {
         return *flat_list[i];
     }

@@ -54,7 +54,8 @@ VAR_NODE::VAR_NODE()
     attr_flags  = 0;
 }
 
-void VAR_NODE::AddChild(VAR_NODE *new_node)
+void
+VAR_NODE::AddChild(VAR_NODE *new_node)
 {
     CPROFILER;
 
@@ -113,7 +114,8 @@ VARIABLE_TREE::~VARIABLE_TREE()
     ChopDownTheTree();
 }
 
-void VARIABLE_TREE::ChopDownTheTree(VAR_NODE *node)
+void
+VARIABLE_TREE::ChopDownTheTree(VAR_NODE *node)
 {
     CPROFILER;
     if(node) {
@@ -127,13 +129,15 @@ void VARIABLE_TREE::ChopDownTheTree(VAR_NODE *node)
     }
 }
 
-void VARIABLE_TREE::ChopDownTheTree()
+void
+VARIABLE_TREE::ChopDownTheTree()
 {
     CPROFILER;
     ChopDownTheTree(root);
 }
 
-void VARIABLE_TREE::FindParentOf(VVAR_NODES &parents,int level)
+void
+VARIABLE_TREE::FindParentOf(VVAR_NODES &parents,int level)
 {
     CPROFILER;
     // Eliminate parents from the back of the stack until you find one
@@ -147,7 +151,8 @@ void VARIABLE_TREE::FindParentOf(VVAR_NODES &parents,int level)
     }
 }
 
-void VARIABLE_TREE::ForceParent(VVAR_NODES &parents,const string &program_id)
+void
+VARIABLE_TREE::ForceParent(VVAR_NODES &parents,const string &program_id)
 {
     CPROFILER;
     // When there is only one PROGRAM-ID in a source module, GnuCOBOL 3.0
@@ -164,7 +169,8 @@ void VARIABLE_TREE::ForceParent(VVAR_NODES &parents,const string &program_id)
     }
 }
 
-void VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
+void
+VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
 {
     CPROFILER;
     ifs.clear();
@@ -579,7 +585,8 @@ void VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
     }
 }
 
-void VARIABLE_TREE::DumpNode(ostream &sout, const VAR_NODE *node)
+void
+VARIABLE_TREE::DumpNode(ostream &sout, const VAR_NODE *node)
 {
     if(node !=root) {
         if(     node->program != current_program_in_dump
@@ -675,7 +682,8 @@ void VARIABLE_TREE::DumpNode(ostream &sout, const VAR_NODE *node)
     }
 }
 
-void VARIABLE_TREE::Dump(ostream &sout)
+void
+VARIABLE_TREE::Dump(ostream &sout)
 {
     // Primarily for debugging.
     // Dump the whole tree, depth first:
@@ -684,7 +692,8 @@ void VARIABLE_TREE::Dump(ostream &sout)
     DumpNode(sout, root);
 }
 
-static VAR_NODE *FindNameIn(VAR_NODE *node,const string &name)
+static VAR_NODE *
+FindNameIn(VAR_NODE *node,const string &name)
 {
     if( node->GetLevel() != LEVEL_66 AND node->GetName() EQ name ) {
         return node;
@@ -699,7 +708,8 @@ static VAR_NODE *FindNameIn(VAR_NODE *node,const string &name)
     return retval;
 }
 
-void VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
+void
+VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
 {
     /*  We are going to take our variable tree, with its basic structure
 
@@ -965,12 +975,14 @@ void VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
     }
 }
 
-void VARIABLE_TREE::BuildCanonicalName()
+void
+VARIABLE_TREE::BuildCanonicalName()
 {
     BuildCanonicalName(root);
 }
 
-void VARIABLE_TREE::AssignBaseSymbol(VAR_NODE *node,const MPSS &symmap)
+void
+VARIABLE_TREE::AssignBaseSymbol(VAR_NODE *node,const MPSS &symmap)
 {
     // Walk the whole trie, seeing if node can be modified
     // with the information in symmap
@@ -1020,9 +1032,10 @@ void VARIABLE_TREE::AssignBaseSymbol(VAR_NODE *node,const MPSS &symmap)
     }
 }
 
-void VARIABLE_TREE::AssignBaseSymbol(VAR_NODE *node,
-                                     const MPSSI &symmap,
-                                     const DATA_DESCRIPTIONS &data_description)
+void
+VARIABLE_TREE::AssignBaseSymbol(VAR_NODE *node,
+                                const MPSSI &symmap,
+                                const DATA_DESCRIPTIONS &data_description)
 {
     cout << node->canonical_name << endl;
 
@@ -1065,7 +1078,8 @@ void VARIABLE_TREE::AssignBaseSymbol(VAR_NODE *node,
     }
 }
 
-void VARIABLE_TREE::BuildBaseOffsetPointers(VAR_NODE *node,VBOP &vbop)
+void
+VARIABLE_TREE::BuildBaseOffsetPointers(VAR_NODE *node,VBOP &vbop)
 {
     if( node EQ NULL ) {
         // This one must've been moved by a RENAMES clause
@@ -1087,7 +1101,8 @@ void VARIABLE_TREE::BuildBaseOffsetPointers(VAR_NODE *node,VBOP &vbop)
     }
 }
 
-void VARIABLE_TREE::BuildFlatList(VAR_NODE *node,VVAR_NODES &flat)
+void
+VARIABLE_TREE::BuildFlatList(VAR_NODE *node,VVAR_NODES &flat)
 {
     if( node EQ NULL ) {
         // This one must've been moved by a RENAMES clause
@@ -1104,7 +1119,8 @@ void VARIABLE_TREE::BuildFlatList(VAR_NODE *node,VVAR_NODES &flat)
     }
 }
 
-void VARIABLE_TREE::MergeWorkingStorage(const DATA_DESCRIPTIONS &data_description)
+void
+VARIABLE_TREE::MergeWorkingStorage(const DATA_DESCRIPTIONS &data_description)
 {
     /*  Each WORKING-STORAGE root variable, typically with levels 01 or 77,
     and more generally variables who have no parents although 01 is
@@ -1230,11 +1246,12 @@ void VARIABLE_TREE::MergeWorkingStorage(const DATA_DESCRIPTIONS &data_descriptio
     }
 }
 
-VAR_NODE *DiveForVariable(        VAR_NODE *node,
-                                  const string &section,
-                                  const string &program_id,
-                                  const string &cbl_symbol,
-                                  const int offset)
+VAR_NODE *
+DiveForVariable(        VAR_NODE *node,
+                        const string &section,
+                        const string &program_id,
+                        const string &cbl_symbol,
+                        const int offset)
 {
     VAR_NODE *retval = nullptr;
 
@@ -1260,12 +1277,14 @@ VAR_NODE *DiveForVariable(        VAR_NODE *node,
 }
 
 
-void VARIABLE_TREE::MergeLocalStorage(const DATA_DESCRIPTIONS &data_description)
+void
+VARIABLE_TREE::MergeLocalStorage(const DATA_DESCRIPTIONS &data_description)
 {
 
 }
 
-void VARIABLE_TREE::Merge(const DATA_DESCRIPTIONS &data_description)
+void
+VARIABLE_TREE::Merge(const DATA_DESCRIPTIONS &data_description)
 {
     CPROFILER;
     /*  We are now going to play a nice game of Symbol Table Sudoku

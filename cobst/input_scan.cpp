@@ -44,7 +44,8 @@ using namespace std;
 #define AND &&
 #define OR ||
 
-string GetCommentText(const string &s)
+string
+GetCommentText(const string &s)
 {
     PROFILER;
     string retval;
@@ -65,7 +66,8 @@ string GetCommentText(const string &s)
     return retval;
 }
 
-void GAS_SYMBOLS::GetSymbolsFromFile(const string &source, const string &scope, ifstream &ifs)
+void
+GAS_SYMBOLS::GetSymbolsFromFile(const string &source, const string &scope, ifstream &ifs)
 {
     CPROFILER;
     ifs.clear();
@@ -155,7 +157,8 @@ void GAS_SYMBOLS::GetSymbolsFromFile(const string &source, const string &scope, 
     }
 }
 
-void GAS_SYMBOLS::UpdateBaseOffset(string symbol, string base, string offset)
+void
+GAS_SYMBOLS::UpdateBaseOffset(string symbol, string base, string offset)
 {
     unordered_map<string,size_t>::iterator it = gas_undecorated_symbol_location.find(symbol);
     if(it != gas_undecorated_symbol_location.end()) {
@@ -165,7 +168,8 @@ void GAS_SYMBOLS::UpdateBaseOffset(string symbol, string base, string offset)
     }
 }
 
-void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, ifstream &ifs, GAS_SYMBOLS &gas_symbol_table)
+void
+COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, ifstream &ifs, GAS_SYMBOLS &gas_symbol_table)
 {
     CPROFILER;
     ifs.clear();
@@ -273,7 +277,7 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
     string current_c_source_line = "000";
     string current_cbl_source = "dummy.cbl";
 
-    set<string>linkage_weve_seen;
+    set<pair<string,string>>linkage_weve_seen;
     for(;;) {
         getline(ifs,input);
         if(ifs.eof()) {
@@ -487,8 +491,11 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
                 smatch sm;
                 static const regex linkage(".*\\(([^,]+),[^']+[']([^']+).*$");
                 if(regex_match(input,sm,linkage)) {
-                    if( linkage_weve_seen.find(sm[1]) EQ linkage_weve_seen.end() ) {
-                        linkage_weve_seen.insert(sm[1]);
+                    pair<string,string> cobol_c;
+                    cobol_c.first  = sm[1];
+                    cobol_c.second = sm[2];
+                    if( linkage_weve_seen.find(cobol_c) EQ linkage_weve_seen.end() ) {
+                        linkage_weve_seen.insert(cobol_c);
                         COB_LABEL cs;
                         cs.source_file = current_cbl_source;
                         cs.line_number = current_line_number;
@@ -508,6 +515,40 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
                 // No continue statement here, because the line might also
                 // contain COB_SET_DATA
                 to_be_continued = true;
+            }
+
+            if( tokens.size() >= 3 AND tokens[2] EQ "cob_check_numeric" ) {
+                // Typical line:
+                //
+                //  351:bob01.c       ****   cob_check_numeric (COB_SET_DATA (f_18, b_18), "aaaa");
+                //
+                // We want to associate the aaaa with b_18
+                //
+                smatch sm;
+                static const regex linkage(".*\\(COB_SET_DATA [^,]+, ([^)]+)[^\"]+\"([^\"]+).*$");
+                if(regex_match(input,sm,linkage)) {
+                    pair<string,string> cobol_c;
+                    cobol_c.first  = sm[1];
+                    cobol_c.second = sm[2];
+                    if( linkage_weve_seen.find(cobol_c) EQ linkage_weve_seen.end() ) {
+                        linkage_weve_seen.insert(cobol_c);
+                        COB_LABEL cs;
+                        cs.source_file = current_cbl_source;
+                        cs.line_number = current_line_number;
+                        cs.sentence_number = current_sentence_number;
+                        if(program_id_stack.size() >= 1) {
+                            cs.program = program_id_stack.back();
+                        }
+                        cs.entry = sm[2];
+                        cs.section = "Linkage";
+                        cs.paragraph = current_paragraph;
+                        // Linkage isn't in .text, but rather .data.rel.local
+                        cs.gas_section = ".data.rel.local";
+                        cs.gas_symbol = sm[1];
+                        symbols.push_back(cs);
+                    }
+                }
+                continue;
             }
             size_t ncob = 0;
             while((ncob = input.find("COB_SET_DATA",ncob)) != string::npos) {
@@ -641,9 +682,11 @@ void COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, i
             }
         }
     }
+    return;
 }
 
-void COB_LABELS::GetProgramIdLineNumbers(const std::string &source, const std::string &scope, std::ifstream &ifs, GAS_SYMBOLS &gas_symbol_table)
+void
+COB_LABELS::GetProgramIdLineNumbers(const std::string &source, const std::string &scope, std::ifstream &ifs, GAS_SYMBOLS &gas_symbol_table)
 {
     CPROFILER;
     ifs.clear();
@@ -725,7 +768,8 @@ void COB_LABELS::GetProgramIdLineNumbers(const std::string &source, const std::s
     }
 }
 
-void COB_LABELS::MergeGasSymbols(const GAS_SYMBOLS &gas_symbol_table)
+void
+COB_LABELS::MergeGasSymbols(const GAS_SYMBOLS &gas_symbol_table)
 {
     CPROFILER;
     for(VCOB_LABEL::iterator it=symbols.begin(); it!=symbols.end(); it++) {
@@ -741,7 +785,8 @@ void COB_LABELS::MergeGasSymbols(const GAS_SYMBOLS &gas_symbol_table)
     }
 }
 
-void DATA_DESCRIPTIONS::ProcessDataStorage(ifstream &ifs,const string &source)
+void
+DATA_DESCRIPTIONS::ProcessDataStorage(ifstream &ifs,const string &source)
 {
     ifs.clear();
     ifs.seekg(0);
@@ -1017,7 +1062,8 @@ void DATA_DESCRIPTIONS::ProcessDataStorage(ifstream &ifs,const string &source)
     }
 }
 
-void DATA_DESCRIPTIONS::AppendLinkageInformation(const COB_LABELS &cob_labels)
+void
+DATA_DESCRIPTIONS::AppendLinkageInformation(const COB_LABELS &cob_labels)
 {
     for( int i=0;  i<cob_labels.size(); i++ ) {
         COB_LABEL cl = cob_labels[i];
@@ -1036,7 +1082,8 @@ void DATA_DESCRIPTIONS::AppendLinkageInformation(const COB_LABELS &cob_labels)
 }
 
 
-void DATA_DESCRIPTIONS::MergeGasSymbols(const GAS_SYMBOLS &gas_symbol_table)
+void
+DATA_DESCRIPTIONS::MergeGasSymbols(const GAS_SYMBOLS &gas_symbol_table)
 {
     CPROFILER;
     // First pass:  Match symbols based on gas_name
@@ -1061,7 +1108,8 @@ void DATA_DESCRIPTIONS::MergeGasSymbols(const GAS_SYMBOLS &gas_symbol_table)
     }
 }
 
-void DATA_DESCRIPTIONS::ScanAllDotHFiles(const string &path,const string &fname)
+void
+DATA_DESCRIPTIONS::ScanAllDotHFiles(const string &path,const string &fname)
 {
     vector<string>AllDotHFiles = DirectoryScan(path,fname,"*.h");
     for(vector<string>::const_iterator filename = AllDotHFiles.begin(); filename != AllDotHFiles.end(); filename++) {

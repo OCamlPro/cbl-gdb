@@ -93,7 +93,8 @@ public:
         }
     }
 
-    void LapTime()
+    void
+    LapTime()
     {
         std::chrono::steady_clock::time_point lt1 = std::chrono::steady_clock::now();
         std::chrono::duration<double> lap_time = std::chrono::duration_cast<std::chrono::duration<double>>(lt1-lap_timer);
@@ -110,7 +111,8 @@ public:
         lap_time_overhead += overhead.count();
     }
 
-    void Freeze()
+    void
+    Freeze()
     {
         oh_3 = time_out = std::chrono::steady_clock::now();
         std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(time_out - time_in);
@@ -133,7 +135,8 @@ public:
 
     friend std::ostream &operator<<(std::ostream &os, PPROFILER const &m);
 
-    std::string Dump() const
+    std::string
+    Dump() const
     {
         std::stringstream ss;
 
