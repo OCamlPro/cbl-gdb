@@ -32,8 +32,8 @@ pregit:
 install :
 ifdef DESTDIR
 	mkdir -p $(DESTDIR)/bin/
-	sudo install $(project) $(DESTDIR)/bin/
+	install $(project) $(DESTDIR)/bin/
 else
-	sudo install $(project) /usr/local/bin/
+	install $(project) /usr/local/bin/
 endif
 	

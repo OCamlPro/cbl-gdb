@@ -90,6 +90,15 @@ GAS_SYMBOLS::GetSymbolsFromFile(const string &source, const string &scope, ifstr
             break;
         }
 
+        // When running on Windows, the program.lst DEFINED SYMBOL section
+        // entries start with a "C:\whatever\ file name.  This messes up the
+        // following regex, which expect two, not three colons.
+
+        // Fix it by just stripping off the first two characters:
+        if( input.length() >2 AND input[1] EQ ':' ) {
+            input = input.substr(2);
+        }
+
         // These are examples of what we are looking for:
 
         //  /tmp/ccAi92uI.s:329    .text:0000000000000041 RTEST_
@@ -1053,7 +1062,7 @@ DATA_DESCRIPTIONS::ProcessDataStorage(ifstream &ifs,const string &source)
                 ds.program_id = program_id;
                 ds.storage_type = "String";
                 ds.storage_scope = scope;
-                ds.field_size = svalue.size()+1;
+                ds.field_size = (int)svalue.size()+1;
                 ds.field_data_pointer = svalue;
                 ds.gas_symbol = sym;
                 symbols.push_back(ds);

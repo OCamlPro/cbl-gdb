@@ -217,7 +217,7 @@ main(int argc, char **argv)
             }
             continue;
         }
-        if(next_function_reference_index < function_references.size()
+        if(next_function_reference_index < (int)function_references.size()
                 && i EQ function_references[next_function_reference_index] ) {
             // We have found a match.
             next_function_reference_index += 1;

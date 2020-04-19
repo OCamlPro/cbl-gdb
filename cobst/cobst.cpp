@@ -454,7 +454,8 @@ ZeroIsNull(const LONGLONG &v)
 static void
 CreateSymc(PARAMETERS &params,
            const COB_LABELS &cob_labels,
-           const VARIABLE_TREE &var_tree)
+           const VARIABLE_TREE &var_tree,
+           bool tack_on_python)
 {
     /*  This routine creates the .sym.c file, which contains a global
         variable comprising the cross-reference information, followed
@@ -565,62 +566,65 @@ CreateSymc(PARAMETERS &params,
 
     delete[] py;
 
-    /*  As per https://sourceware.org/gdb/current/onlinedocs/gdb/dotdebug_005fgdb_005fscripts-section.html,
-        we are going to format that string in a way that reflects this example:
+    if(tack_on_python) {
 
-        #include "symcat.h"
-        #include "gdb/section-scripts.h"
-        asm(
-        ".pushsection \".debug_gdb_scripts\", \"MS\",@progbits,1\n"
-        ".byte " XSTRING (SECTION_SCRIPT_ID_PYTHON_TEXT) "\n"
-        ".ascii \"gdb.inlined-script\\n\"\n"
-        ".ascii \"class test_cmd (gdb.Command):\\n\"\n"
-        ".ascii \"  def __init__ (self):\\n\"\n"
-        ".ascii \"    super (test_cmd, self).__init__ (\\\"test-cmd\\\", gdb.COMMAND_OBSCURE)\\n\"\n"
-        ".ascii \"  def invoke (self, arg, from_tty):\\n\"\n"
-        ".ascii \"    print (\\\"test-cmd output, arg = %s\\\" % arg)\\n\"\n"
-        ".ascii \"test_cmd ()\\n\"\n"
-        ".byte 0\n"
-        ".popsection\n"
-        );
-    */
+        /*  As per https://sourceware.org/gdb/current/onlinedocs/gdb/dotdebug_005fgdb_005fscripts-section.html,
+            we are going to format that string in a way that reflects this example:
 
-    s = ss.str();
+            #include "symcat.h"
+            #include "gdb/section-scripts.h"
+            asm(
+            ".pushsection \".debug_gdb_scripts\", \"MS\",@progbits,1\n"
+            ".byte " XSTRING (SECTION_SCRIPT_ID_PYTHON_TEXT) "\n"
+            ".ascii \"gdb.inlined-script\\n\"\n"
+            ".ascii \"class test_cmd (gdb.Command):\\n\"\n"
+            ".ascii \"  def __init__ (self):\\n\"\n"
+            ".ascii \"    super (test_cmd, self).__init__ (\\\"test-cmd\\\", gdb.COMMAND_OBSCURE)\\n\"\n"
+            ".ascii \"  def invoke (self, arg, from_tty):\\n\"\n"
+            ".ascii \"    print (\\\"test-cmd output, arg = %s\\\" % arg)\\n\"\n"
+            ".ascii \"test_cmd ()\\n\"\n"
+            ".byte 0\n"
+            ".popsection\n"
+            );
+        */
 
-    params.symc << "asm(" << endl;
-    params.symc << "\".pushsection \\\".debug_gdb_scripts\\\", \\\"MS\\\",@progbits,1\\n\"" << endl;
-    params.symc << "\".byte 4\\n\"" << endl;
-    params.symc << "\".ascii \\\"gdb.inlined-script\\\\n\\\"\\n\"";
+        s = ss.str();
 
-    int char_count = 0;
-    size_t i = 0;
-    while( i < s.size() ) {
-        if(char_count EQ 0) {
-            params.symc << "\".ascii \\\"";
-            char_count = 10 ;
-        }
-        if( char_count >= 120 ) {
-            params.symc << "\"" << endl << "\"";
-            char_count = 1;
-            continue;
-        }
-        char ch = s[i++];
-        if( ch EQ '\n' ) {
-            params.symc << "\\\\n\\\"\\n\"" << endl;
-            char_count = 0;
-            continue;
-        }
-        if( ch EQ '\\' OR ch EQ '\"' ) {
-            params.symc << "\\\\\\";
+        params.symc << "asm(" << endl;
+        params.symc << "\".pushsection \\\".debug_gdb_scripts\\\", \\\"MS\\\",@progbits,1\\n\"" << endl;
+        params.symc << "\".byte 4\\n\"" << endl;
+        params.symc << "\".ascii \\\"gdb.inlined-script\\\\n\\\"\\n\"";
+
+        int char_count = 0;
+        size_t i = 0;
+        while( i < s.size() ) {
+            if(char_count EQ 0) {
+                params.symc << "\".ascii \\\"";
+                char_count = 10 ;
+            }
+            if( char_count >= 120 ) {
+                params.symc << "\"" << endl << "\"";
+                char_count = 1;
+                continue;
+            }
+            char ch = s[i++];
+            if( ch EQ '\n' ) {
+                params.symc << "\\\\n\\\"\\n\"" << endl;
+                char_count = 0;
+                continue;
+            }
+            if( ch EQ '\\' OR ch EQ '\"' ) {
+                params.symc << "\\\\\\";
+                char_count += 1;
+            }
+            params.symc << ch;
             char_count += 1;
         }
-        params.symc << ch;
-        char_count += 1;
-    }
 
-    params.symc << "\".byte 0\\n\"" << endl;
-    params.symc << "\".popsection\\n\"" << endl;
-    params.symc << ");" << endl;
+        params.symc << "\".byte 0\\n\"" << endl;
+        params.symc << "\".popsection\\n\"" << endl;
+        params.symc << ");" << endl;
+    }
 
     return;
 }
@@ -717,23 +721,12 @@ main(int argc, char *argv[])
     // Create the .sym.c file that will be compiled and linked into the
     // executable, providing the text that will become the executable's
     // .debug_gdb_scripts section
-    CreateSymc(params,cob_labels,variable_tree);
+#if defined(_WIN32)
+    bool tack_on_python = false;
+#else
+    bool tack_on_python = true;
+#endif
+    CreateSymc(params,cob_labels,variable_tree,tack_on_python);
 
     return 0;
 }
-
-/*
-
-#if defined (__STDC__) || defined (ALMOST_STDC) || defined (HAVE_STRINGIZE)
-#define STRINGX(s) #s
-#else
-#define STRINGX(s) "s"
-#endif
-
-#define XSTRING(s) STRINGX(s)
-#define SECTION_SCRIPT_ID_PYTHON_TEXT 4
-
-
-
-
-*/

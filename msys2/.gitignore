@@ -1,0 +1,5 @@
+gnucobol/
+pkg/
+src/
+*.log
+*.zst

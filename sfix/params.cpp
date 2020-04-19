@@ -241,11 +241,6 @@ OpenOrFail(std::ofstream &ofs,const std::string &fname,std::ios_base::openmode m
 PARAMETERS
 GetParameters(int argc, char *argv[])
 {
-    if(argc < 5) {
-        Usage();
-        exit(1);
-    }
-
     PARAMETERS retval;
 
     string s_input_parameter;
@@ -256,6 +251,7 @@ GetParameters(int argc, char *argv[])
         switch (c) {
         case 'v':
             Version();
+            exit(0);
             break;
         case 'q':
             retval.quiet = true;
@@ -269,6 +265,11 @@ GetParameters(int argc, char *argv[])
             exit(1);
             break;
         }
+    }
+
+    if(argc < 5) {
+        Usage();
+        exit(1);
     }
 
     s_input_parameter = argv[optind++];
