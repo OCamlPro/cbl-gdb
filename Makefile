@@ -37,6 +37,7 @@ ifdef DESTDIR
 	mkdir -p $(DESTDIR)/bin/
 	install cobcd $(DESTDIR)/bin/
 else
+	mkdir -p /usr/local/bin/
 	install cobcd /usr/local/bin/
 endif
 	$(MAKE) -C cobst install

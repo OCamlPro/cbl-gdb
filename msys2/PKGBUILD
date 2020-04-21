@@ -5,7 +5,7 @@
 _realname=gnucobol
 pkgbase=mingw-w64-${_realname}-svn
 pkgname=${MINGW_PACKAGE_PREFIX}-${_realname}-svn
-pkgver=.r3533
+pkgver=.r3534
 _specialversion=-dev
 pkgrel=1
 pkgdesc="GnuCOBOL, a free and modern COBOL compiler (mingw-w64)"

@@ -11,13 +11,13 @@ COBCD=../../cobcd
 .PHONY : all
 all:
 #	mkdir -p library
-	cobcd -x -g -d MAIN.cbl
-	cobcd -m -g -d A.cbl
-	cobcd -m -g -d B.cbl
-	cobcd -m -g -d C.cbl
+	$(COBCD) -x -g -d MAIN.cbl
+	$(COBCD) -m -g -d A.cbl
+	$(COBCD) -m -g -d B.cbl
+	$(COBCD) -m -g -d C.cbl
 #	mv *.so library
 	COB_LIBRARY_PATH=./library ./MAIN
 
 .PHONY : clean
 clean:
-	rm -fr library *.so MAIN
+	rm -fr library *.so *.dll MAIN MAIN.exe *-gdb.py

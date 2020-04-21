@@ -33,7 +33,7 @@ $(project) : $(project).cbl
 suffixes = .c .s *.h .i .lst .cbl.lst .full.tab .tab .o .cbl.o .x -2.lst \
 			.sym.c .sym.o -2.s -2.o
 clean:
-	@rm -f $(addprefix $(project),$(suffixes)) $(project) *.txt $(CLEAN)
+	@rm -f $(addprefix $(project),$(suffixes)) $(project) *.txt $(CLEAN) $(project)-gdb.py
     
 endif
 

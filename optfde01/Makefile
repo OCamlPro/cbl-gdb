@@ -28,5 +28,5 @@ $(project) : $(project).cbl
 .PHONY : clean
 suffixes = .c *.h .i .lst .cbl.lst .full.tab .tab .o .cbl.o 
 clean:
-	@rm -f $(addprefix $(project),$(suffixes)) $(project) *.txt $(CLEAN)
+	@rm -f $(addprefix $(project),$(suffixes)) $(project) *.txt $(CLEAN) $(project)-gdb.py
 

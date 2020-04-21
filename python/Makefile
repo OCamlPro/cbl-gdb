@@ -23,6 +23,8 @@ pregit:
 #
 .PHONY : install
 install :
+	mkdir -p /usr/local/bin/
+	cp cprint.py /usr/local/bin/
 ifeq ($(AUTO_LOAD_FOUND), 0)
 	echo "set auto-load safe-path /" >>~/.gdbinit
 endif

@@ -28,9 +28,6 @@
 #
 ############################################################################ */
 
-// sfix.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
 #include <map>
 #include <string.h>
@@ -69,6 +66,7 @@ GetInputFileMappings(const VSTRING &input_file, const string &primary_file)
     retval[primary_file] = -1;
 
     for(string s : input_file) {
+        s = Trim(s);
         if( s.find(".file ") != string::npos) {
             VSTRING tokens = Split(s,"\t ");
             if( tokens[0] EQ ".file" AND isdigit(tokens[1][0]) ) {
@@ -141,8 +139,12 @@ ReadEntireFile(string filename)
 
     char ach[16384];
     while(fgets(ach,sizeof(ach),f)) {
-        string s = Trim(ach);
-        retval.push_back(s);
+        if(strlen(ach) AND ach[strlen(ach)-1] EQ '\n') {
+            ach[strlen(ach)-1] = '\0';
+        }
+        // string s = Trim(ach);
+        // retval.push_back(s);
+        retval.push_back(ach);
     }
     fclose(f);
     return retval;
@@ -189,11 +191,14 @@ main(int argc, char **argv)
     int next_function_reference_index = 0;
     size_t interject_line_number = -1;
     string interject_line = "";
-    for( size_t i=0; i<input_file.size(); i++ ) {
+
+    // Start at 1, rather than zero; we need to get rid of the original
+    // "  .file blah.c " line.
+    for( size_t i=1; i<input_file.size(); i++ ) {
         if( i EQ interject_line_number ) {
             ss << interject_line;
         }
-        VSTRING tokens = Split(input_file[i]," \t");
+        VSTRING tokens = Split(Trim(input_file[i])," \t");
         if( tokens[0] EQ ".file" ) {
             // We've already taken care of all .file lines
             continue;
@@ -256,6 +261,14 @@ main(int argc, char **argv)
             }
         }
         ss << input_file[i] << endl;
+        if(tokens[0] EQ "main:") {
+            // Starting with version 9, GDB seems to be cranky if there isn't
+            // a .loc entry pretty close to the entry point.  The symptom was
+            // that entering a "L" command caused GDB to simply exit.
+            //
+            // So, I am going to force one in:
+            ss << "\t.loc 1 1 1" << endl;
+        }
     }
 
     FILE *f = fopen(params.s_output_filename.WholePath().c_str(),"w");
