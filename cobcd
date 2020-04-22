@@ -286,11 +286,11 @@ if test X$result = X"0" ; then
 
 if test X$result = X"0" ; then
   if test X$ECHO != X"" ; then
-    echo COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -S $COBCDXM -d -g \
+    echo COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -S $COBCDXM -d -g \
     --fgen-c-line-directives --fgen-c-labels \
     -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
     fi
-  COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -S $COBCDXM -d -g \
+  COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -S $COBCDXM -d -g \
     --fgen-c-line-directives --fgen-c-labels \
     -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
   result=$?
@@ -302,11 +302,11 @@ if test X$result = X"0" ; then
 
 if test X$result = X"0" ; then
   if test X$ECHO != X"" ; then
-    echo COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
+    echo COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
     --fgen-c-line-directives --fgen-c-labels \
     -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
     fi
-  COB_CFLAGS="-Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
+  COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
     --fgen-c-line-directives --fgen-c-labels \
     -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
   result=$?

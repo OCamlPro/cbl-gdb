@@ -8,12 +8,13 @@ COBCD=/usr/local/bin/cobcd
 CWD=$(shell basename `pwd`)
 
 # Yes, this next thing needs to be done in a better way
-VERSION=2.2
+VERSION=1.1
 
 .PHONY : all
 all:
 	$(MAKE) -C cobst
 	$(MAKE) -C sfix
+	$(MAKE) -C samples
 
 .PHONY : test
 test:
