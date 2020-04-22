@@ -11,10 +11,10 @@ COBCD=../../cobcd
 .PHONY : all
 all:
 #	mkdir -p library
-	$(COBCD) -x -g -d MAIN.cbl
-	$(COBCD) -m -g -d A.cbl
-	$(COBCD) -m -g -d B.cbl
-	$(COBCD) -m -g -d C.cbl
+	COBCDEVEL=1 $(COBCD) -x -g -d MAIN.cbl
+	COBCDEVEL=1 $(COBCD) -m -g -d A.cbl
+	COBCDEVEL=1 $(COBCD) -m -g -d B.cbl
+	COBCDEVEL=1 $(COBCD) -m -g -d C.cbl
 #	mv *.so library
 	COB_LIBRARY_PATH=./library ./MAIN
 
