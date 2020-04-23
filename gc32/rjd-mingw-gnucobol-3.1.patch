@@ -1,0 +1,28 @@
+--- common.h.orig	2020-04-22 15:22:13.942466300 -0400
++++ common.h	2020-04-22 16:40:12.616272800 -0400
+@@ -62,7 +62,7 @@
+ 
+ #endif
+ 
+-#if	defined(_WIN32)
++#if	defined(_WIN32) && !defined(__MINGW32__) /* hack for msys2 patch */
+ 
+ #define	CB_FMT_LLD		"%I64d"
+ #define	CB_FMT_LLU		"%I64u"
+@@ -404,14 +404,14 @@
+ #include <setjmp.h>
+ 
+ #ifndef	COB_EXT_EXPORT
+-#if	((defined(_WIN32) || defined(__CYGWIN__)) && !defined(__clang__))
++#if	((defined(_WIN32x) || defined(__CYGWIN__x)) && !defined(__clang__))
+ #define COB_EXT_EXPORT	__declspec(dllexport) extern
+ #else
+ #define COB_EXT_EXPORT	extern
+ #endif
+ #endif
+ #ifndef COB_EXT_IMPORT
+-#if	((defined(_WIN32) || defined(__CYGWIN__)) && !defined(__clang__))
++#if	((defined(_WIN32x) || defined(__CYGWIN__x)) && !defined(__clang__))
+ #define COB_EXT_IMPORT	__declspec(dllimport) extern
+ #else
+ #define COB_EXT_IMPORT	extern

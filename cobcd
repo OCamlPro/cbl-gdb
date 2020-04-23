@@ -54,6 +54,10 @@ if grep -qs centos /etc/os-release ; then
   os_name=centos
   fi
   
+if uname | grep -q MINGW32_NT ; then
+  os_name=MINGW32_NT
+  fi
+
 if uname | grep -q MINGW64_NT ; then
   os_name=MINGW64_NT
   fi
@@ -382,7 +386,7 @@ if test X$result = X"0" ; then
       fi
     $GCC -shared -o $TARGET $BASENAME-2.o $BASENAME.sym.o -lcob $POSTOPTIONS
     
-    if test X$os_name = X"MINGW64_NT" ; then
+    if test X$os_name = X"MINGW32_NT" || test X$os_name = X"MINGW64_NT" ; then
         mv $TARGET $BASENAME.dll
         fi
     fi
@@ -392,7 +396,7 @@ if test X$result = X"0" ; then
 ## if it is necessary:
   
 if test X$result = X"0" ; then
-  if test X$os_name = X"MINGW64_NT" ; then
+  if test X$os_name = X"MINGW32_NT" || test X$os_name = X"MINGW64_NT" ; then
     if test -f $DIR/cprint.py ; then
       cp $DIR/cprint.py ./$BASENAME-gdb.py
     elif test -f $DIR/python/cprint.py ; then
