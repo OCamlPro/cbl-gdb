@@ -87,7 +87,7 @@ FindFunctionReferences(const VSTRING &input_file)
     for(string s : input_file) {
         if( s.find("@function") != string::npos) {
             VSTRING tokens = Split(s,"\t ");
-            if( tokens[0] EQ ".type" AND tokens[2] EQ "@function" ) {
+            if( tokens[1] EQ ".type" AND tokens[3] EQ "@function" ) {
                 retval.push_back(nline);
             }
         }
@@ -222,6 +222,15 @@ main(int argc, char **argv)
             }
             continue;
         }
+        // At this point in the code, we are going to look for function references.
+        // The GDB trapping can get confused when there isn't a .loc reference
+        // soon after a function reference, so we're going to shove them in here
+
+        // We want the actual .loc to appear a few lines after the relevant
+        // function reference comment, so we use the "interject" logic to
+        // provide a couple of lines of delay.
+
+
         if(next_function_reference_index < (int)function_references.size()
                 && i EQ function_references[next_function_reference_index] ) {
             // We have found a match.
@@ -232,19 +241,19 @@ main(int argc, char **argv)
             size_t ii = i+4;
             while(ii < input_file.size() ) {
                 VSTRING tokens = Split(input_file[ii]," \t");
-                if( tokens[0] EQ ".loc" ) {
+                if( tokens.size() > 1 AND tokens[1] EQ ".loc" ) {
                     // We need to replace the old file number with the new one
-                    int old_num = stoi(tokens[1]);
+                    int old_num = stoi(tokens[2]);
                     int new_num = replacements[old_num];
                     if( new_num != 0 ) {
                         // Build the replacement line:
-                        int new_line = stoi(tokens[2])-1;
+                        int new_line = stoi(tokens[3])-1;
                         stringstream ss;
 
                         ss << "\t.loc";
                         ss << " " << new_num ;
                         ss << " " << new_line ;
-                        size_t index = 4;
+                        size_t index = 5;
                         while( index < tokens.size() ) {
                             ss << " ";
                             ss << tokens[index++];
@@ -261,16 +270,6 @@ main(int argc, char **argv)
             }
         }
         ss << input_file[i] << endl;
-
-        // Some compilations have a symbol "main:", others have "_main:"
-        if(input_file[i].find("main:") < 2) {
-            // Starting with version 9, GDB seems to be cranky if there isn't
-            // a .loc entry pretty close to the entry point.  The symptom was
-            // that entering a "L" command caused GDB to simply exit.
-            //
-            // So, I am going to force one in:
-            ss << "\t.loc 1 1 1" << endl;
-        }
     }
 
     FILE *f = fopen(params.s_output_filename.WholePath().c_str(),"w");
