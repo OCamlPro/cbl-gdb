@@ -261,7 +261,9 @@ main(int argc, char **argv)
             }
         }
         ss << input_file[i] << endl;
-        if(tokens[0] EQ "main:") {
+
+        // Some compilations have a symbol "main:", others have "_main:"
+        if(input_file[i].find("main:") < 2) {
             // Starting with version 9, GDB seems to be cranky if there isn't
             // a .loc entry pretty close to the entry point.  The symptom was
             // that entering a "L" command caused GDB to simply exit.

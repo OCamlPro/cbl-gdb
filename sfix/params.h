@@ -34,7 +34,7 @@
 #include <fstream>
 #include <vector>
 
-#define VERSION "2.2"
+#define VERSION "2.3"
 
 class FILENAME
 {

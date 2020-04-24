@@ -121,9 +121,17 @@ GAS_SYMBOLS::GetSymbolsFromFile(const string &source, const string &scope, ifstr
             gs.gas_symbol = sm[4];
             gs.undecorated_symbol = sm[4];
 
+            // When compiled in the Windows environment, symbols get prefixed with
+            // an underscore.  
+            if( gs.undecorated_symbol.length() > 1 AND gs.undecorated_symbol[0] EQ '_' ) {
+                // Get rid of the leading underscore
+                gs.undecorated_symbol = gs.undecorated_symbol.substr(1);
+                }
+
             // Some f_ and b_ symbols, typically ones that are local to COBOL PROGRAM-ID routines,
             // get decorated with .nnnn suffixes.  We need to be able to find them without their
             // decorations:
+
             string first_two = gs.undecorated_symbol.substr(0,2);
             if(first_two EQ "f_" OR first_two EQ "b_") {
                 size_t ndot = gs.undecorated_symbol.find('.',1);

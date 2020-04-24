@@ -8,7 +8,7 @@ COBCD=/usr/local/bin/cobcd
 CWD=$(shell basename `pwd`)
 
 # Yes, this next thing needs to be done in a better way
-VERSION=2.2
+VERSION=2.3
 
 .PHONY : all
 all:
