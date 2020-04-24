@@ -53,7 +53,7 @@ if grep -qs debian /etc/os-release ; then
 if grep -qs centos /etc/os-release ; then
   os_name=centos
   fi
-  
+
 if uname | grep -q MINGW32_NT ; then
   os_name=MINGW32_NT
   fi
@@ -84,6 +84,48 @@ else
   COBST=cobst
   SFIX=sfix
   fi
+
+###########################################################
+## We need to extract the COB_CFLAGS information from
+## the cobc program, because we need to add to it later
+##
+
+info1=`cobc --info | sed 's/\n/ /g'`
+info2=''
+info3=''
+cob_cflags=''
+for info_value in $info1 ; do
+  if test X$info2 != X"" ; then
+    ## The pump has been primed
+    if test X$info2 == X":" ; then
+      if test X$info_value == X":" ; then
+        ## This is our second colon, so we are done
+        break
+        fi
+      fi
+    if test X$info_value == X":" ; then
+      ## This is our first colon, so from here on out we can
+      ## append tokens to cob_cflags
+      info2=":"
+      continue
+      fi
+    ## This is a stunt.  We want every token except the final one, so
+    ## we build in a one-token delay here.
+    cob_cflags="$cob_cflags $info3"
+    info3=$info_value
+    continue
+    fi
+  ## At this point, we are still waiting to see COB_CFLAGS
+  if test X$info_value == X"COB_CFLAGS" ; then
+    info2=$info_value
+    fi
+  done
+#echo cobc_flags is $cob_cflags
+
+##
+## End of COB_CFLAGS extraction
+###########################################################
+
 
 #
 # We need to do some processing on the input parameters.
@@ -240,6 +282,7 @@ if test X$ECHO != X"" ; then
   echo ASSEMBLER    $ASSEMBLER
   echo LOADER       $LOADER
   echo COBC         $COBC
+  echo cob_cflags   $cob_cflags
   echo COBST        $COBST
   echo SFIX         $SFIX
   echo COBCDEVEL    $COBCDEVEL
@@ -283,46 +326,47 @@ if test X$result = X"0" ; then
       exit 1
       fi
   fi
-  
-  
+
 ## In this step, we do a partial compilation that ends with the creation
-## of the .s assembly language file:  
+## of the .s assembly language file:
 
 if test X$result = X"0" ; then
+  COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME.lst $cob_cflags"
   if test X$ECHO != X"" ; then
-    echo COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -S $COBCDXM -d -g \
+    echo COB_CFLAGS=$COB_CFLAGS $COBC $COBCDFLAGS -S $COBCDXM -d -g \
     --fgen-c-line-directives --fgen-c-labels \
     -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
     fi
-  COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -S $COBCDXM -d -g \
+         COB_CFLAGS=$COB_CFLAGS $COBC $COBCDFLAGS -S $COBCDXM -d -g \
     --fgen-c-line-directives --fgen-c-labels \
     -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
   result=$?
   fi
-  
+
 ## In this step, we do a partial compilation that ends with the creation
 ## of the BASENAME.lst mixed-language C/Assember output file.  It's just
 ## like previous step, except that the -S switch is replaced with a -c switch
 
 if test X$result = X"0" ; then
+  COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME.lst $cob_cflags"
   if test X$ECHO != X"" ; then
-    echo COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
+    echo COB_CFLAGS=$COB_CFLAGS $COBC $COBCDFLAGS -c $COBCDXM -d -g \
     --fgen-c-line-directives --fgen-c-labels \
     -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
     fi
-  COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME.lst" $COBC $COBCDFLAGS -c $COBCDXM -d -g \
+         COB_CFLAGS=$COB_CFLAGS $COBC $COBCDFLAGS -c $COBCDXM -d -g \
     --fgen-c-line-directives --fgen-c-labels \
     -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
   result=$?
   fi
-  
+
 ## Remove the .o file that was created in the -c step, just in order to avoid
 ## any possible confusion.
   rm $BASENAME.o
-  
+
 ## In this step, we run the COBST program, which combines information
 ## from BASENAME.lst and the .h files to create BASENAME.sym.c
-  
+
 if test X$result = X"0" ; then
   if test X$ECHO != X"" ; then
     echo $COBST -q $BASENAME
@@ -330,17 +374,17 @@ if test X$result = X"0" ; then
   $COBST -q $BASENAME
   result=$?
   fi
-  
+
 ## In this step, we compile the BASENAME.sym.c, creating BASENAME.sym.o
 ## It contains the VARIABLE_STRING and the cprint.py script
 if test X$result = X"0" ; then
   if test X$ECHO != X"" ; then
-    echo $GCC -c -o $BASENAME.sym.o $BASENAME.sym.c
+    echo $COBC -c -o $BASENAME.sym.o $BASENAME.sym.c
     fi
-  $GCC -c -o $BASENAME.sym.o $BASENAME.sym.c
+  $COBC -c -o $BASENAME.sym.o $BASENAME.sym.c
   result=$?
   fi
-  
+
 ## In this step, we modify the .s file we created earlier.  The SFIX
 ## program removes all .loc references to BASENAME.C and to any .h
 ## files.
@@ -354,21 +398,22 @@ if test X$result = X"0" ; then
   $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
   result=$?
   fi
-  
-## In this step, we invoke COBC to run the assembler on the modified BASENAME-2.s 
+
+## In this step, we invoke COBC to run the assembler on the modified BASENAME-2.s
 ## in order to create BASENAME-2.o file
 
 if test X$result = X"0" ; then
   # Assemble the modified .s file into a replacement .o file:
+  COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME-2.lst $cob_cflags"
   if test X$platform = Xx86_64 ; then
     if test X$ECHO != X"" ; then
-    echo COB_CFLAGS="-Wa,-L,-anchls=$BASENAME-2.lst" $COBC -c -o $BASENAME-2.o $BASENAME-2.s
+    echo COB_CFLAGS=$COB_CFLAGS $COBC -c -o $BASENAME-2.o $BASENAME-2.s
       fi
-    COB_CFLAGS="-Wa,-L,-anchls=$BASENAME-2.lst" $COBC -c -o $BASENAME-2.o $BASENAME-2.s
+         COB_CFLAGS=$COB_CFLAGS $COBC -c -o $BASENAME-2.o $BASENAME-2.s
     result=$?
     fi
   fi
-  
+
 ## In this step, we combine the two .o files to create the executable
 if test X$result = X"0" ; then
   # Combine the two .o files to create the executable
@@ -385,7 +430,7 @@ if test X$result = X"0" ; then
       echo $GCC -shared -o $TARGET $BASENAME-2.o $BASENAME.sym.o -lcob $POSTOPTIONS
       fi
     $GCC -shared -o $TARGET $BASENAME-2.o $BASENAME.sym.o -lcob $POSTOPTIONS
-    
+
     if test X$os_name = X"MINGW32_NT" || test X$os_name = X"MINGW64_NT" ; then
         mv $TARGET $BASENAME.dll
         fi
@@ -394,7 +439,7 @@ if test X$result = X"0" ; then
 
 ## In this step, we put a copy of the cprint.py into the right place,
 ## if it is necessary:
-  
+
 if test X$result = X"0" ; then
   if test X$os_name = X"MINGW32_NT" || test X$os_name = X"MINGW64_NT" ; then
     if test -f $DIR/cprint.py ; then
@@ -408,7 +453,7 @@ if test X$result = X"0" ; then
       fi
     fi
   fi
- 
+
 
 ####
 #### I am keeping the following comments around, because they contain
