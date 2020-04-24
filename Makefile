@@ -37,14 +37,16 @@ install:
 ifdef DESTDIR
 	mkdir -p $(DESTDIR)/bin/
 	install cobcd $(DESTDIR)/bin/
+	install cobcd.bat $(DESTDIR)/bin/
 else
 	mkdir -p /usr/local/bin/
 	install cobcd /usr/local/bin/
+	install cobcd.bat /usr/local/bin/
 endif
 	$(MAKE) -C cobst install
 	$(MAKE) -C sfix install
 	$(MAKE) -C python install
-	$(MAKE) -C vsdistrib install
+#	$(MAKE) -C vsdistrib install
 	
 #	copy cbl-gdb to cblgdb-x.y, tarball the copy, and delete the copy
 .PHONY : package
