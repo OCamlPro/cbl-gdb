@@ -85,9 +85,9 @@ FindFunctionReferences(const VSTRING &input_file)
     VINT retval;
     int nline = 0;
     for(string s : input_file) {
-        if( s.find("@function") != string::npos) {
+        if( s.find(".globl") != string::npos) {
             VSTRING tokens = Split(s,"\t ");
-            if( tokens[1] EQ ".type" AND tokens[3] EQ "@function" ) {
+            if( tokens[1] EQ ".globl" ) {
                 retval.push_back(nline);
             }
         }
@@ -261,7 +261,7 @@ main(int argc, char **argv)
                         ss << endl;
 
                         interject_line = ss.str();
-                        interject_line_number = i+4;
+                        interject_line_number = i+5;
                         break;
                     }
                 }
