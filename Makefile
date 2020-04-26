@@ -54,6 +54,7 @@ package : clean
 	cd .. && \
 	cp -r $(CWD)/ cblgdb-$(VERSION)/ && \
 	tar --exclude=.git --exclude=.legacy -czf cblgdb-$(VERSION).tar.gz cblgdb-$(VERSION) && \
+	cp cblgdb-$(VERSION).tar.gz cblgdb-latest.tar.gz \
 	rm -fr cblgdb-$(VERSION)/
 
 # Dubner likes to work in Windows, using Visual Studio.  This can result in
