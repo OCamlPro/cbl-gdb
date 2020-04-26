@@ -45,6 +45,7 @@ VAR_NODE::VAR_NODE()
     size = 0;
     offset = 0;
     level = LEVEL_ROOT;
+    occurs = 0;
     parent = nullptr;
 
     field_size  = 0;

@@ -115,11 +115,11 @@ GAS_SYMBOLS::GetSymbolsFromFile(const string &source, const string &scope, ifstr
         smatch sm;
         if(regex_match(input,sm,symbol32) OR regex_match(input,sm,symbol16)) {
             GAS_SYMBOL gs;
-            gs.gas_section = sm[2];
-            gs.line_number = stoi(sm[1]);
-            gs.gas_value = stoll(sm[3],NULL,16);
+            gs.gas_section = sm[2].str();
+            gs.line_number = stoi(sm[1].str());
+            gs.gas_value = stoll(sm[3].str(),NULL,16);
 
-            string stripped_symbol = sm[4];
+            string stripped_symbol = sm[4].str();
             // When compiled in the Windows environment, symbols get prefixed with
             // an underscore.  
             if( stripped_symbol.length() > 1 AND stripped_symbol[0] EQ '_' ) {
@@ -510,8 +510,8 @@ COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, ifstre
                 static const regex linkage(".*\\(([^,]+),[^']+[']([^']+).*$");
                 if(regex_match(input,sm,linkage)) {
                     pair<string,string> cobol_c;
-                    cobol_c.first  = sm[1];
-                    cobol_c.second = sm[2];
+                    cobol_c.first  = sm[1].str();
+                    cobol_c.second = sm[2].str();
                     if( linkage_weve_seen.find(cobol_c) EQ linkage_weve_seen.end() ) {
                         linkage_weve_seen.insert(cobol_c);
                         COB_LABEL cs;
@@ -521,12 +521,12 @@ COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, ifstre
                         if(program_id_stack.size() >= 1) {
                             cs.program = program_id_stack.back();
                         }
-                        cs.entry = sm[2];
+                        cs.entry = sm[2].str();
                         cs.section = "Linkage";
                         cs.paragraph = current_paragraph;
                         // Linkage isn't in .text, but rather .data.rel.local
                         cs.gas_section = ".data.rel.local";
-                        cs.gas_symbol = sm[1];
+                        cs.gas_symbol = sm[1].str();
                         symbols.push_back(cs);
                     }
                 }
@@ -546,8 +546,8 @@ COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, ifstre
                 static const regex linkage(".*\\(COB_SET_DATA [^,]+, ([^)]+)[^\"]+\"([^\"]+).*$");
                 if(regex_match(input,sm,linkage)) {
                     pair<string,string> cobol_c;
-                    cobol_c.first  = sm[1];
-                    cobol_c.second = sm[2];
+                    cobol_c.first  = sm[1].str();
+                    cobol_c.second = sm[2].str();
                     if( linkage_weve_seen.find(cobol_c) EQ linkage_weve_seen.end() ) {
                         linkage_weve_seen.insert(cobol_c);
                         COB_LABEL cs;
@@ -557,12 +557,12 @@ COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, ifstre
                         if(program_id_stack.size() >= 1) {
                             cs.program = program_id_stack.back();
                         }
-                        cs.entry = sm[2];
+                        cs.entry = sm[2].str();
                         cs.section = "Linkage";
                         cs.paragraph = current_paragraph;
                         // Linkage isn't in .text, but rather .data.rel.local
                         cs.gas_section = ".data.rel.local";
-                        cs.gas_symbol = sm[1];
+                        cs.gas_symbol = sm[1].str();
                         symbols.push_back(cs);
                     }
                 }
@@ -575,16 +575,16 @@ COB_LABELS::GetSymbolsFromFile(const string &source, const string &scope, ifstre
                 static const regex csd("COB_SET_DATA [(]([^,]+), ([^)]+).*$");
                 string spiece = input.substr(ncob);
                 if(regex_match(spiece,sm,csd)) {
-                    string target = sm[1];
-                    string source = sm[2];
+                    string target = sm[1].str();
+                    string source = sm[2].str();
 
-                    string base = sm[2];
+                    string base = sm[2].str();
                     string offset;
                     static const regex offset_match("(.*) [+] (.*)");
                     smatch sm2;
                     if(regex_match(source,sm2,offset_match)) {
-                        base = sm2[1];
-                        offset = sm2[2];
+                        base = sm2[1].str();
+                        offset = sm2[2].str();
                     }
                     gas_symbol_table.UpdateBaseOffset(target,base,offset);
                 }
@@ -848,12 +848,12 @@ DATA_DESCRIPTIONS::ProcessDataStorage(ifstream &ifs,const string &source)
                     inpic = false;
                     picture_string.clear();
                 } else {
-                    string ch = sm[1];
+                    string ch = sm[1].str();
                     picture_string += ch[0];
-                    int n = stoi(sm[2]);
+                    int n = stoi(sm[2].str());
                     if(n > 1) {
                         picture_string += '(';
-                        picture_string += sm[2];
+                        picture_string += sm[2].str();
                         picture_string += ')';
                     }
                 }
@@ -894,8 +894,8 @@ DATA_DESCRIPTIONS::ProcessDataStorage(ifstream &ifs,const string &source)
                 ds.storage_type = "Storage";
                 ds.storage_scope = scope;
                 ds.cbl_symbol = GetCommentText(input);
-                ds.gas_symbol = sm[1];
-                ds.storage_size = stoll(sm[2]);
+                ds.gas_symbol = sm[1].str();
+                ds.storage_size = stoll(sm[2].str());
                 symbols.push_back(ds);
 
                 // It turns out that the program kinda lies when it gets
@@ -999,12 +999,12 @@ DATA_DESCRIPTIONS::ProcessDataStorage(ifstream &ifs,const string &source)
                     // look for b_17 + 10
                     smatch sm2;
                     static const regex offset_match("(.*) [+] (.*)");
-                    string base_offset = sm[3];
-                    string base = sm[3];
+                    string base_offset = sm[3].str();
+                    string base = sm[3].str();
                     string offset;
                     if(regex_match(base_offset,sm2,offset_match)) {
-                        base = sm2[1];
-                        offset = sm2[2];
+                        base = sm2[1].str();
+                        offset = sm2[2].str();
                     }
 
                     // As mentioned in the b_ processing, the program_id at
@@ -1029,14 +1029,14 @@ DATA_DESCRIPTIONS::ProcessDataStorage(ifstream &ifs,const string &source)
                     ds.program_id = mapped_program_id;
                     ds.storage_type = "Field";
                     ds.storage_scope = scope;
-                    ds.gas_symbol = sm[1];
-                    ds.field_size = stoi(sm[2]);
+                    ds.gas_symbol = sm[1].str();
+                    ds.field_size = stoi(sm[2].str());
                     if(base EQ "NULL") {
                         base.clear();
                     }
                     ds.field_data_pointer = base;
                     ds.field_data_offset = offset;
-                    ds.field_attr_pointer = sm[4];
+                    ds.field_attr_pointer = sm[4].str();
                     ds.cbl_symbol = GetCommentText(input);
                     symbols.push_back(ds);
                 }
@@ -1049,7 +1049,7 @@ DATA_DESCRIPTIONS::ProcessDataStorage(ifstream &ifs,const string &source)
             smatch sm;
             static const regex re_picture(".*cob_pic_symbol ([^[]+).*");
             if(regex_match(input,sm,re_picture)) {
-                picture_symbol = sm[1];
+                picture_symbol = sm[1].str();
                 inpic = true;
                 continue;
             }

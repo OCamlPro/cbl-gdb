@@ -1,4 +1,5 @@
 file rtest
+set height 0
 b 174
 r
 print header
