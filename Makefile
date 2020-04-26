@@ -54,8 +54,13 @@ package : clean
 	cd .. && \
 	cp -r $(CWD)/ cblgdb-$(VERSION)/ && \
 	tar --exclude=.git --exclude=.legacy -czf cblgdb-$(VERSION).tar.gz cblgdb-$(VERSION) && \
-	cp cblgdb-$(VERSION).tar.gz cblgdb-latest.tar.gz \
 	rm -fr cblgdb-$(VERSION)/
+
+	cd .. && \
+	cp -r $(CWD)/ cblgdb-latest/ && \
+	tar --exclude=.git --exclude=.legacy -czf cblgdb-latest.tar.gz cblgdb-latest && \
+	rm -fr cblgdb-latest/
+
 
 # Dubner likes to work in Windows, using Visual Studio.  This can result in
 # Windows-style CRLF line endings.  He also likes to work with C++ code 
