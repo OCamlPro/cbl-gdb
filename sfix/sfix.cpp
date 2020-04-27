@@ -69,7 +69,7 @@ GetInputFileMappings(const VSTRING &input_file, const string &primary_file)
         s = Trim(s);
         if( s.find(".file ") != string::npos) {
             VSTRING tokens = Split(s,"\t ");
-            if( tokens[0] EQ ".file" AND isdigit(tokens[1][0]) ) {
+            if( tokens.size() >= 3 AND tokens[0] EQ ".file" AND isdigit(tokens[1][0]) ) {
                 int nfile = stoi(tokens[1]);
                 string file = StripQuotes(tokens[2]);
                 retval[file] = nfile;
@@ -199,6 +199,9 @@ main(int argc, char **argv)
             ss << interject_line;
         }
         VSTRING tokens = Split(Trim(input_file[i])," \t");
+        if( tokens.empty() ) {
+            continue;
+        }
         if( tokens[0] EQ ".file" ) {
             // We've already taken care of all .file lines
             continue;
