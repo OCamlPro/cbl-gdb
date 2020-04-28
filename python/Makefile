@@ -6,7 +6,7 @@ AUTO_SCRIPTS_FOUND := $(shell grep -s -e "^[ \t]*set auto-load python-scripts on
 .PHONY: all
 all :
 ## Make sure the VERSION text in cprint.py is up-to-date
-	./version
+	./version.sh
 
 .PHONY: pregit
 pregit:
