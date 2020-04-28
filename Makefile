@@ -7,11 +7,11 @@ COBCDEXISTS=$(wildcard /usr/local/bin/cobcd)
 COBCD=/usr/local/bin/cobcd
 CWD=$(shell basename `pwd`)
 
-# Yes, this next thing needs to be done in a better way
-VERSION=2.3
-
 .PHONY : all
 all:
+## Make sure the VERSION text in cprint.py is up-to-date
+	$(MAKE) -C python
+## Then you can make cobst
 	$(MAKE) -C cobst
 	$(MAKE) -C sfix
 	$(MAKE) -C samples
@@ -51,16 +51,7 @@ endif
 #	copy cbl-gdb to cblgdb-x.y, tarball the copy, and delete the copy
 .PHONY : package
 package : clean
-	cd .. && \
-	cp -r $(CWD)/ cblgdb-$(VERSION)/ && \
-	tar --exclude=.git --exclude=.legacy -czf cblgdb-$(VERSION).tar.gz cblgdb-$(VERSION) && \
-	rm -fr cblgdb-$(VERSION)/
-
-	cd .. && \
-	cp -r $(CWD)/ cblgdb-latest/ && \
-	tar --exclude=.git --exclude=.legacy -czf cblgdb-latest.tar.gz cblgdb-latest && \
-	rm -fr cblgdb-latest/
-
+	./package.sh
 
 # Dubner likes to work in Windows, using Visual Studio.  This can result in
 # Windows-style CRLF line endings.  He also likes to work with C++ code 
