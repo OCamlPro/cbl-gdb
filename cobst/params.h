@@ -33,7 +33,7 @@
 #include <string>
 #include <fstream>
 
-#define VERSION "2.3"
+#include "../version.h"
 
 class FILENAME
 {

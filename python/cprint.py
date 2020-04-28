@@ -26,10 +26,10 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-############################################################################
+#   This module implements the gdb extension commands cprint and cwatch
+#EndOfCopyright########################################################
 
-
-#   This module implements the gdb extension command cprint
+#   This module implements the gdb extension commands cprint and cwatch
 #
 #   This script is read by the COBST program and incorporated into a
 #   C module that gets compiled and linked into the final executable
@@ -3140,6 +3140,11 @@ if 'gdb' in sys.modules :
 
         def __init__ (self):
             super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
+            ###########################################################################
+            ## The version number in the next line is updated by a Linux bash script. #
+            ## The text "Version x.x" has to appear in square brackets.               #
+            ## Don't mess with it!                                                    #
+            ###########################################################################
             print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 2.3]')
             self.Worker = CPrintWorker()
             self.TabFile = TabFileInformation();

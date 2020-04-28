@@ -30,8 +30,7 @@
 
 #include <iostream>
 #include <regex>
-#include "params.h"
-#include "utils.h"
+
 #ifdef _WIN32
 #include "getopt.h"
 #include <io.h>
@@ -41,6 +40,11 @@
 #include <unistd.h>
 #include <dirent.h>
 #endif
+
+#include "params.h"
+#include "utils.h"
+#include "../version.h"
+
 
 #define EQ ==
 #define AND &&

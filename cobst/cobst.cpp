@@ -529,11 +529,14 @@ CreateSymc(PARAMETERS &params,
     params.symc << ss.str();
 
     ss.str("");
+    bool in_copyright = true;
     // Copy over the Python script, line by line, getting rid of comments
+    // that appear after the copyright notice
     char *py = new char[___python_cprint_py_len+1];
     py[0] = '\0';
     size_t index=0;
     while(index < ___python_cprint_py_len) {
+        // Read the next line from the .h file
         string seg;
         while(index < ___python_cprint_py_len) {
             char ch = ___python_cprint_py[index++];
@@ -543,7 +546,7 @@ CreateSymc(PARAMETERS &params,
             seg += ch;
         }
         size_t nfound_comment = seg.find("#");
-        if( nfound_comment != string::npos ) {
+        if( !in_copyright AND nfound_comment != string::npos ) {
             // There is a pound sign, which is the Python comment signal
             size_t nfound_quote = seg.find_first_of("'\"");
             if( nfound_quote > nfound_comment ) {
@@ -556,6 +559,11 @@ CreateSymc(PARAMETERS &params,
             seg += '\n';
             size_t t = strlen(py);
             strcpy(py+t,seg.c_str());
+
+        if( seg.find("EndOfCopyright") != string::npos )
+            {
+            in_copyright = false;
+            }
         }
     }
 
