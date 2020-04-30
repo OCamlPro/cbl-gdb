@@ -31,6 +31,7 @@ clean:
 	$(MAKE) -C sfix clean
 	$(MAKE) -C samples clean
 	$(MAKE) -C optfde01 clean
+	$(MAKE) -C msys2 clean
 
 .PHONY : install
 install:

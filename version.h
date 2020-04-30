@@ -5,4 +5,4 @@
 // Linux-only trickery to get the version code in place.
 //
 
-#define VERSION "2.4"
+#define VERSION "2.5"
