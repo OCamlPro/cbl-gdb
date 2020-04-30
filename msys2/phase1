@@ -13,10 +13,6 @@
 ## and with nothing else, in order to keep the size down as much as
 ## possible.
 ##
-echo "Remove old /c/msys64-clean..."
-rm -fr /c/msys64-clean
-echo "copy /c/msys64 to /c/msys64-clean..."
-cp -rv /c/msys64 /c/msys64-clean
 
 ## Install the prerequisites for the GnuCOBOL package build
 
