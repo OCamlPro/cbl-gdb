@@ -1,0 +1,73 @@
+#!/bin/sh
+
+## This routine expects to be running in a folder named
+##
+## ~/builds/cblgdb/cblgdb-latest/msys2
+##
+## It also expects to be running in a brand-spanking new instance of
+## c:\msys64, one that has been updated with 
+## 
+##      pacman -Syu pacman
+##      pacman -Su
+##
+## and with nothing else, in order to keep the size down as much as
+## possible.
+##
+## It's to be run after ./phase1 has executed, and immediately after
+## that environment was renamed to c:\msys64-build
+##
+## We first install the GnuCOBOL i686 package here, and we tack on
+## gdb.
+##
+## We then create a target folder c:\cblgdb and we copy a subset of
+## files from here to there.
+##
+## Install the GnuCOBOL i686 package from the place where we just build it
+##
+pacman --noconfirm -U $(ls -t --color=never \
+    ~/builds/cblgdb/cblgdb-latest/msys2/mingw-w64-i686-gnucobol*.zst | head -n 1)
+##
+## We also need the i686 gdb package:
+##
+pacman --noconfirm -S mingw-w64-i686-gdb
+##
+## Copy over the cbl-gdb executables and scripts from the place where
+## we built them:
+##
+cp /c/msys64-build/usr/local/bin/cobcd     /mingw32/bin
+cp /c/msys64-build/usr/local/bin/cobcd.bat /mingw32/bin
+cp /c/msys64-build/usr/local/bin/cobst.exe /mingw32/bin
+cp /c/msys64-build/usr/local/bin/cprint.py /mingw32/bin
+cp /c/msys64-build/usr/local/bin/sfix.exe  /mingw32/bin
+##
+## This c:\msys64 now has everything it needs to run debuggable
+## GnuCOBOL.  We probably never will.
+##
+## It's time to spawn c:\cblgdb from us:
+##
+rm -fr /c/cblgdb
+mkdir -p /c/cblgdb/share/gnucobol/
+mkdir -p /c/cblgdb/lib/
+cp -r /mingw32/bin/                                         /c/cblgdb/bin/
+cp -r /mingw32/i686-w64-mingw32/                            /c/cblgdb/i686-w64-mingw32/
+cp -r /mingw32/share/gdb/                                   /c/cblgdb/share/gdb/
+cp -r /mingw32/share/gnucobol/config/                       /c/cblgdb/share/gnucobol/config/
+cp -r /mingw32/share/gnucobol/copy/                         /c/cblgdb/share/gnucobol/copy/
+cp    /mingw32/lib/*                                        /c/cblgdb/lib/ 2>/dev/nul
+cp -r /mingw32/lib/gcc/                                     /c/cblgdb/lib/gcc/
+cp -r /mingw32/include/                                     /c/cblgdb/include/
+cp -r ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/extras/ /c/cblgdb/extras/
+cp -r /mingw32/lib/python3.8/                               /c/cblgdb/lib/python3.8/
+rm /c/cblgdb/include/autosp* 
+mkdir -p /c/cblgdb/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/AUTHORS        /c/cblgdb/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/ChangeLog      /c/cblgdb/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/COPYING        /c/cblgdb/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/COPYING.DOC    /c/cblgdb/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/COPYING.LESSER /c/cblgdb/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/README         /c/cblgdb/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/THANKS         /c/cblgdb/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/README.txt                  /c/cblgdb/
+
+
+

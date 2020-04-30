@@ -24,6 +24,10 @@ cp -r $CWD/ cblgdb-$VERSION/
 tar --exclude=.git --exclude=.legacy -czf cblgdb-$VERSION.tar.gz cblgdb-$VERSION
 ## Make a copy of the tarball, with "latest" in place of the version
 cp cblgdb-$VERSION.tar.gz cblgdb-latest.tar.gz
+## Make an "alpha" copy, which is used for internal builds that might
+## not yet be releasable.  This is used by the centos, debian, and arm
+## packaging routines.
+cp cblgdb-$VERSION.tar.gz cblgdb-latest-alpha.tar.gz
 
 ## Get rid of the extra directory
 rm -fr cblgdb-$VERSION/
