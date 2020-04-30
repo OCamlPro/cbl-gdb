@@ -13,10 +13,10 @@
 ## and with nothing else, in order to keep the size down as much as
 ## possible.
 ##
-echo "Remove old /c/msys64-clean...
+echo "Remove old /c/msys64-clean..."
 rm -fr /c/msys64-clean
-copy /c/msys64 to /c/msys64-clean...
-cp -r /c/msys64 /c/msys64-clean
+echo "copy /c/msys64 to /c/msys64-clean..."
+cp -rv /c/msys64 /c/msys64-clean
 
 ## Install the prerequisites for the GnuCOBOL package build
 
@@ -48,7 +48,6 @@ export PATH=/mingw32/bin:$PATH
 export COB_CONFIG_DIR='C:\msys64\mingw32\share\gnucobol\config'
 export COB_COPY_DIR='C:\msys64\mingw32\share\gnucobol\copy'
 export COB_LIBRARY_PATH='C:\msys64\mingw32\lib\gnucobol'
-
 
 ## With the GnuCOBOL package installed, we can build the cbl-gdb toolchain
 cd ..
