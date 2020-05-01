@@ -2,4 +2,4 @@
 
 .PHONY : clean
 clean :
-	./conditional_clean
+	@./conditional_clean

@@ -17,4 +17,4 @@ if ! uname | grep -q -e "^MSYS" ; then
   rm -fr src
   rm -fr *.log
   rm -fr *.zst
-  fir
+  fi
