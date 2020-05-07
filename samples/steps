@@ -1,2 +1,0 @@
-#!/bin/bash
-STEPS=1 make $1

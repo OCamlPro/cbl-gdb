@@ -1,4 +1,4 @@
-project=sfix
+project=cobcd-sfix
 CPP = g++
 
 src = $(wildcard *.cpp)
@@ -17,7 +17,7 @@ $(project) : $(obj)
     
 .PHONY: clean
 clean:
-	rm -f $(obj) $(project) $(dep) cprint_py.h
+	@rm -f $(obj) $(project) $(dep)
 
 .PHONY: pregit
 pregit:

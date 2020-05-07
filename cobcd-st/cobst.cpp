@@ -274,7 +274,7 @@ CreateCSV(PARAMETERS &params,
         .CBL source code line numbers associated with .text assembler
         relative addresses.
 
-        The second section is read by the cprint.py Python extension to
+        The second section is read by the cobcd.py Python extension to
         gdb.  It contains the information needed to map canonical COBOL
         identifiers ( A of B of C ) to the assembly language symbols so
         that COBOL variables can be displayed by gdb.
@@ -282,7 +282,7 @@ CreateCSV(PARAMETERS &params,
         The structure of the columns can be changed by moving them
         around or adding columns.  But the column header text is
         read by the downstream programs, so if you change the headers
-        you'll have to change the matching code in cprint.py
+        you'll have to change the matching code in cobcd.py
         */
 
 
@@ -321,21 +321,21 @@ CreateCSV(PARAMETERS &params,
     csv.AddColumn(SOURCE,          "Source File");
     csv.AddColumn(LINE,            "Line Number");
     csv.AddColumn(SENTENCE,        "Sentence Number");
-    csv.AddColumn(PROGRAM,         "Program Name");     // Also by cprint
-    csv.AddColumn(DIVISION,        "Division");         // Also by cprint
-    csv.AddColumn(SECTION,         "Section");          // Also by cprint
+    csv.AddColumn(PROGRAM,         "Program Name");     // Also by cobcd
+    csv.AddColumn(DIVISION,        "Division");         // Also by cobcd
+    csv.AddColumn(SECTION,         "Section");          // Also by cobcd
     csv.AddColumn(ENTRY,           "Entry");
     csv.AddColumn(PARAGRAPH,       "Paragraph");
     csv.AddColumn(GAS_SECTION,     "Assembly Section");
     csv.AddColumn(GAS_LOCATION,    "Relative Address");
 
-    // This group is used by the cprint Python extension to gdb.  It describes
-    // COBOL variable contents, so that cprint can find and display them.
+    // This group is used by the cobcd Python extension to gdb.  It describes
+    // COBOL variable contents, so that cobcd can find and display them.
     //
-    // The base_symbol is used by gdb/cprint to find the contents of the
+    // The base_symbol is used by gdb/cobcd to find the contents of the
     // variable.  We include field_ and attribute_ symbol for reference, but
-    // cprint doesn't use them.  Instead, we populate the remaining fields
-    // with everything we know (or can divine) so that cprint can figure
+    // cobcd doesn't use them.  Instead, we populate the remaining fields
+    // with everything we know (or can divine) so that cobcd can figure
     // out as early as possible what variables it is dealing with.
 
     csv.AddColumn(FULL_NAME,       "Full Name");    // From .cbl.lst
@@ -392,7 +392,7 @@ CreateCSV(PARAMETERS &params,
         csv.Normalize();
     }
 
-    /// Do the variable identifier information for gdb/cprint
+    /// Do the variable identifier information for gdb/cobcd
     for(int i=0; i<var_tree.size(); i++) {
         const VAR_NODE var = var_tree[i];
         stringstream ss;
@@ -459,7 +459,7 @@ CreateSymc(PARAMETERS &params,
 {
     /*  This routine creates the .sym.c file, which contains a global
         variable comprising the cross-reference information, followed
-        by the magical construction that puts the cprint.py script
+        by the magical construction that puts the cobcd.py script
         into the .debug_script section of the object file created by
         compiling .sym.c
     */
@@ -471,7 +471,7 @@ CreateSymc(PARAMETERS &params,
     stringstream ss;
 
     // Do the line/address information from the .text in the minimal form
-    // used by cprint.py to figure out which program a trap has occurred in.
+    // used by cobcd.py to figure out which program a trap has occurred in.
     string current_program = "";
     for(int i=0; i<cob_labels.size(); i++) {
         COB_LABEL cs = cob_labels[i];
@@ -532,14 +532,14 @@ CreateSymc(PARAMETERS &params,
     bool in_copyright = true;
     // Copy over the Python script, line by line, getting rid of comments
     // that appear after the copyright notice
-    char *py = new char[___python_cprint_py_len+1];
+    char *py = new char[___python_cobcd_py_len+1];
     py[0] = '\0';
     size_t index=0;
-    while(index < ___python_cprint_py_len) {
+    while(index < ___python_cobcd_py_len) {
         // Read the next line from the .h file
         string seg;
-        while(index < ___python_cprint_py_len) {
-            char ch = ___python_cprint_py[index++];
+        while(index < ___python_cobcd_py_len) {
+            char ch = ___python_cobcd_py[index++];
             if(ch EQ '\n') {
                 break;
             }
@@ -567,8 +567,8 @@ CreateSymc(PARAMETERS &params,
         }
     }
 
-//    memcpy(py, ___python_cprint_py,___python_cprint_py_len);
-//    py[___python_cprint_py_len] = '\0';
+//    memcpy(py, ___python_cobcd_py,___python_cobcd_py_len);
+//    py[___python_cobcd_py_len] = '\0';
     ss <<  py;
     ss << "\n";
 

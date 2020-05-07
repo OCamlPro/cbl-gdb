@@ -1,6 +1,12 @@
 #!/bin/bash
 
-# FileVersion 2.5
+###########################################################################
+## The version number in the next line is updated by a Linux bash script. #
+## The text "Version x.x" has to appear in square brackets.               #
+## Don't mess with it!                                                    #
+###########################################################################
+
+# [Version 2.6]
 
 # This script, nominally named cobcd, packages up the process of compiling
 # a single COBOL source module and processing it so that gdb can be used for
@@ -84,11 +90,11 @@ ASSEMBLER=`$GCC --print-prog-name as`
 LOADER=`$GCC --print-prog-name ld`
 
 if test X"$COBCDEVEL" != X"" ; then
-  COBST=$DIR/cobst/cobst
-  SFIX=$DIR/sfix/sfix
+  COBST=$DIR/cobcd-st/cobcd-st
+  SFIX=$DIR/cobcd-sfix/cobcd-sfix
 else
-  COBST=cobst
-  SFIX=sfix
+  COBST=cobcd-st
+  SFIX=cobcd-sfix
   fi
 
 ###########################################################
@@ -382,7 +388,7 @@ if test X$result = X"0" ; then
   fi
 
 ## In this step, we compile the BASENAME.sym.c, creating BASENAME.sym.o
-## It contains the VARIABLE_STRING and the cprint.py script
+## It contains the VARIABLE_STRING and the cobcd.py script
 if test X$result = X"0" ; then
   if test X$ECHO != X"" ; then
     echo $COBC -c -o $BASENAME.sym.o $BASENAME.sym.c
@@ -443,19 +449,19 @@ if test X$result = X"0" ; then
     fi
   fi
 
-## In this step, we put a copy of the cprint.py into the right place,
+## In this step, we put a copy of the cobcd.py into the right place,
 ## if it is necessary:
 
 if test X$result = X"0" ; then
   if test X$os_name = X"MINGW32_NT" || test X$os_name = X"MINGW64_NT" || test X$os_name = X"MSYS_NT" ; then
-    if test -f $DIR/cprint.py ; then
-      cp $DIR/cprint.py ./$BASENAME-gdb.py
-    elif test -f $DIR/python/cprint.py ; then
-      cp $DIR/python/cprint.py ./$BASENAME-gdb.py
-    elif test -f /usr/local/bin/cprint.py ; then
-      cp /usr/local/bin/cprint.py ./$BASENAME-gdb.py
+    if test -f $DIR/cobcd.py ; then
+      cp $DIR/cobcd.py ./$BASENAME-gdb.py
+    elif test -f $DIR/python/cobcd.py ; then
+      cp $DIR/python/cobcd.py ./$BASENAME-gdb.py
+    elif test -f /usr/local/bin/cobcd.py ; then
+      cp /usr/local/bin/cobcd.py ./$BASENAME-gdb.py
     else
-      echo ERROR: "Couldn't find a copy of cprint.py"
+      echo ERROR: "Couldn't find a copy of cobcd.py"
       fi
     fi
   fi

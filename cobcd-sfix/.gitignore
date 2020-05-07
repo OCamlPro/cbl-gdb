@@ -1,9 +1,9 @@
 *.o
 *.d
-sfix
-sfix.exe
+cobcd-sfix
+cobcd-sfix.exe
 /Debug
 /Release
 /x64
 /.vs
-cprint_py.h
+

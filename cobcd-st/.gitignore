@@ -1,8 +1,8 @@
 *.o
 *.d
-cobst
-cobst.exe
-cprint_py.h
+cobcd-st
+cobcd-st.exe
+cobcd_py.h
 /Debug
 /Release
 /x64

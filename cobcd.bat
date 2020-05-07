@@ -1,5 +1,11 @@
 ::
-:: FileVersion 2.5
+::###########################################################################
+::## The version number in the next line is updated by a Linux bash script. #
+::## The text "Version x.x" has to appear in square brackets.               #
+::## Don't mess with it!                                                    #
+::###########################################################################
+::
+::# [Version 2.6]
 ::
 @ECHO OFF
 SETLOCAL
@@ -12,7 +18,7 @@ if not defined COB_CONFIG_DIR (
     )
 
 ::
-:: Bust up the input parameters into one that come before the single
+:: Bust up the input parameters into one that comes before the single
 :: COBOL source module we know how to handle, the COBOL module itself,
 :: and the ones after
 ::
@@ -97,13 +103,13 @@ IF "%XorM%"=="-x" (
     IF NOT ERRORLEVEL 0 GOTO bail
     )
 
-SET CPRINTPY=
-for %%I in (cprint.py) do SET CPRINTPY=%%~$PATH:I
+SET COBCDPY=
+for %%I in (cobcd.py) do SET COBCDPY=%%~$PATH:I
 
-if "%CPRINTPY%"=="" (
-    echo Couldn't find a copy of cprint.py on the PATH
+if "%COBCDPY%"=="" (
+    echo Couldn't find a copy of cobcd.py on the PATH
     ) ELSE (
-    copy %CPRINTPY% %BASENAME%-gdb.py >NUL
+    copy %COBCDPY% %BASENAME%-gdb.py >NUL
     )
 
 :bail

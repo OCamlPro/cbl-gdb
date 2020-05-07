@@ -4,9 +4,11 @@ AUTO_LOAD_FOUND := $(shell grep -s -e "^[ \t]*set auto-load safe-path /" ~/.gdbi
 AUTO_SCRIPTS_FOUND := $(shell grep -s -e "^[ \t]*set auto-load python-scripts on" ~/.gdbinit | wc -l)
 
 .PHONY: all
-all :
+all : cobcd.py
+
+cobcd.py : ../include/version.h
 ## Make sure the VERSION text in cobcd.py is up-to-date
-	./version.sh
+	../bin/version-replace.sh $@ $^
 
 .PHONY: pregit
 pregit:

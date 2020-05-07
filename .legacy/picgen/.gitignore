@@ -1,9 +1,0 @@
-.vs
-Debug
-Release
-x64
-*.d
-*.o
-picgen
-picgen.exe
-inputs.tab

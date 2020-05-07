@@ -7,31 +7,33 @@ COBCDEXISTS=$(wildcard /usr/local/bin/cobcd)
 COBCD=/usr/local/bin/cobcd
 CWD=$(shell basename `pwd`)
 
-.PHONY : all
-all:
-## Make sure the VERSION text in cprint.py is up-to-date
+.PHONY : all 
+all: cobcd cobcd.bat
+## Make sure the VERSION text in cobcd.py is up-to-date
 	$(MAKE) -C python
 ## Then you can make cobst
-	$(MAKE) -C cobst
-	$(MAKE) -C sfix
-	$(MAKE) -C samples
+	$(MAKE) -C cobcd-st
+	$(MAKE) -C cobcd-sfix
 
 .PHONY : test
 test:
-	$(MAKE) -C cobst
-	$(MAKE) -C sfix
-	$(MAKE) -C samples
+	$(MAKE) -C cobcd-st
+	$(MAKE) -C cobcd-sfix
 ifeq ($(COBCDEXISTS), $(COBCD))
 	$(MAKE) -C optfde01
 endif
 
 .PHONY : clean
 clean:
-	$(MAKE) -C cobst clean
-	$(MAKE) -C sfix clean
-	$(MAKE) -C samples clean
+	$(MAKE) -C cobcd-st clean
+	$(MAKE) -C cobcd-sfix clean
 	$(MAKE) -C optfde01 clean
-	$(MAKE) -C msys2 clean
+	
+cobcd : include/version.h
+	bin/version-replace.sh $@ $^
+
+cobcd.bat : include/version.h
+	bin/version-replace.sh $@ $^
 
 .PHONY : install
 install:
@@ -44,15 +46,15 @@ else
 	install cobcd /usr/local/bin/
 	install cobcd.bat /usr/local/bin/
 endif
-	$(MAKE) -C cobst install
-	$(MAKE) -C sfix install
+	$(MAKE) -C cobcd-st install
+	$(MAKE) -C cobcd-sfix install
 	$(MAKE) -C python install
 #	$(MAKE) -C vsdistrib install
 	
 #	copy cbl-gdb to cblgdb-x.y, tarball the copy, and delete the copy
 .PHONY : package
 package : clean
-	./package.sh
+	./bin/package.sh
 
 # Dubner likes to work in Windows, using Visual Studio.  This can result in
 # Windows-style CRLF line endings.  He also likes to work with C++ code 
@@ -61,7 +63,6 @@ package : clean
 # followed by `astyle --style=kr` for Kernighan & Ritchie brace formatting.
 .PHONY : pregit
 pregit:
-	$(MAKE) -C cobst pregit
-	$(MAKE) -C sfix pregit
+	$(MAKE) -C cobcd-st pregit
+	$(MAKE) -C cobcd-sfix pregit
 	$(MAKE) -C python pregit
-	

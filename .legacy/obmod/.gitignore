@@ -1,9 +1,0 @@
-*.o
-*.d
-obmod
-odbmod.exe
-/Debug
-/Release
-/x64
-/.vs
-cprint_py.h
