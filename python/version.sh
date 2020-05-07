@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## Modifies cprint.py, if necessary, with the VERSION text
+## Modifies cobcd.py, if necessary, with the VERSION text
 ## found in ../version.h
 
 ## Extract '2.4' from '#define VERSION "2.4"'
@@ -20,9 +20,9 @@ VERSION_STRING='[Version '$VERSION']'
 #echo VERSION is $VERSION
 #echo VERSION_STRING is $VERSION_STRING
 
-if ! grep -q -F "$VERSION_STRING" cprint.py ; then
+if ! grep -q -F "$VERSION_STRING" cobcd.py ; then
     ## We need to replace the existing out-of-date version string
     ## with our new one
-    echo Updating cprint.py version to $VERSION_STRING
-    sed -i -r "s/[[]Version [0-9]+[.][0-9]+[]]/$VERSION_STRING/g" cprint.py 
+    echo Updating cobcd.py version to $VERSION_STRING
+    sed -i -r "s/[[]Version [0-9]+[.][0-9]+[]]/$VERSION_STRING/g" cobcd.py 
     fi

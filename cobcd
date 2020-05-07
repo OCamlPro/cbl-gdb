@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# FileVersion 2.5
+
 # This script, nominally named cobcd, packages up the process of compiling
 # a single COBOL source module and processing it so that gdb can be used for
 # source-level debugging of that module. Found in the root folder of the

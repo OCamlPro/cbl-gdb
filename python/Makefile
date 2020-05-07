@@ -5,17 +5,17 @@ AUTO_SCRIPTS_FOUND := $(shell grep -s -e "^[ \t]*set auto-load python-scripts on
 
 .PHONY: all
 all :
-## Make sure the VERSION text in cprint.py is up-to-date
+## Make sure the VERSION text in cobcd.py is up-to-date
 	./version.sh
 
 .PHONY: pregit
 pregit:
-	dos2unix cprint.py
+	dos2unix cobcd.py
 	dos2unix Makefile
 	dos2unix .gitignore
 
 #
-# As of this writing, cprint.py is being embedded into the COBOL executables.
+# As of this writing, cobcd.py is being embedded into the COBOL executables.
 # By default, gdb doesn't put the current working directory onto the list 
 # of safe auto-load directories.  There is a default safe directory, but that
 # directory isn't on the search path.  So, one way or the other, the user's 
@@ -25,7 +25,7 @@ pregit:
 .PHONY : install
 install :
 	mkdir -p /usr/local/bin/
-	cp cprint.py /usr/local/bin/
+	cp cobcd.py /usr/local/bin/
 ifeq ($(AUTO_LOAD_FOUND), 0)
 	echo "set auto-load safe-path /" >>~/.gdbinit
 endif

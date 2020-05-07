@@ -1,3 +1,6 @@
+::
+:: FileVersion 2.5
+::
 @ECHO OFF
 SETLOCAL
 ::

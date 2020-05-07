@@ -1,12 +1,12 @@
-Instructions for cprint.py, version 0.5
+Instructions for cobcd.py, version 0.5
 
-The key to making cprint.py work is your personal ~/.gdbinit file.  
+The key to making cobcd.py work is your personal ~/.gdbinit file.  
 
 However: ./python/make install now takes care of it.
 
 Remove any ~/.gdbinit instructions that look like
 
-    source ~/projects/cobol/batch-demo/gdb/python/cprint.py
+    source ~/projects/cobol/batch-demo/gdb/python/cobcd.py
     directory ~/projects/cobol/batch-demo/gdb/python
     add-auto-load-safe-path ~/projects/cobol/batch-demo/gdb/python
 
