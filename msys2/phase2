@@ -27,7 +27,38 @@
 pacman --noconfirm -U $(ls -t --color=never \
     ~/builds/cblgdb/cblgdb-latest/msys2/mingw-w64-i686-gnucobol*.zst | head -n 1)
 ##
-## We also need the i686 gdb package:
+## We are going to create a "just-GnuCOBOL" minimal package from the
+## the files we started with, plus the gnucobol package we just installed:
+target=/c/gnucobol
+##
+rm -fr $target
+mkdir -p $target/share/gnucobol/
+mkdir -p $target/lib/
+cp -r /mingw32/bin/                                                $target/bin/
+cp -r /mingw32/i686-w64-mingw32/                                   $target/i686-w64-mingw32/
+cp -r /mingw32/share/gnucobol/config/                              $target/share/gnucobol/config/
+cp -r /mingw32/share/gnucobol/copy/                                $target/share/gnucobol/copy/
+cp    /mingw32/lib/*                                               $target/lib/ 2>/dev/nul
+cp -r /mingw32/lib/gcc/                                            $target/lib/gcc/
+cp -r /mingw32/include/                                            $target/include/
+cp -r ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/extras/     $target/extras/
+cp -r /mingw32/lib/python3.8/                                      $target/lib/python3.8/
+rm $target/include/autosp* 
+mkdir -p $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/AUTHORS        $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/ChangeLog      $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/COPYING        $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/COPYING.DOC    $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/COPYING.LESSER $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/README         $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/THANKS         $target/license/
+cp README-gnucobol.txt                                             $target/README.txt
+##
+##
+## We are now going to add what we need to create a GnuCOBOL plus 
+## the Symas/Camelian debugging extensions.
+##
+## That means we need the i686 gdb package:
 ##
 pacman --noconfirm -S mingw-w64-i686-gdb
 ##
@@ -41,33 +72,34 @@ cp /c/msys64-build/usr/local/bin/cprint.py /mingw32/bin
 cp /c/msys64-build/usr/local/bin/sfix.exe  /mingw32/bin
 ##
 ## This c:\msys64 now has everything it needs to run debuggable
-## GnuCOBOL.  We probably never will.
+## GnuCOBOL.
 ##
 ## It's time to spawn c:\cblgdb from us:
 ##
-rm -fr /c/cblgdb
-mkdir -p /c/cblgdb/share/gnucobol/
-mkdir -p /c/cblgdb/lib/
-cp -r /mingw32/bin/                                         /c/cblgdb/bin/
-cp -r /mingw32/i686-w64-mingw32/                            /c/cblgdb/i686-w64-mingw32/
-cp -r /mingw32/share/gdb/                                   /c/cblgdb/share/gdb/
-cp -r /mingw32/share/gnucobol/config/                       /c/cblgdb/share/gnucobol/config/
-cp -r /mingw32/share/gnucobol/copy/                         /c/cblgdb/share/gnucobol/copy/
-cp    /mingw32/lib/*                                        /c/cblgdb/lib/ 2>/dev/nul
-cp -r /mingw32/lib/gcc/                                     /c/cblgdb/lib/gcc/
-cp -r /mingw32/include/                                     /c/cblgdb/include/
-cp -r ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/extras/ /c/cblgdb/extras/
-cp -r /mingw32/lib/python3.8/                               /c/cblgdb/lib/python3.8/
-rm /c/cblgdb/include/autosp* 
-mkdir -p /c/cblgdb/license/
-cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/AUTHORS        /c/cblgdb/license/
-cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/ChangeLog      /c/cblgdb/license/
-cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/COPYING        /c/cblgdb/license/
-cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/COPYING.DOC    /c/cblgdb/license/
-cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/COPYING.LESSER /c/cblgdb/license/
-cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/README         /c/cblgdb/license/
-cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/THANKS         /c/cblgdb/license/
-cp ~/builds/cblgdb/cblgdb-latest/msys2/README.txt                  /c/cblgdb/
+target=/c/cblgdb
+rm -fr $target
+mkdir -p $target/share/gnucobol/
+mkdir -p $target/lib/
+cp -r /mingw32/bin/                                                $target/bin/
+cp -r /mingw32/i686-w64-mingw32/                                   $target/i686-w64-mingw32/
+cp -r /mingw32/share/gdb/                                          $target/share/gdb/
+cp -r /mingw32/share/gnucobol/config/                              $target/share/gnucobol/config/
+cp -r /mingw32/share/gnucobol/copy/                                $target/share/gnucobol/copy/
+cp    /mingw32/lib/*                                               $target/lib/ 2>/dev/nul
+cp -r /mingw32/lib/gcc/                                            $target/lib/gcc/
+cp -r /mingw32/include/                                            $target/include/
+cp -r ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/extras/     $target/extras/
+cp -r /mingw32/lib/python3.8/                                      $target/lib/python3.8/
+rm $target/include/autosp*  
+mkdir -p $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/AUTHORS        $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/ChangeLog      $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/COPYING        $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/COPYING.DOC    $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/COPYING.LESSER $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/README         $target/license/
+cp ~/builds/cblgdb/cblgdb-latest/msys2/src/gnucobol/THANKS         $target/license/
+cp README-cblgdb.txt                                               $target/README.txt
 
 
 

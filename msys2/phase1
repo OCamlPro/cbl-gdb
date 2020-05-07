@@ -18,11 +18,13 @@
 
 pacman --noconfirm -S base-devel
 pacman --noconfirm -S mingw-w64-x86_64-toolchain
-pacman --noconfirm -S mingw-w64-i686-toolchain 
 pacman --noconfirm -S mingw-w64-x86_64-db 
 pacman --noconfirm -S mingw-w64-x86_64-libxml2 
+pacman --noconfirm -S mingw-w64-x86_64-json-c 
+pacman --noconfirm -S mingw-w64-i686-toolchain 
 pacman --noconfirm -S mingw-w64-i686-db 
 pacman --noconfirm -S mingw-w64-i686-libxml2 
+pacman --noconfirm -S mingw-w64-i686-json-c 
 pacman --noconfirm -S apr
 pacman --noconfirm -S apr-util
 pacman --noconfirm -S libsasl
