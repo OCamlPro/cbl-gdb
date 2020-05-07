@@ -2,14 +2,14 @@
 
 These are the source files for building the tools that make up the Symas/Camelian debugging extensions for GnuCOBOL.
 
-You'll need to have Version 3.x-dev (or later), of GnuCOBOL installed to actually make things work.
+You'll need to have GnuCOBOL Version 3.x-dev (or later) installed.
 
 Building the source, and installing the binaries and scripts into /usr/local, operates as you'd generally expect:
 
 	make 
 	sudo make install
 
-Using the extensions is generally a case of using the cobcd script where you'd ordinarily use the cobc program:
+Using the debugging extensions is generally a case of using the cobcd script where you'd ordinarily use the cobc command to compile a COBOL program:
 
 Where you would enter the command 
 
@@ -23,7 +23,7 @@ After that, you can debug the resulting binary with
 
 	gdb ./hello
 
-The source code for the extension is found in these folders:
+The source code for the extension is in:
 
 	cobcd-st/
 	cobcd-sfix/
