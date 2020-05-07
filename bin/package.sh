@@ -4,7 +4,7 @@
 ## 
 
 ## Extract '2.4' from '#define VERSION "2.4"'
-input="version.h"
+input="include/version.h"
 while read -r line
   do
     IFS=' '; arrIN=($line); unset IFS;
