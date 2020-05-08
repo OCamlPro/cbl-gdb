@@ -33,4 +33,5 @@ ifdef DESTDIR
 	install $(project) $(DESTDIR)/bin/
 else
 	install $(project) /usr/local/bin/
+endif
 
