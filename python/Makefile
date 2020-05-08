@@ -1,5 +1,7 @@
 # Code to see if ~/.gdbinit already exists
 
+project=cobcd.py
+
 AUTO_LOAD_FOUND := $(shell grep -s -e "^[ \t]*set auto-load safe-path /" ~/.gdbinit | wc -l)
 AUTO_SCRIPTS_FOUND := $(shell grep -s -e "^[ \t]*set auto-load python-scripts on" ~/.gdbinit | wc -l)
 
@@ -26,12 +28,9 @@ pregit:
 #
 .PHONY : install
 install :
-	mkdir -p /usr/local/bin/
-	cp cobcd.py /usr/local/bin/
-ifeq ($(AUTO_LOAD_FOUND), 0)
-	echo "set auto-load safe-path /" >>~/.gdbinit
-endif
-ifeq ($(AUTO_SCRIPTS_FOUND), 0)
-	echo "set auto-load python-scripts on" >>~/.gdbinit
-endif
+ifdef DESTDIR
+	mkdir -p $(DESTDIR)/bin/
+	install $(project) $(DESTDIR)/bin/
+else
+	install $(project) /usr/local/bin/
 
