@@ -78,7 +78,7 @@ erase %BASENAME%.o
 IF NOT ERRORLEVEL 0 GOTO bail
 
 :: Run COBST to create basename.sym.c
-cobst -q %BASENAME%
+cobcd-st -q %BASENAME%
 IF NOT ERRORLEVEL 0 GOTO bail
 
 :: Compile basename.sym.c to create basename.sym.o
@@ -87,7 +87,7 @@ cobc -c -o %BASENAME%.sym.o %BASENAME%.sym.c
 IF NOT ERRORLEVEL 0 GOTO bail
 
 :: Use SFIX to modify the basename.s file
-sfix -q %BASENAME%.s %BASENAME%-2.s %BASENAME%.c %SOURCEFILE%
+cobcd-sfix -q %BASENAME%.s %BASENAME%-2.s %BASENAME%.c %SOURCEFILE%
 IF NOT ERRORLEVEL 0 GOTO bail
 
 :: Assemble the modified .s file
