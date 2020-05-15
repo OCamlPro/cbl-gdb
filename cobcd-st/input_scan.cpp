@@ -152,6 +152,10 @@ ProcessDataStorage(ifstream &ifs,
                 string c_symbol   = sm[1].str();
                 int size          = stoi(sm[2].str());
                 string cbl_symbol = GetCommentText(input);
+                size_t nfound = cbl_symbol.find(" Record");
+                if( nfound != string::npos ) {
+                    cbl_symbol = cbl_symbol.substr(0,nfound);
+                }
 
                 cob_data.Insert(c_symbol, size, program_id, storage, cbl_symbol);
 
@@ -245,6 +249,11 @@ ProcessDataStorage(ifstream &ifs,
                     }
                     name_of_attr = sm[4].str();
                     cbl_name = GetCommentText(input);
+
+                    size_t nfound = cbl_name.find(" Record");
+                    if( nfound != string::npos ) {
+                        cbl_name = cbl_name.substr(0,nfound);
+                    }
 
                     cob_fields.Insert(c_symbol,
                                       size,

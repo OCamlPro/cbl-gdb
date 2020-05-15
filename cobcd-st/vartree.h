@@ -230,6 +230,7 @@ private:
     void ForceParent(VVAR_NODES &parents,const std::string &program_id);
     void BuildCanonicalName(VAR_NODE *var_node);
     void BuildFlatList(VAR_NODE *node,VVAR_NODES &flat);
+    void AdjustFlatList();
 
     void Consolidive(VAR_NODE *node,
                      const DATA_DESCRIPTIONS &data_description,

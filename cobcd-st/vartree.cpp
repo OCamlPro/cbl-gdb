@@ -1039,13 +1039,36 @@ DiveForVariable(        VAR_NODE *node,
 }
 
 void
+VARIABLE_TREE::AdjustFlatList()
+{
+    /*  When there is, after an 00 FILE record, an 01 variable that isn't
+        referenced in the code, you end up with that 01 not being associated
+        with a b_ base symbol.
+
+        This code scans for that situation in the flat_list, and borrows the
+        b_ base_name from the 00 parent and assigns it to the 01 child.  */
+
+    for( size_t i=1; i<flat_list.size(); i++ ) {
+        if( flat_list[i-1]->level EQ 0
+                AND flat_list[i]->base_symbol.empty()
+                AND flat_list[i-1]->program EQ flat_list[i]->program
+                AND flat_list[i]->level EQ 1 ) {
+            // This is the situation: 01 has no base_symbol, but its 00
+            // parent does.
+
+            flat_list[i]->base_symbol = flat_list[i-1]->base_symbol;
+        }
+    }
+}
+
+void
 VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_description,string &base_symbol)
 {
     if( node ) {
         VSTRING tokens = Split(node->GetCanonicalName(),"/");
-        if( tokens.size() >= 2) {
-            if( tokens.size() EQ 2) {
-                // We're starting work on a brand-new level-one variable.  We need to
+        if( tokens.size() >= 2 ) {
+            if( node->level <= 1 OR node->level EQ 77 ) {
+                // We're starting work on a brand-new level-one(ish) variable.  We need to
                 // clear out the base_symbol:
                 base_symbol = "" ;
             }
@@ -1175,6 +1198,8 @@ VARIABLE_TREE::Consolidate(const DATA_DESCRIPTIONS &data_description)
     string base_symbol="";
     Consolidive(root,data_description,base_symbol);
     BuildFlatList(root,flat_list);
+    AdjustFlatList();
+
 }
 
 void
