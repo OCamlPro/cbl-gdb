@@ -62,5 +62,8 @@
     <ClInclude Include="cobcd_py.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

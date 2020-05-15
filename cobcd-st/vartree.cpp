@@ -47,12 +47,13 @@ VAR_NODE::VAR_NODE()
     level = LEVEL_ROOT;
     occurs = 0;
     parent = nullptr;
+    data_description_index = NO_INDEX;
 
-    field_size  = 0;
-    attr_type   = 0;
-    attr_digits   = 0;
-    attr_scale  = 0;
-    attr_flags  = 0;
+    int best_size = 0;
+    int attr_type = 0;
+    int attr_digits = 0;
+    int attr_scale = 0;
+    int attr_flags = 0;
 }
 
 void
@@ -589,97 +590,103 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
 void
 VARIABLE_TREE::DumpNode(ostream &sout, const VAR_NODE *node)
 {
-    if(node !=root) {
-        if(     node->program != current_program_in_dump
-                OR  node->section != current_section_in_dump) {
-            current_program_in_dump = node->program;
-            current_section_in_dump = node->section;
+    if(node) {
+        if(node !=root) {
+            if(     node->program != current_program_in_dump
+                    OR  node->section != current_section_in_dump) {
+                current_program_in_dump = node->program;
+                current_section_in_dump = node->section;
 
-            if(node->section.empty()) {
-                sout << endl;
-                sout << "PROGRAM-ID";
-                sout << " : ";
-                sout << node->program;
-                sout << endl;
-            } else {
-                sout << endl;
-                sout << node->program;
-                sout << " : ";
-                sout << node->section;
-                sout << endl;
-            }
-        } else if(node->level >= LEVEL_FILE) // Without this, the program tries
-            // to dump LEVEL_SECTION.  It's ugly, so we stop it.
-        {
-            if(     node->level EQ LEVEL_01
-                    OR  node->level EQ LEVEL_FILE    // Special processing for FILE record
-                    OR  node->level EQ LEVEL_77 AND current_level_in_dump != 77 ) {
-                sout << endl;
-            }
-            sout.width(5);
-            sout.fill('0');
-            sout << right << node->size;
+                if(node->section.empty()) {
+                    sout << endl;
+                    sout << "PROGRAM-ID";
+                    sout << " : ";
+                    sout << node->program;
+                    sout << endl;
+                } else {
+                    sout << endl;
+                    sout << node->program;
+                    sout << " : ";
+                    sout << node->section;
+                    sout << endl;
+                }
+            } else if(node->level >= LEVEL_FILE) // Without this, the program tries
+                // to dump LEVEL_SECTION.  It's ugly, so we stop it.
+            {
+                if(     node->level EQ LEVEL_01
+                        OR  node->level EQ LEVEL_FILE    // Special processing for FILE record
+                        OR  node->level EQ LEVEL_77 AND current_level_in_dump != 77 ) {
+                    sout << endl;
+                }
+                sout.width(5);
+                sout.fill('0');
+                sout << right << node->size;
 
-            sout << " ";
-            sout.width(15);
-            sout.fill(' ');
-            sout << left << node->type;
-
-            sout << " ";
-            sout.width(2);
-            sout.fill('0');
-            sout << right << node->level;
-            current_level_in_dump = node->level;
-
-            sout << " ";
-            sout.width(30);
-            sout.fill(' ');
-            sout << left << node->name;
-
-            if(!node->picture.empty()) {
-                sout << node->picture;
                 sout << " ";
-            }
-            if(!node->usage.empty()) {
-                sout << node->usage;
-                sout << " ";
-            }
+                sout.width(15);
+                sout.fill(' ');
+                sout << left << node->type;
 
-            if(!node->redefines.empty()) {
-                sout << "REDEFINES ";
-                sout << node->redefines;
                 sout << " ";
-            }
+                sout.width(2);
+                sout.fill('0');
+                sout << right << node->level;
+                current_level_in_dump = node->level;
 
-            if(!node->occurs != 0) {
-                sout << "OCCURS ";
-                sout << node->occurs;
                 sout << " ";
-            }
+                sout.width(30);
+                sout.fill(' ');
+                sout << left << node->name;
 
-            sout << "[";
-            sout << node->canonical_name;
-            if( !node->base_symbol.empty() OR node->offset > 0 ) {
-                sout << " ";
-            }
-            sout << node->base_symbol;
-            if(node->offset > 0) {
-                sout << "+";
-                sout << node->offset;
-            }
-            sout << ':';
-            sout << node->field_symbol;
-            sout << ':';
-            sout << node->attr_symbol;
-            sout << "] ";
+                if(!node->picture.empty()) {
+                    sout << node->picture;
+                    sout << " ";
+                }
+                if(!node->usage.empty()) {
+                    sout << node->usage;
+                    sout << " ";
+                }
 
-            sout << endl;
+                if(!node->redefines.empty()) {
+                    sout << "REDEFINES ";
+                    sout << node->redefines;
+                    sout << " ";
+                }
+
+                if(node->occurs) {
+                    sout << "OCCURS ";
+                    sout << node->occurs;
+                    sout << " ";
+                }
+
+                sout << "[";
+                sout << node->canonical_name;
+                if( !node->base_symbol.empty() OR node->offset > 0 ) {
+                    sout << " ";
+                }
+                sout << node->base_symbol;
+                if(node->offset > 0) {
+                    sout << "+";
+                    sout << node->offset;
+                }
+                sout << "] ";
+
+                if( node->data_description_index != NO_INDEX ) {
+                    sout << "[";
+                    sout << node->data_description_index;
+                    sout << "] ";
+                } else {
+                    sout << "[no_index] ";
+                }
+
+                sout << endl;
+            }
         }
-    }
-    for( VVAR_NODES::const_iterator it=node->children.begin();
-            it!=node->children.end();
-            it++) {
-        DumpNode(sout,*it);
+        for( VVAR_NODES::const_iterator it=node->children.begin();
+                it!=node->children.end();
+                it++) {
+            DumpNode(sout,*it);
+        }
     }
 }
 
@@ -690,7 +697,9 @@ VARIABLE_TREE::Dump(ostream &sout)
     // Dump the whole tree, depth first:
     current_program_in_dump.clear();
     current_section_in_dump.clear();
+    cout << "VARIABLE_TREE:" << endl;
     DumpNode(sout, root);
+    cout << endl;
 }
 
 static VAR_NODE *
@@ -864,8 +873,8 @@ VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
             var_node->parent = grampa->parent;
             grampa->parent->children.push_back(var_node);
 
-            // We need to eliminate ourself one from our parent's level.
-            // We will find ourself, and just null out the pointer:
+            // We need to eliminate ourself from our parent's level.
+            // We will find ourself, and NULL us out:
 
             for(size_t i=0; i<var_node->parent->children.size(); i++) {
                 if( var_node->parent->children[i] EQ var_node ) {
@@ -937,11 +946,10 @@ VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
     if( var_node->level != LEVEL_66 ) {
         // Now it's time to build the canonical name
         // Walk down to the bottom of the variable nodes:
-        for(VVAR_NODES::const_iterator child=var_node->children.begin();
-                child!=var_node->children.end();
-                child++) {
-            if( *child != NULL ) {
-                BuildCanonicalName(*child);
+        for(size_t i=0; i<var_node->children.size(); i++ ) {
+            VAR_NODE *child = var_node->children[i];
+            if( child != NULL ) {
+                BuildCanonicalName(child);
             }
         }
     }
@@ -983,126 +991,6 @@ VARIABLE_TREE::BuildCanonicalName()
 }
 
 void
-VARIABLE_TREE::AssignBaseSymbol(VAR_NODE *node,const MPSS &symmap)
-{
-    // Walk the whole trie, seeing if node can be modified
-    // with the information in symmap
-
-    if( node EQ NULL ) {
-        // This one must've been moved by a RENAMES clause
-        return;
-    }
-
-    PSS prog_var_pair;
-    string name_to_try = node->redefines;
-    if(name_to_try.empty()) {
-        name_to_try = node->canonical_name;
-    }
-
-    if(node->base_symbol.empty()) {
-        // We do this only once:
-        vector<string>names = Split(name_to_try,"/");
-        if(names.size() >= 2) {
-            // We have at least a root/program at the end of the list
-            // Pick up program
-            prog_var_pair.first = names.back();
-            names.pop_back();
-            // Pick up the root name
-            prog_var_pair.second = names.back();
-
-            // See if we've got this in our map
-            MPSS::const_iterator it = symmap.find(prog_var_pair);
-            if(it != symmap.end()) {
-                // If so, assign the b_symbol
-                node->base_symbol = it->second;
-
-                // If anybody referenced us in a 66/RENAMES variable, now is
-                // when we have to apply the base_symbol to that node, as
-                // well as ourselves:
-                for( size_t i=0; i<node->renamed_by.size(); i++) {
-                    node->renamed_by[i]->base_symbol = it->second;
-                }
-            }
-        }
-    }
-
-    for(VVAR_NODES::const_iterator child=node->children.begin();
-            child!=node->children.end();
-            child++) {
-        AssignBaseSymbol(*child,symmap);
-    }
-}
-
-void
-VARIABLE_TREE::AssignBaseSymbol(VAR_NODE *node,
-                                const MPSSI &symmap,
-                                const DATA_DESCRIPTIONS &data_description)
-{
-    cout << node->canonical_name << endl;
-
-
-
-    PSS prog_var_pair;
-    string name_to_try = node->redefines;
-    if(name_to_try.empty()) {
-        name_to_try = node->canonical_name;
-    }
-
-    vector<string>names = Split(name_to_try,"/");
-    if(names.size() >= 2) {
-        // We have at least a root/program at the end of the list
-        // Pick up program
-        prog_var_pair.first = names.back();
-        names.pop_back();
-        // Pick up the root name
-        prog_var_pair.second = names[0];
-
-        // See if we've got this in our map
-        MPSSI::const_iterator it = symmap.find(prog_var_pair);
-        if(it != symmap.end()) {
-            // If so, assign the b_symbol
-            int dd_index = it->second;
-
-            node->base_symbol = data_description[dd_index].field_data_pointer;
-            node->attr_symbol = data_description[dd_index].field_attr_pointer;
-
-            if( node->base_symbol.empty() ) {
-                // This must be a "Storage" record with no matching "Field"
-                node->base_symbol = data_description[dd_index].undecorated_symbol;
-            }
-        }
-    }
-    for(VVAR_NODES::const_iterator child=node->children.begin();
-            child!=node->children.end();
-            child++) {
-        AssignBaseSymbol(*child,symmap,data_description);
-    }
-}
-
-void
-VARIABLE_TREE::BuildBaseOffsetPointers(VAR_NODE *node,VBOP &vbop)
-{
-    if( node EQ NULL ) {
-        // This one must've been moved by a RENAMES clause
-        return;
-    }
-    BOP base_offset_pointer;
-
-    if(node->canonical_name.find("/") != string::npos) {
-        base_offset_pointer.base_symbol = node->base_symbol;
-        base_offset_pointer.offset      = node->offset;
-        base_offset_pointer.pvar_node   = node;
-        vbop.push_back(base_offset_pointer);
-    }
-
-    for(VVAR_NODES::const_iterator child=node->children.begin();
-            child!=node->children.end();
-            child++) {
-        BuildBaseOffsetPointers(*child,vbop);
-    }
-}
-
-void
 VARIABLE_TREE::BuildFlatList(VAR_NODE *node,VVAR_NODES &flat)
 {
     if( node EQ NULL ) {
@@ -1117,133 +1005,6 @@ VARIABLE_TREE::BuildFlatList(VAR_NODE *node,VVAR_NODES &flat)
             child!=node->children.end();
             child++) {
         BuildFlatList(*child,flat);
-    }
-}
-
-void
-VARIABLE_TREE::MergeWorkingStorage(const DATA_DESCRIPTIONS &data_description)
-{
-    /*  Each WORKING-STORAGE root variable, typically with levels 01 or 77,
-    and more generally variables who have no parents although 01 is
-    generally used, there's actually no requirement that the level be 01),
-    has a b_ symbol.
-
-    */
-
-    // Build a list of program/root pairs and their b_ symbols:
-
-    MPSS prog_var_b_symbol;
-
-    for(int i=0; i<data_description.size(); i++) {
-        DATA_DESCRIPTION dd = data_description[i];
-        if( dd.storage_type EQ "Storage" OR dd.storage_type EQ "Linkage") {
-            PSS prog_var;
-            prog_var.first  = dd.program_id;
-            prog_var.second = dd.cbl_symbol;
-
-            //  Special handling.  File records are of the form
-            //  "PRINT-FILE Record".  We have to strip out that egregious
-            //  extraneous information:
-            size_t nfound = prog_var.second.find(" Record");
-            if(nfound != string::npos) {
-                prog_var.second = prog_var.second.substr(0,nfound);
-            }
-
-            prog_var_b_symbol[prog_var] = dd.undecorated_symbol;
-        }
-    }
-
-    // Hand that map to a depth-first search that assigns the undecorated
-    // base_address symbol to the program/root portion of each identifier.
-    AssignBaseSymbol(root,prog_var_b_symbol);
-
-    // Given that we now have a base_symbol to go along with the offset
-    // to every canonical identifier, we can now look through the data
-    // descriptions for matching base/offset pairs and assign the associated
-    // field_symbol to each canonical identifier.
-
-    // The fillip is handling redefines.  The data_descriptions can have
-    // multiple identifier sub-pieces that point to the same base+offset,
-    // but data_descriptions has no information about the variable level.
-    //
-    // It turns out we can figure this all out based on the ordering.
-    // Although the data_descriptions and our variable_tree were built from
-    // separate sources, the order in which the variables were presented
-    // to each source was the same.  So, we can actually assign field/attribute
-    // symbols to our canonical names on that basis.
-
-    // Build a flat vector of <base/offset , VAR_NODE *> pairs:
-    BuildBaseOffsetPointers(root,vbop);
-
-    // With the base/offsets assigned, we can now look to assigning
-    // field/attribute symbols to our variable_tree.  The variable_tree has
-    // entries for every cobol identifier, since it was built from an
-    // listing file close to the source code.  We don't necessarily have
-    // a field/attribute entry for every identifier, since that listing
-    // was created further downstream, and it appears that GnuCOBOL doesn't
-    // create entries for variables that aren't referenced by the source
-    // code.
-
-    // The monkey wrench in the works:  Redefines.  Multiple names can
-    // use the same base/offset pairing.  Hence this refinement:
-
-    // Using a key of base/offset/name, we'll build a map pointing into
-    // the data_description entries.  We'll then walk through vbop, and use
-    // that map to make the assignments.
-
-    map<string,int> field_attribute_lookup;
-
-    for(int i=0; i<data_description.size(); i++) {
-        if(data_description[i].storage_type EQ "Field") {
-            stringstream ss;
-            ss << data_description[i].field_data_pointer;
-            ss << "/";
-            if( data_description[i].field_data_offset.empty() ) {
-                ss << "0";
-            } else {
-                ss << data_description[i].field_data_offset;
-            }
-            ss << "/";
-            ss << data_description[i].cbl_symbol;
-            field_attribute_lookup[ss.str()] = i;
-        }
-    }
-
-    // We can now walk vbop, looking for those base/offset/name entries.
-
-    // When we find them, we copy over the field/attribute information from
-    // data_description to the node
-
-    for(size_t i=0; i<vbop.size(); i++) {
-        stringstream ss;
-        ss << vbop[i].base_symbol;
-        ss << "/";
-        ss << vbop[i].offset;
-        ss << "/";
-        ss << vbop[i].pvar_node->name;
-        map<string,int>::const_iterator it
-            = field_attribute_lookup.find(ss.str());
-        if(it != field_attribute_lookup.end()) {
-            int j = it->second;
-            vbop[i].pvar_node->field_symbol
-                = data_description[j].undecorated_symbol;
-            vbop[i].pvar_node->attr_symbol
-                = data_description[j].field_attr_pointer;
-
-            vbop[i].pvar_node->field_size  = data_description[j].field_size;
-
-            string attr_symbol = vbop[i].pvar_node->attr_symbol;
-            if( !attr_symbol.empty() ) {
-                // Look up the attribute symbol in data_description:
-                int k = data_description.IndexOfSymbol(attr_symbol);
-                if(k > -1) {
-                    vbop[i].pvar_node->attr_type   = data_description[k].attr_type;
-                    vbop[i].pvar_node->attr_digits = data_description[k].attr_digits;
-                    vbop[i].pvar_node->attr_scale  = data_description[k].attr_scale;
-                    vbop[i].pvar_node->attr_flags  = data_description[k].attr_flags;
-                }
-            }
-        }
     }
 }
 
@@ -1277,82 +1038,213 @@ DiveForVariable(        VAR_NODE *node,
     return retval;
 }
 
-
 void
-VARIABLE_TREE::MergeLocalStorage(const DATA_DESCRIPTIONS &data_description)
+VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_description,string &base_symbol)
 {
+    if( node ) {
+        VSTRING tokens = Split(node->GetCanonicalName(),"/");
+        if( tokens.size() >= 2) {
+            if( tokens.size() EQ 2) {
+                // We're starting work on a brand-new level-one variable.  We need to
+                // clear out the base_symbol:
+                base_symbol = "" ;
+            }
 
+            string program_id = tokens.back();
+            string cbl_symbol = tokens[0];
+            int offset = node->GetOffset();
+
+            // See if we have a data_descriptions entry for that cbl_symbol
+            size_t index = NO_INDEX;
+            if( data_description.IsInDs(program_id,cbl_symbol,offset) ) {
+                // We do!  Save the index
+                index = data_description.GetIndex(program_id,cbl_symbol,offset);
+                node->data_description_index = index;
+            } else if( data_description.IsInDs(program_id,cbl_symbol) ) {
+                // We didn't find one specifically at that offset, but there is
+                // non-specific entry (which happens when COBOL code doesn't
+                // actually reference the variable
+                index = data_description.GetIndex(program_id,cbl_symbol);
+                node->data_description_index = index;
+            }
+
+            if( index EQ NO_INDEX AND !node->redefines.empty() ) {
+                // We couldn't find ourself with our own name.  Perhaps we
+                // can borrow our base_symbol from an older sibling.
+                VSTRING tokes = Split(node->redefines,"/");
+
+                if( data_description.IsInDs(program_id,tokes[0],offset) ) {
+                    // We can!  Save the index
+                    index = data_description.GetIndex(program_id,tokes[0],offset);
+                } else if ( data_description.IsInDs(program_id,tokes[0]) ) {
+                    index = data_description.GetIndex(program_id,tokes[0],offset);
+                }
+                if( index != NO_INDEX ) {
+                    DATA_DESCRIPTION symbol = data_description[index];
+                    if( base_symbol.empty() and !symbol.c_symbol.empty() ) {
+                        // Replace our empty base_symbol with the one from data_descriptions
+                        base_symbol = data_description[index].c_symbol;
+                    }
+                    node->base_symbol = data_description[index].c_symbol;
+                }
+
+                // We can't take anything except the base_symbol; none of the
+                // rest of our sibling's fields are relevant:
+                index = NO_INDEX;
+            }
+
+            if( index != NO_INDEX ) {
+                DATA_DESCRIPTION symbol = data_description[index];
+                if( base_symbol.empty() and !symbol.c_symbol.empty() ) {
+                    // Replace our empty base_symbol with the one from data_descriptions
+                    base_symbol = data_description[index].c_symbol;
+                }
+                // Here is where we combine the VARIABLE_TREE data with the DATA_DESCRIPTIONS
+                // data to create everything we need:
+
+                if( symbol.storage_size EQ 0 ) {
+                    node->best_size = symbol.field_size;
+                } else if( symbol.field_size EQ 0 ) {
+                    node->best_size = symbol.storage_size;
+                } else {
+                    node->best_size = symbol.field_size;
+                }
+
+                if( node->picture.empty() ) {
+                    node->best_picture = symbol.picture_string;
+                } else if ( symbol.picture_string.empty() ) {
+                    node->best_picture = node->picture;
+                } else {
+                    // If they're both on, go with the one from the listing file
+                    node->best_picture = node->picture;
+                }
+                node->base_symbol  = symbol.c_symbol    ;
+
+                node->attr_type    = symbol.attr_type   ;
+                node->attr_digits  = symbol.attr_digits ;
+                node->attr_scale   = symbol.attr_scale  ;
+                node->attr_flags   = symbol.attr_flags  ;
+            } else {
+                node->best_size = node->size;
+                node->best_picture = node->picture;
+            }
+
+            // We might have a new base_symbol at this point; if we do, apply it to
+            // this node:
+
+            if( node->base_symbol.empty() AND !base_symbol.empty() ) {
+                node->base_symbol = base_symbol;
+            }
+
+            // And our work here is done:
+        }
+
+        for( auto child : node->children ) {
+            // Check our children
+            Consolidive(child,data_description,base_symbol);
+
+            if( !base_symbol.empty() AND node->base_symbol.empty() ) {
+                // One of our descendents has a base_address, and we don't.  I'm not really
+                // sure that can happen, but just in case, propogate that base_symbol
+                // upward:
+                node->base_symbol = base_symbol;
+            }
+        }
+    }
 }
 
 void
-VARIABLE_TREE::Merge(const DATA_DESCRIPTIONS &data_description)
+VARIABLE_TREE::Consolidate(const DATA_DESCRIPTIONS &data_description)
 {
-    CPROFILER;
-    /*  We are now going to play a nice game of Symbol Table Sudoku
+    // data_description has f_ and b_ entries for working-storage and linkage
+    // variables that are referenced in the COBOL code
 
-    On what I conceptualize as the left side is the trie we built up from
-    the COBOL identifiers list at the end of .cbl.lst
+    // It has b_ entries without f_ entries for level 01 variables that are
+    // declared, but not referenced.
 
-    The characteristic of that trie is that it has the canonical (fully-
-    qualified) A/B/C/program-id identifiers, including the size of each
-    variable and the level of each variable, and which of the INPUT-OUTPUT,
-    WORKING-STORAGE, LOCAL-STORAGE, and LINKAGE sections it came from.
+    // It has f_ entries without b_ entries for referenced local-storage variables
 
-    What it does *not* have is any clue of where in memory it can be found.
+    // The data_description entries have partial variable name entries; for example
+    // The variable 01 HOUSE. 05 GARAGE. 10 FLOOR X(12). has commented entries
+    // in the .h file for HOUSE and FLOOR, but nothing for GARAGE or BEDROOM.
 
-    Because the canonical naming is heirarchical, and because we are given
-    the length of each named variable in the heirarchy, we are able to
-    calculate the offset to each piece of the A/B/C/program-id heirarchy.
+    // We sort that out by walking the tree and matching the fully-qualified
+    // canonical name already in the variable tree with the partial entries in
+    // data_description.
 
-    On the right side of my visualization, we have the data_description
-    entries.  Those have two pieces of the variable name: a name fragment,
-    and the program it came from.  It does not have the whole canonical
-    name, and it doesn't tell us the level.
-
-    Here are the rules of the game:
-
-    1)  Every WORKING-STORAGE level-01 identifier has a storage_type =
-    "Storage" record with the b_ identifier in the undecorated_name
-    field.
-
-    2)  Every variable that is referenced in the program has a storage_type
-    = "Field" entry.  That entry has the f_ identifier in the
-    undecorated_name field.  It has the number of bytes in the
-    field_size filed.  The base address is found in field_data_pointer,
-    the attribute address is in the field_attr_pointer, and the
-    offset from the base address is found in field_data_offset
-
-    3)  LOCAL-STORAGE variables do not have a b_ symbol for the base
-    address.  Those, instead, have 'cob_local_ptr' in the
-    field_data_pointer field of a "Field" entry.
-
-    4)  LINKAGE storage does have b_ identifiers in field_data_pointer
-    field.  They also have undecorated_symbol entries ultimately created
-    by information found in cob_check_linkage() calls found int the .c code
-    commented into the .lst file.  So the association there is similar to the
-    one for WORKING-STORAGE
-
-    For each entry on the left side (the trie starts at 'root') we
-    will work to find the matching entries on the right (data_description)
-    side, and copy information from the right to the left.
-
-    We are, actually, able to figure out a lot of things.  Where we can't
-    manage is when variables are created that are never used.  If they
-    aren't used, no "Field" entries are created.  If none of a heirarchy
-    is accessed, then the best we can do is figure out where it is; we
-    can't get many of the attributes (which are specified in the Field
-    entry.)
-
-    Let's have at it, shall we?
-
-    */
-
-    MergeWorkingStorage(data_description);
-    MergeLocalStorage(data_description);
-
-
-    // With that all done, build a flat list of VAR_NODE pointers
+    string base_symbol="";
+    Consolidive(root,data_description,base_symbol);
     BuildFlatList(root,flat_list);
 }
 
+void
+VARIABLE_TREE::DumpFlatList() const
+{
+    cout << "VARIABLE_TREE::FlatList:" << endl;
+    cout << setw(20) << "program";
+    cout << setw(20) << "section";
+    cout << setw( 5) << "size";
+    cout << setw(13) << "type";
+    cout << setw( 6) << "level";
+    cout << setw(42) << "name";
+    cout << setw(16) << "picture";
+    cout << setw( 8) << "usage";
+    cout << setw(20) << "redefines";
+    cout << setw( 7) << "occurs";
+    cout << setw(42) << "canonical_name";
+    cout << setw( 5) << "base";
+    cout << setw( 7) << "offset";
+    cout << setw( 6) << "bsize";
+    cout << setw(16) << "bpicture";
+    cout << setw( 6) << "atype";
+    cout << setw( 6) << "adigits";
+    cout << setw( 7) << "ascale";
+    cout << setw( 7) << "aflags";
+    cout << endl;
+    for( auto node : flat_list ) {
+        cout << setw(20) << node->program;
+        cout << setw(20) << node->section;
+        cout << setw( 5) << node->size;
+        cout << setw(13) << node->type;
+        cout << setw( 6) << node->level;
+        cout << setw(42) << node->name;
+        cout << setw(16) << node->picture;
+        cout << setw( 8) << node->usage;
+        cout << setw(20) << node->redefines;
+        cout << setw( 7) << node->occurs;
+        cout << setw(42) << node->canonical_name;
+        cout << setw( 5) << node->base_symbol;
+        cout << setw( 7) << node->offset;
+        cout << setw( 6) << node->best_size;
+        cout << setw(16) << node->best_picture;
+        cout << setw( 6) << node->attr_type;
+        cout << setw( 6) << node->attr_digits;
+        cout << setw( 7) << node->attr_scale;
+        cout << setw( 7) << node->attr_flags;
+        cout << endl;
+    }
+    cout << endl;
+}
+
+void
+VARIABLE_TREE::FormatVariablesInfo(stringstream &ss) const
+{
+    for( auto node : flat_list ) {
+        ss << "D|";
+        ss << node->section.substr(0,2) << "|";
+        ss << ZeroIsNull(node->level) << "|" ;
+        ss << node->canonical_name << "|" ;
+        ss << node->base_symbol << "|" ;
+        ss << ZeroIsNull(node->offset) << "|" ;
+        ss << node->type.substr(0,1) << "|" ;
+        ss << ZeroIsNull(node->best_size) << "|" ;
+        ss << node->best_picture << "|" ;
+        ss << node->usage << "|" ;
+        ss << ZeroIsNull(node->occurs) << "|" ;
+        ss << ZeroIsNull(node->attr_type) << "|" ;
+        ss << ZeroIsNull(node->attr_digits) << "|" ;
+        ss << ZeroIsNull(node->attr_scale) << "|" ;
+        ss << ZeroIsNull(node->attr_flags) << "~";
+    }
+}
 

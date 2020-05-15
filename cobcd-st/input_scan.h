@@ -33,11 +33,14 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <fstream>
 #include <regex>
 #include <sstream>
+#include <iomanip>
 #include "profiler.h"
 #include "utils.h"
+#include "vartree.h"
 
 #ifndef EQ
 #define EQ ==
@@ -46,103 +49,405 @@
 #define NEEDED_TO_DEFINE_EQ
 #endif
 
-std::string GetCommentText(const std::string &s);
 
-class GAS_SYMBOL
+//////////////////////////////////////////////////////////////////////////
+// These data structures are based on from GnuCOBOL3.1-dev/libcob/common.h
+//////////////////////////////////////////////////////////////////////////
+
+/*  It should be noted that we have two, or perhaps three, sources of
+    of data size.  There is the summary in source.cbl.list, there is
+    the size in COB_DATA, and there is the size field in COB_FIELD.
+
+    I've seen cases where they don't quite match.  There will be code to
+    check that, but wariness is indicated.  RJD, 2020-05-12
+    */
+
+class COB_PIC_SYMBOLS;
+class COB_PIC_SYMBOL
 {
 public:
-    int line_number;
-    std::string gas_section;
-    std::string gas_symbol;
-    std::string undecorated_symbol;
-    std::string field_data_pointer;
-    std::string field_data_offset;
-    LONGLONG gas_value;
-
-    GAS_SYMBOL()
+    std::string         name;       /* name of pic_symbol */
+    std::string         pic_symbol;
+public:
+    COB_PIC_SYMBOL(const std::string &n, const std::string &p)
     {
-        line_number = 0;
-        gas_value = 0;
+        name = n;
+        pic_symbol = p;
+    }
+    friend COB_PIC_SYMBOLS;
+};
+typedef std::vector<COB_PIC_SYMBOL> V_COB_PIC_SYMBOLS;
+typedef std::unordered_map<std::string,size_t> M_COB_PIC_SYMBOLS;
+
+class COB_PIC_SYMBOLS
+{
+private:
+    V_COB_PIC_SYMBOLS v_pic_symbols;
+    M_COB_PIC_SYMBOLS m_pic_symbols;
+
+public:
+    COB_PIC_SYMBOLS()
+    {
+    }
+    void
+    Insert(const std::string &name, const std::string &pic_symbol)
+    {
+        M_COB_PIC_SYMBOLS::const_iterator it = m_pic_symbols.find(name);
+        if( it != m_pic_symbols.end() ) {
+            std::cout << "Creating the symbol " << name << " more than once in COB_PIC_SYMBOLS::Insert()\n" ;
+            exit(1);
+        }
+
+        COB_PIC_SYMBOL cps(name, pic_symbol);
+        m_pic_symbols[name] = v_pic_symbols.size();
+        v_pic_symbols.push_back(cps);
+    }
+    void
+    Dump() const
+    {
+        std::cout << "COB_PIC_SYMBOLS:" << std::endl;
+        std::cout << std::setw(20) << "name" ;
+        std::cout << " ";
+        std::cout << std::setw(20) << "pic_symbol";
+        std::cout << std::endl;
+        for( auto symbol : v_pic_symbols) {
+            std::cout << std::setw(20) << symbol.name ;
+            std::cout << " ";
+            std::cout << std::setw(20) << symbol.pic_symbol;
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+    }
+    const COB_PIC_SYMBOL *
+    GetPicSymbol(std::string const &pic_name) const
+    {
+        const COB_PIC_SYMBOL *retval = nullptr;
+        M_COB_PIC_SYMBOLS::const_iterator it = m_pic_symbols.find(pic_name);
+        if( it != m_pic_symbols.end() ) {
+            retval = &v_pic_symbols[it->second];
+        }
+        return retval;
     }
 };
 
-class GAS_SYMBOLS
+class COB_DATA;
+class COB_DATUM
 {
-protected:
-    typedef std::vector<GAS_SYMBOL> VGAS_SYMBOLS;
+public:
+    std::string         name;         /* name of data field */
+    int                 size;         /* size of the field  */
+    std::string         program_id;   /* From a header comment*/
+    std::string         storage_type; /* From .h file structure*/
+    std::string         cbl_name;     /* From the comment in the .h code */
 
-    VGAS_SYMBOLS symbols;
-    std::unordered_map<std::string,size_t>gas_undecorated_symbol_location;
-    std::unordered_map<std::string,size_t> reverse_gas_symbol_location;
-
-    std::string
-    SectionValueCombiner(const std::string &section,LONGLONG value) const
+public:
+    COB_DATUM(const std::string &name_,
+              int size_,
+              const std::string &program_id_,
+              const std::string &storage_,
+              const std::string &cbl_name_)
     {
-        std::stringstream ss;
-        ss<<value;
-        return section + ":" + ss.str();
+        name = name_;
+        size = size_;
+        program_id = program_id_;
+        storage_type = storage_;
+        cbl_name = cbl_name_;
+    }
+    friend COB_DATA;
+} ;
+typedef std::vector<COB_DATUM> V_COB_DATUM;
+typedef std::unordered_map<std::string,size_t> M_COB_DATUM;
+
+class COB_DATA
+{
+public:
+    V_COB_DATUM v_data;
+    M_COB_DATUM m_data;
+
+public:
+    COB_DATA()
+    {
+    }
+    void
+    Insert(const std::string &name,
+           int size,
+           const std::string &program_id,
+           const std::string &storage,
+           const std::string &cbl_name)
+    {
+        M_COB_DATUM::const_iterator it = m_data.find(name);
+        if( it != m_data.end() ) {
+            std::cout << "Creating the symbol " << name << " more than once in COB_DATA::Insert()\n" ;
+            exit(1);
+        }
+
+        COB_DATUM cd(name, size, program_id, storage, cbl_name);
+        m_data[name] = v_data.size();
+        v_data.push_back(cd);
     }
 
     void
-    SectionValueSplitter(const std::string &combined,std::string &section, LONGLONG &value)
+    Dump() const
     {
-        section.clear();
-        value = 0;
-        size_t nfound = combined.find_last_of(':');
-        if(nfound != std::string::npos) {
-            section = combined.substr(0,nfound);
-            value = stoll(combined.substr(nfound+1));
+        std::cout << "COB_DATA:" << std::endl;
+        std::cout << std::setw(20) << "name" ;
+        std::cout << std::setw(20) << "size";
+        std::cout << std::setw(20) << "program_id";
+        std::cout << std::setw(20) << "storage";
+        std::cout << std::setw(20) << "cbl_name";
+        std::cout << std::endl;
+        for( auto symbol : v_data) {
+            std::cout << std::setw(20) << symbol.name ;
+            std::cout << std::setw(20) << symbol.size;
+            std::cout << std::setw(20) << symbol.program_id;
+            std::cout << std::setw(20) << symbol.storage_type;
+            std::cout << std::setw(20) << symbol.cbl_name;
+            std::cout << std::endl;
         }
+        std::cout << std::endl;
     }
+
+    const COB_DATUM *
+    GetCobDatum(const std::string &b_name) const
+    {
+        const COB_DATUM *retval = nullptr;
+        M_COB_DATUM::const_iterator it = m_data.find(b_name);
+        if( it != m_data.end() ) {
+            retval = &v_data[it->second];
+        }
+
+        return retval;
+    }
+
+};
+
+class COB_FIELD_ATTRIBUTES;
+class COB_FIELD_ATTRIBUTE
+{
+public:
+    std::string         name;       /* name of attribute */
+    unsigned short      type;       /* Field type        */
+    unsigned short      digits;     /* Digit count       */
+    signed short        scale;      /* Field scale       */
+    unsigned short      flags;      /* Field flags       */
+    std::string         name_of_pic;/* picture string    */
+    std::string         program_id; /* picture string    */
 
 public:
-    void GetSymbolsFromFile(const std::string &source, const std::string &scope, std::ifstream &ifs);
-
-    GAS_SYMBOL
-    FindGasSymbol(const std::string &sym) const
+    COB_FIELD_ATTRIBUTE(std::string         name_,
+                        unsigned short      type_,
+                        unsigned short      digits_,
+                        signed short        scale_,
+                        unsigned short      flags_,
+                        std::string         name_of_pic_,
+                        std::string         program_id_)
     {
-        GAS_SYMBOL retval;
-        if(!sym.empty()) {
-            std::unordered_map<std::string,size_t>::const_iterator it = gas_undecorated_symbol_location.find(sym);
-            if(it != gas_undecorated_symbol_location.end()) {
-                retval = symbols[it->second];
-            }
+        name        = name_          ;
+        type        = type_          ;
+        digits      = digits_        ;
+        scale       = scale_         ;
+        flags       = flags_         ;
+        name_of_pic = name_of_pic_   ;
+        program_id  = program_id_    ;
+    }
+    friend COB_FIELD_ATTRIBUTES;
+} ;
+typedef std::vector<COB_FIELD_ATTRIBUTE> V_COB_FIELD_ATTRIBUTE;
+typedef std::unordered_map<std::string,size_t> M_COB_FIELD_ATTRIBUTES;
+
+class COB_FIELD_ATTRIBUTES
+{
+public:
+    V_COB_FIELD_ATTRIBUTE  v_cob_field_attributes;
+    M_COB_FIELD_ATTRIBUTES m_cob_field_attributes;
+
+public:
+    COB_FIELD_ATTRIBUTES()
+    {
+    }
+    void
+    Insert(std::string         name,       /* name of attribute */
+           unsigned short      type,       /* Field type        */
+           unsigned short      digits,     /* Digit count       */
+           signed short        scale,      /* Field scale       */
+           unsigned short      flags,      /* Field flags       */
+           std::string         name_of_pic,/* picture string    */
+           std::string         program_id) /* picture string    */
+    {
+        M_COB_FIELD_ATTRIBUTES::const_iterator it = m_cob_field_attributes.find(name);
+        if( it != m_cob_field_attributes.end() ) {
+            std::cout << "Creating the symbol " << name << " more than once in COB_FIELD_ATTRIBUTES::Insert()\n" ;
+            exit(1);
         }
-        return retval;
+
+        COB_FIELD_ATTRIBUTE cfa(name,
+                                type,
+                                digits,
+                                scale,
+                                flags,
+                                name_of_pic,
+                                program_id);
+        m_cob_field_attributes[name] = v_cob_field_attributes.size();
+        v_cob_field_attributes.push_back(cfa);
     }
 
-    GAS_SYMBOL
-    FindGasValue(const std::string &section,LONGLONG value) const
+    void
+    Dump() const
     {
-        GAS_SYMBOL retval;
-        const std::string sectionvalue = SectionValueCombiner(section,value);
-
-        std::unordered_map<std::string,size_t>::const_iterator it = reverse_gas_symbol_location.find(sectionvalue);
-        if(it != reverse_gas_symbol_location.end()) {
-            retval = symbols[it->second];
+        std::cout << "COB_FIELD_ATTRIBUTES:" << std::endl;
+        std::cout << std::setw(20) << "name" ;
+        std::cout << std::setw(20) << "type";
+        std::cout << std::setw(20) << "digits";
+        std::cout << std::setw(20) << "scale" ;
+        std::cout << std::setw(20) << "flags";
+        std::cout << std::setw(20) << "name_of_pic";
+        std::cout << std::setw(20) << "program_id";
+        std::cout << std::endl;
+        for( auto attr : v_cob_field_attributes) {
+            std::cout << std::setw(20) << attr.name ;
+            std::cout << std::setw(20) << attr.type;
+            std::cout << std::setw(20) << attr.digits;
+            std::cout << std::setw(20) << attr.scale ;
+            std::cout << std::setw(20) << attr.flags;
+            std::cout << std::setw(20) << attr.name_of_pic;
+            std::cout << std::setw(20) << attr.program_id;
+            std::cout << std::endl;
         }
+        std::cout << std::endl;
+    }
+
+    const COB_FIELD_ATTRIBUTE *
+    GetFieldAttribute(const std::string &a_name) const
+    {
+        const COB_FIELD_ATTRIBUTE *retval = nullptr;
+        M_COB_FIELD_ATTRIBUTES::const_iterator it = m_cob_field_attributes.find(a_name);
+        if( it != m_cob_field_attributes.end() ) {
+            retval = &v_cob_field_attributes[it->second];
+        }
+
         return retval;
-    }
-
-    void UpdateBaseOffset(std::string symbol, std::string base, std::string offset);
-
-
-    int
-    size() const
-    {
-        return static_cast<int>(symbols.size());
-    }
-
-    const GAS_SYMBOL &
-    operator[](int n) const
-    {
-        return symbols[n];
     }
 };
 
-class COB_LABEL
+class COB_FIELDS;
+class COB_FIELD
 {
 public:
+    std::string               name;         /* name of field         */
+    int                       size;         /* Field size            */
+    std::string               name_of_data; /* name of data field    */
+    int                       offset;       /* any internal + offset */
+    std::string               name_of_attr; /* name of attribute     */
+    std::string               program_id;   /* Where defined         */
+    std::string               cbl_name;     /* From the comment in the .h code */
+
+public:
+    COB_FIELD(std::string name_,
+              int         size_,
+              std::string data_,
+              int         offset_,
+              std::string attr_,
+              std::string program_id_,
+              std::string cbl_name_)
+    {
+        name         = name_      ;
+        size         = size_      ;
+        name_of_data = data_      ;
+        offset       = offset_    ;
+        name_of_attr = attr_      ;
+        program_id   = program_id_;
+        cbl_name     = cbl_name_  ;
+    }
+
+    friend COB_FIELDS;
+} ;
+typedef std::vector<COB_FIELD> V_COB_FIELDS;
+typedef std::unordered_map<std::string,size_t> M_COB_FIELDS;
+
+class COB_FIELDS
+{
+private:
+    M_COB_FIELDS m_cob_fields;
+
+public:
+    V_COB_FIELDS v_cob_fields;
+
+public:
+    void
+    Insert(std::string name,
+           int         size,
+           std::string name_of_data,
+           int         offset,
+           std::string name_of_attr,
+           std::string program_id,
+           std::string cbl_name)
+    {
+        M_COB_FIELDS::const_iterator it = m_cob_fields.find(name);
+        if( it != m_cob_fields.end() ) {
+            std::cout << "Creating the symbol " << name << " more than once in COB_FIELDS::Insert()\n" ;
+            exit(1);
+        }
+        COB_FIELD cf(name,
+                     size,
+                     name_of_data,
+                     offset,
+                     name_of_attr,
+                     program_id,
+                     cbl_name);
+        m_cob_fields[name] = v_cob_fields.size();
+        v_cob_fields.push_back(cf);
+    }
+
+    void
+    Modify(std::string name_,
+           std::string name_of_data_,
+           int         offset_)
+    {
+        M_COB_FIELDS::iterator it = m_cob_fields.find(name_);
+        if( it EQ m_cob_fields.end() ) {
+            std::cout << "Couldn't modify symbol " << name_ << " COB_FIELDS::Modify()\n" ;
+            exit(1);
+        }
+        size_t i = it->second;
+        v_cob_fields[i].name_of_data = name_of_data_;
+        v_cob_fields[i].offset = offset_;
+    }
+
+    void
+    Dump() const
+    {
+        std::cout << "COB_FIELDS:" << std::endl;
+        std::cout << std::setw(20) << "name" ;
+        std::cout << std::setw(20) << "size";
+        std::cout << std::setw(20) << "name_of_data";
+        std::cout << std::setw(20) << "offset" ;
+        std::cout << std::setw(20) << "name_of_attr";
+        std::cout << std::setw(20) << "program_id";
+        std::cout << std::setw(20) << "cbl_name";
+        std::cout << std::endl;
+        for( auto field : v_cob_fields) {
+            std::cout << std::setw(20) << field.name ;
+            std::cout << std::setw(20) << field.size;
+            std::cout << std::setw(20) << field.name_of_data;
+            std::cout << std::setw(20) << field.offset ;
+            std::cout << std::setw(20) << field.name_of_attr;
+            std::cout << std::setw(20) << field.program_id;
+            std::cout << std::setw(20) << field.cbl_name;
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+    }
+};
+
+class COB_PROGRAM_LABELS;
+class COB_PROGRAM_LABEL
+{
+private:
+    char type;
+    // P for PROGRAM-ID
+    // E for ENTRY
+    // S for SECTION
+    // G for PARAGRAPH
     std::string source_file;
     int line_number;
     int sentence_number;
@@ -150,104 +455,146 @@ public:
     std::string entry;
     std::string section;
     std::string paragraph;
-    std::string gas_section;
-    std::string gas_symbol;
-    LONGLONG   gas_value;
-
-    COB_LABEL()
-    {
-        line_number = -1;
-        sentence_number = -1;
-        gas_value = 0;
-    }
-};
-typedef std::vector<COB_LABEL>VCOB_LABEL;
-
-class COB_LABELS
-{
-protected:
-    VCOB_LABEL          symbols;
-    std::unordered_map<std::string,int>program_id_lines;
 
 public:
-    void GetProgramIdLineNumbers(const std::string &source, const std::string &scope, std::ifstream &ifs, GAS_SYMBOLS &gas_symbol_table);
-    void GetSymbolsFromFile(const std::string &source, const std::string &scope, std::ifstream &ifs, GAS_SYMBOLS &gas_symbol_table);
-    void MergeGasSymbols(const GAS_SYMBOLS &gas_symbol_table);
-
-    int
-    size() const
+    COB_PROGRAM_LABEL(char type_,
+                      const std::string &source_file_,
+                      int line_number_,
+                      int sentence_number_,
+                      const std::string &program_,
+                      const std::string &entry_,
+                      const std::string &section_,
+                      const std::string &paragraph_)
     {
-        return static_cast<int>(symbols.size());
+        type            = type_           ;
+        source_file     = source_file_    ;
+        line_number     = line_number_    ;
+        sentence_number = sentence_number_;
+        program         = program_        ;
+        entry           = entry_          ;
+        section         = section_        ;
+        paragraph       = paragraph_      ;
     }
 
-    const COB_LABEL &
-    operator[](int n) const
+    friend COB_PROGRAM_LABELS;
+};
+typedef std::vector<COB_PROGRAM_LABEL>VCOB_PROGRAM_LABEL;
+
+class COB_PROGRAM_LABELS
+{
+private:
+    VCOB_PROGRAM_LABEL program_labels;
+
+public:
+    COB_PROGRAM_LABELS()
     {
-        return symbols[n];
+    }
+    void
+    AddEntry(char type,
+             const std::string &source_file,
+             int line_number,
+             int sentence_number,
+             const std::string &program,
+             const std::string &entry,
+             const std::string &section,
+             const std::string &paragraph)
+    {
+        COB_PROGRAM_LABEL cpl(  type,
+                                source_file,
+                                line_number,
+                                sentence_number,
+                                program,
+                                entry,
+                                section,
+                                paragraph);
+        program_labels.push_back(cpl);
+    }
+    void FormatProgramInfo(std::stringstream &ss) const;
+
+    void
+    Dump() const
+    {
+        std::cout << "COB_PROGRAM_LABELS:\n";
+        std::cout << std::setw( 5) << "t";
+        std::cout << std::setw(15) << "source_file";
+        std::cout << std::setw( 6) << "line";
+        std::cout << std::setw(30) << "program";
+        std::cout << std::setw(30) << "entry";
+        std::cout << std::setw(30) << "section";
+        std::cout << std::setw(30) << "paragraph";
+        std::cout << std::endl;
+
+        for( auto label : program_labels ) {
+            std::cout << std::setw( 5) << label.type;
+            std::cout << std::setw(15) << label.source_file;
+            std::cout << std::setw( 6) << label.line_number;
+            std::cout << std::setw(30) << label.program;
+            std::cout << std::setw(30) << label.entry;
+            std::cout << std::setw(30) << label.section;
+            std::cout << std::setw(30) << label.paragraph;
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
     }
 };
 
+class DATA_DESCRIPTIONS;
 class DATA_DESCRIPTION
 {
 public:
-    std::string source;
-    int line_number;
     std::string program_id;
+    int         level;
     std::string storage_type;
-    std::string storage_scope;
     std::string cbl_symbol;
-    std::string gas_section;
-    std::string gas_symbol;
-    std::string undecorated_symbol;
+    std::string c_symbol;
     std::string picture_string;
-    LONGLONG    gas_value;
 
     // storage comes with a size parameter:  b_17[21];
-    LONGLONG storage_size;
+    // It's often not right.  Too big?
+    int storage_size;
 
     // See cobc/cobc/libcob/common.h declaration for cob_field_attr
-    USHORT attr_type;
-    USHORT attr_digits;
-    short attr_scale;
+    USHORT  attr_type;
+    USHORT  attr_digits;
+    short   attr_scale;
     USHORT attr_flags;
-    std::string attr_pic_pointer;
+    std::string attr_pic_name;
 
-    // See cobc/cobc/libcob/common.h declaration for cob_field
     int field_size;
-    std::string field_data_pointer;
-    std::string field_data_offset;
-    std::string field_attr_pointer;
+    std::string field_data_name;
+    int field_data_offset;
+    std::string field_attr_name;
 
 public:
     DATA_DESCRIPTION()
     {
-        line_number = 0;
-        gas_value = 0;
+        level = 0;
         storage_size = 0;
         attr_type = 0;
         attr_digits = 0;
         attr_scale = 0;
         attr_flags = 0;
         field_size = 0;
+        field_data_offset = 0;
     }
+    friend DATA_DESCRIPTIONS;
 };
 typedef std::vector<DATA_DESCRIPTION> VDATA_DESCRIPTION;
+
+typedef std::unordered_map<std::string,size_t> M_VKEY;
 
 class DATA_DESCRIPTIONS
 {
 private:
     VDATA_DESCRIPTION symbols;
-    std::unordered_map<std::string,size_t>location_of_gas_symbol;
-    std::unordered_map<std::string,std::string>b_symbol_to_program_id;
+    // We are going to key that table by (program-id, cbl_symbol,offset)
+    M_VKEY symbols_key;
+    // We are also going to create an non-unique "index" (program-id, cbl_symbol,-1)
+    M_VKEY symbols_index;
 
-    void ProcessDataStorage(std::ifstream &ifs,const std::string &source_file);
+    std::unordered_map<std::string,size_t>location_of_c_symbol;
 
 public:
-    void ScanAllDotHFiles(const std::string &path,const std::string &fname);
-    void AppendLinkageInformation(const COB_LABELS &cob_labels);
-
-    void MergeGasSymbols(const GAS_SYMBOLS &gas_symbol_table);
-
     int
     size() const
     {
@@ -255,7 +602,7 @@ public:
     }
 
     const DATA_DESCRIPTION &
-    operator[](int n) const
+    operator[](size_t n) const
     {
         return symbols[n];
     }
@@ -264,26 +611,92 @@ public:
     IndexOfSymbol(const std::string &symbol) const
     {
         std::unordered_map<std::string,size_t>::const_iterator it =
-            location_of_gas_symbol.find(symbol);
-        if(it == location_of_gas_symbol.end()) {
+            location_of_c_symbol.find(symbol);
+        if(it == location_of_c_symbol.end()) {
             return -1;
         }
         return static_cast<int>(it->second);
     }
 
     std::string
-    WeveSeen(const std::string &b_sym) const
+    MakeVKey(std::string const &program_id, std::string const &cbl_identifier,int offset) const
     {
-        std::string retval;
-        std::unordered_map<std::string,std::string>::const_iterator it
-            = b_symbol_to_program_id.find(b_sym);
-        if(it != b_symbol_to_program_id.end()) {
+        char ach[20];
+        sprintf(ach,"%d",offset);
+        return program_id + "|" + cbl_identifier + "|" + ach;
+    }
+
+    void
+    DsInsert(const DATA_DESCRIPTION &ds )
+    {
+        symbols_key[MakeVKey(ds.program_id,ds.cbl_symbol,ds.field_data_offset)] = symbols.size();
+        symbols_index[MakeVKey(ds.program_id,ds.cbl_symbol,-1)] = symbols.size();
+        symbols.push_back(ds);
+    }
+
+    bool
+    IsInDs(std::string const &program_id, std::string const &cbl_identifier,int offset) const
+    {
+        std::string dskey=MakeVKey(program_id,cbl_identifier,offset);
+        M_VKEY::const_iterator it = symbols_key.find(dskey);
+        return it != symbols_key.end();
+    }
+    size_t
+    GetIndex(std::string const &program_id, std::string const &cbl_identifier,int offset) const
+    {
+        size_t retval = (size_t)(-1);
+        std::string dskey=MakeVKey(program_id,cbl_identifier,offset);
+        M_VKEY::const_iterator it = symbols_key.find(dskey);
+        if(it != symbols_key.end()) {
             retval = it->second;
         }
         return retval;
     }
 
+    bool
+    IsInDs(std::string const &program_id, std::string const &cbl_identifier) const
+    {
+        std::string dskey=MakeVKey(program_id,cbl_identifier,-1);
+        M_VKEY::const_iterator it = symbols_index.find(dskey);
+        return it != symbols_index.end();
+    }
+    size_t
+    GetIndex(std::string const &program_id, std::string const &cbl_identifier) const
+    {
+        size_t retval = (size_t)(-1);
+        std::string dskey=MakeVKey(program_id,cbl_identifier,-1);
+        M_VKEY::const_iterator it = symbols_index.find(dskey);
+        if(it != symbols_index.end()) {
+            retval = it->second;
+        }
+        return retval;
+    }
+
+    void Dump() const;
+
+    void Flatten(const COB_FIELDS &cob_fields,
+                 const COB_FIELD_ATTRIBUTES &cob_field_attributes,
+                 const COB_PIC_SYMBOLS &cob_pic_symbols,
+                 const COB_DATA &cob_data
+                );
+    void FormatVariablesInfo(std::stringstream &ss) const;
+
 };
+
+void ScanAllDotHFiles(const std::string &path,
+                      const std::string &fname,
+                      COB_PIC_SYMBOLS &cob_pic_symbols,
+                      COB_DATA &cob_data,
+                      COB_FIELD_ATTRIBUTES &cob_field_attributes,
+                      COB_FIELDS &cob_fields
+                     );
+void ScanForLinkage(std::ifstream &ifs,
+                    const std::string &current_c_source,
+                    COB_PROGRAM_LABELS &program_labels,
+                    COB_DATA &cob_data,
+                    COB_FIELDS &cob_fields
+                   );
+
 
 #ifdef NEEDED_TO_DEFINE_EQ
 #undef EQ

@@ -48,9 +48,12 @@ typedef uint32_t ULONG;
 typedef  int64_t  LONGLONG;
 typedef uint64_t ULONGLONG;
 
+typedef std::vector<std::string>VSTRING;
+
 std::string Trim(const std::string &s);
 std::string RTrim(const std::string &s);
 std::string StripQuotes(const std::string &s);
 std::vector<std::string>Split(const std::string &s,const std::string &delimiters);
 std::string Replace(const std::string &s,const char was, const char is);
 std::string Upper(const std::string&s);
+std::string ZeroIsNull(const LONGLONG &v);

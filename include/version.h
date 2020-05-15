@@ -1,8 +1,7 @@
 // This file is used by subordinate projects to keep the versioning
 // consistent through compilations and packaging.
 //
-// Note that for the python subdirectory, there is a little bit of 
-// Linux-only trickery to get the version code in place.
-//
+// On the Unix side, there is scripting trickery to propogate this version
+// code into cobcd.py and the names of packages when they are created.
 
-#define VERSION "2.6"
+#define VERSION "2.7"

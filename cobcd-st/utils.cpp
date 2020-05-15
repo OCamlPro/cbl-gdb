@@ -139,3 +139,14 @@ Upper(const string &s)
     }
     return retval;
 }
+
+string
+ZeroIsNull(const LONGLONG &v)
+{
+    stringstream ss;
+    if( v != 0 ) {
+        ss << v;
+    }
+    return ss.str();
+}
+

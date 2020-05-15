@@ -37,6 +37,7 @@
 #include <set>
 #include <map>
 #include "input_scan.h"
+#include "vartree.h"
 
 /*  These objects are for keeping track of the parsed storage section
 
@@ -87,23 +88,16 @@ typedef std::pair<std::string,std::string> PSS;
 typedef std::map<PSS,std::string>MPSS;
 typedef std::map<PSS,int>MPSSI;
 
+#define NO_INDEX ((size_t)(-1))
+
 class VAR_NODE;
 typedef std::vector<VAR_NODE *>VVAR_NODES;
-
-typedef struct {
-    std::string base_symbol;
-    int         offset;
-    VAR_NODE   *pvar_node;
-} BOP;
-typedef std::vector<BOP>VBOP;
-
 class VAR_NODE
 {
 private:
     // This is stuff we get from the .cbl.lst file:
     std::string program;            // From the two-element PROGRAM line
     std::string section;            // From the two-element SECTION line
-
     int         size;               // Size in bytes
     std::string type;               // GROUP, NUMERIC, ALPHABETIC
     int         level;              // COBOL identifier level
@@ -123,16 +117,23 @@ private:
     //                              // we save them here so we can update
     //                              // them later
 
-    // This is stuff we build once we've created the tree
     std::string canonical_name;     // The full COBOL A in B in C identifier
     std::string base_symbol;        // The b_ base for this variable
-    //                              // from our 01 ancestor
     int         offset;             // The total offset to this identifier
-    std::string field_symbol;       // The f_ symbol for this variable
-    std::string attr_symbol;        // The a_ symbol for this variable
 
-    // This is stuff we got from the .h files:
-    int field_size;
+    size_t data_description_index;
+
+    // This section is for variables up above combined with the data
+    // from the DATA_DESCRIPTIONS object.  They get filled by the
+    // Consolidate() routine
+
+    // For the final VARIABLE_STRING (which is the raison d'etre for this
+    // program in the first place!) We need the following fields.  They
+    // come from the DATA_DESCRIPTION data
+
+    int best_size;
+    std::string best_picture;
+
     int attr_type;
     int attr_digits;
     int attr_scale;
@@ -166,16 +167,6 @@ public:
     GetBaseSymbol() const
     {
         return base_symbol;
-    }
-    std::string
-    GetFieldSymbol() const
-    {
-        return field_symbol;
-    }
-    std::string
-    GetAttributeSymbol() const
-    {
-        return attr_symbol;
     }
     std::string
     GetType() const
@@ -212,32 +203,6 @@ public:
     {
         return offset;
     }
-    int
-    GetFieldSize() const
-    {
-        return field_size;
-    }
-    int
-    GetAttrType() const
-    {
-        return attr_type;
-    }
-    int
-    GetAttrDigits() const
-    {
-        return attr_digits;
-        ;
-    }
-    int
-    GetAttrScale() const
-    {
-        return attr_scale;
-    }
-    int
-    GetAttrFlags() const
-    {
-        return attr_flags;
-    }
     VVAR_NODES
     GetChildren()
     {
@@ -248,11 +213,11 @@ public:
 };
 typedef std::vector<VAR_NODE *>VVAR_NODES;
 
+class DATA_DESCRIPTIONS;
 class VARIABLE_TREE
 {
 private:
     VAR_NODE *root;
-    VBOP vbop;
     VVAR_NODES flat_list;
 
     int         current_level_in_dump;
@@ -261,18 +226,14 @@ private:
 
     void ChopDownTheTree(VAR_NODE *);
     void DumpNode(std::ostream &sout, const VAR_NODE *node);
-    void FindParentOf(std::vector<VAR_NODE *> &parents,int level);
+    void FindParentOf(VVAR_NODES &parents,int level);
     void ForceParent(VVAR_NODES &parents,const std::string &program_id);
     void BuildCanonicalName(VAR_NODE *var_node);
-    void AssignBaseSymbol(VAR_NODE *node,const MPSS &symmap);
-    void AssignBaseSymbol(VAR_NODE *node,
-                          const MPSSI &symmap,
-                          const DATA_DESCRIPTIONS &data_description
-                         );
-    void BuildBaseOffsetPointers(VAR_NODE *node,VBOP &vbop);
     void BuildFlatList(VAR_NODE *node,VVAR_NODES &flat);
-    void MergeWorkingStorage(const DATA_DESCRIPTIONS &data_description);
-    void MergeLocalStorage(const DATA_DESCRIPTIONS &data_description);
+
+    void Consolidive(VAR_NODE *node,
+                     const DATA_DESCRIPTIONS &data_description,
+                     std::string &base_symbol);
 
 public:
     VARIABLE_TREE();
@@ -281,7 +242,9 @@ public:
     void ReadFromFile(std::ifstream &ifs);
     void BuildCanonicalName();
     void Dump(std::ostream &s = std::cout);
-    void Merge(const DATA_DESCRIPTIONS &data_description);
+    void Consolidate(const DATA_DESCRIPTIONS &data_description);
+    void DumpFlatList() const;
+    void FormatVariablesInfo(std::stringstream &ss) const;
 
     int
     size() const
@@ -294,4 +257,44 @@ public:
     {
         return *flat_list[i];
     }
+
+    int
+    GetSize(int i) const
+    {
+        int retval = 0;
+
+        size_t index = flat_list[i]->data_description_index;
+
+        return retval;
+    }
+
+    int
+    GetAttrType(int i) const
+    {
+        int retval = 0;
+        return retval;
+    }
+
+    int
+    GetAttrDigits(int i) const
+    {
+        int retval = 0;
+        return retval;
+    }
+
+    int
+    GetAttrScale(int i) const
+    {
+        int retval = 0;
+        return retval;
+    }
+
+    int
+    GetAttrFlags(int i) const
+    {
+        int retval = 0;
+        return retval;
+    }
+
+    friend DATA_DESCRIPTIONS;
 };

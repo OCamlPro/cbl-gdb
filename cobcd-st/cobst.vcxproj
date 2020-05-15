@@ -165,6 +165,7 @@
     <ClCompile Include="vartree.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\version.h" />
     <ClInclude Include="cobcd_py.h" />
     <ClInclude Include="csv.h" />
     <ClInclude Include="getopt.h" />
