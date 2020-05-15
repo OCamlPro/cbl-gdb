@@ -3145,7 +3145,7 @@ if 'gdb' in sys.modules :
             ## The text "Version x.x" has to appear in square brackets.               #
             ## Don't mess with it!                                                    #
             ###########################################################################
-            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 2.6]')
+            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 2.7]')
             self.Worker = CPrintWorker()
             self.TabFile = TabFileInformation();
 

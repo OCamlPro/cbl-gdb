@@ -22,7 +22,7 @@ cobcd_py.h : ../python/cobcd.py
 
 .PHONY: clean
 clean:
-	@rm -f $(obj) $(project) $(dep)
+	@rm -f $(obj) $(project) $(dep) cobcd_py.h
 
 .PHONY: pregit
 pregit:

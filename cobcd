@@ -6,7 +6,7 @@
 ## Don't mess with it!                                                    #
 ###########################################################################
 
-# [Version 2.6]
+# [Version 2.7]
 
 # This script, nominally named cobcd, packages up the process of compiling
 # a single COBOL source module and processing it so that gdb can be used for
@@ -340,10 +340,10 @@ if test X$result = X"0" ; then
   fi
 
 ## In this step, we do a partial compilation that ends with the creation
-## of the .s assembly language file:
+## of the .c and .s intermediate files:
 
 if test X$result = X"0" ; then
-  COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME.lst $cob_cflags"
+  COB_CFLAGS="-fPIC -Wa,-L $cob_cflags"
   if test X$ECHO != X"" ; then
     echo COB_CFLAGS=$COB_CFLAGS $COBC $COBCDFLAGS -S $COBCDXM -d -g \
     --fgen-c-line-directives --fgen-c-labels \
@@ -354,27 +354,6 @@ if test X$result = X"0" ; then
     -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
   result=$?
   fi
-
-## In this step, we do a partial compilation that ends with the creation
-## of the BASENAME.lst mixed-language C/Assember output file.  It's just
-## like previous step, except that the -S switch is replaced with a -c switch
-
-if test X$result = X"0" ; then
-  COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME.lst $cob_cflags"
-  if test X$ECHO != X"" ; then
-    echo COB_CFLAGS=$COB_CFLAGS $COBC $COBCDFLAGS -c $COBCDXM -d -g \
-    --fgen-c-line-directives --fgen-c-labels \
-    -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
-    fi
-         COB_CFLAGS=$COB_CFLAGS $COBC $COBCDFLAGS -c $COBCDXM -d -g \
-    --fgen-c-line-directives --fgen-c-labels \
-    -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
-  result=$?
-  fi
-
-## Remove the .o file that was created in the -c step, just in order to avoid
-## any possible confusion.
-  rm $BASENAME.o
 
 ## In this step, we run the COBST program, which combines information
 ## from BASENAME.lst and the .h files to create BASENAME.sym.c
@@ -416,7 +395,7 @@ if test X$result = X"0" ; then
 
 if test X$result = X"0" ; then
   # Assemble the modified .s file into a replacement .o file:
-  COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME-2.lst $cob_cflags"
+  COB_CFLAGS="-fPIC -Wa,-L $cob_cflags"
   if test X$ECHO != X"" ; then
     echo COB_CFLAGS=$COB_CFLAGS $COBC -c -o $BASENAME-2.o $BASENAME-2.s
     fi
@@ -448,7 +427,7 @@ if test X$result = X"0" ; then
   fi
 
 ## In this step, we put a copy of the cobcd.py into the right place,
-## if it is necessary:
+## if it is necessary for this operating system:
 
 if test X$result = X"0" ; then
   if test X$os_name = X"MINGW32_NT" || test X$os_name = X"MINGW64_NT" || test X$os_name = X"MSYS_NT" ; then
@@ -463,87 +442,6 @@ if test X$result = X"0" ; then
       fi
     fi
   fi
-
-
-####
-#### I am keeping the following comments around, because they contain
-#### code known to work on both Intel and Rasperry Pi platforms.
-#### Until I get a chance to try the newer script, up above, on the Pi
-
-#if test X$result = X"0" ; then
-#  # Create the .s file from the .c file
-#  if test X$platform = Xx86_64 ; then
-#    if test X$ECHO != X"" ; then
-#      echo   $CC1 -quiet -imultiarch x86_64-linux-gnu \
-#        -D PIC $BASENAME.c -quiet -mtune=generic -march=x86-64 -g -fPIC \
-#        -fstack-protector-strong -Wformat -Wformat-security -o $BASENAME.s
-#      fi
-#    $CC1 -quiet -imultiarch x86_64-linux-gnu \
-#      -D PIC $BASENAME.c -quiet -mtune=generic -march=x86-64 -g -fPIC \
-#      -fstack-protector-strong -Wformat -Wformat-security -o $BASENAME.s
-#    result=$?
-#    fi
-#  fi
-#
-#if test X$result = X"0" ; then
-#  if test X$platform = Xarm ; then
-#    # This worked on a Raspberry Pi 3 running buster
-#    $CC1 -quiet -imultilib . -imultiarch arm-linux-gnueabihf \
-#      $BASENAME.c -quiet -mfloat-abi=hard -mfpu=vfp -mtls-dialect=gnu \
-#      -marm -march=armv6+fp -g -fPIC -o $BASENAME.s
-#    result=$?
-#    fi
-#  fi
-#
-#if test X$result = X"0" ; then
-#  # Modify the .s file, removing all .loc references to
-#  # BASENAME.c and any .h files.
-#  if test X$ECHO != X"" ; then
-#    echo $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
-#    fi
-#  $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
-#  result=$?
-#  fi
-#
-#if test X$result = X"0" ; then
-#  # Assemble the modified .s file into a replacement .o file:
-#  if test X$platform = Xx86_64 ; then
-#    if test X$ECHO != X"" ; then
-#      echo $ASSEMBLER --64 -L -anchls=$BASENAME-2.lst \
-#           -o $BASENAME-2.o $BASENAME-2.s
-#      fi
-#    $ASSEMBLER --64 -L -anchls=$BASENAME-2.lst \
-#               -o $BASENAME-2.o $BASENAME-2.s
-#    result=$?
-#    fi
-#  fi
-#
-#if test X$result = X"0" ; then
-#  if test X$platform = Xarm ; then
-#    # This worked on a Raspberry Pi 3 running buster
-#    $ASSEMBLER -march=armv6 -mfloat-abi=hard -mfpu=vfp -meabi=5 \
-#      -o $BASENAME-2.o $BASENAME-2.s
-#    result=$?
-#    fi
-#  fi
-#
-#if test X$result = X"0" ; then
-#  # Combine the two .o files to create the executable
-#  # Stay in the original directory so that $TARGET, if relative, ends up in
-#  # the right place.
-#
-#  if test X$COBCDXM = X"-x" ; then
-#    if test X$ECHO != X"" ; then
-#      echo $COBC $COBCDXM -o $TARGET $BASENAME-2.o $BASENAME.sym.o $POSTOPTIONS
-#      fi
-#    $COBC $COBCDXM -o $TARGET $BASENAME-2.o $BASENAME.sym.o $POSTOPTIONS
-#  else
-#    if test X$ECHO != X"" ; then
-#      echo $GCC -shared -o $TARGET $BASENAME-2.o $BASENAME.sym.o -lcob $POSTOPTIONS
-#      fi
-#    $GCC -shared -o $TARGET $BASENAME-2.o $BASENAME.sym.o -lcob $POSTOPTIONS
-#    fi
-#  fi
 
 if test X$COBCDNOCLEAN = X"" ; then
     rm -fr = $BASENAME.c $BASENAME.s $BASENAME*.h $BASENAME.i $BASENAME.lst \
