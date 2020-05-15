@@ -1141,6 +1141,16 @@ VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_descript
                     // If they're both on, go with the one from the listing file
                     node->best_picture = node->picture;
                 }
+
+                if( node->level EQ 66 ) {
+                    // The .cbl.lst file doesn't have good offset information
+                    // for 66 REDEFINES.  But the symbol *might* have good information,
+                    // which it gets from the f_ field_attribute record when the 66
+                    // variable is referenced in the code.
+
+                    node->offset = symbol.field_data_offset ;
+                }
+
                 node->base_symbol  = symbol.c_symbol    ;
 
                 node->attr_type    = symbol.attr_type   ;
