@@ -264,23 +264,15 @@ GetParameters(int argc, char *argv[])
     }
     input_parameter = argv[optind];
 
-    retval.cbl_filename.Decode(input_parameter);
-    retval.basename = retval.cbl_filename.GetFname();
-    retval.i_filename.Decode(retval.cbl_filename.Stem() + ".i");
-    retval.c_filename.Decode(retval.cbl_filename.Stem() + ".c");
-    retval.lst_filename.Decode(retval.cbl_filename.Stem() + ".lst");
-    retval.cbl_lst_filename.Decode(retval.cbl_filename.Stem() + ".cbl.lst");
-    retval.full_csv_filename.Decode(retval.cbl_filename.Stem() + ".full.tab");
-    retval.csv_filename.Decode(retval.cbl_filename.Stem() + ".tab");
-    retval.symc_filename.Decode(retval.cbl_filename.Stem() + ".sym.c");
+    retval.c_filename.Decode(input_parameter);
+    retval.basename = retval.c_filename.GetFname();
+    retval.c_filename.Decode(retval.c_filename.Stem() + ".c");
+    retval.cbl_lst_filename.Decode(retval.c_filename.Stem() + ".cbl.lst");
+    retval.symc_filename.Decode(retval.c_filename.Stem() + ".sym.c");
 
     //OpenOrFail(retval.cbl,retval.cbl_filename.WholePath());
-    OpenOrFail(retval.i,retval.i_filename.WholePath());
     OpenOrFail(retval.c,retval.c_filename.WholePath());
-    OpenOrFail(retval.lst,retval.lst_filename.WholePath());
     OpenOrFail(retval.cbl_lst,retval.cbl_lst_filename.WholePath());
-    OpenOrFail(retval.full_csv,retval.full_csv_filename.WholePath());
-    OpenOrFail(retval.csv,retval.csv_filename.WholePath());
     OpenOrFail(retval.symc,retval.symc_filename.WholePath());
 
     return retval;

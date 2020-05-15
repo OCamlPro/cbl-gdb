@@ -100,7 +100,7 @@ CreateSymc(PARAMETERS &params,
         compiling .sym.c
     */
 
-    string fname = params.cbl_filename.GetFname();
+    string fname = params.c_filename.GetFname();
     stringstream ss_tab;
     stringstream ss;
 
@@ -281,8 +281,8 @@ main(int argc, char *argv[])
 #endif
 
     // Scan the .h files for working storage and local storage locations
-    ScanAllDotHFiles(params.cbl_filename.Path(),
-                     params.cbl_filename.GetFname(),
+    ScanAllDotHFiles(params.c_filename.Path(),
+                     params.c_filename.GetFname(),
                      cob_pic_symbols,
                      cob_data,
                      cob_field_attributes,
