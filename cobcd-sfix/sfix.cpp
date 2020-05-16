@@ -30,6 +30,7 @@
 
 #include <iostream>
 #include <map>
+#include <set>
 #include <string.h>
 
 #include "profiler.h"
@@ -82,17 +83,44 @@ GetInputFileMappings(const VSTRING &input_file, const string &primary_file)
 VINT
 FindFunctionReferences(const VSTRING &input_file)
 {
+    set<int>cheating;
+
     VINT retval;
     int nline = 0;
     for(string s : input_file) {
+        if( s.find(".globl") != string::npos) {
+            VSTRING tokens = Split(s,"\t ");
+            if( tokens[1] EQ ".globl" ) {
+                cheating.insert(nline+4);  // This is where a .loc will go
+            }
+        }
+
         if( s.find("@function") != string::npos) {
             VSTRING tokens = Split(s,"\t ");
             if( tokens[3] EQ "@function" ) {
-                retval.push_back(nline+3);  // This is where a .loc will go, if there isn't already one there.
+                // gdb-9 gets upset with too many .loc directives pointing to the
+                // the same line.  So, we are assuming that our programmer isn't using
+                // underscores, and thus the best place to force in .loc instructions is
+                // for functions with a single underscore at the end of their name:
+
+                string name = tokens[2];
+                size_t length = name.length();
+
+                if( length > 3
+                        AND name[length-1] EQ ','
+                        AND name[length-2] EQ '_'
+                        AND name[length-3] != '_'
+                  ) {
+                    cheating.insert(nline+3);  // This is where a .loc will go, if there isn't already one there.
+                }
             }
         }
         nline += 1;
     }
+    for( set<int>::const_iterator it=cheating.begin(); it!=cheating.end(); it++) {
+        retval.push_back(*it);
+    }
+
     return retval;
 }
 
