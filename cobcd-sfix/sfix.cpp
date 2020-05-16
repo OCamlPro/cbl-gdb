@@ -91,28 +91,14 @@ FindFunctionReferences(const VSTRING &input_file)
         if( s.find(".globl") != string::npos) {
             VSTRING tokens = Split(s,"\t ");
             if( tokens[1] EQ ".globl" ) {
-                cheating.insert(nline+4);  // This is where a .loc will go
+                cheating.insert(nline+4);  // This is where our synthetic .loc will go
             }
         }
 
         if( s.find("@function") != string::npos) {
             VSTRING tokens = Split(s,"\t ");
             if( tokens[3] EQ "@function" ) {
-                // gdb-9 gets upset with too many .loc directives pointing to the
-                // the same line.  So, we are assuming that our programmer isn't using
-                // underscores, and thus the best place to force in .loc instructions is
-                // for functions with a single underscore at the end of their name:
-
-                string name = tokens[2];
-                size_t length = name.length();
-
-                if( length > 3
-                        AND name[length-1] EQ ','
-                        AND name[length-2] EQ '_'
-                        AND name[length-3] != '_'
-                  ) {
-                    cheating.insert(nline+3);  // This is where a .loc will go, if there isn't already one there.
-                }
+                cheating.insert(nline+3);  // This is where our synthetic .loc will go
             }
         }
         nline += 1;
@@ -170,8 +156,6 @@ ReadEntireFile(string filename)
         if(strlen(ach) AND ach[strlen(ach)-1] EQ '\n') {
             ach[strlen(ach)-1] = '\0';
         }
-        // string s = Trim(ach);
-        // retval.push_back(s);
         retval.push_back(ach);
     }
     fclose(f);
@@ -266,11 +250,6 @@ main(int argc, char **argv)
             }
         }
 
-
-
-
-
-
         VSTRING tokens = Split(Trim(input_file[i])," \t");
         if( !tokens.empty() ) {
             if( tokens[0] EQ ".file" ) {
@@ -298,7 +277,16 @@ main(int argc, char **argv)
             }
         }
 
-        ss << input_file[i] << endl;
+        if( input_file[i].find("endbr64") EQ string::npos ) {
+            // When gcc went from version 8 to version 9, the compiler started
+            // inserting endbr64 assembly language instructions.  It's safer, says
+            // the documentation.
+            //
+            // They screw up our efforts to trick GDB into doing our bidding -- GDB loses
+            // track of what lines to display after subroutine calls -- so I took the easy
+            // way out and just removed the suckers.
+            ss << input_file[i] << endl;
+        }
     }
 
     FILE *f = fopen(params.s_output_filename.WholePath().c_str(),"w");
