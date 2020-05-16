@@ -85,10 +85,10 @@ FindFunctionReferences(const VSTRING &input_file)
     VINT retval;
     int nline = 0;
     for(string s : input_file) {
-        if( s.find(".globl") != string::npos) {
+        if( s.find("@function") != string::npos) {
             VSTRING tokens = Split(s,"\t ");
-            if( tokens[1] EQ ".globl" ) {
-                retval.push_back(nline);
+            if( tokens[3] EQ "@function" ) {
+                retval.push_back(nline+3);  // This is where a .loc will go, if there isn't already one there.
             }
         }
         nline += 1;
@@ -189,57 +189,25 @@ main(int argc, char **argv)
     }
 
     int next_function_reference_index = 0;
-    size_t interject_line_number = -1;
-    string interject_line = "";
 
     // Start at 1, rather than zero; we need to get rid of the original
     // "  .file blah.c " line.
     for( size_t i=1; i<input_file.size(); i++ ) {
-        if( i EQ interject_line_number ) {
-            ss << interject_line;
-        }
-        VSTRING tokens = Split(Trim(input_file[i])," \t");
-        if( tokens.empty() ) {
-            continue;
-        }
-        if( tokens[0] EQ ".file" ) {
-            // We've already taken care of all .file lines
-            continue;
-        }
-        if( tokens[0] EQ ".loc" ) {
-            // We need to replace the old file number with the new one
-            int oldnum = stoi(tokens[1]);
-            int newnum = replacements[oldnum];
-            if( newnum != 0 ) {
-                // Rebuild the .loc line
-                ss << "\t";
-                ss << tokens[0];
-                ss << " ";
-                ss << newnum;
-                size_t index = 2;
-                while( index < tokens.size() ) {
-                    ss << " ";
-                    ss << tokens[index++];
-                }
-                ss << endl;
-            }
-            continue;
-        }
-        // At this point in the code, we are going to look for function references.
-        // The GDB trapping can get confused when there isn't a .loc reference
-        // soon after a function reference, so we're going to shove them in here
+        // We have learned that the GDB trapping can get confused if there isn't
+        // a .loc reference in the first few lines after a function declaration.
 
-        // We want the actual .loc to appear a few lines after the relevant
-        // function reference comment, so we use the "interject" logic to
-        // provide a couple of lines of delay.
-
+        // When we created the function_references array, we added offset we
+        // need to put a .loc into the right place.  So, when i = function_references,
+        // it's time to put a .loc in.
 
         if(next_function_reference_index < (int)function_references.size()
                 && i EQ function_references[next_function_reference_index] ) {
             // We have found a match.
             next_function_reference_index += 1;
 
-            // We are going to look ahead for the next valid .loc:
+            // We are going to look ahead for the next valid .loc, and put
+            // that same loc in right here.  The duplications don't seem to
+            // cause GDB any problem.
 
             size_t ii = i+4;
             while(ii < input_file.size() ) {
@@ -251,7 +219,6 @@ main(int argc, char **argv)
                     if( new_num != 0 ) {
                         // Build the replacement line:
                         int new_line = stoi(tokens[3])-1;
-                        stringstream ss;
 
                         ss << "\t.loc";
                         ss << " " << new_num ;
@@ -263,8 +230,6 @@ main(int argc, char **argv)
                         }
                         ss << endl;
 
-                        interject_line = ss.str();
-                        interject_line_number = i+5;
                         break;
                     }
                 }
@@ -272,6 +237,39 @@ main(int argc, char **argv)
                 ii += 1;
             }
         }
+
+
+
+
+
+
+        VSTRING tokens = Split(Trim(input_file[i])," \t");
+        if( !tokens.empty() ) {
+            if( tokens[0] EQ ".file" ) {
+                // We've already taken care of all .file lines
+                continue;
+            }
+            if( tokens[0] EQ ".loc" ) {
+                // We need to replace the old file number with the new one
+                int oldnum = stoi(tokens[1]);
+                int newnum = replacements[oldnum];
+                if( newnum != 0 ) {
+                    // Rebuild the .loc line
+                    ss << "\t";
+                    ss << tokens[0];
+                    ss << " ";
+                    ss << newnum;
+                    size_t index = 2;
+                    while( index < tokens.size() ) {
+                        ss << " ";
+                        ss << tokens[index++];
+                    }
+                    ss << endl;
+                }
+                continue;
+            }
+        }
+
         ss << input_file[i] << endl;
     }
 
