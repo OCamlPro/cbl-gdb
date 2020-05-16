@@ -395,7 +395,7 @@ if test X$result = X"0" ; then
 
 if test X$result = X"0" ; then
   # Assemble the modified .s file into a replacement .o file:
-  COB_CFLAGS="-fPIC -Wa,-L $cob_cflags"
+  COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME-2.lst $cob_cflags"
   if test X$ECHO != X"" ; then
     echo COB_CFLAGS=$COB_CFLAGS $COBC -c -o $BASENAME-2.o $BASENAME-2.s
     fi
