@@ -33,14 +33,20 @@ The source code for the extension is in:
 Utility scripts used during development and deployment are found in 
 
     bin/ 
-    
-There is a .vsix file containing the Visual Studio Code extension that knows how to use the Symas/Camelian debugging extensions to do source-level debugging of COBOL code in the VSC IDE.  (VSC integration is still under development.) It is found in 
-
-    vsdistrib/
 
 optfde01 is a COBOL program that, while simple, is a little more interesting than "hello, world".  (It reads three records from one file and writes them to another.)  After you do a 'make install' you'll be able to enter this directory and run the Makefile.  optfde01 also serves as an example of how to use Visual Studio Code to debug COBOL.  The optfde01/.vscode/ subdirectory contains the launch.json and tasks.json files that you'll clone into your own projects.  The program is found in the directory
 
     optfde01/ 
+
+It should be emphasized that there are now two branches that are required to be present:
+
+origin/master is supposed to be stable and buildable at all times.
+
+origin/relcan, for "release candidate", is used by the camelian-packages repositories package-
+building routines for creating packages.  My procedure lately has been to fuss and fiddle
+with relcan until the completed final packages work properly, and then merge relcan into
+master.  That merge gets tagged as a release version, and at that point ../include/version.h
+is incremented.
 
 Feel free to contact me with any questions or problems.
 
