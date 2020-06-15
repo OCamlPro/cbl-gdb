@@ -1177,14 +1177,21 @@ class CobolVariable() :
         print("Usage:      " , self.Usage           )
         print("Size:       " , self.ListSize        )
         print("pic_data: (HEX)   [" , end= " ")
-        for byte in self.data :
+
+        ## At this point, if BINARY_SWAP is on, our data are reversed.
+        ## We want to unreverse them for this display:
+        output_bytes = self.data
+        if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
+            output_bytes.reverse()
+
+        for byte in output_bytes :
             hexout = hex(byte)[-2:]
             if hexout[0:1] == 'x' :
                 hexout = '0' + hexout[-1:]
             print(hexout,end=" ")
         print("]")
         print("pic_data: (ASCII) \"", end = "")
-        for byte in self.data :
+        for byte in output_bytes :
             if 32 <= byte < 128 :   # valid ASCII characters
                 print(chr(byte),end="")
             else :
@@ -2060,6 +2067,7 @@ class CobolVariable() :
         if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
             our_bytes.reverse()
 
+        # we need to figure out if we are dealing with a signed
         # we need to figure out if we are dealing with a signed
         # and negative number.
 
@@ -3145,7 +3153,7 @@ if 'gdb' in sys.modules :
             ## The text "Version x.x" has to appear in square brackets.               #
             ## Don't mess with it!                                                    #
             ###########################################################################
-            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 2.8]')
+            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 2.9]')
             self.Worker = CPrintWorker()
             self.TabFile = TabFileInformation();
 

@@ -6,7 +6,7 @@
 ## Don't mess with it!                                                    #
 ###########################################################################
 
-# [Version 2.8]
+# [Version 2.9]
 
 # This script, nominally named cobcd, packages up the process of compiling
 # a single COBOL source module and processing it so that gdb can be used for
@@ -38,7 +38,7 @@
 #
 # COBCDFLAGS ## Use for things like --free
 #
-# COBCDXM=[-x|-m] ## cobc assumes a default of -m
+# COBCDXM=[-x|-m|-b] ## cobc assumes a default of -m
 
 set +e  ## This kind of needs to be +e in order to make sure intermediate files
         ## get cleaned up in the event of compilation errors
@@ -226,6 +226,7 @@ while (( $# )) ; do
       # This is a -o switch.
       # Save the parameter as our ultimate target
       shift
+      PARM=$1
       TARGET=$PARM
     elif test X$FIRSTTHREE = X"-t=" || test X$FIRSTTHREE = X"-T=" ; then
       # We know a -t=this or -T=that switch will break our compilation, so just ignore it
@@ -235,7 +236,7 @@ while (( $# )) ; do
       # ignore the switch and the following parameter
       ORIGINALRUN="yes"
       shift
-    elif test X$PARM = X"-x" || test X$PARM = X"-m" ; then
+    elif test X$PARM = X"-x" || test X$PARM = X"-m" || test X$PARM = X"-b" ; then
       # A command-line parameter overwhelms anything
       # we inherited
       COBCDXM=$PARM
@@ -263,7 +264,7 @@ while (( $# )) ; do
   done
 
 if test X$COBCDXM = X"" ; then
-  # If neither -x nor -m was specified, explicitly match the COBC default of -m
+  # If neither -x nor -m nor -b was specified, explicitly match the COBC default of -m
   COBCDXM=-m
   fi
 
@@ -274,7 +275,7 @@ BASENAME="${BASENAME##/*}"
 # it'll be put in the current working directory
 if test X$TARGET = X"" ; then
   TARGET=$BASENAME
-  if test X$COBCDXM = X"-m" ; then
+  if test X$COBCDXM = X"-m" || test X$COBCDXM = X"-b"  ; then
     TARGET=$TARGET.so
     fi
   fi
