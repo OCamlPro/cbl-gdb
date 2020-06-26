@@ -326,6 +326,7 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
                 // We now have input free of comments and text literals,
                 // so we can split what's left and look for gold:
                 vector<string>tokens = Split(input," \t");
+
                 size_t ntoken = 0;
                 if(!program_id_triggered) {
                     for(ntoken=0; ntoken<tokens.size(); ntoken++) {
@@ -365,6 +366,20 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             // Ignore blank lines
             continue;
         }
+
+        // At some point GLOBAL was added, which mucks up my heuristics which
+        // were based on a non-GLOBAL universe.  Just hack it off.
+
+        // It would make more sense to search for all of the USAGE possibilities
+        // and process things that way.  But I'm going for quick and dirty in the
+        // hope and anticipation that the compiler will eventually generate all the
+        // data we need in a formal way.  RJD, just before version cobc 3.1 was
+        // released, 2020-06-26
+
+        if( tokens.back() EQ "GLOBAL" ) {
+            tokens.pop_back();
+        }
+
         if(tokens.size() EQ 2 AND tokens[0] EQ "PROGRAM") {
             // We are starting a brand new PROGRAM section, which has the
             // root as a parent:
@@ -550,7 +565,7 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             delete new_node;
             continue;
         } else {
-            cerr << "VARIABLE_TREE::ReadFromFile() doesn't know how to handle";
+            cerr << "cobcd-st: VARIABLE_TREE::ReadFromFile() doesn't know how to handle";
             cerr << endl;
             cerr << "\"" << input << "\"" << endl;
             delete new_node;
