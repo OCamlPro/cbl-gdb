@@ -123,7 +123,7 @@ FILENAME::Decode(const string &filename_)
     // Convert backslashes to frontslashes in the file name
     filename = Replace(filename,'\\',delimiter);
 
-    if(filename.size() EQ 0 OR filename.size() >= 1 AND filename[0] != delimiter) {
+    if( filename.size() EQ 0 OR (filename.size() >= 1 AND filename[0] != delimiter) ) {
         // The filename doesn't start with a slash, so it is a relative path.
         // Incorporate the default path:
         filename = default_path + filename;

@@ -49,11 +49,11 @@ VAR_NODE::VAR_NODE()
     parent = nullptr;
     data_description_index = NO_INDEX;
 
-    int best_size = 0;
-    int attr_type = 0;
-    int attr_digits = 0;
-    int attr_scale = 0;
-    int attr_flags = 0;
+    best_size = 0;
+    attr_type = 0;
+    attr_digits = 0;
+    attr_scale = 0;
+    attr_flags = 0;
 }
 
 void
@@ -630,7 +630,7 @@ VARIABLE_TREE::DumpNode(ostream &sout, const VAR_NODE *node)
             {
                 if(     node->level EQ LEVEL_01
                         OR  node->level EQ LEVEL_FILE    // Special processing for FILE record
-                        OR  node->level EQ LEVEL_77 AND current_level_in_dump != 77 ) {
+                        OR  (node->level EQ LEVEL_77 AND current_level_in_dump != 77) ) {
                     sout << endl;
                 }
                 sout.width(5);

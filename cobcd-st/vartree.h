@@ -259,43 +259,5 @@ public:
         return *flat_list[i];
     }
 
-    int
-    GetSize(int i) const
-    {
-        int retval = 0;
-
-        size_t index = flat_list[i]->data_description_index;
-
-        return retval;
-    }
-
-    int
-    GetAttrType(int i) const
-    {
-        int retval = 0;
-        return retval;
-    }
-
-    int
-    GetAttrDigits(int i) const
-    {
-        int retval = 0;
-        return retval;
-    }
-
-    int
-    GetAttrScale(int i) const
-    {
-        int retval = 0;
-        return retval;
-    }
-
-    int
-    GetAttrFlags(int i) const
-    {
-        int retval = 0;
-        return retval;
-    }
-
     friend DATA_DESCRIPTIONS;
 };
