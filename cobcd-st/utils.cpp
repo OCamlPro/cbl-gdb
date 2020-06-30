@@ -28,6 +28,7 @@
 #
 ############################################################################ */
 
+#include <sstream>
 #include "utils.h"
 #include "profiler.h"
 
@@ -134,7 +135,8 @@ string
 Upper(const string &s)
 {
     string retval;
-    for(char ch : s) {
+    for(size_t i=0; i<s.size(); i++) {
+        char ch = s[i];
         retval += toupper(ch);
     }
     return retval;
@@ -142,7 +144,8 @@ Upper(const string &s)
 
 string
 ZeroIsNull(const LONGLONG &v)
-{
+{   
+    string retval;
     stringstream ss;
     if( v != 0 ) {
         ss << v;

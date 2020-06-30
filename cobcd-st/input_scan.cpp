@@ -85,7 +85,7 @@ ProcessDataStorage(ifstream &ifs,
     string storage = "Working"; // This is the default
     string program_id;
 
-    unordered_map<std::string,std::string>b_symbol_to_program_id;
+    map<std::string,std::string>b_symbol_to_program_id;
 
     // Variables for building a picture string
     bool inpic = false;
@@ -237,7 +237,7 @@ ProcessDataStorage(ifstream &ifs,
                     // to get around that, which we have to do to get these
                     // variables lined up with the .cbl.lst variable list.
 
-                    unordered_map<string,string>::const_iterator it =
+                    map<string,string>::const_iterator it =
                         b_symbol_to_program_id.find(name_of_data);
                     if(it != b_symbol_to_program_id.end()) {
                         mapped_program_id = it->second;

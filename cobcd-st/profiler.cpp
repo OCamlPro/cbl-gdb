@@ -30,6 +30,8 @@
 
 #include "profiler.h"
 
+#if __GNUC__ >= 7
+
 // These are static variables for the PPROFILER class
 std::unordered_map<std::string,double> PPROFILER::ProfilerRoutineTimes;
 std::unordered_map<std::string,LONGLONG> PPROFILER::ProfilerRoutineEntries;
@@ -40,3 +42,5 @@ operator<<(std::ostream &os, PPROFILER const &m)
 {
     return os << m.Dump();
 }
+
+#endif

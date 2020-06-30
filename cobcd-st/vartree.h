@@ -61,6 +61,7 @@ PROGRAM             JIMBOB
 WORKING-STORAGE SECTION
 
 00022 GROUP          01   WS-JIM
+00022 GROUP          01   WS-JIM
 00010 ALPHABETIC     02   WS-FIRSTNAME                   A(10)
 00001 ALPHABETIC     02   WS-MIDDLE-INITIAL              A(1)
 00001 ALPHABETIC     02   FILLER                         A(1)
@@ -75,14 +76,14 @@ WORKING-STORAGE SECTION
 
 */
 
-constexpr int LEVEL_ROOT    = -3;
-constexpr int LEVEL_PROGRAM = -2;
-constexpr int LEVEL_SECTION = -1;
-constexpr int LEVEL_FILE    = 0;    // Special handling for the FILE type
-constexpr int LEVEL_01      = 01;   // Just to avoid magic numbers;
-constexpr int LEVEL_66      = 66;   // ibid.;
-constexpr int LEVEL_77      = 77;   // ibid.;
-constexpr char SECTION_INPUT_OUTPUT[]= "INPUT-OUTPUT";
+static const int LEVEL_ROOT    = -3;
+static const int LEVEL_PROGRAM = -2;
+static const int LEVEL_SECTION = -1;
+static const int LEVEL_FILE    = 0;    // Special handling for the FILE type
+static const int LEVEL_01      = 01;   // Just to avoid magic numbers;
+static const int LEVEL_66      = 66;   // ibid.;
+static const int LEVEL_77      = 77;   // ibid.;
+static const char SECTION_INPUT_OUTPUT[]= "INPUT-OUTPUT";
 
 typedef std::pair<std::string,std::string> PSS;
 typedef std::map<PSS,std::string>MPSS;

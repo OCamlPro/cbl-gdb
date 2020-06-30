@@ -39,6 +39,21 @@ using namespace std;
 #define AND &&
 #define OR ||
 
+#if __GNUC__ <= 4
+
+int stoi(const string &s)
+{
+    return atoi(s.c_str());
+}
+
+#endif
+
+
+
+
+
+
+
 VAR_NODE::VAR_NODE()
 {
     CPROFILER;
@@ -332,7 +347,8 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
                     for(ntoken=0; ntoken<tokens.size(); ntoken++) {
                         string token = tokens[ntoken];
                         string lc;
-                        for(char s : token) {
+                        for(size_t i=0; i<token.size(); i++) {
+                            char s = token[i];
                             lc += tolower(s);
                         }
                         if(lc EQ "program-id" OR lc EQ "program-id.") {
@@ -412,13 +428,17 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
         // In PICTURE strings, so we need to keep them there.  But if a ','
         // appears at the end of the token before a REDEFINES token, we have to
         // remove it.
+        
+        vector<string>::const_iterator it = tokens.begin();
+        while(it != tokens.end()){
+            if( *it EQ "REDEFINES" ) {
+                break;
+            }
+        }
 
-        vector<string>::const_iterator it = find(tokens.begin(),
-                                            tokens.end(),
-                                            "REDEFINES");
         if( it != tokens.end() ) {
             // 'it' points to REDEFINES:
-            auto index = it - tokens.begin();
+            size_t index = it - tokens.begin();
 
             // Get rid of the comma at the end of index-1:
             size_t n = tokens[index-1].find_last_of(',');
@@ -437,7 +457,13 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             // And now we can proceed
         }
 
-        it = find(tokens.begin(),tokens.end(),"OCCURS");
+        it = tokens.begin();
+        while(it != tokens.end()){
+            if( *it EQ "OCCURS" ) {
+                break;
+            }
+        }
+        
         if( it != tokens.end() ) {
             // 'it' points to OCCURS:
             size_t index = it - tokens.begin();
@@ -1040,7 +1066,10 @@ DiveForVariable(        VAR_NODE *node,
         return node;
     }
     VVAR_NODES children = node->GetChildren();
-    for(VAR_NODE *child : children) {
+    for(VVAR_NODES::const_iterator it=children.begin();
+        it!=children.end();
+        it++) {
+        VAR_NODE *child = *it;
         VAR_NODE *maybe = DiveForVariable(child,
                                           section,
                                           program_id,
@@ -1187,7 +1216,10 @@ VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_descript
             // And our work here is done:
         }
 
-        for( auto child : node->children ) {
+        for(VVAR_NODES::const_iterator it=node->children.begin();
+            it!=node->children.end();
+            it++) {
+            VAR_NODE *child = *it;
             // Check our children
             Consolidive(child,data_description,base_symbol);
 
@@ -1251,7 +1283,11 @@ VARIABLE_TREE::DumpFlatList() const
     cout << setw( 7) << "ascale";
     cout << setw( 7) << "aflags";
     cout << endl;
-    for( auto node : flat_list ) {
+    
+    for(VVAR_NODES::const_iterator it=flat_list.begin();
+        it!=flat_list.end();
+        it++) {
+        VAR_NODE *node = *it;
         cout << setw(20) << node->program;
         cout << setw(20) << node->section;
         cout << setw( 5) << node->size;
@@ -1279,7 +1315,10 @@ VARIABLE_TREE::DumpFlatList() const
 void
 VARIABLE_TREE::FormatVariablesInfo(stringstream &ss) const
 {
-    for( auto node : flat_list ) {
+    for(VVAR_NODES::const_iterator it=flat_list.begin();
+        it!=flat_list.end();
+        it++) {
+        VAR_NODE *node = *it;
         ss << "D|";
         ss << node->section.substr(0,2) << "|";
         ss << ZeroIsNull(node->level) << "|" ;

@@ -30,12 +30,16 @@
 
 #pragma once
 
+#if __GNUC__ >= 7
 #include <cstdint>
+#endif
+
 #include <string>
 #include <vector>
 
 typedef char *PCHAR;
 
+#if __GNUC__ >= 7
 typedef  int8_t  BYTE;
 typedef uint8_t UBYTE;
 
@@ -47,6 +51,22 @@ typedef uint32_t ULONG;
 
 typedef  int64_t  LONGLONG;
 typedef uint64_t ULONGLONG;
+#else
+    
+typedef   signed char  BYTE;
+typedef unsigned char UBYTE;
+
+typedef   signed short  SHORT;
+typedef unsigned short USHORT;
+
+typedef   signed int  LONG;
+typedef unsigned int ULONG;
+
+typedef   signed long long  LONGLONG;
+typedef unsigned long long ULONGLONG;
+
+#endif
+
 
 typedef std::vector<std::string>VSTRING;
 

@@ -29,7 +29,7 @@
 ############################################################################ */
 
 #include <iostream>
-#include <regex>
+#include <regex.h>
 
 #ifdef _WIN32
 #include "getopt.h"

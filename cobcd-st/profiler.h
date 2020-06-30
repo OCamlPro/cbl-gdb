@@ -30,6 +30,9 @@
 
 #pragma once
 
+
+#if __GNUC__ >= 7
+
 #include <map>
 #include <unordered_map>
 #include <string>
@@ -167,6 +170,8 @@ public:
     }
 
 };
+
+#endif
 
 #ifdef PROFILING
 #define PROFILER PPROFILER Profiler(__func__);

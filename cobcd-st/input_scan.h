@@ -30,12 +30,13 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <string>
 #include <vector>
-#include <unordered_map>
-#include <unordered_set>
+#include <map>
+#include <set>
 #include <fstream>
-#include <regex>
+#include <regex.h>
 #include <sstream>
 #include <iomanip>
 #include "profiler.h"
@@ -47,6 +48,10 @@
 #define AND &&
 #define OR ||
 #define NEEDED_TO_DEFINE_EQ
+#endif
+
+#if __GNUC__ < 7
+#define nullptr NULL
 #endif
 
 
@@ -77,7 +82,7 @@ public:
     friend COB_PIC_SYMBOLS;
 };
 typedef std::vector<COB_PIC_SYMBOL> V_COB_PIC_SYMBOLS;
-typedef std::unordered_map<std::string,size_t> M_COB_PIC_SYMBOLS;
+typedef std::map<std::string,size_t> M_COB_PIC_SYMBOLS;
 
 class COB_PIC_SYMBOLS
 {
@@ -110,7 +115,12 @@ public:
         std::cout << " ";
         std::cout << std::setw(20) << "pic_symbol";
         std::cout << std::endl;
-        for( auto symbol : v_pic_symbols) {
+        
+        for( V_COB_PIC_SYMBOLS::const_iterator it = v_pic_symbols.begin();
+             it != v_pic_symbols.end();
+             it++)
+             {
+             const COB_PIC_SYMBOL symbol = *it;
             std::cout << std::setw(20) << symbol.name ;
             std::cout << " ";
             std::cout << std::setw(20) << symbol.pic_symbol;
@@ -156,7 +166,7 @@ public:
     friend COB_DATA;
 } ;
 typedef std::vector<COB_DATUM> V_COB_DATUM;
-typedef std::unordered_map<std::string,size_t> M_COB_DATUM;
+typedef std::map<std::string,size_t> M_COB_DATUM;
 
 class COB_DATA
 {
@@ -196,7 +206,12 @@ public:
         std::cout << std::setw(20) << "storage";
         std::cout << std::setw(20) << "cbl_name";
         std::cout << std::endl;
-        for( auto symbol : v_data) {
+
+        
+        for( V_COB_DATUM::const_iterator it=v_data.begin();
+                it!= v_data.end();
+                it++) {
+            COB_DATUM symbol = *it;
             std::cout << std::setw(20) << symbol.name ;
             std::cout << std::setw(20) << symbol.size;
             std::cout << std::setw(20) << symbol.program_id;
@@ -253,7 +268,7 @@ public:
     friend COB_FIELD_ATTRIBUTES;
 } ;
 typedef std::vector<COB_FIELD_ATTRIBUTE> V_COB_FIELD_ATTRIBUTE;
-typedef std::unordered_map<std::string,size_t> M_COB_FIELD_ATTRIBUTES;
+typedef std::map<std::string,size_t> M_COB_FIELD_ATTRIBUTES;
 
 class COB_FIELD_ATTRIBUTES
 {
@@ -303,7 +318,10 @@ public:
         std::cout << std::setw(20) << "name_of_pic";
         std::cout << std::setw(20) << "program_id";
         std::cout << std::endl;
-        for( auto attr : v_cob_field_attributes) {
+        for(V_COB_FIELD_ATTRIBUTE::const_iterator it=v_cob_field_attributes.begin();
+            it!=v_cob_field_attributes.end();
+            it++) {
+            COB_FIELD_ATTRIBUTE attr = *it;
             std::cout << std::setw(20) << attr.name ;
             std::cout << std::setw(20) << attr.type;
             std::cout << std::setw(20) << attr.digits;
@@ -362,7 +380,7 @@ public:
     friend COB_FIELDS;
 } ;
 typedef std::vector<COB_FIELD> V_COB_FIELDS;
-typedef std::unordered_map<std::string,size_t> M_COB_FIELDS;
+typedef std::map<std::string,size_t> M_COB_FIELDS;
 
 class COB_FIELDS
 {
@@ -425,7 +443,11 @@ public:
         std::cout << std::setw(20) << "program_id";
         std::cout << std::setw(20) << "cbl_name";
         std::cout << std::endl;
-        for( auto field : v_cob_fields) {
+        
+        for( V_COB_FIELDS::const_iterator it = v_cob_fields.begin();
+             it!=v_cob_fields.end();
+             it++) {
+            COB_FIELD field = *it;
             std::cout << std::setw(20) << field.name ;
             std::cout << std::setw(20) << field.size;
             std::cout << std::setw(20) << field.name_of_data;
@@ -524,7 +546,10 @@ public:
         std::cout << std::setw(30) << "paragraph";
         std::cout << std::endl;
 
-        for( auto label : program_labels ) {
+        for( VCOB_PROGRAM_LABEL::const_iterator it=program_labels.begin();
+                it!=program_labels.end();
+                it++) {
+            COB_PROGRAM_LABEL label = *it;
             std::cout << std::setw( 5) << label.type;
             std::cout << std::setw(15) << label.source_file;
             std::cout << std::setw( 6) << label.line_number;
@@ -581,7 +606,7 @@ public:
 };
 typedef std::vector<DATA_DESCRIPTION> VDATA_DESCRIPTION;
 
-typedef std::unordered_map<std::string,size_t> M_VKEY;
+typedef std::map<std::string,size_t> M_VKEY;
 
 class DATA_DESCRIPTIONS
 {
@@ -592,7 +617,7 @@ private:
     // We are also going to create an non-unique "index" (program-id, cbl_symbol,-1)
     M_VKEY symbols_index;
 
-    std::unordered_map<std::string,size_t>location_of_c_symbol;
+    std::map<std::string,size_t>location_of_c_symbol;
 
 public:
     int
@@ -610,7 +635,7 @@ public:
     int
     IndexOfSymbol(const std::string &symbol) const
     {
-        std::unordered_map<std::string,size_t>::const_iterator it =
+        std::map<std::string,size_t>::const_iterator it =
             location_of_c_symbol.find(symbol);
         if(it == location_of_c_symbol.end()) {
             return -1;
