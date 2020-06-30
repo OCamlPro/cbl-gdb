@@ -39,21 +39,6 @@ using namespace std;
 #define AND &&
 #define OR ||
 
-#if __GNUC__ <= 4
-
-int stoi(const string &s)
-{
-    return atoi(s.c_str());
-}
-
-#endif
-
-
-
-
-
-
-
 VAR_NODE::VAR_NODE()
 {
     CPROFILER;
@@ -428,12 +413,13 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
         // In PICTURE strings, so we need to keep them there.  But if a ','
         // appears at the end of the token before a REDEFINES token, we have to
         // remove it.
-        
+
         vector<string>::const_iterator it = tokens.begin();
-        while(it != tokens.end()){
+        while(it != tokens.end()) {
             if( *it EQ "REDEFINES" ) {
                 break;
             }
+            it++;
         }
 
         if( it != tokens.end() ) {
@@ -458,12 +444,13 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
         }
 
         it = tokens.begin();
-        while(it != tokens.end()){
+        while(it != tokens.end()) {
             if( *it EQ "OCCURS" ) {
                 break;
             }
+            it++;
         }
-        
+
         if( it != tokens.end() ) {
             // 'it' points to OCCURS:
             size_t index = it - tokens.begin();
@@ -478,10 +465,9 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             // OCCURS 4
             // OCCURS 1 TO 15
 
-
             if( tokens.size() > index+2 AND tokens[index+2] EQ "TO" ) {
                 // Pick up the maximum number of occurrences
-                new_node->occurs = stoi(tokens[index+3]);
+                new_node->occurs = STOI(tokens[index+3]);
 
                 // Remove "OCCURS 1 TO 15" from the tokens
                 vector<string>::iterator it1 = tokens.begin() + index;
@@ -490,7 +476,7 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             } else {
                 // Assume "OCCURS 10"
                 // Pick up the number of occurrences
-                new_node->occurs = stoi(tokens[index+1]);
+                new_node->occurs = STOI(tokens[index+1]);
 
                 // And now remove "OCCURS 10" from the tokens:
                 vector<string>::iterator it1 = tokens.begin() + index;
@@ -529,7 +515,7 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
 
             // And having forced that in, create the level 00 entry for
             // the FILE record itself:
-            new_node->size = stoi(tokens[0]);
+            new_node->size = STOI(tokens[0]);
             new_node->type = tokens[1];         // This is, of course, "FILE"
             new_node->level = LEVEL_FILE;       // Should be 00; special handling
             new_node->section = "";
@@ -542,9 +528,9 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             // Usually a GROUP record.  As of this writing, it can also
             // be a FLOAT-DECIMAL-16 or -34, because those don't have
             // PICTURE field descriptions, although they ought to.
-            new_node->size = stoi(tokens[0]);
+            new_node->size = STOI(tokens[0]);
             new_node->type = tokens[1];
-            new_node->level = stoi(tokens[2]);
+            new_node->level = STOI(tokens[2]);
             new_node->name = tokens[3];
         } else if( tokens.size() EQ 5 AND tokens[1] EQ "warnings" ) {
             // We've reached the end of the parsed tokens with a line:
@@ -567,9 +553,9 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             }
             // There are now five elements:
 
-            new_node->size = stoi(tokens[0]);
+            new_node->size = STOI(tokens[0]);
             new_node->type = tokens[1];
-            new_node->level = stoi(tokens[2]);
+            new_node->level = STOI(tokens[2]);
             new_node->name = tokens[3];
             vector<string>usage = Split(tokens[4]," ");
             if(usage.size() >= 1) {
@@ -1067,8 +1053,8 @@ DiveForVariable(        VAR_NODE *node,
     }
     VVAR_NODES children = node->GetChildren();
     for(VVAR_NODES::const_iterator it=children.begin();
-        it!=children.end();
-        it++) {
+            it!=children.end();
+            it++) {
         VAR_NODE *child = *it;
         VAR_NODE *maybe = DiveForVariable(child,
                                           section,
@@ -1217,8 +1203,8 @@ VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_descript
         }
 
         for(VVAR_NODES::const_iterator it=node->children.begin();
-            it!=node->children.end();
-            it++) {
+                it!=node->children.end();
+                it++) {
             VAR_NODE *child = *it;
             // Check our children
             Consolidive(child,data_description,base_symbol);
@@ -1283,10 +1269,10 @@ VARIABLE_TREE::DumpFlatList() const
     cout << setw( 7) << "ascale";
     cout << setw( 7) << "aflags";
     cout << endl;
-    
+
     for(VVAR_NODES::const_iterator it=flat_list.begin();
-        it!=flat_list.end();
-        it++) {
+            it!=flat_list.end();
+            it++) {
         VAR_NODE *node = *it;
         cout << setw(20) << node->program;
         cout << setw(20) << node->section;
@@ -1316,8 +1302,8 @@ void
 VARIABLE_TREE::FormatVariablesInfo(stringstream &ss) const
 {
     for(VVAR_NODES::const_iterator it=flat_list.begin();
-        it!=flat_list.end();
-        it++) {
+            it!=flat_list.end();
+            it++) {
         VAR_NODE *node = *it;
         ss << "D|";
         ss << node->section.substr(0,2) << "|";

@@ -99,25 +99,43 @@ ProcessDataStorage(ifstream &ifs,
         if(ifs.eof()) {
             break;
         }
-
         current_line_number += 1;
 
         if(inpic) {
-            // We are in the state of building up a picture string.
-            smatch sm;
-            static const regex re_picture_payload("[^{]+[{]'(.+)', ([0-9]+).*$");
-            if(regex_match(input,sm,re_picture_payload)) {
-                if(sm[1] EQ "\\0") {
-                    cob_pic_symbols.Insert(picture_symbol,picture_string);
-                    inpic = false;
-                } else {
-                    string ch = sm[1].str();
-                    picture_string += ch[0];
-                    int n = stoi(sm[2].str());
-                    if(n > 1) {
-                        picture_string += '(';
-                        picture_string += sm[2].str();
-                        picture_string += ')';
+            // We are in the state of building up a picture string,
+            // which looks like this:
+//                static const cob_pic_symbol p_1[] = {
+//                  {'-', 1},
+//                  {'9', 9},
+//                  {'.', 1},
+//                  {'9', 9},
+//                  {'\0', 1}
+//                };
+
+
+            size_t nfound = input.find("\\0");
+            if( nfound != string::npos ) {
+                // We have processed every element
+                cob_pic_symbols.Insert(picture_symbol,picture_string);
+                inpic = false;
+            } else {
+                // We are working on an element:
+                size_t nstart = input.find("{");
+                if( nstart != string::npos ) {
+                    nstart += 2;
+                    if( nstart < input.length() ) {
+                        picture_string += input.substr(nstart,1);
+                        nstart += 3;
+                        if( nstart < input.length() ) {
+                            int n = STOI( input.substr(nstart) );
+                            char ach[24];
+                            sprintf(ach,"%d",n);
+                            if(n > 1) {
+                                picture_string += '(';
+                                picture_string += ach;
+                                picture_string += ')';
+                            }
+                        }
                     }
                 }
             }
@@ -144,13 +162,27 @@ ProcessDataStorage(ifstream &ifs,
         }
 
         // Look for b_xx[size] variables, found in "Data Storage" subsections:
-        smatch sm;
-        // Scans for not 'b' followed by b_(something)[<number)]
-        static const regex re_storage(".+(b_[0-9]+)[[]([0-9]+).*$");
-        if(regex_match(input,sm,re_storage)) {
-            if(sm.size() EQ 3) {
-                string c_symbol   = sm[1].str();
-                int size          = stoi(sm[2].str());
+
+        //    static cob_u8_t b_10[120] __attribute__((aligned));     /* PRINT-FILE Record */
+        //    static cob_u8_t b_11[1] __attribute__((aligned));       /* WRK-DU-1V0-1 */
+
+        size_t nfound = input.find(" b_");
+        if( nfound EQ string::npos ) {
+            nfound = input.find("\tb_");
+        }
+        if( nfound != string::npos ) {
+            nfound += 1;
+            string c_symbol;
+            char ch;
+            while( nfound < input.length() ) {
+                ch = input[nfound++];
+                if( ch EQ '[' ) {
+                    break;
+                }
+                c_symbol += ch;
+            }
+            if( ch EQ '[' ) {
+                int size = STOI( input.substr(nfound) );
                 string cbl_symbol = GetCommentText(input);
                 size_t nfound = cbl_symbol.find(" Record");
                 if( nfound != string::npos ) {
@@ -171,20 +203,47 @@ ProcessDataStorage(ifstream &ifs,
 
                 // To facilitate that, we build a <string,string> map.
                 b_symbol_to_program_id[c_symbol] = program_id;
+                continue;
             }
-            continue;
         }
 
         // Look for a_xxx attributes:
         // ==>static const cob_field_attr a_3 = {0x21,   0,   0, 0x0000, NULL};<<=
-        static const regex attribute(".*cob_field_attr ([^ ]+).+[{]0x([^,]+),([^,]+),([^,]+), 0x([^,]+), ([^}]+).*$");
-        if(regex_match(input,sm,attribute)) {
-            string c_symbol    =  sm[1].str();
-            USHORT attr_type   = static_cast<USHORT>(stoul(sm[2],NULL,16));
-            USHORT attr_digits = static_cast<USHORT>(stoul(sm[3]));
-            SHORT  attr_scale  = static_cast<short>(stol(sm[4]));
-            USHORT attr_flags  = static_cast<USHORT>(stoul(sm[5],NULL,16));
-            string pic_pointer = sm[6];
+
+        static const char SZ_COB_FIELD_ATTR[] = "cob_field_attr ";
+        nfound = input.find(SZ_COB_FIELD_ATTR);
+        if( nfound != string::npos ) {
+            size_t nstart = nfound + strlen(SZ_COB_FIELD_ATTR);
+            string c_symbol;
+            char ch;
+            // Pick up the symbol
+            while( nstart < input.length() AND (ch = input[nstart++]) != ' '  ) {
+                c_symbol += ch;
+            }
+            // Skip past the opening brace
+            while( nstart < input.length() AND (ch = input[nstart++]) != '{'  ) {
+            }
+            // Pick up the hexadecimal attr_type
+            char *endptr;
+            USHORT attr_type   = static_cast<USHORT>(strtol(input.c_str()+nstart,&endptr,16));
+            // Pick up the decimal number of digits:
+            USHORT attr_digits = static_cast<USHORT>(strtol(endptr+1,&endptr,10));
+            // Pick up the decimal scale
+            USHORT attr_scale = static_cast<USHORT>(strtol(endptr+1,&endptr,10));
+            // Pick up the hexadecimal flags
+            USHORT attr_flags   = static_cast<USHORT>(strtol(endptr+1,&endptr,16));
+            // And pick up the pic_pointer
+            string pic_pointer;
+            // Skip past the ", "
+            if( *endptr != '\0' ) {
+                endptr += 1;
+            }
+            if( *endptr != '\0' ) {
+                endptr += 1;
+            }
+            while( *endptr != '\0' AND *endptr != '}' ) {
+                pic_pointer += *endptr++;
+            }
             if(pic_pointer EQ "NULL") {
                 pic_pointer.clear();
             }
@@ -199,83 +258,137 @@ ProcessDataStorage(ifstream &ifs,
         }
 
         // Look for f_xxx fields:
-        if(input.find("cob_field f_") != string::npos) {
-            // This is a variable field, generate by a storage level of 02 or more
-            // ==>static cob_field f_17 = {22, b_17, &a_2}; /* WS-NAME */<<==
-            // cob_field is found in cobc/libcob/common.h
+        // static cob_field f_8    = {120, b_10 + 10, &a_10};   /* PRINT-REC */
+        // static cob_field f_294	= {5, b_291 + 15, &a_10};	/* LOW-VAL */
+        static const char SZ_COB_FIELD_F[] = "cob_field f_";
+        nfound = input.find(SZ_COB_FIELD_F);
+        if( nfound != string::npos ) {
+            nfound += strlen(SZ_COB_FIELD_F);
 
-            static const regex field(".*cob_field f_.*$");
-            if(regex_match(input,field)) {
-                // This is a variable field
+            // Pick up the c_symbol
+            string c_symbol="f_";
+            while( nfound < input.length() ) {
+                char ch = input[nfound++];
+                if( !isdigit(ch) ) {
+                    break;
+                }
+                c_symbol += ch;
+            }
 
-                smatch sm;
-                static const regex field_match(".*cob_field ([^ \t]+)[^{]+[{]([^,]+), ([^,]+), [&]([^}]+).*$");
-                if(regex_match(input,sm,field_match)) {
-                    string c_symbol;
-                    int    size=0;
-                    string name_of_data;
-                    int    offset=0;
-                    string name_of_attr;
-                    string mapped_program_id = program_id;
-                    string cbl_name;
-
-                    // look for b_17 + 10
-                    smatch sm2;
-                    static const regex offset_match("(.*) [+] (.*)");
-                    string base_offset = sm[3].str();
-                    name_of_data = sm[3].str();
-                    if(regex_match(base_offset,sm2,offset_match)) {
-                        name_of_data = sm2[1].str();
-                        offset = stoi(sm2[2].str());
-                    }
-
-                    // As mentioned in the b_ processing, the program_id at
-                    // this point can be a lie.  When a b_ is declared GLOBAL,
-                    // its definition is in one program-id.  But if it's
-                    // accessed in program-id2, that's where the .h file says
-                    // the f_ variable that references b_ is.  We built a map
-                    // to get around that, which we have to do to get these
-                    // variables lined up with the .cbl.lst variable list.
-
-                    map<string,string>::const_iterator it =
-                        b_symbol_to_program_id.find(name_of_data);
-                    if(it != b_symbol_to_program_id.end()) {
-                        mapped_program_id = it->second;
-                    }
-                    c_symbol = sm[1].str();
-                    size = stoi(sm[2].str());
-                    if(name_of_data EQ "NULL") {
-                        name_of_data.clear();
-                    }
-                    name_of_attr = sm[4].str();
-                    cbl_name = GetCommentText(input);
-
-                    size_t nfound = cbl_name.find(" Record");
-                    if( nfound != string::npos ) {
-                        cbl_name = cbl_name.substr(0,nfound);
-                    }
-
-                    cob_fields.Insert(c_symbol,
-                                      size,
-                                      name_of_data,
-                                      offset,
-                                      name_of_attr,
-                                      mapped_program_id,
-                                      cbl_name);
+            // Skip past the '{'
+            while( nfound < input.length() ) {
+                char ch = input[nfound++];
+                if( ch EQ '{' ) {
+                    break;
                 }
             }
+
+            // Pick up the size:
+            int size = STOI(input.substr(nfound));
+
+            // Skip past the next space:
+            while( nfound < input.length() ) {
+                char ch = input[nfound++];
+                if( ch EQ ' ' ) {
+                    break;
+                }
+            }
+            // Skip to the name_of_data
+            string name_of_data;
+            if( nfound < input.length() ) {
+                // Pick up the b
+                name_of_data += input[nfound++];
+            }
+            if( nfound < input.length() ) {
+                // Pick up the _
+                name_of_data += input[nfound++];
+            }
+            while( nfound < input.length() ) {
+                char ch = input[nfound++];
+                if( ch EQ ',' ) {
+                    break;
+                }
+                name_of_data += ch;
+            }
+
+            // Skip past the ampersand:
+            while( nfound < input.length() ) {
+                char ch = input[nfound++];
+                if( ch EQ '&' ) {
+                    break;
+                }
+            }
+
+            // Pick up the pointer to the attribute
+            string name_of_attr;
+            if( nfound < input.length() ) {
+                // Pick up the a
+                name_of_attr += input[nfound++];
+            }
+            if( nfound < input.length() ) {
+                // Pick up the _
+                name_of_attr += input[nfound++];
+            }
+            while( nfound < input.length() ) {
+                char ch = input[nfound++];
+                if( !isdigit(ch) ) {
+                    break;
+                }
+                name_of_attr += ch;
+            }
+
+            // See if there is an offset:
+            int offset = 0;
+            nfound = input.find(" + ");
+            if( nfound != string::npos ) {
+                offset = STOI( input.substr(nfound+3) );
+            }
+
+            string cbl_name = GetCommentText(input);
+
+            size_t nfound = cbl_name.find(" Record");
+            if( nfound != string::npos ) {
+                cbl_name = cbl_name.substr(0,nfound);
+            }
+
+            string mapped_program_id = program_id;
+            // As mentioned in the b_ processing, the program_id at
+            // this point can be a lie.  When a b_ is declared GLOBAL,
+            // its definition is in one program-id.  But if it's
+            // accessed in program-id2, that's where the .h file says
+            // the f_ variable that references b_ is.  We built a map
+            // to get around that, which we have to do to get these
+            // variables lined up with the .cbl.lst variable list.
+
+            map<string,string>::const_iterator it =
+                b_symbol_to_program_id.find(name_of_data);
+            if(it != b_symbol_to_program_id.end()) {
+                mapped_program_id = it->second;
+            }
+
+            cob_fields.Insert(c_symbol,
+                              size,
+                              name_of_data,
+                              offset,
+                              name_of_attr,
+                              mapped_program_id,
+                              cbl_name);
             continue;
         }
 
         // Check for a PICTURE symbol
         if(!inpic) {
-            smatch sm;
-            static const regex re_picture(".*cob_pic_symbol ([^[]+).*");
-            if(regex_match(input,sm,re_picture)) {
-                picture_symbol = sm[1].str();
-                picture_string.clear();
-                inpic = true;
-                continue;
+            static const char look_for[] = "cob_pic_symbol ";
+            size_t nfound = input.find(look_for);
+            if( nfound != string::npos ) {
+                size_t nstart = nfound + strlen(look_for);
+                nfound = input.find("[");
+                if( nfound != string::npos ) {
+                    picture_symbol = input.substr(nstart,nfound-nstart);
+                    picture_string.clear();
+                    inpic = true;
+                    continue;
+                }
             }
         }
     }
@@ -369,61 +482,75 @@ ScanForLinkage(ifstream &ifs,
         if( input.substr(0,5) EQ "#line" ) {
             vector<string> tokens = Split(input," \t");
             if( tokens.size() >= 3 AND StripQuotes(tokens[2]) EQ current_source ) {
-                current_line_number = stoi(tokens[1]);
+                current_line_number = STOI(tokens[1]);
                 continue;
             }
         }
 
-        if( input.find("ENTRY_") != string::npos ) {
-            smatch sm;
-            static const regex re_entry("^[ \t]*ENTRY_(.*):.*$");
-            if(regex_match(input,sm,re_entry)) {
-                program_labels.AddEntry('P',
-                                        current_source,
-                                        current_line_number,
-                                        current_sentence_number,
-                                        current_program,
-                                        current_entry,
-                                        current_section,
-                                        current_paragraph   );
+        static char SZ_ENTRY[] = "ENTRY_";
+        size_t nfound = input.find(SZ_ENTRY);
+        if( nfound != string::npos ) {
+            nfound += strlen(SZ_ENTRY);
 
-                current_entry = sm[1];
-                current_section = "";
-                current_paragraph = "";
-                program_labels.AddEntry('E',
-                                        current_source,
-                                        current_line_number,
-                                        current_sentence_number,
-                                        current_program,
-                                        current_entry,
-                                        current_section,
-                                        current_paragraph   );
-                continue;
+            program_labels.AddEntry('P',
+                                    current_source,
+                                    current_line_number,
+                                    current_sentence_number,
+                                    current_program,
+                                    current_entry,
+                                    current_section,
+                                    current_paragraph   );
+
+            current_entry.clear();
+            while(nfound < input.length() ) {
+                char ch = input[nfound++];
+                if( ch EQ ':' ) {
+                    break;
+                }
+                current_entry += ch;
             }
+
+            current_section = "";
+            current_paragraph = "";
+            program_labels.AddEntry('E',
+                                    current_source,
+                                    current_line_number,
+                                    current_sentence_number,
+                                    current_program,
+                                    current_entry,
+                                    current_section,
+                                    current_paragraph   );
+            continue;
         }
 
-        if( input.find("SECTION_") != string::npos ) {
-            smatch sm;
-            static const regex re_entry("^[ \t]*SECTION_(.*):.*$");
-            if(regex_match(input,sm,re_entry)) {
-                current_section = sm[1];
-                current_paragraph = "";
-                program_labels.AddEntry('S',
-                                        current_source,
-                                        current_line_number,
-                                        current_sentence_number,
-                                        current_program,
-                                        current_entry,
-                                        current_section,
-                                        current_paragraph   );
-                continue;
+        static char SZ_SECTION[] = "SECTION_";
+        nfound = input.find(SZ_SECTION);
+        if( nfound != string::npos ) {
+            nfound += strlen(SZ_SECTION);
+            current_section.clear();
+            while(nfound < input.length() ) {
+                char ch = input[nfound++];
+                if( ch EQ ':' ) {
+                    break;
+                }
+                current_section += ch;
             }
+            current_paragraph = "";
+            program_labels.AddEntry('S',
+                                    current_source,
+                                    current_line_number,
+                                    current_sentence_number,
+                                    current_program,
+                                    current_entry,
+                                    current_section,
+                                    current_paragraph   );
+            continue;
         }
 
         if( input.find( "Paragraph") != string::npos ) {
             vector<string> tokens = Split(input," \t");
             if( tokens.size() >= 9 AND tokens[0] EQ "/*" AND tokens[1] EQ "Line:" AND tokens[4] EQ "Paragraph" ) {
-                current_line_number = stoi(tokens[2]);
+                current_line_number = STOI(tokens[2]);
                 current_paragraph = tokens[5];
                 program_labels.AddEntry('G',
                                         current_source,
@@ -447,57 +574,81 @@ ScanForLinkage(ifstream &ifs,
 
         // cout << input << endl;
         // There is information to be gleaned from various C calls.
-        if( input.find("cob_check_linkage") != string::npos ) {
-            //  We are processing something like
-            //
-            //  cob_check_linkage (b_41, "'LK-MATH-PROBLEM' (accessed by 'LK-PARAM-1')", 1);
-
-            smatch sm;
-            static const regex linkage(".*\\(([^,]+),[^']+[']([^']+).*$");
-            if(regex_match(input,sm,linkage)) {
-                pair<string,string> cobol_c;
-                string c_symbol = sm[1].str();
-                string cbl_symbol = sm[2].str();
-                cobol_c.first  = c_symbol;
-                cobol_c.second = cbl_symbol;
-
-                if( linkage_weve_seen.find(cobol_c) EQ linkage_weve_seen.end() ) {
-                    linkage_weve_seen.insert(cobol_c);
-
-                    cob_data.Insert(c_symbol,0,current_program,"Linkage",cbl_symbol);
-
+        static const char SZ_COB_CHECK_LINKAGE[] = "cob_check_linkage (";
+        nfound = input.find(SZ_COB_CHECK_LINKAGE);
+        if( nfound != string::npos ) {
+            pair<string,string> cobol_c;
+            string c_symbol;
+            nfound += strlen(SZ_COB_CHECK_LINKAGE);
+            while( nfound < input.length() ) {
+                char ch = input[nfound++];
+                if( ch EQ ',' ) {
+                    break;
                 }
+                c_symbol += ch;
+            }
+
+            string cbl_symbol;
+            while( nfound < input.length() ) {
+                char ch = input[nfound++];
+                if( ch EQ '\'' ) {
+                    break;
+                }
+            }
+            while( nfound < input.length() ) {
+                char ch = input[nfound++];
+                if( ch EQ '\'' ) {
+                    break;
+                }
+                cbl_symbol += ch;
+            }
+
+            cobol_c.first  = c_symbol;
+            cobol_c.second = cbl_symbol;
+            if( linkage_weve_seen.find(cobol_c) EQ linkage_weve_seen.end() ) {
+                linkage_weve_seen.insert(cobol_c);
+                cob_data.Insert(c_symbol,0,current_program,"Linkage",cbl_symbol);
             }
             // No continue statement here, because the line might also
             // contain COB_SET_DATA
         }
 
         size_t ncob = 0;
-        while((ncob = input.find("COB_SET_DATA",ncob)) != string::npos) {
+        static const char SZ_COB_SET_DATA[] = "COB_SET_DATA (";
+        while((ncob = input.find(SZ_COB_SET_DATA,ncob)) != string::npos) {
             //   We might be working with a line like this:
             //   cob_add (COB_SET_DATA (f_40, cob_local_ptr), COB_SET_DATA (f_44, b_41 + 8), 0);
+            //   cob_display (0, 1, 1, COB_SET_DATA (f_13, cob_local_ptr + 32 + 23));
 
-            // We know we'll get at least one hit, so we can do the expensive regex_match with confidence:
-            smatch sm;
-            static const regex csd("COB_SET_DATA [(]([^,]+), ([^)]+).*$");
-            string spiece = input.substr(ncob);
-            if(regex_match(spiece,sm,csd)) {
-                string f_symbol = sm[1].str();
-                string source = sm[2].str();
-                string base = sm[2].str();
-                int offset=0;
-                static const regex offset_match("(.*) [+] (.*)");
-                smatch sm2;
-                if(regex_match(source,sm2,offset_match)) {
-                    base = sm2[1].str();
-                    offset = stoi(sm2[2].str());
+            size_t nstart = ncob + strlen(SZ_COB_SET_DATA);
+            size_t nfound = input.find( ",", nstart );
+            string f_symbol = input.substr(nstart,nfound - nstart);
+            string base;
+            int    offset=0;
+
+            nstart = nfound+2;
+            nfound = input.find( ")", nstart );
+            string param2 = input.substr(nstart,nfound-nstart);
+
+            //   We ignore cob_local_ptr types; locals are handled elsewhere
+            if( param2.find("cob_local_ptr") EQ string::npos ) {
+                // It could be SOMETHING or SOMETHING + decimal
+                nfound = param2.find(" + ");
+                if( nfound != string::npos ) {
+                    base = param2.substr(0,nfound);
+                    offset = STOI(param2.substr(nfound+3));
+                } else {
+                    nfound = param2.find(")",nstart);
+                    base = param2;
+                    if( nfound != string::npos ) {
+                        base = param2.substr(0,nfound);
+                    }
                 }
-                if( base.find("cob_local_ptr") EQ string::npos ) {
-                    cob_fields.Modify(f_symbol,base,offset);
-                }
+                cob_fields.Modify(f_symbol,base,offset);
             }
 
-            ncob += 12;
+            // Go see if there are more on this line
+            ncob += strlen(SZ_COB_SET_DATA);
         }
     }
     return;

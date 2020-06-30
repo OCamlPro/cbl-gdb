@@ -144,7 +144,7 @@ Upper(const string &s)
 
 string
 ZeroIsNull(const LONGLONG &v)
-{   
+{
     string retval;
     stringstream ss;
     if( v != 0 ) {
@@ -153,3 +153,8 @@ ZeroIsNull(const LONGLONG &v)
     return ss.str();
 }
 
+int
+STOI(const string &s)
+{
+    return atoi(s.c_str());
+}

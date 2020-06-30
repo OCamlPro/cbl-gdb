@@ -36,7 +36,6 @@
 #include <map>
 #include <set>
 #include <fstream>
-#include <regex.h>
 #include <sstream>
 #include <iomanip>
 #include "profiler.h"
@@ -115,12 +114,11 @@ public:
         std::cout << " ";
         std::cout << std::setw(20) << "pic_symbol";
         std::cout << std::endl;
-        
+
         for( V_COB_PIC_SYMBOLS::const_iterator it = v_pic_symbols.begin();
-             it != v_pic_symbols.end();
-             it++)
-             {
-             const COB_PIC_SYMBOL symbol = *it;
+                it != v_pic_symbols.end();
+                it++) {
+            const COB_PIC_SYMBOL symbol = *it;
             std::cout << std::setw(20) << symbol.name ;
             std::cout << " ";
             std::cout << std::setw(20) << symbol.pic_symbol;
@@ -207,7 +205,7 @@ public:
         std::cout << std::setw(20) << "cbl_name";
         std::cout << std::endl;
 
-        
+
         for( V_COB_DATUM::const_iterator it=v_data.begin();
                 it!= v_data.end();
                 it++) {
@@ -319,8 +317,8 @@ public:
         std::cout << std::setw(20) << "program_id";
         std::cout << std::endl;
         for(V_COB_FIELD_ATTRIBUTE::const_iterator it=v_cob_field_attributes.begin();
-            it!=v_cob_field_attributes.end();
-            it++) {
+                it!=v_cob_field_attributes.end();
+                it++) {
             COB_FIELD_ATTRIBUTE attr = *it;
             std::cout << std::setw(20) << attr.name ;
             std::cout << std::setw(20) << attr.type;
@@ -443,10 +441,10 @@ public:
         std::cout << std::setw(20) << "program_id";
         std::cout << std::setw(20) << "cbl_name";
         std::cout << std::endl;
-        
+
         for( V_COB_FIELDS::const_iterator it = v_cob_fields.begin();
-             it!=v_cob_fields.end();
-             it++) {
+                it!=v_cob_fields.end();
+                it++) {
             COB_FIELD field = *it;
             std::cout << std::setw(20) << field.name ;
             std::cout << std::setw(20) << field.size;

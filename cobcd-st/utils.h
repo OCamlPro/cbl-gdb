@@ -52,7 +52,7 @@ typedef uint32_t ULONG;
 typedef  int64_t  LONGLONG;
 typedef uint64_t ULONGLONG;
 #else
-    
+
 typedef   signed char  BYTE;
 typedef unsigned char UBYTE;
 
@@ -77,3 +77,5 @@ std::vector<std::string>Split(const std::string &s,const std::string &delimiters
 std::string Replace(const std::string &s,const char was, const char is);
 std::string Upper(const std::string&s);
 std::string ZeroIsNull(const LONGLONG &v);
+
+int STOI(const std::string &s);
