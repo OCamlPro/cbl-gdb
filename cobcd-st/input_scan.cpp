@@ -663,7 +663,11 @@ DATA_DESCRIPTIONS::Flatten(const COB_FIELDS &cob_fields,
 {
     // Run through the f_ fields first
 
-    for(auto field : cob_fields.v_cob_fields) {
+    for(V_COB_FIELDS::const_iterator it=cob_fields.v_cob_fields.begin();
+            it != cob_fields.v_cob_fields.end();
+            it++
+       ) {
+        COB_FIELD field = *it;
         DATA_DESCRIPTION ds;
         ds.field_data_name     = field.name        ;
         ds.field_size          = field.size        ;
@@ -706,7 +710,11 @@ DATA_DESCRIPTIONS::Flatten(const COB_FIELDS &cob_fields,
     // the debugger won't be able to show you properly formatted data, but it
     // will, at least, know where it is and show you the byte values.
 
-    for(auto cob_data : cob_data.v_data) {
+    for(V_COB_DATUM::const_iterator it=cob_data.v_data.begin();
+            it != cob_data.v_data.end();
+            it++
+       ) {
+        COB_DATUM cob_data = *it;
         if( !IsInDs(cob_data.program_id,cob_data.cbl_name) ) {
             // It's not already there.  So, put it there.
             DATA_DESCRIPTION ds;
@@ -724,7 +732,10 @@ DATA_DESCRIPTIONS::Flatten(const COB_FIELDS &cob_fields,
 void
 COB_PROGRAM_LABELS::FormatProgramInfo(stringstream &ss) const
 {
-    for(auto label : program_labels) {
+    for(VCOB_PROGRAM_LABEL::const_iterator it=program_labels.begin();
+            it != program_labels.end();
+            it++ ) {
+        COB_PROGRAM_LABEL label = *it;
         /*
         type            = type_           ;
         source_file     = source_file_    ;
@@ -768,8 +779,6 @@ COB_PROGRAM_LABELS::FormatProgramInfo(stringstream &ss) const
     }
 }
 
-
-
 void
 DATA_DESCRIPTIONS::Dump() const
 {
@@ -787,7 +796,11 @@ DATA_DESCRIPTIONS::Dump() const
     cout << setw(11) << "attr_scale"          ;
     cout << setw(11) << "attr_flags"          ;
     cout << endl;
-    for( auto symbol : symbols ) {
+
+    for(VDATA_DESCRIPTION::const_iterator it=symbols.begin();
+            it!=symbols.end();
+            it++ ) {
+        DATA_DESCRIPTION symbol = *it;
         cout << setw(20) << symbol.program_id            ;
         cout << setw(20) << symbol.cbl_symbol            ;
         cout << setw(20) << symbol.c_symbol            ;
@@ -804,6 +817,3 @@ DATA_DESCRIPTIONS::Dump() const
     }
     cout << endl;
 }
-
-
-
