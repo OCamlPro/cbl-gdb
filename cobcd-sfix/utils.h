@@ -33,9 +33,7 @@
 #include <string>
 #include <vector>
 
-typedef char *PCHAR;
-typedef char const *CPCHAR;
-
+#if __GNUC__ >= 7
 typedef  int8_t  BYTE;
 typedef uint8_t UBYTE;
 
@@ -47,6 +45,21 @@ typedef uint32_t ULONG;
 
 typedef  int64_t  LONGLONG;
 typedef uint64_t ULONGLONG;
+#else
+
+typedef   signed char  BYTE;
+typedef unsigned char UBYTE;
+
+typedef   signed short  SHORT;
+typedef unsigned short USHORT;
+
+typedef   signed int  LONG;
+typedef unsigned int ULONG;
+
+typedef   signed long long  LONGLONG;
+typedef unsigned long long ULONGLONG;
+
+#endif
 
 typedef std::vector<std::string> VSTRING ;
 
@@ -54,3 +67,4 @@ std::string Trim(const std::string &s);
 std::string StripQuotes(const std::string &s);
 VSTRING Split(const std::string &s,const std::string &delimiters);
 std::string Replace(const std::string &s,const char was, const char is);
+int STOI(const std::string &s);

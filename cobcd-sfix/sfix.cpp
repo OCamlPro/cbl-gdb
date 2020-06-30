@@ -28,9 +28,11 @@
 #
 ############################################################################ */
 
+#include <stdlib.h>
 #include <iostream>
 #include <map>
 #include <set>
+#include <sstream>
 #include <string.h>
 
 #include "profiler.h"
@@ -66,12 +68,15 @@ GetInputFileMappings(const VSTRING &input_file, const string &primary_file)
 
     retval[primary_file] = -1;
 
-    for(string s : input_file) {
+    for(VSTRING::const_iterator it=input_file.begin();
+        it!=input_file.end();
+        it++) {
+        string s = *it;
         s = Trim(s);
         if( s.find(".file ") != string::npos) {
             VSTRING tokens = Split(s,"\t ");
             if( tokens.size() >= 3 AND tokens[0] EQ ".file" AND isdigit(tokens[1][0]) ) {
-                int nfile = stoi(tokens[1]);
+                int nfile = STOI(tokens[1]);
                 string file = StripQuotes(tokens[2]);
                 retval[file] = nfile;
             }
@@ -87,7 +92,10 @@ FindFunctionReferences(const VSTRING &input_file)
 
     VINT retval;
     int nline = 0;
-    for(string s : input_file) {
+    for(VSTRING::const_iterator it=input_file.begin();
+        it!=input_file.end();
+        it++) {
+        string s = *it;
         if( s.find(".globl") != string::npos) {
             VSTRING tokens = Split(s,"\t ");
             if( tokens[1] EQ ".globl" ) {
@@ -226,11 +234,11 @@ main(int argc, char **argv)
                 VSTRING tokens = Split(input_file[ii]," \t");
                 if( tokens.size() > 1 AND tokens[1] EQ ".loc" ) {
                     // We need to replace the old file number with the new one
-                    int old_num = stoi(tokens[2]);
+                    int old_num = STOI(tokens[2]);
                     int new_num = replacements[old_num];
                     if( new_num != 0 ) {
                         // Build the replacement line:
-                        int new_line = stoi(tokens[3])-1;
+                        int new_line = STOI(tokens[3])-1;
 
                         ss << "\t.loc";
                         ss << " " << new_num ;
@@ -258,7 +266,7 @@ main(int argc, char **argv)
             }
             if( tokens[0] EQ ".loc" ) {
                 // We need to replace the old file number with the new one
-                int oldnum = stoi(tokens[1]);
+                int oldnum = STOI(tokens[1]);
                 int newnum = replacements[oldnum];
                 if( newnum != 0 ) {
                     // Rebuild the .loc line

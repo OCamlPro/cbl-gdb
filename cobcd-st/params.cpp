@@ -28,7 +28,10 @@
 #
 ############################################################################ */
 
+#include <stdlib.h>
 #include <iostream>
+#include <errno.h>
+#include <string.h>
 
 #ifdef _WIN32
 #include "getopt.h"
@@ -210,7 +213,7 @@ Usage()
 void
 OpenOrFail(std::ifstream &ifs,const std::string &fname,std::ios_base::openmode mode/* = std::ifstream::in*/)
 {
-    ifs.open(fname,mode);
+    ifs.open(fname.c_str(),mode);
     if(!ifs.is_open()) {
         cerr << "Failed to open input file \"" << fname << "\"" << endl;
         cerr << "Error: " << strerror(errno) << endl;
@@ -221,7 +224,7 @@ OpenOrFail(std::ifstream &ifs,const std::string &fname,std::ios_base::openmode m
 void
 OpenOrFail(std::ofstream &ofs,const std::string &fname,std::ios_base::openmode mode/* = std::ofstream::out*/)
 {
-    ofs.open(fname,mode);
+    ofs.open(fname.c_str(),mode);
     if(!ofs.is_open()) {
         cerr << "Failed to open output file \"" << fname << "\"" << endl;
         cerr << "Error: " << strerror(errno) << endl;
@@ -270,9 +273,9 @@ GetParameters(int argc, char *argv[])
     retval.symc_filename.Decode(retval.c_filename.Stem() + ".sym.c");
 
     //OpenOrFail(retval.cbl,retval.cbl_filename.WholePath());
-    OpenOrFail(retval.c,retval.c_filename.WholePath());
-    OpenOrFail(retval.cbl_lst,retval.cbl_lst_filename.WholePath());
-    OpenOrFail(retval.symc,retval.symc_filename.WholePath());
+    OpenOrFail(*retval.c,retval.c_filename.WholePath());
+    OpenOrFail(*retval.cbl_lst,retval.cbl_lst_filename.WholePath());
+    OpenOrFail(*retval.symc,retval.symc_filename.WholePath());
 
     return retval;
 }

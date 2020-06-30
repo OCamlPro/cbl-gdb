@@ -28,8 +28,8 @@
 #
 ############################################################################ */
 
+#include <stdlib.h>
 #include <iostream>
-#include <regex>
 #include "params.h"
 #include "utils.h"
 #ifdef _WIN32
@@ -221,7 +221,7 @@ Version()
 void
 OpenOrFail(std::ifstream &ifs,const std::string &fname,std::ios_base::openmode mode/* = std::ifstream::in*/)
 {
-    ifs.open(fname,mode);
+    ifs.open(fname.c_str(),mode);
     if(!ifs.is_open()) {
         cerr << "Failed to open input file \"" << fname << "\"" << endl;
         exit(1);
@@ -231,7 +231,7 @@ OpenOrFail(std::ifstream &ifs,const std::string &fname,std::ios_base::openmode m
 void
 OpenOrFail(std::ofstream &ofs,const std::string &fname,std::ios_base::openmode mode/* = std::ofstream::out*/)
 {
-    ofs.open(fname,mode);
+    ofs.open(fname.c_str(),mode);
     if(!ofs.is_open()) {
         cerr << "Failed to open output file \"" << fname << "\"" << endl;
         exit(1);

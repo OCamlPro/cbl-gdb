@@ -28,6 +28,7 @@
 #
 ############################################################################ */
 
+#include <stdlib.h>
 #include <sstream>
 #include "utils.h"
 #include "profiler.h"

@@ -453,7 +453,7 @@ ScanForLinkage(ifstream &ifs,
     string current_entry;
     string current_section;
     string current_paragraph;
-    set<pair<string,string>>linkage_weve_seen;
+    set< pair<string,string> >linkage_weve_seen;
     for(;;) {
         getline(ifs,input);
         if(ifs.eof()) {

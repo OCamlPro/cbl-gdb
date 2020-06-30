@@ -118,9 +118,9 @@ public:
     FILENAME    symc_filename;      // The source file for the .debug_gdb_scrips
     //                              //
 
-    std::ifstream cbl_lst;
-    std::ifstream c;
-    std::ofstream symc;
+    std::ifstream *cbl_lst;
+    std::ifstream *c;
+    std::ofstream *symc;
 
     bool quiet;
 };

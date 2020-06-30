@@ -35,7 +35,7 @@
 
 #include <string>
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <fstream>
 #include <algorithm>
 
@@ -64,7 +64,7 @@ private:
 
 private:
     std::vector<CSV_COLUMN> columns;
-    std::unordered_map<int,size_t> id_to_column;
+    std::map<int,size_t> id_to_column;
 
     std::string
     Linify(const std::string &s)
@@ -182,7 +182,7 @@ public:
         IsConsistent();
 
         std::ofstream ofs;
-        ofs.open(filename,std::ofstream::out);
+        ofs.open(filename.c_str(),std::ofstream::out);
         if(!ofs.is_open()) {
             std::cerr << "Couldn't open \"" << filename << "\" for output.";
             exit(1);

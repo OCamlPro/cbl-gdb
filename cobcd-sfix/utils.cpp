@@ -28,6 +28,7 @@
 #
 ############################################################################ */
 
+#include <stdlib.h>
 #include "utils.h"
 #include "profiler.h"
 
@@ -112,3 +113,9 @@ Replace(const string &s,const char was, const char is)
     }
     return retval;
 }
+
+int
+STOI(const string &s)
+    {
+    return atoi(s.c_str());
+    }

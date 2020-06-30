@@ -33,8 +33,8 @@
 #if __GNUC__ >= 7
 
 // These are static variables for the PPROFILER class
-std::unordered_map<std::string,double> PPROFILER::ProfilerRoutineTimes;
-std::unordered_map<std::string,LONGLONG> PPROFILER::ProfilerRoutineEntries;
+std::map<std::string,double> PPROFILER::ProfilerRoutineTimes;
+std::map<std::string,LONGLONG> PPROFILER::ProfilerRoutineEntries;
 std::vector<double> PPROFILER::AccumulatedTimes;
 
 std::ostream &

@@ -30,8 +30,12 @@
 
 #pragma once
 
+// #define PROFILING
+
+#if defined(PROFILING)
+
 #include <map>
-#include <unordered_map>
+#include <map>
 #include <string>
 #include <vector>
 #include <chrono>
@@ -39,13 +43,12 @@
 #include <sstream>
 #include <algorithm>
 
-// #define PROFILING
 
 class PPROFILER
 {
 private:
-    static std::unordered_map<std::string,double> ProfilerRoutineTimes;
-    static std::unordered_map<std::string,long long> ProfilerRoutineEntries;
+    static std::map<std::string,double> ProfilerRoutineTimes;
+    static std::map<std::string,long long> ProfilerRoutineEntries;
     static std::vector<double> AccumulatedTimes;
     std::string routine;
     std::chrono::steady_clock::time_point time_in;
@@ -141,7 +144,7 @@ public:
 
         size_t max_width = 0;
         std::map<std::string,double> smap;
-        for(std::unordered_map<std::string,double>::const_iterator it=ProfilerRoutineTimes.begin(); it!=ProfilerRoutineTimes.end(); it++) {
+        for(std::map<std::string,double>::const_iterator it=ProfilerRoutineTimes.begin(); it!=ProfilerRoutineTimes.end(); it++) {
             max_width = std::max(max_width,it->first.length());
             smap[it->first] = it->second;
         }
@@ -166,6 +169,8 @@ public:
     }
 
 };
+
+#endif
 
 #ifdef PROFILING
 #define PROFILER PPROFILER Profiler(__func__);
