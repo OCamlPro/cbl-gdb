@@ -118,11 +118,13 @@ public:
     FILENAME    symc_filename;      // The source file for the .debug_gdb_scrips
     //                              //
 
-    std::ifstream *cbl_lst;
-    std::ifstream *c;
-    std::ofstream *symc;
+    std::ifstream cbl_lst;
+    std::ifstream c_file;
+    std::ofstream symc;
 
     bool quiet;
+
+    void GetParameters(int argc, char *argv[]);
 };
 
 std::vector<std::string> DirectoryScan(const std::string &path,
@@ -134,4 +136,3 @@ void OpenOrFail(std::ifstream &ifs,
 void OpenOrFail(std::ofstream &ofs,
                 const std::string &fname,
                 std::ios_base::openmode mode = std::ofstream::out);
-PARAMETERS GetParameters(int argc, char *argv[]);

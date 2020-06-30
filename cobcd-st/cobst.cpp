@@ -130,7 +130,7 @@ CreateSymc(PARAMETERS &params,
         ss << "\"" << s << "\"" << endl;
     }
     ss << ";" << endl << endl;
-    *params.symc << ss.str();
+    params.symc << ss.str();
 
     ss.str("");
     bool in_copyright = true;
@@ -201,40 +201,40 @@ CreateSymc(PARAMETERS &params,
 
         s = ss.str();
 
-        *params.symc << "asm(" << endl;
-        *params.symc << "\".pushsection \\\".debug_gdb_scripts\\\", \\\"MS\\\",@progbits,1\\n\"" << endl;
-        *params.symc << "\".byte 4\\n\"" << endl;
-        *params.symc << "\".ascii \\\"gdb.inlined-script\\\\n\\\"\\n\"";
+        params.symc << "asm(" << endl;
+        params.symc << "\".pushsection \\\".debug_gdb_scripts\\\", \\\"MS\\\",@progbits,1\\n\"" << endl;
+        params.symc << "\".byte 4\\n\"" << endl;
+        params.symc << "\".ascii \\\"gdb.inlined-script\\\\n\\\"\\n\"";
 
         int char_count = 0;
         size_t i = 0;
         while( i < s.size() ) {
             if(char_count EQ 0) {
-                *params.symc << "\".ascii \\\"";
+                params.symc << "\".ascii \\\"";
                 char_count = 10 ;
             }
             if( char_count >= 120 ) {
-                *params.symc << "\"" << endl << "\"";
+                params.symc << "\"" << endl << "\"";
                 char_count = 1;
                 continue;
             }
             char ch = s[i++];
             if( ch EQ '\n' ) {
-                *params.symc << "\\\\n\\\"\\n\"" << endl;
+                params.symc << "\\\\n\\\"\\n\"" << endl;
                 char_count = 0;
                 continue;
             }
             if( ch EQ '\\' OR ch EQ '\"' ) {
-                *params.symc << "\\\\\\";
+                params.symc << "\\\\\\";
                 char_count += 1;
             }
-            *params.symc << ch;
+            params.symc << ch;
             char_count += 1;
         }
 
-        *params.symc << "\".byte 0\\n\"" << endl;
-        *params.symc << "\".popsection\\n\"" << endl;
-        *params.symc << ");" << endl;
+        params.symc << "\".byte 0\\n\"" << endl;
+        params.symc << "\".popsection\\n\"" << endl;
+        params.symc << ");" << endl;
     }
     return;
 }
@@ -245,7 +245,8 @@ main(int argc, char *argv[])
     PROFILER;
 
     // Decode the command line for our purposes.
-    PARAMETERS params = GetParameters(argc, argv);
+    PARAMETERS params;
+    params.GetParameters(argc, argv);
     if(!params.quiet) {
         cout << "cobst version " << VERSION << endl;
     }
@@ -273,7 +274,7 @@ main(int argc, char *argv[])
     // a normalized rendition of the parsed STORAGE sections.  We read that
     // in, and build a COBOL identifier tree based on the various storage
     // sections and the COBOL 77 01 02 03 data heirarchy.
-    variable_tree.ReadFromFile(*params.cbl_lst);
+    variable_tree.ReadFromFile(params.cbl_lst);
     variable_tree.BuildCanonicalName();
 #if defined(DUMPING)
     //variable_tree.Dump();
@@ -289,7 +290,7 @@ main(int argc, char *argv[])
                     );
 
     // Scan the .c file for program identification and linkage information.
-    ScanForLinkage(*params.c,
+    ScanForLinkage(params.c_file,
                    params.c_filename.GetFname(),
                    program_labels,
                    cob_data,

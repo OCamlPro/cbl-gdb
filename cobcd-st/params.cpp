@@ -232,23 +232,22 @@ OpenOrFail(std::ofstream &ofs,const std::string &fname,std::ios_base::openmode m
     }
 }
 
-PARAMETERS
-GetParameters(int argc, char *argv[])
+void 
+PARAMETERS::GetParameters(int argc, char *argv[])
 {
     if(argc < 2) {
         Usage();
         exit(1);
     }
 
-    PARAMETERS retval;
-    retval.quiet = false;
+    quiet = false;
 
     string input_parameter;
     int c;
     while ((c = getopt (argc, argv, "qv")) != -1) {
         switch (c) {
         case 'q':
-            retval.quiet = true;
+            quiet = true;
             break;
         case 'v':
             cerr << "cobst: Cobol Symbol Table generator version: "
@@ -266,18 +265,17 @@ GetParameters(int argc, char *argv[])
     }
     input_parameter = argv[optind];
 
-    retval.c_filename.Decode(input_parameter);
-    retval.basename = retval.c_filename.GetFname();
-    retval.c_filename.Decode(retval.c_filename.Stem() + ".c");
-    retval.cbl_lst_filename.Decode(retval.c_filename.Stem() + ".cbl.lst");
-    retval.symc_filename.Decode(retval.c_filename.Stem() + ".sym.c");
+    c_filename.Decode(input_parameter);
+    basename = c_filename.GetFname();
+    c_filename.Decode(c_filename.Stem() + ".c");
+    cbl_lst_filename.Decode(c_filename.Stem() + ".cbl.lst");
+    symc_filename.Decode(c_filename.Stem() + ".sym.c");
 
     //OpenOrFail(retval.cbl,retval.cbl_filename.WholePath());
-    OpenOrFail(*retval.c,retval.c_filename.WholePath());
-    OpenOrFail(*retval.cbl_lst,retval.cbl_lst_filename.WholePath());
-    OpenOrFail(*retval.symc,retval.symc_filename.WholePath());
+    OpenOrFail(c_file,c_filename.WholePath());
+    OpenOrFail(cbl_lst,cbl_lst_filename.WholePath());
+    OpenOrFail(symc,symc_filename.WholePath());
 
-    return retval;
 }
 
 vector<string>
