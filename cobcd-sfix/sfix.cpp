@@ -69,8 +69,8 @@ GetInputFileMappings(const VSTRING &input_file, const string &primary_file)
     retval[primary_file] = -1;
 
     for(VSTRING::const_iterator it=input_file.begin();
-        it!=input_file.end();
-        it++) {
+            it!=input_file.end();
+            it++) {
         string s = *it;
         s = Trim(s);
         if( s.find(".file ") != string::npos) {
@@ -93,8 +93,8 @@ FindFunctionReferences(const VSTRING &input_file)
     VINT retval;
     int nline = 0;
     for(VSTRING::const_iterator it=input_file.begin();
-        it!=input_file.end();
-        it++) {
+            it!=input_file.end();
+            it++) {
         string s = *it;
         if( s.find(".globl") != string::npos) {
             VSTRING tokens = Split(s,"\t ");

@@ -1,9 +1,11 @@
 project=cobcd-st
 CPP = g++
 
-src = $(wildcard *.cpp)
-obj = $(src:.cpp=.o)
-dep = $(obj:.o=.d)	# one dependency file for each source
+DESTDIR ?=/usr/local
+
+src := $(wildcard *.cpp)
+obj := $(src:.cpp=.o)
+dep := $(obj:.o=.d)	# one dependency file for each source
 
 $(project) : $(obj)
 	$(CPP) -o $@ $^
@@ -35,10 +37,9 @@ pregit:
 
 .PHONY : install
 install :
-ifdef DESTDIR
 	mkdir -p $(DESTDIR)/bin/
 	install $(project) $(DESTDIR)/bin/
-else
-	install $(project) /usr/local/bin/
-endif
-	
+
+.PHONY : uninstall
+uninstall :
+	rm -f $(DESTDIR)/bin/$(project)

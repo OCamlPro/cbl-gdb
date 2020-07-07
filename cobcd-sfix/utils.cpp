@@ -116,6 +116,6 @@ Replace(const string &s,const char was, const char is)
 
 int
 STOI(const string &s)
-    {
+{
     return atoi(s.c_str());
-    }
+}

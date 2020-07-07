@@ -2,6 +2,8 @@
 
 project=cobcd.py
 
+DESTDIR ?=/usr/local
+
 AUTO_LOAD_FOUND := $(shell grep -s -e "^[ \t]*set auto-load safe-path /" ~/.gdbinit | wc -l)
 AUTO_SCRIPTS_FOUND := $(shell grep -s -e "^[ \t]*set auto-load python-scripts on" ~/.gdbinit | wc -l)
 
@@ -23,15 +25,14 @@ pregit:
 # By default, gdb doesn't put the current working directory onto the list 
 # of safe auto-load directories.  There is a default safe directory, but that
 # directory isn't on the search path.  So, one way or the other, the user's 
-# .gdbinit file has to be modified.	 I have chosen to defeat the default 
+# .gdbinit file has to be modified.	 I personally have chosen to defeat the default 
 # security setting to allow auto-load from anywhere.
 #
 .PHONY : install
 install :
-ifdef DESTDIR
 	mkdir -p $(DESTDIR)/bin/
 	install $(project) $(DESTDIR)/bin/
-else
-	install $(project) /usr/local/bin/
-endif
 
+.PHONY : uninstall
+uninstall :
+	rm -f $(DESTDIR)/bin/$(project)

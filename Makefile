@@ -1,13 +1,15 @@
-CXXFLAGS = -std=c++11 -Wall
+CXXFLAGS:=-std=c++11 -Wall
 export CXXFLAGS
+
+DESTDIR ?=/usr/local
 
 # Don't try to build the optfde01 example until the cobcd script
 # can be found in /usr/local/bin/
-COBCDEXISTS=$(wildcard /usr/local/bin/cobcd)
-COBCD=/usr/local/bin/cobcd
-CWD=$(shell basename `pwd`)
+COBCDEXISTS:=$(wildcard /usr/local/bin/cobcd)
+COBCD:=/usr/local/bin/cobcd
+CWD:=$(shell basename `pwd`)
 
-.PHONY : all 
+.PHONY : all
 all: cobcd cobcd.bat
 ## Make sure the VERSION text in cobcd.py is up-to-date
 	$(MAKE) -C python
@@ -28,7 +30,7 @@ clean:
 	$(MAKE) -C cobcd-st clean
 	$(MAKE) -C cobcd-sfix clean
 	$(MAKE) -C optfde01 clean
-	
+
 cobcd : include/version.h
 	bin/version-replace.sh $@ $^
 
@@ -37,29 +39,31 @@ cobcd.bat : include/version.h
 
 .PHONY : install
 install:
-ifdef DESTDIR
 	mkdir -p $(DESTDIR)/bin/
 	install cobcd $(DESTDIR)/bin/
 	install cobcd.bat $(DESTDIR)/bin/
-else
-	mkdir -p /usr/local/bin/
-	install cobcd /usr/local/bin/
-	install cobcd.bat /usr/local/bin/
-endif
 	$(MAKE) -C cobcd-st install
 	$(MAKE) -C cobcd-sfix install
 	$(MAKE) -C python install
-#	$(MAKE) -C vsdistrib install
-	
+
+.PHONY : uninstall
+uninstall:
+	rm -f $(DESTDIR)/bin/cobcd
+	rm -f $(DESTDIR)/bin/cobcd.bat
+	$(MAKE) -C cobcd-st uninstall
+	$(MAKE) -C cobcd-sfix uninstall
+	$(MAKE) -C python uninstall
+
+
 #	copy cbl-gdb to cblgdb-x.y, tarball the copy, and delete the copy
 .PHONY : package
 package : clean
 	./bin/package.sh
 
 # Dubner likes to work in Windows, using Visual Studio.  This can result in
-# Windows-style CRLF line endings.  He also likes to work with C++ code 
-# formatted with Whitesmith style brace formatting.  This rule fixes the 
-# potential problems that might arise by running dos2unix on the various files, 
+# Windows-style CRLF line endings.  He also likes to work with C++ code
+# formatted with Whitesmith style brace formatting.  This rule fixes the
+# potential problems that might arise by running dos2unix on the various files,
 # followed by `astyle --style=kr` for Kernighan & Ritchie brace formatting.
 .PHONY : pregit
 pregit:

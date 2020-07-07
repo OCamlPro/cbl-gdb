@@ -233,7 +233,7 @@ OpenOrFail(std::ofstream &ofs,const std::string &fname,std::ios_base::openmode m
     }
 }
 
-void 
+void
 PARAMETERS::GetParameters(int argc, char *argv[])
 {
     if(argc < 2) {
