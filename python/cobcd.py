@@ -29,6 +29,13 @@
 #   This module implements the gdb extension commands cprint and cwatch
 #EndOfCopyright########################################################
 
+from __future__ import print_function
+
+import re
+import sys
+import os
+import traceback
+
 #   This module implements the gdb extension commands cprint and cwatch
 #
 #   This script is read by the COBST program and incorporated into a
@@ -108,11 +115,6 @@ COB_FLAG_IS_FP          = (1 << 9)   # /* 0x0200 */
 COB_FLAG_REAL_SIGN      = (1 << 10)  # /* 0x0400 */
 COB_FLAG_BINARY_TRUNC   = (1 << 11)  # /* 0x0800 */
 COB_FLAG_CONSTANT       = (1 << 12)  # /* 0x1000 */
-
-import re
-import sys
-import os
-import traceback
 
 def NoNulls(s) :
     ss = ""
@@ -223,7 +225,7 @@ def BlankIsZero(v) :
         v = "0"
     return int(v)
 
-def GetAddressOf(variable:str) :
+def GetAddressOf(variable) :
     if 'gdb' in sys.modules :
         try :
             command = "info address " + variable
@@ -237,7 +239,7 @@ def GetAddressOf(variable:str) :
                 address_string = address_string[nfound+3:]
                 nfound = address_string.find(' ')
                 address_string = address_string[0:nfound]
-                address:int = int(address_string,16)
+                address = int(address_string,16)
                 return address
         except gdb.error:
             print("gdb.execute failed:",command)
@@ -373,10 +375,10 @@ class VarTrie() :
         return retval
 
     def NameMatcher(self,
-                    boys:[],
-                    boy_index:int,
-                    trie:VarTrieNode,
-                    paths:[]) :
+                    boys,
+                    boy_index,
+                    trie,
+                    paths) :
         # Nomenclature:  We have a list of lost_boys: A/B/C
         # We have a forest, where some of the trees are labeled.
         # The labels might be
@@ -485,6 +487,11 @@ class VarTrie() :
             # with bupkis.  Let's start again with the very first element (if
             # there was more than one) and give him some options:
 
+            if desired == '*' :
+                for index in range(len(self.storage_list)) :
+                    paths.append(index)
+                return paths
+
             fragment = desired.split()[0]
 
             pattern1 = re.compile("^"  + fragment)
@@ -534,10 +541,10 @@ class LineList() :
         self.line_list = [] # This will be a list of (int,str) tuples
         self.EndOfTheWorld = 10000000
 
-    def Insert(self,line_number : int, program_id : str) :
+    def Insert(self,line_number , program_id ) :
         self.line_list.append( (line_number,program_id) )
 
-    def Find(self,line_number : int) :
+    def Find(self,line_number ) :
         # returns the program-id that covers line_number
 
         if len(self.line_list) == 0 :
@@ -788,7 +795,7 @@ class CobolVariable() :
 
         return True
 
-    def SetToRside(self, line_list : LineList(), rside) :
+    def SetToRside(self, line_list , rside) :
         #print( "Inside SetToRside", rside)
 
         GotData = True
@@ -939,7 +946,7 @@ class CobolVariable() :
         else :
             return None
 
-    def FetchVariableData(self, line_list : LineList(), show_failure ) :
+    def FetchVariableData(self, line_list , show_failure ) :
         data_string = None
         self.location = ""
         self.data = []
@@ -2678,10 +2685,10 @@ class TabFileInformation() :
     def __init__(self) :
         self.var_trie = VarTrie()
         self.line_list = LineList()
-        self.current_variable_string:str = ""
-        self.current_trapped_routine:str = ""
-        self.current_trapped_file:str = ""
-        self.current_trapped_line:int = 0
+        self.current_variable_string = ""
+        self.current_trapped_routine = ""
+        self.current_trapped_file = ""
+        self.current_trapped_line = 0
 
     def ProcessInfoStack(self, info_stack) :
         """ Figures out which routine we are currently trapped in"""
@@ -2736,7 +2743,7 @@ class TabFileInformation() :
                 self.var_trie.LoadFromLine(variable_line)
 
             # Put a fencepost at the end of the line_list
-            self.line_list.Insert(self.line_list.EndOfTheWorld,"Ragnarök")
+            self.line_list.Insert(self.line_list.EndOfTheWorld,"Ragnarok")
 
     def ReadSymbolTableText(self) :
 
@@ -2838,7 +2845,7 @@ class CPrintWorker() :
 
         return args
 
-    def FormattedDisplay(self,payload : CobolVariable()) :
+    def FormattedDisplay(self,payload ) :
         # see the comments in ProcessDisplayMode()
         if self.current_display_mode == '0' :
             print(payload.display_body)
@@ -2885,7 +2892,6 @@ class CPrintWorker() :
                 pstar = True
                 # If the single argument is an asterisk, then
                 # he is asking for a list of variables and values:
-                args[0] = TabFile.current_trapped_routine
 
             elif args[0].isdigit() :
                 # if the single argument is a number, then he is looking
@@ -3048,7 +3054,7 @@ class CWatchWorker() :
 
         return args
 
-    def SetTheWatchpoint(self, TabFile:TabFileInformation(), payload : CobolVariable()) :
+    def SetTheWatchpoint(self, TabFile, payload ) :
         the_address = payload.GetTheAddress(TabFile.line_list)
 
         if not the_address and not 'gdb' in sys.modules :

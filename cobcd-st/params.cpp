@@ -1,5 +1,5 @@
 /* #######################################################################
-# Copyright (c) 2019-2020 Symas Corporation
+# Copyright (c) 2019-2020 COBOLworx Corporation
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -11,7 +11,7 @@
 #      notice, this list of conditions and the following disclaimer in
 #      the documentation and/or other materials provided with the
 #      distribution.
-#    * Neither the name of the Symas Corporation nor the names of its
+#    * Neither the name of the COBOLworx Corporation nor the names of its
 #      contributors may be used to endorse or promote products derived
 #      from this software without specific prior written permission.
 #
@@ -203,11 +203,12 @@ static void
 Usage()
 {
     cerr << "cobst: Cobol Symbol Table generator version: " << VERSION << endl;
-    cerr << "cobst [-v] [-q] FileName.CBL\n";
+    cerr << "cobst [-v] [-q] [-n] FileName.CBL\n";
     cerr << "Reads various other files with the same FileName root;\n";
     cerr << "Generates FileName.tab containing the symbol table data\n";
     cerr << "-q suppresses the one-line version announcement\n";
     cerr << "-v generates the one-line version announcement and exits\n";
+    cerr << "-n suppresses the insertion of cobcb.py into SOURCE.sym.c\n";
 }
 
 void
@@ -241,10 +242,11 @@ PARAMETERS::GetParameters(int argc, char *argv[])
     }
 
     quiet = false;
+    insert_python = true;
 
     string input_parameter;
     int c;
-    while ((c = getopt (argc, argv, "qv")) != -1) {
+    while ((c = getopt (argc, argv, "qvn")) != -1) {
         switch (c) {
         case 'q':
             quiet = true;
@@ -253,6 +255,9 @@ PARAMETERS::GetParameters(int argc, char *argv[])
             cerr << "cobst: Cobol Symbol Table generator version: "
                  << VERSION << endl;
             exit(0);
+            break;
+        case 'n':
+            insert_python = false;
             break;
         case '?':
             fprintf (stderr, "Unknown option '-%c'.\n", optopt);

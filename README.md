@@ -1,6 +1,6 @@
-# Camelian.Systems GnuCOBOL Source Level Debugging Support
+# COBOLworx GnuCOBOL Source Level Debugging Support
 
-These are the source files for building the tools that make up the Symas/Camelian debugging extensions for GnuCOBOL.
+These are the source files for building the tools that make up the COBOLworx debugging extensions for GnuCOBOL.
 
 You'll need to have GnuCOBOL Version 3.x-dev (or later) installed.
 
@@ -42,7 +42,7 @@ It should be emphasized that there are now two branches that are required to be 
 
 origin/master is supposed to be stable and buildable at all times.
 
-origin/relcan, for "release candidate", is used by the camelian-packages repositories package-
+origin/relcan, for "release candidate", is used by the cbl-gdb-distribution repositories package-
 building routines for creating packages.  My procedure lately has been to fuss and fiddle
 with relcan until the completed final packages work properly, and then merge relcan into
 master.  That merge gets tagged as a release version, and at that point ../include/version.h
@@ -53,5 +53,5 @@ Feel free to contact me with any questions or problems.
 2020-05-07
 
 Bob Dubner
-Symas/Camelian
-rdubner@symas.com
+COBOLworx
+support@cobolworx.com
