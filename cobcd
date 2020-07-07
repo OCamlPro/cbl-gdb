@@ -6,7 +6,7 @@
 ## Don't mess with it!                                                    #
 ###########################################################################
 
-# [Version 2.9]
+# [Version 3.1]
 
 # This script, nominally named cobcd, packages up the process of compiling
 # a single COBOL source module and processing it so that gdb can be used for
@@ -58,8 +58,17 @@ if uname -a | grep -q arm ; then
 if grep -qs debian /etc/os-release ; then
   os_name=debian
   fi
+
 if grep -qs centos /etc/os-release ; then
   os_name=centos
+  fi
+
+if uname -a | grep -qs centos7 ; then
+  os_name=centos7
+  fi
+
+if uname -a | grep -qs rhel7 ; then
+  os_name=rhel7
   fi
 
 if uname | grep -q MINGW32_NT ; then
@@ -92,9 +101,15 @@ LOADER=`$GCC --print-prog-name ld`
 if test X"$COBCDEVEL" != X"" ; then
   COBST=$DIR/cobcd-st/cobcd-st
   SFIX=$DIR/cobcd-sfix/cobcd-sfix
+  PYTHON=$DIR/python/cobcd.py
 else
   COBST=cobcd-st
   SFIX=cobcd-sfix
+  PYTHON=`which cobcd.py`
+  fi
+
+if test X"$os_name" == X"centos7" || test X"$os_name" == X"rhel7" ; then
+  COBST_FLAGS=-n
   fi
 
 ###########################################################
@@ -288,27 +303,29 @@ BASENAME=$(echo $BASENAME | sed "s/$TRUEBASENAME/$TRUEBASENAME$TEMPEST/")
 #cp $TRUESOURCEFILE $SOURCEFILE     ## This is part of the failed "compile elsewhere" effort
 
 if test X$ECHO != X"" ; then
-  echo platform     $platform
-  echo os_name      $os_name
-  echo GCC          $GCC
-  echo CC1          $CC1
-  echo ASSEMBLER    $ASSEMBLER
-  echo LOADER       $LOADER
-  echo COBC         $COBC
-  echo cob_cflags   $cob_cflags
-  echo COBST        $COBST
-  echo SFIX         $SFIX
-  echo COBCDEVEL    $COBCDEVEL
-  echo COBCDNOCLEAN $COBCDNOCLEAN
-  echo COBCDXM      $COBCDXM
-  echo ORIGINAL     $ORIGINAL
-  echo PREOPTIONS   $PREOPTIONS
+  echo platform       $platform
+  echo os_name        $os_name
+  echo GCC            $GCC
+  echo CC1            $CC1
+  echo ASSEMBLER      $ASSEMBLER
+  echo LOADER         $LOADER
+  echo COBC           $COBC
+  echo cob_cflags     $cob_cflags
+  echo COBST          $COBST
+  echo COBST_FLAGS    $COBST_FLAGS
+  echo SFIX           $SFIX
+  echo PYTHON         $PYTHON
+  echo COBCDEVEL      $COBCDEVEL
+  echo COBCDNOCLEAN   $COBCDNOCLEAN
+  echo COBCDXM        $COBCDXM
+  echo ORIGINAL       $ORIGINAL
+  echo PREOPTIONS     $PREOPTIONS
   echo TRUESOURCEFILE $TRUESOURCEFILE
-  echo TRUEBASENAME $TRUEBASENAME
-  echo SOURCEFILE   $SOURCEFILE
-  echo BASENAME     $BASENAME
-  echo POSTOPTIONS  $POSTOPTIONS
-  echo TARGET       $TARGET
+  echo TRUEBASENAME   $TRUEBASENAME
+  echo SOURCEFILE     $SOURCEFILE
+  echo BASENAME       $BASENAME
+  echo POSTOPTIONS    $POSTOPTIONS
+  echo TARGET         $TARGET
   set | grep COB
   fi
 
@@ -361,9 +378,9 @@ if test X$result = X"0" ; then
 
 if test X$result = X"0" ; then
   if test X$ECHO != X"" ; then
-    echo $COBST -q $BASENAME
+    echo $COBST -q $COBST_FLAGS $BASENAME
     fi
-  $COBST -q $BASENAME
+  $COBST -q $COBST_FLAGS $BASENAME
   result=$?
   fi
 
@@ -431,13 +448,14 @@ if test X$result = X"0" ; then
 ## if it is necessary for this operating system:
 
 if test X$result = X"0" ; then
-  if test X$os_name = X"MINGW32_NT" || test X$os_name = X"MINGW64_NT" || test X$os_name = X"MSYS_NT" ; then
-    if test -f $DIR/cobcd.py ; then
-      cp $DIR/cobcd.py ./$BASENAME-gdb.py
-    elif test -f $DIR/python/cobcd.py ; then
-      cp $DIR/python/cobcd.py ./$BASENAME-gdb.py
-    elif test -f /usr/local/bin/cobcd.py ; then
-      cp /usr/local/bin/cobcd.py ./$BASENAME-gdb.py
+  if test X$os_name = X"MINGW32_NT" \
+  || test X$os_name = X"MINGW64_NT" \
+  || test X$os_name = X"MSYS_NT" \
+  || test X$os_name = X"centos7" \
+  || test X$os_name = X"rhel7" \
+  ; then
+    if test -f $PYTHON ; then
+      cp $PYTHON ./$BASENAME-gdb.py
     else
       echo ERROR: "Couldn't find a copy of cobcd.py"
       fi

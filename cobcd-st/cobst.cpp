@@ -328,10 +328,9 @@ main(int argc, char *argv[])
     // Create the .sym.c file that will be compiled and linked into the
     // executable, providing the text that will become the executable's
     // .debug_gdb_scripts section
+    bool tack_on_python = params.insert_python;
 #if defined(_WIN32)
-    bool tack_on_python = false;
-#else
-    bool tack_on_python = true;
+    tack_on_python = false;
 #endif
     CreateSymc(params,
                program_labels,

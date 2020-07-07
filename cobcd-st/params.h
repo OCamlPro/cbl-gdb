@@ -123,6 +123,7 @@ public:
     std::ofstream symc;
 
     bool quiet;
+    bool insert_python;
 
     void GetParameters(int argc, char *argv[]);
 };
