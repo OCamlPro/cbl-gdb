@@ -1,12 +1,38 @@
 #!/bin/bash
 
+usage()
+  {
+  echo "This is the cobc debugging wrapper $1 $2"
+  echo "Use it as you would 'cobc'"
+  }
+  
+print_help()
+  {
+  echo "This is the cobc debugging wrapper $1 $2"
+  echo "Use it as you would 'cobc'"
+  echo ""
+  echo "It doesn't take any switches, although it looks at a few as they"
+  echo "go by on their way to cobc."
+  echo ""
+  echo "It can be controlled by a few environment variables:"
+  echo "COBCD_COBC=alt Replaces 'cobc' with 'alt'"
+  echo "COBC=alt Also replaces 'cobc' with 'alt'"
+  echo "COBCDEVEL=1 Use development toolchain instead of production toolchain"
+  echo "COBCDNOCLEAN=1 Don't delete intermediate files"
+  echo "COBCDFLAGS=xyz These flags are passed to cobc"
+  echo "COBCDXM=[-x|-m|-b] cobc assumes a default of -m"
+  echo "ECHO=1 causes line-by-line command echoing"
+  echo ""
+  echo "If you need help with cobc, use the command 'cobc --help'"
+  }
+
 ###########################################################################
 ## The version number in the next line is updated by a Linux bash script. #
 ## The text "Version x.x" has to appear in square brackets.               #
 ## Don't mess with it!                                                    #
 ###########################################################################
 
-# [Version 3.1]
+SCRIPT_VERSION="[Version 3.2]"
 
 # This script, nominally named cobcd, packages up the process of compiling
 # a single COBOL source module and processing it so that gdb can be used for
@@ -39,13 +65,21 @@
 # COBCDFLAGS ## Use for things like --free
 #
 # COBCDXM=[-x|-m|-b] ## cobc assumes a default of -m
+#
+# COBCD_COBC=alt (or COBC, for that matter) replaces 'cobc' with 'alt'
+#
+# ECHO=1 causes massive debugging output
+
+if [ X"$#" = X"0" ]
+  then
+  usage $SCRIPT_VERSION
+  exit 1
+  fi
 
 set +e  ## This kind of needs to be +e in order to make sure intermediate files
         ## get cleaned up in the event of compilation errors
 #set -x ## This turns on shell echoing
 #ECHO=1  ## This turns on *my* echoing
-
-unset COB_SWITCH_1
 
 if uname -a | grep -q x86_64 ; then
   platform=x86_64
@@ -83,36 +117,36 @@ if uname | grep -q MSYS_NT ; then
   os_name=MSYS_NT
   fi
 
-#### Why not just "readlink /proc/$$/cwd" ?
-
 # Courtesy of stackoverflow, a script to find the directory of the script
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
-  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+  SCRIPTDIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
   SOURCE="$(readlink "$SOURCE")"
-  [[ X$SOURCE != X/* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+  [[ X$SOURCE != X/* ]] && SOURCE="$SCRIPTDIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
 done
-DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+SCRIPTDIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 
-GCC=gcc
-COBC=cobc
+if [ X"$COBCD_COBC" != X"" ] ; then
+  COBC="$COBCD_COBC"
+elif [ X"$COBC" == X"" ] ; then
+  COBC=cobc
+  fi
+
+GCC=`$COBC --info | grep COB_CC | cut -d: -f2`  
+
 CC1=`$GCC --print-prog-name cc1`
 ASSEMBLER=`$GCC --print-prog-name as`
 LOADER=`$GCC --print-prog-name ld`
 
 if [ "$COBCDEVEL" ]; then
-  COBST=$DIR/cobcd-st/cobcd-st
-  SFIX=$DIR/cobcd-sfix/cobcd-sfix
-  PYTHON=$DIR/python/cobcd.py
+  COBST=$SCRIPTDIR/cobcd-st/cobcd-st
+  SFIX=$SCRIPTDIR/cobcd-sfix/cobcd-sfix
+  PYTHON=$SCRIPTDIR/python/cobcd.py
 else
   COBST=cobcd-st
   SFIX=cobcd-sfix
   PYTHON=`which cobcd.py`
   fi
-
-#### if [ "$os_name" = "centos7" ] || [ "$os_name" = "rhel7" ]; then
-####   COBST_FLAGS=-n
-####   fi
 
 case "$os_name" in
     "centos7"|"rhel7")
@@ -125,7 +159,7 @@ esac
 ## the cobc program, because we need to add to it later
 ##
 
-info1=`cobc --info | sed 's/\n/ /g'`
+info1=`$COBC --info | sed 's/\n/ /g'`
 info2=''
 info3=''
 cob_cflags=''
@@ -251,6 +285,16 @@ while (( $# )) ; do
       shift
       PARM=$1
       TARGET=$PARM
+    elif [ "$PARM" = "--version" ] ; then
+      PRINT_VERSION=yes
+      if [ -z "$SOURCEFILE" ]; then
+        PREOPTIONS="$PREOPTIONS $PARM"
+      else
+        POSTOPTIONS="$POSTOPTIONS $PARM"
+        fi
+    elif [ "$PARM" = "--help" ] ; then
+      print_help $SCRIPT_VERSION
+      exit 1
     elif [ "$FIRSTTHREE" = "-t=" ] || [ "$FIRSTTHREE" = "-T=" ]; then
       # We know a -t=this or -T=that switch will break our compilation, so just ignore it
       ORIGINALRUN="yes"
@@ -303,12 +347,13 @@ if [ -z "$TARGET" ]; then
     fi
   fi
 
-#TEMPEST="---"$$                    ## This is part of the failed "compile elsewhere" effort
-TRUEBASENAME=$BASENAME
-TRUESOURCEFILE=$SOURCEFILE
-SOURCEFILE=$(echo $SOURCEFILE | sed "s/$TRUEBASENAME/$TRUEBASENAME$TEMPEST/")
-BASENAME=$(echo $BASENAME | sed "s/$TRUEBASENAME/$TRUEBASENAME$TEMPEST/")
-#cp $TRUESOURCEFILE $SOURCEFILE     ## This is part of the failed "compile elsewhere" effort
+if [ $BASENAME ] 
+  then
+  TRUEBASENAME=$BASENAME
+  TRUESOURCEFILE=$SOURCEFILE
+  SOURCEFILE=$(echo $SOURCEFILE | sed "s/$TRUEBASENAME/$TRUEBASENAME/")
+  BASENAME=$(echo $BASENAME | sed "s/$TRUEBASENAME/$TRUEBASENAME/")
+  fi
 
 if [ "$ECHO" ]; then
   echo platform       $platform
@@ -319,6 +364,7 @@ if [ "$ECHO" ]; then
   echo LOADER         $LOADER
   echo COBC           $COBC
   echo cob_cflags     $cob_cflags
+  echo SCRIPTDIR      $SCRIPTDIR
   echo COBST          $COBST
   echo COBST_FLAGS    $COBST_FLAGS
   echo SFIX           $SFIX
@@ -335,6 +381,11 @@ if [ "$ECHO" ]; then
   echo POSTOPTIONS    $POSTOPTIONS
   echo TARGET         $TARGET
   set | grep COB
+  fi
+
+if [ X$PRINT_VERSION = X"yes" ]
+  then
+  usage $SCRIPT_VERSION
   fi
 
 #
@@ -357,7 +408,7 @@ if [ "$result" = "0" ]; then
     fi
   fi
 
-if [ "$result" = "0" ]; then
+if [ "$result" = "0" ] ; then
   if [ -z "$BASENAME" ]; then
       echo "There doesn't seem to be a source file specified."
       echo "We can't proceed with the debug-capable build."
@@ -380,7 +431,7 @@ if [ "$result" = "0" ]; then
     -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
   result=$?
   fi
-
+  
 ## In this step, we run the COBST program, which combines information
 ## from BASENAME.lst and the .h files to create BASENAME.sym.c
 
