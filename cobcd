@@ -83,9 +83,11 @@ if uname | grep -q MSYS_NT ; then
   os_name=MSYS_NT
   fi
 
+#### Why not just "readlink /proc/$$/cwd" ?
+
 # Courtesy of stackoverflow, a script to find the directory of the script
 SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ] ; do # resolve $SOURCE until the file is no longer a symlink
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
   DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
   SOURCE="$(readlink "$SOURCE")"
   [[ X$SOURCE != X/* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
@@ -98,7 +100,7 @@ CC1=`$GCC --print-prog-name cc1`
 ASSEMBLER=`$GCC --print-prog-name as`
 LOADER=`$GCC --print-prog-name ld`
 
-if test X"$COBCDEVEL" != X"" ; then
+if [ "$COBCDEVEL" ]; then
   COBST=$DIR/cobcd-st/cobcd-st
   SFIX=$DIR/cobcd-sfix/cobcd-sfix
   PYTHON=$DIR/python/cobcd.py
@@ -108,9 +110,15 @@ else
   PYTHON=`which cobcd.py`
   fi
 
-if test X"$os_name" == X"centos7" || test X"$os_name" == X"rhel7" ; then
-  COBST_FLAGS=-n
-  fi
+#### if [ "$os_name" = "centos7" ] || [ "$os_name" = "rhel7" ]; then
+####   COBST_FLAGS=-n
+####   fi
+
+case "$os_name" in
+    "centos7"|"rhel7")
+	COBST_FLAGS=-n
+	;;
+esac
 
 ###########################################################
 ## We need to extract the COB_CFLAGS information from
@@ -122,15 +130,15 @@ info2=''
 info3=''
 cob_cflags=''
 for info_value in $info1 ; do
-  if test X$info2 != X"" ; then
+  if [ "$info2" ]; then
     ## The pump has been primed
-    if test X$info2 == X":" ; then
-      if test X$info_value == X":" ; then
+    if [ "$info2" = ":" ]; then
+      if [ "$info_value" = ":" ]; then
         ## This is our second colon, so we are done
         break
         fi
       fi
-    if test X$info_value == X":" ; then
+    if [ "$info_value" = ":" ]; then
       ## This is our first colon, so from here on out we can
       ## append tokens to cob_cflags
       info2=":"
@@ -143,7 +151,7 @@ for info_value in $info1 ; do
     continue
     fi
   ## At this point, we are still waiting to see COB_CFLAGS
-  if test X$info_value == X"COB_CFLAGS" ; then
+  if [ "$info_value" = "COB_CFLAGS" ]; then
     info2=$info_value
     fi
   done
@@ -207,16 +215,16 @@ while (( $# )) ; do
   FIRSTCHAR="${PARM:0:1}"
   FIRSTTHREE="${PARM:0:3}"
 
-  if test X$FIRSTCHAR != X"-" ; then
+  if [ "$FIRSTCHAR" != "-" ]; then
     # The first character is not a '-', so this is not a switch.
 
     # In the case where the filename is part of an double-entry switch (e.g.,
     # "-L <directory>" we will have set JUSTPUSH to "yes"
 
-    if test X$JUSTPUSH = X"yes" ; then
+    if [ "$JUSTPUSH" = "yes" ]; then
       JUSTPUSH="no"
       # Put the parameter into the right list:
-      if test X$SOURCEFILE = X"" ; then
+      if [ -z "$SOURCEFILE" ]; then
         PREOPTIONS="$PREOPTIONS $PARM"
       else
         POSTOPTIONS="$POSTOPTIONS $PARM"
@@ -237,29 +245,29 @@ while (( $# )) ; do
       fi
   else
     # The first character is a '-', so this is a switch
-    if test X$PARM = X"-o" ; then
+    if [ "$PARM" = "-o" ]; then
       # This is a -o switch.
       # Save the parameter as our ultimate target
       shift
       PARM=$1
       TARGET=$PARM
-    elif test X$FIRSTTHREE = X"-t=" || test X$FIRSTTHREE = X"-T=" ; then
+    elif [ "$FIRSTTHREE" = "-t=" ] || [ "$FIRSTTHREE" = "-T=" ]; then
       # We know a -t=this or -T=that switch will break our compilation, so just ignore it
       ORIGINALRUN="yes"
-    elif test X$PARM = X"-t" || test X$PARM = X"-T" ; then
+    elif [ "$PARM" = "-t" ] || [ "$PARM" = "-T" ]; then
       # We know a -t <file> or -T <file> switch will break our compilation, so
       # ignore the switch and the following parameter
       ORIGINALRUN="yes"
       shift
-    elif test X$PARM = X"-x" || test X$PARM = X"-m" || test X$PARM = X"-b" ; then
+    elif [ "$PARM" = "-x" ] || [ "$PARM" = "-m" ] || [ "$PARM" = "-b" ]; then
       # A command-line parameter overwhelms anything
       # we inherited
       COBCDXM=$PARM
-    elif test X$PARM = X"-I" || test X$PARM = X"-L" || test X$PARM = X"-l" || \
-         test X$PARM = X"-D" || test X$PARM = X"-A" || test X$PARM = X"-Q" || \
-         test X$PARM = X"-K" || test X$PARM = X"-ext"; then
+    elif [ "$PARM" = "-I" ] || [ "$PARM" = "-L" ] || [ "$PARM" = "-l" ] || \
+         [ "$PARM" = "-D" ] || [ "$PARM" = "-A" ] || [ "$PARM" = "-Q" ] || \
+         [ "$PARM" = "-K" ] || [ "$PARM" = "-ext" ]; then
       # We need this switch...
-      if test X$SOURCEFILE = X"" ; then
+      if [ -z "$SOURCEFILE" ]; then
         PREOPTIONS="$PREOPTIONS $PARM"
       else
         POSTOPTIONS="$POSTOPTIONS $PARM"
@@ -268,7 +276,7 @@ while (( $# )) ; do
       JUSTPUSH="yes"
     else
       # Otherwise, add to PRE or POST options
-      if test X$SOURCEFILE = X"" ; then
+      if [ -z "$SOURCEFILE" ]; then
         PREOPTIONS="$PREOPTIONS $PARM"
       else
         POSTOPTIONS="$POSTOPTIONS $PARM"
@@ -278,7 +286,7 @@ while (( $# )) ; do
   shift
   done
 
-if test X$COBCDXM = X"" ; then
+if [ -z "$COBCDXM" ]; then
   # If neither -x nor -m nor -b was specified, explicitly match the COBC default of -m
   COBCDXM=-m
   fi
@@ -288,9 +296,9 @@ BASENAME="${BASENAME##/*}"
 
 # If there is no specific target, create one based on the source file name;
 # it'll be put in the current working directory
-if test X$TARGET = X"" ; then
+if [ -z "$TARGET" ]; then
   TARGET=$BASENAME
-  if test X$COBCDXM = X"-m" || test X$COBCDXM = X"-b"  ; then
+  if [ "$COBCDXM" = "-m" ] || [ "$COBCDXM" = "-b" ]  ; then
     TARGET=$TARGET.so
     fi
   fi
@@ -302,7 +310,7 @@ SOURCEFILE=$(echo $SOURCEFILE | sed "s/$TRUEBASENAME/$TRUEBASENAME$TEMPEST/")
 BASENAME=$(echo $BASENAME | sed "s/$TRUEBASENAME/$TRUEBASENAME$TEMPEST/")
 #cp $TRUESOURCEFILE $SOURCEFILE     ## This is part of the failed "compile elsewhere" effort
 
-if test X$ECHO != X"" ; then
+if [ "$ECHO" ]; then
   echo platform       $platform
   echo os_name        $os_name
   echo GCC            $GCC
@@ -339,9 +347,9 @@ if test X$ECHO != X"" ; then
 
 result="0"
 
-if test X$result = X"0" ; then
-  if test X$ORIGINALRUN = X"yes" ; then
-    if test X$ECHO != X"" ; then
+if [ "$result" = "0" ]; then
+  if [ "$ORIGINALRUN" = "yes" ]; then
+    if [ "$ECHO" ]; then
       echo $COBC $COBCDFLAGS $ORIGINAL
       fi
     $COBC $COBCDFLAGS $ORIGINAL
@@ -349,8 +357,8 @@ if test X$result = X"0" ; then
     fi
   fi
 
-if test X$result = X"0" ; then
-  if test X$BASENAME = X"" ; then
+if [ "$result" = "0" ]; then
+  if [ -z "$BASENAME" ]; then
       echo "There doesn't seem to be a source file specified."
       echo "We can't proceed with the debug-capable build."
       exit 1
@@ -360,9 +368,9 @@ if test X$result = X"0" ; then
 ## In this step, we do a partial compilation that ends with the creation
 ## of the .c and .s intermediate files:
 
-if test X$result = X"0" ; then
+if [ "$result" = "0" ]; then
   COB_CFLAGS="-fPIC -Wa,-L $cob_cflags"
-  if test X$ECHO != X"" ; then
+  if [ "$ECHO" ]; then
     echo COB_CFLAGS=$COB_CFLAGS $COBC $COBCDFLAGS -S $COBCDXM -d -g \
     --fgen-c-line-directives --fgen-c-labels \
     -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
@@ -376,8 +384,8 @@ if test X$result = X"0" ; then
 ## In this step, we run the COBST program, which combines information
 ## from BASENAME.lst and the .h files to create BASENAME.sym.c
 
-if test X$result = X"0" ; then
-  if test X$ECHO != X"" ; then
+if [ "$result" = "0" ]; then
+  if [ "$ECHO" ]; then
     echo $COBST -q $COBST_FLAGS $BASENAME
     fi
   $COBST -q $COBST_FLAGS $BASENAME
@@ -386,8 +394,8 @@ if test X$result = X"0" ; then
 
 ## In this step, we compile the BASENAME.sym.c, creating BASENAME.sym.o
 ## It contains the VARIABLE_STRING and the cobcd.py script
-if test X$result = X"0" ; then
-  if test X$ECHO != X"" ; then
+if [ "$result" = "0" ]; then
+  if [ "$ECHO" ]; then
     echo $COBC -c -o $BASENAME.sym.o $BASENAME.sym.c
     fi
   $COBC -c -o $BASENAME.sym.o $BASENAME.sym.c
@@ -398,10 +406,10 @@ if test X$result = X"0" ; then
 ## program removes all .loc references to BASENAME.C and to any .h
 ## files.
 
-if test X$result = X"0" ; then
+if [ "$result" = "0" ]; then
   # Modify the .s file, removing all .loc references to
   # BASENAME.c and any .h files.
-  if test X$ECHO != X"" ; then
+  if [ "$ECHO" ]; then
     echo $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
     fi
   $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
@@ -411,10 +419,10 @@ if test X$result = X"0" ; then
 ## In this step, we invoke COBC to run the assembler on the modified BASENAME-2.s
 ## in order to create BASENAME-2.o file
 
-if test X$result = X"0" ; then
+if [ "$result" = "0" ]; then
   # Assemble the modified .s file into a replacement .o file:
   COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME-2.lst $cob_cflags"
-  if test X$ECHO != X"" ; then
+  if [ "$ECHO" ]; then
     echo COB_CFLAGS=$COB_CFLAGS $COBC -c -o $BASENAME-2.o $BASENAME-2.s
     fi
   COB_CFLAGS=$COB_CFLAGS $COBC -c -o $BASENAME-2.o $BASENAME-2.s
@@ -422,23 +430,23 @@ if test X$result = X"0" ; then
   fi
 
 ## In this step, we combine the two .o files to create the executable
-if test X$result = X"0" ; then
+if [ "$result" = "0" ]; then
   # Combine the two .o files to create the executable
   # Stay in the original directory so that $TARGET, if relative, ends up in
   # the right place.
 
-  if test X$COBCDXM = X"-x" ; then
-    if test X$ECHO != X"" ; then
+  if [ "$COBCDXM" = "-x" ]; then
+    if [ "$ECHO" ]; then
       echo $COBC $COBCDXM -o $TARGET $BASENAME-2.o $BASENAME.sym.o $POSTOPTIONS
       fi
     $COBC $COBCDXM -o $TARGET $BASENAME-2.o $BASENAME.sym.o $POSTOPTIONS
   else
-    if test X$ECHO != X"" ; then
+    if [ "$ECHO" ]; then
       echo $GCC -shared -o $TARGET $BASENAME-2.o $BASENAME.sym.o -lcob $POSTOPTIONS
       fi
     $GCC -shared -o $TARGET $BASENAME-2.o $BASENAME.sym.o -lcob $POSTOPTIONS
 
-    if test X$os_name = X"MINGW32_NT" || test X$os_name = X"MINGW64_NT" || test X$os_name = X"MSYS_NT" ; then
+    if [ "$os_name" = "MINGW32_NT" ] || [ "$os_name" = "MINGW64_NT" ] || [ "$os_name" = "MSYS_NT" ]; then
         mv $TARGET $BASENAME.dll
         fi
     fi
@@ -447,25 +455,28 @@ if test X$result = X"0" ; then
 ## In this step, we put a copy of the cobcd.py into the right place,
 ## if it is necessary for this operating system:
 
-if test X$result = X"0" ; then
-  if test X$os_name = X"MINGW32_NT" \
-  || test X$os_name = X"MINGW64_NT" \
-  || test X$os_name = X"MSYS_NT" \
-  || test X$os_name = X"centos7" \
-  || test X$os_name = X"rhel7" \
-  ; then
-    if test -f $PYTHON ; then
-      cp $PYTHON ./$BASENAME-gdb.py
-    else
-      echo ERROR: "Couldn't find a copy of cobcd.py"
-      fi
-    fi
-  fi
+#### Bob: if $os_name is guaranteed to exist, the variable need not be quoted:
+####
+####    case $os_name in 
+####	MINGW32_NT|MINGW64_NT|MSYS_NT|centos7|rhel7)
+####
+#### is more commonly used. 
 
-if test X$COBCDNOCLEAN = X"" ; then
-    rm -fr = $BASENAME.c $BASENAME.s $BASENAME*.h $BASENAME.i $BASENAME.lst \
-    $BASENAME.cbl.lst $BASENAME.full.tab $BASENAME.tab $BASENAME.o \
-    $BASENAME.cbl.o $BASENAME-2.lst $BASENAME.sym.c $BASENAME.sym.o \
-    $BASENAME-2.s $BASENAME-2.o
+if [ "$result" = "0" ]; then
+    case "$os_name" in 
+	"MINGW32_NT"|"MINGW64_NT"|"MSYS_NT"|"centos7"|"rhel7")
+	    if [ -f $PYTHON ]; then
+		cp $PYTHON ./$BASENAME-gdb.py
+	    else
+		echo ERROR: "Couldn't find a copy of cobcd.py"
+	    fi
+    esac
+fi
+
+if [ -z "$COBCDNOCLEAN" ]; then
+    rm -fr = $BASENAME.[csio] $BASENAME*.h $BASENAME.lst \
+    $BASENAME.cbl.lst $BASENAME.full.tab $BASENAME.tab \
+    $BASENAME.cbl.o $BASENAME-2.lst $BASENAME.sym.[co] \
+    $BASENAME-2.[so]
     fi
 
