@@ -5,7 +5,7 @@ usage()
   echo "This is the cobc debugging wrapper $1 $2"
   echo "Use it as you would 'cobc'"
   }
-  
+
 print_help()
   {
   echo "This is the cobc debugging wrapper $1 $2"
@@ -32,7 +32,7 @@ print_help()
 ## Don't mess with it!                                                    #
 ###########################################################################
 
-SCRIPT_VERSION="[Version 3.2]"
+SCRIPT_VERSION="[Version 3.3]"
 
 # This script, nominally named cobcd, packages up the process of compiling
 # a single COBOL source module and processing it so that gdb can be used for
@@ -81,11 +81,11 @@ set +e  ## This kind of needs to be +e in order to make sure intermediate files
 #set -x ## This turns on shell echoing
 #ECHO=1  ## This turns on *my* echoing
 
-if uname -a | grep -q x86_64 ; then
+if uname -r | grep -q x86_64 ; then
   platform=x86_64
   fi
 
-if uname -a | grep -q arm ; then
+if uname -r | grep -q arm ; then
   platform=arm
   fi
 
@@ -97,11 +97,7 @@ if grep -qs centos /etc/os-release ; then
   os_name=centos
   fi
 
-if uname -a | grep -qs centos7 ; then
-  os_name=centos7
-  fi
-
-if uname -a | grep -qs rhel7 ; then
+if uname -r | grep -qs el7 ; then
   os_name=rhel7
   fi
 
@@ -132,7 +128,7 @@ elif [ X"$COBC" == X"" ] ; then
   COBC=cobc
   fi
 
-GCC=`$COBC --info | grep COB_CC | cut -d: -f2`  
+GCC=`$COBC --info | grep COB_CC | cut -d: -f2`
 
 CC1=`$GCC --print-prog-name cc1`
 ASSEMBLER=`$GCC --print-prog-name as`
@@ -143,15 +139,15 @@ if [ "$COBCDEVEL" ]; then
   SFIX=$SCRIPTDIR/cobcd-sfix/cobcd-sfix
   PYTHON=$SCRIPTDIR/python/cobcd.py
 else
-  COBST=cobcd-st
-  SFIX=cobcd-sfix
-  PYTHON=`which cobcd.py`
+  COBST=$SCRIPTDIR/cobcd-st
+  SFIX=$SCRIPTDIR/cobcd-sfix
+  PYTHON=$SCRIPTDIR/cobcd.py
   fi
 
 case "$os_name" in
-    "centos7"|"rhel7")
-	COBST_FLAGS=-n
-	;;
+     "rhel7")
+        COBST_FLAGS=-n
+        ;;
 esac
 
 ###########################################################
@@ -347,7 +343,7 @@ if [ -z "$TARGET" ]; then
     fi
   fi
 
-if [ $BASENAME ] 
+if [ $BASENAME ]
   then
   TRUEBASENAME=$BASENAME
   TRUESOURCEFILE=$SOURCEFILE
@@ -431,7 +427,7 @@ if [ "$result" = "0" ]; then
     -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
   result=$?
   fi
-  
+
 ## In this step, we run the COBST program, which combines information
 ## from BASENAME.lst and the .h files to create BASENAME.sym.c
 
@@ -508,13 +504,13 @@ if [ "$result" = "0" ]; then
 
 #### Bob: if $os_name is guaranteed to exist, the variable need not be quoted:
 ####
-####    case $os_name in 
+####    case $os_name in
 ####	MINGW32_NT|MINGW64_NT|MSYS_NT|centos7|rhel7)
 ####
-#### is more commonly used. 
+#### is more commonly used.
 
 if [ "$result" = "0" ]; then
-    case "$os_name" in 
+    case "$os_name" in
 	"MINGW32_NT"|"MINGW64_NT"|"MSYS_NT"|"centos7"|"rhel7")
 	    if [ -f $PYTHON ]; then
 		cp $PYTHON ./$BASENAME-gdb.py
@@ -530,4 +526,3 @@ if [ -z "$COBCDNOCLEAN" ]; then
     $BASENAME.cbl.o $BASENAME-2.lst $BASENAME.sym.[co] \
     $BASENAME-2.[so]
     fi
-
