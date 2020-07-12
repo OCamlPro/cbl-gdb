@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 usage()
   {
@@ -42,10 +42,6 @@ SCRIPT_VERSION="[Version 3.3]"
 # variables COBCDEVEL and COBCDNOCLEAN.  Once installed in, say, /usr/local/bin,
 # it will use production versions of the processing programs
 #
-# Standard disclaimer: Your author is neither pyschic nor omnipotent, so please,
-# blame him not if you can't make this script do what you need. Edit it as
-# necessary, with his blessing.
-#
 # Usage:
 # cobcd source.cbl ## Uses production toolchain.  Any switches before the source
 # module are incorporated in the part of the process that creates the .C module,
@@ -81,11 +77,11 @@ set +e  ## This kind of needs to be +e in order to make sure intermediate files
 #set -x ## This turns on shell echoing
 #ECHO=1  ## This turns on *my* echoing
 
-if uname -r | grep -q x86_64 ; then
+if uname -m | grep -qs x86_64 ; then
   platform=x86_64
   fi
 
-if uname -r | grep -q arm ; then
+if uname -m | grep -qs arm ; then
   platform=arm
   fi
 
@@ -101,96 +97,60 @@ if uname -r | grep -qs el7 ; then
   os_name=rhel7
   fi
 
-if uname | grep -q MINGW32_NT ; then
+if uname | grep -qs MINGW32_NT ; then
   os_name=MINGW32_NT
   fi
 
-if uname | grep -q MINGW64_NT ; then
+if uname | grep -qs MINGW64_NT ; then
   os_name=MINGW64_NT
   fi
 
-if uname | grep -q MSYS_NT ; then
+if uname | grep -qs MSYS_NT ; then
   os_name=MSYS_NT
   fi
 
-# Courtesy of stackoverflow, a script to find the directory of the script
-SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
-  SCRIPTDIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
-  SOURCE="$(readlink "$SOURCE")"
-  [[ X$SOURCE != X/* ]] && SOURCE="$SCRIPTDIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
-done
-SCRIPTDIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+## We need to know the directory that our script is in.
+SCRIPTDIR=$(dirname $(realpath $0))
 
+# set COBCD to COBCD_COBC or COBCD if provided, or "cobc" by default
 if [ X"$COBCD_COBC" != X"" ] ; then
   COBC="$COBCD_COBC"
-elif [ X"$COBC" == X"" ] ; then
+elif [ X"$COBC" = X"" ] ; then
   COBC=cobc
   fi
 
+# pick up GCC from `cobc --info`
 GCC=`$COBC --info | grep COB_CC | cut -d: -f2`
 
-CC1=`$GCC --print-prog-name cc1`
-ASSEMBLER=`$GCC --print-prog-name as`
-LOADER=`$GCC --print-prog-name ld`
-
 if [ "$COBCDEVEL" ]; then
+  # For development purposes, pick up executables from subdirectories
+  # from where the cobcd script was found
   COBST=$SCRIPTDIR/cobcd-st/cobcd-st
   SFIX=$SCRIPTDIR/cobcd-sfix/cobcd-sfix
   PYTHON=$SCRIPTDIR/python/cobcd.py
 else
+  # In normal operation, the executables are found in the same folder
+  # as the cobcd script
   COBST=$SCRIPTDIR/cobcd-st
   SFIX=$SCRIPTDIR/cobcd-sfix
   PYTHON=$SCRIPTDIR/cobcd.py
   fi
 
+# Under centos7/rhel7, we don't allow cobcd-st to embed the Python code
+# into the .sym.c module
 case "$os_name" in
      "rhel7")
         COBST_FLAGS=-n
         ;;
-esac
+  esac
 
-###########################################################
-## We need to extract the COB_CFLAGS information from
-## the cobc program, because we need to add to it later
-##
+## We need to extract the COB_CFLAGS information from `cobc --info`
+## in case we need to augment COB_CFLAGS when we actually use cobc.
 
-info1=`$COBC --info | sed 's/\n/ /g'`
-info2=''
-info3=''
-cob_cflags=''
-for info_value in $info1 ; do
-  if [ "$info2" ]; then
-    ## The pump has been primed
-    if [ "$info2" = ":" ]; then
-      if [ "$info_value" = ":" ]; then
-        ## This is our second colon, so we are done
-        break
-        fi
-      fi
-    if [ "$info_value" = ":" ]; then
-      ## This is our first colon, so from here on out we can
-      ## append tokens to cob_cflags
-      info2=":"
-      continue
-      fi
-    ## This is a stunt.  We want every token except the final one, so
-    ## we build in a one-token delay here.
-    cob_cflags="$cob_cflags $info3"
-    info3=$info_value
-    continue
-    fi
-  ## At this point, we are still waiting to see COB_CFLAGS
-  if [ "$info_value" = "COB_CFLAGS" ]; then
-    info2=$info_value
-    fi
-  done
-#echo cobc_flags is $cob_cflags
+cobc_info=`$COBC --info | sed 's/\n/ /g'`
+cob_cflags=$(echo $cobc_info | sed 's/.*COB_CFLAGS\s\+:\s\+\(.*\)COB_LDFLAGS.*/\1/')
 
-##
-## End of COB_CFLAGS extraction
-###########################################################
-
+#echo cob_cflags is $cob_cflags
 
 #
 # We need to do some processing on the input parameters.
