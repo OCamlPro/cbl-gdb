@@ -413,9 +413,12 @@ if [ "$result" = "0" ]; then
 
 ## Find the final "to be executed: " string
 FINAL_COMMAND=$(echo $TRIPLE_X_PRIME | sed 's/.*to be executed: //g')
-## In that string, there is something like "/tmp/cob2458_0.o"
-## Replace it with our .o files:
+## When compiling with -x, there is something like "/tmp/cob2458_0.o"
+## in that command.  Replace it with our .o files:
 FINAL_COMMAND=$(echo $FINAL_COMMAND | sed "s|\"/.*[.]o\"|$FILE_O $FILE_SYM_O|g")
+## When compiling with -m, there is something like "/tmp/cob2458_0.c"
+## in that command.  Replace it with our .o files:
+FINAL_COMMAND=$(echo $FINAL_COMMAND | sed "s|\"/.*[.]c\"|$FILE_O $FILE_SYM_O|g")
 ##
 ## The FINAL_COMMAND can be, oddly, littered with double quotes.  Let's get rid of them, under the
 ## assumption that naming files with double quotes is a really bad thing.
