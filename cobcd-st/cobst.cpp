@@ -99,7 +99,7 @@ CreateSymc(PARAMETERS &params,
         compiling .sym.c
     */
 
-    string fname = params.c_filename.GetFname();
+    string fname = params.sourcename;
     stringstream ss_tab;
     stringstream ss;
 
@@ -118,6 +118,12 @@ CreateSymc(PARAMETERS &params,
 
     string s = ss.str();
     ss.str("");
+
+    for(size_t i=0; i<fname.size(); i++) {
+        if( fname[i] EQ '.' ) {
+            fname[i] = '_' ;
+        }
+    }
 
     ss << "char VARIABLE_STRING_" << Upper(fname) << "[]=" << endl;
 

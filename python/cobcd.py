@@ -1,5 +1,5 @@
 #######################################################################
-# Copyright (c) 2019-2020 Symas Corporation
+# Copyright (c) 2019-2020 COBOLworx
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -11,7 +11,7 @@
 #      notice, this list of conditions and the following disclaimer in
 #      the documentation and/or other materials provided with the
 #      distribution.
-#    * Neither the name of the Symas Corporation nor the names of its
+#    * Neither the name of the COBOLworx nor the names of its
 #      contributors may be used to endorse or promote products derived
 #      from this software without specific prior written permission.
 #
@@ -2713,8 +2713,9 @@ class TabFileInformation() :
             self.current_trapped_file = file_and_line[0]
 
             # Find the address of the VARIABLE_STRING for this file
-            name_root = self.current_trapped_file.split('.')
-            string_name = "VARIABLE_STRING_" + name_root[0].upper();
+            name_root = self.current_trapped_file
+            name_root = name_root.replace('.','_')
+            string_name = "VARIABLE_STRING_" + name_root.upper()
             the_address = GetAddressOf(string_name)
 
             # And pick up that string, byte by laborious byte:
@@ -3159,7 +3160,7 @@ if 'gdb' in sys.modules :
             ## The text "Version x.x" has to appear in square brackets.               #
             ## Don't mess with it!                                                    #
             ###########################################################################
-            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 3.3]')
+            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 3.4]')
             self.Worker = CPrintWorker()
             self.TabFile = TabFileInformation();
 

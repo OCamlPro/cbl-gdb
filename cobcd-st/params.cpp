@@ -203,9 +203,9 @@ static void
 Usage()
 {
     cerr << "cobst: Cobol Symbol Table generator version: " << VERSION << endl;
-    cerr << "cobst [-v] [-q] [-n] FileName.CBL\n";
-    cerr << "Reads various other files with the same FileName root;\n";
-    cerr << "Generates FileName.tab containing the symbol table data\n";
+    cerr << "cobst [-v] [-q] [-n] root CobolSourceFilename\n";
+    cerr << "Reads various other files with the same root;\n";
+    cerr << "Generates root.sym.c containing the symbol table data\n";
     cerr << "-q suppresses the one-line version announcement\n";
     cerr << "-v generates the one-line version announcement and exits\n";
     cerr << "-n suppresses the insertion of cobcb.py into SOURCE.sym.c\n";
@@ -236,7 +236,7 @@ OpenOrFail(std::ofstream &ofs,const std::string &fname,std::ios_base::openmode m
 void
 PARAMETERS::GetParameters(int argc, char *argv[])
 {
-    if(argc < 2) {
+    if(argc < 3) {
         Usage();
         exit(1);
     }
@@ -244,7 +244,7 @@ PARAMETERS::GetParameters(int argc, char *argv[])
     quiet = false;
     insert_python = true;
 
-    string input_parameter;
+    string root;
     int c;
     while ((c = getopt (argc, argv, "qvn")) != -1) {
         switch (c) {
@@ -268,13 +268,20 @@ PARAMETERS::GetParameters(int argc, char *argv[])
             break;
         }
     }
-    input_parameter = argv[optind];
+    if( optind >= argc ) {
+        Usage();
+        exit(1);
+    }
+    basename   = argv[optind++];
+    if( optind >= argc ) {
+        Usage();
+        exit(1);
+    }
+    sourcename = argv[optind++];
 
-    c_filename.Decode(input_parameter);
-    basename = c_filename.GetFname();
-    c_filename.Decode(c_filename.Stem() + ".c");
-    cbl_lst_filename.Decode(c_filename.Stem() + ".cbl.lst");
-    symc_filename.Decode(c_filename.Stem() + ".sym.c");
+    c_filename.Decode(basename + ".c");
+    cbl_lst_filename.Decode(basename + ".cbl.lst");
+    symc_filename.Decode(basename + ".sym.c");
 
     //OpenOrFail(retval.cbl,retval.cbl_filename.WholePath());
     OpenOrFail(c_file,c_filename.WholePath());

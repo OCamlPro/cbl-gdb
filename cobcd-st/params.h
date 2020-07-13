@@ -110,6 +110,7 @@ class PARAMETERS
 {
 public:
     std::string    basename;
+    std::string    sourcename;
 
     FILENAME    cbl_lst_filename;   // GnucCOBOL-generated stylized source code,
     //                              // with parsed STORAGE sections

@@ -1,9 +1,38 @@
 #!/bin/sh
 
+#######################################################################
+# Copyright (c) 2019-2020 COBOLworx
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in
+#      the documentation and/or other materials provided with the
+#      distribution.
+#    * Neither the name of the COBOLworx nor the names of its
+#      contributors may be used to endorse or promote products derived
+#      from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#######################################################################
+
 usage()
   {
   echo "This is the cobc debugging wrapper $1 $2"
-  echo "Use it as you would 'cobc'"
   }
 
 print_help()
@@ -11,17 +40,20 @@ print_help()
   echo "This is the cobc debugging wrapper $1 $2"
   echo "Use it as you would 'cobc'"
   echo ""
-  echo "It doesn't take any switches, although it looks at a few as they"
-  echo "go by on their way to cobc."
+  echo "It doesn't take any switches except --help, although it looks at"
+  echo "--version as it goes by go by on its way to cobc."
+  echo ""
+  echo "If there is a -T or -t switch, the unmodified cobc compile will take place to generate"
+  echo "the listing file before the more complex debug build is done."
   echo ""
   echo "It can be controlled by a few environment variables:"
-  echo "COBCD_COBC=alt Replaces 'cobc' with 'alt'"
-  echo "COBC=alt Also replaces 'cobc' with 'alt'"
-  echo "COBCDEVEL=1 Use development toolchain instead of production toolchain"
-  echo "COBCDNOCLEAN=1 Don't delete intermediate files"
-  echo "COBCDFLAGS=xyz These flags are passed to cobc"
+  echo "COBCD_COBC=alt     Replaces 'cobc' with 'alt'"
+  echo "COBC=alt           Also replaces 'cobc' with 'alt'"
+  echo "COBCDEVEL=1        Use development toolchain instead of production toolchain"
+  echo "COBCDNOCLEAN=1     Don't delete intermediate files"
+  echo "COBCDFLAGS=xyz     These flags are passed to cobc"
   echo "COBCDXM=[-x|-m|-b] cobc assumes a default of -m"
-  echo "ECHO=1 causes line-by-line command echoing"
+  echo "ECHO=1             Causes line-by-line command echoing"
   echo ""
   echo "If you need help with cobc, use the command 'cobc --help'"
   }
@@ -32,7 +64,7 @@ print_help()
 ## Don't mess with it!                                                    #
 ###########################################################################
 
-SCRIPT_VERSION="[Version 3.3]"
+SCRIPT_VERSION="[Version 3.4]"
 
 # This script, nominally named cobcd, packages up the process of compiling
 # a single COBOL source module and processing it so that gdb can be used for
@@ -69,6 +101,7 @@ SCRIPT_VERSION="[Version 3.3]"
 if [ X"$#" = X"0" ]
   then
   usage $SCRIPT_VERSION
+  echo "Use it as you would 'cobc'"
   exit 1
   fi
 
@@ -119,12 +152,9 @@ elif [ X"$COBC" = X"" ] ; then
   COBC=cobc
   fi
 
-# pick up GCC from `cobc --info`
-GCC=`$COBC --info | grep COB_CC | cut -d: -f2`
-
 if [ "$COBCDEVEL" ]; then
-  # For development purposes, pick up executables from subdirectories
-  # from where the cobcd script was found
+  ## For development purposes, pick up executables from subdirectories
+  ## from where the cobcd script was found
   COBST=$SCRIPTDIR/cobcd-st/cobcd-st
   SFIX=$SCRIPTDIR/cobcd-sfix/cobcd-sfix
   PYTHON=$SCRIPTDIR/python/cobcd.py
@@ -136,8 +166,8 @@ else
   PYTHON=$SCRIPTDIR/cobcd.py
   fi
 
-# Under centos7/rhel7, we don't allow cobcd-st to embed the Python code
-# into the .sym.c module
+## Under centos7/rhel7, we don't allow cobcd-st to embed the Python code
+## into the .sym.c module
 case "$os_name" in
      "rhel7")
         COBST_FLAGS=-n
@@ -152,337 +182,263 @@ cob_cflags=$(echo $cobc_info | sed 's/.*COB_CFLAGS\s\+:\s\+\(.*\)COB_LDFLAGS.*/\
 
 #echo cob_cflags is $cob_cflags
 
-#
-# We need to do some processing on the input parameters.
-#
-# 1) We are going to make the assumption that the cobol module
-#    has the extension .cbl.
-# 2) We are going to assume that any -o option is followed by the executable
-#    target name; we'll handle that with a final filemove
-# 3) Any other options that appear before the filename will be accumulated
-#    into PREOPTIONS
-# 4) Any other options that appear after the filename will be accumulated
-#    into POSTOPTIONS.  Post options go at the end of the second call to
-#    COBC, which links object files into executables
-#
-# We are also going to maintain a copy of the original command sequence. We
-# will be running that separately just be sure that if the user wants something
-# I have been unable to anticipate, that it gets done properly.
+## Build up the entire original set of parameters:
 
-ORIGINAL=""
+COMMAND_LINE=""
+ASKED_FOR_HELP=""
+ASKED_FOR_VERSION=""
+DASH_V=""
+T_FLAG=""
 SOURCEFILE=""
-BASENAME=""
-TARGET=""
-PREOPTIONS=""
-POSTOPTIONS=""
-ORIGINALRUN="no"
 
-#
-# Because we need to have control over the intermediate files, and because
-# the -save-temps switch works by creating the intermediate files locally and
-# then moving them, and because the -g switch prevents the -save-temps switch
-# from working properly, we have a problem.  For our purposes, all of those
-# things are bad things.  We don't know exactly what the user might have in
-# mind, and all of that creating and moving can result in our tripping on
-# ourselves.  For example, I ran into trouble when one of the COBOL85 test
-# programs provided by GnuCOBOL added a '-t something.lst' switch, which
-# produced a compile error because I also have a '-T switch'.
-#
-# I tried creating a temporary directory and compiling from there, but ran
-# into a NIST test case that had a COPY SOMEBOOK IN ../ELSEWHERE.  So, instead
-# of that, I am now copying SOURCE.CBL into SOURCE-=-$PID.CBL.  Even though
-# the intermediate files get created in the current directory, I have control
-# over them and (unless I get lottery-winning unlucky) they won't interfere
-# with anything else the user has in mind.
-#
-
-JUSTPUSH="no"
-while (( $# )) ; do
-  # Append the unaltered parameter to the list of original parameters.
-  ORIGINAL="$ORIGINAL $1"
-
-  PARM=$1  ## Our version of the parameter; we might modify it
-  FIRSTCHAR="${PARM:0:1}"
-  FIRSTTHREE="${PARM:0:3}"
-
-  if [ "$FIRSTCHAR" != "-" ]; then
-    # The first character is not a '-', so this is not a switch.
-
-    # In the case where the filename is part of an double-entry switch (e.g.,
-    # "-L <directory>" we will have set JUSTPUSH to "yes"
-
-    if [ "$JUSTPUSH" = "yes" ]; then
-      JUSTPUSH="no"
-      # Put the parameter into the right list:
-      if [ -z "$SOURCEFILE" ]; then
-        PREOPTIONS="$PREOPTIONS $PARM"
-      else
-        POSTOPTIONS="$POSTOPTIONS $PARM"
-        fi
-    else
-      # If you get here, then you have a file name, and it wasn't preceded by
-      # any switch explaining what to do with it.  So, in our simple universe
-      # of an executable built from a single source modules) it must be the
-      # the primary source code module:
-      SOURCEFILE=$PARM
-
-      # Extract any extension
-      EXT="${1##*.}"
-
-      # Extract the basename
-      BASENAME=`basename $PARM .$EXT`
-
-      fi
-  else
-    # The first character is a '-', so this is a switch
-    if [ "$PARM" = "-o" ]; then
-      # This is a -o switch.
-      # Save the parameter as our ultimate target
-      shift
-      PARM=$1
-      TARGET=$PARM
-    elif [ "$PARM" = "--version" ] ; then
-      PRINT_VERSION=yes
-      if [ -z "$SOURCEFILE" ]; then
-        PREOPTIONS="$PREOPTIONS $PARM"
-      else
-        POSTOPTIONS="$POSTOPTIONS $PARM"
-        fi
-    elif [ "$PARM" = "--help" ] ; then
-      print_help $SCRIPT_VERSION
-      exit 1
-    elif [ "$FIRSTTHREE" = "-t=" ] || [ "$FIRSTTHREE" = "-T=" ]; then
-      # We know a -t=this or -T=that switch will break our compilation, so just ignore it
-      ORIGINALRUN="yes"
-    elif [ "$PARM" = "-t" ] || [ "$PARM" = "-T" ]; then
-      # We know a -t <file> or -T <file> switch will break our compilation, so
-      # ignore the switch and the following parameter
-      ORIGINALRUN="yes"
-      shift
-    elif [ "$PARM" = "-x" ] || [ "$PARM" = "-m" ] || [ "$PARM" = "-b" ]; then
-      # A command-line parameter overwhelms anything
-      # we inherited
-      COBCDXM=$PARM
-    elif [ "$PARM" = "-I" ] || [ "$PARM" = "-L" ] || [ "$PARM" = "-l" ] || \
-         [ "$PARM" = "-D" ] || [ "$PARM" = "-A" ] || [ "$PARM" = "-Q" ] || \
-         [ "$PARM" = "-K" ] || [ "$PARM" = "-ext" ]; then
-      # We need this switch...
-      if [ -z "$SOURCEFILE" ]; then
-        PREOPTIONS="$PREOPTIONS $PARM"
-      else
-        POSTOPTIONS="$POSTOPTIONS $PARM"
-        fi
-      # ...and the parameter that follows
-      JUSTPUSH="yes"
-    else
-      # Otherwise, add to PRE or POST options
-      if [ -z "$SOURCEFILE" ]; then
-        PREOPTIONS="$PREOPTIONS $PARM"
-      else
-        POSTOPTIONS="$POSTOPTIONS $PARM"
-        fi
-      fi
+while [ "$#" != "0" ]
+  do
+  if [ X"$1" = X"--help" ]
+    then
+    ASKED_FOR_HELP=yes
     fi
+  if [ X"$1" = X"--version" ]
+    then
+    ASKED_FOR_VERSION=yes
+    fi
+  if [ X"$1" = X"-v" ]
+    then
+    DASH_V=-v
+    fi
+  if echo $1 | grep -iqs -e "-t"
+    then
+    T_FLAG=yes
+    fi
+  case $1 in
+    -x|-m|-b)
+      COBCDXM=$1
+      ;;
+    esac
+  COMMAND_LINE="$COMMAND_LINE $1"
   shift
   done
 
-if [ -z "$COBCDXM" ]; then
-  # If neither -x nor -m nor -b was specified, explicitly match the COBC default of -m
+if [ "$COBCDXM" = "" ]
+  then
   COBCDXM=-m
   fi
 
-# For our purposes, we need to strike any leading path from the BASENAME:
-BASENAME="${BASENAME##/*}"
-
-# If there is no specific target, create one based on the source file name;
-# it'll be put in the current working directory
-if [ -z "$TARGET" ]; then
-  TARGET=$BASENAME
-  if [ "$COBCDXM" = "-m" ] || [ "$COBCDXM" = "-b" ]  ; then
-    TARGET=$TARGET.so
-    fi
-  fi
-
-if [ $BASENAME ]
+if [ $ASKED_FOR_HELP ]
   then
-  TRUEBASENAME=$BASENAME
-  TRUESOURCEFILE=$SOURCEFILE
-  SOURCEFILE=$(echo $SOURCEFILE | sed "s/$TRUEBASENAME/$TRUEBASENAME/")
-  BASENAME=$(echo $BASENAME | sed "s/$TRUEBASENAME/$TRUEBASENAME/")
+  print_help $SCRIPT_VERSION
   fi
 
-if [ "$ECHO" ]; then
-  echo platform       $platform
-  echo os_name        $os_name
-  echo GCC            $GCC
-  echo CC1            $CC1
-  echo ASSEMBLER      $ASSEMBLER
-  echo LOADER         $LOADER
-  echo COBC           $COBC
-  echo cob_cflags     $cob_cflags
-  echo SCRIPTDIR      $SCRIPTDIR
-  echo COBST          $COBST
-  echo COBST_FLAGS    $COBST_FLAGS
-  echo SFIX           $SFIX
-  echo PYTHON         $PYTHON
-  echo COBCDEVEL      $COBCDEVEL
-  echo COBCDNOCLEAN   $COBCDNOCLEAN
-  echo COBCDXM        $COBCDXM
-  echo ORIGINAL       $ORIGINAL
-  echo PREOPTIONS     $PREOPTIONS
-  echo TRUESOURCEFILE $TRUESOURCEFILE
-  echo TRUEBASENAME   $TRUEBASENAME
-  echo SOURCEFILE     $SOURCEFILE
-  echo BASENAME       $BASENAME
-  echo POSTOPTIONS    $POSTOPTIONS
-  echo TARGET         $TARGET
-  set | grep COB
-  fi
-
-if [ X$PRINT_VERSION = X"yes" ]
+if [ $ASKED_FOR_VERSION ]
   then
   usage $SCRIPT_VERSION
   fi
 
-#
-# First, we sometimes execute the original command, unaltered. The need for this
-# became clear when replaced the 'cobc' command in the GnuCOBOL 'make tests'
-# chain and saw a number of errors in the COBOL85 test suite.  The generated
-# code was okay, but there were some tests of the compiler being done as well,
-# and it's easier to just run the original command than it is to parse
-# everything out and try to duplicate it:
-
 result="0"
 
-if [ "$result" = "0" ]; then
-  if [ "$ORIGINALRUN" = "yes" ]; then
-    if [ "$ECHO" ]; then
-      echo $COBC $COBCDFLAGS $ORIGINAL
+## If he is doing something that requires a straight cobc compilation
+## with a -t or -T switch, do it now.
+if [ "$result" = "0" ]
+  then
+  if [ "$T_FLAG" = "yes" ]
+    then
+    if [ "$ECHO" ]
+      then
+      echo $COBC $COBCDFLAGS $DASH_V $COMMAND_LINE
       fi
-    $COBC $COBCDFLAGS $ORIGINAL
+    echo "Performing original"
+    $COBC $COBCDFLAGS $DASH_V $COMMAND_LINE
     result=$?
+
+    ## Strip the -t/-T stuff out of the command line so that it doesn't
+    ## interfere with our subsequent processing:
+    COMMAND_LINE=$(echo $COMMAND_LINE | sed 's/\s\+-t\s*\S\+/ /gi')
     fi
+else
+  exit 1
   fi
 
-if [ "$result" = "0" ] ; then
-  if [ -z "$BASENAME" ]; then
-      echo "There doesn't seem to be a source file specified."
-      echo "We can't proceed with the debug-capable build."
-      exit 1
-      fi
+## Strip out things that will cause trouble for us if they are there:
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -v / /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -v$/ /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-v / /g')
+
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -x / /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -x$/ /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-x / /g')
+
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -b / /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -b$/ /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-b / /g')
+
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -m / /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -m$/ /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-m / /g')
+
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -c / /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -c$/ /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-c / /g')
+
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -C / /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -C$/ /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-C$/ /g')
+
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -g / /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -g$/ /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-g / /g')
+
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -S / /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -S$/ /g')
+
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -debug/ /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-debug / /g')
+
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -d / /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -d$/ /g')
+COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-d / /g')
+
+# Let's find out what the original input and output parameters are from
+# the slightly modified original command line:
+
+## The actual information we need is in stderr, and we need to get
+## rid of the stuff from stdout because it ends up at the end of the
+## the string, and later on we'll need the stuff from the final -###
+## entry, and I can't figure out how to isolate it from the stdout stuff
+
+TRIPLE_X_COMMAND="$COBCDXM $COBCDFLAGS $COMMAND_LINE"
+
+TFILE=/tmp/$$triplex
+$COBC -### $TRIPLE_X_COMMAND 1>/dev/null 2>$TFILE
+TRIPLE_X_PRIME=$(cat $TFILE | sed 's/\n/ /g')
+rm $TFILE
+
+## The COBOL source file is last thing before " preprocessing: "
+FILE_CBL=$(echo $TRIPLE_X_PRIME | sed -e 's/.* \(\S\+\) preprocessing: .*/\1/')
+
+## Come up with TRIPLE_X for the -S command:
+OUR_COMMAND="-S -g -d --fgen-c-line-directives --fgen-c-labels $COBCDXM $COBCDFLAGS $COMMAND_LINE"
+## If we were supplied with a -o switch, it screws things up at this point.  So, let's get rid of it, if it is there
+OUR_COMMAND=$(echo $OUR_COMMAND | sed 's/\s\+-o\s*\S\+/ /')
+TRIPLE_X=$($COBC -### $OUR_COMMAND 2>&1)
+
+## The .s file name is first thing after the last " -o "
+FILE_S=$(echo $TRIPLE_X | sed -e 's/.* -o //' | cut -d ' ' -f 1)
+## Get rid of the quotation marks
+FILE_S=$(echo $FILE_S | sed -e 's/"//g')
+
+## Strip off the .s to get the file root:
+FILE_ROOT=$(echo $FILE_S | sed -e 's/[.]s//g')
+
+## Create some other names
+FILE_C=$FILE_ROOT.c
+FILE_O=$FILE_ROOT.o
+FILE_LST=$FILE_ROOT.cbl.lst
+FILE_SYM_C=$FILE_ROOT.sym.c
+FILE_SYM_O=$FILE_ROOT.sym.o
+
+if [ $ECHO ]
+  then
+  echo "COBST      is $COBST      "
+  echo "SFIX       is $SFIX       "
+  echo "PYTHON     is $PYTHON     "
+  echo "FILE_ROOT  is $FILE_ROOT  "
+  echo "FILE_CBL   is $FILE_CBL   "
+  echo "FILE_LST   is $FILE_LST   "
+  echo "FILE_C     is $FILE_C     "
+  echo "FILE_S     is $FILE_S     "
+  echo "FILE_O     is $FILE_O     "
+  echo "FILE_SYM_C is $FILE_SYM_C "
+  echo "FILE_SYM_O is $FILE_SYM_O "
   fi
 
-## In this step, we do a partial compilation that ends with the creation
-## of the .c and .s intermediate files:
+## Do the initial compilation that gives us the .c .h .i and .s files
+## Rebuild our command, this time with our -T directive:
+OUR_COMMAND="-S -g -d --fgen-c-line-directives --fgen-c-labels -T $FILE_LST --tlines=0 --tsymbols $COBCDXM $COBCDFLAGS $COMMAND_LINE"
+OUR_COMMAND=$(echo $OUR_COMMAND | sed 's/\s\+-o\s*\S\+/ /')
 
-if [ "$result" = "0" ]; then
-  COB_CFLAGS="-fPIC -Wa,-L $cob_cflags"
-  if [ "$ECHO" ]; then
-    echo COB_CFLAGS=$COB_CFLAGS $COBC $COBCDFLAGS -S $COBCDXM -d -g \
-    --fgen-c-line-directives --fgen-c-labels \
-    -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
+if [ "$ECHO" ]
+  then
+  echo $COBC $DASH_V $OUR_COMMAND
+  fi
+$COBC $DASH_V $OUR_COMMAND
+result=$?
+
+## We can now create the .sym.c file:
+if [ "$result" = "0" ]
+  then
+  if [ "$ECHO" ]
+    then
+    echo $COBST -q $FILE_ROOT $FILE_CBL
     fi
-         COB_CFLAGS=$COB_CFLAGS $COBC $COBCDFLAGS -S $COBCDXM -d -g \
-    --fgen-c-line-directives --fgen-c-labels \
-    -T $BASENAME.cbl.lst --tlines=0 --tsymbols $PREOPTIONS $SOURCEFILE
+  $COBST -q $FILE_ROOT $FILE_CBL
   result=$?
   fi
 
-## In this step, we run the COBST program, which combines information
-## from BASENAME.lst and the .h files to create BASENAME.sym.c
-
-if [ "$result" = "0" ]; then
-  if [ "$ECHO" ]; then
-    echo $COBST -q $COBST_FLAGS $BASENAME
+## We can now compile the .sym.c file:
+if [ "$result" = "0" ]
+  then
+  if [ "$ECHO" ]
+    then
+    echo $COBC $DASH_V -c -o $FILE_SYM_O $FILE_SYM_C
     fi
-  $COBST -q $COBST_FLAGS $BASENAME
+  $COBC $DASH_V -c -o $FILE_SYM_O $FILE_SYM_C
   result=$?
   fi
 
-## In this step, we compile the BASENAME.sym.c, creating BASENAME.sym.o
-## It contains the VARIABLE_STRING and the cobcd.py script
+## It is time to modify the .s file
 if [ "$result" = "0" ]; then
+  # Modify the .s file, removing all .loc references to
+  # BASENAME.c and any .h files.
   if [ "$ECHO" ]; then
-    echo $COBC -c -o $BASENAME.sym.o $BASENAME.sym.c
+    echo $SFIX -q $FILE_S $FILE_S $FILE_C $FILE_CBL
     fi
-  $COBC -c -o $BASENAME.sym.o $BASENAME.sym.c
+  $SFIX -q $FILE_S $FILE_S $FILE_C $FILE_CBL
   result=$?
   fi
 
-## In this step, we modify the .s file we created earlier.  The SFIX
-## program removes all .loc references to BASENAME.C and to any .h
-## files.
+## We can now compile that .s file:
+
+OUR_COMMAND="-c -g -d $COBCDXM $COBCDFLAGS -o $FILE_O $FILE_S"
 
 if [ "$result" = "0" ]; then
   # Modify the .s file, removing all .loc references to
   # BASENAME.c and any .h files.
   if [ "$ECHO" ]; then
-    echo $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
+    echo $COBC $DASH_V $OUR_COMMAND
     fi
-  $SFIX -q $BASENAME.s $BASENAME-2.s $BASENAME.c $SOURCEFILE
+  $COBC $DASH_V $OUR_COMMAND
   result=$?
   fi
 
-## In this step, we invoke COBC to run the assembler on the modified BASENAME-2.s
-## in order to create BASENAME-2.o file
+## It's time to put everything together
+
+## Find the final "to be executed: " string
+FINAL_COMMAND=$(echo $TRIPLE_X_PRIME | sed 's/.*to be executed: //g')
+## In that string, there is something like "/tmp/cob2458_0.o"
+## Replace it with our .o files:
+FINAL_COMMAND=$(echo $FINAL_COMMAND | sed "s|\"/.*[.]o\"|$FILE_O $FILE_SYM_O|g")
+##
+## The FINAL_COMMAND can be, oddly, littered with double quotes.  Let's get rid of them, under the
+## assumption that naming files with double quotes is a really bad thing.
+FINAL_COMMAND=$(echo $FINAL_COMMAND | sed "s|\"||g")
 
 if [ "$result" = "0" ]; then
-  # Assemble the modified .s file into a replacement .o file:
-  COB_CFLAGS="-fPIC -Wa,-L,-anchls=$BASENAME-2.lst $cob_cflags"
+  # Modify the .s file, removing all .loc references to
+  # BASENAME.c and any .h files.
   if [ "$ECHO" ]; then
-    echo COB_CFLAGS=$COB_CFLAGS $COBC -c -o $BASENAME-2.o $BASENAME-2.s
+    echo $FINAL_COMMAND $DASH_V
     fi
-  COB_CFLAGS=$COB_CFLAGS $COBC -c -o $BASENAME-2.o $BASENAME-2.s
+  $FINAL_COMMAND $DASH_V
   result=$?
   fi
 
-## In this step, we combine the two .o files to create the executable
-if [ "$result" = "0" ]; then
-  # Combine the two .o files to create the executable
-  # Stay in the original directory so that $TARGET, if relative, ends up in
-  # the right place.
+## And we have a debuggable executable
 
-  if [ "$COBCDXM" = "-x" ]; then
-    if [ "$ECHO" ]; then
-      echo $COBC $COBCDXM -o $TARGET $BASENAME-2.o $BASENAME.sym.o $POSTOPTIONS
-      fi
-    $COBC $COBCDXM -o $TARGET $BASENAME-2.o $BASENAME.sym.o $POSTOPTIONS
-  else
-    if [ "$ECHO" ]; then
-      echo $GCC -shared -o $TARGET $BASENAME-2.o $BASENAME.sym.o -lcob $POSTOPTIONS
-      fi
-    $GCC -shared -o $TARGET $BASENAME-2.o $BASENAME.sym.o -lcob $POSTOPTIONS
-
-    if [ "$os_name" = "MINGW32_NT" ] || [ "$os_name" = "MINGW64_NT" ] || [ "$os_name" = "MSYS_NT" ]; then
-        mv $TARGET $BASENAME.dll
-        fi
-    fi
-  fi
-
-## In this step, we put a copy of the cobcd.py into the right place,
-## if it is necessary for this operating system:
-
-#### Bob: if $os_name is guaranteed to exist, the variable need not be quoted:
-####
-####    case $os_name in
-####	MINGW32_NT|MINGW64_NT|MSYS_NT|centos7|rhel7)
-####
-#### is more commonly used.
-
-if [ "$result" = "0" ]; then
-    case "$os_name" in
-	"MINGW32_NT"|"MINGW64_NT"|"MSYS_NT"|"centos7"|"rhel7")
-	    if [ -f $PYTHON ]; then
-		cp $PYTHON ./$BASENAME-gdb.py
-	    else
-		echo ERROR: "Couldn't find a copy of cobcd.py"
-	    fi
-    esac
-fi
-
-if [ -z "$COBCDNOCLEAN" ]; then
-    rm -fr = $BASENAME.[csio] $BASENAME*.h $BASENAME.lst \
-    $BASENAME.cbl.lst $BASENAME.full.tab $BASENAME.tab \
-    $BASENAME.cbl.o $BASENAME-2.lst $BASENAME.sym.[co] \
-    $BASENAME-2.[so]
+## clean crap up, assuming that's desired
+if [ -z "$COBCDNOCLEAN" ];
+    then
+    rm -fr $FILE_ROOT.[csio]
+    rm -fr $FILE_ROOT*.h
+    rm -fr $FILE_LST
+    rm -fr $FILE_O
+    rm -fr $FILE_ROOT.sym.[co]
     fi
