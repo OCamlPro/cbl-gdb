@@ -473,7 +473,6 @@ if [ "$result" = "0" ]; then
     esac
   fi
 
-
 ## clean up after ourselves, assuming that's desired
 if [ -z "$COBCDNOCLEAN" ];
     then

@@ -335,7 +335,6 @@ main(int argc, char *argv[])
     // executable, providing the text that will become the executable's
     // .debug_gdb_scripts section
     bool tack_on_python = params.insert_python;
-    cout  << "Tack on python " << tack_on_python << endl;
 #if defined(_WIN32)
     tack_on_python = false;
 #endif
