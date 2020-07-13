@@ -1,4 +1,5 @@
 #!/bin/sh
+#!/bin/sh
 
 #######################################################################
 # Copyright (c) 2019-2020 COBOLworx
@@ -64,7 +65,7 @@ print_help()
 ## Don't mess with it!                                                    #
 ###########################################################################
 
-SCRIPT_VERSION="[Version 3.5]"
+SCRIPT_VERSION="[Version 3.6]"
 
 # This script, nominally named cobcd, packages up the process of compiling
 # a single COBOL source module and processing it so that gdb can be used for
@@ -337,6 +338,8 @@ FILE_SYM_O=$FILE_ROOT.sym.o
 
 if [ $ECHO ]
   then
+  echo "platform   is $platform   "
+  echo "os_name    is $os_name    "
   echo "COBST      is $COBST      "
   echo "SFIX       is $SFIX       "
   echo "PYTHON     is $PYTHON     "
@@ -362,14 +365,19 @@ if [ "$ECHO" ]
 $COBC $DASH_V $OUR_COMMAND
 result=$?
 
+if [ X"$os_name" = X"rhel7" ]
+  then
+  DASH_N=-n
+  fi
+
 ## We can now create the .sym.c file:
 if [ "$result" = "0" ]
   then
   if [ "$ECHO" ]
     then
-    echo $COBST -q $FILE_ROOT $FILE_CBL
+    echo $COBST -q $DASH_N $FILE_ROOT $FILE_CBL
     fi
-  $COBST -q $FILE_ROOT $FILE_CBL
+  $COBST -q $DASH_N $FILE_ROOT $FILE_CBL
   result=$?
   fi
 
@@ -387,7 +395,7 @@ if [ "$result" = "0" ]
 ## It is time to modify the .s file
 if [ "$result" = "0" ]; then
   # Modify the .s file, removing all .loc references to
-  # BASENAME.c and any .h files.
+  # FILE_ROOT.c and any .h files.  The modification is done "in-place".
   if [ "$ECHO" ]; then
     echo $SFIX -q $FILE_S $FILE_S $FILE_C $FILE_CBL
     fi
@@ -400,8 +408,6 @@ if [ "$result" = "0" ]; then
 OUR_COMMAND="-c -g -d $COBCDXM $COBCDFLAGS -o $FILE_O $FILE_S"
 
 if [ "$result" = "0" ]; then
-  # Modify the .s file, removing all .loc references to
-  # BASENAME.c and any .h files.
   if [ "$ECHO" ]; then
     echo $COBC $DASH_V $OUR_COMMAND
     fi
@@ -436,7 +442,39 @@ if [ "$result" = "0" ]; then
 
 ## And we have a debuggable executable
 
-## clean crap up, assuming that's desired
+## Some operating systems, notably Windows and RHEL7, require that a
+## copy of the Python code be placed next to the executable:
+if [ "$result" = "0" ]; then
+  case "$os_name" in
+    "MINGW32_NT"|"MINGW64_NT"|"MSYS_NT"|"centos7"|"rhel7")
+      if [ -f $PYTHON ]
+        then
+          if [ -z $PYTHON_DESTINATION ]
+            then
+            ## The destination is the first thing after the -o:
+            PYTHON_DESTINATION=$(echo $FINAL_COMMAND | sed 's/.* -o //' | cut -d ' ' -f 1)
+            PYTHON_DESTINATION=$(realpath $PYTHON_DESTINATION)
+            PYTHON_DESTINATION=$(dirname $PYTHON_DESTINATION)
+            echo $PYTHON_DESTINATION
+            fi
+          if [ -z $PYTHON_NAME ]
+            then
+            PYTHON_NAME="$FILE_ROOT-gdb.py"
+            fi
+            
+          if [ $ECHO ]
+            then
+            echo "cp $PYTHON $PYTHON_DESTINATION/$PYTHON_NAME"
+            fi
+        cp $PYTHON $PYTHON_DESTINATION/$PYTHON_NAME
+      else
+        echo ERROR: "Couldn't find a copy of cobcd.py"
+      fi
+    esac
+  fi
+
+
+## clean up after ourselves, assuming that's desired
 if [ -z "$COBCDNOCLEAN" ];
     then
     rm -fr $FILE_ROOT.[csio]
