@@ -99,7 +99,7 @@ CreateSymc(PARAMETERS &params,
         compiling .sym.c
     */
 
-    string fname = params.sourcename;
+    string fname = params.cbl_filename.GetFandExt();
     stringstream ss_tab;
     stringstream ss;
 

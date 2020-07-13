@@ -283,6 +283,8 @@ PARAMETERS::GetParameters(int argc, char *argv[])
     cbl_lst_filename.Decode(basename + ".cbl.lst");
     symc_filename.Decode(basename + ".sym.c");
 
+    cbl_filename.Decode(sourcename);
+
     //OpenOrFail(retval.cbl,retval.cbl_filename.WholePath());
     OpenOrFail(c_file,c_filename.WholePath());
     OpenOrFail(cbl_lst,cbl_lst_filename.WholePath());

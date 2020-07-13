@@ -2713,7 +2713,10 @@ class TabFileInformation() :
             self.current_trapped_file = file_and_line[0]
 
             # Find the address of the VARIABLE_STRING for this file
+
             name_root = self.current_trapped_file
+            name_root = name_root.split('/')
+            name_root = name_root[-1]
             name_root = name_root.replace('.','_')
             string_name = "VARIABLE_STRING_" + name_root.upper()
             the_address = GetAddressOf(string_name)
@@ -3160,7 +3163,7 @@ if 'gdb' in sys.modules :
             ## The text "Version x.x" has to appear in square brackets.               #
             ## Don't mess with it!                                                    #
             ###########################################################################
-            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 3.4]')
+            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 3.5]')
             self.Worker = CPrintWorker()
             self.TabFile = TabFileInformation();
 
