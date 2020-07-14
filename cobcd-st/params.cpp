@@ -203,12 +203,13 @@ static void
 Usage()
 {
     cerr << "cobst: Cobol Symbol Table generator version: " << VERSION << endl;
-    cerr << "cobst [-v] [-q] [-n] root CobolSourceFilename\n";
+    cerr << "cobst [-v] [-q] [-f] [-s] root CobolSourceFilename\n";
     cerr << "Reads various other files with the same root;\n";
     cerr << "Generates root.sym.c containing the symbol table data\n";
     cerr << "-q suppresses the one-line version announcement\n";
     cerr << "-v generates the one-line version announcement and exits\n";
-    cerr << "-n suppresses the insertion of cobcb.py into SOURCE.sym.c\n";
+    cerr << "-f inserts a Type1 pointer to cobcd.py into SOURCE.sym.c\n";
+    cerr << "-n inserts a Type3 copy of cobcb.py into SOURCE.sym.c\n";
 }
 
 void
@@ -242,12 +243,12 @@ PARAMETERS::GetParameters(int argc, char *argv[])
     }
 
     quiet = false;
-    insert_python = true;
+    insert_python = false;
     insert_filename = false;
 
     string root;
     int c;
-    while ((c = getopt (argc, argv, "qvn7")) != -1) {
+    while ((c = getopt (argc, argv, "qvfs")) != -1) {
         switch (c) {
         case 'q':
             quiet = true;
@@ -257,10 +258,10 @@ PARAMETERS::GetParameters(int argc, char *argv[])
                  << VERSION << endl;
             exit(0);
             break;
-        case 'n':
-            insert_python = false;
+        case 's':
+            insert_python = true;
             break;
-        case '7':
+        case 'f':
             insert_filename = true;
             break;
         case '?':
