@@ -347,8 +347,6 @@ if [ $ECHO ]
   echo "platform   is $platform   "
   echo "os_name    is $os_name    "
   echo "COBCDEVEL  is $COBCDEVEL    "
-
-  COBCDEVEL
   echo "COBST      is $COBST      "
   echo "SFIX       is $SFIX       "
   echo "PYTHON     is $PYTHON     "
