@@ -64,7 +64,7 @@ print_help()
 ## Don't mess with it!                                                    #
 ###########################################################################
 
-SCRIPT_VERSION="[Version 3.6]"
+SCRIPT_VERSION="[Version 3.7]"
 
 # This script, nominally named cobcd, packages up the process of compiling
 # a single COBOL source module and processing it so that gdb can be used for
