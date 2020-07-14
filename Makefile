@@ -45,7 +45,7 @@ install:
 	$(MAKE) -C cobcd-st install
 	$(MAKE) -C cobcd-sfix install
 	$(MAKE) -C python install
-	@echo "\033[0;33m"
+	@/bin/echo -e "\033[0;33m"
 	@echo "In order for gdb to be able to load the Python script that displays COBOL variables,"
 	@echo "you will have to create a ~/.gdbinit file that has the following lines in it:"
 	@echo ""
@@ -54,7 +54,7 @@ install:
 	@echo "      set auto-load python-scripts on"
 	@echo ""
 	@echo "See https://sourceware.org/gdb/onlinedocs/gdb/Auto_002dloading-safe-path.html for more information"
-	@echo "\033[0m"
+	@/bin/echo -e "\033[0m"
 
 
 .PHONY : uninstall

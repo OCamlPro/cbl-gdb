@@ -174,8 +174,12 @@ else
   DASH_S=""
   fi
 
-
-
+## However, -s doesn't work in RHEL7:
+if [ "$os_name" = "rhel7" ]
+  then
+  DASH_F="-f"
+  DASH_S=""
+  fi
 
 ## We need to extract the COB_CFLAGS information from `cobc --info`
 ## in case we need to augment COB_CFLAGS when we actually use cobc.
