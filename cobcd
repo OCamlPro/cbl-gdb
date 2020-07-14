@@ -375,9 +375,9 @@ if [ "$result" = "0" ]
   then
   if [ "$ECHO" ]
     then
-    echo $COBST -q $DASH_N $FILE_ROOT $FILE_CBL
+    echo $COBST -q $DASH_7 $DASH_N $FILE_ROOT $FILE_CBL
     fi
-  $COBST -q $DASH_N $FILE_ROOT $FILE_CBL
+  $COBST -q  $DASH_7 $DASH_N $FILE_ROOT $FILE_CBL
   result=$?
   fi
 

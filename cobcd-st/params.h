@@ -127,6 +127,7 @@ public:
 
     bool quiet;
     bool insert_python;
+    bool insert_filename;
 
     void GetParameters(int argc, char *argv[]);
 };

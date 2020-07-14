@@ -243,10 +243,11 @@ PARAMETERS::GetParameters(int argc, char *argv[])
 
     quiet = false;
     insert_python = true;
+    insert_filename = false;
 
     string root;
     int c;
-    while ((c = getopt (argc, argv, "qvn")) != -1) {
+    while ((c = getopt (argc, argv, "qvn7")) != -1) {
         switch (c) {
         case 'q':
             quiet = true;
@@ -258,6 +259,9 @@ PARAMETERS::GetParameters(int argc, char *argv[])
             break;
         case 'n':
             insert_python = false;
+            break;
+        case '7':
+            insert_filename = true;
             break;
         case '?':
             fprintf (stderr, "Unknown option '-%c'.\n", optopt);

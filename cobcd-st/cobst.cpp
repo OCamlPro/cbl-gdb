@@ -90,7 +90,8 @@ static void
 CreateSymc(PARAMETERS &params,
            const COB_PROGRAM_LABELS &program_labels,
            const VARIABLE_TREE &variable_tree,
-           bool tack_on_python)
+           bool tack_on_python,
+           bool tack_on_filename)
 {
     /*  This routine creates the .sym.c file, which contains a global
         variable comprising the cross-reference information, followed
@@ -242,6 +243,33 @@ CreateSymc(PARAMETERS &params,
         params.symc << "\".popsection\\n\"" << endl;
         params.symc << ");" << endl;
     }
+
+    if(tack_on_filename) {
+
+        /*  As per https://sourceware.org/gdb/current/onlinedocs/gdb/dotdebug_005fgdb_005fscripts-section.html,
+        we are going to format that string in a way that reflects this example:
+
+         asm("
+        .pushsection \".debug_gdb_scripts\", \"MS\",@progbits,1\n
+        .byte 1 \n
+        .asciz \"cobcd.py\"\n
+        .popsection \n
+        ");
+
+        */
+
+        s = ss.str();
+
+        params.symc << "asm(" ;
+        params.symc << "\".pushsection \\\".debug_gdb_scripts\\\", \\\"MS\\\",@progbits,1\\n\"" ;
+        params.symc << "\".byte 1 \\n\"" ;
+        params.symc << "\".asciz \\\"cobcd.py\\\"\\n\"" ;
+        params.symc << "\".popsection\\n\"" ;
+        params.symc << ");" ;
+
+        params.symc << endl;
+        }
+
     return;
 }
 
@@ -335,12 +363,14 @@ main(int argc, char *argv[])
     // executable, providing the text that will become the executable's
     // .debug_gdb_scripts section
     bool tack_on_python = params.insert_python;
+    bool tack_on_filename = params.insert_filename;
 #if defined(_WIN32)
     tack_on_python = false;
 #endif
     CreateSymc(params,
                program_labels,
                variable_tree,
-               tack_on_python);
+               tack_on_python,
+               tack_on_filename);
     return 0;
 }
