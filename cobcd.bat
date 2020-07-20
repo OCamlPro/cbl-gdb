@@ -7,7 +7,7 @@ SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 ::## Don't mess with it!                                                    #
 ::###########################################################################
 ::
-set VERSION=[Version 3.7]
+set VERSION=[Version 3.9]
 ::
 ::
 set argC=0
