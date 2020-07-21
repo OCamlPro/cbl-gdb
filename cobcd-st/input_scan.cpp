@@ -148,6 +148,21 @@ ProcessDataStorage(ifstream &ifs,
             continue;
         }
 
+        // Look for external storage
+
+        const string EXTERNAL_PREAMBLE = "static unsigned char\t*b_";
+        if( input.substr(0,EXTERNAL_PREAMBLE.size()) EQ EXTERNAL_PREAMBLE ) {
+            string c_symbol = "b_";
+            size_t nfound = EXTERNAL_PREAMBLE.size();
+            while( isdigit(input[nfound]) ) {
+                c_symbol += input[nfound++];
+            }
+            string cbl_symbol = GetCommentText(input);
+            int size = 0;
+            cob_data.Insert(c_symbol, size, program_id, storage, cbl_symbol);
+            continue;
+        }
+
         vector<string> tokens = Split(input," \t");
         if(input.substr(0,lswitch.size()) EQ lswitch) {
             //storage = "Local";
@@ -305,10 +320,14 @@ ProcessDataStorage(ifstream &ifs,
             }
             while( nfound < input.length() ) {
                 char ch = input[nfound++];
-                if( ch EQ ',' ) {
+                if( !isdigit(ch) ) {
                     break;
                 }
                 name_of_data += ch;
+            }
+
+            if(name_of_data EQ "NU") {
+                name_of_data = "";
             }
 
             // Skip past the ampersand:

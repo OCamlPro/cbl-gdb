@@ -48,7 +48,7 @@
 
 using namespace std;
 
-//#define DUMPING
+#define DUMPING
 
 void
 scan_test(const string &filename)
@@ -332,10 +332,10 @@ main(int argc, char *argv[])
                   );
 #if defined(DUMPING)
     cout << endl;
-    program_labels.Dump();
-    cob_pic_symbols.Dump();
+    //program_labels.Dump();
+    //cob_pic_symbols.Dump();
     cob_data.Dump();
-    cob_field_attributes.Dump();
+    //cob_field_attributes.Dump();
     cob_fields.Dump();
 #endif
     // We now have a nice complete list of COB_DATA, COB_FIELD_ATTRIBUTES, COB_FIELDS
@@ -354,7 +354,9 @@ main(int argc, char *argv[])
 
     // The Consolidate() routine puts them together.
 
+    variable_tree.Dump();
     variable_tree.Consolidate(data_description);
+    variable_tree.Dump();
 #if defined(DUMPING)
     variable_tree.Dump();
     variable_tree.DumpFlatList();

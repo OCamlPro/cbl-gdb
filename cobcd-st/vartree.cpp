@@ -1111,6 +1111,8 @@ void
 VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_description,string &base_symbol)
 {
     if( node ) {
+        cout << "DEBUG0 " << node->level << " " << node->canonical_name << " " << base_symbol << endl;
+
         VSTRING tokens = Split(node->GetCanonicalName(),"/");
         if( tokens.size() >= 2 ) {
             if( node->level <= 1 OR node->level EQ 77 ) {
@@ -1129,13 +1131,15 @@ VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_descript
                 // We do!  Save the index
                 index = data_description.GetIndex(program_id,cbl_symbol,offset);
                 node->data_description_index = index;
-            } else if( data_description.IsInDs(program_id,cbl_symbol) ) {
-                // We didn't find one specifically at that offset, but there is
-                // non-specific entry (which happens when COBOL code doesn't
-                // actually reference the variable
-                index = data_description.GetIndex(program_id,cbl_symbol);
-                node->data_description_index = index;
             }
+            //else if( data_description.IsInDs(program_id,cbl_symbol) )
+            //    {
+            //    // We didn't find one specifically at that offset, but there is
+            //    // non-specific entry (which happens when COBOL code doesn't
+            //    // actually reference the variable
+            //    index = data_description.GetIndex(program_id,cbl_symbol);
+            //    node->data_description_index = index;
+            //    }
 
             if( index EQ NO_INDEX AND !node->redefines.empty() ) {
                 // We couldn't find ourself with our own name.  Perhaps we
@@ -1212,6 +1216,7 @@ VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_descript
             // this node:
 
             if( node->base_symbol.empty() AND !base_symbol.empty() ) {
+                cout << "DEBUG1 " << node->canonical_name << " " << base_symbol << endl ;
                 node->base_symbol = base_symbol;
             }
 
@@ -1229,7 +1234,13 @@ VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_descript
                 // One of our descendents has a base_address, and we don't.  I'm not really
                 // sure that can happen, but just in case, propogate that base_symbol
                 // upward:
+                cout << "DEBUG2 " << node->canonical_name << " " << base_symbol << endl ;
                 node->base_symbol = base_symbol;
+                if( node->level <= 1 OR node->level EQ 77 ) {
+                    // We're starting work on a brand-new level-one(ish) variable.  We need to
+                    // clear out the base_symbol:
+                    base_symbol = "" ;
+                }
             }
         }
     }
