@@ -110,6 +110,7 @@ private:
     std::string usage;              // Reported USAGE string
     std::string redefines;          // Identifier this one REDEFINES
     int         occurs;             // Non-zero means this is a table
+    bool        is_external;        // Flagged as EXTERNAL
 
     // Here we keep track of the tree
     VAR_NODE *parent;

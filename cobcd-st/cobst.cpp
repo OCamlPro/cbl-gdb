@@ -268,7 +268,7 @@ CreateSymc(PARAMETERS &params,
         params.symc << ");" ;
 
         params.symc << endl;
-        }
+    }
 
     return;
 }

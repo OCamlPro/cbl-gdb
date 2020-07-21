@@ -46,6 +46,7 @@ VAR_NODE::VAR_NODE()
     offset = 0;
     level = LEVEL_ROOT;
     occurs = 0;
+    is_external = false;
     parent = nullptr;
     data_description_index = NO_INDEX;
 
@@ -441,6 +442,21 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             tokens.erase(it1,it2);
 
             // And now we can proceed
+        }
+
+        it = tokens.begin();
+        while(it != tokens.end()) {
+            if( *it EQ "EXTERNAL" ) {
+                new_node->is_external = true;
+                break;
+            }
+            it++;
+        }
+        if( it != tokens.end() ) {
+            size_t index = it - tokens.begin();
+            vector<string>::iterator it1 = tokens.begin() + index;
+            vector<string>::iterator it2 = tokens.begin() + index + 1;
+            tokens.erase(it1,it2);
         }
 
         it = tokens.begin();
