@@ -263,12 +263,12 @@ class COB_FIELD_ATTRIBUTES;
 class COB_FIELD_ATTRIBUTE
 {
 public:
-    std::string         name;       /* name of attribute */
+    std::string         a_name;     /* name of attribute */
     unsigned short      type;       /* Field type        */
     unsigned short      digits;     /* Digit count       */
     signed short        scale;      /* Field scale       */
     unsigned short      flags;      /* Field flags       */
-    std::string         name_of_pic;/* picture string    */
+    std::string         p_name;     /* picture string    */
     std::string         program_id; /* picture string    */
 
 public:
@@ -280,12 +280,12 @@ public:
                         std::string         name_of_pic_,
                         std::string         program_id_)
     {
-        name        = name_          ;
+        a_name      = name_          ;
         type        = type_          ;
         digits      = digits_        ;
         scale       = scale_         ;
         flags       = flags_         ;
-        name_of_pic = name_of_pic_   ;
+        p_name      = name_of_pic_   ;
         program_id  = program_id_    ;
     }
     friend COB_FIELD_ATTRIBUTES;
@@ -304,28 +304,28 @@ public:
     {
     }
     void
-    Insert(std::string         name,       /* name of attribute */
+    Insert(std::string         a_name,     /* name of attribute */
            unsigned short      type,       /* Field type        */
            unsigned short      digits,     /* Digit count       */
            signed short        scale,      /* Field scale       */
            unsigned short      flags,      /* Field flags       */
-           std::string         name_of_pic,/* picture string    */
+           std::string         p_name,     /* picture string    */
            std::string         program_id) /* picture string    */
     {
-        M_COB_FIELD_ATTRIBUTES::const_iterator it = m_cob_field_attributes.find(name);
+        M_COB_FIELD_ATTRIBUTES::const_iterator it = m_cob_field_attributes.find(a_name);
         if( it != m_cob_field_attributes.end() ) {
-            std::cout << "Creating the symbol " << name << " more than once in COB_FIELD_ATTRIBUTES::Insert()\n" ;
+            std::cout << "Creating the symbol " << a_name << " more than once in COB_FIELD_ATTRIBUTES::Insert()\n" ;
             exit(1);
         }
 
-        COB_FIELD_ATTRIBUTE cfa(name,
+        COB_FIELD_ATTRIBUTE cfa(a_name,
                                 type,
                                 digits,
                                 scale,
                                 flags,
-                                name_of_pic,
+                                p_name,
                                 program_id);
-        m_cob_field_attributes[name] = v_cob_field_attributes.size();
+        m_cob_field_attributes[a_name] = v_cob_field_attributes.size();
         v_cob_field_attributes.push_back(cfa);
     }
 
@@ -333,24 +333,24 @@ public:
     Dump() const
     {
         std::cout << "COB_FIELD_ATTRIBUTES:" << std::endl;
-        std::cout << std::setw(20) << "name" ;
+        std::cout << std::setw(20) << "a_name" ;
         std::cout << std::setw(20) << "type";
         std::cout << std::setw(20) << "digits";
         std::cout << std::setw(20) << "scale" ;
         std::cout << std::setw(20) << "flags";
-        std::cout << std::setw(20) << "name_of_pic";
+        std::cout << std::setw(20) << "p_name";
         std::cout << std::setw(20) << "program_id";
         std::cout << std::endl;
         for(V_COB_FIELD_ATTRIBUTE::const_iterator it=v_cob_field_attributes.begin();
                 it!=v_cob_field_attributes.end();
                 it++) {
             COB_FIELD_ATTRIBUTE attr = *it;
-            std::cout << std::setw(20) << attr.name ;
+            std::cout << std::setw(20) << attr.a_name ;
             std::cout << std::setw(20) << attr.type;
             std::cout << std::setw(20) << attr.digits;
             std::cout << std::setw(20) << attr.scale ;
             std::cout << std::setw(20) << attr.flags;
-            std::cout << std::setw(20) << attr.name_of_pic;
+            std::cout << std::setw(20) << attr.p_name;
             std::cout << std::setw(20) << attr.program_id;
             std::cout << std::endl;
         }
@@ -374,28 +374,28 @@ class COB_FIELDS;
 class COB_FIELD
 {
 public:
-    std::string               name;         /* name of field         */
-    int                       size;         /* Field size            */
-    std::string               name_of_data; /* name of data field    */
-    int                       offset;       /* any internal + offset */
-    std::string               name_of_attr; /* name of attribute     */
-    std::string               program_id;   /* Where defined         */
-    std::string               cbl_name;     /* From the comment in the .h code */
+    std::string  f_name;       /* name of field         */
+    std::string  b_name;       /* name of data field    */
+    int          offset;       /* any internal + offset */
+    int          size;         /* Field size            */
+    std::string  a_name;       /* name of attribute     */
+    std::string  program_id;   /* Where defined         */
+    std::string  cbl_name;     /* From the comment in the .h code */
 
 public:
-    COB_FIELD(std::string name_,
-              int         size_,
-              std::string data_,
+    COB_FIELD(std::string f_name_,
+              std::string b_name_,
               int         offset_,
-              std::string attr_,
+              int         size_,
+              std::string a_name_,
               std::string program_id_,
               std::string cbl_name_)
     {
-        name         = name_      ;
-        size         = size_      ;
-        name_of_data = data_      ;
+        f_name       = f_name_      ;
+        b_name       = b_name_      ;
         offset       = offset_    ;
-        name_of_attr = attr_      ;
+        size         = size_      ;
+        a_name       = a_name_      ;
         program_id   = program_id_;
         cbl_name     = cbl_name_  ;
     }
@@ -415,42 +415,42 @@ public:
 
 public:
     void
-    Insert(std::string name,
-           int         size,
-           std::string name_of_data,
+    Insert(std::string f_name,
+           std::string b_name,
            int         offset,
-           std::string name_of_attr,
+           int         size,
+           std::string a_name,
            std::string program_id,
            std::string cbl_name)
     {
-        M_COB_FIELDS::const_iterator it = m_cob_fields.find(name);
+        M_COB_FIELDS::const_iterator it = m_cob_fields.find(f_name);
         if( it != m_cob_fields.end() ) {
-            std::cout << "Creating the symbol " << name << " more than once in COB_FIELDS::Insert()\n" ;
+            std::cout << "Creating the symbol " << f_name << " more than once in COB_FIELDS::Insert()\n" ;
             exit(1);
         }
-        COB_FIELD cf(name,
-                     size,
-                     name_of_data,
+        COB_FIELD cf(f_name,
+                     b_name,
                      offset,
-                     name_of_attr,
+                     size,
+                     a_name,
                      program_id,
                      cbl_name);
-        m_cob_fields[name] = v_cob_fields.size();
+        m_cob_fields[f_name] = v_cob_fields.size();
         v_cob_fields.push_back(cf);
     }
 
     void
-    Modify(std::string name_,
-           std::string name_of_data_,
+    Modify(std::string f_name_,
+           std::string b_name_,
            int         offset_)
     {
-        M_COB_FIELDS::iterator it = m_cob_fields.find(name_);
+        M_COB_FIELDS::iterator it = m_cob_fields.find(f_name_);
         if( it EQ m_cob_fields.end() ) {
-            std::cout << "Couldn't modify symbol " << name_ << " COB_FIELDS::Modify()\n" ;
+            std::cout << "Couldn't find symbol " << f_name_ << " COB_FIELDS::Modify()\n" ;
             exit(1);
         }
         size_t i = it->second;
-        v_cob_fields[i].name_of_data = name_of_data_;
+        v_cob_fields[i].b_name = b_name_;
         v_cob_fields[i].offset = offset_;
     }
 
@@ -458,11 +458,11 @@ public:
     Dump() const
     {
         std::cout << "COB_FIELDS:" << std::endl;
-        std::cout << std::setw(20) << "name" ;
-        std::cout << std::setw(20) << "size";
-        std::cout << std::setw(20) << "name_of_data";
+        std::cout << std::setw(20) << "f_name" ;
+        std::cout << std::setw(20) << "b_name";
         std::cout << std::setw(20) << "offset" ;
-        std::cout << std::setw(20) << "name_of_attr";
+        std::cout << std::setw(20) << "size";
+        std::cout << std::setw(20) << "a_name";
         std::cout << std::setw(20) << "program_id";
         std::cout << std::setw(20) << "cbl_name";
         std::cout << std::endl;
@@ -471,11 +471,11 @@ public:
                 it!=v_cob_fields.end();
                 it++) {
             COB_FIELD field = *it;
-            std::cout << std::setw(20) << field.name ;
-            std::cout << std::setw(20) << field.size;
-            std::cout << std::setw(20) << field.name_of_data;
+            std::cout << std::setw(20) << field.f_name ;
+            std::cout << std::setw(20) << field.b_name;
             std::cout << std::setw(20) << field.offset ;
-            std::cout << std::setw(20) << field.name_of_attr;
+            std::cout << std::setw(20) << field.size;
+            std::cout << std::setw(20) << field.a_name;
             std::cout << std::setw(20) << field.program_id;
             std::cout << std::setw(20) << field.cbl_name;
             std::cout << std::endl;
@@ -591,37 +591,19 @@ class DATA_DESCRIPTION
 {
 public:
     std::string program_id;
+    std::string cobol_symbol;
     std::string storage_type;
-    std::string cbl_symbol;
-    std::string c_symbol;
+    std::string b_name;
+    int         offset;
+    int         size;
+    std::string f_name;
     std::string picture_string;
-
-    // storage comes with a size parameter:  b_17[21];
-    // It's often not right.  Too big?
-    int storage_size;
-
-    // See cobc/cobc/libcob/common.h declaration for cob_field_attr
-    USHORT  attr_type;
-    USHORT  attr_digits;
-    short   attr_scale;
-    USHORT attr_flags;
-    std::string attr_pic_name;
-
-    int field_size;
-    std::string field_data_name;
-    int field_data_offset;
-    std::string field_attr_name;
 
 public:
     DATA_DESCRIPTION()
     {
-        storage_size = 0;
-        attr_type = 0;
-        attr_digits = 0;
-        attr_scale = 0;
-        attr_flags = 0;
-        field_size = 0;
-        field_data_offset = 0;
+        offset = 0;
+        size = 0;
     }
     friend DATA_DESCRIPTIONS;
 };
@@ -635,8 +617,6 @@ private:
     VDATA_DESCRIPTION symbols;
     // We are going to key that table by (program-id, cbl_symbol,offset)
     M_VKEY symbols_key;
-    // We are also going to create an non-unique "index" (program-id, cbl_symbol,-1)
-    M_VKEY symbols_index;
 
     std::map<std::string,size_t>location_of_c_symbol;
 
@@ -675,18 +655,18 @@ public:
     void
     DsInsert(const DATA_DESCRIPTION &ds )
     {
-        symbols_key[MakeVKey(ds.program_id,ds.c_symbol,ds.field_data_offset)] = symbols.size();
-        symbols_index[MakeVKey(ds.program_id,ds.c_symbol,-1)] = symbols.size();
+        symbols_key[MakeVKey(ds.program_id,ds.cobol_symbol,ds.offset)] = symbols.size();
         symbols.push_back(ds);
     }
 
     bool
-    IsInDs(std::string const &program_id, std::string const &c_symbol,int offset) const
+    IsInDs(std::string const &program_id, std::string const &cobol_symbol,int offset) const
     {
-        std::string dskey=MakeVKey(program_id,c_symbol,offset);
+        std::string dskey=MakeVKey(program_id,cobol_symbol,offset);
         M_VKEY::const_iterator it = symbols_key.find(dskey);
         return it != symbols_key.end();
     }
+
     size_t
     GetIndex(std::string const &program_id, std::string const &c_symbol,int offset) const
     {
@@ -694,25 +674,6 @@ public:
         std::string dskey=MakeVKey(program_id,c_symbol,offset);
         M_VKEY::const_iterator it = symbols_key.find(dskey);
         if(it != symbols_key.end()) {
-            retval = it->second;
-        }
-        return retval;
-    }
-
-    bool
-    IsInDs(std::string const &program_id, std::string const &c_symbol) const
-    {
-        std::string dskey=MakeVKey(program_id,c_symbol,-1);
-        M_VKEY::const_iterator it = symbols_index.find(dskey);
-        return it != symbols_index.end();
-    }
-    size_t
-    GetIndex(std::string const &program_id, std::string const &c_symbol) const
-    {
-        size_t retval = (size_t)(-1);
-        std::string dskey=MakeVKey(program_id,c_symbol,-1);
-        M_VKEY::const_iterator it = symbols_index.find(dskey);
-        if(it != symbols_index.end()) {
             retval = it->second;
         }
         return retval;

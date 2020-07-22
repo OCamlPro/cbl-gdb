@@ -281,13 +281,13 @@ ProcessDataStorage(ifstream &ifs,
             nfound += strlen(SZ_COB_FIELD_F);
 
             // Pick up the c_symbol
-            string c_symbol="f_";
+            string f_name = "f_" ;
             while( nfound < input.length() ) {
                 char ch = input[nfound++];
                 if( !isdigit(ch) ) {
                     break;
                 }
-                c_symbol += ch;
+                f_name += ch;
             }
 
             // Skip past the '{'
@@ -385,10 +385,10 @@ ProcessDataStorage(ifstream &ifs,
                 mapped_program_id = it->second;
             }
 
-            cob_fields.Insert(c_symbol,
-                              size,
+            cob_fields.Insert(f_name,
                               name_of_data,
                               offset,
+                              size,
                               name_of_attr,
                               mapped_program_id,
                               cbl_name);
@@ -674,7 +674,7 @@ ScanForLinkage(ifstream &ifs,
                         nfound = param2.find(" + ",nfound+3);
                     }
                 }
-                cob_fields.Modify(f_symbol,base,offset);
+                cob_fields.Modify(f_symbol,"NULL",offset);
             }
 
             // Go see if there are more on this line
@@ -699,64 +699,25 @@ DATA_DESCRIPTIONS::Flatten(const COB_FIELDS &cob_fields,
        ) {
         COB_FIELD field = *it;
         DATA_DESCRIPTION ds;
-        ds.field_data_name     = field.name        ;
-        ds.field_size          = field.size        ;
-        ds.c_symbol            = field.name_of_data;
-        ds.field_data_offset   = field.offset      ;
-        ds.field_attr_name     = field.name_of_attr;
+        ds.f_name              = field.f_name      ;
+        ds.size                = field.size        ;
+        ds.b_name              = field.b_name;
+        ds.offset              = field.offset      ;
         ds.program_id          = field.program_id  ;
-        ds.cbl_symbol          = field.cbl_name    ;
+        ds.cobol_symbol        = field.cbl_name    ;
 
-        const COB_FIELD_ATTRIBUTE *cfa = cob_field_attributes.GetFieldAttribute(field.name_of_attr);
-        if( cfa ) {
-            ds.attr_type          = cfa->type;
-            ds.attr_digits        = cfa->digits;
-            ds.attr_scale         = cfa->scale;
-            ds.attr_flags         = cfa->flags;
-            ds.attr_pic_name   = cfa->name_of_pic;
-
-            const COB_PIC_SYMBOL *pic_pointer = cob_pic_symbols.GetPicSymbol(ds.attr_pic_name);
-            if( pic_pointer ) {
-                ds.picture_string = pic_pointer->pic_symbol;
-            }
-        }
-
-        const COB_DATUM *cd = cob_data.GetCobDatum(ds.c_symbol);
+        const COB_DATUM *cd = cob_data.GetCobDatum(ds.b_name);
         if( cd ) {
-            ds.storage_size = cd->size;
+            ds.size = cd->size;
             ds.storage_type = cd->storage_type;
         }
 
-        if( ds.storage_type.empty() AND ds.c_symbol.empty() ) {
+        if( ds.storage_type.empty() AND ds.b_name.empty() ) {
             ds.storage_type = "Local";
         }
 
         DsInsert(ds);
     }
-
-    // Now walk through the b_ data fields.  In general, these will already
-    // be in the symbols array.  But in cases where a working-storage variable
-    // is declared, but never used, there won't be an f_ entry.  This means that
-    // the debugger won't be able to show you properly formatted data, but it
-    // will, at least, know where it is and show you the byte values.
-
-    for(V_COB_DATUM::const_iterator it=cob_data.v_data.begin();
-            it != cob_data.v_data.end();
-            it++
-       ) {
-        COB_DATUM cob_data = *it;
-        if( !IsInDs(cob_data.program_id,cob_data.name) ) {
-            // It's not already there.  So, put it there.
-            DATA_DESCRIPTION ds;
-            ds.program_id = cob_data.program_id;
-            ds.cbl_symbol = cob_data.cbl_name;
-            ds.c_symbol = cob_data.name;
-            ds.storage_size = cob_data.size;
-            ds.storage_type = cob_data.storage_type;
-            DsInsert(ds);
-        }
-    }
-
 }
 
 void
@@ -813,19 +774,14 @@ void
 DATA_DESCRIPTIONS::Dump() const
 {
     cout << "DATA_DESCRIPTION:" << endl ;
-    cout << setw(20) << "program_id"            ;
-    cout << setw(20) << "cbl_symbol"            ;
-    cout << setw( 9) << "c_symbol"            ;
-    cout << setw( 9) << "f_symbol"            ;
-    cout << setw( 7) << "offset"   ;
-    cout << setw(13) << "storage_type" ;
+    cout << setw(20) << "program_id"    ;
+    cout << setw(20) << "cobol_symbol"  ;
+    cout << setw(13) << "storage_type"  ;
+    cout << setw( 9) << "b_name"        ;
+    cout << setw( 7) << "offset"        ;
+    cout << setw( 6) << "size"          ;
+    cout << setw( 9) << "f_symbol"      ;
     cout << setw(16) << "picture"       ;
-    cout << setw( 6) << "ssize"           ;
-    cout << setw( 6) << "fsize"           ;
-    cout << setw(10) << "attr_type"           ;
-    cout << setw(12) << "attr_digits"         ;
-    cout << setw(11) << "attr_scale"          ;
-    cout << setw(11) << "attr_flags"          ;
     cout << endl;
 
     for(VDATA_DESCRIPTION::const_iterator it=symbols.begin();
@@ -833,18 +789,13 @@ DATA_DESCRIPTIONS::Dump() const
             it++ ) {
         DATA_DESCRIPTION symbol = *it;
         cout << setw(20) << symbol.program_id            ;
-        cout << setw(20) << symbol.cbl_symbol            ;
-        cout << setw( 9) << symbol.c_symbol            ;
-        cout << setw( 9) << symbol.field_data_name   ;
-        cout << setw( 7) << symbol.field_data_offset   ;
+        cout << setw(20) << symbol.cobol_symbol            ;
         cout << setw(13) << symbol.storage_type ;
+        cout << setw( 9) << symbol.b_name            ;
+        cout << setw( 7) << symbol.offset   ;
+        cout << setw( 6) << symbol.size           ;
+        cout << setw( 9) << symbol.f_name   ;
         cout << setw(16) << symbol.picture_string       ;
-        cout << setw( 6) << symbol.storage_size           ;
-        cout << setw( 6) << symbol.field_size           ;
-        cout << setw(10) << symbol.attr_type           ;
-        cout << setw(12) << symbol.attr_digits         ;
-        cout << setw(11) << symbol.attr_scale          ;
-        cout << setw(11) << symbol.attr_flags          ;
         cout << endl;
     }
     cout << endl;

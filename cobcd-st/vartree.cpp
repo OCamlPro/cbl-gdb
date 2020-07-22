@@ -1120,9 +1120,10 @@ VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_descript
             int offset = node->GetOffset();
             size_t index = NO_INDEX;
 
-            if( node->level <= 1 OR node->level EQ 77 ) {
+            if(node->section != "LOCAL-STORAGE" AND node->level <= 1 OR node->level EQ 77 ) {
                 // We're starting work on a brand-new level-one(ish) variable.
                 // Let's check to see if there is a b_ buffer for this 01/77 symbol
+                base_symbol = "";
                 const COB_DATUM *pdatum = cob_data.GetCobDatumFromProgAndName(program_id,cbl_symbol);
                 if( pdatum ) {
                     // Pick up the base symbol
@@ -1130,55 +1131,17 @@ VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_descript
                 }
             }
 
+            if( base_symbol.empty() ) {
+
+            }
+
+
             if( !base_symbol.empty() ) {
                 // See if we have a data_descriptions entry for that cbl_symbol
                 if( data_description.IsInDs(program_id,base_symbol,offset) ) {
                     // We do!  Save the index
                     index = data_description.GetIndex(program_id,base_symbol,offset);
                     node->data_description_index = index;
-
-                    DATA_DESCRIPTION symbol = data_description[index];
-
-                    // Here is where we combine the VARIABLE_TREE data with the DATA_DESCRIPTIONS
-                    // data to create everything we need:
-
-                    node->base_symbol = base_symbol;
-
-                    if( symbol.storage_size EQ 0 ) {
-                        node->best_size = symbol.field_size;
-                    } else if( symbol.field_size EQ 0 ) {
-                        node->best_size = symbol.storage_size;
-                    } else {
-                        node->best_size = symbol.field_size;
-                    }
-
-                    if( node->picture.empty() ) {
-                        node->best_picture = symbol.picture_string;
-                    } else if ( symbol.picture_string.empty() ) {
-                        node->best_picture = node->picture;
-                    } else {
-                        // If they're both on, go with the one from the listing file
-                        node->best_picture = node->picture;
-                    }
-
-                    if( node->level EQ 66 ) {
-                        // The .cbl.lst file doesn't have good offset information
-                        // for 66 REDEFINES.  But the symbol *might* have good information,
-                        // which it gets from the f_ field_attribute record when the 66
-                        // variable is referenced in the code.
-
-                        node->offset = symbol.field_data_offset ;
-                    }
-
-                    node->base_symbol  = symbol.c_symbol    ;
-
-                    node->attr_type    = symbol.attr_type   ;
-                    node->attr_digits  = symbol.attr_digits ;
-                    node->attr_scale   = symbol.attr_scale  ;
-                    node->attr_flags   = symbol.attr_flags  ;
-                } else {
-                    node->best_size = node->size;
-                    node->best_picture = node->picture;
                 }
             }
         }
