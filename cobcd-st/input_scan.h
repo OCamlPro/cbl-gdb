@@ -500,6 +500,17 @@ public:
         v_cob_fields[i].offset = offset_;
     }
 
+    const COB_FIELD *
+    Fetch(std::string f_name_) const
+    {
+        const COB_FIELD *retval = nullptr;
+        M_COB_FIELDS::const_iterator it = m_cob_fields.find(f_name_);
+        if( it != m_cob_fields.end() ) {
+            retval = &v_cob_fields[it->second];
+        }
+        return retval;
+    }
+
     void
     FixLookup(const COB_DATA &cob_data)
     {

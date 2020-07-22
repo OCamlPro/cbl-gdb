@@ -1234,13 +1234,38 @@ VARIABLE_TREE::DumpFlatList() const
 }
 
 void
-VARIABLE_TREE::FormatVariablesInfo(stringstream &ss) const
+VARIABLE_TREE::FormatVariablesInfo(stringstream &ss,
+                                   const COB_FIELDS &cob_fields,
+                                   const COB_FIELD_ATTRIBUTES &cob_field_attributes,
+                                   const COB_PIC_SYMBOLS &cob_pic_symbols) const
 {
-    for(VVAR_NODES::const_iterator it=flat_list.begin();
-            it!=flat_list.end();
-            it++) {
-
+    for(VVAR_NODES::const_iterator it=flat_list.begin(); it!=flat_list.end(); it++) {
         VAR_NODE *node = *it;
+
+        string f_name = node->f_name;
+        const COB_FIELD *pfield = cob_fields.Fetch(f_name);
+        const COB_FIELD_ATTRIBUTE *pattr = nullptr;
+        int attr_type   = 0 ;
+        int attr_digits = 0 ;
+        int attr_scale  = 0 ;
+        int attr_flags  = 0 ;
+        string picture = node->picture;
+        if( pfield ) {
+            pattr = cob_field_attributes.GetFieldAttribute(pfield->a_name);
+            if( pattr ) {
+                attr_type   = pattr->type;
+                attr_digits = pattr->digits;
+                attr_scale  = pattr->scale;
+                attr_flags  = pattr->flags;
+
+                string p_name = pattr->p_name;
+                const COB_PIC_SYMBOL *ppic = cob_pic_symbols.GetPicSymbol(p_name);
+                if( ppic ) {
+                    picture = ppic->pic_symbol;
+                }
+            }
+        }
+
         ss << "D|";
         ss << node->section.substr(0,2) << "|";
         ss << ZeroIsNull(node->level) << "|" ;
@@ -1249,9 +1274,13 @@ VARIABLE_TREE::FormatVariablesInfo(stringstream &ss) const
         ss << ZeroIsNull(node->offset) << "|" ;
         ss << node->type.substr(0,1) << "|" ;
         ss << ZeroIsNull(node->size) << "|" ;
-        ss << node->picture << "|" ;
+        ss << picture << "|" ;
         ss << node->usage << "|" ;
         ss << ZeroIsNull(node->occurs) << "|" ;
+        ss << ZeroIsNull(attr_type) << "|" ;
+        ss << ZeroIsNull(attr_digits) << "|" ;
+        ss << ZeroIsNull(attr_scale) << "|" ;
+        ss << ZeroIsNull(attr_flags) << "~";
     }
 }
 

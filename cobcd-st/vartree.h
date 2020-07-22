@@ -203,6 +203,8 @@ typedef std::vector<VAR_NODE *>VVAR_NODES;
 class COB_DATA;
 class COB_FIELDS;
 class DATA_DESCRIPTIONS;
+class COB_FIELD_ATTRIBUTES;
+class COB_PIC_SYMBOLS;
 class VARIABLE_TREE
 {
 private:
@@ -238,8 +240,10 @@ public:
     void Consolidate(const COB_FIELDS &cob_fields);
     void DumpANode(const VAR_NODE *node) const;
     void DumpFlatList() const;
-    void FormatVariablesInfo(std::stringstream &ss) const;
-
+    void FormatVariablesInfo(std::stringstream &ss,
+                             const COB_FIELDS &cob_fields,
+                             const COB_FIELD_ATTRIBUTES &cob_field_attributes,
+                             const COB_PIC_SYMBOLS &cob_pic_symbols) const ;
     int
     size() const
     {

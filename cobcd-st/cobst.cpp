@@ -89,6 +89,9 @@ scan_test(const string &filename)
 static void
 CreateSymc(PARAMETERS &params,
            const COB_PROGRAM_LABELS &program_labels,
+           const COB_FIELDS &cob_fields,
+           const COB_FIELD_ATTRIBUTES &cob_field_attributes,
+           const COB_PIC_SYMBOLS &cob_pic_symbols,
            const VARIABLE_TREE &variable_tree,
            bool tack_on_python,
            bool tack_on_filename)
@@ -108,7 +111,7 @@ CreateSymc(PARAMETERS &params,
     program_labels.FormatProgramInfo(ss);
 
     // Continue with the data variables information:
-    variable_tree.FormatVariablesInfo(ss);
+    variable_tree.FormatVariablesInfo(ss,cob_fields,cob_field_attributes,cob_pic_symbols);
 
     // Do the line/address information from the .text in the minimal form
     // used by cobcd.py to figure out which program a trap has occurred in.
@@ -361,6 +364,9 @@ main(int argc, char *argv[])
 #endif
     CreateSymc(params,
                program_labels,
+               cob_fields,
+               cob_field_attributes,
+               cob_pic_symbols,
                variable_tree,
                tack_on_python,
                tack_on_filename);
