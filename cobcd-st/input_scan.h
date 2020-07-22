@@ -169,8 +169,9 @@ typedef std::map<std::string,size_t> M_COB_DATUM;
 class COB_DATA
 {
 public:
-    V_COB_DATUM v_data;
-    M_COB_DATUM m_data;
+    V_COB_DATUM v_data; // The list of elements
+    M_COB_DATUM m_data_from_b_field;
+    M_COB_DATUM m_data_from_cbl_name;
 
 public:
     COB_DATA()
@@ -183,14 +184,20 @@ public:
            const std::string &storage,
            const std::string &cbl_name)
     {
-        M_COB_DATUM::const_iterator it = m_data.find(name);
-        if( it != m_data.end() ) {
+        M_COB_DATUM::const_iterator it = m_data_from_b_field.find(name);
+        if( it != m_data_from_b_field.end() ) {
             std::cout << "Creating the symbol " << name << " more than once in COB_DATA::Insert()\n" ;
             exit(1);
         }
 
         COB_DATUM cd(name, size, program_id, storage, cbl_name);
-        m_data[name] = v_data.size();
+        m_data_from_b_field[name] = v_data.size();
+
+        std::string cobol_name = program_id;
+        cobol_name += "|";
+        cobol_name += cbl_name;
+        m_data_from_cbl_name[cobol_name] = v_data.size();
+
         v_data.push_back(cd);
     }
 
@@ -199,9 +206,9 @@ public:
     {
         std::cout << "COB_DATA:" << std::endl;
         std::cout << std::setw(20) << "name" ;
+        std::cout << std::setw(20) << "storage";
         std::cout << std::setw(20) << "size";
         std::cout << std::setw(20) << "program_id";
-        std::cout << std::setw(20) << "storage";
         std::cout << std::setw(20) << "cbl_name";
         std::cout << std::endl;
 
@@ -211,9 +218,9 @@ public:
                 it++) {
             COB_DATUM symbol = *it;
             std::cout << std::setw(20) << symbol.name ;
+            std::cout << std::setw(20) << symbol.storage_type;
             std::cout << std::setw(20) << symbol.size;
             std::cout << std::setw(20) << symbol.program_id;
-            std::cout << std::setw(20) << symbol.storage_type;
             std::cout << std::setw(20) << symbol.cbl_name;
             std::cout << std::endl;
         }
@@ -224,13 +231,31 @@ public:
     GetCobDatum(const std::string &b_name) const
     {
         const COB_DATUM *retval = nullptr;
-        M_COB_DATUM::const_iterator it = m_data.find(b_name);
-        if( it != m_data.end() ) {
+        M_COB_DATUM::const_iterator it = m_data_from_b_field.find(b_name);
+        if( it != m_data_from_b_field.end() ) {
             retval = &v_data[it->second];
         }
 
         return retval;
     }
+
+    const COB_DATUM *
+    GetCobDatumFromProgAndName(const std::string &prog,
+                               const std::string &name) const
+    {
+        std::string cobol_name = prog;
+        cobol_name += "|";
+        cobol_name += name;
+
+        const COB_DATUM *retval = nullptr;
+        M_COB_DATUM::const_iterator it = m_data_from_cbl_name.find(cobol_name);
+        if( it != m_data_from_cbl_name.end() ) {
+            retval = &v_data[it->second];
+        }
+
+        return retval;
+    }
+
 
 };
 
@@ -566,7 +591,6 @@ class DATA_DESCRIPTION
 {
 public:
     std::string program_id;
-    int         level;
     std::string storage_type;
     std::string cbl_symbol;
     std::string c_symbol;
@@ -591,7 +615,6 @@ public:
 public:
     DATA_DESCRIPTION()
     {
-        level = 0;
         storage_size = 0;
         attr_type = 0;
         attr_digits = 0;
@@ -642,33 +665,33 @@ public:
     }
 
     std::string
-    MakeVKey(std::string const &program_id, std::string const &cbl_identifier,int offset) const
+    MakeVKey(std::string const &program_id, std::string const &c_symbol,int offset) const
     {
         char ach[20];
         sprintf(ach,"%d",offset);
-        return program_id + "|" + cbl_identifier + "|" + ach;
+        return program_id + "|" + c_symbol + "|" + ach;
     }
 
     void
     DsInsert(const DATA_DESCRIPTION &ds )
     {
-        symbols_key[MakeVKey(ds.program_id,ds.cbl_symbol,ds.field_data_offset)] = symbols.size();
-        symbols_index[MakeVKey(ds.program_id,ds.cbl_symbol,-1)] = symbols.size();
+        symbols_key[MakeVKey(ds.program_id,ds.c_symbol,ds.field_data_offset)] = symbols.size();
+        symbols_index[MakeVKey(ds.program_id,ds.c_symbol,-1)] = symbols.size();
         symbols.push_back(ds);
     }
 
     bool
-    IsInDs(std::string const &program_id, std::string const &cbl_identifier,int offset) const
+    IsInDs(std::string const &program_id, std::string const &c_symbol,int offset) const
     {
-        std::string dskey=MakeVKey(program_id,cbl_identifier,offset);
+        std::string dskey=MakeVKey(program_id,c_symbol,offset);
         M_VKEY::const_iterator it = symbols_key.find(dskey);
         return it != symbols_key.end();
     }
     size_t
-    GetIndex(std::string const &program_id, std::string const &cbl_identifier,int offset) const
+    GetIndex(std::string const &program_id, std::string const &c_symbol,int offset) const
     {
         size_t retval = (size_t)(-1);
-        std::string dskey=MakeVKey(program_id,cbl_identifier,offset);
+        std::string dskey=MakeVKey(program_id,c_symbol,offset);
         M_VKEY::const_iterator it = symbols_key.find(dskey);
         if(it != symbols_key.end()) {
             retval = it->second;
@@ -677,17 +700,17 @@ public:
     }
 
     bool
-    IsInDs(std::string const &program_id, std::string const &cbl_identifier) const
+    IsInDs(std::string const &program_id, std::string const &c_symbol) const
     {
-        std::string dskey=MakeVKey(program_id,cbl_identifier,-1);
+        std::string dskey=MakeVKey(program_id,c_symbol,-1);
         M_VKEY::const_iterator it = symbols_index.find(dskey);
         return it != symbols_index.end();
     }
     size_t
-    GetIndex(std::string const &program_id, std::string const &cbl_identifier) const
+    GetIndex(std::string const &program_id, std::string const &c_symbol) const
     {
         size_t retval = (size_t)(-1);
-        std::string dskey=MakeVKey(program_id,cbl_identifier,-1);
+        std::string dskey=MakeVKey(program_id,c_symbol,-1);
         M_VKEY::const_iterator it = symbols_index.find(dskey);
         if(it != symbols_index.end()) {
             retval = it->second;
@@ -702,7 +725,6 @@ public:
                  const COB_PIC_SYMBOLS &cob_pic_symbols,
                  const COB_DATA &cob_data
                 );
-    void FormatVariablesInfo(std::stringstream &ss) const;
 
 };
 

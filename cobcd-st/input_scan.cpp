@@ -664,6 +664,17 @@ ScanForLinkage(ifstream &ifs,
                     }
                 }
                 cob_fields.Modify(f_symbol,base,offset);
+            } else {
+                size_t nfound = param2.find(" + ");
+                if( nfound != string::npos ) {
+                    offset += STOI( param2.substr(nfound+3) );
+                    nfound = param2.find(" + ",nfound+3);
+                    if( nfound != string::npos ) {
+                        offset += STOI( param2.substr(nfound+3) );
+                        nfound = param2.find(" + ",nfound+3);
+                    }
+                }
+                cob_fields.Modify(f_symbol,base,offset);
             }
 
             // Go see if there are more on this line
@@ -734,7 +745,7 @@ DATA_DESCRIPTIONS::Flatten(const COB_FIELDS &cob_fields,
             it++
        ) {
         COB_DATUM cob_data = *it;
-        if( !IsInDs(cob_data.program_id,cob_data.cbl_name) ) {
+        if( !IsInDs(cob_data.program_id,cob_data.name) ) {
             // It's not already there.  So, put it there.
             DATA_DESCRIPTION ds;
             ds.program_id = cob_data.program_id;
@@ -804,7 +815,8 @@ DATA_DESCRIPTIONS::Dump() const
     cout << "DATA_DESCRIPTION:" << endl ;
     cout << setw(20) << "program_id"            ;
     cout << setw(20) << "cbl_symbol"            ;
-    cout << setw(20) << "c_symbol"            ;
+    cout << setw( 9) << "c_symbol"            ;
+    cout << setw( 9) << "f_symbol"            ;
     cout << setw( 7) << "offset"   ;
     cout << setw(13) << "storage_type" ;
     cout << setw(16) << "picture"       ;
@@ -822,7 +834,8 @@ DATA_DESCRIPTIONS::Dump() const
         DATA_DESCRIPTION symbol = *it;
         cout << setw(20) << symbol.program_id            ;
         cout << setw(20) << symbol.cbl_symbol            ;
-        cout << setw(20) << symbol.c_symbol            ;
+        cout << setw( 9) << symbol.c_symbol            ;
+        cout << setw( 9) << symbol.field_data_name   ;
         cout << setw( 7) << symbol.field_data_offset   ;
         cout << setw(13) << symbol.storage_type ;
         cout << setw(16) << symbol.picture_string       ;

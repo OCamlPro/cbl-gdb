@@ -1108,146 +1108,51 @@ VARIABLE_TREE::AdjustFlatList()
 }
 
 void
-VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_description,string &base_symbol)
+VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_description,string &base_symbol,const COB_DATA &cob_data)
 {
+    // This routine was once more complicated; now it just propogates the top node b_xxx down through
+    // the whole branch:
     if( node ) {
-        cout << "DEBUG0 " << node->level << " " << node->canonical_name << " " << base_symbol << endl;
-
         VSTRING tokens = Split(node->GetCanonicalName(),"/");
         if( tokens.size() >= 2 ) {
-            if( node->level <= 1 OR node->level EQ 77 ) {
-                // We're starting work on a brand-new level-one(ish) variable.  We need to
-                // clear out the base_symbol:
-                base_symbol = "" ;
-            }
-
             string program_id = tokens.back();
             string cbl_symbol = tokens[0];
             int offset = node->GetOffset();
-
-            // See if we have a data_descriptions entry for that cbl_symbol
             size_t index = NO_INDEX;
-            if( data_description.IsInDs(program_id,cbl_symbol,offset) ) {
-                // We do!  Save the index
-                index = data_description.GetIndex(program_id,cbl_symbol,offset);
-                node->data_description_index = index;
-            }
-            //else if( data_description.IsInDs(program_id,cbl_symbol) )
-            //    {
-            //    // We didn't find one specifically at that offset, but there is
-            //    // non-specific entry (which happens when COBOL code doesn't
-            //    // actually reference the variable
-            //    index = data_description.GetIndex(program_id,cbl_symbol);
-            //    node->data_description_index = index;
-            //    }
 
-            if( index EQ NO_INDEX AND !node->redefines.empty() ) {
-                // We couldn't find ourself with our own name.  Perhaps we
-                // can borrow our base_symbol from an older sibling.
-                VSTRING tokes = Split(node->redefines,"/");
-
-                if( data_description.IsInDs(program_id,tokes[0],offset) ) {
-                    // We can!  Save the index
-                    index = data_description.GetIndex(program_id,tokes[0],offset);
-                } else if ( data_description.IsInDs(program_id,tokes[0]) ) {
-                    index = data_description.GetIndex(program_id,tokes[0],offset);
+            if( node->level <= 1 OR node->level EQ 77 ) {
+                // We're starting work on a brand-new level-one(ish) variable.
+                // Let's check to see if there is a b_ buffer for this 01/77 symbol
+                const COB_DATUM *pdatum = cob_data.GetCobDatumFromProgAndName(program_id,cbl_symbol);
+                if( pdatum ) {
+                    // Pick up the base symbol
+                    base_symbol = pdatum->name;
                 }
-                if( index != NO_INDEX ) {
-                    DATA_DESCRIPTION symbol = data_description[index];
-                    if( base_symbol.empty() and !symbol.c_symbol.empty() ) {
-                        // Replace our empty base_symbol with the one from data_descriptions
-                        base_symbol = data_description[index].c_symbol;
-                    }
+            }
+
+            if( !base_symbol.empty() ) {
+                // See if we have a data_descriptions entry for that cbl_symbol
+                if( data_description.IsInDs(program_id,base_symbol,offset) ) {
+                    // We do!  Save the index
+                    index = data_description.GetIndex(program_id,base_symbol,offset);
+                    node->data_description_index = index;
                     node->base_symbol = data_description[index].c_symbol;
                 }
-
-                // We can't take anything except the base_symbol; none of the
-                // rest of our sibling's fields are relevant:
-                index = NO_INDEX;
             }
-
-            if( index != NO_INDEX ) {
-                DATA_DESCRIPTION symbol = data_description[index];
-                if( base_symbol.empty() and !symbol.c_symbol.empty() ) {
-                    // Replace our empty base_symbol with the one from data_descriptions
-                    base_symbol = data_description[index].c_symbol;
-                }
-                // Here is where we combine the VARIABLE_TREE data with the DATA_DESCRIPTIONS
-                // data to create everything we need:
-
-                if( symbol.storage_size EQ 0 ) {
-                    node->best_size = symbol.field_size;
-                } else if( symbol.field_size EQ 0 ) {
-                    node->best_size = symbol.storage_size;
-                } else {
-                    node->best_size = symbol.field_size;
-                }
-
-                if( node->picture.empty() ) {
-                    node->best_picture = symbol.picture_string;
-                } else if ( symbol.picture_string.empty() ) {
-                    node->best_picture = node->picture;
-                } else {
-                    // If they're both on, go with the one from the listing file
-                    node->best_picture = node->picture;
-                }
-
-                if( node->level EQ 66 ) {
-                    // The .cbl.lst file doesn't have good offset information
-                    // for 66 REDEFINES.  But the symbol *might* have good information,
-                    // which it gets from the f_ field_attribute record when the 66
-                    // variable is referenced in the code.
-
-                    node->offset = symbol.field_data_offset ;
-                }
-
-                node->base_symbol  = symbol.c_symbol    ;
-
-                node->attr_type    = symbol.attr_type   ;
-                node->attr_digits  = symbol.attr_digits ;
-                node->attr_scale   = symbol.attr_scale  ;
-                node->attr_flags   = symbol.attr_flags  ;
-            } else {
-                node->best_size = node->size;
-                node->best_picture = node->picture;
-            }
-
-            // We might have a new base_symbol at this point; if we do, apply it to
-            // this node:
-
-            if( node->base_symbol.empty() AND !base_symbol.empty() ) {
-                cout << "DEBUG1 " << node->canonical_name << " " << base_symbol << endl ;
-                node->base_symbol = base_symbol;
-            }
-
-            // And our work here is done:
         }
-
         for(VVAR_NODES::const_iterator it=node->children.begin();
                 it!=node->children.end();
                 it++) {
             VAR_NODE *child = *it;
             // Check our children
-            Consolidive(child,data_description,base_symbol);
-
-            if( !base_symbol.empty() AND node->base_symbol.empty() ) {
-                // One of our descendents has a base_address, and we don't.  I'm not really
-                // sure that can happen, but just in case, propogate that base_symbol
-                // upward:
-                cout << "DEBUG2 " << node->canonical_name << " " << base_symbol << endl ;
-                node->base_symbol = base_symbol;
-                if( node->level <= 1 OR node->level EQ 77 ) {
-                    // We're starting work on a brand-new level-one(ish) variable.  We need to
-                    // clear out the base_symbol:
-                    base_symbol = "" ;
-                }
-            }
+            Consolidive(child,data_description,base_symbol,cob_data);
         }
+        base_symbol = "" ;
     }
 }
 
 void
-VARIABLE_TREE::Consolidate(const DATA_DESCRIPTIONS &data_description)
+VARIABLE_TREE::Consolidate(const DATA_DESCRIPTIONS &data_description,const COB_DATA &cob_data)
 {
     // data_description has f_ and b_ entries for working-storage and linkage
     // variables that are referenced in the COBOL code
@@ -1266,7 +1171,7 @@ VARIABLE_TREE::Consolidate(const DATA_DESCRIPTIONS &data_description)
     // data_description.
 
     string base_symbol="";
-    Consolidive(root,data_description,base_symbol);
+    Consolidive(root,data_description,base_symbol,cob_data);
     BuildFlatList(root,flat_list);
     AdjustFlatList();
 

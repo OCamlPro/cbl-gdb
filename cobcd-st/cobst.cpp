@@ -48,7 +48,7 @@
 
 using namespace std;
 
-#define DUMPING
+//#define DUMPING
 
 void
 scan_test(const string &filename)
@@ -354,9 +354,7 @@ main(int argc, char *argv[])
 
     // The Consolidate() routine puts them together.
 
-    variable_tree.Dump();
-    variable_tree.Consolidate(data_description);
-    variable_tree.Dump();
+    variable_tree.Consolidate(data_description,cob_data);
 #if defined(DUMPING)
     variable_tree.Dump();
     variable_tree.DumpFlatList();

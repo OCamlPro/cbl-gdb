@@ -36,8 +36,9 @@
 #include <iostream>
 #include <set>
 #include <map>
-#include "input_scan.h"
 #include "vartree.h"
+#include "input_scan.h"
+
 
 /*  These objects are for keeping track of the parsed storage section
 
@@ -215,6 +216,7 @@ public:
 };
 typedef std::vector<VAR_NODE *>VVAR_NODES;
 
+class COB_DATA;
 class DATA_DESCRIPTIONS;
 class VARIABLE_TREE
 {
@@ -236,7 +238,8 @@ private:
 
     void Consolidive(VAR_NODE *node,
                      const DATA_DESCRIPTIONS &data_description,
-                     std::string &base_symbol);
+                     std::string &base_symbol,
+                     const COB_DATA &cob_data);
 
 public:
     VARIABLE_TREE();
@@ -245,7 +248,7 @@ public:
     void ReadFromFile(std::ifstream &ifs);
     void BuildCanonicalName();
     void Dump(std::ostream &s = std::cout);
-    void Consolidate(const DATA_DESCRIPTIONS &data_description);
+    void Consolidate(const DATA_DESCRIPTIONS &data_description,const COB_DATA &cob_data);
     void DumpFlatList() const;
     void FormatVariablesInfo(std::stringstream &ss) const;
 
