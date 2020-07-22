@@ -1137,6 +1137,14 @@ VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_descript
                     index = data_description.GetIndex(program_id,base_symbol,offset);
                     node->data_description_index = index;
                     node->base_symbol = data_description[index].c_symbol;
+
+                    node->offset        = data_description[index].field_data_offset  ;
+                    node->best_size     = data_description[index].field_size   ;
+                    node->best_picture  = data_description[index].picture_string   ;
+                    node->attr_type     = data_description[index].attr_type   ;
+                    node->attr_digits   = data_description[index].attr_digits  ;
+                    node->attr_scale    = data_description[index].attr_scale  ;
+                    node->attr_flags    = data_description[index].attr_flags  ;
                 }
             }
         }
@@ -1236,6 +1244,7 @@ VARIABLE_TREE::FormatVariablesInfo(stringstream &ss) const
     for(VVAR_NODES::const_iterator it=flat_list.begin();
             it!=flat_list.end();
             it++) {
+
         VAR_NODE *node = *it;
         ss << "D|";
         ss << node->section.substr(0,2) << "|";
