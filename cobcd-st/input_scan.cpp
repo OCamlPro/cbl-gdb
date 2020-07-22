@@ -309,25 +309,25 @@ ProcessDataStorage(ifstream &ifs,
                 }
             }
             // Skip to the name_of_data
-            string name_of_data;
+            string b_name;
             if( nfound < input.length() ) {
                 // Pick up the b
-                name_of_data += input[nfound++];
+                b_name += input[nfound++];
             }
             if( nfound < input.length() ) {
                 // Pick up the _
-                name_of_data += input[nfound++];
+                b_name += input[nfound++];
             }
             while( nfound < input.length() ) {
                 char ch = input[nfound++];
                 if( !isdigit(ch) ) {
                     break;
                 }
-                name_of_data += ch;
+                b_name += ch;
             }
 
-            if(name_of_data EQ "NU") {
-                name_of_data = "";
+            if(b_name EQ "NU") {
+                b_name = "";
             }
 
             // Skip past the ampersand:
@@ -339,21 +339,21 @@ ProcessDataStorage(ifstream &ifs,
             }
 
             // Pick up the pointer to the attribute
-            string name_of_attr;
+            string a_name;
             if( nfound < input.length() ) {
                 // Pick up the a
-                name_of_attr += input[nfound++];
+                a_name += input[nfound++];
             }
             if( nfound < input.length() ) {
                 // Pick up the _
-                name_of_attr += input[nfound++];
+                a_name += input[nfound++];
             }
             while( nfound < input.length() ) {
                 char ch = input[nfound++];
                 if( !isdigit(ch) ) {
                     break;
                 }
-                name_of_attr += ch;
+                a_name += ch;
             }
 
             // See if there is an offset:
@@ -380,18 +380,25 @@ ProcessDataStorage(ifstream &ifs,
             // variables lined up with the .cbl.lst variable list.
 
             map<string,string>::const_iterator it =
-                b_symbol_to_program_id.find(name_of_data);
+                b_symbol_to_program_id.find(b_name);
             if(it != b_symbol_to_program_id.end()) {
                 mapped_program_id = it->second;
             }
 
+            string parent;
+            const COB_DATUM *pdatum = cob_data.GetCobDatum(b_name);
+            if( pdatum ) {
+                parent =  pdatum->cbl_name;
+            }
+
             cob_fields.Insert(f_name,
-                              name_of_data,
+                              b_name,
                               offset,
                               size,
-                              name_of_attr,
+                              a_name,
                               mapped_program_id,
-                              cbl_name);
+                              parent,
+                              cbl_name);        // And this the child
             continue;
         }
 
@@ -674,7 +681,7 @@ ScanForLinkage(ifstream &ifs,
                         nfound = param2.find(" + ",nfound+3);
                     }
                 }
-                cob_fields.Modify(f_symbol,"NULL",offset);
+                cob_fields.Modify(f_symbol,"",offset);
             }
 
             // Go see if there are more on this line
@@ -682,42 +689,6 @@ ScanForLinkage(ifstream &ifs,
         }
     }
     return;
-}
-
-void
-DATA_DESCRIPTIONS::Flatten(const COB_FIELDS &cob_fields,
-                           const COB_FIELD_ATTRIBUTES &cob_field_attributes,
-                           const COB_PIC_SYMBOLS &cob_pic_symbols,
-                           const COB_DATA &cob_data
-                          )
-{
-    // Run through the f_ fields first
-
-    for(V_COB_FIELDS::const_iterator it=cob_fields.v_cob_fields.begin();
-            it != cob_fields.v_cob_fields.end();
-            it++
-       ) {
-        COB_FIELD field = *it;
-        DATA_DESCRIPTION ds;
-        ds.f_name              = field.f_name      ;
-        ds.size                = field.size        ;
-        ds.b_name              = field.b_name;
-        ds.offset              = field.offset      ;
-        ds.program_id          = field.program_id  ;
-        ds.cobol_symbol        = field.cbl_name    ;
-
-        const COB_DATUM *cd = cob_data.GetCobDatum(ds.b_name);
-        if( cd ) {
-            ds.size = cd->size;
-            ds.storage_type = cd->storage_type;
-        }
-
-        if( ds.storage_type.empty() AND ds.b_name.empty() ) {
-            ds.storage_type = "Local";
-        }
-
-        DsInsert(ds);
-    }
 }
 
 void
@@ -768,35 +739,4 @@ COB_PROGRAM_LABELS::FormatProgramInfo(stringstream &ss) const
             break;
         }
     }
-}
-
-void
-DATA_DESCRIPTIONS::Dump() const
-{
-    cout << "DATA_DESCRIPTION:" << endl ;
-    cout << setw(20) << "program_id"    ;
-    cout << setw(20) << "cobol_symbol"  ;
-    cout << setw(13) << "storage_type"  ;
-    cout << setw( 9) << "b_name"        ;
-    cout << setw( 7) << "offset"        ;
-    cout << setw( 6) << "size"          ;
-    cout << setw( 9) << "f_symbol"      ;
-    cout << setw(16) << "picture"       ;
-    cout << endl;
-
-    for(VDATA_DESCRIPTION::const_iterator it=symbols.begin();
-            it!=symbols.end();
-            it++ ) {
-        DATA_DESCRIPTION symbol = *it;
-        cout << setw(20) << symbol.program_id            ;
-        cout << setw(20) << symbol.cobol_symbol            ;
-        cout << setw(13) << symbol.storage_type ;
-        cout << setw( 9) << symbol.b_name            ;
-        cout << setw( 7) << symbol.offset   ;
-        cout << setw( 6) << symbol.size           ;
-        cout << setw( 9) << symbol.f_name   ;
-        cout << setw(16) << symbol.picture_string       ;
-        cout << endl;
-    }
-    cout << endl;
 }

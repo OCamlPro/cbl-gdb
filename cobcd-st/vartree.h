@@ -103,15 +103,16 @@ private:
     int         size;               // Size in bytes
     std::string type;               // GROUP, NUMERIC, ALPHABETIC
     int         level;              // COBOL identifier level
-    // DATA section is level 00
-    // The PROGRAM-ID is level -1
-    // The ROOT is level -2
+    //                              // DATA section is level 00
+    //                              // The PROGRAM-ID is level -1
+    //                              // The ROOT is level -2
     std::string name;               // COBOL identifier
     std::string picture;            // Reported PICTURE string
     std::string usage;              // Reported USAGE string
-    std::string redefines;          // Identifier this one REDEFINES
     int         occurs;             // Non-zero means this is a table
+    std::string redefines;          // Identifier this one REDEFINES
     bool        is_external;        // Flagged as EXTERNAL
+    bool        is_global;          // Flagged as global
 
     // Here we keep track of the tree
     VAR_NODE *parent;
@@ -119,28 +120,11 @@ private:
     VVAR_NODES renamed_by;          // When somebody cites us as an 66/RENAMES,
     //                              // we save them here so we can update
     //                              // them later
-
     std::string canonical_name;     // The full COBOL A in B in C identifier
-    std::string base_symbol;        // The b_ base for this variable
-    int         offset;             // The total offset to this identifier
-
-    size_t data_description_index;
-
-    // This section is for variables up above combined with the data
-    // from the DATA_DESCRIPTIONS object.  They get filled by the
-    // Consolidate() routine
-
-    // For the final VARIABLE_STRING (which is the raison d'etre for this
-    // program in the first place!) We need the following fields.  They
-    // come from the DATA_DESCRIPTION data
-
-    int best_size;
-    std::string best_picture;
-
-    int attr_type;
-    int attr_digits;
-    int attr_scale;
-    int attr_flags;
+    int         offset;             // The total offset to this identifier, as
+    //                              // calculated from the sizes.
+    std::string b_name;             // b_name is imputed from the f_name
+    std::string f_name;
 
 public:
     VAR_NODE();
@@ -169,7 +153,7 @@ public:
     std::string
     GetBaseSymbol() const
     {
-        return base_symbol;
+        return b_name;
     }
     std::string
     GetType() const
@@ -217,6 +201,7 @@ public:
 typedef std::vector<VAR_NODE *>VVAR_NODES;
 
 class COB_DATA;
+class COB_FIELDS;
 class DATA_DESCRIPTIONS;
 class VARIABLE_TREE
 {
@@ -236,10 +221,12 @@ private:
     void BuildFlatList(VAR_NODE *node,VVAR_NODES &flat);
     void AdjustFlatList();
 
-    void Consolidive(VAR_NODE *node,
-                     const DATA_DESCRIPTIONS &data_description,
-                     std::string &base_symbol,
-                     const COB_DATA &cob_data);
+    void
+    Consolidive(VAR_NODE *node,
+                std::string &base_symbol,
+                const COB_FIELDS &cob_fields);
+    void PropogateBaseName(VAR_NODE *node,
+                           std::string &base_symbol);
 
 public:
     VARIABLE_TREE();
@@ -248,7 +235,8 @@ public:
     void ReadFromFile(std::ifstream &ifs);
     void BuildCanonicalName();
     void Dump(std::ostream &s = std::cout);
-    void Consolidate(const DATA_DESCRIPTIONS &data_description,const COB_DATA &cob_data);
+    void Consolidate(const COB_FIELDS &cob_fields);
+    void DumpANode(const VAR_NODE *node) const;
     void DumpFlatList() const;
     void FormatVariablesInfo(std::stringstream &ss) const;
 

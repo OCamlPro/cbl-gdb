@@ -48,7 +48,7 @@
 
 using namespace std;
 
-#define DUMPING
+//#define DUMPING
 
 void
 scan_test(const string &filename)
@@ -291,12 +291,6 @@ main(int argc, char *argv[])
     COB_DATA             cob_data;
     COB_FIELD_ATTRIBUTES cob_field_attributes;
     COB_FIELDS           cob_fields;
-    DATA_DESCRIPTIONS    data_description;
-
-    string source = params.basename;
-    const string GLOBAL = "GLOBAL";
-    const string LOCAL = "LOCAL";
-    const string MAIN = "MAIN";
 
     // We embark on a multi-step process, where we scan a number of
     // different files separately.  This is a bit like putting a jigsaw
@@ -311,7 +305,7 @@ main(int argc, char *argv[])
     variable_tree.ReadFromFile(params.cbl_lst);
     variable_tree.BuildCanonicalName();
 #if defined(DUMPING)
-    //variable_tree.Dump();
+//    variable_tree.Dump();
 #endif
 
     // Scan the .h files for working storage and local storage locations
@@ -322,7 +316,6 @@ main(int argc, char *argv[])
                      cob_field_attributes,
                      cob_fields
                     );
-
     // Scan the .c file for program identification and linkage information.
     ScanForLinkage(params.c_file,
                    params.c_filename.GetFname(),
@@ -330,6 +323,11 @@ main(int argc, char *argv[])
                    cob_data,
                    cob_fields
                   );
+
+    // The f_/b_ cross reference is as complete as we know how to make it.
+    // Scan cob_fields, updating the parent variables and building the lookup map
+    cob_fields.FixLookup(cob_data);
+
 #if defined(DUMPING)
     cout << endl;
     //program_labels.Dump();
@@ -339,12 +337,6 @@ main(int argc, char *argv[])
     cob_fields.Dump();
 #endif
     // We now have a nice complete list of COB_DATA, COB_FIELD_ATTRIBUTES, COB_FIELDS
-    // Flatten them down into the composite table:
-
-    data_description.Flatten(cob_fields,cob_field_attributes,cob_pic_symbols,cob_data);
-#if defined(DUMPING)
-    data_description.Dump();
-#endif
 
     // The most complete description of the COBOL variable identifiers is
     // found in variable_tree.  But as of right now, it knows nothing about
@@ -354,7 +346,7 @@ main(int argc, char *argv[])
 
     // The Consolidate() routine puts them together.
 
-    variable_tree.Consolidate(data_description,cob_data);
+    variable_tree.Consolidate(cob_fields);
 #if defined(DUMPING)
     variable_tree.Dump();
     variable_tree.DumpFlatList();

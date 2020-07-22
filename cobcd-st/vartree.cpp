@@ -47,14 +47,8 @@ VAR_NODE::VAR_NODE()
     level = LEVEL_ROOT;
     occurs = 0;
     is_external = false;
+    is_global   = false;
     parent = nullptr;
-    data_description_index = NO_INDEX;
-
-    best_size = 0;
-    attr_type = 0;
-    attr_digits = 0;
-    attr_scale = 0;
-    attr_flags = 0;
 }
 
 void
@@ -378,10 +372,6 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
         // data we need in a formal way.  RJD, just before version cobc 3.1 was
         // released, 2020-06-26
 
-        if( tokens.back() EQ "GLOBAL" ) {
-            tokens.pop_back();
-        }
-
         if(tokens.size() EQ 2 AND tokens[0] EQ "PROGRAM") {
             // We are starting a brand new PROGRAM section, which has the
             // root as a parent:
@@ -448,6 +438,21 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
         while(it != tokens.end()) {
             if( *it EQ "EXTERNAL" ) {
                 new_node->is_external = true;
+                break;
+            }
+            it++;
+        }
+        if( it != tokens.end() ) {
+            size_t index = it - tokens.begin();
+            vector<string>::iterator it1 = tokens.begin() + index;
+            vector<string>::iterator it2 = tokens.begin() + index + 1;
+            tokens.erase(it1,it2);
+        }
+
+        it = tokens.begin();
+        while(it != tokens.end()) {
+            if( *it EQ "GLOBAL" ) {
+                new_node->is_global = true;
                 break;
             }
             it++;
@@ -704,23 +709,15 @@ VARIABLE_TREE::DumpNode(ostream &sout, const VAR_NODE *node)
 
                 sout << "[";
                 sout << node->canonical_name;
-                if( !node->base_symbol.empty() OR node->offset > 0 ) {
+                if( !node->b_name.empty() OR node->offset > 0 ) {
                     sout << " ";
                 }
-                sout << node->base_symbol;
+                sout << node->b_name;
                 if(node->offset > 0) {
                     sout << "+";
                     sout << node->offset;
                 }
                 sout << "] ";
-
-                if( node->data_description_index != NO_INDEX ) {
-                    sout << "[";
-                    sout << node->data_description_index;
-                    sout << "] ";
-                } else {
-                    sout << "[no_index] ";
-                }
 
                 sout << endl;
             }
@@ -1051,39 +1048,6 @@ VARIABLE_TREE::BuildFlatList(VAR_NODE *node,VVAR_NODES &flat)
     }
 }
 
-VAR_NODE *
-DiveForVariable(        VAR_NODE *node,
-                        const string &section,
-                        const string &program_id,
-                        const string &cbl_symbol,
-                        const int offset)
-{
-    VAR_NODE *retval = nullptr;
-
-    if(     node->GetSection()  EQ section
-            AND node->GetProgram()  EQ program_id
-            AND node->GetName()     EQ cbl_symbol
-            AND node->GetOffset()   EQ offset ) {
-        // Son of a gun!  We found it!
-        return node;
-    }
-    VVAR_NODES children = node->GetChildren();
-    for(VVAR_NODES::const_iterator it=children.begin();
-            it!=children.end();
-            it++) {
-        VAR_NODE *child = *it;
-        VAR_NODE *maybe = DiveForVariable(child,
-                                          section,
-                                          program_id,
-                                          cbl_symbol,
-                                          offset);
-        if(maybe != nullptr) {
-            return maybe;
-        }
-    }
-    return retval;
-}
-
 void
 VARIABLE_TREE::AdjustFlatList()
 {
@@ -1096,68 +1060,101 @@ VARIABLE_TREE::AdjustFlatList()
 
     for( size_t i=1; i<flat_list.size(); i++ ) {
         if( flat_list[i-1]->level EQ 0
-                AND flat_list[i]->base_symbol.empty()
+                AND flat_list[i]->b_name.empty()
                 AND flat_list[i-1]->program EQ flat_list[i]->program
                 AND flat_list[i]->level EQ 1 ) {
             // This is the situation: 01 has no base_symbol, but its 00
             // parent does.
 
-            flat_list[i]->base_symbol = flat_list[i-1]->base_symbol;
+            flat_list[i]->b_name = flat_list[i-1]->b_name;
         }
     }
 }
 
 void
-VARIABLE_TREE::Consolidive(VAR_NODE *node,const DATA_DESCRIPTIONS &data_description,string &base_symbol,const COB_DATA &cob_data)
+VARIABLE_TREE::Consolidive(VAR_NODE *node,
+                           string &base_symbol,
+                           const COB_FIELDS &cob_fields)
 {
-    // This routine was once more complicated; now it just propogates the top node b_xxx down through
-    // the whole branch:
     if( node ) {
         VSTRING tokens = Split(node->GetCanonicalName(),"/");
         if( tokens.size() >= 2 ) {
-            string program_id = tokens.back();
-            string cbl_symbol = tokens[0];
-            int offset = node->GetOffset();
-            size_t index = NO_INDEX;
-
-            if(node->section != "LOCAL-STORAGE" AND node->level <= 1 OR node->level EQ 77 ) {
-                // We're starting work on a brand-new level-one(ish) variable.
-                // Let's check to see if there is a b_ buffer for this 01/77 symbol
+            if( node->level <= 1 OR node->level EQ 77 ) {
+                // We're starting a new variable:
                 base_symbol = "";
-                const COB_DATUM *pdatum = cob_data.GetCobDatumFromProgAndName(program_id,cbl_symbol);
-                if( pdatum ) {
-                    // Pick up the base symbol
-                    base_symbol = pdatum->name;
-                }
             }
 
-            if( base_symbol.empty() ) {
+            // From the canonical name, get the program-id (the last entry)
+            string program_id = tokens.back();
 
+            // Get the parent entry, which is the 01/77 part of the canonical name;
+            // it's the one right below the program-id
+            string parent     = tokens[tokens.size()-2];
+
+            // Get the "youngest" element, which is the first in the list
+            // It can be the same as the parent
+            string child = tokens[0];
+
+            // Get the offset, as calculated from the .cbl.lst sizes:
+            int offset = node->GetOffset();
+
+            // Try to find that entry in the cob_fields table, which was created
+            // by scanning the .h files.  It had program-id values, and it had "youngest"
+            // labels.  It had b_ and offsets.  But it didn't have the intermediate labels
+            // of the canonical name.  Pity.
+            size_t index = cob_fields.FetchByNameAndOffset(program_id,parent,child,offset);
+
+            if( index != NO_INDEX ) {
+                // We can now link this node to this cob_field because they have the
+                // same program-id, youngest cobol_symbol, and offset
+                COB_FIELD cob_field = cob_fields.v_cob_fields[index];
+                base_symbol  = cob_field.b_name;
+                node->f_name = cob_field.f_name;
             }
-
-
-            if( !base_symbol.empty() ) {
-                // See if we have a data_descriptions entry for that cbl_symbol
-                if( data_description.IsInDs(program_id,base_symbol,offset) ) {
-                    // We do!  Save the index
-                    index = data_description.GetIndex(program_id,base_symbol,offset);
-                    node->data_description_index = index;
-                }
-            }
+            node->b_name = base_symbol;
         }
+
         for(VVAR_NODES::const_iterator it=node->children.begin();
                 it!=node->children.end();
                 it++) {
             VAR_NODE *child = *it;
             // Check our children
-            Consolidive(child,data_description,base_symbol,cob_data);
+            Consolidive(child,base_symbol,cob_fields);
+            // In the case where the cobol variable is 01 GROUP
+            //                                         05 A
+            //                                         05 B
+            //                                         05 C
+            // and only B is referenced, there is no f_ variable for A, but there is one
+            // for B.  So, we can start to infer some information for unreferenced variables
+            // (as a minimum, where they are) by propogating base_symbol upward:
+            node->b_name = base_symbol;
         }
-        base_symbol = "" ;
     }
 }
 
 void
-VARIABLE_TREE::Consolidate(const DATA_DESCRIPTIONS &data_description,const COB_DATA &cob_data)
+VARIABLE_TREE::PropogateBaseName(VAR_NODE *node,
+                                 string &base_symbol)
+{
+    if( node ) {
+        if( node->level <= 1 OR node->level EQ 77 ) {
+            base_symbol = node->b_name;
+        } else {
+            node->b_name = base_symbol;
+        }
+
+        if( !base_symbol.empty() ) {
+            for(VVAR_NODES::const_iterator it=node->children.begin(); it!=node->children.end(); it++) {
+                VAR_NODE *child = *it;
+                // Check our children
+                PropogateBaseName(child,base_symbol);
+            }
+        }
+    }
+}
+
+void
+VARIABLE_TREE::Consolidate(const COB_FIELDS &cob_fields)
 {
     // data_description has f_ and b_ entries for working-storage and linkage
     // variables that are referenced in the COBOL code
@@ -1176,10 +1173,33 @@ VARIABLE_TREE::Consolidate(const DATA_DESCRIPTIONS &data_description,const COB_D
     // data_description.
 
     string base_symbol="";
-    Consolidive(root,data_description,base_symbol,cob_data);
+    Consolidive(root,base_symbol,cob_fields);
+    base_symbol="";
+    PropogateBaseName(root,base_symbol);
     BuildFlatList(root,flat_list);
     AdjustFlatList();
+}
 
+void
+VARIABLE_TREE::DumpANode(const VAR_NODE *node) const
+{
+    cout << setw(20) << node->program;
+    cout << setw(20) << node->section;
+    cout << setw(13) << node->type;
+    cout << setw( 6) << node->level;
+    cout << setw(30) << node->name;
+    cout << setw(16) << node->picture;
+    cout << setw( 8) << node->usage;
+    cout << setw(20) << node->redefines;
+    cout << setw( 7) << node->occurs;
+    cout << setw( 7) << node->f_name;
+    cout << setw( 7) << node->b_name;
+    cout << setw( 7) << node->offset;
+    cout << setw( 5) << node->size;
+    cout << setw(30) << node->canonical_name;
+    cout << setw( 4) << (node->is_global ? "GLB" : "");
+    cout << setw( 4) << (node->is_external ? "EXT" : "");
+    cout << endl;
 }
 
 void
@@ -1188,49 +1208,27 @@ VARIABLE_TREE::DumpFlatList() const
     cout << "VARIABLE_TREE::FlatList:" << endl;
     cout << setw(20) << "program";
     cout << setw(20) << "section";
-    cout << setw( 5) << "size";
     cout << setw(13) << "type";
     cout << setw( 6) << "level";
-    cout << setw(42) << "name";
+    cout << setw(30) << "name";
     cout << setw(16) << "picture";
     cout << setw( 8) << "usage";
     cout << setw(20) << "redefines";
     cout << setw( 7) << "occurs";
-    cout << setw(42) << "canonical_name";
-    cout << setw( 5) << "base";
+    cout << setw( 7) << "f_name";
+    cout << setw( 7) << "b_name";
     cout << setw( 7) << "offset";
-    cout << setw( 6) << "bsize";
-    cout << setw(16) << "bpicture";
-    cout << setw( 6) << "atype";
-    cout << setw( 6) << "adigits";
-    cout << setw( 7) << "ascale";
-    cout << setw( 7) << "aflags";
+    cout << setw( 5) << "size";
+    cout << setw(30) << "canonical_name";
+    cout << setw( 4) << "glb";
+    cout << setw( 4) << "ext";
     cout << endl;
 
     for(VVAR_NODES::const_iterator it=flat_list.begin();
             it!=flat_list.end();
             it++) {
         VAR_NODE *node = *it;
-        cout << setw(20) << node->program;
-        cout << setw(20) << node->section;
-        cout << setw( 5) << node->size;
-        cout << setw(13) << node->type;
-        cout << setw( 6) << node->level;
-        cout << setw(42) << node->name;
-        cout << setw(16) << node->picture;
-        cout << setw( 8) << node->usage;
-        cout << setw(20) << node->redefines;
-        cout << setw( 7) << node->occurs;
-        cout << setw(42) << node->canonical_name;
-        cout << setw( 5) << node->base_symbol;
-        cout << setw( 7) << node->offset;
-        cout << setw( 6) << node->best_size;
-        cout << setw(16) << node->best_picture;
-        cout << setw( 6) << node->attr_type;
-        cout << setw( 6) << node->attr_digits;
-        cout << setw( 7) << node->attr_scale;
-        cout << setw( 7) << node->attr_flags;
-        cout << endl;
+        DumpANode(node);
     }
     cout << endl;
 }
@@ -1247,17 +1245,13 @@ VARIABLE_TREE::FormatVariablesInfo(stringstream &ss) const
         ss << node->section.substr(0,2) << "|";
         ss << ZeroIsNull(node->level) << "|" ;
         ss << node->canonical_name << "|" ;
-        ss << node->base_symbol << "|" ;
+        ss << node->b_name << "|" ;
         ss << ZeroIsNull(node->offset) << "|" ;
         ss << node->type.substr(0,1) << "|" ;
-        ss << ZeroIsNull(node->best_size) << "|" ;
-        ss << node->best_picture << "|" ;
+        ss << ZeroIsNull(node->size) << "|" ;
+        ss << node->picture << "|" ;
         ss << node->usage << "|" ;
         ss << ZeroIsNull(node->occurs) << "|" ;
-        ss << ZeroIsNull(node->attr_type) << "|" ;
-        ss << ZeroIsNull(node->attr_digits) << "|" ;
-        ss << ZeroIsNull(node->attr_scale) << "|" ;
-        ss << ZeroIsNull(node->attr_flags) << "~";
     }
 }
 

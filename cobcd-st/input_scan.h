@@ -53,6 +53,7 @@
 #define nullptr NULL
 #endif
 
+#define NO_INDEX ((size_t)(-1))
 
 //////////////////////////////////////////////////////////////////////////
 // These data structures are based on from GnuCOBOL3.1-dev/libcob/common.h
@@ -379,8 +380,9 @@ public:
     int          offset;       /* any internal + offset */
     int          size;         /* Field size            */
     std::string  a_name;       /* name of attribute     */
-    std::string  program_id;   /* Where defined         */
-    std::string  cbl_name;     /* From the comment in the .h code */
+    std::string  program_id;
+    std::string  parent;
+    std::string  child;        /* child of B of C of parent of program_id */
 
 public:
     COB_FIELD(std::string f_name_,
@@ -389,7 +391,8 @@ public:
               int         size_,
               std::string a_name_,
               std::string program_id_,
-              std::string cbl_name_)
+              std::string parent_,
+              std::string child_)
     {
         f_name       = f_name_      ;
         b_name       = b_name_      ;
@@ -397,7 +400,8 @@ public:
         size         = size_      ;
         a_name       = a_name_      ;
         program_id   = program_id_;
-        cbl_name     = cbl_name_  ;
+        parent       = parent_  ;
+        child        = child_  ;
     }
 
     friend COB_FIELDS;
@@ -409,9 +413,31 @@ class COB_FIELDS
 {
 private:
     M_COB_FIELDS m_cob_fields;
+    M_COB_FIELDS m_from_cobol;
 
 public:
     V_COB_FIELDS v_cob_fields;
+
+private:
+    std::string
+    MakeKey(const std::string &prog,
+            const std::string &parent,
+            const std::string &child,
+            int offset
+           ) const
+    {
+        char ach[32];
+        sprintf(ach,"%d",offset);
+        std::string retval;
+        retval += prog;
+        retval += "|";
+        retval += parent;
+        retval += "|";
+        retval += child;
+        retval += "|";
+        retval += ach;
+        return retval;
+    }
 
 public:
     void
@@ -421,7 +447,8 @@ public:
            int         size,
            std::string a_name,
            std::string program_id,
-           std::string cbl_name)
+           std::string parent,
+           std::string child)
     {
         M_COB_FIELDS::const_iterator it = m_cob_fields.find(f_name);
         if( it != m_cob_fields.end() ) {
@@ -434,9 +461,28 @@ public:
                      size,
                      a_name,
                      program_id,
-                     cbl_name);
+                     parent,
+                     child);
         m_cob_fields[f_name] = v_cob_fields.size();
         v_cob_fields.push_back(cf);
+    }
+
+    size_t
+    FetchByNameAndOffset(const std::string &program_id_,
+                         const std::string &parent_,
+                         const std::string &child_,
+                         int offset
+                        ) const
+    {
+        size_t retval = NO_INDEX;
+
+        std::string key = MakeKey(program_id_,parent_,child_,offset);
+        M_COB_FIELDS::const_iterator it = m_from_cobol.find(key);
+        if( it != m_from_cobol.end() ) {
+            retval = it->second;
+        }
+
+        return retval;
     }
 
     void
@@ -455,6 +501,27 @@ public:
     }
 
     void
+    FixLookup(const COB_DATA &cob_data)
+    {
+        for( size_t i=0; i< v_cob_fields.size(); i++ ) {
+            if( !v_cob_fields[i].b_name.empty() && v_cob_fields[i].parent.empty() ) {
+                // The parent is empty, and b_name is not.  It's possible that the linkage
+                // scan of the .c code populated the parent field.  If so, we might be able
+                // to populate the parent field now:
+
+                const COB_DATUM *pdatum = cob_data.GetCobDatum(v_cob_fields[i].b_name);
+                if( pdatum ) {
+                    v_cob_fields[i].parent = pdatum->cbl_name;
+                }
+            }
+            m_from_cobol[MakeKey(v_cob_fields[i].program_id,
+                                 v_cob_fields[i].parent,
+                                 v_cob_fields[i].child,
+                                 v_cob_fields[i].offset)] = i;
+        }
+    }
+
+    void
     Dump() const
     {
         std::cout << "COB_FIELDS:" << std::endl;
@@ -464,7 +531,8 @@ public:
         std::cout << std::setw(20) << "size";
         std::cout << std::setw(20) << "a_name";
         std::cout << std::setw(20) << "program_id";
-        std::cout << std::setw(20) << "cbl_name";
+        std::cout << std::setw(20) << "parent";
+        std::cout << std::setw(20) << "child";
         std::cout << std::endl;
 
         for( V_COB_FIELDS::const_iterator it = v_cob_fields.begin();
@@ -477,7 +545,8 @@ public:
             std::cout << std::setw(20) << field.size;
             std::cout << std::setw(20) << field.a_name;
             std::cout << std::setw(20) << field.program_id;
-            std::cout << std::setw(20) << field.cbl_name;
+            std::cout << std::setw(20) << field.parent;
+            std::cout << std::setw(20) << field.child;
             std::cout << std::endl;
         }
         std::cout << std::endl;
@@ -584,109 +653,6 @@ public:
         }
         std::cout << std::endl;
     }
-};
-
-class DATA_DESCRIPTIONS;
-class DATA_DESCRIPTION
-{
-public:
-    std::string program_id;
-    std::string cobol_symbol;
-    std::string storage_type;
-    std::string b_name;
-    int         offset;
-    int         size;
-    std::string f_name;
-    std::string picture_string;
-
-public:
-    DATA_DESCRIPTION()
-    {
-        offset = 0;
-        size = 0;
-    }
-    friend DATA_DESCRIPTIONS;
-};
-typedef std::vector<DATA_DESCRIPTION> VDATA_DESCRIPTION;
-
-typedef std::map<std::string,size_t> M_VKEY;
-
-class DATA_DESCRIPTIONS
-{
-private:
-    VDATA_DESCRIPTION symbols;
-    // We are going to key that table by (program-id, cbl_symbol,offset)
-    M_VKEY symbols_key;
-
-    std::map<std::string,size_t>location_of_c_symbol;
-
-public:
-    int
-    size() const
-    {
-        return static_cast<int>(symbols.size());
-    }
-
-    const DATA_DESCRIPTION &
-    operator[](size_t n) const
-    {
-        return symbols[n];
-    }
-
-    int
-    IndexOfSymbol(const std::string &symbol) const
-    {
-        std::map<std::string,size_t>::const_iterator it =
-            location_of_c_symbol.find(symbol);
-        if(it == location_of_c_symbol.end()) {
-            return -1;
-        }
-        return static_cast<int>(it->second);
-    }
-
-    std::string
-    MakeVKey(std::string const &program_id, std::string const &c_symbol,int offset) const
-    {
-        char ach[20];
-        sprintf(ach,"%d",offset);
-        return program_id + "|" + c_symbol + "|" + ach;
-    }
-
-    void
-    DsInsert(const DATA_DESCRIPTION &ds )
-    {
-        symbols_key[MakeVKey(ds.program_id,ds.cobol_symbol,ds.offset)] = symbols.size();
-        symbols.push_back(ds);
-    }
-
-    bool
-    IsInDs(std::string const &program_id, std::string const &cobol_symbol,int offset) const
-    {
-        std::string dskey=MakeVKey(program_id,cobol_symbol,offset);
-        M_VKEY::const_iterator it = symbols_key.find(dskey);
-        return it != symbols_key.end();
-    }
-
-    size_t
-    GetIndex(std::string const &program_id, std::string const &c_symbol,int offset) const
-    {
-        size_t retval = (size_t)(-1);
-        std::string dskey=MakeVKey(program_id,c_symbol,offset);
-        M_VKEY::const_iterator it = symbols_key.find(dskey);
-        if(it != symbols_key.end()) {
-            retval = it->second;
-        }
-        return retval;
-    }
-
-    void Dump() const;
-
-    void Flatten(const COB_FIELDS &cob_fields,
-                 const COB_FIELD_ATTRIBUTES &cob_field_attributes,
-                 const COB_PIC_SYMBOLS &cob_pic_symbols,
-                 const COB_DATA &cob_data
-                );
-
 };
 
 void ScanAllDotHFiles(const std::string &path,
