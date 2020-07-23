@@ -237,11 +237,6 @@ OpenOrFail(std::ofstream &ofs,const std::string &fname,std::ios_base::openmode m
 void
 PARAMETERS::GetParameters(int argc, char *argv[])
 {
-    if(argc < 3) {
-        Usage();
-        exit(1);
-    }
-
     quiet = false;
     insert_python = false;
     insert_filename = false;
@@ -273,6 +268,12 @@ PARAMETERS::GetParameters(int argc, char *argv[])
             break;
         }
     }
+
+    if(argc < 3) {
+        Usage();
+        exit(1);
+    }
+    
     if( optind >= argc ) {
         Usage();
         exit(1);

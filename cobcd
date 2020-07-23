@@ -40,8 +40,7 @@ print_help()
   echo "This is the cobc debugging wrapper $1 $2"
   echo "Use it as you would 'cobc'"
   echo ""
-  echo "It doesn't take any switches except --help, although it looks at"
-  echo "--version as it goes by go by on its way to cobc."
+  echo "It doesn't take any switches except --help and --version"
   echo ""
   echo "If there is a -T or -t switch, the unmodified cobc compile will take place to generate"
   echo "the listing file before the more complex debug build is done."
@@ -64,7 +63,7 @@ print_help()
 ## Don't mess with it!                                                    #
 ###########################################################################
 
-SCRIPT_VERSION="[Version 3.8]"
+SCRIPT_VERSION="[Version 3.9]"
 
 # This script, nominally named cobcd, packages up the process of compiling
 # a single COBOL source module and processing it so that gdb can be used for
@@ -238,6 +237,10 @@ if [ $ASKED_FOR_HELP ]
 if [ $ASKED_FOR_VERSION ]
   then
   usage $SCRIPT_VERSION
+  $COBST -v
+  $SFIX -v
+  $COBC --version
+  exit 0
   fi
 
 result="0"
@@ -378,15 +381,20 @@ case "$os_name" in
     DASH_F=""
     DASH_S=""
   esac
+  
+if [ "ECHO" ]
+  then
+  DASH_Q=-q
+  fi
 
 ## We can now create the .sym.c file:
 if [ "$result" = "0" ]
   then
   if [ "$ECHO" ]
     then
-    echo $COBST -q $DASH_F $DASH_S $FILE_ROOT $FILE_CBL
+    echo $COBST $DASH_Q $DASH_F $DASH_S $FILE_ROOT $FILE_CBL
     fi
-  $COBST -q  $DASH_F $DASH_S $FILE_ROOT $FILE_CBL
+  $COBST $DASH_Q $DASH_F $DASH_S $FILE_ROOT $FILE_CBL
   result=$?
   fi
 
@@ -406,9 +414,9 @@ if [ "$result" = "0" ]; then
   # Modify the .s file, removing all .loc references to
   # FILE_ROOT.c and any .h files.  The modification is done "in-place".
   if [ "$ECHO" ]; then
-    echo $SFIX -q $FILE_S $FILE_S $FILE_C $FILE_CBL
+    echo $SFIX $DASH_Q $FILE_S $FILE_S $FILE_C $FILE_CBL
     fi
-  $SFIX -q $FILE_S $FILE_S $FILE_C $FILE_CBL
+  $SFIX $DASH_Q $FILE_S $FILE_S $FILE_C $FILE_CBL
   result=$?
   fi
 
@@ -493,3 +501,5 @@ if [ -z "$COBCDNOCLEAN" ];
     rm -fr $FILE_O
     rm -fr $FILE_ROOT.sym.[co]
     fi
+
+exit $result
