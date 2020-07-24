@@ -49,6 +49,7 @@ VAR_NODE::VAR_NODE()
     is_external = false;
     is_global   = false;
     parent = nullptr;
+    birth_order = (size_t)(-1);
 }
 
 void
@@ -98,6 +99,7 @@ VAR_NODE::AddChild(VAR_NODE *new_node)
 
     // And link in the new node
     new_node->parent = this;
+    new_node->birth_order = this->children.size();
     this->children.push_back(new_node);
 }
 
@@ -830,17 +832,7 @@ VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
 
     if(var_node->level >= LEVEL_FILE) {
         VAR_NODE *parent = var_node->parent;
-        int brother_index = -1;
-
-        // Check all of dad's children
-        for(int i=1; i<(int)parent->children.size(); i++) {
-            // When we find ourself, then we've also found our immediately
-            // older sibling:
-            if(parent->children[i] EQ var_node) {
-                brother_index = i-1 ;
-                break;
-            }
-        }
+        int brother_index = (int)(var_node->birth_order-1);
 
         if( var_node->level EQ LEVEL_66 ) {
             // A level 66 variable is like an 01 or 77: it's a top-level
@@ -911,6 +903,7 @@ VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
             // the same level that grampa is on.
 
             var_node->parent = grampa->parent;
+            var_node->birth_order = grampa->parent->children.size();
             grampa->parent->children.push_back(var_node);
 
             // We need to eliminate ourself from our parent's level.

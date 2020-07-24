@@ -273,7 +273,7 @@ PARAMETERS::GetParameters(int argc, char *argv[])
         Usage();
         exit(1);
     }
-    
+
     if( optind >= argc ) {
         Usage();
         exit(1);

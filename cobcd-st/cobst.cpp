@@ -48,7 +48,7 @@
 
 using namespace std;
 
-//#define DUMPING
+// #define DUMPING
 
 void
 scan_test(const string &filename)

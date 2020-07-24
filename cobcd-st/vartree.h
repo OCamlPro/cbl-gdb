@@ -126,6 +126,9 @@ private:
     std::string b_name;             // b_name is imputed from the f_name
     std::string f_name;
 
+    size_t      birth_order;        // This is our position in the roll call of siblings
+    //                              // (starts from zero)
+
 public:
     VAR_NODE();
 

@@ -277,6 +277,9 @@ ProcessDataStorage(ifstream &ifs,
         // static cob_field f_294	= {5, b_291 + 15, &a_10};	/* LOW-VAL */
         static const char SZ_COB_FIELD_F[] = "cob_field f_";
         nfound = input.find(SZ_COB_FIELD_F);
+        // we can be fooled at this point.  For example, if there is an EBCDIC
+        // alphabet involved, then we can have cob_field f_native.
+
         if( nfound != string::npos ) {
             nfound += strlen(SZ_COB_FIELD_F);
 
@@ -290,116 +293,119 @@ ProcessDataStorage(ifstream &ifs,
                 f_name += ch;
             }
 
-            // Skip past the '{'
-            while( nfound < input.length() ) {
-                char ch = input[nfound++];
-                if( ch EQ '{' ) {
-                    break;
+            // Let's refuse to be fooled:
+            if( f_name != "f_" ) {
+                // Skip past the '{'
+                while( nfound < input.length() ) {
+                    char ch = input[nfound++];
+                    if( ch EQ '{' ) {
+                        break;
+                    }
                 }
-            }
 
-            // Pick up the size:
-            int size = STOI(input.substr(nfound));
+                // Pick up the size:
+                int size = STOI(input.substr(nfound));
 
-            // Skip past the next space:
-            while( nfound < input.length() ) {
-                char ch = input[nfound++];
-                if( ch EQ ' ' ) {
-                    break;
+                // Skip past the next space:
+                while( nfound < input.length() ) {
+                    char ch = input[nfound++];
+                    if( ch EQ ' ' ) {
+                        break;
+                    }
                 }
-            }
-            // Skip to the name_of_data
-            string b_name;
-            if( nfound < input.length() ) {
-                // Pick up the b
-                b_name += input[nfound++];
-            }
-            if( nfound < input.length() ) {
-                // Pick up the _
-                b_name += input[nfound++];
-            }
-            while( nfound < input.length() ) {
-                char ch = input[nfound++];
-                if( !isdigit(ch) ) {
-                    break;
+                // Skip to the name_of_data
+                string b_name;
+                if( nfound < input.length() ) {
+                    // Pick up the b
+                    b_name += input[nfound++];
                 }
-                b_name += ch;
-            }
-
-            if(b_name EQ "NU") {
-                b_name = "";
-            }
-
-            // Skip past the ampersand:
-            while( nfound < input.length() ) {
-                char ch = input[nfound++];
-                if( ch EQ '&' ) {
-                    break;
+                if( nfound < input.length() ) {
+                    // Pick up the _
+                    b_name += input[nfound++];
                 }
-            }
-
-            // Pick up the pointer to the attribute
-            string a_name;
-            if( nfound < input.length() ) {
-                // Pick up the a
-                a_name += input[nfound++];
-            }
-            if( nfound < input.length() ) {
-                // Pick up the _
-                a_name += input[nfound++];
-            }
-            while( nfound < input.length() ) {
-                char ch = input[nfound++];
-                if( !isdigit(ch) ) {
-                    break;
+                while( nfound < input.length() ) {
+                    char ch = input[nfound++];
+                    if( !isdigit(ch) ) {
+                        break;
+                    }
+                    b_name += ch;
                 }
-                a_name += ch;
+
+                if(b_name EQ "NU") {
+                    b_name = "";
+                }
+
+                // Skip past the ampersand:
+                while( nfound < input.length() ) {
+                    char ch = input[nfound++];
+                    if( ch EQ '&' ) {
+                        break;
+                    }
+                }
+
+                // Pick up the pointer to the attribute
+                string a_name;
+                if( nfound < input.length() ) {
+                    // Pick up the a
+                    a_name += input[nfound++];
+                }
+                if( nfound < input.length() ) {
+                    // Pick up the _
+                    a_name += input[nfound++];
+                }
+                while( nfound < input.length() ) {
+                    char ch = input[nfound++];
+                    if( !isdigit(ch) ) {
+                        break;
+                    }
+                    a_name += ch;
+                }
+
+                // See if there is an offset:
+                int offset = 0;
+                nfound = input.find(" + ");
+                if( nfound != string::npos ) {
+                    offset = STOI( input.substr(nfound+3) );
+                }
+
+                string cbl_name = GetCommentText(input);
+
+                size_t nfound = cbl_name.find(" Record");
+                if( nfound != string::npos ) {
+                    cbl_name = cbl_name.substr(0,nfound);
+                }
+
+                string mapped_program_id = program_id;
+                // As mentioned in the b_ processing, the program_id at
+                // this point can be a lie.  When a b_ is declared GLOBAL,
+                // its definition is in one program-id.  But if it's
+                // accessed in program-id2, that's where the .h file says
+                // the f_ variable that references b_ is.  We built a map
+                // to get around that, which we have to do to get these
+                // variables lined up with the .cbl.lst variable list.
+
+                map<string,string>::const_iterator it =
+                    b_symbol_to_program_id.find(b_name);
+                if(it != b_symbol_to_program_id.end()) {
+                    mapped_program_id = it->second;
+                }
+
+                string parent;
+                const COB_DATUM *pdatum = cob_data.GetCobDatum(b_name);
+                if( pdatum ) {
+                    parent =  pdatum->cbl_name;
+                }
+
+                cob_fields.Insert(f_name,
+                                  b_name,
+                                  offset,
+                                  size,
+                                  a_name,
+                                  mapped_program_id,
+                                  parent,
+                                  cbl_name);
+                continue;
             }
-
-            // See if there is an offset:
-            int offset = 0;
-            nfound = input.find(" + ");
-            if( nfound != string::npos ) {
-                offset = STOI( input.substr(nfound+3) );
-            }
-
-            string cbl_name = GetCommentText(input);
-
-            size_t nfound = cbl_name.find(" Record");
-            if( nfound != string::npos ) {
-                cbl_name = cbl_name.substr(0,nfound);
-            }
-
-            string mapped_program_id = program_id;
-            // As mentioned in the b_ processing, the program_id at
-            // this point can be a lie.  When a b_ is declared GLOBAL,
-            // its definition is in one program-id.  But if it's
-            // accessed in program-id2, that's where the .h file says
-            // the f_ variable that references b_ is.  We built a map
-            // to get around that, which we have to do to get these
-            // variables lined up with the .cbl.lst variable list.
-
-            map<string,string>::const_iterator it =
-                b_symbol_to_program_id.find(b_name);
-            if(it != b_symbol_to_program_id.end()) {
-                mapped_program_id = it->second;
-            }
-
-            string parent;
-            const COB_DATUM *pdatum = cob_data.GetCobDatum(b_name);
-            if( pdatum ) {
-                parent =  pdatum->cbl_name;
-            }
-
-            cob_fields.Insert(f_name,
-                              b_name,
-                              offset,
-                              size,
-                              a_name,
-                              mapped_program_id,
-                              parent,
-                              cbl_name);        // And this the child
-            continue;
         }
 
         // Check for a PICTURE symbol
