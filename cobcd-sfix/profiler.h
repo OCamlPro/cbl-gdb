@@ -30,7 +30,7 @@
 
 #pragma once
 
-// #define PROFILING
+#define PROFILING
 
 #if defined(PROFILING)
 

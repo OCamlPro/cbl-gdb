@@ -47,9 +47,9 @@ using namespace std;
 
 typedef vector<size_t> VINT;
 
-map<string,int>
-GetInputFileMappings(const VSTRING &input_file, const string &primary_file)
-{
+map<string,int> GetInputFileMappings(const VSTRING &input_file, const string &primary_file)
+    {
+    PROFILER;
     map<string,int> retval;
 
     // Prime the pump with the primary COBOL source file name.  We absolutely
@@ -70,116 +70,133 @@ GetInputFileMappings(const VSTRING &input_file, const string &primary_file)
 
     for(VSTRING::const_iterator it=input_file.begin();
             it!=input_file.end();
-            it++) {
+            it++)
+        {
         string s = *it;
         s = Trim(s);
-        if( s.find(".file ") != string::npos) {
+        if( s.find(".file ") != string::npos)
+            {
             VSTRING tokens = Split(s,"\t ");
-            if( tokens.size() >= 3 AND tokens[0] EQ ".file" AND isdigit(tokens[1][0]) ) {
+            if( tokens.size() >= 3 AND tokens[0] EQ ".file" AND isdigit(tokens[1][0]) )
+                {
                 int nfile = STOI(tokens[1]);
                 string file = StripQuotes(tokens[2]);
                 retval[file] = nfile;
+                }
             }
         }
-    }
     return retval;
-}
+    }
 
-VINT
-FindFunctionReferences(const VSTRING &input_file)
-{
+VINT FindFunctionReferences(const VSTRING &input_file)
+    {
+    PROFILER;
     set<int>cheating;
 
     VINT retval;
     int nline = 0;
     for(VSTRING::const_iterator it=input_file.begin();
             it!=input_file.end();
-            it++) {
+            it++)
+        {
         string s = *it;
-        if( s.find(".globl") != string::npos) {
+        if( s.find(".globl") != string::npos)
+            {
             VSTRING tokens = Split(s,"\t ");
-            if( tokens[1] EQ ".globl" ) {
+            if( tokens[1] EQ ".globl" )
+                {
                 cheating.insert(nline+4);  // This is where our synthetic .loc will go
+                }
             }
-        }
 
-        if( s.find("@function") != string::npos) {
+        if( s.find("@function") != string::npos)
+            {
             VSTRING tokens = Split(s,"\t ");
-            if( tokens[3] EQ "@function" ) {
+            if( tokens[3] EQ "@function" )
+                {
                 cheating.insert(nline+3);  // This is where our synthetic .loc will go
+                }
             }
-        }
         nline += 1;
-    }
-    for( set<int>::const_iterator it=cheating.begin(); it!=cheating.end(); it++) {
+        }
+    for( set<int>::const_iterator it=cheating.begin(); it!=cheating.end(); it++)
+        {
         retval.push_back(*it);
-    }
+        }
 
     return retval;
-}
+    }
 
-map<int,int>
-FigureOutReplacements(const PARAMETERS &params,
-                      const map<string,int> &input_file_mappings)
-{
+map<int,int> FigureOutReplacements(const PARAMETERS &params,
+                                   const map<string,int> &input_file_mappings)
+    {
+    PROFILER;
     map<int,int> retval;
 
     int next=2;
     for( map<string,int>::const_iterator it=input_file_mappings.begin();
             it != input_file_mappings.end();
-            it ++) {
-        if( it->first EQ params.c_filename ) {
+            it ++)
+        {
+        if( it->first EQ params.c_filename )
+            {
             // Skip over the cobc-generated .c file
             retval[it->second] = 0;
             continue;
-        }
+            }
         if( it->first.substr(it->first.length()-2) EQ ".h"
-                OR it->first.substr(it->first.length()-2) EQ ".c") {
+                OR it->first.substr(it->first.length()-2) EQ ".c")
+            {
             // Skip over any xxxx.h file
             retval[it->second] = 0;
             continue;
-        }
-        if( it->first EQ params.cbl_filename ) {
+            }
+        if( it->first EQ params.cbl_filename )
+            {
             // Force the COBOL source file to be #1
             retval[it->second] = 1;
             continue;
-        }
+            }
         retval[it->second] = next++;
-    }
+        }
 
     return retval;
-}
+    }
 
-VSTRING
-ReadEntireFile(string filename)
-{
+VSTRING ReadEntireFile(string filename)
+    {
+    PROFILER;
     VSTRING retval;
     FILE *f = fopen(filename.c_str(), "r");
-    if( !f ) {
-        cerr << "Couldn't open input file " << filename << endl;
-    }
+    if( !f )
+        {
+        cerr << "Couldn't the open input file " << filename << endl;
+        exit(1);
+        }
 
     char ach[16384];
-    while(fgets(ach,sizeof(ach),f)) {
-        if(strlen(ach) AND ach[strlen(ach)-1] EQ '\n') {
+    while(fgets(ach,sizeof(ach),f))
+        {
+        if(strlen(ach) AND ach[strlen(ach)-1] EQ '\n')
+            {
             ach[strlen(ach)-1] = '\0';
-        }
+            }
         retval.push_back(ach);
-    }
+        }
     fclose(f);
     return retval;
-}
+    }
 
 
-int
-main(int argc, char **argv)
-{
+int main(int argc, char **argv)
+    {
     PROFILER;
 
     PARAMETERS params = GetParameters(argc, argv);
-    if(!params.quiet) {
+    if(!params.quiet)
+        {
         cout << "sfix version " << VERSION << endl;
-    }
+        }
 
     VSTRING input_file = ReadEntireFile(params.s_input_filename.WholePath());
     map<string,int>input_file_mappings = GetInputFileMappings(
@@ -200,19 +217,22 @@ main(int argc, char **argv)
     for(map<string,int>::const_iterator it=input_file_mappings.begin();
             it != input_file_mappings.end();
             it++
-       ) {
+       )
+        {
         int oldnum = it->second;
         int newnum = replacements[oldnum];
-        if( newnum ) {
+        if( newnum )
+            {
             ss << "\t.file " << newnum << " \"" << it->first << "\"" << endl;
+            }
         }
-    }
 
     int next_function_reference_index = 0;
 
     // Start at 1, rather than zero; we need to get rid of the original
     // "  .file blah.c " line.
-    for( size_t i=1; i<input_file.size(); i++ ) {
+    for( size_t i=1; i<input_file.size(); i++ )
+        {
         // We have learned that the GDB trapping can get confused if there isn't
         // a .loc reference in the first few lines after a function declaration.
 
@@ -221,7 +241,8 @@ main(int argc, char **argv)
         // it's time to put a .loc in.
 
         if(next_function_reference_index < (int)function_references.size()
-                && i EQ function_references[next_function_reference_index] ) {
+                && i EQ function_references[next_function_reference_index] )
+            {
             // We have found a match.
             next_function_reference_index += 1;
 
@@ -230,13 +251,16 @@ main(int argc, char **argv)
             // cause GDB any problem.
 
             size_t ii = i+4;
-            while(ii < input_file.size() ) {
+            while(ii < input_file.size() )
+                {
                 VSTRING tokens = Split(input_file[ii]," \t");
-                if( tokens.size() > 1 AND tokens[1] EQ ".loc" ) {
+                if( tokens.size() > 1 AND tokens[1] EQ ".loc" )
+                    {
                     // We need to replace the old file number with the new one
                     int old_num = STOI(tokens[2]);
                     int new_num = replacements[old_num];
-                    if( new_num != 0 ) {
+                    if( new_num != 0 )
+                        {
                         // Build the replacement line:
                         int new_line = STOI(tokens[3])-1;
 
@@ -244,48 +268,55 @@ main(int argc, char **argv)
                         ss << " " << new_num ;
                         ss << " " << new_line ;
                         size_t index = 5;
-                        while( index < tokens.size() ) {
+                        while( index < tokens.size() )
+                            {
                             ss << " ";
                             ss << tokens[index++];
-                        }
+                            }
                         ss << endl;
 
                         break;
+                        }
                     }
-                }
 
                 ii += 1;
+                }
             }
-        }
 
         VSTRING tokens = Split(Trim(input_file[i])," \t");
-        if( !tokens.empty() ) {
-            if( tokens[0] EQ ".file" ) {
+        if( !tokens.empty() )
+            {
+            if( tokens[0] EQ ".file" )
+                {
                 // We've already taken care of all .file lines
                 continue;
-            }
-            if( tokens[0] EQ ".loc" ) {
+                }
+            if( tokens[0] EQ ".loc" )
+                {
                 // We need to replace the old file number with the new one
                 int oldnum = STOI(tokens[1]);
                 int newnum = replacements[oldnum];
-                if( newnum != 0 ) {
+                if( newnum != 0 )
+                    {
                     // Rebuild the .loc line
                     ss << "\t";
                     ss << tokens[0];
                     ss << " ";
                     ss << newnum;
                     size_t index = 2;
-                    while( index < tokens.size() ) {
+                    while( index < tokens.size() )
+                        {
                         ss << " ";
                         ss << tokens[index++];
-                    }
+                        }
                     ss << endl;
-                }
+                    }
                 continue;
+                }
             }
-        }
 
-        if( input_file[i].find("endbr64") EQ string::npos ) {
+        if( input_file[i].find("endbr64") EQ string::npos )
+            {
             // When gcc went from version 8 to version 9, the compiler started
             // inserting endbr64 assembly language instructions.  It's safer, says
             // the documentation.
@@ -294,16 +325,17 @@ main(int argc, char **argv)
             // track of what lines to display after subroutine calls -- so I took the easy
             // way out and just removed the suckers.
             ss << input_file[i] << endl;
+            }
         }
-    }
 
     FILE *f = fopen(params.s_output_filename.WholePath().c_str(),"w");
-    if( !f ) {
+    if( !f )
+        {
         cerr << "Couldn't open input file " << params.s_output_filename.WholePath() << endl;
         exit(1);
-    }
+        }
     fprintf(f,"%s",ss.str().c_str());
     fclose(f);
     return 0;
-}
+    }
 
