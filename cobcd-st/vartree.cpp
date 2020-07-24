@@ -640,6 +640,7 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
 void
 VARIABLE_TREE::DumpNode(ostream &sout, const VAR_NODE *node)
 {
+    PROFILER;
     if(node) {
         if(node !=root) {
             if(     node->program != current_program_in_dump
@@ -735,6 +736,7 @@ VARIABLE_TREE::DumpNode(ostream &sout, const VAR_NODE *node)
 void
 VARIABLE_TREE::Dump(ostream &sout)
 {
+    PROFILER;
     // Primarily for debugging.
     // Dump the whole tree, depth first:
     current_program_in_dump.clear();
@@ -747,6 +749,7 @@ VARIABLE_TREE::Dump(ostream &sout)
 static VAR_NODE *
 FindNameIn(VAR_NODE *node,const string &name)
 {
+    PROFILER;
     if( node->GetLevel() != LEVEL_66 AND node->GetName() EQ name ) {
         return node;
     }
@@ -763,6 +766,7 @@ FindNameIn(VAR_NODE *node,const string &name)
 void
 VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
 {
+    PROFILER;
     /*  We are going to take our variable tree, with its basic structure
 
             PROGRAM
@@ -1026,6 +1030,7 @@ VARIABLE_TREE::BuildCanonicalName()
 void
 VARIABLE_TREE::BuildFlatList(VAR_NODE *node,VVAR_NODES &flat)
 {
+    PROFILER;
     if( node EQ NULL ) {
         // This one must've been moved by a RENAMES clause
         return;
@@ -1044,6 +1049,7 @@ VARIABLE_TREE::BuildFlatList(VAR_NODE *node,VVAR_NODES &flat)
 void
 VARIABLE_TREE::AdjustFlatList()
 {
+    PROFILER;
     /*  When there is, after an 00 FILE record, an 01 variable that isn't
         referenced in the code, you end up with that 01 not being associated
         with a b_ base symbol.
@@ -1069,6 +1075,7 @@ VARIABLE_TREE::Consolidive(VAR_NODE *node,
                            string &base_symbol,
                            const COB_FIELDS &cob_fields)
 {
+    PROFILER;
     if( node ) {
         VSTRING tokens = Split(node->GetCanonicalName(),"/");
         if( tokens.size() >= 2 ) {
@@ -1129,6 +1136,7 @@ void
 VARIABLE_TREE::PropogateBaseName(VAR_NODE *node,
                                  string &base_symbol)
 {
+    PROFILER;
     if( node ) {
         if( node->level <= 1 OR node->level EQ 77 ) {
             base_symbol = node->b_name;
@@ -1149,6 +1157,7 @@ VARIABLE_TREE::PropogateBaseName(VAR_NODE *node,
 void
 VARIABLE_TREE::Consolidate(const COB_FIELDS &cob_fields)
 {
+    PROFILER;
     // data_description has f_ and b_ entries for working-storage and linkage
     // variables that are referenced in the COBOL code
 
@@ -1176,6 +1185,7 @@ VARIABLE_TREE::Consolidate(const COB_FIELDS &cob_fields)
 void
 VARIABLE_TREE::DumpANode(const VAR_NODE *node) const
 {
+    PROFILER;
     cout << setw(20) << node->program;
     cout << setw(20) << node->section;
     cout << setw(13) << node->type;
@@ -1198,6 +1208,7 @@ VARIABLE_TREE::DumpANode(const VAR_NODE *node) const
 void
 VARIABLE_TREE::DumpFlatList() const
 {
+    PROFILER;
     cout << "VARIABLE_TREE::FlatList:" << endl;
     cout << setw(20) << "program";
     cout << setw(20) << "section";
@@ -1232,6 +1243,7 @@ VARIABLE_TREE::FormatVariablesInfo(stringstream &ss,
                                    const COB_FIELD_ATTRIBUTES &cob_field_attributes,
                                    const COB_PIC_SYMBOLS &cob_pic_symbols) const
 {
+    PROFILER;
     for(VVAR_NODES::const_iterator it=flat_list.begin(); it!=flat_list.end(); it++) {
         VAR_NODE *node = *it;
 

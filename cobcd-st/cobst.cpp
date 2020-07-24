@@ -96,6 +96,7 @@ CreateSymc(PARAMETERS &params,
            bool tack_on_python,
            bool tack_on_filename)
 {
+    PROFILER;
     /*  This routine creates the .sym.c file, which contains a global
         variable comprising the cross-reference information, followed
         by the magical construction that puts the cobcd.py script

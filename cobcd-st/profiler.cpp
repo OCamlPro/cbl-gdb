@@ -30,7 +30,7 @@
 
 #include "profiler.h"
 
-#if __GNUC__ >= 7
+#if __GNUC__ >= 7 || defined(_WIN32)
 
 // These are static variables for the PPROFILER class
 std::map<std::string,double> PPROFILER::ProfilerRoutineTimes;

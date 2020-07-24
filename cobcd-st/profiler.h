@@ -30,8 +30,7 @@
 
 #pragma once
 
-
-#if __GNUC__ >= 7
+#if __GNUC__ >= 7 || defined(_WIN32)
 
 #include <map>
 #include <map>
@@ -43,7 +42,7 @@
 #include <algorithm>
 #include "utils.h"
 
-//#define PROFILING
+#define PROFILING
 
 class PPROFILER
 {

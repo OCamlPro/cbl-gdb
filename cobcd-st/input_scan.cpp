@@ -76,6 +76,7 @@ ProcessDataStorage(ifstream &ifs,
                    COB_FIELDS &cob_fields
                   )
 {
+    PROFILER;
     ifs.clear();
     ifs.seekg(0);
 
@@ -435,6 +436,7 @@ ScanAllDotHFiles(const string &path,
                  COB_FIELDS &cob_fields
                 )
 {
+    PROFILER;
     vector<string>AllDotHFiles = DirectoryScan(path,fname,"*.h");
     for(vector<string>::const_iterator filename = AllDotHFiles.begin(); filename != AllDotHFiles.end(); filename++) {
         ifstream ifs;
@@ -466,6 +468,7 @@ ScanForLinkage(ifstream &ifs,
                COB_FIELDS &cob_fields
               )
 {
+    PROFILER;
     // This routine actually does two things, but we put them together here so that
     // we have to scan the .c file only once.
 
@@ -473,7 +476,6 @@ ScanForLinkage(ifstream &ifs,
     // We also look for b_xx / f_yy assocations for LINKAGE-SECTION variables
 
 
-    CPROFILER;
     ifs.clear();
     ifs.seekg(0);
 
@@ -700,6 +702,7 @@ ScanForLinkage(ifstream &ifs,
 void
 COB_PROGRAM_LABELS::FormatProgramInfo(stringstream &ss) const
 {
+    CPROFILER;
     for(VCOB_PROGRAM_LABEL::const_iterator it=program_labels.begin();
             it != program_labels.end();
             it++ ) {
