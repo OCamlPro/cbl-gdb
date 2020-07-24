@@ -105,7 +105,6 @@ CreateSymc(PARAMETERS &params,
     */
 
     string fname = params.cbl_filename.GetFandExt();
-    stringstream ss_tab;
     stringstream ss;
 
     // Start off the output with the program section information:
@@ -133,12 +132,15 @@ CreateSymc(PARAMETERS &params,
     ss << "char VARIABLE_STRING_" << Upper(fname) << "[]=" << endl;
 
     const int SEGMENT_LENGTH = 78;
-    while(s.length() > SEGMENT_LENGTH) {
-        ss << "\"" << s.substr(0,SEGMENT_LENGTH) << "\"" << endl;
-        s = s.substr(SEGMENT_LENGTH);
+    int walker = 0;
+    int remaining = (int)s.length();
+    while( remaining > SEGMENT_LENGTH ) {
+        ss << "\"" << s.substr(walker,SEGMENT_LENGTH) << "\"" << endl;
+        walker    += SEGMENT_LENGTH;
+        remaining -= SEGMENT_LENGTH;
     }
-    if( s.length() ) {
-        ss << "\"" << s << "\"" << endl;
+    if( remaining ) {
+        ss << "\"" << s.substr(walker) << "\"" << endl;
     }
     ss << ";" << endl << endl;
     params.symc << ss.str();
