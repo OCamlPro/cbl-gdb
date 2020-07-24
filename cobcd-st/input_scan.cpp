@@ -189,7 +189,7 @@ ProcessDataStorage(ifstream &ifs,
         if( nfound != string::npos ) {
             nfound += 1;
             string c_symbol;
-            char ch;
+            char ch='\0';
             while( nfound < input.length() ) {
                 ch = input[nfound++];
                 if( ch EQ '[' ) {

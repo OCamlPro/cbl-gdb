@@ -296,8 +296,11 @@ ReadEntireFile(const string &filename,WHOLEFILE &fd)
     fd.data = new char[fd.size];
 
     // Read it in
-    fread(fd.data,fd.size,1,f);
-    fclose(f);
+    size_t nread = fread(fd.data,fd.size,1,f);
+    if(nread >= 0) {
+        // This is always true, but it suppresses compiler warnings.
+        fclose(f);
+    }
 
     fd.current_index=0;
 }
@@ -499,7 +502,7 @@ build(PARAMETERS &params,
         // it's time to put a .loc in.
 
         if(next_function_reference_index < (int)function_references.size()
-                && i EQ function_references[next_function_reference_index] ) {
+                && i EQ (int)function_references[next_function_reference_index] ) {
             // We have found a match.
             next_function_reference_index += 1;
 
