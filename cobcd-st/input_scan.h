@@ -209,8 +209,8 @@ public:
         std::cout << std::setw(20) << "name" ;
         std::cout << std::setw(20) << "storage";
         std::cout << std::setw(20) << "size";
-        std::cout << std::setw(20) << "program_id";
         std::cout << std::setw(20) << "cbl_name";
+        std::cout << std::setw(20) << "program_id";
         std::cout << std::endl;
 
 
@@ -221,8 +221,8 @@ public:
             std::cout << std::setw(20) << symbol.name ;
             std::cout << std::setw(20) << symbol.storage_type;
             std::cout << std::setw(20) << symbol.size;
-            std::cout << std::setw(20) << symbol.program_id;
             std::cout << std::setw(20) << symbol.cbl_name;
+            std::cout << std::setw(20) << symbol.program_id;
             std::cout << std::endl;
         }
         std::cout << std::endl;
@@ -541,9 +541,9 @@ public:
         std::cout << std::setw(20) << "offset" ;
         std::cout << std::setw(20) << "size";
         std::cout << std::setw(20) << "a_name";
-        std::cout << std::setw(20) << "program_id";
-        std::cout << std::setw(20) << "parent";
         std::cout << std::setw(20) << "child";
+        std::cout << std::setw(20) << "parent";
+        std::cout << std::setw(20) << "program_id";
         std::cout << std::endl;
 
         for( V_COB_FIELDS::const_iterator it = v_cob_fields.begin();
@@ -555,9 +555,9 @@ public:
             std::cout << std::setw(20) << field.offset ;
             std::cout << std::setw(20) << field.size;
             std::cout << std::setw(20) << field.a_name;
-            std::cout << std::setw(20) << field.program_id;
-            std::cout << std::setw(20) << field.parent;
             std::cout << std::setw(20) << field.child;
+            std::cout << std::setw(20) << field.parent;
+            std::cout << std::setw(20) << field.program_id;
             std::cout << std::endl;
         }
         std::cout << std::endl;

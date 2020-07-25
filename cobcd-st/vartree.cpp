@@ -40,7 +40,7 @@ using namespace std;
 #define OR ||
 
 VAR_NODE::VAR_NODE()
-{
+    {
     CPROFILER;
     size = 0;
     offset = 0;
@@ -50,11 +50,10 @@ VAR_NODE::VAR_NODE()
     is_global   = false;
     parent = nullptr;
     birth_order = (size_t)(-1);
-}
+    }
 
-void
-VAR_NODE::AddChild(VAR_NODE *new_node)
-{
+void VAR_NODE::AddChild(VAR_NODE *new_node)
+    {
     CPROFILER;
 
     /*  Little bit of special processing in order to keep things lined up
@@ -81,96 +80,99 @@ VAR_NODE::AddChild(VAR_NODE *new_node)
 
         */
 
-    if(new_node->occurs != 0) {
+    if(new_node->occurs != 0)
+        {
         // Note that the size derived from .cbl.lst is being augmented. The
         // field_size attribute, which will be derived from the .h files,
         // and will be the size of each element of the table, is going to be
         // left alone.
         new_node->size *= new_node->occurs;
-    }
+        }
 
     // Propogate the program/section from parent to child
-    if(!this->program.empty()) {
+    if(!this->program.empty())
+        {
         new_node->program = this->program;
-    }
-    if(!this->section.empty()) {
+        }
+    if(!this->section.empty())
+        {
         new_node->section = this->section;
-    }
+        }
 
     // And link in the new node
     new_node->parent = this;
     new_node->birth_order = this->children.size();
     this->children.push_back(new_node);
-}
+    }
 
 VARIABLE_TREE::VARIABLE_TREE()
-{
+    {
     root = new VAR_NODE;
-}
+    }
 
 VARIABLE_TREE::~VARIABLE_TREE()
-{
+    {
     ChopDownTheTree();
-}
+    }
 
-void
-VARIABLE_TREE::ChopDownTheTree(VAR_NODE *node)
-{
+void VARIABLE_TREE::ChopDownTheTree(VAR_NODE *node)
+    {
     CPROFILER;
-    if(node) {
+    if(node)
+        {
         for(VVAR_NODES::iterator child=node->children.begin();
                 child!=node->children.end();
-                child++) {
+                child++)
+            {
             ChopDownTheTree(*child);
-        }
+            }
         delete node;
         node = nullptr;
+        }
     }
-}
 
-void
-VARIABLE_TREE::ChopDownTheTree()
-{
+void VARIABLE_TREE::ChopDownTheTree()
+    {
     CPROFILER;
     ChopDownTheTree(root);
-}
+    }
 
-void
-VARIABLE_TREE::FindParentOf(VVAR_NODES &parents,int level)
-{
+void VARIABLE_TREE::FindParentOf(VVAR_NODES &parents,int level)
+    {
     CPROFILER;
     // Eliminate parents from the back of the stack until you find one
     // that's an immediate ancestor -- not a sibling, but an ancestor --
     // to 'level'
-    while(!parents.empty()) {
-        if(parents.back()->level < level) {
+    while(!parents.empty())
+        {
+        if(parents.back()->level < level)
+            {
             break;
-        }
+            }
         parents.pop_back();
+        }
     }
-}
 
-void
-VARIABLE_TREE::ForceParent(VVAR_NODES &parents,const string &program_id)
-{
+void VARIABLE_TREE::ForceParent(VVAR_NODES &parents,const string &program_id)
+    {
     CPROFILER;
     // When there is only one PROGRAM-ID in a source module, GnuCOBOL 3.0
     // neglects to include that name in the variables section of the .cbl.lst
     // -T listing.  We call this routine to make sure there is a parent
     // parent when need one
 
-    if(parents.empty()) {
+    if(parents.empty())
+        {
         VAR_NODE *new_node = new VAR_NODE;
         new_node->program = program_id;
         new_node->level = LEVEL_PROGRAM;
         root->AddChild(new_node);
         parents.push_back(new_node);
+        }
     }
-}
 
-void
-VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
-{
+void VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
+    {
     CPROFILER;
     ifs.clear();
     ifs.seekg(0);
@@ -187,25 +189,31 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
     VVAR_NODES parents;         // This is a stack for keeping track
     // of parent nodes
     bool processing = false;
-    for(;;) {
+    for(;;)
+        {
         getline(ifs,input);
-        if(ifs.eof()) {
+        if(ifs.eof())
+            {
             break;
-        }
+            }
 
-        if(!processing) {
-            if(input.size() > 4 AND input.substr(0,4) EQ "SIZE") {
+        if(!processing)
+            {
+            if(input.size() > 4 AND input.substr(0,4) EQ "SIZE")
+                {
                 // We have reached the beginning of the parsed variables
                 processing = true;
                 continue;
-            }
-            if(input.size() > 4 AND input.substr(0,4) EQ "LINE") {
+                }
+            if(input.size() > 4 AND input.substr(0,4) EQ "LINE")
+                {
                 vector<string>tokens = Split(input," \t");
                 free_form = tokens.size() EQ 2 ;
                 continue;
-            }
+                }
 
-            if(first_program_id.empty()) {
+            if(first_program_id.empty())
+                {
                 // Here's where we look for "PROGRAM-ID. <program-id>."
                 // Ain't simple.  We need to deal with fixed and free input,
                 // and we need to strip out comments, and we need to ignore
@@ -215,15 +223,18 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
 
                 // Most of the following is pure magic, and is based on the
                 // actual structure of the files.  Just live with it.
-                if(free_form AND input.length() >= 8) {
+                if(free_form AND input.length() >= 8)
+                    {
                     // Trim away the leading "dddddd  "
                     input = input.substr(8);
-                }
-                if(!free_form AND input.length() > 80) {
+                    }
+                if(!free_form AND input.length() > 80)
+                    {
                     // Trim away the SEQUENCE information at column 80
                     input = input.substr(0,80);
-                }
-                if(!free_form AND input.length() > 9) {
+                    }
+                if(!free_form AND input.length() > 9)
+                    {
                     // Trim away the leading "ddddd  "
                     input = input.substr(9);
                     // We should be left with a standard COBOL 72-line input
@@ -234,75 +245,88 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
                     input[3] = ' ';
                     input[4] = ' ';
                     input[5] = ' ';
-                }
+                    }
 
                 // We now need to eliminate anything inside of paired single-
                 // or double-quotes, because we don't want to be confused by
                 // any crap some evil programmer put in there.  Probably in
                 // an attempt to screw me up.
                 bool dequoting = true;
-                while(dequoting) {
+                while(dequoting)
+                    {
                     dequoting = false;
                     size_t nfound;
 
                     // Find and eliminate consecutive double-quotes
                     nfound = input.find("\"\"");
-                    if(nfound != string::npos) {
+                    if(nfound != string::npos)
+                        {
                         dequoting = true;
                         input[nfound] = ' ';
                         input[nfound+1] = ' ';
                         continue;
-                    }
+                        }
 
                     // and consecutive single-quotes
                     nfound = input.find("''");
-                    if(nfound != string::npos) {
+                    if(nfound != string::npos)
+                        {
                         dequoting = true;
                         input[nfound] = ' ';
                         input[nfound+1] = ' ';
                         continue;
-                    }
+                        }
 
                     nfound = input.find_first_of("\"'");
-                    if(nfound != string::npos) {
+                    if(nfound != string::npos)
+                        {
                         // Eliminate everything between the quote and its
                         // mate:
                         char endquote = input[nfound];
                         dequoting = true;
                         size_t i = nfound;
-                        while(input[i] != endquote) {
+                        while(input[i] != endquote)
+                            {
                             input[i++] = ' ';
-                            if(i>=input.length()) {
+                            if(i>=input.length())
+                                {
                                 break;
+                                }
                             }
-                        }
-                        if(i<input.length()) {
+                        if(i<input.length())
+                            {
                             input[i++] = ' ';
-                        }
+                            }
 
                         continue;
+                        }
                     }
-                }
                 //  And now, we have to consider comments:
-                if(free_form) {
+                if(free_form)
+                    {
                     size_t nfound;
 
                     // Strip off leading spaces
                     nfound = input.find_first_not_of(" ");
-                    if(nfound != string::npos) {
+                    if(nfound != string::npos)
+                        {
                         input = input.substr(nfound);
-                    }
+                        }
 
                     // Find the *> and >>D comment types:
                     nfound = input.find("*>");
-                    if(nfound != string::npos) {
+                    if(nfound != string::npos)
+                        {
                         input = input.substr(0,nfound);
-                    }
+                        }
                     nfound = input.find(">>D");
-                    if(nfound != string::npos) {
+                    if(nfound != string::npos)
+                        {
                         input = input.substr(0,nfound);
+                        }
                     }
-                } else {
+                else
+                    {
                     if(     input.length() >= 7
                             AND (
                                 input[7-1] EQ '*'
@@ -310,60 +334,70 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
                                 input[7-1] EQ '/'
                                 OR
                                 input[7-1] EQ 'D'
-                            )   ) {
+                            )   )
+                        {
                         // Ignore comment lines
                         input.clear();
-                    }
+                        }
                     size_t nfound = input.find("*>");
-                    if(nfound != string::npos) {
+                    if(nfound != string::npos)
+                        {
                         input = input.substr(0,nfound);
+                        }
                     }
-                }
 
                 // We now have input free of comments and text literals,
                 // so we can split what's left and look for gold:
                 vector<string>tokens = Split(input," \t");
 
                 size_t ntoken = 0;
-                if(!program_id_triggered) {
-                    for(ntoken=0; ntoken<tokens.size(); ntoken++) {
+                if(!program_id_triggered)
+                    {
+                    for(ntoken=0; ntoken<tokens.size(); ntoken++)
+                        {
                         string token = tokens[ntoken];
                         string lc;
-                        for(size_t i=0; i<token.size(); i++) {
+                        for(size_t i=0; i<token.size(); i++)
+                            {
                             char s = token[i];
                             lc += tolower(s);
-                        }
-                        if(lc EQ "program-id" OR lc EQ "program-id.") {
+                            }
+                        if(lc EQ "program-id" OR lc EQ "program-id.")
+                            {
                             // Given our comment processing and the elimination
                             // of text strings, the next token we see will
                             // be the value we need
                             ntoken += 1;
                             program_id_triggered = true;
                             break;
+                            }
                         }
                     }
-                }
-                if(program_id_triggered) {
-                    if(ntoken < tokens.size()) {
+                if(program_id_triggered)
+                    {
+                    if(ntoken < tokens.size())
+                        {
                         first_program_id = tokens[ntoken];
                         size_t nfound = first_program_id.find(".");
-                        if(nfound != string::npos) {
+                        if(nfound != string::npos)
+                            {
                             first_program_id =
                                 first_program_id.substr(0,nfound);
+                            }
                         }
                     }
+
                 }
 
+            continue;
             }
 
-            continue;
-        }
-
         vector<string>tokens = Split(input," \t");
-        if(tokens.size() EQ 0) {
+        if(tokens.size() EQ 0)
+            {
             // Ignore blank lines
             continue;
-        }
+            }
 
         // At some point GLOBAL was added, which mucks up my heuristics which
         // were based on a non-GLOBAL universe.  Just hack it off.
@@ -374,7 +408,8 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
         // data we need in a formal way.  RJD, just before version cobc 3.1 was
         // released, 2020-06-26
 
-        if(tokens.size() EQ 2 AND tokens[0] EQ "PROGRAM") {
+        if(tokens.size() EQ 2 AND tokens[0] EQ "PROGRAM")
+            {
             // We are starting a brand new PROGRAM section, which has the
             // root as a parent:
 
@@ -385,9 +420,10 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             root->AddChild(new_node);
             parents.push_back(new_node);
             continue;
-        }
+            }
 
-        if(tokens.size() EQ 2 AND tokens[1] EQ "SECTION") {
+        if(tokens.size() EQ 2 AND tokens[1] EQ "SECTION")
+            {
             // Sections get their own node, and they have to have the
             // level-00 program-id node as a parent:
             ForceParent(parents,first_program_id);
@@ -398,7 +434,7 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             parents.back()->AddChild(new_node);
             parents.push_back(new_node);
             continue;
-        }
+            }
 
         VAR_NODE *new_node = new VAR_NODE;
 
@@ -408,22 +444,26 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
         // remove it.
 
         vector<string>::const_iterator it = tokens.begin();
-        while(it != tokens.end()) {
-            if( *it EQ "REDEFINES" ) {
+        while(it != tokens.end())
+            {
+            if( *it EQ "REDEFINES" )
+                {
                 break;
-            }
+                }
             it++;
-        }
+            }
 
-        if( it != tokens.end() ) {
+        if( it != tokens.end() )
+            {
             // 'it' points to REDEFINES:
             size_t index = it - tokens.begin();
 
             // Get rid of the comma at the end of index-1:
             size_t n = tokens[index-1].find_last_of(',');
-            if( n != string::npos ) {
+            if( n != string::npos )
+                {
                 tokens[index-1] = tokens[index-1].substr(0,n);
-            }
+                }
 
             // Pick up the name of the referenced variable:
             new_node->redefines = tokens[index+1];
@@ -434,61 +474,72 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             tokens.erase(it1,it2);
 
             // And now we can proceed
-        }
+            }
 
         it = tokens.begin();
-        while(it != tokens.end()) {
-            if( *it EQ "EXTERNAL" ) {
+        while(it != tokens.end())
+            {
+            if( *it EQ "EXTERNAL" )
+                {
                 new_node->is_external = true;
                 break;
-            }
+                }
             it++;
-        }
-        if( it != tokens.end() ) {
+            }
+        if( it != tokens.end() )
+            {
             size_t index = it - tokens.begin();
             vector<string>::iterator it1 = tokens.begin() + index;
             vector<string>::iterator it2 = tokens.begin() + index + 1;
             tokens.erase(it1,it2);
-        }
+            }
 
         it = tokens.begin();
-        while(it != tokens.end()) {
-            if( *it EQ "GLOBAL" ) {
+        while(it != tokens.end())
+            {
+            if( *it EQ "GLOBAL" )
+                {
                 new_node->is_global = true;
                 break;
-            }
+                }
             it++;
-        }
-        if( it != tokens.end() ) {
+            }
+        if( it != tokens.end() )
+            {
             size_t index = it - tokens.begin();
             vector<string>::iterator it1 = tokens.begin() + index;
             vector<string>::iterator it2 = tokens.begin() + index + 1;
             tokens.erase(it1,it2);
-        }
+            }
 
         it = tokens.begin();
-        while(it != tokens.end()) {
-            if( *it EQ "OCCURS" ) {
+        while(it != tokens.end())
+            {
+            if( *it EQ "OCCURS" )
+                {
                 break;
-            }
+                }
             it++;
-        }
+            }
 
-        if( it != tokens.end() ) {
+        if( it != tokens.end() )
+            {
             // 'it' points to OCCURS:
             size_t index = it - tokens.begin();
 
             // Get rid of any comma at the end of index-1:
             size_t n = tokens[index-1].find_last_of(',');
-            if( n != string::npos ) {
+            if( n != string::npos )
+                {
                 tokens[index-1] = tokens[index-1].substr(0,n);
-            }
+                }
 
             // There are at least two possibilities
             // OCCURS 4
             // OCCURS 1 TO 15
 
-            if( tokens.size() > index+2 AND tokens[index+2] EQ "TO" ) {
+            if( tokens.size() > index+2 AND tokens[index+2] EQ "TO" )
+                {
                 // Pick up the maximum number of occurrences
                 new_node->occurs = STOI(tokens[index+3]);
 
@@ -496,7 +547,9 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
                 vector<string>::iterator it1 = tokens.begin() + index;
                 vector<string>::iterator it2 = tokens.begin() + index + 4;
                 tokens.erase(it1,it2);
-            } else {
+                }
+            else
+                {
                 // Assume "OCCURS 10"
                 // Pick up the number of occurrences
                 new_node->occurs = STOI(tokens[index+1]);
@@ -505,13 +558,14 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
                 vector<string>::iterator it1 = tokens.begin() + index;
                 vector<string>::iterator it2 = tokens.begin() + index + 2;
                 tokens.erase(it1,it2);
-            }
+                }
 
 
             // And now we can proceed
-        }
+            }
 
-        if(tokens.size() EQ 3 AND tokens[1] EQ "FILE") {
+        if(tokens.size() EQ 3 AND tokens[1] EQ "FILE")
+            {
             // Special case:  FILE records have a size and a name, but
             // no level.  So, we give it the special level of 00, and treat
             // the whole section with its unique needs.  In particular,
@@ -547,7 +601,9 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             parents.push_back(new_node);
 
             continue;
-        } else if(tokens.size() EQ 4) {
+            }
+        else if(tokens.size() EQ 4)
+            {
             // Usually a GROUP record.  As of this writing, it can also
             // be a FLOAT-DECIMAL-16 or -34, because those don't have
             // PICTURE field descriptions, although they ought to.
@@ -555,25 +611,32 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             new_node->type = tokens[1];
             new_node->level = STOI(tokens[2]);
             new_node->name = tokens[3];
-        } else if( tokens.size() EQ 5 AND tokens[1] EQ "warnings" ) {
+            }
+        else if( tokens.size() EQ 5 AND tokens[1] EQ "warnings" )
+            {
             // We've reached the end of the parsed tokens with a line:
             // "0 warnings in compilation group"
             delete new_node;
             break;
-        } else if( tokens.size() EQ 2 AND tokens[0] EQ "Error/Warning" ) {
+            }
+        else if( tokens.size() EQ 2 AND tokens[0] EQ "Error/Warning" )
+            {
             // We've reached the end of the parsed tokens with a line:
             // "0 warnings in compilation group"
             delete new_node;
             break;
-        } else if(tokens.size() EQ 5 OR tokens.size() EQ 6) {
-            if(tokens.size() EQ 6) {
+            }
+        else if(tokens.size() EQ 5 OR tokens.size() EQ 6)
+            {
+            if(tokens.size() EQ 6)
+                {
                 // If size is 6, then there is a PIC field followed by a
                 // variable type.  Combine them:
                 tokens[5-1] += ' ';
                 tokens[5-1] += tokens[6-1];
                 // And get rid of the position 6
                 tokens.pop_back();
-            }
+                }
             // There are now five elements:
 
             new_node->size = STOI(tokens[0]);
@@ -581,45 +644,57 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             new_node->level = STOI(tokens[2]);
             new_node->name = tokens[3];
             vector<string>usage = Split(tokens[4]," ");
-            if(usage.size() >= 1) {
+            if(usage.size() >= 1)
+                {
                 new_node->picture = usage[0];
-            }
-            if(usage.size() >= 2) {
+                }
+            if(usage.size() >= 2)
+                {
                 new_node->usage = usage[1];
+                }
             }
-        } else if( tokens.size() EQ 3 AND tokens[2] EQ "defined.") {
+        else if( tokens.size() EQ 3 AND tokens[2] EQ "defined.")
+            {
             // Just ignore "No fields defined."
             delete new_node;
             continue;
-        } else if(tokens.size() EQ 3
-                  AND (       tokens[1] EQ "88"
-                              OR  tokens[2] EQ "66"
-                              OR  tokens[3] EQ "78")
-                 ) {
+            }
+        else if(tokens.size() EQ 3
+                AND (       tokens[1] EQ "88"
+                            OR  tokens[2] EQ "66"
+                            OR  tokens[3] EQ "78")
+               )
+            {
             // Just ignore types we can't handle
             delete new_node;
             continue;
-        } else {
+            }
+        else
+            {
             cerr << "cobcd-st: VARIABLE_TREE::ReadFromFile() doesn't know how to handle";
             cerr << endl;
             cerr << "\"" << input << "\"" << endl;
             delete new_node;
             exit(1);
-        }
+            }
 
-        if(!new_node->name.empty()) {
+        if(!new_node->name.empty())
+            {
 
             // Special processing for the oddball LEVEL 77 variable type.
             // Level 77 variables have to be atomic, which we don't care
             // about here.  But they also are children of the section, rather
             // than of a lower-leveled variable:
-            if( new_node->level EQ LEVEL_77) {
+            if( new_node->level EQ LEVEL_77)
+                {
                 // Make sure that parent is the section:
                 FindParentOf(parents,LEVEL_SECTION+1);
-            } else {
+                }
+            else
+                {
                 // Make sure that parent is an *immediate* ancestor
                 FindParentOf(parents,new_node->level);
-            }
+                }
 
             // Add us as a child of that parent
             ForceParent(parents,first_program_id);
@@ -627,115 +702,38 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
 
             // And perhaps we will become a parent
             parents.push_back(new_node);
-        } else {
+            }
+        else
+            {
             cerr << "new_node->name is empty in VARIABLE_TREE::ReadFromFile()";
             cerr << endl;
             cerr << "\"" << input << "\"" << endl;
             delete new_node;
             exit(1);
-        }
-    }
-}
-
-void
-VARIABLE_TREE::DumpNode(ostream &sout, const VAR_NODE *node)
-{
-    PROFILER;
-    if(node) {
-        if(node !=root) {
-            if(     node->program != current_program_in_dump
-                    OR  node->section != current_section_in_dump) {
-                current_program_in_dump = node->program;
-                current_section_in_dump = node->section;
-
-                if(node->section.empty()) {
-                    sout << endl;
-                    sout << "PROGRAM-ID";
-                    sout << " : ";
-                    sout << node->program;
-                    sout << endl;
-                } else {
-                    sout << endl;
-                    sout << node->program;
-                    sout << " : ";
-                    sout << node->section;
-                    sout << endl;
-                }
-            } else if(node->level >= LEVEL_FILE) // Without this, the program tries
-                // to dump LEVEL_SECTION.  It's ugly, so we stop it.
-            {
-                if(     node->level EQ LEVEL_01
-                        OR  node->level EQ LEVEL_FILE    // Special processing for FILE record
-                        OR  (node->level EQ LEVEL_77 AND current_level_in_dump != 77) ) {
-                    sout << endl;
-                }
-                sout.width(5);
-                sout.fill('0');
-                sout << right << node->size;
-
-                sout << " ";
-                sout.width(15);
-                sout.fill(' ');
-                sout << left << node->type;
-
-                sout << " ";
-                sout.width(2);
-                sout.fill('0');
-                sout << right << node->level;
-                current_level_in_dump = node->level;
-
-                sout << " ";
-                sout.width(30);
-                sout.fill(' ');
-                sout << left << node->name;
-
-                if(!node->picture.empty()) {
-                    sout << node->picture;
-                    sout << " ";
-                }
-                if(!node->usage.empty()) {
-                    sout << node->usage;
-                    sout << " ";
-                }
-
-                if(!node->redefines.empty()) {
-                    sout << "REDEFINES ";
-                    sout << node->redefines;
-                    sout << " ";
-                }
-
-                if(node->occurs) {
-                    sout << "OCCURS ";
-                    sout << node->occurs;
-                    sout << " ";
-                }
-
-                sout << "[";
-                sout << node->canonical_name;
-                if( !node->b_name.empty() OR node->offset > 0 ) {
-                    sout << " ";
-                }
-                sout << node->b_name;
-                if(node->offset > 0) {
-                    sout << "+";
-                    sout << node->offset;
-                }
-                sout << "] ";
-
-                sout << endl;
             }
         }
+    }
+
+void VARIABLE_TREE::DumpNode(ostream &sout, const VAR_NODE *node)
+    {
+    PROFILER;
+    if(node)
+        {
+        if(node !=root)
+            {
+            DumpANode(node);
+            }
         for( VVAR_NODES::const_iterator it=node->children.begin();
                 it!=node->children.end();
-                it++) {
+                it++)
+            {
             DumpNode(sout,*it);
+            }
         }
     }
-}
 
-void
-VARIABLE_TREE::Dump(ostream &sout)
-{
+void VARIABLE_TREE::Dump(ostream &sout)
+    {
     PROFILER;
     // Primarily for debugging.
     // Dump the whole tree, depth first:
@@ -744,28 +742,29 @@ VARIABLE_TREE::Dump(ostream &sout)
     cout << "VARIABLE_TREE:" << endl;
     DumpNode(sout, root);
     cout << endl;
-}
+    }
 
-static VAR_NODE *
-FindNameIn(VAR_NODE *node,const string &name)
-{
+static VAR_NODE *FindNameIn(VAR_NODE *node,const string &name)
+    {
     PROFILER;
-    if( node->GetLevel() != LEVEL_66 AND node->GetName() EQ name ) {
+    if( node->GetLevel() != LEVEL_66 AND node->GetName() EQ name )
+        {
         return node;
-    }
-    VAR_NODE *retval = NULL;
-    for( size_t i=0; i<node->GetChildren().size(); i++ ) {
-        retval = FindNameIn(node->GetChildren()[i],name);
-        if( retval ) {
-            break;
         }
-    }
+    VAR_NODE *retval = NULL;
+    for( size_t i=0; i<node->GetChildren().size(); i++ )
+        {
+        retval = FindNameIn(node->GetChildren()[i],name);
+        if( retval )
+            {
+            break;
+            }
+        }
     return retval;
-}
+    }
 
-void
-VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
-{
+void VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node, const COB_DATA &cob_data)
+    {
     PROFILER;
     /*  We are going to take our variable tree, with its basic structure
 
@@ -822,23 +821,14 @@ VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
         Grab your abacus; we're gonna do some calculating:
         */
 
-#if 0
-    cout << var_node->program << " " ;
-    cout << var_node->section << " " ;
-    cout << var_node->type << " " ;
-    cout << var_node->level << " " ;
-    cout << var_node->name << " " ;
-    if( !var_node->redefines.empty() ) {
-        cout << "REDEFINES:" << var_node->redefines << " " ;
-    }
-    cout << endl;
-#endif
-
-    if(var_node->level >= LEVEL_FILE) {
+    if(var_node->level >= LEVEL_FILE)
+        {
         VAR_NODE *parent = var_node->parent;
         int brother_index = (int)(var_node->birth_order-1);
 
-        if( var_node->level EQ LEVEL_66 ) {
+#if 0
+        if( var_node->level EQ LEVEL_66 )
+            {
             // A level 66 variable is like an 01 or 77: it's a top-level
             // variable that comes right off of the root.  It points, however,
             // to a previously-defined memory location within the same
@@ -885,16 +875,18 @@ VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
 
             // back up to level 1 :
             VAR_NODE *grampa = parent->parent;
-            while( grampa->level > LEVEL_01 ) {
+            while( grampa->level > LEVEL_01 )
+                {
                 grampa = grampa->parent;
-            }
+                }
 
             VAR_NODE *source = FindNameIn(grampa,var_node->redefines);
-            if( !source ) {
+            if( !source )
+                {
                 cerr << "HULL BREACH in cobst! A RENAMES variable doesn't seem to have an ancestor!\n";
                 cerr << "This is in VARIABLE_TREE::BuildCanonicalName()\n";
                 exit(1);
-            }
+                }
 
             // We have now found the source of our RENAME:
             var_node->offset = source->offset;
@@ -913,49 +905,69 @@ VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
             // We need to eliminate ourself from our parent's level.
             // We will find ourself, and NULL us out:
 
-            for(size_t i=0; i<var_node->parent->children.size(); i++) {
-                if( var_node->parent->children[i] EQ var_node ) {
+            for(size_t i=0; i<var_node->parent->children.size(); i++)
+                {
+                if( var_node->parent->children[i] EQ var_node )
+                    {
                     var_node->parent->children[i] = NULL;
+                    }
                 }
             }
-        } else if( !var_node->redefines.empty() ) {
+        else 
+#endif
+            if( !var_node->redefines.empty() AND var_node->level != LEVEL_66 )
+            {
             // This is case 1:  We are a REDEFINES record.
-            if( brother_index EQ -1) {
+            if( brother_index EQ -1)
+                {
                 cerr << "HULL BREACH in cobst! A REDEFINES variable has no older brother!\n";
                 cerr << "This is in VARIABLE_TREE::BuildCanonicalName()\n";
                 exit(1);
-            }
-            // And our brother's offset is our offset
+                }
+            // Our immediately preceding sibling's offset is ours:
             var_node->offset = parent->children[brother_index]->offset;
 
             // We want to replace ->redefines with the canonical identifier
             // of the redefined variable.  We will try our brother's
             // redefined first, which will handle a chained redefined
-            if(!parent->children[brother_index]->redefines.empty()) {
+            if(!parent->children[brother_index]->redefines.empty())
+                {
                 var_node->redefines = parent->children[brother_index]->redefines;
-            } else {
+                }
+            else
+                {
                 var_node->redefines = parent->children[brother_index]->canonical_name;
+                }
+
             }
-        } else if( parent->level EQ LEVEL_FILE and brother_index != -1 ) {
+        else if( parent->level EQ LEVEL_FILE and brother_index != -1 )
+            {
             // This is case 2: an implicit redefines in the
             // INPUT-OUTPUT section
             var_node->offset = parent->children[brother_index]->offset;
             var_node->redefines = parent->children[brother_index]->canonical_name;
-        } else if( brother_index EQ -1 ) {
+            }
+        else if( brother_index EQ -1 )
+            {
             // This is case 3.  Not a REDEFINES, and we have no older sibling.
             // Our offset thus has to be the same as our parent's offset:
             var_node->offset = parent->offset;
-        } else if( parent->level EQ LEVEL_SECTION
-                   AND var_node->section != "LOCAL-STORAGE" ) {
+            }
+        else if( parent->level EQ LEVEL_SECTION
+                 AND var_node->section != "LOCAL-STORAGE" )
+            {
             // This is case 4:  We are a level 77 or level 01 identifier,
             // and so our offset should be zero.
-            if( parent->offset != 0) {
+            if( parent->offset != 0)
+                {
                 cerr << "HULL BREACH in cobst! A LEVEL_SECTION parent has a non-zero\n";
                 cerr << "offset in VARIABLE_TREE::BuildCanonicalName\n";
                 exit(1);
-            }
+                }
             var_node->offset = parent->offset;
-        } else {
+            }
+        else
+            {
             // This is case 5 or 6:  "All other cases".
             const int BOUNDARY = 16;
 
@@ -969,86 +981,121 @@ VARIABLE_TREE::BuildCanonicalName(VAR_NODE *var_node)
             // inside the cob_local_ptr block are allocated on 16-byte
             // boundaries
             if( parent->level EQ LEVEL_SECTION
-                    AND var_node->section EQ "LOCAL-STORAGE" ) {
+                    AND var_node->section EQ "LOCAL-STORAGE" )
+                {
                 // Make sure that size is a multiple of BOUNDARY:
                 size += (BOUNDARY-1);
                 size &= ~(BOUNDARY-1);
-            }
+                }
 
             var_node->offset = parent->children[brother_index]->offset
                                + size;
-        }
-    }
-
-    if( var_node->level != LEVEL_66 ) {
-        // Now it's time to build the canonical name
-        // Walk down to the bottom of the variable nodes:
-        for(size_t i=0; i<var_node->children.size(); i++ ) {
-            VAR_NODE *child = var_node->children[i];
-            if( child != NULL ) {
-                BuildCanonicalName(child);
             }
         }
-    }
+
+    if( var_node->level != LEVEL_66 )
+        {
+        // Now it's time to build the canonical name
+        // Walk down to the bottom of the variable nodes:
+        for(size_t i=0; i<var_node->children.size(); i++ )
+            {
+            VAR_NODE *child = var_node->children[i];
+            if( child != NULL )
+                {
+                BuildCanonicalName(child, cob_data);
+                }
+            }
+        }
 
     //  Look back up through our ancestors, building up the canonical
     //  COBOL name:
 
     const VAR_NODE *walker = var_node;
     var_node->canonical_name = "";
-    if(walker->level >= LEVEL_SECTION) {
+    if(walker->level >= LEVEL_SECTION)
+        {
         // Only start processing if we've above the program level.
-        for(;;) {
+        for(;;)
+            {
             bool add_IN = false;
-            if( walker->level > LEVEL_SECTION ) {
+            if( walker->level > LEVEL_SECTION )
+                {
                 var_node->canonical_name += walker->name;
                 add_IN = true;
-            }
+                }
 
-            if( walker->level EQ LEVEL_PROGRAM ) {
+            if( walker->level EQ LEVEL_PROGRAM )
+                {
                 var_node->canonical_name += walker->program;
                 //  We just added the PROGRAM name, so we're done walking back
                 //  this node:
                 break;
-            }
+                }
 
             // There is more to come
-            if(add_IN) {
+            if(add_IN)
+                {
                 var_node->canonical_name += "/";
-            }
+                }
             walker = walker->parent;
+            }
+        }
+    // We now have to do something heuristical and wonderful for REDEFINES on Level 01/77
+    if( !var_node->redefines.empty() AND (var_node->level EQ LEVEL_01 OR var_node->level EQ LEVEL_77) )
+        {
+        // We need to remake our canonical name out of our minor name combined with the
+        // parent specified by the REDEFINES
+        var_node->canonical_name = var_node->name;
+        var_node->canonical_name += "/";
+        var_node->canonical_name += var_node->redefines;
+        }
+    // And something similar for level 66 RENAMES:
+    if( !var_node->redefines.empty() AND var_node->level EQ LEVEL_66 AND !var_node->b_name.empty() )
+        {
+        // We need to remake our canonical name out of the redefines name plus the 
+        // parent/program specified by the b_name;
+
+        const COB_DATUM *pdatum = cob_data.GetCobDatum(var_node->b_name);
+        if( pdatum )
+            {
+            var_node->canonical_name = var_node->redefines;
+            var_node->canonical_name += "/";
+            var_node->canonical_name += pdatum->cbl_name;
+            var_node->canonical_name += "/";
+            var_node->canonical_name += pdatum->program_id;
+            var_node->canonical_name += var_node->redefines;
+            }
         }
     }
-}
 
-void
-VARIABLE_TREE::BuildCanonicalName()
-{
-    BuildCanonicalName(root);
-}
+void VARIABLE_TREE::BuildCanonicalName(const COB_DATA &cob_data)
+    {
+    BuildCanonicalName(root, cob_data);
+    }
 
-void
-VARIABLE_TREE::BuildFlatList(VAR_NODE *node,VVAR_NODES &flat)
-{
+void VARIABLE_TREE::BuildFlatList(VAR_NODE *node,VVAR_NODES &flat)
+    {
     PROFILER;
-    if( node EQ NULL ) {
+    if( node EQ NULL )
+        {
         // This one must've been moved by a RENAMES clause
         return;
-    }
-    if(node->level >= LEVEL_FILE) {
+        }
+    if(node->level >= LEVEL_FILE)
+        {
         flat.push_back(node);
-    }
+        }
 
     for(VVAR_NODES::const_iterator child=node->children.begin();
             child!=node->children.end();
-            child++) {
+            child++)
+        {
         BuildFlatList(*child,flat);
+        }
     }
-}
 
-void
-VARIABLE_TREE::AdjustFlatList()
-{
+void VARIABLE_TREE::AdjustFlatList()
+    {
     PROFILER;
     /*  When there is, after an 00 FILE record, an 01 variable that isn't
         referenced in the code, you end up with that 01 not being associated
@@ -1057,32 +1104,36 @@ VARIABLE_TREE::AdjustFlatList()
         This code scans for that situation in the flat_list, and borrows the
         b_ base_name from the 00 parent and assigns it to the 01 child.  */
 
-    for( size_t i=1; i<flat_list.size(); i++ ) {
+    for( size_t i=1; i<flat_list.size(); i++ )
+        {
         if( flat_list[i-1]->level EQ 0
                 AND flat_list[i]->b_name.empty()
                 AND flat_list[i-1]->program EQ flat_list[i]->program
-                AND flat_list[i]->level EQ 1 ) {
+                AND flat_list[i]->level EQ 1 )
+            {
             // This is the situation: 01 has no base_symbol, but its 00
             // parent does.
 
             flat_list[i]->b_name = flat_list[i-1]->b_name;
+            }
         }
     }
-}
 
-void
-VARIABLE_TREE::Consolidive(VAR_NODE *node,
-                           string &base_symbol,
-                           const COB_FIELDS &cob_fields)
-{
+void VARIABLE_TREE::Consolidive(VAR_NODE *node,
+                                string &base_symbol,
+                                const COB_FIELDS &cob_fields)
+    {
     PROFILER;
-    if( node ) {
+    if( node )
+        {
         VSTRING tokens = Split(node->GetCanonicalName(),"/");
-        if( tokens.size() >= 2 ) {
-            if( node->level <= 1 OR node->level EQ 77 ) {
+        if( tokens.size() >= 2 )
+            {
+            if( node->level <= 1 OR node->level EQ 77 )
+                {
                 // We're starting a new variable:
                 base_symbol = "";
-            }
+                }
 
             // From the canonical name, get the program-id (the last entry)
             string program_id = tokens.back();
@@ -1104,19 +1155,21 @@ VARIABLE_TREE::Consolidive(VAR_NODE *node,
             // of the canonical name.  Pity.
             size_t index = cob_fields.FetchByNameAndOffset(program_id,parent,child,offset);
 
-            if( index != NO_INDEX ) {
+            if( index != NO_INDEX )
+                {
                 // We can now link this node to this cob_field because they have the
                 // same program-id, youngest cobol_symbol, and offset
                 COB_FIELD cob_field = cob_fields.v_cob_fields[index];
                 base_symbol  = cob_field.b_name;
                 node->f_name = cob_field.f_name;
-            }
+                }
             node->b_name = base_symbol;
-        }
+            }
 
         for(VVAR_NODES::const_iterator it=node->children.begin();
                 it!=node->children.end();
-                it++) {
+                it++)
+            {
             VAR_NODE *child = *it;
             // Check our children
             Consolidive(child,base_symbol,cob_fields);
@@ -1128,35 +1181,39 @@ VARIABLE_TREE::Consolidive(VAR_NODE *node,
             // for B.  So, we can start to infer some information for unreferenced variables
             // (as a minimum, where they are) by propogating base_symbol upward:
             node->b_name = base_symbol;
-        }
-    }
-}
-
-void
-VARIABLE_TREE::PropogateBaseName(VAR_NODE *node,
-                                 string &base_symbol)
-{
-    PROFILER;
-    if( node ) {
-        if( node->level <= 1 OR node->level EQ 77 ) {
-            base_symbol = node->b_name;
-        } else {
-            node->b_name = base_symbol;
-        }
-
-        if( !base_symbol.empty() ) {
-            for(VVAR_NODES::const_iterator it=node->children.begin(); it!=node->children.end(); it++) {
-                VAR_NODE *child = *it;
-                // Check our children
-                PropogateBaseName(child,base_symbol);
             }
         }
     }
-}
 
-void
-VARIABLE_TREE::Consolidate(const COB_FIELDS &cob_fields)
-{
+void VARIABLE_TREE::PropogateBaseName(VAR_NODE *node,
+                                      string &base_symbol)
+    {
+    PROFILER;
+    if( node )
+        {
+        if( node->level <= 1 OR node->level EQ 77 )
+            {
+            base_symbol = node->b_name;
+            }
+        else
+            {
+            node->b_name = base_symbol;
+            }
+
+        if( !base_symbol.empty() )
+            {
+            for(VVAR_NODES::const_iterator it=node->children.begin(); it!=node->children.end(); it++)
+                {
+                VAR_NODE *child = *it;
+                // Check our children
+                PropogateBaseName(child,base_symbol);
+                }
+            }
+        }
+    }
+
+void VARIABLE_TREE::Consolidate(const COB_FIELDS &cob_fields)
+    {
     PROFILER;
     // data_description has f_ and b_ entries for working-storage and linkage
     // variables that are referenced in the COBOL code
@@ -1175,16 +1232,17 @@ VARIABLE_TREE::Consolidate(const COB_FIELDS &cob_fields)
     // data_description.
 
     string base_symbol="";
+    Dump();
     Consolidive(root,base_symbol,cob_fields);
     base_symbol="";
+    Dump();
     PropogateBaseName(root,base_symbol);
     BuildFlatList(root,flat_list);
     AdjustFlatList();
-}
+    }
 
-void
-VARIABLE_TREE::DumpANode(const VAR_NODE *node) const
-{
+void VARIABLE_TREE::DumpANode(const VAR_NODE *node) const
+    {
     PROFILER;
     cout << setw(20) << node->program;
     cout << setw(20) << node->section;
@@ -1193,7 +1251,7 @@ VARIABLE_TREE::DumpANode(const VAR_NODE *node) const
     cout << setw(30) << node->name;
     cout << setw(16) << node->picture;
     cout << setw( 8) << node->usage;
-    cout << setw(20) << node->redefines;
+    cout << setw(30) << node->redefines;
     cout << setw( 7) << node->occurs;
     cout << setw( 7) << node->f_name;
     cout << setw( 7) << node->b_name;
@@ -1203,11 +1261,10 @@ VARIABLE_TREE::DumpANode(const VAR_NODE *node) const
     cout << setw( 4) << (node->is_global ? "GLB" : "");
     cout << setw( 4) << (node->is_external ? "EXT" : "");
     cout << endl;
-}
+    }
 
-void
-VARIABLE_TREE::DumpFlatList() const
-{
+void VARIABLE_TREE::DumpFlatList() const
+    {
     PROFILER;
     cout << "VARIABLE_TREE::FlatList:" << endl;
     cout << setw(20) << "program";
@@ -1217,7 +1274,7 @@ VARIABLE_TREE::DumpFlatList() const
     cout << setw(30) << "name";
     cout << setw(16) << "picture";
     cout << setw( 8) << "usage";
-    cout << setw(20) << "redefines";
+    cout << setw(30) << "redefines";
     cout << setw( 7) << "occurs";
     cout << setw( 7) << "f_name";
     cout << setw( 7) << "b_name";
@@ -1230,21 +1287,22 @@ VARIABLE_TREE::DumpFlatList() const
 
     for(VVAR_NODES::const_iterator it=flat_list.begin();
             it!=flat_list.end();
-            it++) {
+            it++)
+        {
         VAR_NODE *node = *it;
         DumpANode(node);
-    }
+        }
     cout << endl;
-}
+    }
 
-void
-VARIABLE_TREE::FormatVariablesInfo(stringstream &ss,
-                                   const COB_FIELDS &cob_fields,
-                                   const COB_FIELD_ATTRIBUTES &cob_field_attributes,
-                                   const COB_PIC_SYMBOLS &cob_pic_symbols) const
-{
+void VARIABLE_TREE::FormatVariablesInfo(stringstream &ss,
+                                        const COB_FIELDS &cob_fields,
+                                        const COB_FIELD_ATTRIBUTES &cob_field_attributes,
+                                        const COB_PIC_SYMBOLS &cob_pic_symbols) const
+    {
     PROFILER;
-    for(VVAR_NODES::const_iterator it=flat_list.begin(); it!=flat_list.end(); it++) {
+    for(VVAR_NODES::const_iterator it=flat_list.begin(); it!=flat_list.end(); it++)
+        {
         VAR_NODE *node = *it;
 
         string f_name = node->f_name;
@@ -1255,9 +1313,11 @@ VARIABLE_TREE::FormatVariablesInfo(stringstream &ss,
         int attr_scale  = 0 ;
         int attr_flags  = 0 ;
         string picture = node->picture;
-        if( pfield ) {
+        if( pfield )
+            {
             pattr = cob_field_attributes.GetFieldAttribute(pfield->a_name);
-            if( pattr ) {
+            if( pattr )
+                {
                 attr_type   = pattr->type;
                 attr_digits = pattr->digits;
                 attr_scale  = pattr->scale;
@@ -1265,11 +1325,12 @@ VARIABLE_TREE::FormatVariablesInfo(stringstream &ss,
 
                 string p_name = pattr->p_name;
                 const COB_PIC_SYMBOL *ppic = cob_pic_symbols.GetPicSymbol(p_name);
-                if( ppic ) {
+                if( ppic )
+                    {
                     picture = ppic->pic_symbol;
+                    }
                 }
             }
-        }
 
         ss << "D|";
         ss << node->section.substr(0,2) << "|";
@@ -1286,6 +1347,6 @@ VARIABLE_TREE::FormatVariablesInfo(stringstream &ss,
         ss << ZeroIsNull(attr_digits) << "|" ;
         ss << ZeroIsNull(attr_scale) << "|" ;
         ss << ZeroIsNull(attr_flags) << "~";
+        }
     }
-}
 

@@ -48,7 +48,7 @@
 
 using namespace std;
 
-// #define DUMPING
+#define DUMPING
 
 void
 scan_test(const string &filename)
@@ -308,11 +308,6 @@ main(int argc, char *argv[])
     // a normalized rendition of the parsed STORAGE sections.  We read that
     // in, and build a COBOL identifier tree based on the various storage
     // sections and the COBOL 77 01 02 03 data heirarchy.
-    variable_tree.ReadFromFile(params.cbl_lst);
-    variable_tree.BuildCanonicalName();
-#if defined(DUMPING)
-//    variable_tree.Dump();
-#endif
 
     // Scan the .h files for working storage and local storage locations
     ScanAllDotHFiles(params.c_filename.Path(),
@@ -329,6 +324,9 @@ main(int argc, char *argv[])
                    cob_data,
                    cob_fields
                   );
+
+    variable_tree.ReadFromFile(params.cbl_lst);
+    variable_tree.BuildCanonicalName(cob_data);
 
     // The f_/b_ cross reference is as complete as we know how to make it.
     // Scan cob_fields, updating the parent variables and building the lookup map
@@ -352,10 +350,11 @@ main(int argc, char *argv[])
 
     // The Consolidate() routine puts them together.
 
+    variable_tree.Dump();
     variable_tree.Consolidate(cob_fields);
 #if defined(DUMPING)
     variable_tree.Dump();
-    variable_tree.DumpFlatList();
+    //variable_tree.DumpFlatList();
 #endif
     // Create the .sym.c file that will be compiled and linked into the
     // executable, providing the text that will become the executable's

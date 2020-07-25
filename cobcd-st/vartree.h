@@ -222,7 +222,7 @@ private:
     void DumpNode(std::ostream &sout, const VAR_NODE *node);
     void FindParentOf(VVAR_NODES &parents,int level);
     void ForceParent(VVAR_NODES &parents,const std::string &program_id);
-    void BuildCanonicalName(VAR_NODE *var_node);
+    void BuildCanonicalName(VAR_NODE *var_node, const COB_DATA &cob_data);
     void BuildFlatList(VAR_NODE *node,VVAR_NODES &flat);
     void AdjustFlatList();
 
@@ -238,7 +238,7 @@ public:
     ~VARIABLE_TREE();
     void ChopDownTheTree();
     void ReadFromFile(std::ifstream &ifs);
-    void BuildCanonicalName();
+    void BuildCanonicalName(const COB_DATA &cob_data);
     void Dump(std::ostream &s = std::cout);
     void Consolidate(const COB_FIELDS &cob_fields);
     void DumpANode(const VAR_NODE *node) const;
