@@ -193,6 +193,11 @@ public:
     {
         return offset;
     }
+    void
+    SetOffset(int n)
+    {
+        offset = n;
+    }
     VVAR_NODES
     GetChildren()
     {
