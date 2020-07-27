@@ -35,6 +35,7 @@ import re
 import sys
 import os
 import traceback
+import datetime
 
 #   This module implements the gdb extension commands cprint and cwatch
 #
@@ -2690,6 +2691,58 @@ class TabFileInformation() :
         self.current_trapped_file = ""
         self.current_trapped_line = 0
 
+    def ReadVariableString(self, string_name) :
+        retval = ""
+
+        # We are going to use the x/ns "memory as string" command, which reads
+        # in n blocks of some number of characters.  On gdb 8.3, each block seems
+        # to be 201 characters. I can't know if that's universal, so I am going
+        # to make this code adaptive
+
+        # We are going to read a single line of the string, in order to figure
+        # how how many characters per line we're going to get:
+
+        the_address = GetAddressOf(string_name)
+        command = "x/1s " + str(the_address)
+        the_data = gdb.execute(command,False,True)
+        index1 = the_data.find('"')
+        if index1 != -1 :
+            index2 = the_data.find('"',index1+1)
+            if( index2 != -1 ) :
+                total_length = int(the_data[index1+1:index1+1+9])
+                chars_each_line = index2-(index1+1);
+
+                # We know the total length, and we know the number of
+                # chars we will get in each block.  So, we can calculate
+                # the number of blocks we need to ask for, and build
+                # that command:
+                blocks = (total_length + chars_each_line-1) // chars_each_line
+                command = "x/" + str(blocks) + "s " + str(the_address)
+
+                # And we can get that data
+                the_data = gdb.execute(command,False,True)
+
+                # And now we loop through the data, extracting each chunk
+                is_first_line = True
+                index2 = 0
+                lines = []
+                while True :
+                    index1 = the_data.find('"',index2+1)
+                    if index1 == -1 :
+                        break;
+                    index2 = the_data.find('"',index1+1)
+                    if index2 == -1 :
+                        break;
+                    if is_first_line :
+                        index1 += 9
+                        is_first_line = False
+                    lines.append(the_data[index1+1:index2])
+
+                # and now that we have all the chunks, we can assemble
+                # them into the VARIABLE_STRING_xxx
+                self.current_variable_string = "".join(lines)
+        return
+
     def ProcessInfoStack(self, info_stack) :
         """ Figures out which routine we are currently trapped in"""
 
@@ -2719,20 +2772,8 @@ class TabFileInformation() :
             name_root = name_root[-1]
             name_root = name_root.replace('.','_')
             string_name = "VARIABLE_STRING_" + name_root.upper()
-            the_address = GetAddressOf(string_name)
 
-            # And pick up that string, byte by laborious byte:
-            self.current_variable_string = ""
-            while True :
-                command = "x/1xb " + str(the_address)
-                the_byte_string = gdb.execute(command,False,True)
-                nfound = the_byte_string[2:].find("0x")
-                the_byte = int(the_byte_string[nfound+2:],16)
-                if the_byte == 0 :
-                    # This is the end of a C-string
-                    break;
-                the_address += 1
-                self.current_variable_string += chr(the_byte)
+            self.ReadVariableString(string_name)
 
             # We have us a new variable string
             # Clear out the tables:
