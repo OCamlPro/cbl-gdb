@@ -1097,7 +1097,7 @@ VARIABLE_TREE::FormatVariablesInfo(stringstream &ss,
     for(VVAR_NODES::const_iterator it=flat_list.begin(); it!=flat_list.end(); it++) {
         VAR_NODE *node = *it;
 
-        if( node->b_name.empty() ) {
+        if( node->b_name.empty() AND node->section != "LOCAL-STORAGE") {
             // If there is no base name, then don't bother creating a record.  The
             // Python wouldn't be able to do anything with it, anyway.
             continue;
