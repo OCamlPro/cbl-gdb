@@ -118,19 +118,28 @@ CreateSymc(PARAMETERS &params,
     string current_program = "";
 
     // At this point, ss contains a potentially huge literal string.
-    // We're going to bust it up into smaller pieces.
+    // The Python code, in order to read it fairly efficiently, needs to know
+    // how long it is.  We are going to prepend a nine digit number to the
+    // beginning of the string
 
-    string s = ss.str();
+    char ach[16];
+    sprintf(ach,"%9.9u",(int)ss.str().size()+9);
+
+    string s = ach;
+    s += ss.str();
+
+    // Build the C-code for the global variable string
     ss.str("");
 
+    // Start with the name
     for(size_t i=0; i<fname.size(); i++) {
         if( fname[i] EQ '.' ) {
             fname[i] = '_' ;
         }
     }
-
     ss << "char VARIABLE_STRING_" << Upper(fname) << "[]=" << endl;
 
+    // Break up the actual data into smaller pieces, so that it will compile.
     const int SEGMENT_LENGTH = 78;
     int walker = 0;
     int remaining = (int)s.length();
