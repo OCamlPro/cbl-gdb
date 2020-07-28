@@ -1,6 +1,7 @@
 // cobcd-rw.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
+#include <string.h>
 #include <iostream>
 #include <set>
 #include <string>
@@ -14,6 +15,17 @@ using namespace std;
 #define OR ||
 
 extern set<string>CobolReservedWords;
+
+char *ToUpper(char *s)
+    {
+    char *p = s;
+    while(*p)
+        {
+        *p = toupper(*p);
+        p += 1;
+        }
+    return s;
+    }
 
 void GetRidOfComments(char *s)
     {
@@ -169,7 +181,7 @@ void FindTokensIn(char *s,set<string> &results)
     // This routine feels free to destroy the string it's been handed.
     // You Have Been Warned
 
-    _strupr(s);  // See? We've already started.
+    ToUpper(s);  // See? We've already started.
 
     GetRidOfComments(s);
     GetRidOfTextLiterals(s);

@@ -3,3 +3,5 @@ Release
 Debug
 x64
 cobcd-rw
+*.d
+*.o
