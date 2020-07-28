@@ -1,3 +1,5 @@
+CPP = g++
+export CPP
 CXXFLAGS:=-std=c++11 -Wall -O3
 export CXXFLAGS
 
@@ -13,14 +15,16 @@ CWD:=$(shell basename `pwd`)
 all: cobcd cobcd.bat
 ## Make sure the VERSION text in cobcd.py is up-to-date
 	$(MAKE) -C python
-## Then you can make cobst
+## Then you can make cobst and friends
 	$(MAKE) -C cobcd-st
 	$(MAKE) -C cobcd-sfix
+	$(MAKE) -C cobcd-rw
 
 .PHONY : test
 test:
 	$(MAKE) -C cobcd-st
 	$(MAKE) -C cobcd-sfix
+	$(MAKE) -C cobcd-rw
 ifeq ($(COBCDEXISTS), $(COBCD))
 	$(MAKE) -C optfde01
 endif
@@ -29,6 +33,7 @@ endif
 clean:
 	$(MAKE) -C cobcd-st clean
 	$(MAKE) -C cobcd-sfix clean
+	$(MAKE) -C cobcd-rw clean
 	$(MAKE) -C optfde01 clean
 
 cobcd : include/version.h
@@ -44,6 +49,7 @@ install:
 	install cobcd.bat $(DESTDIR)/bin/
 	$(MAKE) -C cobcd-st install
 	$(MAKE) -C cobcd-sfix install
+	$(MAKE) -C cobcd-rw install
 	$(MAKE) -C python install
 	@/bin/echo -e "\033[0;33m"
 	@echo "In order for gdb to be able to load the Python script that displays COBOL variables,"
@@ -63,8 +69,8 @@ uninstall:
 	rm -f $(DESTDIR)/bin/cobcd.bat
 	$(MAKE) -C cobcd-st uninstall
 	$(MAKE) -C cobcd-sfix uninstall
+	$(MAKE) -C cobcd-rw uninstall
 	$(MAKE) -C python uninstall
-
 
 #	copy cbl-gdb to cblgdb-x.y, tarball the copy, and delete the copy
 .PHONY : package
@@ -80,4 +86,5 @@ package : clean
 pregit:
 	$(MAKE) -C cobcd-st pregit
 	$(MAKE) -C cobcd-sfix pregit
+	$(MAKE) -C cobcd-rw pregit
 	$(MAKE) -C python pregit

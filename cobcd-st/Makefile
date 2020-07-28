@@ -1,5 +1,4 @@
 project=cobcd-st
-CPP = g++
 
 DESTDIR ?=/usr/local
 

@@ -1,5 +1,4 @@
 project=cobcd-sfix
-CPP = g++
 
 DESTDIR ?=/usr/local
 
