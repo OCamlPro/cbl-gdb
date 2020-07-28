@@ -446,6 +446,13 @@ class VarTrie() :
                 #
                 # and terminate
                 return
+                
+    def GetAllPossibilities(self) :
+        # Typically in response to a 'print *'
+        paths = []
+        for index in range(len(self.storage_list)) :
+            paths.append(index)
+        return paths
 
     def GetListOfPossibilities(self,desired) :
         if isinstance(desired,list) :
@@ -467,31 +474,11 @@ class VarTrie() :
 
         if len(paths) == 1 :
             index = paths[0]
-# The following code was commented out because Marty Heyman wants to see
-# the whole group when a group is selected by name.  I'm leaving the commented
-# code in for now in case the decision gets refined.  If we revisit, it'll
-# save a few minutes if we want to expand on GROUPness. Bob Dubner, 2019-08-01
-#
-#            if self.storage_list[index].ListType == "GROUP" :
-#                level = self.storage_list[index].Level
-#                index += 1
-#                while index < len(self.storage_list) :
-#                    if self.storage_list[index].Level <= level \
-#                             or self.storage_list[index].Level > 49 :
-#                        break
-#                    # Note that the list is sorted by heirarchy
-#                    paths.append(index)
-#                    index += 1
 
         if len(paths) == 0 :
             # A strict attempt at matching what we were given has come up
             # with bupkis.  Let's start again with the very first element (if
             # there was more than one) and give him some options:
-
-            if desired == '*' :
-                for index in range(len(self.storage_list)) :
-                    paths.append(index)
-                return paths
 
             fragment = desired.split()[0]
 
@@ -2930,118 +2917,32 @@ class CPrintWorker() :
 
         args = self.ProcessDisplayMode(args)
 
-        payload_number = None
-        pstar = False
-        if len(args) == 1 :
-            if args[0] == '*' :
-                pstar = True
-                # If the single argument is an asterisk, then
-                # he is asking for a list of variables and values:
-
-            elif args[0].isdigit() :
-                # if the single argument is a number, then he is looking
-                # for a short_term_memory entry.  If the short-term entry is
-                # alphabetic, then it is a reference to a program-id.  If it
-                # is numeric, it's a payload number
-
-                # Pick up the value indexed by the argument:
-                index = int(args[0])
-
-                if index > 0 and index <= len(ShortTermMemory.short_term_memory) :
-                    # If index is valid, pick up the short-term memory entry
-                    short_term_entry = ShortTermMemory.short_term_memory[index-1]
-                    if isinstance(short_term_entry, int) :
-                        # It is an integer; look up the payload number:
-                        payload_number = ShortTermMemory.short_term_memory[index-1]
-                    else :
-                        # It is text, meaning it is a program-id.  Pass it
-                        # along for expansion
-                        args[0] = short_term_entry
-
+        possibilities = []
         if len(args) >= 1 :
-            if payload_number == None :
+            if args[0] == '*' :
+                # If the first, presumably single, argument is an asterisk, then
+                # he is asking for a list of variables and values:
+                possibilities = TabFile.var_trie.GetAllPossibilities()
+            elif args[0].isdigit() :
+                # if the first, presumably single, argument is a number, then he is looking
+                # for a short_term_memory entry.  
+                
+                # Pick up the 1-based value indexed by the argument:
+                index = int(args[0])-1  
+                if index >= 0 and index < len(ShortTermMemory.short_term_memory) :
+                    # If index is valid, pick up the short-term memory entry
+                    possibilities = [ShortTermMemory.short_term_memory[index]] 
+            else :
                 # There are one or more arguments.  Use our clever routine
                 # to come up with the possibilities:
                 possibilities = TabFile.var_trie.GetListOfPossibilities(args)
-                if len(possibilities) == 1 and not pstar:
-                    # There's only one possibility, and it wasn't a star.
-                    # This is nice and simple.
-                    # We'll just move ahead and process it.
-                    payload_number = possibilities[0]
-                elif len(possibilities) > 1 or (len(possibilities) > 0 and pstar) :
-                    # There are multiple possibilities, or there is one
-                    # possibility found via a 'p *'.
-                    # Load them into short-term memory:
-                    ShortTermMemory.short_term_memory = possibilities
 
-                    if self.machine_interface_mode :
-                        # This is machine interface mode
-                        # Our mission is to emulate the
-                        # '-stack-list-variables --simple-values'
+            # What we do now depends on how many possibilities there are
 
-                        s = "variables=["
-                        for payload_index in possibilities :
-                            payload = TabFile.var_trie.storage_list[payload_index]
-                            payload.FetchVariableData(TabFile.line_list , False)
-                            if not payload.not_in_context :
-                                name = ""
-                                name += payload.display_name;
-                                n = name.find(' ')
-                                if n > -1 :
-                                    name = name[:n] + '-' + name[n+1:]
-                                n = name.find(' ')
-                                if n > -1 :
-                                    name = name[:n]
-
-                                # Everything after the final slash is the program
-                                # name, which is redundant and takes up valuable
-                                # screen real estate.  Clear it out.
-
-                                n = name.rfind('/')
-                                if n > -1 :
-                                    name = name[:n]
-
-                                body , body_length = MachineInterfaceBody(payload.display_body)
-
-                                s += '{name="'
-                                s += name
-                                s += '"'
-
-                                s += ',type="char *"'
-
-                                s += r',value="'
-                                s += payload.location
-                                s += r' \"'
-                                s += body
-                                s += r'\""},'
-                        if s[-1] == ',' :
-                            s = s[:-1]  # Strip off final comma
-                        s += ']'
-                        print(NoNulls(s))
-
-                    else :
-                        # This is human-interactive mode
-                        # and show them to our user
-                        line_counter = 1
-                        for payload_index in possibilities :
-                            payload = TabFile.var_trie.storage_list[payload_index]
-                            payload.FetchVariableData(TabFile.line_list , False)
-                            if not payload.not_in_context :
-                                s = "{0:2} : ".format(line_counter)
-                                s += payload.display_name
-                                s += " : "
-                                s += payload.display_body
-                                print(NoNulls(s))
-                                line_counter += 1
-                    payload_number = None
-
-        # At this point, if we have a single payload, it's time to show
-        # that to our user:
-        if payload_number != None :
-            # print("Payload number is ", payload_number)
-
+        if len(possibilities) == 1 :
+            # There is but one possibility
             # Pick up the payload from the list
-            payload = TabFile.var_trie.storage_list[payload_number]
+            payload = TabFile.var_trie.storage_list[possibilities[0]]
 
             if rside :
                 payload.SetToRside(TabFile.line_list, rside)
@@ -3059,6 +2960,70 @@ class CPrintWorker() :
                 # Human-interface:
                 # And display the variable according to the current list v-level
                 self.FormattedDisplay(payload)
+        else :
+            # There is more than one possibility:
+
+            if self.machine_interface_mode :
+            # This is machine interface mode
+            # Our mission is to emulate the
+            # '-stack-list-variables --simple-values'
+                s = "variables=["
+                for payload_index in possibilities :
+                    payload = TabFile.var_trie.storage_list[payload_index]
+                    payload.FetchVariableData(TabFile.line_list , False)
+                    if not payload.not_in_context :
+                        name = ""
+                        name += payload.display_name;
+                        n = name.find(' ')
+                        if n > -1 :
+                            name = name[:n] + '-' + name[n+1:]
+                        n = name.find(' ')
+                        if n > -1 :
+                            name = name[:n]
+
+                            # Everything after the final slash is the program
+                            # name, which is redundant and takes up valuable
+                            # screen real estate.  Clear it out.
+
+                        n = name.rfind('/')
+                        if n > -1 :
+                            name = name[:n]
+
+                        body , body_length = MachineInterfaceBody(payload.display_body)
+
+                        s += '{name="'
+                        s += name
+                        s += '"'
+
+                        s += ',type="char *"'
+
+                        s += r',value="'
+                        s += payload.location
+                        s += r' \"'
+                        s += body
+                        s += r'\""},'
+                        if s[-1] == ',' :
+                            s = s[:-1]  # Strip off final comma
+                        s += ']'
+                        print(NoNulls(s))
+
+            else :
+                ShortTermMemory.short_term_memory = []
+            
+                # This is human-interactive mode
+                # and show them to our user
+                line_counter = 1
+                for payload_index in possibilities :
+                    payload = TabFile.var_trie.storage_list[payload_index]
+                    payload.FetchVariableData(TabFile.line_list , False)
+                    if not payload.not_in_context :
+                        ShortTermMemory.short_term_memory.append(payload_index)
+                        s = "{0:2} : ".format(line_counter)
+                        s += payload.display_name
+                        s += " : "
+                        s += payload.display_body
+                        print(NoNulls(s))
+                        line_counter += 1
 
 class CWatchWorker() :
     """Does most of the non-gdb work of CWatch()"""
@@ -3118,7 +3083,7 @@ class CWatchWorker() :
         else :
             print(command)
 
-    def ProcessArgumentsW(self, TabFile, ShortTermMemory, arguments) :
+    def ProcessWArgumentsW(self, TabFile, ShortTermMemory, arguments) :
         # The command is typically "cw A
 
         args = arguments.split()
@@ -3224,30 +3189,13 @@ if 'gdb' in sys.modules :
 
         def invoke (self, arguments, from_tty):
             self.TabFile.ReadSymbolTableText()
-            self.Worker.ProcessArgumentsW(self.TabFile,GV_ShortTermMemory,arguments)
+            self.Worker.ProcessWArgumentsW(self.TabFile,GV_ShortTermMemory,arguments)
 
 if 'gdb' not in sys.modules:
     # I debug with Visual Studio in Windows, which doesn't provide a gdb object.
     # Test code goes here
     #Worker = CPrintWorker()
     #Worker.ProcessInfoSource("|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
-    #Worker.ProcessInfoSource("|Located in Y:\cobol\cbl-gdb\selfcheck\program_under_test.cbl ")
-    #Worker.ProcessInfoSource("|Located in Y:\cobol\cbl-gdb\samples\ref_test_1\rtest.cbl ")
-    #Worker.ProcessInfoStack("Line 60 ")
-    #Worker.ProcessInfoSource("|Located in Y:/cobol/cbl-gdb/samples/ref_test_0/rtest.cbl ")
-    #Worker.ProcessInfoStack("Line:4\n")
-    #Worker.ProcessArguments("*")
-    #Worker.ProcessArguments("/m *")
-
-#    Worker.ProcessArguments("*")
-#    Worker.ProcessArguments("/m *")
-#    Worker.ProcessArguments("/m my-counters/working-data/optfde01")
-    #Worker.ProcessArguments("V=.0000999999999")
-
-#    WWorker = CWatchWorker()
-#    WWorker.ProcessInfoSourceW("|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
-#    Worker.ProcessInfoStackW("Line 34 ")
-#    WWorker.ProcessArgumentsW("*")
     pass
 else:
     CPrint()
