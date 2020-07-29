@@ -172,7 +172,7 @@ CreateSymc(PARAMETERS &params,
             seg += ch;
         }
         size_t nfound_comment = seg.find("#");
-        if( !in_copyright AND nfound_comment != string::npos ) {
+        if(false AND !in_copyright AND nfound_comment != string::npos ) {
             // There is a pound sign, which is the Python comment signal
             size_t nfound_quote = seg.find_first_of("'\"");
             if( nfound_quote > nfound_comment ) {
@@ -181,7 +181,8 @@ CreateSymc(PARAMETERS &params,
             }
         }
 
-        if( !Trim(seg).empty() ) {
+        //if( !Trim(seg).empty() )
+        {
             seg += '\n';
             size_t t = strlen(py);
             strcpy(py+t,seg.c_str());
