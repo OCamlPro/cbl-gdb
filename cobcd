@@ -325,7 +325,7 @@ rm $TFILE
 FILE_CBL=$(echo $TRIPLE_X_PRIME | sed -e 's/.* \(\S\+\) preprocessing: .*/\1/')
 
 ## Come up with TRIPLE_X for the -S command:
-OUR_COMMAND="-S -g -d --fgen-c-line-directives --fgen-c-labels $COBCDXM $COBCDFLAGS $COMMAND_LINE"
+OUR_COMMAND="-S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels $COBCDXM $COBCDFLAGS $COMMAND_LINE"
 ## If we were supplied with a -o switch, it screws things up at this point.  So, let's get rid of it, if it is there
 OUR_COMMAND=$(echo $OUR_COMMAND | sed 's/\s\+-o\s*\S\+/ /')
 TRIPLE_X=$($COBC -### $OUR_COMMAND 2>&1)
