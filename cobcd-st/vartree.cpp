@@ -359,6 +359,28 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             continue;
         }
 
+        // I'm getting bored with some of this nonsense.
+        // But as we run more and more code through this program, we keep
+        // coming up with stuff that needs to be skipped over
+
+        size_t nfound = input.find("ANY LENGTH");
+        if( nfound != string::npos )
+            {
+            input.replace(nfound,10,"          ");
+            }
+
+        nfound = input.find("ANY NUMERIC");
+        if( nfound != string::npos )
+            {
+            input.replace(nfound,11,"          ");
+            }
+
+        nfound = input.find("ALIGNED");
+        if( nfound != string::npos )
+            {
+            input.replace(nfound,7,"       ");
+            }
+
         vector<string>tokens = Split(input," \t");
         if(tokens.size() EQ 0) {
             // Ignore blank lines
@@ -1131,6 +1153,7 @@ VARIABLE_TREE::FormatVariablesInfo(stringstream &ss,
         ss << node->section.substr(0,2) << "|";
         ss << ZeroIsNull(node->level) << "|" ;
         ss << node->canonical_name << "|" ;
+        ss << node->f_name << "|" ;
         ss << node->b_name << "|" ;
         ss << ZeroIsNull(node->offset) << "|" ;
         ss << node->type.substr(0,1) << "|" ;
