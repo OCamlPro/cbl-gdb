@@ -36,6 +36,8 @@ import sys
 import os
 import traceback
 import datetime
+import subprocess
+
 
 #   This module implements the gdb extension commands cprint and cwatch
 #
@@ -259,6 +261,7 @@ class VarTrie() :
         our_node = trie
 
         for name in name_tokens :
+            name = name.upper()
             if name not in our_node.children :
                 new_child = VarTrieNode()
                 new_child.piece_of_name = name
@@ -299,9 +302,9 @@ class VarTrie() :
             if len(name_tokens) >= 1 :
                 payload = CobolVariable()
 
-                payload.Program    = name_tokens[-1]
+                payload.Program    = name_tokens[-1].upper()
                 payload.Section    = tokens[indexSection]
-                payload.Name       = tokens[indexName]
+                payload.Name       = tokens[indexName].upper();
                 payload.Level      = int(BlankIsZero(tokens[indexLevel]))
                 payload.Base       = tokens[indexBase]
                 #payload.Field      = tokens[indexField]
@@ -514,6 +517,19 @@ class VarTrie() :
 
         return paths
 
+    def GetListOfExactPossibilities(self,token) :
+        # We are going to return variables that contain token in its
+        # exact, case-insensitive, form
+
+        token = token.upper();
+
+        # Wander through the forest, looking for possible paths:
+        paths = []
+        self.NameMatcher([token],0,self.storage_trie,paths)
+
+        return paths
+
+
 class LineList() :
     """List of starting lines of ProgramNames"""
 
@@ -560,7 +576,7 @@ class LineList() :
         if len(variable_line) > 0 and variable_line[0] == 'P' :
             tokens = variable_line.split("|")
             if len(tokens) >= 3 :
-                program_id = tokens[2]
+                program_id = tokens[2].upper()
                 line_number = int(tokens[1])
                 self.Insert(line_number,program_id)
 
@@ -2677,6 +2693,7 @@ class TabFileInformation() :
         self.current_trapped_routine = ""
         self.current_trapped_file = ""
         self.current_trapped_line = 0
+        self.usual_suspects_range = 6
 
     def ReadVariableString(self, string_name) :
         retval = ""
@@ -2805,11 +2822,22 @@ class ShortTermMemory() :
 GV_ShortTermMemory = ShortTermMemory()
 
 def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode) :
+    possibilities = []
     if len(args) >= 1 :
         if args[0] == '*' :
             # If the first, presumably single, argument is an asterisk, then
             # he is asking for a list of variables and values:
             possibilities = TabFile.var_trie.GetAllPossibilities()
+        elif args[0] == '?' :
+            # If the first, presumably single, argument is a question mark,
+            # then we need to round up the usual suspects.
+            return_string = subprocess.check_output(["cobcd-rw", TabFile.current_trapped_file, str(TabFile.current_trapped_line), str(TabFile.usual_suspects_range) ])
+            tokens = return_string.split()
+            ss = set()
+            for token in tokens :
+                token = token.decode("utf-8")
+                ss = ss.union(set(TabFile.var_trie.GetListOfExactPossibilities(token)))
+            possibilities = list(ss)
         elif args[0].isdigit() :
             # if the first, presumably single, argument is a number, then he is looking
             # for a short_term_memory entry.
@@ -2826,7 +2854,7 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode) :
 
         # What we do now depends on how many possibilities there are
 
-    if len(possibilities) > 1 :
+    if len(possibilities) > 1 or machine_interface_mode :
         # There is more than one possibility:
         if machine_interface_mode :
         # This is machine interface mode
@@ -2870,7 +2898,7 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode) :
                     if s[-1] == ',' :
                         s = s[:-1]  # Strip off final comma
                     s += ']'
-                    print(NoNulls(s))
+            print(NoNulls(s))
 
         else :
             ShortTermMemory.short_term_memory = []
@@ -3014,17 +3042,17 @@ class CPrintWorker() :
             if rside :
                 payload.SetToRside(TabFile.line_list, rside)
 
-            # Fetch the data again, just in case he executed some instructions
-            # since short-term-memory was established
-            payload.FetchVariableData(TabFile.line_list , True)
+                if self.machine_interface_mode :
+                    body , body_length = MachineInterfaceBody(payload.display_body)
 
-            if self.machine_interface_mode :
-                body , body_length = MachineInterfaceBody(payload.display_body)
+                    s = payload.display_name + " set to " + body
+                    print(s)
 
-                s = payload.display_name + " set to " + body
-                print(s)
-            else :
+            if not self.machine_interface_mode :
                 # Human-interface:
+                # Fetch the data again, just in case he executed some instructions
+                # since short-term-memory was established
+                payload.FetchVariableData(TabFile.line_list , True)
                 # And display the variable according to the current list v-level
                 self.FormattedDisplay(payload)
 
