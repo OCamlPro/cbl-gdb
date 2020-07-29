@@ -3029,7 +3029,12 @@ class CPrintWorker() :
             rside = preargs[1]
 
         # The variable name side is to the left of any '=' character
-        args = preargs[0].split()
+        args = []
+        argsargs = preargs[0].split()
+        for arg in argsargs :
+            if arg[0] != '/' :
+                arg = arg.upper()
+            args.append(arg)
 
         args = self.ProcessDisplayMode(args)
 
