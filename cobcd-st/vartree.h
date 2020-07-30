@@ -84,6 +84,7 @@ static const int LEVEL_FILE    = 0;    // Special handling for the FILE type
 static const int LEVEL_01      = 01;   // Just to avoid magic numbers;
 static const int LEVEL_66      = 66;   // ibid.;
 static const int LEVEL_77      = 77;   // ibid.;
+static const int LEVEL_78      = 78;   // ibid.;  This is a MicroFocus extension; like 77, but read-only
 static const char SECTION_INPUT_OUTPUT[]= "INPUT-OUTPUT";
 
 typedef std::pair<std::string,std::string> PSS;

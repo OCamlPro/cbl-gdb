@@ -613,20 +613,22 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             // Just ignore "No fields defined."
             delete new_node;
             continue;
-        } else if(tokens.size() EQ 3
-                  AND (       tokens[1] EQ "88"
-                              OR  tokens[2] EQ "66"
-                              OR  tokens[3] EQ "78")
-                 ) {
-            // Just ignore types we can't handle
-            delete new_node;
-            continue;
+        //} else if(tokens.size() EQ 3
+        //          AND (       tokens[1] EQ "88"
+        //                      OR  tokens[2] EQ "66"
+        //                      OR  tokens[3] EQ "78")
+        //         ) {
+        //    // Just ignore types we can't handle
+        //    delete new_node;
+        //    continue;
         } else {
-            cerr << "cobcd-st: VARIABLE_TREE::ReadFromFile() doesn't know how to handle";
+            cerr << "cobcd-st: VARIABLE_TREE::ReadFromFile() doesn't know how to handle something in";
             cerr << endl;
             cerr << "\"" << input << "\"" << endl;
-            delete new_node;
-            exit(1);
+            cerr << "This is going to be ignored, but you should let Bob Dubner know about it.";
+            cerr << endl;
+            cerr << "Please copy this messsage, and e-mail it to to support@cobolworx.com";
+            cerr << endl;
         }
 
         if(!new_node->name.empty()) {
@@ -635,7 +637,7 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
             // Level 77 variables have to be atomic, which we don't care
             // about here.  But they also are children of the section, rather
             // than of a lower-leveled variable:
-            if( new_node->level EQ LEVEL_77) {
+            if( new_node->level EQ LEVEL_77 OR new_node->level EQ LEVEL_78) {
                 // Make sure that parent is the section:
                 FindParentOf(parents,LEVEL_SECTION+1);
             } else {
