@@ -285,17 +285,18 @@ class VarTrie() :
             indexSection=1
             indexLevel=2
             indexName=3
-            indexBase=4
-            indexOffset=5
-            indexListType=6
-            indexListSize=7
-            indexPicture=8
-            indexUsage=9
-            indexOccurs=10
-            indexAttrType=11
-            indexAttrDigits=12
-            indexAttrScale=13
-            indexAttrFlags=14
+            indexField=4
+            indexBase=5
+            indexOffset=6
+            indexListType=7
+            indexListSize=8
+            indexPicture=9
+            indexUsage=10
+            indexOccurs=11
+            indexAttrType=12
+            indexAttrDigits=13
+            indexAttrScale=14
+            indexAttrFlags=15
 
             tokens = variable_line.split("|")
             name_tokens =  tokens[indexName].split("/")
@@ -307,8 +308,7 @@ class VarTrie() :
                 payload.Name       = tokens[indexName].upper();
                 payload.Level      = int(BlankIsZero(tokens[indexLevel]))
                 payload.Base       = tokens[indexBase]
-                #payload.Field      = tokens[indexField]
-                #payload.Attr       = tokens[indexAttr]
+                payload.Field      = tokens[indexField]
                 payload.Offset     = int(BlankIsZero(tokens[indexOffset]))
                 payload.ListType   = tokens[indexListType]
                 payload.ListSize   = int(BlankIsZero(tokens[indexListSize]))
@@ -580,7 +580,6 @@ class LineList() :
                 line_number = int(tokens[1])
                 self.Insert(line_number,program_id)
 
-
 class CobolVariable() :
     """Manages the field, attributes, flags, and pointers of a GnuCOBOL COBOL variable"""
     def __init__ (self) :
@@ -591,7 +590,6 @@ class CobolVariable() :
         self.Level      = -1
         self.Base       = ""
         self.Field      = ""
-        self.Attr       = ""
         self.Offset     = 0
         self.ListType   = ""
         self.ListSize   = 0
@@ -1097,7 +1095,7 @@ class CobolVariable() :
         print("Name:       " , self.display_name    )
         print("Base:       " , self.Base            )
         print("Offset:     " , self.Offset          )
-        print("Attr:       " , self.Attr            )
+        #print("Attr:       " , self.Attr            )
         print("ListType:   " , self.ListType        )
 
         print("AttrType:   " , self.AttrType ,end="")
@@ -2010,42 +2008,43 @@ class CobolVariable() :
                 pcount += 1;
 
         negative = False
-        # DISPLAY keeps the negative bit in an oddball place:
-        if (self.data[self.ListSize-1] & 0x40) != 0 :
-            negative = True
+        if self.ListSize > 0 :
+            # DISPLAY keeps the negative bit in an oddball place:
+            if (self.data[self.ListSize-1] & 0x40) != 0 :
+                negative = True
 
-        # Convert the binary value in self.data to a string
-        for i in range(self.ListSize) :
-            digit = self.data[i] & 0x3F
-            body += chr(digit)
+            # Convert the binary value in self.data to a string
+            for i in range(self.ListSize) :
+                digit = self.data[i] & 0x3F
+                body += chr(digit)
 
-        if pcount > 0 :
-            # There is scaling involved
-            if self.AttrScale < 0 :
-                # scaling to the left of the decimal point
-                for i in range(pcount) :
-                    body += '0'
+            if pcount > 0 :
+                # There is scaling involved
+                if self.AttrScale < 0 :
+                    # scaling to the left of the decimal point
+                    for i in range(pcount) :
+                        body += '0'
+                else :
+                    # scaling to the right of the decimal point
+                    for i in range(pcount) :
+                        body = '0' + body
+                    body = self.decimal_point + body
+            elif self.AttrScale > 0 :
+                # No scaling
+                radix_point = self.ListSize - self.AttrScale
+                body = body[:radix_point] + self.decimal_point + body[radix_point:]
+
+            if negative :
+                body = '-' + body
             else :
-                # scaling to the right of the decimal point
-                for i in range(pcount) :
-                    body = '0' + body
-                body = self.decimal_point + body
-        elif self.AttrScale > 0 :
-            # No scaling
-            radix_point = self.ListSize - self.AttrScale
-            body = body[:radix_point] + self.decimal_point + body[radix_point:]
+                if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+                    body = '+' + body
 
-        if negative :
-            body = '-' + body
-        else :
-            if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
-                body = '+' + body
-
-        pic += "[ DISPLAY ("
-        pic += str(self.AttrDigits - self.AttrScale)
-        pic += ','
-        pic += str(self.AttrScale)
-        pic += ") ]"
+            pic += "[ DISPLAY ("
+            pic += str(self.AttrDigits - self.AttrScale)
+            pic += ','
+            pic += str(self.AttrScale)
+            pic += ") ]"
         return body , pic
 
     def StringToNumericDisplay(self,rside) :
@@ -3154,8 +3153,11 @@ if 'gdb' in sys.modules :
 
         def invoke (self, arguments, from_tty):
             # pick up the name of the current source file
-            self.TabFile.ReadSymbolTableText()
-            self.Worker.ProcessArguments(self.TabFile,GV_ShortTermMemory,arguments)
+            try :
+                self.TabFile.ReadSymbolTableText()
+                self.Worker.ProcessArguments(self.TabFile,GV_ShortTermMemory,arguments)
+            except :
+                traceback.print_exc()
 
     class CWatch (gdb.Command) :
         """Used for creating COBOL-NAMED watchpoints when debugging cobst processed object files."""
@@ -3167,8 +3169,11 @@ if 'gdb' in sys.modules :
             self.TabFile = TabFileInformation();
 
         def invoke (self, arguments, from_tty):
-            self.TabFile.ReadSymbolTableText()
-            self.Worker.ProcessWArgumentsW(self.TabFile,GV_ShortTermMemory,arguments)
+            try :
+                self.TabFile.ReadSymbolTableText()
+                self.Worker.ProcessWArgumentsW(self.TabFile,GV_ShortTermMemory,arguments)
+            except :
+                traceback.print_exc()
 
 if 'gdb' not in sys.modules:
     # I debug with Visual Studio in Windows, which doesn't provide a gdb object.
