@@ -365,7 +365,7 @@ if [ $ECHO ]
 
 ## Do the initial compilation that gives us the .c .h .i and .s files
 ## Rebuild our command, this time with our -T directive:
-OUR_COMMAND="-S -g -d --fgen-c-line-directives --fgen-c-labels -T $FILE_LST --tlines=0 --tsymbols $COBCDXM $COBCDFLAGS $COMMAND_LINE"
+OUR_COMMAND="-S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels -T $FILE_LST --tlines=0 --tsymbols $COBCDXM $COBCDFLAGS $COMMAND_LINE"
 OUR_COMMAND=$(echo $OUR_COMMAND | sed 's/\s\+-o\s*\S\+/ /')
 
 if [ "$ECHO" ]
