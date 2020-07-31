@@ -325,7 +325,7 @@ rm $TFILE
 FILE_CBL=$(echo $TRIPLE_X_PRIME | sed -e 's/.* \(\S\+\) preprocessing: .*/\1/')
 
 ## Come up with TRIPLE_X for the -S command:
-OUR_COMMAND="-S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels $COBCDXM $COBCDFLAGS $COMMAND_LINE"
+OUR_COMMAND="-S -g -fdump=ALL --fgen-c-line-directives --fgen-c-labels $COBCDXM $COBCDFLAGS $COMMAND_LINE"
 ## If we were supplied with a -o switch, it screws things up at this point.  So, let's get rid of it, if it is there
 OUR_COMMAND=$(echo $OUR_COMMAND | sed 's/\s\+-o\s*\S\+/ /')
 TRIPLE_X=$($COBC -### $OUR_COMMAND 2>&1)
@@ -365,7 +365,7 @@ if [ $ECHO ]
 
 ## Do the initial compilation that gives us the .c .h .i and .s files
 ## Rebuild our command, this time with our -T directive:
-OUR_COMMAND="-S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels -T $FILE_LST --tlines=0 --tsymbols $COBCDXM $COBCDFLAGS $COMMAND_LINE"
+OUR_COMMAND="-S -g -fdump=ALL --fgen-c-line-directives --fgen-c-labels -T $FILE_LST --tlines=0 --tsymbols $COBCDXM $COBCDFLAGS $COMMAND_LINE"
 OUR_COMMAND=$(echo $OUR_COMMAND | sed 's/\s\+-o\s*\S\+/ /')
 
 if [ "$ECHO" ]
