@@ -261,7 +261,6 @@ class VarTrie() :
         our_node = trie
 
         for name in name_tokens :
-            name = name.upper()
             if name not in our_node.children :
                 new_child = VarTrieNode()
                 new_child.piece_of_name = name
@@ -303,9 +302,9 @@ class VarTrie() :
             if len(name_tokens) >= 1 :
                 payload = CobolVariable()
 
-                payload.Program    = name_tokens[-1].upper()
+                payload.Program    = name_tokens[-1]
                 payload.Section    = tokens[indexSection]
-                payload.Name       = tokens[indexName].upper();
+                payload.Name       = tokens[indexName]
                 payload.Level      = int(BlankIsZero(tokens[indexLevel]))
                 payload.Base       = tokens[indexBase]
                 payload.Field      = tokens[indexField]
@@ -412,7 +411,14 @@ class VarTrie() :
             boy = boys[boy_index]
             #print("DEBUG boy",boy)
             #print("DEBUG trie.children.keys",trie.children.keys())
-            if boy in trie.children :
+            # Do a case-insensitive match:
+            bFound = False;
+            for child in trie.children :
+                if boy.upper() == child.upper() :
+                    bFound = True
+                    boy = child
+                    break
+            if bFound :
                 # We have found this boy's tree.  Advance both the boy
                 # and the trie.
                 next_trie = trie.children[boy]
@@ -521,8 +527,6 @@ class VarTrie() :
         # We are going to return variables that contain token in its
         # exact, case-insensitive, form
 
-        token = token.upper();
-
         # Wander through the forest, looking for possible paths:
         paths = []
         self.NameMatcher([token],0,self.storage_trie,paths)
@@ -576,7 +580,7 @@ class LineList() :
         if len(variable_line) > 0 and variable_line[0] == 'P' :
             tokens = variable_line.split("|")
             if len(tokens) >= 3 :
-                program_id = tokens[2].upper()
+                program_id = tokens[2]
                 line_number = int(tokens[1])
                 self.Insert(line_number,program_id)
 
@@ -969,7 +973,6 @@ class CobolVariable() :
 
             if 'gdb' in sys.modules :
                 try :
-                    #print(command)
                     data_string = gdb.execute(command,False,True)
                 except gdb.error:
                     # This exception is thrown when you ask for a LINKAGE
@@ -1033,7 +1036,6 @@ class CobolVariable() :
                             command += "+"
                             command += str(self.Offset)
 
-                        #print(command)
                         data_string = gdb.execute(command,False,True)
                         #print(data_string)
                     else :
@@ -1042,7 +1044,6 @@ class CobolVariable() :
                         self.not_in_context = True
 
                 except gdb.error:
-                    print("Not in context (gdb.error)")
                     self.not_in_context = True
             else :
                 # print("Can't do LOCAL-STORAGE in debug mode")
@@ -2692,7 +2693,7 @@ class TabFileInformation() :
         self.current_trapped_routine = ""
         self.current_trapped_file = ""
         self.current_trapped_line = 0
-        self.usual_suspects_range = 6
+        self.question_mark_range = 6
 
     def ReadVariableString(self, string_name) :
         retval = ""
@@ -2823,20 +2824,25 @@ GV_ShortTermMemory = ShortTermMemory()
 def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode) :
     possibilities = []
     if len(args) >= 1 :
-        if args[0] == '*' :
+        if args[0] == '*' or TabFile.question_mark_range < 0:
             # If the first, presumably single, argument is an asterisk, then
             # he is asking for a list of variables and values:
             possibilities = TabFile.var_trie.GetAllPossibilities()
         elif args[0] == '?' :
             # If the first, presumably single, argument is a question mark,
             # then we need to round up the usual suspects.
-            return_string = subprocess.check_output(["cobcd-rw", TabFile.current_trapped_file, str(TabFile.current_trapped_line), str(TabFile.usual_suspects_range) ])
-            tokens = return_string.split()
-            ss = set()
-            for token in tokens :
-                token = token.decode("utf-8")
-                ss = ss.union(set(TabFile.var_trie.GetListOfExactPossibilities(token)))
-            possibilities = list(ss)
+
+            if len(TabFile.current_trapped_file) > 0 :
+                return_string = subprocess.check_output(["cobcd-rw", \
+                                                          TabFile.current_trapped_file, \
+                                                          str(TabFile.current_trapped_line), \
+                                                          str(TabFile.question_mark_range) ])
+                tokens = return_string.split()
+                ss = set()
+                for token in tokens :
+                    token = token.decode("utf-8")
+                    ss = ss.union(set(TabFile.var_trie.GetListOfExactPossibilities(token)))
+                possibilities = list(ss)
         elif args[0].isdigit() :
             # if the first, presumably single, argument is a number, then he is looking
             # for a short_term_memory entry.
@@ -2937,7 +2943,7 @@ class CPrintWorker() :
     def __init__(self):
         self.current_source_file = ""
         self.sticky_display_mode = os.environ.get('CPRINT_V', '0')
-        self.current_display_mode = self.sticky_display_mode
+        self.question_mark_range = int(os.environ.get('CPRINT_R', '6'))
         self.machine_interface_mode = False
 
     def ProcessDisplayMode(self,args) :
@@ -2950,19 +2956,19 @@ class CPrintWorker() :
             if args[0] == '/h' :
                 print("COBOL print command usage:")
                 print("'print/h' prints this message.")
-                print("'print <arg>' shows <arg> formatted as specified below")
-                print("'print/v<n>' formats print results:")
-                print("'print/v<n>' with no arguments sets the session formatting")
+                print("'print <arg>' shows <arg> using session-default formatting")
                 print("'print/v<n> <arg>' displays <arg> with a one-time formatting override")
-                print("'print/v0' : just the variable  (this is the default)")
-                print("'print/v1' : variable and picture-string")
-                print("'print/v2' : variable and '01 full/name'")
-                print("'print/v3' : variable, pic-string, and '01 full/name'")
-                print("'print/v4' : two-line display with name, variable, and pic-string")
-                print("'print/v'  : same as /v4")
-                print("'print/vd' or print/d : debug output")
+                print("'print/v0' : name and variable on one line (this is the default)")
+                print("'print/v1' : just the variable")
+                print("'print/v2' : two-line display with name, then variable")
+                print("'print/d   : expanded information")
+                print("'print/v<n>' with no arguments sets the session formatting")
                 print("'print/m'  : generate output compatible with '-stack-list-variables --simple-values'")
-                print("default v-level can be set with the environment variable CPRINT_V=<n>")
+                print("'print *'  : print all variables that are currently in context")
+                print("'print ?'  : print all variables that are currently in context and within R lines of the breakpoint")
+                print("'print/r N': set the range for 'print ?' to plus/minus R (the default is 6; -1 means 'all')")
+                print("The default v-level can be set with the environment variable CPRINT_V=n")
+                print("The default r-level can be set with the environment variable CPRINT_R=n")
                 args = [""]
                 return args
 
@@ -2974,50 +2980,61 @@ class CPrintWorker() :
                 self.machine_interface_mode = True
                 args.pop(0)
             elif args[0] == '/v' :
-                self.current_display_mode = '4'
+                self.current_display_mode = '0'
                 args.pop(0)
             elif len(args[0]) >= 3 and args[0][0:2] == '/v' :
                 # This is a display v-code:
                 v_code = args[0][2]
                 args.pop(0)
-                if v_code in "01234d" :
+                if v_code in "012d" :
                     # It's a valid display_mode
                     self.current_display_mode = v_code
-
-        # if len(args) is down to zero, then any /v code established here
-        # becomes the new session default.  Otherwise, it'll apply only
-        # once
-        if len(args) == 0 :
-            self.sticky_display_mode = self.current_display_mode
+                    # if len(args) is down to zero, then any /v code established here
+                    # becomes the new session default.  Otherwise, it'll apply only once
+                    if len(args) == 0 :
+                        self.sticky_display_mode = self.current_display_mode
+            elif len(args) == 2 and args[0] == '/r' and args[1].lstrip('-').isnumeric()  :
+                # This is a request to change the question_mark_range
+                self.question_mark_range = int(args[1])
+                print("The 'p ?' range has been set to +/-", self.question_mark_range, "lines")
+                args = ['?']
+            elif len(args[0]) > 2 and args[0][0:2] == '/r'  :
+                # This is a request to change the question_mark_range
+                range = args[0][2:]
+                if range.lstrip('-').isnumeric() :
+                    self.question_mark_range = int(range)
+                if int(self.question_mark_range) < 0 :
+                    print("The 'p ?' range has been set to the same as 'p *'")
+                else :
+                    print("The 'p ?' range has been set to", self.question_mark_range)
+                args = ['?']
+            elif len(args) == 1 and args[0] == '/r' :
+                if int(self.question_mark_range) < 0 :
+                    print("The 'p ?' range is currently the same as 'p *'")
+                else :
+                    print("The 'p ?' range is currently +/-", self.question_mark_range,"lines")
+                args = []
 
         return args
 
     def FormattedDisplay(self,payload ) :
         # see the comments in ProcessDisplayMode()
         if self.current_display_mode == '0' :
-            print(payload.display_body)
+            print(payload.display_name," : ",payload.display_body)
             pass
         elif self.current_display_mode ==  '1' :
-            print(payload.display_body," : ",payload.display_pic)
+            print(payload.display_body)
             pass
         elif self.current_display_mode ==  '2' :
-            print(payload.display_body," : ",payload.display_name)
-            pass
-        elif self.current_display_mode ==  '3' :
-            print(payload.display_body," : ",
-                  payload.display_pic," : ",
-                  payload.display_name)
-            pass
-        elif self.current_display_mode ==  '4' :
             print(payload.display_name)
-            print(payload.display_body," : ",payload.display_pic)
+            print(payload.display_body)
             pass
         else : # self.current_display_mode ==  'd' :
             payload.ShowFields()
             pass
 
     def ProcessArguments(self, TabFile, ShortTermMemory, arguments) :
-        # The command is typically "cp A B C" or "cp/d A B C"
+        # The command is typically "print A B C" or "print/d A B C"
         # There is also the possibility of an '=' character, whereby the
         # value after the '=' is assigned to the variable described to the left
 
@@ -3031,11 +3048,11 @@ class CPrintWorker() :
         args = []
         argsargs = preargs[0].split()
         for arg in argsargs :
-            if arg[0] != '/' :
-                arg = arg.upper()
             args.append(arg)
 
+        self.question_mark_range = TabFile.question_mark_range
         args = self.ProcessDisplayMode(args)
+        TabFile.question_mark_range = self.question_mark_range
 
         possibilities = MetaPossibilities(args,TabFile,ShortTermMemory,self.machine_interface_mode)
         if len(possibilities) == 1 :
@@ -3066,39 +3083,6 @@ class CWatchWorker() :
     def __init__(self):
         self.current_display_mode = "0"
 
-    def ProcessDisplayModeW(self,args) :
-        if len(args) >= 1 :
-            if args[0] == '/h' :
-                print("COBOL cwatch command usage:")
-                print("'cwatch/h' prints this message.")
-                print("'cwatch/vd' or cwatch/d : debug output")
-                print("'cwatch/v0' back to default")
-                args = [""]
-                return args
-
-            # if the first argument is /d, turn on our debug flag:
-            if args[0] == '/d' :
-                self.current_display_mode = 'd'
-                args.pop(0)
-            elif args[0] == '/v' :
-                self.current_display_mode = '4'
-                args.pop(0)
-            elif len(args[0]) >= 3 and args[0][0:2] == '/v' :
-                # This is a display v-code:
-                v_code = args[0][2]
-                args.pop(0)
-                if v_code in "0d" :
-                    # It's a valid display_mode
-                    self.current_display_mode = v_code
-
-        # if len(args) is down to zero, then any /v code established here
-        # becomes the new session default.  Otherwise, it'll apply only
-        # once
-        if len(args) == 0 :
-            self.sticky_display_mode = self.current_display_mode
-
-        return args
-
     def SetTheWatchpoint(self, TabFile, payload ) :
         the_address = payload.GetTheAddress(TabFile.line_list)
 
@@ -3122,7 +3106,6 @@ class CWatchWorker() :
         # The command is typically "cw A
 
         args = arguments.split()
-        args = self.ProcessDisplayModeW(args)
 
         possibilities = MetaPossibilities(args,TabFile,ShortTermMemory, False)
 
@@ -3147,9 +3130,10 @@ if 'gdb' in sys.modules :
             ## The text "Version x.x" has to appear in square brackets.               #
             ## Don't mess with it!                                                    #
             ###########################################################################
-            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 3.10]')
+            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 3.11]')
             self.Worker = CPrintWorker()
             self.TabFile = TabFileInformation();
+            self.TabFile.question_mark_range = self.Worker.question_mark_range
 
         def invoke (self, arguments, from_tty):
             # pick up the name of the current source file
