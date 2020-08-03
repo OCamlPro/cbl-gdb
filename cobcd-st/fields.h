@@ -35,6 +35,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <string.h>
 
 #ifndef EQ
 #define EQ ==
