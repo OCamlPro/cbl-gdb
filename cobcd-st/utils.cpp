@@ -163,3 +163,25 @@ STOI(const string &s)
     PROFILER;
     return atoi(s.c_str());
 }
+
+string
+GetCommentText(const string &s)
+{
+    PROFILER;
+    string retval;
+    size_t comment = 0;
+    for(;;) {
+        size_t nfound = s.find("/*",comment);
+        if(nfound EQ string::npos) {
+            break;
+        }
+        comment = nfound+2;
+    }
+    if(comment > 0) {
+        size_t end_comment = s.find("*/",comment);
+        if(end_comment != string::npos) {
+            retval = Trim(s.substr(comment,end_comment-comment));
+        }
+    }
+    return retval;
+}

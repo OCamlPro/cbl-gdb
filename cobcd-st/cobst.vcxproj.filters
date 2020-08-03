@@ -21,9 +21,6 @@
     <ClCompile Include="cobst.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="input_scan.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="profiler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -33,18 +30,15 @@
     <ClCompile Include="utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="vartree.cpp">
+    <ClCompile Include="fields.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="variables.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="csv.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="getopt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="input_scan.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="profiler.h">
@@ -56,13 +50,16 @@
     <ClInclude Include="utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vartree.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cobcd_py.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fields.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="variables.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

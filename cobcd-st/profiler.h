@@ -42,7 +42,7 @@
 #include <algorithm>
 #include "utils.h"
 
-// #define PROFILING
+#define PROFILING
 
 class PPROFILER
 {

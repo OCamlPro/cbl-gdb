@@ -157,23 +157,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cobst.cpp" />
+    <ClCompile Include="fields.cpp" />
     <ClCompile Include="getopt.cpp" />
-    <ClCompile Include="input_scan.cpp" />
     <ClCompile Include="profiler.cpp" />
     <ClCompile Include="params.cpp" />
     <ClCompile Include="utils.cpp" />
-    <ClCompile Include="vartree.cpp" />
+    <ClCompile Include="variables.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\version.h" />
     <ClInclude Include="cobcd_py.h" />
-    <ClInclude Include="csv.h" />
+    <ClInclude Include="fields.h" />
     <ClInclude Include="getopt.h" />
-    <ClInclude Include="input_scan.h" />
     <ClInclude Include="params.h" />
     <ClInclude Include="profiler.h" />
     <ClInclude Include="utils.h" />
-    <ClInclude Include="vartree.h" />
+    <ClInclude Include="variables.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
