@@ -129,7 +129,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                 continue;
             }
             VARIABLE variable;
-            variable.level = level;
+            variable.level = stoi(level);
 
             SkipPast(p,'\"');
 
@@ -283,7 +283,7 @@ VARIABLES::FormatVariablesInfo(stringstream &ss) const
             variable!=variables.end();
             variable++) {
         ss << variable->record_type             << "|" ;
-        ss << variable->level                   << "|" ;
+        ss << ZeroIsNull(variable->level)       << "|" ;
         ss << variable->name                    << "|" ;
         ss << variable->f_name                  << "|" ;
         ss << variable->b_name                  << "|" ;

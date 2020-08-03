@@ -17,7 +17,7 @@ private:
     //                          // W for WORKING-STORAGE
     //                          // L for LOCAL-STORAGE
     //                          // I for LINKAGE
-    std::string level;          // FD, SD, 01-49, 66, 77, 78, 88
+    int         level;          // 0, 1-49, 66, 77, 78, 88
     // 78 is a MicroFocus "read-only" memory extension
     // 88 probably won't appear at all
     std::string name;           // COBOL variable identifier
@@ -35,6 +35,7 @@ private:
 public:
     VARIABLE()
     {
+        level = 0;
         offset = 0;
         length = 0;
         occurs_min = 0;
