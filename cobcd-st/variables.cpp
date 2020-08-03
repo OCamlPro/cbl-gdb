@@ -291,6 +291,14 @@ VARIABLES::FormatVariablesInfo(stringstream &ss) const
         ss << ZeroIsNull(variable->offset)      << "|" ;
         ss << ZeroIsNull(variable->length)      << "|" ;
         ss << ZeroIsNull(variable->occurs_min)  << "|" ;
+        if( variable->occurs_min EQ 0 AND variable->occurs_max EQ 1 ) {
+            // This is the default, so output nothing
+            ss << "|" ;
+        } else {
+            ss << variable->occurs_max;
+            ss << "|" ;
+        }
+
         ss << variable->occurs_max;
         ss << "~";
     }
