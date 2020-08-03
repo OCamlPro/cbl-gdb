@@ -286,7 +286,7 @@ VARIABLES::FormatVariablesInfo(stringstream &ss) const
         ss << ZeroIsNull(variable->level)       << "|" ;
         ss << variable->name                    << "|" ;
         ss << variable->f_name                  << "|" ;
-        ss << variable->b_name                  << "|" ;
+        ss << (variable->b_name EQ "cob_local_ptr" ? "" : variable->b_name) << "|" ;
         ss << variable->a_name                  << "|" ;
         ss << ZeroIsNull(variable->offset)      << "|" ;
         ss << ZeroIsNull(variable->length)      << "|" ;
@@ -298,8 +298,6 @@ VARIABLES::FormatVariablesInfo(stringstream &ss) const
             ss << variable->occurs_max;
             ss << "|" ;
         }
-
-        ss << variable->occurs_max;
         ss << "~";
     }
 }
