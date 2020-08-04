@@ -30,6 +30,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <map>
 #include "variables.h"
 #include "profiler.h"
 #include "utils.h"
@@ -130,74 +131,92 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                 variable.name += *p++ ;
             }
 
-            if( variable.name != "FILLER" ) {
-                char *poccurs = strstr(ach,"OCCURS");
-                if( poccurs ) {
-                    string s = GetCommentText(ach);
-                    VSTRING t = Split(s," ");
-                    variable.occurs_min = stoi(t[1]);
-                    variable.occurs_max = stoi(t[2]);
+            char *poccurs = strstr(ach," OCCURS ");
+            char *redef = strstr(ach," REDEFINES ");
+            if( poccurs OR redef ) {
+                string s = GetCommentText(ach);
+                VSTRING t = Split(s," ");
+
+                // Just make sure what we are looking for is in comment
+                // text, and not inside a fiendish text literal or really
+                // weird variable name.  This probably isn't necessary; we already
+                // know that we are on a cob_dump_field line.  And the spaces that
+                // surround OCCURS and REDEFINES will prevent a false positive
+                // on a variable named "REDEFINES-OCCURS", for example.
+                //
+                // But still...
+
+                for( size_t i=0; i<t.size(); i++ ) {
+                    if( t[i] EQ "REDEFINES") {
+                        variable.redefines = true;
+                        continue;
+                    }
+                    if( t[i] EQ "OCCURS ") {
+                        variable.occurs_min = stoi(t[i+1]);
+                        variable.occurs_max = stoi(t[i+2]);
+                        continue;
+                    }
                 }
+            }
 
-                SkipPast(p,',');
-                SkipPast(p,' ');
+            SkipPast(p,',');
+            SkipPast(p,' ');
 
-                if( *p EQ '&' ) {
-                    // Minimal association: name with f_name
+            if( *p EQ '&' ) {
+                // Minimal association: name with f_name
+                p += 1;
+                while(*p != ',') {
+                    variable.f_name += *p++;
+                }
+                variable.record_type = current_record_type;
+                variables.push_back(variable);
+            } else if( strncmp(p, COB_SET_DATA, strlen(COB_SET_DATA)) EQ 0 ) {
+                p += strlen(COB_SET_DATA);
+                SkipPast(p,'(');
+                string s;
+                while( *p != ')' ) {
+                    if( *p != ' ' AND *p != '\t' ) {
+                        s += *p;
+                    }
                     p += 1;
-                    while(*p != ',') {
-                        variable.f_name += *p++;
+                }
+                VSTRING tokens = Split(s,",");
+                if( tokens.size() EQ 2 ) {
+                    variable.f_name = tokens[0];
+
+                    VSTRING tokens_base_offset = Split(tokens[1],"+");
+                    variable.b_name = tokens_base_offset[0];
+                    for( size_t i=1; i<tokens_base_offset.size(); i++) {
+                        variable.offset += stoi(tokens_base_offset[i]);
                     }
                     variable.record_type = current_record_type;
                     variables.push_back(variable);
-                } else if( strncmp(p, COB_SET_DATA, strlen(COB_SET_DATA)) EQ 0 ) {
-                    p += strlen(COB_SET_DATA);
-                    SkipPast(p,'(');
-                    string s;
-                    while( *p != ')' ) {
-                        if( *p != ' ' AND *p != '\t' ) {
-                            s += *p;
-                        }
-                        p += 1;
+                }
+            } else if( strncmp(p, COB_SET_FLD, strlen(COB_SET_FLD)) EQ 0 ) {
+                p += strlen(COB_SET_FLD);
+                SkipPast(p,'(');
+                string s;
+                while( *p != ')' ) {
+                    if( *p != ' ' AND *p != '\t' ) {
+                        s += *p;
                     }
-                    VSTRING tokens = Split(s,",");
-                    if( tokens.size() EQ 2 ) {
-                        variable.f_name = tokens[0];
+                    p += 1;
+                }
 
-                        VSTRING tokens_base_offset = Split(tokens[1],"+");
-                        variable.b_name = tokens_base_offset[0];
-                        for( size_t i=1; i<tokens_base_offset.size(); i++) {
-                            variable.offset += stoi(tokens_base_offset[i]);
-                        }
-                        variable.record_type = current_record_type;
-                        variables.push_back(variable);
-                    }
-                } else if( strncmp(p, COB_SET_FLD, strlen(COB_SET_FLD)) EQ 0 ) {
-                    p += strlen(COB_SET_FLD);
-                    SkipPast(p,'(');
-                    string s;
-                    while( *p != ')' ) {
-                        if( *p != ' ' AND *p != '\t' ) {
-                            s += *p;
-                        }
-                        p += 1;
-                    }
+                SkipPast(p,',');
+                int occurrence = atoi(p);
+                if(occurrence EQ 0) {
+                    VSTRING tokens = Split(s," ,");
 
-                    SkipPast(p,',');
-                    int occurrence = atoi(p);
-                    if(occurrence EQ 0) {
-                        VSTRING tokens = Split(s," ,");
-
-                        VSTRING tokens_base_offset = Split(tokens[2],"+");
-                        variable.length = stoi(tokens[1]);
-                        variable.b_name = tokens_base_offset[0];
-                        for( size_t i=1; i<tokens_base_offset.size(); i++) {
-                            variable.offset += stoi(tokens_base_offset[i]);
-                        }
-                        variable.a_name = tokens[3].substr(1);
-                        variable.record_type = current_record_type;
-                        variables.push_back(variable);
+                    VSTRING tokens_base_offset = Split(tokens[2],"+");
+                    variable.length = stoi(tokens[1]);
+                    variable.b_name = tokens_base_offset[0];
+                    for( size_t i=1; i<tokens_base_offset.size(); i++) {
+                        variable.offset += stoi(tokens_base_offset[i]);
                     }
+                    variable.a_name = tokens[3].substr(1);
+                    variable.record_type = current_record_type;
+                    variables.push_back(variable);
                 }
             }
         }
@@ -248,6 +267,7 @@ VARIABLES::Dump() const
     cout << setw( 7) << "length";
     cout << setw( 6) << "o_min";
     cout << setw( 6) << "o_max";
+    cout << setw( 6) << "redef";
     cout << endl;
 
     for( V_VARIABLES::const_iterator variable = variables.begin();
@@ -263,6 +283,7 @@ VARIABLES::Dump() const
         cout << setw( 7) << variable->length;         // When f_name exists, length should be the same as f_name->size
         cout << setw( 6) << variable->occurs_min;     //
         cout << setw( 6) << variable->occurs_max;     // -1 for unbounded
+        cout << setw( 6) << (variable->redefines ? "REDEF" : "");
         cout << endl;
     }
     cout << endl;
@@ -275,6 +296,9 @@ VARIABLES::FormatVariablesInfo(stringstream &ss) const
     for( V_VARIABLES::const_iterator variable = variables.begin();
             variable!=variables.end();
             variable++) {
+        if( variable->name EQ "FILLER" ) {
+            continue;
+        }
         ss << variable->record_type             << "|" ;
         ss << ZeroIsNull(variable->level)       << "|" ;
         ss << variable->name                    << "|" ;
@@ -292,5 +316,98 @@ VARIABLES::FormatVariablesInfo(stringstream &ss) const
             ss << "|" ;
         }
         ss << "~";
+    }
+}
+
+void
+VARIABLES::Insert(const VARIABLE &v)
+{
+    variables.push_back(v);
+}
+
+static int
+VARIABLE_LEVEL(int a)
+{
+    return ((a EQ 77 OR a EQ 78) ? 1 : a);
+}
+
+void
+VARIABLES::FixLocalStorageOffsets()
+{
+    // The purpose of this routine is to cope with the fact that
+    // GnuCOBOL doesn't generate LOCAL-VARIABLE offset information
+    // for variables that are not referenced in the body of the code.
+
+    // So, we have to infer the locations within cob_local_ptr by the
+    // lengths of each variable.
+
+    // This is further complicated by observation that 01/77 variables are
+    // placed on 16-byte boundaries.
+
+    // We also have to take into account the possibility of REDEFINES, which
+    // reset a variable to the same offset as the previous one on the same
+    // level
+
+    // Use a <map> to prevent O(N-squared) in the highly-theoretical and extremely
+    // unlikely limit when handling REDEFINES.
+    //
+    // It would take an extremely long time to become N-squared, and even that
+    // would require a huge input file with a lot of REDEFINES and other odd
+    // circumstances.  But good habits are good habits.
+
+    map<int,V_VARIABLES::iterator>elder_sibling;
+
+    for( V_VARIABLES::iterator variable = variables.begin();
+            variable!=variables.end();
+            variable++) {
+        if( variable->level EQ 66 ) {
+            // We can't handle Level 66 here
+            continue;
+        }
+
+        if( variable->record_type EQ "L" ) {
+            int our_level = VARIABLE_LEVEL(variable->level);
+
+            if( variable->redefines ) {
+                // Make sure our offset is the same as our elder sibling's offset
+                map<int,V_VARIABLES::iterator>::iterator elder = elder_sibling.find(our_level);
+                if( elder != elder_sibling.end() ) {
+                    variable->offset = elder->second->offset;
+                }
+            }
+
+            elder_sibling[our_level] = variable;
+
+            if( variable->offset EQ 0 ) {
+                // We have a possible rework here:
+                // Find somebody older than us.  And, yes, this, too, is O(N-squared) in
+                // the insane limit.  I half-thought of a couple of Nlog(N) ways of avoiding the N-squared,
+                // and wouldn't bet that there isn't an O(N) possibilitiy.
+                // But it doesn't matter.  It just doesn't.  And unlike the simple map for handling
+                // redefines, this would require real work and testing.  Screw it.
+
+                V_VARIABLES::iterator it = variable - 1;
+                while( it->record_type EQ "L" AND our_level < VARIABLE_LEVEL(it->level) ) {
+                    it--;
+                }
+
+                // our_level is >= it->level
+                if( it->record_type EQ "L" AND our_level EQ VARIABLE_LEVEL(it->level) ) {
+                    // We have found our immediately elder sibling
+                    // Replace us with his offset plus his length:
+                    variable->offset = it->offset + it->length;
+
+                    // cob_local_ptr idiosyncracy:  Level 01 variables are allocated on
+                    // 16-byte boundaries:
+                    if( our_level EQ 1 ) {
+                        variable->offset = (variable->offset + 15) & ~15;
+                    }
+                } else if( it->record_type EQ "L" AND our_level > VARIABLE_LEVEL(it->level) ) {
+                    // We have found our parent.  Our offset is their offset
+                    variable->offset = it->offset;
+                }
+            }
+
+        }
     }
 }

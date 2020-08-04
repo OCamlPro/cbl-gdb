@@ -265,6 +265,7 @@ main(int argc, char *argv[])
     variables.ScanCFile(params.c_filename.Path(),
                         params.c_filename.GetFname() );
     variables.FillInTheBlanks(cob_fields);
+    variables.FixLocalStorageOffsets();
 #if defined(DUMPING)
     variables.Dump();
 #endif

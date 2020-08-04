@@ -336,3 +336,5 @@ COB_FIELDS::ScanCFile(const string &path, const string &fname)
 
     ::fclose(f);
 }
+
+

@@ -28,6 +28,7 @@ private:
     int         length;         // When f_name exists, length should be the same as f_name->size
     int         occurs_min;     //
     int         occurs_max;     // -1 for unbounded
+    bool        redefines;      // Means that we redefine our immediately elder sibling
     //                          // When f_name exists, b_name, a_name, offset, and length, won't be available
     //                          // When f_name doesn't exist, the others should be present, and can be used
     //                          // to synthesize an f0 cob_field structure to hand to the cob_get routine
@@ -40,6 +41,7 @@ public:
         length = 0;
         occurs_min = 0;
         occurs_max = 1;
+        redefines = false;
     }
 
     friend class VARIABLES;
@@ -55,12 +57,10 @@ private:
 public:
     void ScanCFile(const std::string &path, const std::string &fname);
     void FillInTheBlanks(COB_FIELDS &cob_fields);
+    void FixLocalStorageOffsets();
     void Dump() const;
     void
-    Insert(const VARIABLE &v)
-    {
-        variables.push_back(v);
-    }
+    Insert(const VARIABLE &v);
     void FormatVariablesInfo(std::stringstream &ss) const;
 };
 

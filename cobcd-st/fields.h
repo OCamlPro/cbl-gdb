@@ -92,6 +92,7 @@ private:
 public:
     void ScanAllDotHFiles(const std::string &path, const std::string &fname);
     void ScanCFile(const std::string &path, const std::string &fname);
+
     COB_FIELD *Find(const std::string &f_name_) ;
 
     void Dump() const ;
