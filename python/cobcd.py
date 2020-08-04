@@ -38,7 +38,6 @@ import traceback
 import datetime
 import subprocess
 
-
 #   This module implements the gdb extension commands cprint and cwatch
 #
 #   This script is read by the COBST program and incorporated into a
@@ -228,34 +227,75 @@ def BlankIsZero(v) :
         v = "0"
     return int(v)
 
-def GetAddressOf(variable) :
-    if 'gdb' in sys.modules :
-        try :
-            command = "info address " + variable
-            address_string = gdb.execute(command,False,True)
-
-            nfound = address_string.find(" 0x")
-            if nfound == -1 :
-                print("No match in GetAddressOf()", command)
-                return None
-            else :
-                address_string = address_string[nfound+3:]
-                nfound = address_string.find(' ')
-                address_string = address_string[0:nfound]
-                address = int(address_string,16)
-                return address
-        except gdb.error:
-            print("gdb.execute failed:",command)
+def GetDataAt(address,bytes) :
+    # This routine takes an address and returns the 
+    # value there.  'bytes' can be 1, 2, 4, or 8
+    try :
+        if bytes == 1 :
+            u = 'b'
+        elif bytes == 2 : 
+            u = 'h'
+        elif bytes == 4 : 
+            u = 'w'
+        elif bytes == 8 : 
+            u = 'g'
+        else :
             return None
-    else :
-        # We are running off-line
+
+        command = "x/1" + u + "d " + str(address)
+        value_back = gdb.execute(command,False,True)
+
+        nfound = value_back.find(":")
+        if nfound == -1 :
+            return None
+        value = int(   value_back[nfound+1:] )
+        return value
+
+    except gdb.error:
+        print("gdb.execute failed in GetDataAt:",command)
         return None
+
+def GetAddressOf(variable) :
+    try :
+        command = "info address " + variable
+        address_string = gdb.execute(command,False,True)
+
+        nfound = address_string.find(" 0x")
+        if nfound == -1 :
+            print("No match in GetAddressOf()", command)
+            return None
+        else :
+            address_string = address_string[nfound+3:]
+            nfound = address_string.find(' ')
+            if nfound == -1 :
+                nfound = address_string.find('.')
+            address_string = address_string[0:nfound]
+            address = int(address_string,16)
+            return address
+    except gdb.error:
+        # print("gdb.execute failed in GetAddressOf:",command)
+        return None
+
 
 class VarTrie() :
     def __init__(self):
         self.storage_list = []
         self.storage_trie = VarTrieNode()
         self.program_ids = set()
+
+        self.IndexType = 0
+        self.IndexLevel = 1
+        self.IndexName = 2
+        self.IndexFname = 3
+        self.IndexBname = 4
+        self.IndexAname = 5
+        self.IndexOffset = 6
+        self.IndexLength = 7
+        self.IndexOccursMin = 8
+        self.IndexOccursMax = 9
+
+        self.StackOfNames = []
+        self.StackOfLevels = []
 
     def AddToTrie(self,trie,name_tokens,payload_index) :
         our_node = trie
@@ -280,84 +320,60 @@ class VarTrie() :
         # and we are done
 
     def LoadFromLine(self,variable_line) :
-        if len(variable_line) >= 1 and variable_line[0] == "D" :
-            indexSection=1
-            indexLevel=2
-            indexName=3
-            indexField=4
-            indexBase=5
-            indexOffset=6
-            indexListType=7
-            indexListSize=8
-            indexPicture=9
-            indexUsage=10
-            indexOccurs=11
-            indexAttrType=12
-            indexAttrDigits=13
-            indexAttrScale=14
-            indexAttrFlags=15
+        tokens = variable_line.split("|")
+        try :
+            if len(tokens) == 11 :
+                ## We have enough in the way of tokens, so proceed
+                if tokens[self.IndexType] == 'P' :
+                    ## We are entering a new PROGRAM-ID, so reset our stacks
+                    self.StackOfNames = [ tokens[self.IndexName] ]
+                    self.StackOfLevels = [-2]
 
-            tokens = variable_line.split("|")
-            name_tokens =  tokens[indexName].split("/")
-            if len(name_tokens) >= 1 :
-                payload = CobolVariable()
+                if len(self.StackOfNames) == 0 :
+                    print("Please save your program for Dubner at COBOLworx")
+                    print("self.StackOfNames is empty, and it shouldn't be")
+                    sys.exit(1)
 
-                payload.Program    = name_tokens[-1]
-                payload.Section    = tokens[indexSection]
-                payload.Name       = tokens[indexName]
-                payload.Level      = int(BlankIsZero(tokens[indexLevel]))
-                payload.Base       = tokens[indexBase]
-                payload.Field      = tokens[indexField]
-                payload.Offset     = int(BlankIsZero(tokens[indexOffset]))
-                payload.ListType   = tokens[indexListType]
-                payload.ListSize   = int(BlankIsZero(tokens[indexListSize]))
-                payload.Picture    = tokens[indexPicture]
-                payload.Usage      = tokens[indexUsage]
-                payload.Occurs     = int(BlankIsZero(tokens[indexOccurs]))
-                payload.FieldSize  = int(BlankIsZero(tokens[indexListSize]))
-                payload.AttrType   = int(BlankIsZero(tokens[indexAttrType]))
-                payload.AttrDigits = int(BlankIsZero(tokens[indexAttrDigits]))
-                payload.AttrScale  = int(BlankIsZero(tokens[indexAttrScale]))
-                payload.AttrFlags  = int(BlankIsZero(tokens[indexAttrFlags]))
+                if tokens[self.IndexType] in ('F','W','L','I') :
+                    ## We are working with a variable.  We need to erode the
+                    ## stack of names down to the variable who is our parent:
+                    our_level = int(tokens[self.IndexLevel])
+                    if our_level in (77,78) :
+                        our_level = 1
+                    while self.StackOfLevels[-1] >= our_level :
+                        self.StackOfNames.pop(-1)
+                        self.StackOfLevels.pop(-1)
 
-                if payload.Section == "IN" :
-                    payload.Section = "INPUT-OUTPUT"
-                elif payload.Section == "WO" :
-                    payload.Section = "WORKING-STORAGE"
-                elif payload.Section == "LO" :
-                    payload.Section = "LOCAL-STORAGE"
-                elif payload.Section == "LI" :
-                    payload.Section = "LINKAGE"
+                    ## and now we put ourselves into the position of
+                    ## most favored child
+                    self.StackOfNames.append(tokens[self.IndexName])
+                    self.StackOfLevels.append(our_level)
 
-                if payload.ListType == "A" :
-                    payload.ListType == "ALPHANUMERIC"
-                if payload.ListType == "N" :
-                    payload.ListType == "NUMERIC"
-                if payload.ListType == "G" :
-                    payload.ListType == "GROUP"
-                if payload.ListType == "F" :
-                    payload.ListType == "FILE"
+                    reversed = self.StackOfNames.copy()
+                    reversed.reverse()
 
-                # If the COBOL source code doesn't refer to a variable,
-                # then we don't have much information about it.  But
-                # we can look at the payload.ListType and at least
-                # identify ALPHANUMERICS:
+                    payload = CobolVariable()
+                    payload.Program    = self.StackOfNames[0]
+                    payload.Section    = tokens[self.IndexType]
+                    payload.Level      = int(tokens[self.IndexLevel])
+                    payload.Name       = '/'.join(reversed)
+                    payload.Fname      = tokens[self.IndexFname]
+                    payload.Bname      = tokens[self.IndexBname]
+                    payload.Aname      = tokens[self.IndexAname]
+                    payload.Offset     = int(tokens[self.IndexOffset] or "0")
+                    payload.Length     = int(tokens[self.IndexLength] or "0")
+                    payload.OccursMin  = int(tokens[self.IndexOffset] or "0")
+                    payload.OccursMax  = int(tokens[self.IndexLength] or "0")
 
-                if payload.ListType in ("ALPHABETIC","ALPHANUMERIC") :
-                    payload.AttrType = COB_TYPE_ALPHANUMERIC ;
-
-                # Save the location of this payload in the _storage
-                # list.  It's ordered, so we can make use of that when
-                # displaying the contents of grouped variables.  We also
-                # only keep the payloads themselves in the
-                # storage list, and otherwise deal in indexes into that
-                # list.
-                payload.payload_index = len(self.storage_list)
-                self.storage_list.append(payload)
-                self.AddToTrie(self.storage_trie,
-                                name_tokens,
-                                payload.payload_index)
-                self.program_ids.add(payload.Program)
+                    payload.payload_index = len(self.storage_list)
+                    self.storage_list.append(payload)
+                    self.AddToTrie(self.storage_trie,
+                                   reversed,
+                                   payload.payload_index)
+                    self.program_ids.add(payload.Program)
+        except :
+            traceback.print_exc()
+            sys.exit(1)
 
     def TokenizeCanonicalName(self,desired) :
         # We allow "A of B in C", where [of|in] is not case sensitive
@@ -581,7 +597,7 @@ class LineList() :
             tokens = variable_line.split("|")
             if len(tokens) >= 3 :
                 program_id = tokens[2]
-                line_number = int(tokens[1])
+                line_number = int(tokens[6])
                 self.Insert(line_number,program_id)
 
 class CobolVariable() :
@@ -590,24 +606,25 @@ class CobolVariable() :
         self.index      = None
         self.Program    = ""
         self.Section    = ""
-        self.Name       = ""
         self.Level      = -1
-        self.Base       = ""
-        self.Field      = ""
+        self.Name       = ""
+        self.Fname      = ""
+        self.Bname      = ""
+        self.Aname      = ""
         self.Offset     = 0
-        self.ListType   = ""
-        self.ListSize   = 0
-        self.Picture    = ""
-        self.Usage      = ""
-        self.Occurs     = 0
-        self.FieldSize  = 0
+        self.Length     = 0
+        self.OccursMin  = 0
+        self.OccursMax  = 0
+
         self.AttrType   = 0
         self.AttrDigits = 0
         self.AttrScale  = 0
         self.AttrFlags  = 0
 
-        self.location   = ""            # This is Base + Offset as reported by GDB
-        self.data       = []            # list of ListSize bytes
+        self.location_of_field     = 0  # value of Fname
+        self.location_of_data      = 0  # value of Fname->data
+        self.location_of_attribute = 0  # value of Fname->attr
+        self.data       = []            # list of Length bytes
 
         self.decimal_point = '.'        # Eventually we are going to have to
         self.comma_separator = ','      # handle DECIMAL-POINT IS COMMA
@@ -629,6 +646,13 @@ class CobolVariable() :
         self.ldigits = -1          # this integer is AttrDigits - AttrScale
         self.rdigits = -1          # this integer is AttrScale...
         #                          # ...but see self.CleanAndScale
+        
+        ## Let's figure out if we are a 32-bit or 64-bit machine:
+        self.pointer_size = 4     # Assume 32-bit
+        arch = gdb.execute("show architecture",False,True)
+        nfound = arch.find("x86-64")
+        if nfound != -1 :
+            self.pointer_size = 8
 
     def CleanTokens(self,execute_result) :
         # (This was created during initial development.  During refactoring
@@ -843,7 +867,7 @@ class CobolVariable() :
             #print("We've GotData: self.data")
             #print(' '.join(format(x, '02x') for x in self.data))
 
-            # We've got self.ListSize bytes in self.data
+            # We've got self.Length bytes in self.data
             # Put them into memory
 
             the_address = self.GetTheAddress(line_list)
@@ -852,204 +876,240 @@ class CobolVariable() :
                 i = 0
                 while i < len(self.data) :
                     command = "set {char}" + hex(the_address+i) + "=" + hex(self.data[i])
-                    if 'gdb' in sys.modules :
-                         gdb.execute(command,False,True)
+                    gdb.execute(command,False,True)
                     i += 1
 
     def GetTheAddress(self,line_list) :
-        if self.Section in ("WORKING-STORAGE",
-                            "INPUT-OUTPUT",
-                            "LINKAGE") :
+        if self.Section in ('W',
+                            'F',
+                            'L') :
             # We can find this variable's address at base_symbol + offset:
             command = "info address " + self.Base
 
-            if 'gdb' in sys.modules :
-                try :
+            try :
+                #print(command)
+                address_string = gdb.execute(command,False,True)
+
+                match = re.search("address 0x([0-9a-f]+)\.",address_string)
+                if not match :
+                    print("No match")
+                else :
+                    address = int(match.group(1),16)
+                    address += self.Offset
+                    return address
+
+            except gdb.error:
+                # This exception is thrown when you ask for a LINKAGE
+                # variable and it's not available because you aren't
+                # trapped inside the referring routine.
+                self.not_in_context = True
+
+        elif self.Section == "LOCAL-STORAGE" :
+            try :
+                # Okay.
+                #
+                # We are looking for something in LOCAL-STORAGE.  Local
+                # storage is kept in a calloc-ed memory location named
+                # cob_local_ptr.  The complication is that if we have
+                # several program-ids that each have their own cob_local_ptr
+                # we have to make sure we know which one we are dealing
+                # with.
+
+                # Pick up the decimal line number where we are trapped
+                line_number = -1
+                frame_string = gdb.execute("frame",False,True)
+                # Look for a number after a colon
+                nfound = frame_string.find(':')
+                if nfound > -1 :
+                    frame_string = frame_string[nfound+1:]
+                    frame_string = frame_string.split()
+                    try :
+                        line_number = int(frame_string[0])
+                    except :
+                        line_number = -1
+
+                #print("Trapped at ",line_number)
+                # We know we are trapped at line_number
+
+                # Look up the program-id of that line_number
+                program_id = line_list.Find(line_number)
+                #print("in :", program_id)
+
+                # Okay again.
+                #
+                # program-id is where the program-under-test is
+                # trapped.  Let's see if that program-id matches
+                # the final place of the desired variable:
+                #
+                #print( self.Name )
+                split_name = self.Name.split('/')
+                #print("Match? :",split_name[-1],program_id)
+                if split_name[-1] == program_id :
+                    # Everything seems to match up, so we can try
+                    # to get this variable's data:
+
+                    command = "info address cob_local_ptr"
+                    address_string = gdb.execute(command,False,True)
                     #print(command)
+                    #print(address_string)
                     address_string = gdb.execute(command,False,True)
 
                     match = re.search("address 0x([0-9a-f]+)\.",address_string)
                     if not match :
                         print("No match")
                     else :
+                        #print(match.group(1))
                         address = int(match.group(1),16)
                         address += self.Offset
                         return address
-
-                except gdb.error:
-                    # This exception is thrown when you ask for a LINKAGE
-                    # variable and it's not available because you aren't
-                    # trapped inside the referring routine.
-                    self.not_in_context = True
-            else :
-                # We are running off-line
-                return None
-
-        elif self.Section == "LOCAL-STORAGE" :
-            if 'gdb' in sys.modules :
-                try :
-                    # Okay.
-                    #
-                    # We are looking for something in LOCAL-STORAGE.  Local
-                    # storage is kept in a calloc-ed memory location named
-                    # cob_local_ptr.  The complication is that if we have
-                    # several program-ids that each have their own cob_local_ptr
-                    # we have to make sure we know which one we are dealing
-                    # with.
-
-                    # Pick up the decimal line number where we are trapped
-                    line_number = -1
-                    frame_string = gdb.execute("frame",False,True)
-                    # Look for a number after a colon
-                    nfound = frame_string.find(':')
-                    if nfound > -1 :
-                        frame_string = frame_string[nfound+1:]
-                        frame_string = frame_string.split()
-                        try :
-                            line_number = int(frame_string[0])
-                        except :
-                            line_number = -1
-
-                    #print("Trapped at ",line_number)
-                    # We know we are trapped at line_number
-
-                    # Look up the program-id of that line_number
-                    program_id = line_list.Find(line_number)
-                    #print("in :", program_id)
-
-                    # Okay again.
-                    #
-                    # program-id is where the program-under-test is
-                    # trapped.  Let's see if that program-id matches
-                    # the final place of the desired variable:
-                    #
-                    #print( self.Name )
-                    split_name = self.Name.split('/')
-                    #print("Match? :",split_name[-1],program_id)
-                    if split_name[-1] == program_id :
-                        # Everything seems to match up, so we can try
-                        # to get this variable's data:
-
-                        command = "info address cob_local_ptr"
-                        address_string = gdb.execute(command,False,True)
-                        #print(command)
-                        #print(address_string)
-                        address_string = gdb.execute(command,False,True)
-
-                        match = re.search("address 0x([0-9a-f]+)\.",address_string)
-                        if not match :
-                            print("No match")
-                        else :
-                            #print(match.group(1))
-                            address = int(match.group(1),16)
-                            address += self.Offset
-                            return address
-                    else :
-                        return None
-
-                except gdb.error:
+                else :
                     return None
+
+            except gdb.error:
+                return None
         else :
             return None
 
     def FetchVariableData(self, line_list , show_failure ) :
+        #self.display_body ="Hold your horses"
+        #self.display_name = self.NameToString();
+
         data_string = None
-        self.location = ""
+        self.location_of_field = 0;
+        self.location_of_data = 0;
+        self.location_of_attribute = 0;
         self.data = []
         self.display_body = ""
         self.display_pic = ""
         self.display_name = ""
         self.not_in_context = False
+        
+        ## Let's update everything we might need:
+        
+        ## First, check to see if the compiler provided us with the
+        ## the name of the field.  If so, use the run-time values in that named
+        ## field to override anything we might have gotten from compile-time
+        
+        if self.Fname :
+            # We have a field name
+            self.location_of_field = GetAddressOf(self.Fname)
+            if self.location_of_field == None :
+                self.not_in_context = True
+                return
+            # The cob_field structure looks like this:
+            #   typedef struct __cob_field 
+            #       {
+            #       size_t                size;
+            #       unsigned char        *data;
+            #       const cob_field_attr *attr;
+            #       } cob_field;
+            self.Length = GetDataAt(self.location_of_field,self.pointer_size)
+            self.location_of_data = GetDataAt(self.location_of_field+self.pointer_size,self.pointer_size)
+            self.location_of_attribute = GetDataAt(self.location_of_field+2*self.pointer_size,self.pointer_size)
+        else :
+            ## There is no named field.  If there is a named b_ base address, we can use it to synthesize
+            ## a cob_field variable:
+            pass
+         
+        if self.location_of_attribute == 0 :
+            if self.Aname :
+                self.location_of_attribute = GetAddressOf(self.Aname)
+         
+        if self.location_of_data == 0 :
+            if self.Bname :
+                loc_of_data = GetAddressOf(self.Bname)
+                if loc_of_data == None :
+                    self.not_in_context = True
+                    return
+                self.location_of_data = GetAddressOf(self.Bname) + self.Offset
+         
+        if self.location_of_attribute != 0 :
+            #   typedef struct __cob_field_attr 
+            #       {
+            #       unsigned short		type;		/* Field type */
+            #       unsigned short		digits;		/* Digit count */
+            #       signed short		scale;		/* Field scale */
+            #       unsigned short		flags;		/* Field flags */
+            #       const cob_pic_symbol	*pic;		/* Pointer to picture string */
+            #       } cob_field_attr;
+            self.AttrType   = GetDataAt(self.location_of_attribute+0,2)
+            self.AttrDigits = GetDataAt(self.location_of_attribute+2,2)
+            self.AttrScale  = GetDataAt(self.location_of_attribute+4,2)
+            self.AttrFlags  = GetDataAt(self.location_of_attribute+6,2)
 
-        if self.Section in ("WORKING-STORAGE",
-                            "INPUT-OUTPUT",
-                            "LINKAGE") :
+        if self.Section in ('W',
+                            'F',
+                            'I') :
             # We can find this variable's contents by asking for the bytes
             # at base_symbol + offset:
-            command = "x/" + str(self.ListSize) + "xb " + self.Base
-            if self.Offset > 0 :
-                command += "+"
-                command += str(self.Offset)
+            command = "x/" + str(self.Length) + "xb " + str(self.location_of_data)
 
-            if 'gdb' in sys.modules :
-                try :
+            try :
+                data_string = gdb.execute(command,False,True)
+            except gdb.error:
+                # This exception is thrown when you ask for a LINKAGE
+                # variable and it's not available because you aren't
+                # trapped inside the referring routine.
+                self.not_in_context = True
+        elif self.Section == 'L' :
+            try :
+                # Okay.
+                #
+                # We are looking for something in LOCAL-STORAGE.  Local
+                # storage is kept in a calloc-ed memory location named
+                # cob_local_ptr.  The complication is that if we have
+                # several program-ids that each have their own cob_local_ptr
+                # we have to make sure we know which one we are dealing
+                # with.
+
+                # Pick up the decimal line number where we are trapped
+                line_number = -1
+                frame_string = gdb.execute("frame",False,True)
+                # Look for a number after a colon
+                nfound = frame_string.find(':')
+                if nfound > -1 :
+                    frame_string = frame_string[nfound+1:]
+                    frame_string = frame_string.split()
+                    try :
+                        line_number = int(frame_string[0])
+                    except :
+                        line_number = -1
+
+                #print("Trapped at ",line_number)
+                # We know we are trapped at line_number
+
+                # Look up the program-id of that line_number
+                program_id = line_list.Find(line_number)
+                #print("in :", program_id)
+
+                # Okay again.
+                #
+                # program-id is where the program-under-test is
+                # trapped.  Let's see if that program-id matches
+                # the final place of the desired variable:
+                #
+                #print( self.Name )
+                split_name = self.Name.split('/')
+                #print("Match? :",split_name[-1],program_id)
+                if split_name[-1] == program_id :
+                    # Everything seems to match up, so we can try
+                    # to get this variable's data:
+
+                    command = "x/" + str(self.Length) + "xb "
+                    command += "cob_local_ptr"
+                    if self.Offset > 0 :
+                        command += "+"
+                        command += str(self.Offset)
+
                     data_string = gdb.execute(command,False,True)
-                except gdb.error:
-                    # This exception is thrown when you ask for a LINKAGE
-                    # variable and it's not available because you aren't
-                    # trapped inside the referring routine.
+                    #print(data_string)
+                else :
+                    if show_failure :
+                        print("Not in context ( we are stopped in", program_id,")")
                     self.not_in_context = True
-            else :
-                # We are running off-line, so simulate a return of just zeroes
-                data_string = ""
-                for i in range(self.ListSize) :
-                    data_string += "0x00 "
-                # print("Simulated", command, "returns", self.ListSize, "zeroes")
-        elif self.Section == "LOCAL-STORAGE" :
-            if 'gdb' in sys.modules :
-                try :
-                    # Okay.
-                    #
-                    # We are looking for something in LOCAL-STORAGE.  Local
-                    # storage is kept in a calloc-ed memory location named
-                    # cob_local_ptr.  The complication is that if we have
-                    # several program-ids that each have their own cob_local_ptr
-                    # we have to make sure we know which one we are dealing
-                    # with.
 
-                    # Pick up the decimal line number where we are trapped
-                    line_number = -1
-                    frame_string = gdb.execute("frame",False,True)
-                    # Look for a number after a colon
-                    nfound = frame_string.find(':')
-                    if nfound > -1 :
-                        frame_string = frame_string[nfound+1:]
-                        frame_string = frame_string.split()
-                        try :
-                            line_number = int(frame_string[0])
-                        except :
-                            line_number = -1
-
-                    #print("Trapped at ",line_number)
-                    # We know we are trapped at line_number
-
-                    # Look up the program-id of that line_number
-                    program_id = line_list.Find(line_number)
-                    #print("in :", program_id)
-
-                    # Okay again.
-                    #
-                    # program-id is where the program-under-test is
-                    # trapped.  Let's see if that program-id matches
-                    # the final place of the desired variable:
-                    #
-                    #print( self.Name )
-                    split_name = self.Name.split('/')
-                    #print("Match? :",split_name[-1],program_id)
-                    if split_name[-1] == program_id :
-                        # Everything seems to match up, so we can try
-                        # to get this variable's data:
-
-                        command = "x/" + str(self.ListSize) + "xb "
-                        command += "cob_local_ptr"
-                        if self.Offset > 0 :
-                            command += "+"
-                            command += str(self.Offset)
-
-                        data_string = gdb.execute(command,False,True)
-                        #print(data_string)
-                    else :
-                        if show_failure :
-                            print("Not in context ( we are stopped in", program_id,")")
-                        self.not_in_context = True
-
-                except gdb.error:
-                    self.not_in_context = True
-            else :
-                # print("Can't do LOCAL-STORAGE in debug mode")
-                data_string = ""
-                for i in range(self.ListSize) :
-                    data_string += "0x00 "
+            except gdb.error:
+                self.not_in_context = True
         else :
             print("We don't know how to handle",self.Section)
             return
@@ -1080,13 +1140,13 @@ class CobolVariable() :
 
     def NameToString(self) :
         storage_type = ""
-        if self.Section == "INPUT-OUTPUT" :
+        if self.Section == "F" :
             storage_type = "I/O"
-        elif self.Section == "WORKING-STORAGE" :
+        elif self.Section == "W" :
             storage_type = "W-S"
-        elif self.Section == "LOCAL-STORAGE" :
+        elif self.Section == "L" :
             storage_type = "L-S"
-        elif self.Section == "LINKAGE" :
+        elif self.Section == "I" :
             storage_type = "LNK"
 
         s = "{1:02} {2} [{0}]".format(storage_type,self.Level,self.Name)
@@ -1094,10 +1154,11 @@ class CobolVariable() :
 
     def ShowFields(self) :
         print("Name:       " , self.display_name    )
-        print("Base:       " , self.Base            )
+        print("Field:      " , self.Fname            )
+        print("Base:       " , self.Bname            )
+        print("Attr:       " , self.Aname            )
         print("Offset:     " , self.Offset          )
-        #print("Attr:       " , self.Attr            )
-        print("ListType:   " , self.ListType        )
+        print("Length:     " , self.Length          )
 
         print("AttrType:   " , self.AttrType ,end="")
         print(" (",hex(self.AttrType),") ", sep='', end="")
@@ -1109,8 +1170,6 @@ class CobolVariable() :
             print("GROUP              ", end="")
         elif self.AttrType == COB_TYPE_BOOLEAN             :
             print("BOOLEAN            ", end="")
-        #elif self.AttrType == COB_TYPE_NUMERIC             :   # NUMERIC and NUMERIC_DISPLAY are the same
-        #    print("NUMERIC            ", end="")
         elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY     :
             print("NUMERIC_DISPLAY    ", end="")
         elif self.AttrType == COB_TYPE_NUMERIC_BINARY      :
@@ -1183,9 +1242,6 @@ class CobolVariable() :
             print(" CONSTANT ", end = '')
         print()
 
-        print("Picture:    " , self.Picture         )
-        print("Usage:      " , self.Usage           )
-        print("Size:       " , self.ListSize        )
         print("pic_data: (HEX)   [" , end= " ")
 
         ## At this point, if BINARY_SWAP is on, our data are reversed.
@@ -1386,8 +1442,8 @@ class CobolVariable() :
         return body , pic
 
     def StringToIeeeBinary(self,rside) :
-        self.data = bytearray(self.ListSize)
-        length = self.ListSize
+        self.data = bytearray(self.Length)
+        length = self.Length
 
         if length == 2 :
             # binary16
@@ -1680,11 +1736,11 @@ class CobolVariable() :
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 128-bit zero, for example
-        for i in range(self.ListSize-1,-1, -1) :
+        for i in range(self.Length-1,-1, -1) :
             value <<= 8
             value += our_bytes[i]
 
-        if self.ListSize == 16 :
+        if self.Length == 16 :
             # decimal128
             # The format is 1 S, 4 combination,  14 exponent, 110 coefficient
             type = "decimal64"
@@ -1745,11 +1801,11 @@ class CobolVariable() :
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 64-bit zero, for example
-        for i in range(self.ListSize-1,-1, -1) :
+        for i in range(self.Length-1,-1, -1) :
             value <<= 8
             value += our_bytes[i]
 
-        if self.ListSize == 8 :
+        if self.Length == 8 :
             # decimal64
             # The format is 1 S, 4 combination, 8 exponent, 50 coefficient
             type = "decimal64"
@@ -1813,11 +1869,11 @@ class CobolVariable() :
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 64-bit zero, for example
-        for i in range(self.ListSize-1,-1, -1) :
+        for i in range(self.Length-1,-1, -1) :
             value <<= 8
             value += our_bytes[i]
 
-        if self.ListSize == 8 :
+        if self.Length == 8 :
             # decimal64
             # The format is 1 S, 5 combination, 8 exponent, 50 coefficient
             type = "binary64"
@@ -1884,8 +1940,6 @@ class CobolVariable() :
         for ch in Picture(self.Picture) :
             if ch == '9' :
                 digit_count += 1
-            if ch == 'P' :
-                pcount += 1
 
         # The sign nybble: 0x0C = positive
         #                  0x0D = negative
@@ -1896,7 +1950,7 @@ class CobolVariable() :
 
         negative = False
         if has_sign_nybble :
-            sign_nybble = self.data[self.ListSize-1] & 0x0F
+            sign_nybble = self.data[self.Length-1] & 0x0F
             if sign_nybble in (0xf, 0xa, 0xc, 0xe) : # one learns not to ask silly questions
                 negative = False
             else :
@@ -1977,7 +2031,7 @@ class CobolVariable() :
             rvalue = self.cleaned_rvalue[::-1]
 
             # We can now put together the self.data package:
-            self.data = bytearray(self.ListSize)
+            self.data = bytearray(self.Length)
             offset = len(self.data)-1
             mask = 0
             if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0 :
@@ -2004,18 +2058,15 @@ class CobolVariable() :
 
         # Count up any P-scalers in the Picture string:
         pcount = 0
-        for ch in Picture(self.Picture) :
-            if ch == 'P' :
-                pcount += 1;
 
         negative = False
-        if self.ListSize > 0 :
+        if self.Length > 0 :
             # DISPLAY keeps the negative bit in an oddball place:
-            if (self.data[self.ListSize-1] & 0x40) != 0 :
+            if (self.data[self.Length-1] & 0x40) != 0 :
                 negative = True
 
             # Convert the binary value in self.data to a string
-            for i in range(self.ListSize) :
+            for i in range(self.Length) :
                 digit = self.data[i] & 0x3F
                 body += chr(digit)
 
@@ -2032,7 +2083,7 @@ class CobolVariable() :
                     body = self.decimal_point + body
             elif self.AttrScale > 0 :
                 # No scaling
-                radix_point = self.ListSize - self.AttrScale
+                radix_point = self.Length - self.AttrScale
                 body = body[:radix_point] + self.decimal_point + body[radix_point:]
 
             if negative :
@@ -2052,21 +2103,18 @@ class CobolVariable() :
         self.data = bytearray()
 
         if self.CleanAndScale(rside) :
-            self.data = bytearray(self.ListSize)
-            for i in range(self.ListSize) :
+            self.data = bytearray(self.Length)
+            for i in range(self.Length) :
                 self.data[i] = ord(self.cleaned_rvalue[i])
 
             if self.is_negative :
-                self.data[self.ListSize-1] |= 0x40
+                self.data[self.Length-1] |= 0x40
 
     def NumericBinaryToStringComp5(self) :
         # Special processing for COMP-5, which as of this writing
         # behaves differently when compared to other Generic Binary variables
 
         pcount = 0
-        for ch in Picture(self.Picture) :
-            if ch == 'P' :
-                pcount += 1
 
         # we can be handed binary data in either little-endian
         # or big-endian.  We will operated little-endian
@@ -2086,7 +2134,7 @@ class CobolVariable() :
         if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
             # This is a binary number that can be signed; let's
             # see if it is.
-            if (our_bytes[self.ListSize-1] & 0x80) != 0 :
+            if (our_bytes[self.Length-1] & 0x80) != 0 :
                 # and it is negative
                 negative = True
 
@@ -2094,7 +2142,7 @@ class CobolVariable() :
                 # be fighting Python the whole way:
 
                 carry = 1
-                for i in range(self.ListSize) :
+                for i in range(self.Length) :
                     our_bytes[i] = ~our_bytes[i];
                     our_bytes[i] &= 0xFF
                     our_bytes[i] += carry;
@@ -2106,7 +2154,7 @@ class CobolVariable() :
         # build up the little-endian value:
 
         value = 0
-        for i in range(self.ListSize-1,-1, -1) :
+        for i in range(self.Length-1,-1, -1) :
             value <<= 8
             value += our_bytes[i]
 
@@ -2122,11 +2170,11 @@ class CobolVariable() :
         # to the appropriate length
 
         length = 0
-        if self.ListSize <= 1 :
+        if self.Length <= 1 :
             length = 3
-        elif self.ListSize <= 2 :
+        elif self.Length <= 2 :
             length = 5
-        elif self.ListSize <= 4 :
+        elif self.Length <= 4 :
             length = 10
         else :
             length = 20
@@ -2145,7 +2193,7 @@ class CobolVariable() :
             pic += " unsigned "
 
         pic += "binary-"
-        pic += str(self.ListSize*8)
+        pic += str(self.Length*8)
         if self.AttrScale != 0 :
             pic += " ("
             pic += str(self.AttrDigits - self.AttrScale)
@@ -2157,16 +2205,10 @@ class CobolVariable() :
         return body, pic
 
     def NumericBinaryToString(self) :
-        if self.Usage == "COMP-5" :
-            body, pic = self.NumericBinaryToStringComp5()
-            return body, pic
 
         # Generic Binary
 
         pcount = 0
-        for ch in Picture(self.Picture) :
-            if ch == 'P' :
-                pcount += 1
 
         # we can be handed binary data in either little-endian
         # or big-endian.  We will operated little-endian
@@ -2185,7 +2227,7 @@ class CobolVariable() :
         if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
             # This is a binary number that can be signed; let's
             # see if it is.
-            if (our_bytes[self.ListSize-1] & 0x80) != 0 :
+            if (our_bytes[self.Length-1] & 0x80) != 0 :
                 # and it is negative
                 negative = True
 
@@ -2193,7 +2235,7 @@ class CobolVariable() :
                 # be fighting Python the whole way:
 
                 carry = 1
-                for i in range(self.ListSize) :
+                for i in range(self.Length) :
                     our_bytes[i] = ~our_bytes[i];
                     our_bytes[i] &= 0xFF
                     our_bytes[i] += carry;
@@ -2205,7 +2247,7 @@ class CobolVariable() :
         # build up the little-endian value:
 
         value = 0
-        for i in range(self.ListSize-1,-1, -1) :
+        for i in range(self.Length-1,-1, -1) :
             value <<= 8
             value += our_bytes[i]
 
@@ -2253,7 +2295,7 @@ class CobolVariable() :
             pic += " unsigned "
 
         pic += "binary-"
-        pic += str(self.ListSize*8)
+        pic += str(self.Length*8)
         if self.AttrScale != 0 :
             pic += " ("
             pic += str(self.AttrDigits - self.AttrScale)
@@ -2274,8 +2316,8 @@ class CobolVariable() :
                 value = -value
 
             # Build up that value as little-endian
-            self.data = bytearray(self.ListSize)
-            for i in range(self.ListSize) :
+            self.data = bytearray(self.Length)
+            for i in range(self.Length) :
                 self.data[i] += value & 0xFF
                 value = value // 256
 
@@ -2294,14 +2336,14 @@ class CobolVariable() :
                 body += chr(self.data[i])
         body += '"'
         pic = '[ alphanumeric-'
-        pic += str(self.ListSize)
+        pic += str(self.Length)
         pic += ' ]'
         return body, pic;
 
     def StringToAlphanumeric(self,rside):
         # String from string:
-        self.data = rside[0:self.ListSize]
-        while len(self.data) < self.ListSize :
+        self.data = rside[0:self.Length]
+        while len(self.data) < self.Length :
             self.data += ' '
         # convert to bytearray:
         self.data = bytearray(self.data,"utf8")
@@ -2311,7 +2353,7 @@ class CobolVariable() :
         body = ""
         pic = ""
 
-        for i in range(self.ListSize) :
+        for i in range(self.Length) :
             if self.data[i] < 32 or self.data[i] >= 128 :
                 body += '.'
             else :
@@ -2664,10 +2706,6 @@ class CobolVariable() :
                         value += '.'
                 value += '"'
 
-        pcount = 0
-        for ch in Picture(self.Picture) :
-            if ch == 'P' :
-                pcount += 1
         pcount = 0
 
         if pcount > 0 :
@@ -3086,21 +3124,15 @@ class CWatchWorker() :
     def SetTheWatchpoint(self, TabFile, payload ) :
         the_address = payload.GetTheAddress(TabFile.line_list)
 
-        if not the_address and not 'gdb' in sys.modules :
-            the_address = 0x12345678
-
         #print("SetTheWatchpoint", hex(the_address))
 
         command = "watch *(char(*)"
-        command += '[' + str(payload.ListSize) +'])'
+        command += '[' + str(payload.Length) +'])'
         command += '(' + hex(the_address) + ')'
 
-        if 'gdb' in sys.modules :
-            #print("The command is:",command)
-            watch_text = gdb.execute(command,False,True)
-            print(watch_text)
-        else :
-            print(command)
+        #print("The command is:",command)
+        watch_text = gdb.execute(command,False,True)
+        print(watch_text)
 
     def ProcessWArgumentsW(self, TabFile, ShortTermMemory, arguments) :
         # The command is typically "cw A
@@ -3119,53 +3151,44 @@ class CWatchWorker() :
             # And go set the Watchpoint
             self.SetTheWatchpoint(TabFile, payload)
 
-if 'gdb' in sys.modules :
-    class CPrint (gdb.Command) :
-        """Prints COBOL-NAMED variables when debugging cobst processed object files."""
+class CPrint (gdb.Command) :
+    """Prints COBOL-NAMED variables when debugging cobst processed object files."""
 
-        def __init__ (self):
-            super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
-            ###########################################################################
-            ## The version number in the next line is updated by a Linux bash script. #
-            ## The text "Version x.x" has to appear in square brackets.               #
-            ## Don't mess with it!                                                    #
-            ###########################################################################
-            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 3.11]')
-            self.Worker = CPrintWorker()
-            self.TabFile = TabFileInformation();
-            self.TabFile.question_mark_range = self.Worker.question_mark_range
+    def __init__ (self):
+        super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
+        ###########################################################################
+        ## The version number in the next line is updated by a Linux bash script. #
+        ## The text "Version x.x" has to appear in square brackets.               #
+        ## Don't mess with it!                                                    #
+        ###########################################################################
+        print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 4.1]')
+        self.Worker = CPrintWorker()
+        self.TabFile = TabFileInformation();
+        self.TabFile.question_mark_range = self.Worker.question_mark_range
 
-        def invoke (self, arguments, from_tty):
-            # pick up the name of the current source file
-            try :
-                self.TabFile.ReadSymbolTableText()
-                self.Worker.ProcessArguments(self.TabFile,GV_ShortTermMemory,arguments)
-            except :
-                traceback.print_exc()
+    def invoke (self, arguments, from_tty):
+        # pick up the name of the current source file
+        try :
+            self.TabFile.ReadSymbolTableText()
+            self.Worker.ProcessArguments(self.TabFile,GV_ShortTermMemory,arguments)
+        except :
+            traceback.print_exc()
 
-    class CWatch (gdb.Command) :
-        """Used for creating COBOL-NAMED watchpoints when debugging cobst processed object files."""
+class CWatch (gdb.Command) :
+    """Used for creating COBOL-NAMED watchpoints when debugging cobst processed object files."""
 
-        def __init__ (self):
-            super (CWatch, self).__init__ ("cwatch", gdb.COMMAND_USER)
-            print('registering CWatch (Usage is "cwatch <COBOL identifier>")')
-            self.Worker = CWatchWorker()
-            self.TabFile = TabFileInformation();
+    def __init__ (self):
+        super (CWatch, self).__init__ ("cwatch", gdb.COMMAND_USER)
+        print('registering CWatch (Usage is "cwatch <COBOL identifier>")')
+        self.Worker = CWatchWorker()
+        self.TabFile = TabFileInformation();
 
-        def invoke (self, arguments, from_tty):
-            try :
-                self.TabFile.ReadSymbolTableText()
-                self.Worker.ProcessWArgumentsW(self.TabFile,GV_ShortTermMemory,arguments)
-            except :
-                traceback.print_exc()
+    def invoke (self, arguments, from_tty):
+        try :
+            self.TabFile.ReadSymbolTableText()
+            self.Worker.ProcessWArgumentsW(self.TabFile,GV_ShortTermMemory,arguments)
+        except :
+            traceback.print_exc()
 
-if 'gdb' not in sys.modules:
-    # I debug with Visual Studio in Windows, which doesn't provide a gdb object.
-    # Test code goes here
-    #Worker = CPrintWorker()
-    #Worker.ProcessInfoSource("|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
-    pass
-else:
-    CPrint()
-    CWatch()
-
+CPrint()
+CWatch()
