@@ -44,9 +44,9 @@
 #define NEEDED_TO_DEFINE_EQ
 #endif
 
-class COB_FIELDS_2;
+class COB_FIELDS;
 
-class COB_FIELD_2
+class COB_FIELD
 {
 public:
     std::string  f_name;       /* name of field         */
@@ -56,11 +56,11 @@ public:
     std::string  a_name;       /* name of attribute     */
 
 public:
-    COB_FIELD_2(std::string f_name_,
-                std::string b_name_,
-                int         offset_,
-                int         size_,
-                std::string a_name_)
+    COB_FIELD(std::string f_name_,
+              std::string b_name_,
+              int         offset_,
+              int         size_,
+              std::string a_name_)
     {
         f_name       = f_name_     ;
         b_name       = b_name_     ;
@@ -69,12 +69,12 @@ public:
         a_name       = a_name_     ;
     }
 
-    friend COB_FIELDS_2;
+    friend COB_FIELDS;
 } ;
-typedef std::vector<COB_FIELD_2> V_COB_FIELDS_2;
+typedef std::vector<COB_FIELD> V_COB_FIELDS_2;
 typedef std::map<std::string,size_t> M_COB_FIELDS_2;
 
-class COB_FIELDS_2
+class COB_FIELDS
 {
 private:
     M_COB_FIELDS_2 m_cob_fields;
@@ -91,7 +91,8 @@ private:
 
 public:
     void ScanAllDotHFiles(const std::string &path, const std::string &fname);
-    const COB_FIELD_2 *Find(const std::string &f_name_) const;
+    void ScanCFile(const std::string &path, const std::string &fname);
+    COB_FIELD *Find(const std::string &f_name_) ;
 
     void Dump() const ;
 };

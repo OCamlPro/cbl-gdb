@@ -40,13 +40,6 @@ using namespace std;
 #define AND &&
 #define OR ||
 
-static void
-SkipPast(PCHAR &p,char ch)
-{
-    while( *p++ != ch ) {
-    }
-}
-
 void
 VARIABLES::ScanCFile(const string &path, const string &fname)
 {
@@ -214,11 +207,11 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
 }
 
 void
-VARIABLES::FillInTheBlanks(const COB_FIELDS_2 &cob_fields_2)
+VARIABLES::FillInTheBlanks(COB_FIELDS &cob_fields)
 {
     for( V_VARIABLES::iterator it = variables.begin(); it!=variables.end(); it++) {
         if( it->a_name.empty() ) {
-            const COB_FIELD_2 *pfield = cob_fields_2.Find(it->f_name);
+            const COB_FIELD *pfield = cob_fields.Find(it->f_name);
             if( pfield ) {
                 if( it->record_type EQ "L" ) {
                     // Local variables are all referenced against cob_local_ptr
@@ -244,7 +237,7 @@ void
 VARIABLES::Dump() const
 {
     CPROFILER;
-    cout << "COB_FIELDS_2:" << endl;
+    cout << "COB_FIELDS:" << endl;
     cout << setw( 3) << "RT" ;
     cout << setw( 4) << "lvl";
     cout << setw(20) << "name" ;

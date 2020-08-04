@@ -54,7 +54,7 @@ private:
 
 public:
     void ScanCFile(const std::string &path, const std::string &fname);
-    void FillInTheBlanks(const COB_FIELDS_2 &cob_fields_2);
+    void FillInTheBlanks(COB_FIELDS &cob_fields);
     void Dump() const;
     void
     Insert(const VARIABLE &v)

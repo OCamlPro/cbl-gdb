@@ -185,3 +185,11 @@ GetCommentText(const string &s)
     }
     return retval;
 }
+
+void
+SkipPast(PCHAR &p,char ch)
+{
+    while( *p++ != ch ) {
+    }
+}
+

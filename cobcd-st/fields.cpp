@@ -40,29 +40,29 @@ using namespace std;
 #define OR ||
 
 void
-COB_FIELDS_2::Insert(std::string f_name_,
-                     std::string b_name_,
-                     int         offset_,
-                     int         size_,
-                     std::string a_name_)
+COB_FIELDS::Insert(std::string f_name_,
+                   std::string b_name_,
+                   int         offset_,
+                   int         size_,
+                   std::string a_name_)
 {
     M_COB_FIELDS_2::const_iterator it = m_cob_fields.find(f_name_);
     if( it != m_cob_fields.end() ) {
-        std::cout << "Creating the symbol " << f_name_ << " more than once in COB_FIELDS_2::Insert()\n" ;
+        std::cout << "Creating the symbol " << f_name_ << " more than once in COB_FIELDS::Insert()\n" ;
         exit(1);
     }
-    COB_FIELD_2 cf(f_name_,
-                   b_name_,
-                   offset_,
-                   size_,
-                   a_name_);
+    COB_FIELD cf(f_name_,
+                 b_name_,
+                 offset_,
+                 size_,
+                 a_name_);
     m_cob_fields[f_name_] = v_cob_fields.size();
     v_cob_fields.push_back(cf);
 }
 
 
 void
-COB_FIELDS_2::ScanDotHFile(ifstream &ifs, const string &source)
+COB_FIELDS::ScanDotHFile(ifstream &ifs, const string &source)
 {
     int current_line_number = 0;
 
@@ -188,7 +188,7 @@ COB_FIELDS_2::ScanDotHFile(ifstream &ifs, const string &source)
 }
 
 void
-COB_FIELDS_2::ScanAllDotHFiles(const std::string &path, const std::string &fname )
+COB_FIELDS::ScanAllDotHFiles(const std::string &path, const std::string &fname )
 {
     CPROFILER;
     vector<string>AllDotHFiles = DirectoryScan(path,fname,"*.h");
@@ -208,10 +208,10 @@ COB_FIELDS_2::ScanAllDotHFiles(const std::string &path, const std::string &fname
     }
 }
 
-const COB_FIELD_2 *
-COB_FIELDS_2::Find(const std::string &f_name_) const
+COB_FIELD *
+COB_FIELDS::Find(const std::string &f_name_)
 {
-    const COB_FIELD_2 *retval = NULL;
+    COB_FIELD *retval = NULL;
 
     map<std::string,size_t>::const_iterator it =  m_cob_fields.find(f_name_);
     if( it != m_cob_fields.end() ) {
@@ -222,10 +222,10 @@ COB_FIELDS_2::Find(const std::string &f_name_) const
 }
 
 void
-COB_FIELDS_2::Dump() const
+COB_FIELDS::Dump() const
 {
     CPROFILER;
-    std::cout << "COB_FIELDS_2:" << std::endl;
+    std::cout << "COB_FIELDS:" << std::endl;
     std::cout << std::setw(20) << "f_name" ;
     std::cout << std::setw(20) << "b_name";
     std::cout << std::setw(20) << "offset" ;
@@ -236,7 +236,7 @@ COB_FIELDS_2::Dump() const
     for( V_COB_FIELDS_2::const_iterator it = v_cob_fields.begin();
             it!=v_cob_fields.end();
             it++) {
-        COB_FIELD_2 field = *it;
+        COB_FIELD field = *it;
         std::cout << std::setw(20) << field.f_name ;
         std::cout << std::setw(20) << field.b_name;
         std::cout << std::setw(20) << field.offset ;
@@ -245,4 +245,94 @@ COB_FIELDS_2::Dump() const
         std::cout << std::endl;
     }
     std::cout << std::endl;
+}
+
+void
+COB_FIELDS::ScanCFile(const string &path, const string &fname)
+{
+    // We specifically are looking for COB_SET_DATA for LOCAL-STORAGE, because
+    // that's the only way we can find offsets into cob_local_ptr:
+
+    CPROFILER;
+    string full_path = path;
+    full_path += fname;
+    full_path += ".c";
+
+    FILE *f = fopen(full_path.c_str(),"r");
+    if( !f ) {
+        cout << "Couldn't open the input file " << full_path << endl;
+        exit(1);
+    }
+
+    char ach[16384];
+    static const char COB_SET_DATA[] = "COB_SET_DATA";
+    while( fgets(ach,sizeof(ach),f) ) {
+        char *pcsd;
+        if( (pcsd=strstr(ach,COB_SET_DATA)) ) {
+            // This line has COB_SET_DATA in it.
+
+            // I can't believe I am about to do this.  But I couldn't let it go. Users
+            // are an evil bunch, just evil, and I found I couldn't ignore the possibility
+            // that some evil -- I did say they are evil, right? -- user would write some
+            // COBOL code that has in it " MOVE 'COB_SET_DATA' TO CONFUSE-DUBNER", which
+            // would end up with a "memmove(dest,"COB_SET_DATA",12)" in the C code we
+            // are currently examining.
+
+            // So, I am going to put in some simple screening code that will get rid
+            // of the simplest form of that problem.
+
+            // Did I say I can't believe I am doing this?
+
+            char *p1 = strchr(ach,'\"');
+            char *p2 = strchr(pcsd,'\"');
+
+            if( p1 AND p2 AND p1 < pcsd ) {
+                // Our COB_SET_DATA is in a double-quote sandwich.  Assume it's
+                // part of a literal, and just skip it
+                continue;
+            }
+
+            char *p = pcsd + strlen(COB_SET_DATA);
+            // Find the first character after the opening parenthesis
+            SkipPast(p,'(');
+
+            // Build up a string of non-space characters up to the
+            // closing parenthesis
+            string s;
+            while( *p != ')' ) {
+                if( *p != ' ' AND *p != '\t' ) {
+                    s += *p;
+                }
+                p += 1;
+            }
+            // Bust it up on commas:
+            VSTRING tokens = Split(s,",");
+            if( tokens.size() EQ 2 ) {
+                // The first element is the f_name:
+                string f_n = tokens[0];
+
+                // Which is followed by a base name.  It'll be cob_local_ptr
+                // for LOCAL-STORAGE, or b_xxx otherwise
+                VSTRING tokens_base_offset = Split(tokens[1],"+");
+                string b_n = tokens_base_offset[0];
+
+                // And if there is anything after that, separated by plus signs,
+                // that'll be the offset
+                int off = 0;
+                for( size_t i=1; i<tokens_base_offset.size(); i++) {
+                    off += stoi(tokens_base_offset[i]);
+                }
+
+                // Okay, we have f_ b_ off
+                // Use them to modify what should be an already-existing f_ record:
+                COB_FIELD *pfield = Find(f_n);
+                if( pfield ) {
+                    pfield->b_name = b_n;
+                    pfield->offset = off;
+                }
+            }
+        }
+    }
+
+    ::fclose(f);
 }

@@ -47,7 +47,7 @@
 
 using namespace std;
 
-// #define DUMPING
+#define DUMPING
 
 static void
 CreateSymc(PARAMETERS &params,
@@ -252,17 +252,19 @@ main(int argc, char *argv[])
         cout << "cobst version " << VERSION << endl;
     }
 
-    COB_FIELDS_2 cob_fields_2;
-    cob_fields_2.ScanAllDotHFiles(params.c_filename.Path(),
-                                  params.c_filename.GetFname() );
+    COB_FIELDS cob_fields;
+    cob_fields.ScanAllDotHFiles(params.c_filename.Path(),
+                                params.c_filename.GetFname() );
+    cob_fields.ScanCFile(params.c_filename.Path(),
+                         params.c_filename.GetFname() );
 #if defined(DUMPING)
-    cob_fields_2.Dump();
+    cob_fields.Dump();
 #endif
 
     VARIABLES variables;
     variables.ScanCFile(params.c_filename.Path(),
                         params.c_filename.GetFname() );
-    variables.FillInTheBlanks(cob_fields_2);
+    variables.FillInTheBlanks(cob_fields);
 #if defined(DUMPING)
     variables.Dump();
 #endif

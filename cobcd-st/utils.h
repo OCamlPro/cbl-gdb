@@ -79,3 +79,4 @@ std::string Upper(const std::string&s);
 std::string ZeroIsNull(const LONGLONG &v);
 int STOI(const std::string &s);
 std::string GetCommentText(const std::string &s);
+void SkipPast(PCHAR &p,char ch);
