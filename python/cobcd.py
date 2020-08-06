@@ -130,31 +130,25 @@ class GlobalVariables() :
         nfound = arch.find("x86-64")
         if nfound != -1 :
             self.PointerSize = 8
+        self.libraries_loaded = False
 
     def LoadLibcob(self) :
-        shared_libraries = gdb.execute("info sharedlibrary",False,True)
-        shared_libraries = shared_libraries.split('\n')
+        if not self.libraries_loaded :
+            shared_libraries = gdb.execute("info sharedlibrary",False,True)
+            shared_libraries = shared_libraries.split('\n')
 
-        self.LIBCOB = None
-        for slib in shared_libraries :
-            m = re.match(r'.*[ ](.*libcob[.].*)$',slib)
-            if m :
-                libcob_name = m.group(1)
-                break
-        if libcob_name :
-            self.LIBCOB = ctypes.CDLL(libcob_name)
-
-        self.LIBC = None
-        for slib in shared_libraries :
-            m = re.match(r'.*[ ](.*libc[.].*)$',slib)
-            if m :
-                libc_name = m.group(1)
-                break
-        if libc_name :
-            self.LIBC = ctypes.CDLL(libc_name)
-            
-        # And while we are in the neighborhood:
-        self.LIBCOB.cob_extern_init()
+            self.LIBCOB = None
+            libcob_name = None
+            for slib in shared_libraries :
+                m = re.match(r'.*[ ](.*libcob[.].*)$',slib)
+                if m :
+                    libcob_name = m.group(1)
+                    break
+            if libcob_name :
+                self.LIBCOB = ctypes.CDLL(libcob_name)
+                # And while we are in the neighborhood:
+                self.LIBCOB.bob_standalone_initializer()
+                self.libraries_loaded = True
 
 GV_GlobalVariables = GlobalVariables()
 
@@ -1043,20 +1037,21 @@ class CobolVariable() :
     def GetDataAsString(self) :
         retval = ""
 
-        print("GetDataAsString         Name:"   ,self.Name);
-        print("GetDataAsString      Section:"   ,self.Section);
-        print("GetDataAsString        Fname:"   ,self.Fname);
-        print("GetDataAsString        Bname:"   ,self.Bname);
-        print("GetDataAsString        Aname:"   ,self.Aname);
-        print("GetDataAsString       Offset:"   ,self.Offset);
-        print("GetDataAsString       Length:"   ,self.Length);
-        print("GetDataAsString     AttrType:"   ,hex(self.AttrType));
-        print("GetDataAsString   AttrDigits:"   ,self.AttrDigits);
-        print("GetDataAsString    AttrScale:"   ,self.AttrScale);
-        print("GetDataAsString    AttrFlags:"   ,hex(self.AttrFlags));
-        print("GetDataAsString  loc_of_data:"   ,hex(self.location_of_data));
-        print("GetDataAsString  loc_of_attr:"   ,hex(self.location_of_attribute));
-        print("GetDataAsString   loc_of_pic:"   ,hex(self.location_of_pic));
+        if False :
+            print("GetDataAsString         Name:"   ,self.Name);
+            print("GetDataAsString      Section:"   ,self.Section);
+            print("GetDataAsString        Fname:"   ,self.Fname);
+            print("GetDataAsString        Bname:"   ,self.Bname);
+            print("GetDataAsString        Aname:"   ,self.Aname);
+            print("GetDataAsString       Offset:"   ,self.Offset);
+            print("GetDataAsString       Length:"   ,self.Length);
+            print("GetDataAsString     AttrType:"   ,hex(self.AttrType));
+            print("GetDataAsString   AttrDigits:"   ,self.AttrDigits);
+            print("GetDataAsString    AttrScale:"   ,self.AttrScale);
+            print("GetDataAsString    AttrFlags:"   ,hex(self.AttrFlags));
+            print("GetDataAsString  loc_of_data:"   ,hex(self.location_of_data));
+            print("GetDataAsString  loc_of_attr:"   ,hex(self.location_of_attribute));
+            print("GetDataAsString   loc_of_pic:"   ,hex(self.location_of_pic));
         
         ## By the time we get here, we have pulled all the information we
         ## can from the data we got from the compiler, and also from the
@@ -1070,10 +1065,10 @@ class CobolVariable() :
         
         ## Let's get the cob_field.data.  This one is relatively easy, because we have a length and a pointer:
         
-        variable_data = GetBytesAt(self.location_of_data,self.Length)
-        p_variable_data = create_string_buffer(len(variable_data))
-        for i in range(len(variable_data)) :
-            p_variable_data[i] = variable_data[i]
+        self.data = GetBytesAt(self.location_of_data,self.Length)
+        p_variable_data = create_string_buffer(len(self.data))
+        for i in range(len(self.data)) :
+            p_variable_data[i] = self.data[i]
         
         ## Get the picture string, if there is one
         picture_data = self.GetPictureString(self.location_of_pic)
@@ -1098,47 +1093,15 @@ class CobolVariable() :
         ## we used GDB to pick up from the COBOL memory space.
 
         length = self.Length + 128
-        buffer = ctypes.create_string_buffer(b'Marty' + b'\000' * length)
+        buffer = ctypes.create_string_buffer(b'\000' * length)
         size = ctypes.c_size_t(length)
 
-        print("buffer", buffer)
-        print(" size", size)
-
-        print("");
-        print("");
-        print("");
-        print("");
-
-        self.LIBCOB = ctypes.CDLL("/usr/local/lib/libcob.so.4")
-        f_data = GetDataAt(self.location_of_field,8) # Reads an 8-byte binary integer
-        print("Bob will say hello by reading the data at ",hex(self.location_of_field),"which is",f_data)
-        ## const char * cob_get_field_str (const cob_field *f, char *buffer, size_t size)
-        GV_GlobalVariables.LIBCOB.bob_says_hello.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
-        GV_GlobalVariables.LIBCOB.bob_says_hello(byref(cob_field),buffer,size)
-        print("    (We got back", buffer.value.decode("utf-8"),")")
-        print("Bob said hello")
-
-        print("About to call cob_get_field_str")
+        #print("About to call cob_get_field_str")
         GV_GlobalVariables.LIBCOB.cob_get_field_str.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
         GV_GlobalVariables.LIBCOB.cob_get_field_str(byref(cob_field),buffer,size)
-        print("    (We got back", buffer.value.decode("utf-8"),")")
-        print("Back from calling cob_get_field_str")
+        #print("    (We got back", buffer.value.decode("utf-8"),")")
 
-        return "Simon"
-
-
-        GV_GlobalVariables.LIBCOB.bob_says_hello.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
-
-        print("Bob will say hello")
-        GV_GlobalVariables.LIBCOB.bob_says_hello(f,buffer,size)
-        print("    (We got back", buffer.value.decode("utf-8"),")")
-        print("Bob said hello")
-        return "Simon"
-        GV_GlobalVariables.LIBCOB.cob_get_field_str.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
-        GV_GlobalVariables.LIBCOB.cob_get_field_str(f, buffer, size)
-
-        return "Simon"
-        pass
+        return buffer.value.decode("utf-8")
 
     def FetchVariableData(self, line_list , show_failure ) :
         # print("FetchVariableData:",self.Name,self.Section)
@@ -1375,7 +1338,7 @@ class CobolVariable() :
             print(" CONSTANT ", end = '')
         print()
 
-        print("pic_data: (HEX)   [" , end= " ")
+        print("data: (HEX)   [" , end= " ")
 
         ## At this point, if BINARY_SWAP is on, our data are reversed.
         ## We want to unreverse them for this display:
@@ -1389,7 +1352,7 @@ class CobolVariable() :
                 hexout = '0' + hexout[-1:]
             print(hexout,end=" ")
         print("]")
-        print("pic_data: (ASCII) \"", end = "")
+        print("data: (ASCII) \"", end = "")
         for byte in output_bytes :
             if 32 <= byte < 128 :   # valid ASCII characters
                 print(chr(byte),end="")
