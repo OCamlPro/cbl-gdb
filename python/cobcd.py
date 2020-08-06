@@ -37,6 +37,8 @@ import os
 import traceback
 import datetime
 import subprocess
+import ctypes
+from ctypes import *
 
 #   This module implements the gdb extension commands cprint and cwatch
 #
@@ -118,6 +120,63 @@ COB_FLAG_REAL_SIGN      = (1 << 10)  # /* 0x0400 */
 COB_FLAG_BINARY_TRUNC   = (1 << 11)  # /* 0x0800 */
 COB_FLAG_CONSTANT       = (1 << 12)  # /* 0x1000 */
 
+class GlobalVariables() :
+    def __init__(self) :
+        self.ShortTermMemory = []
+
+        ## Let's figure out if we are a 32-bit or 64-bit machine:
+        self.PointerSize = 4     # Assume 32-bit
+        arch = gdb.execute("show architecture",False,True)
+        nfound = arch.find("x86-64")
+        if nfound != -1 :
+            self.PointerSize = 8
+
+    def LoadLibcob(self) :
+        shared_libraries = gdb.execute("info sharedlibrary",False,True)
+        shared_libraries = shared_libraries.split('\n')
+
+        self.LIBCOB = None
+        for slib in shared_libraries :
+            m = re.match(r'.*[ ](.*libcob[.].*)$',slib)
+            if m :
+                libcob_name = m.group(1)
+                break
+        if libcob_name :
+            self.LIBCOB = ctypes.CDLL(libcob_name)
+
+        self.LIBC = None
+        for slib in shared_libraries :
+            m = re.match(r'.*[ ](.*libc[.].*)$',slib)
+            if m :
+                libc_name = m.group(1)
+                break
+        if libc_name :
+            self.LIBC = ctypes.CDLL(libc_name)
+            
+        # And while we are in the neighborhood:
+        self.LIBCOB.cob_extern_init()
+
+GV_GlobalVariables = GlobalVariables()
+
+class COB_PIC_SYMBOL(Structure) :
+    _fields_ = [("symbol"        , c_char),
+                ("times_repeated", c_int)]
+
+class COB_FIELD_ATTR(Structure) :
+    _fields_ = [("type"  , c_ushort),
+                ("digits", c_ushort),
+                ("scale" , c_short) ,
+                ("flags" , c_ushort),
+                ("pic"   , POINTER(COB_PIC_SYMBOL))]
+
+class COB_FIELD(Structure) :
+    _fields_ = [("size", c_size_t),
+                ("data", c_char_p),
+                ("attr", POINTER(COB_FIELD_ATTR))]
+    
+    def __init__(self) :
+        self.cob_field_attr = COB_FIELD_ATTR()
+    
 def NoNulls(s) :
     ss = ""
     for ch in s:
@@ -228,16 +287,16 @@ def BlankIsZero(v) :
     return int(v)
 
 def GetDataAt(address,bytes) :
-    # This routine takes an address and returns the 
+    # This routine takes an address and returns the
     # value there.  'bytes' can be 1, 2, 4, or 8
     try :
         if bytes == 1 :
             u = 'b'
-        elif bytes == 2 : 
+        elif bytes == 2 :
             u = 'h'
-        elif bytes == 4 : 
+        elif bytes == 4 :
             u = 'w'
-        elif bytes == 8 : 
+        elif bytes == 8 :
             u = 'g'
         else :
             return None
@@ -254,6 +313,20 @@ def GetDataAt(address,bytes) :
     except gdb.error:
         print("gdb.execute failed in GetDataAt:",command)
         return None
+        
+def GetBytesAt(address,N) :
+    # Pick up N bytes from address, return them as a list of ints
+    retval = []
+    command = "x/" + str(N) + "xb " + hex(address)
+    all_the_bytes = gdb.execute(command,False,True)
+    lines = all_the_bytes.split('\n')
+    for line in lines :
+        nfound = line.find(':')
+        if nfound != -1 :
+            bytes = line[nfound+1:].split( )
+            for byte in bytes :
+                retval.append( int(byte,16) )
+    return retval;
 
 def GetAddressOf(variable) :
     try :
@@ -646,13 +719,6 @@ class CobolVariable() :
         self.ldigits = -1          # this integer is AttrDigits - AttrScale
         self.rdigits = -1          # this integer is AttrScale...
         #                          # ...but see self.CleanAndScale
-        
-        ## Let's figure out if we are a 32-bit or 64-bit machine:
-        self.pointer_size = 4     # Assume 32-bit
-        arch = gdb.execute("show architecture",False,True)
-        nfound = arch.find("x86-64")
-        if nfound != -1 :
-            self.pointer_size = 8
 
     def CleanTokens(self,execute_result) :
         # (This was created during initial development.  During refactoring
@@ -969,11 +1035,113 @@ class CobolVariable() :
                 return None
         else :
             return None
+    
+    def GetPictureString(self,location_of_pic) :
+        retval = []
+        return retval
+
+    def GetDataAsString(self) :
+        retval = ""
+
+        print("GetDataAsString         Name:"   ,self.Name);
+        print("GetDataAsString      Section:"   ,self.Section);
+        print("GetDataAsString        Fname:"   ,self.Fname);
+        print("GetDataAsString        Bname:"   ,self.Bname);
+        print("GetDataAsString        Aname:"   ,self.Aname);
+        print("GetDataAsString       Offset:"   ,self.Offset);
+        print("GetDataAsString       Length:"   ,self.Length);
+        print("GetDataAsString     AttrType:"   ,hex(self.AttrType));
+        print("GetDataAsString   AttrDigits:"   ,self.AttrDigits);
+        print("GetDataAsString    AttrScale:"   ,self.AttrScale);
+        print("GetDataAsString    AttrFlags:"   ,hex(self.AttrFlags));
+        print("GetDataAsString  loc_of_data:"   ,hex(self.location_of_data));
+        print("GetDataAsString  loc_of_attr:"   ,hex(self.location_of_attribute));
+        print("GetDataAsString   loc_of_pic:"   ,hex(self.location_of_pic));
+        
+        ## By the time we get here, we have pulled all the information we
+        ## can from the data we got from the compiler, and also from the
+        ## run-time information that the compiler pointed us to.
+        
+        ## We can't feed those pointers directly to libcob from here, because they
+        ## came from the memory space of a different process, and thus
+        ## we get segmentation faults.  So, we are going to build a local
+        ## copy that we can send to libcob:
+        ## We've got everything except the field->data and field->attr->pic stuff.
+        
+        ## Let's get the cob_field.data.  This one is relatively easy, because we have a length and a pointer:
+        
+        variable_data = GetBytesAt(self.location_of_data,self.Length)
+        p_variable_data = create_string_buffer(len(variable_data))
+        for i in range(len(variable_data)) :
+            p_variable_data[i] = variable_data[i]
+        
+        ## Get the picture string, if there is one
+        picture_data = self.GetPictureString(self.location_of_pic)
+        p_picture_data = create_string_buffer(len(picture_data))
+        for i in range(len(picture_data)) :
+            p_picture_data[i] = picture_data[i]
+     
+        cob_field_attr = COB_FIELD_ATTR()
+        cob_field_attr.type   = self.AttrType
+        cob_field_attr.digits = self.AttrDigits
+        cob_field_attr.scale  = self.AttrScale
+        cob_field_attr.flags  = self.AttrFlags
+        cob_field_attr.pic    = cast(p_picture_data, POINTER(COB_PIC_SYMBOL))
+        
+        cob_field = COB_FIELD()
+        cob_field.size = self.Length
+        cob_field.data = cast(p_variable_data,c_char_p)
+        cob_field.attr = pointer(cob_field_attr)
+        
+        ## cob_field is now a duplicate, in our GDB/Python memory space, of the
+        ## relevant f_ (or synthesized f0 equivalent) cob_field variable that
+        ## we used GDB to pick up from the COBOL memory space.
+
+        length = self.Length + 128
+        buffer = ctypes.create_string_buffer(b'Marty' + b'\000' * length)
+        size = ctypes.c_size_t(length)
+
+        print("buffer", buffer)
+        print(" size", size)
+
+        print("");
+        print("");
+        print("");
+        print("");
+
+        self.LIBCOB = ctypes.CDLL("/usr/local/lib/libcob.so.4")
+        f_data = GetDataAt(self.location_of_field,8) # Reads an 8-byte binary integer
+        print("Bob will say hello by reading the data at ",hex(self.location_of_field),"which is",f_data)
+        ## const char * cob_get_field_str (const cob_field *f, char *buffer, size_t size)
+        GV_GlobalVariables.LIBCOB.bob_says_hello.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
+        GV_GlobalVariables.LIBCOB.bob_says_hello(byref(cob_field),buffer,size)
+        print("    (We got back", buffer.value.decode("utf-8"),")")
+        print("Bob said hello")
+
+        print("About to call cob_get_field_str")
+        GV_GlobalVariables.LIBCOB.cob_get_field_str.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
+        GV_GlobalVariables.LIBCOB.cob_get_field_str(byref(cob_field),buffer,size)
+        print("    (We got back", buffer.value.decode("utf-8"),")")
+        print("Back from calling cob_get_field_str")
+
+        return "Simon"
+
+
+        GV_GlobalVariables.LIBCOB.bob_says_hello.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
+
+        print("Bob will say hello")
+        GV_GlobalVariables.LIBCOB.bob_says_hello(f,buffer,size)
+        print("    (We got back", buffer.value.decode("utf-8"),")")
+        print("Bob said hello")
+        return "Simon"
+        GV_GlobalVariables.LIBCOB.cob_get_field_str.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
+        GV_GlobalVariables.LIBCOB.cob_get_field_str(f, buffer, size)
+
+        return "Simon"
+        pass
 
     def FetchVariableData(self, line_list , show_failure ) :
-        #self.display_body ="Hold your horses"
-        #self.display_name = self.NameToString();
-
+        # print("FetchVariableData:",self.Name,self.Section)
         data_string = None
         self.location_of_field = 0;
         self.location_of_data = 0;
@@ -981,15 +1149,15 @@ class CobolVariable() :
         self.data = []
         self.display_body = ""
         self.display_pic = ""
-        self.display_name = ""
+        self.display_name = self.NameToString()
         self.not_in_context = False
-        
+
         ## Let's update everything we might need:
-        
+
         ## First, check to see if the compiler provided us with the
         ## the name of the field.  If so, use the run-time values in that named
         ## field to override anything we might have gotten from compile-time
-        
+
         if self.Fname :
             # We have a field name
             self.location_of_field = GetAddressOf(self.Fname)
@@ -997,64 +1165,55 @@ class CobolVariable() :
                 self.not_in_context = True
                 return
             # The cob_field structure looks like this:
-            #   typedef struct __cob_field 
+            #   typedef struct __cob_field
             #       {
             #       size_t                size;
             #       unsigned char        *data;
             #       const cob_field_attr *attr;
             #       } cob_field;
-            self.Length = GetDataAt(self.location_of_field,self.pointer_size)
-            self.location_of_data = GetDataAt(self.location_of_field+self.pointer_size,self.pointer_size)
-            self.location_of_attribute = GetDataAt(self.location_of_field+2*self.pointer_size,self.pointer_size)
-        else :
-            ## There is no named field.  If there is a named b_ base address, we can use it to synthesize
-            ## a cob_field variable:
-            pass
-         
+            self.Length = GetDataAt(self.location_of_field,GV_GlobalVariables.PointerSize)
+            if self.Length == None :
+                self.not_in_context = True
+                return
+            self.location_of_data = GetDataAt(self.location_of_field+GV_GlobalVariables.PointerSize,GV_GlobalVariables.PointerSize)
+            self.location_of_attribute = GetDataAt(self.location_of_field+2*GV_GlobalVariables.PointerSize,GV_GlobalVariables.PointerSize)
+
+        if self.location_of_data == 0 :
+            # When the COBOL code doesn't reference a variable, there is no f_ cob_field.  But
+            # sometimes we are able to divine a b_ + offset reference:
+            if self.Bname :
+                self.location_of_data  = GetAddressOf(self.Bname)
+                if self.location_of_data == None :
+                    self.not_in_context = True
+                    return
+                self.location_of_data += self.Offset
+
         if self.location_of_attribute == 0 :
             if self.Aname :
                 self.location_of_attribute = GetAddressOf(self.Aname)
-         
-        if self.location_of_data == 0 :
-            if self.Bname :
-                loc_of_data = GetAddressOf(self.Bname)
-                if loc_of_data == None :
+                if self.location_of_attribute == None :
                     self.not_in_context = True
                     return
-                self.location_of_data = GetAddressOf(self.Bname) + self.Offset
-         
+
         if self.location_of_attribute != 0 :
-            #   typedef struct __cob_field_attr 
+            #   typedef struct __cob_field_attr
             #       {
-            #       unsigned short		type;		/* Field type */
-            #       unsigned short		digits;		/* Digit count */
-            #       signed short		scale;		/* Field scale */
-            #       unsigned short		flags;		/* Field flags */
-            #       const cob_pic_symbol	*pic;		/* Pointer to picture string */
+            #       unsigned short      type;       /* Field type */
+            #       unsigned short      digits;     /* Digit count */
+            #       signed short        scale;      /* Field scale */
+            #       unsigned short      flags;      /* Field flags */
+            #       const cob_pic_symbol    *pic;       /* Pointer to picture string */
             #       } cob_field_attr;
             self.AttrType   = GetDataAt(self.location_of_attribute+0,2)
             self.AttrDigits = GetDataAt(self.location_of_attribute+2,2)
             self.AttrScale  = GetDataAt(self.location_of_attribute+4,2)
             self.AttrFlags  = GetDataAt(self.location_of_attribute+6,2)
+            self.location_of_pic = GetDataAt(self.location_of_attribute+8,GV_GlobalVariables.PointerSize)
 
-        if self.Section in ('W',
-                            'F',
-                            'I') :
-            # We can find this variable's contents by asking for the bytes
-            # at base_symbol + offset:
-            command = "x/" + str(self.Length) + "xb " + str(self.location_of_data)
-
-            try :
-                data_string = gdb.execute(command,False,True)
-            except gdb.error:
-                # This exception is thrown when you ask for a LINKAGE
-                # variable and it's not available because you aren't
-                # trapped inside the referring routine.
-                self.not_in_context = True
+        if self.Section in('F','W','I') :
+            pass
         elif self.Section == 'L' :
             try :
-                # Okay.
-                #
                 # We are looking for something in LOCAL-STORAGE.  Local
                 # storage is kept in a calloc-ed memory location named
                 # cob_local_ptr.  The complication is that if we have
@@ -1082,7 +1241,6 @@ class CobolVariable() :
                 program_id = line_list.Find(line_number)
                 #print("in :", program_id)
 
-                # Okay again.
                 #
                 # program-id is where the program-under-test is
                 # trapped.  Let's see if that program-id matches
@@ -1090,53 +1248,28 @@ class CobolVariable() :
                 #
                 #print( self.Name )
                 split_name = self.Name.split('/')
-                #print("Match? :",split_name[-1],program_id)
-                if split_name[-1] == program_id :
-                    # Everything seems to match up, so we can try
-                    # to get this variable's data:
-
-                    command = "x/" + str(self.Length) + "xb "
-                    command += "cob_local_ptr"
-                    if self.Offset > 0 :
-                        command += "+"
-                        command += str(self.Offset)
-
-                    data_string = gdb.execute(command,False,True)
-                    #print(data_string)
-                else :
-                    if show_failure :
-                        print("Not in context ( we are stopped in", program_id,")")
+                if split_name[-1] != program_id :
                     self.not_in_context = True
+                    return
+                    
+                # To recap:  We are trapped in the routine of the desired
+                # LOCAL-STORAGE variable, so we can look for it in cob_local_ptr
+                # we need GDB's help finding out where cob_local_ptr + offset is:
+                command = "x " + "cob_local_ptr + " + str(self.Offset)
+                address_string = gdb.execute(command,False,True)
+                nfound = address_string.find(':')
+                if nfound != -1 :
+                    self.location_of_data = int( address_string[:nfound], 16 )
 
             except gdb.error:
                 self.not_in_context = True
         else :
-            print("We don't know how to handle",self.Section)
+            print("We don't know how to handle",self.Section, self.Name)
+            self.not_in_context = True
             return
 
-        if data_string != None :
-            bytes = data_string.split()
-
-            if len(bytes) > 0 :
-                self.location = bytes[0]
-                n = self.location.find(':')
-                if n > -1 :
-                    self.location = self.location[0:n]
-
-            for byte in bytes :
-                if len(byte) != 4 :
-                    # We are ignoring anything that's not a single-byte 0x..
-                    # hex value
-                    continue
-                self.data.append(int(byte,0))
-
-        # Our caller thinks we have data, so we're going to be asked to
-        # display it.  Might as well get a jump on that.
-        self.display_name = self.NameToString();
-        if self.not_in_context :
-            self.display_body = "Not in context"
-        else :
-            self.display_body,self.display_pic = self.DataToString()
+        self.display_body = self.GetDataAsString()
+        return
 
     def NameToString(self) :
         storage_type = ""
@@ -2853,13 +2986,8 @@ class TabFileInformation() :
             #traceback.print_exc()
             print( "No stack.")
 
-class ShortTermMemory() :
-    def __init__(self) :
-        self.short_term_memory = []
 
-GV_ShortTermMemory = ShortTermMemory()
-
-def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode) :
+def MetaPossibilities(args,TabFile,machine_interface_mode) :
     possibilities = []
     if len(args) >= 1 :
         if args[0] == '*' or TabFile.question_mark_range < 0:
@@ -2883,13 +3011,13 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode) :
                 possibilities = list(ss)
         elif args[0].isdigit() :
             # if the first, presumably single, argument is a number, then he is looking
-            # for a short_term_memory entry.
+            # for a short-term memory entry.
 
             # Pick up the 1-based value indexed by the argument:
             index = int(args[0])-1
-            if index >= 0 and index < len(ShortTermMemory.short_term_memory) :
+            if index >= 0 and index < len(GV_GlobalVariables.ShortTermMemory) :
                 # If index is valid, pick up the short-term memory entry
-                possibilities = [ShortTermMemory.short_term_memory[index]]
+                possibilities = [GV_GlobalVariables.ShortTermMemory[index]]
         else :
             # There are one or more arguments.  Use our clever routine
             # to come up with the possibilities:
@@ -2944,7 +3072,7 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode) :
             print(NoNulls(s))
 
         else :
-            ShortTermMemory.short_term_memory = []
+            GV_GlobalVariables.ShortTermMemory = []
 
             # This is human-interactive mode
             # and show them to our user
@@ -2953,7 +3081,7 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode) :
                 payload = TabFile.var_trie.storage_list[payload_index]
                 payload.FetchVariableData(TabFile.line_list , False)
                 if not payload.not_in_context :
-                    ShortTermMemory.short_term_memory.append(payload_index)
+                    GV_GlobalVariables.ShortTermMemory.append(payload_index)
                     s = "{0:2} : ".format(line_counter)
                     s += payload.display_name
                     s += " : "
@@ -3071,7 +3199,7 @@ class CPrintWorker() :
             payload.ShowFields()
             pass
 
-    def ProcessArguments(self, TabFile, ShortTermMemory, arguments) :
+    def ProcessArguments(self, TabFile, arguments) :
         # The command is typically "print A B C" or "print/d A B C"
         # There is also the possibility of an '=' character, whereby the
         # value after the '=' is assigned to the variable described to the left
@@ -3092,7 +3220,7 @@ class CPrintWorker() :
         args = self.ProcessDisplayMode(args)
         TabFile.question_mark_range = self.question_mark_range
 
-        possibilities = MetaPossibilities(args,TabFile,ShortTermMemory,self.machine_interface_mode)
+        possibilities = MetaPossibilities(args,TabFile,self.machine_interface_mode)
         if len(possibilities) == 1 :
             # There is but one possibility
             # Pick up the payload from the list
@@ -3167,10 +3295,11 @@ class CPrint (gdb.Command) :
         self.TabFile.question_mark_range = self.Worker.question_mark_range
 
     def invoke (self, arguments, from_tty):
+        GV_GlobalVariables.LoadLibcob()
         # pick up the name of the current source file
         try :
             self.TabFile.ReadSymbolTableText()
-            self.Worker.ProcessArguments(self.TabFile,GV_ShortTermMemory,arguments)
+            self.Worker.ProcessArguments(self.TabFile,arguments)
         except :
             traceback.print_exc()
 
