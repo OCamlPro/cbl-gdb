@@ -2688,6 +2688,7 @@ class CobolVariable() :
 class TabFileInformation() :
     def __init__(self) :
         self.var_trie = VarTrie()
+        self.old_dogs = set()
         self.line_list = LineList()
         self.current_variable_string = ""
         self.current_trapped_routine = ""
@@ -2831,6 +2832,14 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode,rside)
         elif args[0] == '?' :
             # If the first, presumably single, argument is a question mark,
             # then we need to round up the usual suspects.
+
+            # But first, we are going to keep a rogue's gallery of the current list
+            # suspects.  The idea here is that sometimes MOVE A TO B is the last line
+            # of a PARAGRAPH, so as soon as it is executed control jumps elsewhere and
+            # B falls out of context.  Or perhaps the next GDB command is a CONTINUE,
+            # rather than NEXT.  By keeping one stage of stickiness, the display of variables
+            # will be a bit more like what the user probably expects.
+
             if len(TabFile.current_trapped_file) > 0 :
                 range = TabFile.question_mark_range;
                 if range < 0 :
@@ -2840,11 +2849,12 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode,rside)
                                                           str(TabFile.current_trapped_line), \
                                                           str(range) ])
                 tokens = return_string.split()
-                ss = set()
+                new_dogs = set()
                 for token in tokens :
                     token = token.decode("utf-8")
-                    ss = ss.union(set(TabFile.var_trie.GetListOfExactPossibilities(token)))
-                possibilities = list(ss)
+                    new_dogs = new_dogs.union(set(TabFile.var_trie.GetListOfExactPossibilities(token)))
+                possibilities = list(TabFile.old_dogs.union(new_dogs))
+                TabFile.old_dogs = new_dogs
         elif args[0].isdigit() :
             # if the first, presumably single, argument is a number, then he is looking
             # for a short_term_memory entry.
@@ -2860,6 +2870,7 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode,rside)
             possibilities = TabFile.var_trie.GetListOfPossibilities(args)
 
     # What we do now depends on how many possibilities there are
+    possibilities.sort()
 
     if len(possibilities) == 1 and machine_interface_mode and not rside and args[0] != '*' and args[0] != '?' :
         # Very special case.  This was a `p/m something`, which is what happens when
