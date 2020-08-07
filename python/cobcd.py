@@ -38,7 +38,6 @@ import traceback
 import datetime
 import subprocess
 
-
 #   This module implements the gdb extension commands cprint and cwatch
 #
 #   This script is read by the COBST program and incorporated into a
@@ -211,6 +210,140 @@ def MachineInterfaceBody(s) :
         temp += ch
 
     return body , body_length
+
+def ReplaceWithRepeatCountQuoted(s) :
+    retval = ""
+    if s :
+        if s[0] == '"' :
+            ## Strip off the leading and trailing quotes
+            s  = s[1:-1]
+            rabbit = 0
+            fox = 0
+            count = 0
+            prior_contraction = False
+            while rabbit < len(s) :
+                ## This is the beginning of a new run
+                fox = rabbit
+                char = s[rabbit]
+                rabbit += 1
+                while rabbit < len(s) and s[rabbit] == char :
+                    ## This is where we count up the length of a run
+                    rabbit += 1
+
+                ## We have either run out of characters, or else
+                ## rabbit points to a character other than char
+                if rabbit - fox >= 29 : ## This is a magic number
+                    ## The contraction will be shorter than the length
+                    ## of the replaced characters:
+                    if not prior_contraction and len(retval) > 1:
+                        ## We have to end the current ongoing string
+                        ## and start this contraction with a prelude
+                        retval += '", '
+                    ## and now we can start the contraction:
+                    retval += '\''
+                    retval += char
+                    retval += "' <repeats "
+                    retval += str(rabbit-fox)
+                    retval += ' times>, '
+                    prior_contraction = True
+                else :
+                    ## The run is short enough that we just put the characters
+                    ## into place
+                    if len(retval) == 0 :
+                        ## We have to start the quote:
+                        retval += '"'
+                    if prior_contraction :
+                        ## the prior contraction ended with ', '.  We
+                        ## need to restart the string:
+                        retval += '"'
+                    ## Copy over characters until the fox catches up with the rabbit
+                    while fox < rabbit :
+                        fox += 1
+                        retval += char
+                    prior_contraction = False
+
+            ## We have reached the end
+            if prior_contraction :
+                ## strip off the unnecessary ', '
+                retval = retval[:-2]
+            else :
+                ## Terminate the final string
+                retval += '"'
+        else :
+            retval = s;
+    return retval
+
+def ReplaceWithRepeatCountBracketed(s) :
+    if (len(s) % 2) == 1 :
+        ## We don't know what to do with an odd-length string.  We just don't
+        return s
+    retval = ""
+    if s :
+        if s[0] == '[' :
+            ## Strip off the leading and trailing brackets
+            s  = s[1:-1]
+            rabbit = 0
+            fox = 0
+            count = 0
+            prior_contraction = False
+            while rabbit < len(s) :
+                ## This is the beginning of a new run
+                fox = rabbit
+                char = s[rabbit:rabbit+2]
+                rabbit += 2
+                while rabbit < len(s) and s[rabbit:rabbit+2] == char :
+                    ## This is where we count up the length of a run
+                    rabbit += 2
+
+                ## We have either run out of characters, or else
+                ## rabbit points to a character other than char
+                if rabbit - fox >= 14 : ## This is a magic number
+                    ## The contraction will be shorter than the length
+                    ## of the replaced characters:
+                    if not prior_contraction and len(retval) > 1:
+                        ## We have to end the current ongoing string
+                        ## and start this contraction with a prelude
+                        retval += ', '
+                    ## and now we can start the contraction:
+                    retval += '0x'
+                    retval += char
+                    retval += " <repeats "
+                    retval += str((rabbit-fox)/2)
+                    retval += ' times>, '
+                    prior_contraction = True
+                else :
+                    ## The run is short enough that we just put the characters
+                    ## into place
+                    if len(retval) == 0 :
+                        ## We have to start the bracketed value:
+                        retval += '['
+                    ## Copy over characters until the fox catches up with the rabbit
+                    while fox < rabbit :
+                        fox += 2
+                        retval += char
+                    prior_contraction = False
+
+            ## We have reached the end
+            if prior_contraction :
+                ## strip off the unnecessary ', '
+                retval = retval[:-2]
+            else :
+                ## Terminate the final element
+                retval += ']'
+        else :
+            retval = s;
+    return retval
+
+def ReplaceWithRepeatCount(s) :
+    try :
+        if s and s[0] == '"' :
+            return ReplaceWithRepeatCountQuoted(s)
+        if s and s[0] == '[' :
+            return ReplaceWithRepeatCountBracketed(s)
+        return s
+    except :
+        traceback.print_exc()
+        sys.exit(1)
 
 class VarTrieNode() :
     def __init__(self):
@@ -1077,6 +1210,7 @@ class CobolVariable() :
             self.display_body = "Not in context"
         else :
             self.display_body,self.display_pic = self.DataToString()
+            self.display_body = ReplaceWithRepeatCount(self.display_body)
 
     def NameToString(self) :
         storage_type = ""
