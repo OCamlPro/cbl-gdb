@@ -364,22 +364,19 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
         // coming up with stuff that needs to be skipped over
 
         size_t nfound = input.find("ANY LENGTH");
-        if( nfound != string::npos )
-            {
+        if( nfound != string::npos ) {
             input.replace(nfound,10,"          ");
-            }
+        }
 
         nfound = input.find("ANY NUMERIC");
-        if( nfound != string::npos )
-            {
+        if( nfound != string::npos ) {
             input.replace(nfound,11,"          ");
-            }
+        }
 
         nfound = input.find("ALIGNED");
-        if( nfound != string::npos )
-            {
+        if( nfound != string::npos ) {
             input.replace(nfound,7,"       ");
-            }
+        }
 
         vector<string>tokens = Split(input," \t");
         if(tokens.size() EQ 0) {
@@ -1002,7 +999,9 @@ VARIABLE_TREE::Consolidive(VAR_NODE *node,
             // and only B is referenced, there is no f_ variable for A, but there is one
             // for B.  So, we can start to infer some information for unreferenced variables
             // (as a minimum, where they are) by propogating base_symbol upward:
-            node->b_name = base_symbol;
+            if( node->b_name.empty() ) {
+                node->b_name = base_symbol;
+            }
         }
     }
 }
