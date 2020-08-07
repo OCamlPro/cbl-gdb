@@ -2821,22 +2821,24 @@ class ShortTermMemory() :
 
 GV_ShortTermMemory = ShortTermMemory()
 
-def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode) :
+def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode,rside) :
     possibilities = []
     if len(args) >= 1 :
-        if args[0] == '*' or TabFile.question_mark_range < 0:
+        if args[0] == '*' :
             # If the first, presumably single, argument is an asterisk, then
             # he is asking for a list of variables and values:
             possibilities = TabFile.var_trie.GetAllPossibilities()
         elif args[0] == '?' :
             # If the first, presumably single, argument is a question mark,
             # then we need to round up the usual suspects.
-
             if len(TabFile.current_trapped_file) > 0 :
+                range = TabFile.question_mark_range;
+                if range < 0 :
+                    range = 1000000000
                 return_string = subprocess.check_output(["cobcd-rw", \
                                                           TabFile.current_trapped_file, \
                                                           str(TabFile.current_trapped_line), \
-                                                          str(TabFile.question_mark_range) ])
+                                                          str(range) ])
                 tokens = return_string.split()
                 ss = set()
                 for token in tokens :
@@ -2857,14 +2859,25 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode) :
             # to come up with the possibilities:
             possibilities = TabFile.var_trie.GetListOfPossibilities(args)
 
-        # What we do now depends on how many possibilities there are
+    # What we do now depends on how many possibilities there are
+
+    if len(possibilities) == 1 and machine_interface_mode and not rside and args[0] != '*' and args[0] != '?' :
+        # Very special case.  This was a `p/m something`, which is what happens when
+        # the -data-evaluate-expression command is issued by Visual Studio Code
+        payload_index = possibilities[0]
+        payload = TabFile.var_trie.storage_list[payload_index]
+        payload.FetchVariableData(TabFile.line_list , False)
+        s = 'value="' + payload.display_body.replace(r'"',r'\"') + '"'
+        print(s)
+        possibilities = []
+        return possibilities
 
     if len(possibilities) > 1 or machine_interface_mode :
         # There is more than one possibility:
         if machine_interface_mode :
-        # This is machine interface mode
-        # Our mission is to emulate the
-        # '-stack-list-variables --simple-values'
+            # This is machine interface mode
+            # Our mission is to emulate the
+            # '-stack-list-variables --simple-values'
             s = "variables=["
             for payload_index in possibilities :
                 payload = TabFile.var_trie.storage_list[payload_index]
@@ -2879,9 +2892,9 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode) :
                     if n > -1 :
                         name = name[:n]
 
-                        # Everything after the final slash is the program
-                        # name, which is redundant and takes up valuable
-                        # screen real estate.  Clear it out.
+                    # Everything after the final slash is the program
+                    # name, which is redundant and takes up valuable
+                    # screen real estate.  Clear it out.
 
                     n = name.rfind('/')
                     if n > -1 :
@@ -2900,9 +2913,9 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode) :
                     s += r' \"'
                     s += body
                     s += r'\""},'
-                    if s[-1] == ',' :
-                        s = s[:-1]  # Strip off final comma
-                    s += ']'
+            if s[-1] == ',' :
+                s = s[:-1]  # Strip off final comma
+            s += ']'
             print(NoNulls(s))
 
         else :
@@ -3054,7 +3067,7 @@ class CPrintWorker() :
         args = self.ProcessDisplayMode(args)
         TabFile.question_mark_range = self.question_mark_range
 
-        possibilities = MetaPossibilities(args,TabFile,ShortTermMemory,self.machine_interface_mode)
+        possibilities = MetaPossibilities(args,TabFile,ShortTermMemory,self.machine_interface_mode,rside)
         if len(possibilities) == 1 :
             # There is but one possibility
             # Pick up the payload from the list
@@ -3107,7 +3120,7 @@ class CWatchWorker() :
 
         args = arguments.split()
 
-        possibilities = MetaPossibilities(args,TabFile,ShortTermMemory, False)
+        possibilities = MetaPossibilities(args,TabFile,ShortTermMemory, False, False)
 
         if len(possibilities) == 1 :
             payload_number = possibilities[0]
