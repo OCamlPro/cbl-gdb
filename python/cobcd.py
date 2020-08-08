@@ -184,154 +184,161 @@ def Picture(s) :
     return r
 
 def MachineInterfaceBody(s) :
+    #print("MachineInterfaceBody 1:", s)
     ### convert display_body for machine interface:
-    body = s
-    body_length = 0
-    is_quoted = False
+    came_with_quotes = False
+    if len(s) >= 2 and s[0] == '"' and s[-1] == '"' :
+        s = s[1:-1]
+        came_with_quotes = True
 
-    # Strip off leading and trailing square brackets, which is what sometimes
-    # get before some variable types (e.g., file records) are initialized
-    #if len(body) >=2 and body[0] == '[' :
-    #    body = body[1:-1]
+    # Replace double-quotes and backslashes
+    retval = ""
+    for ch in s :
+        if ch == '"' :
+            retval += '\\\\\\\"'
+        elif ch == '\\' :
+            retval += '\\\\\\\\'
+        else :
+            retval += ch
 
-    # Strip off leading and trailing double-quotes
-    if len(body) >=2 and body[0] == '"' :
-        is_quoted = True
-        body = body[1:-1]
-
-    # Whatever is left is now the actual number of characters
-    body_length = len(body)
-
-    # Prefix double-quotes and backslashes with backslashes:
-    temp = ""
-    for ch in body :
-        if ch == '"'  or ch == '\\':
-            temp += '\\'
-        temp += ch
-
-    return body , body_length
+    if came_with_quotes :
+        retval = '\\"' + retval + '\\"'
+    #print("MachineInterfaceBody 2:", retval)
+    return retval
 
 def ReplaceWithRepeatCountQuoted(s) :
+    # We know this guy has a leading quote, and presumably a trailing one
+    #print("ReplaceWithRepeatCountQuoted(1)", s)
     retval = ""
-    if s :
-        if s[0] == '"' :
-            ## Strip off the leading and trailing quotes
-            s  = s[1:-1]
-            rabbit = 0
-            fox = 0
-            count = 0
-            prior_contraction = False
-            while rabbit < len(s) :
-                ## This is the beginning of a new run
-                fox = rabbit
-                char = s[rabbit]
-                rabbit += 1
-                while rabbit < len(s) and s[rabbit] == char :
-                    ## This is where we count up the length of a run
-                    rabbit += 1
+    ## Strip off the leading and trailing quotes
+    s  = s[1:-1]
+    rabbit = 0
+    fox = 0
+    count = 0
+    prior_contraction = False
+    in_a_quoted_run = False
+    number_of_repeated_runs = 0
+    while rabbit < len(s) :
+        ## Arriving here means:
+        ## We're here for the first time, or we just finished a run
+        ## So, we are going to pick up 'char', which is a candidate
+        ## for the start of a new run
 
-                ## We have either run out of characters, or else
-                ## rabbit points to a character other than char
-                if rabbit - fox >= 29 : ## This is a magic number
-                    ## The contraction will be shorter than the length
-                    ## of the replaced characters:
-                    if not prior_contraction and len(retval) > 1:
-                        ## We have to end the current ongoing string
-                        ## and start this contraction with a prelude
-                        retval += '", '
-                    ## and now we can start the contraction:
-                    retval += '\''
-                    retval += char
-                    retval += "' <repeats "
-                    retval += str(rabbit-fox)
-                    retval += ' times>, '
-                    prior_contraction = True
-                else :
-                    ## The run is short enough that we just put the characters
-                    ## into place
-                    if len(retval) == 0 :
-                        ## We have to start the quote:
-                        retval += '"'
-                    if prior_contraction :
-                        ## the prior contraction ended with ', '.  We
-                        ## need to restart the string:
-                        retval += '"'
-                    ## Copy over characters until the fox catches up with the rabbit
-                    while fox < rabbit :
-                        fox += 1
-                        retval += char
-                    prior_contraction = False
+        fox = rabbit
+        char = s[rabbit]
+        rabbit += 1
+        while rabbit < len(s) and s[rabbit] == char :
+            ## This is where we proceed in a run.  Swallow up characters
+            ## that are the same as our candidate:
+            rabbit += 1
 
-            ## We have reached the end
-            if prior_contraction :
-                ## strip off the unnecessary ', '
-                retval = retval[:-2]
-            else :
-                ## Terminate the final string
-                retval += '"'
+        ## We have either run out of characters, or else
+        ## rabbit points to a character other than char
+        if rabbit - fox >= 29 : ## This is a magic number
+            ## Because the contraction will be shorter than the length
+            ## of the replaced characters, we build the <repeats> clause
+            if in_a_quoted_run:
+                ## We have to end the current ongoing string
+                ## and start this contraction with a prelude
+                retval += '", '
+            ## and now we can start the contraction:
+            retval += '\''
+            retval += char
+            retval += "' <repeats "
+            retval += str(rabbit-fox)
+            retval += ' times>, '
+            prior_contraction = True
+            in_a_quoted_run = False
+            number_of_repeated_runs += 1
         else :
-            retval = s;
+            ## The run is short enough that we just put the characters
+            ## into place
+            if not in_a_quoted_run :
+                ## We have to start the quote:
+                retval += '"'
+                in_a_quoted_run = True
+            ## Copy over characters until the fox catches up with the rabbit
+            while fox < rabbit :
+                fox += 1
+                retval += char
+            prior_contraction = False
+
+    ## We have reached the end
+    if prior_contraction :
+        ## strip off the unnecessary ', '
+        retval = retval[:-2]
+    if in_a_quoted_run :
+        retval += '"'
+
+    #print("ReplaceWithRepeatCountQuoted(2)", retval)
     return retval
 
 def ReplaceWithRepeatCountBracketed(s) :
     if (len(s) % 2) == 1 :
         ## We don't know what to do with an odd-length string.  We just don't
         return s
-    retval = ""
-    if s :
-        if s[0] == '[' :
-            ## Strip off the leading and trailing brackets
-            s  = s[1:-1]
-            rabbit = 0
-            fox = 0
-            count = 0
-            prior_contraction = False
-            while rabbit < len(s) :
-                ## This is the beginning of a new run
-                fox = rabbit
-                char = s[rabbit:rabbit+2]
-                rabbit += 2
-                while rabbit < len(s) and s[rabbit:rabbit+2] == char :
-                    ## This is where we count up the length of a run
-                    rabbit += 2
+    # We know this guy has a leading bracket, and presumably a trailing one
+    # In between are a stream of undecorated hex characters.  So, this is
+    # a lot like the quoted version, except we operate in pairs, rather than characters
+    #print("ReplaceWithRepeatCountBracketed(1)", s)
+    retval = "["
+    ## Strip off the leading and trailing brackets
+    s  = s[1:-1]
+    rabbit = 0
+    fox = 0
+    count = 0
+    prior_contraction = False
+    in_a_quoted_run = False
+    number_of_repeated_runs = 0
+    while rabbit < len(s) :
+        ## Arriving here means:
+        ## We're here for the first time, or we just finished a run
+        ## So, we are going to pick up 'char', which is a candidate
+        ## for the start of a new run
 
-                ## We have either run out of characters, or else
-                ## rabbit points to a character other than char
-                if rabbit - fox >= 14 : ## This is a magic number
-                    ## The contraction will be shorter than the length
-                    ## of the replaced characters:
-                    if not prior_contraction and len(retval) > 1:
-                        ## We have to end the current ongoing string
-                        ## and start this contraction with a prelude
-                        retval += ', '
-                    ## and now we can start the contraction:
-                    retval += '0x'
-                    retval += char
-                    retval += " <repeats "
-                    retval += str((rabbit-fox)/2)
-                    retval += ' times>, '
-                    prior_contraction = True
-                else :
-                    ## The run is short enough that we just put the characters
-                    ## into place
-                    if len(retval) == 0 :
-                        ## We have to start the bracketed value:
-                        retval += '['
-                    ## Copy over characters until the fox catches up with the rabbit
-                    while fox < rabbit :
-                        fox += 2
-                        retval += char
-                    prior_contraction = False
+        fox = rabbit
+        char = s[rabbit:rabbit+2]
+        rabbit += 2
+        while rabbit < len(s) and s[rabbit:rabbit+2] == char :
+            ## This is where we proceed in a run.  Swallow up characters
+            ## that are the same as our candidate:
+            rabbit += 2
 
-            ## We have reached the end
-            if prior_contraction :
-                ## strip off the unnecessary ', '
-                retval = retval[:-2]
-            else :
-                ## Terminate the final element
-                retval += ']'
+        ## We have either run out of characters, or else
+        ## rabbit points to a character other than char
+        if rabbit - fox >= 14 : ## This is a magic number
+            ## Because the contraction will be shorter than the length
+            ## of the replaced characters, we build the <repeats> clause
+            if in_a_quoted_run:
+                ## We have to end the current ongoing string
+                ## and start this contraction with a prelude
+                retval += '", '
+            ## and now we can start the contraction:
+            retval += char
+            retval += " <repeats "
+            retval += str((rabbit-fox)//2)
+            retval += ' times>, '
+            prior_contraction = True
+            in_a_quoted_run = False
+            number_of_repeated_runs += 1
         else :
-            retval = s;
+            ## The run is short enough that we just put the characters
+            ## into place
+            if not in_a_quoted_run :
+                in_a_quoted_run = True
+            ## Copy over characters until the fox catches up with the rabbit
+            while fox < rabbit :
+                fox += 2
+                retval += char
+            prior_contraction = False
+
+    ## We have reached the end
+    if prior_contraction :
+        ## strip off the unnecessary ', '
+        retval = retval[:-2]
+    retval += ']'
+
+    #print("ReplaceWithRepeatCountBracketed(2)", retval)
     return retval
 
 def ReplaceWithRepeatCount(s) :
@@ -2817,6 +2824,10 @@ class CobolVariable() :
                     value = '0' + value
                 value = stash + self.decimal_point + value
 
+        ## Because we are in COBOL land, we replace any embedded quotes
+        ## with doubled quotes:
+        if value and value[0] == '"' :
+            value = '"' + value[1:-1].replace('"','""') + '"'
         return value, pic;
 
 class TabFileInformation() :
@@ -3023,6 +3034,7 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode,rside)
             # This is machine interface mode
             # Our mission is to emulate the
             # '-stack-list-variables --simple-values'
+            # e.g.,    variables=[{name="b_70",arg="1",type="unsigned char *",value="0x555555759df0 <b_39> \"James     K Lowden    \""}]
             s = "variables=["
             for payload_index in possibilities :
                 payload = TabFile.var_trie.storage_list[payload_index]
@@ -3045,19 +3057,13 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode,rside)
                     if n > -1 :
                         name = name[:n]
 
-                    body , body_length = MachineInterfaceBody(payload.display_body)
+                    body = MachineInterfaceBody(payload.display_body)
 
                     s += '{name="'
                     s += name
-                    s += '"'
-
-                    s += ',type="char *"'
-
-                    s += r',value="'
-                    s += payload.location
-                    s += r' \"'
+                    s += '",type="char *",value="'
                     s += body
-                    s += r'\""},'
+                    s += '"},'
             if s[-1] == ',' :
                 s = s[:-1]  # Strip off final comma
             s += ']'
@@ -3222,7 +3228,7 @@ class CPrintWorker() :
                 payload.SetToRside(TabFile.line_list, rside)
 
                 if self.machine_interface_mode :
-                    body , body_length = MachineInterfaceBody(payload.display_body)
+                    body = MachineInterfaceBody(payload.display_body)
 
                     s = payload.display_name + " set to " + body
                     print(s)
