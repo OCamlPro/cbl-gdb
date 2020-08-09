@@ -287,9 +287,9 @@ def ReplaceWithRepeatCountQuoted(s) :
 
         ## We have either run out of characters, or else
         ## rabbit points to a character other than char
-        if rabbit - fox >= 29 : ## This is a magic number
-            ## Because the contraction will be shorter than the length
-            ## of the replaced characters, we build the <repeats> clause
+        if rabbit - fox >= 11 : ## This is a magic number
+            ## At 29, the <repeats> clause will be shorter than the replaced text
+            ## At 11, the string will be longer.  But 11 matches what gdb does
             if in_a_quoted_run:
                 ## We have to end the current ongoing string
                 ## and start this contraction with a prelude
@@ -359,9 +359,8 @@ def ReplaceWithRepeatCountBracketed(s) :
 
         ## We have either run out of characters, or else
         ## rabbit points to a character other than char
-        if rabbit - fox >= 14 : ## This is a magic number
-            ## Because the contraction will be shorter than the length
-            ## of the replaced characters, we build the <repeats> clause
+        if (rabbit - fox)//2 >= 11 : ## This is a magic number.  See the
+                                     ## comment in ReplaceWithRepeatCountQuoted()
             if in_a_quoted_run:
                 ## We have to end the current ongoing string
                 ## and start this contraction with a prelude
@@ -470,15 +469,23 @@ def GetAddressOf(variable) :
 
         nfound = address_string.find(" 0x")
         if nfound == -1 :
-            return None
+            # info address turns out to fail when the variable
+            # is on the stack.  Go to the alternative
+            command = "x/1xb " + variable
+            address_string = gdb.execute(command,False,True)
+            # Returns "0x7fffffffc1d8: 0x07"
+            nfound = address_string.find(":")
+            if nfound == -1 :
+                return None
+            address_string = address_string[:nfound]
         else :
             address_string = address_string[nfound+3:]
             nfound = address_string.find(' ')
             if nfound == -1 :
                 nfound = address_string.find('.')
             address_string = address_string[0:nfound]
-            address = int(address_string,16)
-            return address
+        address = int(address_string,16)
+        return address
     except gdb.error:
         # print("gdb.execute failed in GetAddressOf:",command)
         return None
