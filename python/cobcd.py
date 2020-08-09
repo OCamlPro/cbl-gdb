@@ -473,11 +473,16 @@ def GetAddressOf(variable) :
             # is on the stack.  Go to the alternative
             command = "x/1xb " + variable
             address_string = gdb.execute(command,False,True)
-            # Returns "0x7fffffffc1d8: 0x07"
+            # Returns "0x7fffffffc1d8: 0x07" OR "0x55555575ac90 <b_49.4571>:  
             nfound = address_string.find(":")
+            if nfound != -1 :
+                address_string = address_string[:nfound]
+            nfound = address_string.find(" ")
+            if nfound != -1 :
+                address_string = address_string[:nfound]
+            nfound = address_string.find("0x")
             if nfound == -1 :
                 return None
-            address_string = address_string[:nfound]
         else :
             address_string = address_string[nfound+3:]
             nfound = address_string.find(' ')
