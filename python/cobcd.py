@@ -167,10 +167,10 @@ class COB_FIELD(Structure) :
     _fields_ = [("size", c_size_t),
                 ("data", c_char_p),
                 ("attr", POINTER(COB_FIELD_ATTR))]
-    
+
     def __init__(self) :
         self.cob_field_attr = COB_FIELD_ATTR()
-    
+
 def NoNulls(s) :
     ss = ""
     for ch in s:
@@ -448,7 +448,7 @@ def GetDataAt(address,bytes) :
     except gdb.error:
         print("gdb.execute failed in GetDataAt:",command)
         return None
-        
+
 def GetBytesAt(address,N) :
     # Pick up N bytes from address, return them as a list of ints
     retval = []
@@ -470,7 +470,6 @@ def GetAddressOf(variable) :
 
         nfound = address_string.find(" 0x")
         if nfound == -1 :
-            print("No match in GetAddressOf()", command)
             return None
         else :
             address_string = address_string[nfound+3:]
@@ -687,6 +686,17 @@ class VarTrie() :
             paths.append(index)
         return paths
 
+    def GetListOfExactPossibilities(self,token) :
+        # We are going to return variables that contain the given token
+        # in its exact, case-insensitive, form.  This is typically used
+        # by the 'print ?' form
+
+        # Wander through the forest, looking for possible paths:
+        paths = []
+        self.NameMatcher([token],0,self.storage_trie,paths)
+
+        return paths
+
     def GetListOfPossibilities(self,desired) :
         if isinstance(desired,list) :
             # We were handed a bunch of pieces.  Let's
@@ -744,19 +754,7 @@ class VarTrie() :
             for index in set4 :
                 if index not in paths :
                     paths.append(index)
-
         return paths
-
-    def GetListOfExactPossibilities(self,token) :
-        # We are going to return variables that contain token in its
-        # exact, case-insensitive, form
-
-        # Wander through the forest, looking for possible paths:
-        paths = []
-        self.NameMatcher([token],0,self.storage_trie,paths)
-
-        return paths
-
 
 class LineList() :
     """List of starting lines of ProgramNames"""
@@ -1170,7 +1168,7 @@ class CobolVariable() :
                 return None
         else :
             return None
-    
+
     def GetPictureString(self,location_of_pic) :
         retval = []
         return retval
@@ -1179,56 +1177,55 @@ class CobolVariable() :
         retval = ""
 
         if False :
-            print("GetDataAsString         Name:"   ,self.Name);
-            print("GetDataAsString      Section:"   ,self.Section);
-            print("GetDataAsString        Fname:"   ,self.Fname);
-            print("GetDataAsString        Bname:"   ,self.Bname);
-            print("GetDataAsString        Aname:"   ,self.Aname);
-            print("GetDataAsString       Offset:"   ,self.Offset);
-            print("GetDataAsString       Length:"   ,self.Length);
-            print("GetDataAsString     AttrType:"   ,hex(self.AttrType));
-            print("GetDataAsString   AttrDigits:"   ,self.AttrDigits);
-            print("GetDataAsString    AttrScale:"   ,self.AttrScale);
-            print("GetDataAsString    AttrFlags:"   ,hex(self.AttrFlags));
-            print("GetDataAsString  loc_of_data:"   ,hex(self.location_of_data));
-            print("GetDataAsString  loc_of_attr:"   ,hex(self.location_of_attribute));
-            print("GetDataAsString   loc_of_pic:"   ,hex(self.location_of_pic));
-        
+            print("GetData AsString         Name:"   ,self.Name);
+            print("GetData AsString      Section:"   ,self.Section);
+            print("GetData AsString        Fname:"   ,self.Fname);
+            print("GetData AsString        Bname:"   ,self.Bname);
+            print("GetData AsString        Aname:"   ,self.Aname);
+            print("GetData AsString       Offset:"   ,self.Offset);
+            print("GetData AsString       Length:"   ,self.Length);
+            print("GetData AsString     AttrType:"   ,hex(self.AttrType));
+            print("GetData AsString   AttrDigits:"   ,self.AttrDigits);
+            print("GetData AsString    AttrScale:"   ,self.AttrScale);
+            print("GetData AsString    AttrFlags:"   ,hex(self.AttrFlags));
+            print("GetData AsString  loc_of_data:"   ,hex(self.location_of_data));
+            print("GetData AsString  loc_of_attr:"   ,hex(self.location_of_attribute));
+            print("GetData AsString   loc_of_pic:"   ,hex(self.location_of_pic));
+
         ## By the time we get here, we have pulled all the information we
         ## can from the data we got from the compiler, and also from the
         ## run-time information that the compiler pointed us to.
-        
+
         ## We can't feed those pointers directly to libcob from here, because they
         ## came from the memory space of a different process, and thus
         ## we get segmentation faults.  So, we are going to build a local
         ## copy that we can send to libcob:
         ## We've got everything except the field->data and field->attr->pic stuff.
-        
+
         ## Let's get the cob_field.data.  This one is relatively easy, because we have a length and a pointer:
-        
-        self.data = GetBytesAt(self.location_of_data,self.Length)
+
         p_variable_data = create_string_buffer(len(self.data))
         for i in range(len(self.data)) :
             p_variable_data[i] = self.data[i]
-        
+
         ## Get the picture string, if there is one
         picture_data = self.GetPictureString(self.location_of_pic)
         p_picture_data = create_string_buffer(len(picture_data))
         for i in range(len(picture_data)) :
             p_picture_data[i] = picture_data[i]
-     
+
         cob_field_attr = COB_FIELD_ATTR()
         cob_field_attr.type   = self.AttrType
         cob_field_attr.digits = self.AttrDigits
         cob_field_attr.scale  = self.AttrScale
         cob_field_attr.flags  = self.AttrFlags
         cob_field_attr.pic    = cast(p_picture_data, POINTER(COB_PIC_SYMBOL))
-        
+
         cob_field = COB_FIELD()
         cob_field.size = self.Length
         cob_field.data = cast(p_variable_data,c_char_p)
         cob_field.attr = pointer(cob_field_attr)
-        
+
         ## cob_field is now a duplicate, in our GDB/Python memory space, of the
         ## relevant f_ (or synthesized f0 equivalent) cob_field variable that
         ## we used GDB to pick up from the COBOL memory space.
@@ -1240,9 +1237,29 @@ class CobolVariable() :
         #print("About to call cob_get_field_str")
         GV_GlobalVariables.LIBCOB.cob_get_field_str.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
         GV_GlobalVariables.LIBCOB.cob_get_field_str(byref(cob_field),buffer,size)
-        #print("    (We got back", buffer.value.decode("utf-8"),")")
 
-        return buffer.value.decode("utf-8")
+        try :
+            retval = buffer.value.decode("utf-8")
+            if self.AttrType in ( COB_TYPE_UNKNOWN,
+                                  COB_TYPE_GROUP,
+                                  COB_TYPE_BOOLEAN,
+                                  COB_TYPE_ALNUM,
+                                  COB_TYPE_ALPHANUMERIC,
+                                  COB_TYPE_ALPHANUMERIC_ALL,
+                                  COB_TYPE_ALPHANUMERIC_EDITED,
+                                  COB_TYPE_NUMERIC_EDITED,
+                                  COB_TYPE_NATIONAL,
+                                  COB_TYPE_NATIONAL_EDITED ) :
+                retval = '"' + retval + '"'
+
+        except :
+            # While 3.1 was still in the release candidate stage,
+            # an attempt to get at some variables resulted in
+            # utf-8 failures.
+            retval = "<non-utf-8 return from cob_get_field_str>"
+            self.not_in_context = True
+
+        return retval
 
     def FetchVariableData(self, line_list , show_failure ) :
         # print("FetchVariableData:",self.Name,self.Section)
@@ -1278,12 +1295,17 @@ class CobolVariable() :
             if self.Length == None :
                 self.not_in_context = True
                 return
-            self.location_of_data = GetDataAt(self.location_of_field+GV_GlobalVariables.PointerSize,GV_GlobalVariables.PointerSize)
+            possible_location_of_data = GetDataAt(self.location_of_field+GV_GlobalVariables.PointerSize,GV_GlobalVariables.PointerSize)
+            if possible_location_of_data :
+                self.location_of_data = possible_location_of_data
             self.location_of_attribute = GetDataAt(self.location_of_field+2*GV_GlobalVariables.PointerSize,GV_GlobalVariables.PointerSize)
 
         if self.location_of_data == 0 :
             # When the COBOL code doesn't reference a variable, there is no f_ cob_field.  But
-            # sometimes we are able to divine a b_ + offset reference:
+            # sometimes we are able to divine a b_ + offset reference.  Likewise, sometimes
+            # there is an f_value, but at this point in the code the cob_field->data value hasn't yet
+            # been set up.  But, again, sometimes we have advance knowledge of what is going to be
+            # there because we got information from the compiler.
             if self.Bname :
                 self.location_of_data  = GetAddressOf(self.Bname)
                 if self.location_of_data == None :
@@ -1354,7 +1376,7 @@ class CobolVariable() :
                 if split_name[-1] != program_id :
                     self.not_in_context = True
                     return
-                    
+
                 # To recap:  We are trapped in the routine of the desired
                 # LOCAL-STORAGE variable, so we can look for it in cob_local_ptr
                 # we need GDB's help finding out where cob_local_ptr + offset is:
@@ -1370,6 +1392,9 @@ class CobolVariable() :
             print("We don't know how to handle",self.Section, self.Name)
             self.not_in_context = True
             return
+
+        if self.location_of_data != 0 :
+            self.data = GetBytesAt(self.location_of_data,self.Length)
 
         self.display_body = self.GetDataAsString()
         self.display_body = ReplaceWithRepeatCount(self.display_body)
@@ -1391,10 +1416,11 @@ class CobolVariable() :
 
     def ShowFields(self) :
         print("Name:       " , self.display_name    )
-        print("Field:      " , self.Fname            )
-        print("Base:       " , self.Bname            )
-        print("Attr:       " , self.Aname            )
+        print("Field:      " , self.Fname,'   (',hex(self.location_of_field),')' )
+        print("Base:       " , self.Bname,         )
+        print("Attr:       " , self.Aname,'   (',hex(self.location_of_attribute),')' )
         print("Offset:     " , self.Offset          )
+        print("location:   " , hex(self.location_of_data) );
         print("Length:     " , self.Length          )
 
         print("AttrType:   " , self.AttrType ,end="")
@@ -3096,12 +3122,12 @@ class TabFileInformation() :
             print( "No stack.")
 
 def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
-    possibilities = []
+    possibilities_1 = []
     if len(args) >= 1 :
         if args[0] == '*' :
             # If the first, presumably single, argument is an asterisk, then
             # he is asking for a list of variables and values:
-            possibilities = TabFile.var_trie.GetAllPossibilities()
+            possibilities_1 = TabFile.var_trie.GetAllPossibilities()
         elif args[0] == '?' :
             # If the first, presumably single, argument is a question mark,
             # then we need to round up the usual suspects.
@@ -3126,7 +3152,7 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
                 for token in tokens :
                     token = token.decode("utf-8")
                     new_dogs = new_dogs.union(set(TabFile.var_trie.GetListOfExactPossibilities(token)))
-                possibilities = list(TabFile.old_dogs.union(new_dogs))
+                possibilities_1 = list(TabFile.old_dogs.union(new_dogs))
                 TabFile.old_dogs = new_dogs
         elif args[0].isdigit() :
             # if the first, presumably single, argument is a number, then he is looking
@@ -3136,18 +3162,32 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
             index = int(args[0])-1
             if index >= 0 and index < len(GV_GlobalVariables.ShortTermMemory) :
                 # If index is valid, pick up the short-term memory entry
-                possibilities = [GV_GlobalVariables.ShortTermMemory[index]]
+                possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
         else :
             # There are one or more arguments.  Use our clever routine
-            # to come up with the possibilities:
-            possibilities = TabFile.var_trie.GetListOfPossibilities(args)
+            # to come up with the possibilities_1:
+            possibilities_1 = TabFile.var_trie.GetListOfPossibilities(args)
+
+    # We now have a list of possibilities_1 based on the names of the variables
+    # typically, some of them will not be in context.  We wish, at this point
+    # to eliminate such variables.  The bad news is that this means we
+    # have to fetch all the variable data twice.  But, heck.
+
+    possibilities = []
+    for payload_index in possibilities_1 :
+        payload = TabFile.var_trie.storage_list[payload_index]
+        payload.FetchVariableData(TabFile.line_list , False)
+        if not payload.not_in_context :
+            possibilities.append(payload_index)
 
     # What we do now depends on how many possibilities there are
     possibilities.sort()
 
     if len(possibilities) == 1 and machine_interface_mode and not rside and args[0] != '*' and args[0] != '?' :
         # Very special case.  This was a `p/m something`, which is what happens when
-        # the -data-evaluate-expression command is issued by Visual Studio Code
+        # the -data-evaluate-expression command is issued by Visual Studio Code.  I considered creating
+        # a unique 'print/e ' command, but then I realized that VSC never issues a 'p/m something' unless there
+        # is also an 'rside'.  So, this code is in response to a `-data-evalute-expression` equivalent command
         payload_index = possibilities[0]
         payload = TabFile.var_trie.storage_list[payload_index]
         payload.FetchVariableData(TabFile.line_list , False)
