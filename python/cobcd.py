@@ -237,32 +237,173 @@ def Picture(s) :
     return r
 
 def MachineInterfaceBody(s) :
+    #print("MachineInterfaceBody 1:", s)
     ### convert display_body for machine interface:
-    body = s
-    body_length = 0
-    is_quoted = False
+    came_with_quotes = False
+    if len(s) >= 2 and s[0] == '"' and s[-1] == '"' :
+        s = s[1:-1]
+        came_with_quotes = True
 
-    # Strip off leading and trailing square brackets, which is what sometimes
-    # get before some variable types (e.g., file records) are initialized
-    #if len(body) >=2 and body[0] == '[' :
-    #    body = body[1:-1]
+    # Replace double-quotes and backslashes
+    retval = ""
+    for ch in s :
+        if ch == '"' :
+            retval += '\\\\\\\"'
+        elif ch == '\\' :
+            retval += '\\\\\\\\'
+        else :
+            retval += ch
 
-    # Strip off leading and trailing double-quotes
-    if len(body) >=2 and body[0] == '"' :
-        is_quoted = True
-        body = body[1:-1]
+    if came_with_quotes :
+        retval = '\\"' + retval + '\\"'
+    #print("MachineInterfaceBody 2:", retval)
+    return retval
 
-    # Whatever is left is now the actual number of characters
-    body_length = len(body)
+def ReplaceWithRepeatCountQuoted(s) :
+    # We know this guy has a leading quote, and presumably a trailing one
+    #print("ReplaceWithRepeatCountQuoted(1)", s)
+    retval = ""
+    ## Strip off the leading and trailing quotes
+    s  = s[1:-1]
+    rabbit = 0
+    fox = 0
+    count = 0
+    prior_contraction = False
+    in_a_quoted_run = False
+    number_of_repeated_runs = 0
+    while rabbit < len(s) :
+        ## Arriving here means:
+        ## We're here for the first time, or we just finished a run
+        ## So, we are going to pick up 'char', which is a candidate
+        ## for the start of a new run
 
-    # Prefix double-quotes and backslashes with backslashes:
-    temp = ""
-    for ch in body :
-        if ch == '"'  or ch == '\\':
-            temp += '\\'
-        temp += ch
+        fox = rabbit
+        char = s[rabbit]
+        rabbit += 1
+        while rabbit < len(s) and s[rabbit] == char :
+            ## This is where we proceed in a run.  Swallow up characters
+            ## that are the same as our candidate:
+            rabbit += 1
 
-    return body , body_length
+        ## We have either run out of characters, or else
+        ## rabbit points to a character other than char
+        if rabbit - fox >= 29 : ## This is a magic number
+            ## Because the contraction will be shorter than the length
+            ## of the replaced characters, we build the <repeats> clause
+            if in_a_quoted_run:
+                ## We have to end the current ongoing string
+                ## and start this contraction with a prelude
+                retval += '", '
+            ## and now we can start the contraction:
+            retval += '\''
+            retval += char
+            retval += "' <repeats "
+            retval += str(rabbit-fox)
+            retval += ' times>, '
+            prior_contraction = True
+            in_a_quoted_run = False
+            number_of_repeated_runs += 1
+        else :
+            ## The run is short enough that we just put the characters
+            ## into place
+            if not in_a_quoted_run :
+                ## We have to start the quote:
+                retval += '"'
+                in_a_quoted_run = True
+            ## Copy over characters until the fox catches up with the rabbit
+            while fox < rabbit :
+                fox += 1
+                retval += char
+            prior_contraction = False
+
+    ## We have reached the end
+    if prior_contraction :
+        ## strip off the unnecessary ', '
+        retval = retval[:-2]
+    if in_a_quoted_run :
+        retval += '"'
+
+    #print("ReplaceWithRepeatCountQuoted(2)", retval)
+    return retval
+
+def ReplaceWithRepeatCountBracketed(s) :
+    if (len(s) % 2) == 1 :
+        ## We don't know what to do with an odd-length string.  We just don't
+        return s
+    # We know this guy has a leading bracket, and presumably a trailing one
+    # In between are a stream of undecorated hex characters.  So, this is
+    # a lot like the quoted version, except we operate in pairs, rather than characters
+    #print("ReplaceWithRepeatCountBracketed(1)", s)
+    retval = "["
+    ## Strip off the leading and trailing brackets
+    s  = s[1:-1]
+    rabbit = 0
+    fox = 0
+    count = 0
+    prior_contraction = False
+    in_a_quoted_run = False
+    number_of_repeated_runs = 0
+    while rabbit < len(s) :
+        ## Arriving here means:
+        ## We're here for the first time, or we just finished a run
+        ## So, we are going to pick up 'char', which is a candidate
+        ## for the start of a new run
+
+        fox = rabbit
+        char = s[rabbit:rabbit+2]
+        rabbit += 2
+        while rabbit < len(s) and s[rabbit:rabbit+2] == char :
+            ## This is where we proceed in a run.  Swallow up characters
+            ## that are the same as our candidate:
+            rabbit += 2
+
+        ## We have either run out of characters, or else
+        ## rabbit points to a character other than char
+        if rabbit - fox >= 14 : ## This is a magic number
+            ## Because the contraction will be shorter than the length
+            ## of the replaced characters, we build the <repeats> clause
+            if in_a_quoted_run:
+                ## We have to end the current ongoing string
+                ## and start this contraction with a prelude
+                retval += '", '
+            ## and now we can start the contraction:
+            retval += char
+            retval += " <repeats "
+            retval += str((rabbit-fox)//2)
+            retval += ' times>, '
+            prior_contraction = True
+            in_a_quoted_run = False
+            number_of_repeated_runs += 1
+        else :
+            ## The run is short enough that we just put the characters
+            ## into place
+            if not in_a_quoted_run :
+                in_a_quoted_run = True
+            ## Copy over characters until the fox catches up with the rabbit
+            while fox < rabbit :
+                fox += 2
+                retval += char
+            prior_contraction = False
+
+    ## We have reached the end
+    if prior_contraction :
+        ## strip off the unnecessary ', '
+        retval = retval[:-2]
+    retval += ']'
+
+    #print("ReplaceWithRepeatCountBracketed(2)", retval)
+    return retval
+
+def ReplaceWithRepeatCount(s) :
+    try :
+        if s and s[0] == '"' :
+            return ReplaceWithRepeatCountQuoted(s)
+        if s and s[0] == '[' :
+            return ReplaceWithRepeatCountBracketed(s)
+        return s
+    except :
+        traceback.print_exc()
+        sys.exit(1)
 
 class VarTrieNode() :
     def __init__(self):
@@ -1105,7 +1246,6 @@ class CobolVariable() :
 
     def FetchVariableData(self, line_list , show_failure ) :
         # print("FetchVariableData:",self.Name,self.Section)
-        data_string = None
         self.location_of_field = 0;
         self.location_of_data = 0;
         self.location_of_attribute = 0;
@@ -1232,6 +1372,7 @@ class CobolVariable() :
             return
 
         self.display_body = self.GetDataAsString()
+        self.display_body = ReplaceWithRepeatCount(self.display_body)
         return
 
     def NameToString(self) :
@@ -2817,11 +2958,16 @@ class CobolVariable() :
                     value = '0' + value
                 value = stash + self.decimal_point + value
 
+        ## Because we are in COBOL land, we replace any embedded quotes
+        ## with doubled quotes:
+        if value and value[0] == '"' :
+            value = '"' + value[1:-1].replace('"','""') + '"'
         return value, pic;
 
 class TabFileInformation() :
     def __init__(self) :
         self.var_trie = VarTrie()
+        self.old_dogs = set()
         self.line_list = LineList()
         self.current_variable_string = ""
         self.current_trapped_routine = ""
@@ -2949,11 +3095,10 @@ class TabFileInformation() :
             #traceback.print_exc()
             print( "No stack.")
 
-
-def MetaPossibilities(args,TabFile,machine_interface_mode) :
+def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
     possibilities = []
     if len(args) >= 1 :
-        if args[0] == '*' or TabFile.question_mark_range < 0:
+        if args[0] == '*' :
             # If the first, presumably single, argument is an asterisk, then
             # he is asking for a list of variables and values:
             possibilities = TabFile.var_trie.GetAllPossibilities()
@@ -2961,17 +3106,28 @@ def MetaPossibilities(args,TabFile,machine_interface_mode) :
             # If the first, presumably single, argument is a question mark,
             # then we need to round up the usual suspects.
 
+            # But first, we are going to keep a rogue's gallery of the current list
+            # suspects.  The idea here is that sometimes MOVE A TO B is the last line
+            # of a PARAGRAPH, so as soon as it is executed control jumps elsewhere and
+            # B falls out of context.  Or perhaps the next GDB command is a CONTINUE,
+            # rather than NEXT.  By keeping one stage of stickiness, the display of variables
+            # will be a bit more like what the user probably expects.
+
             if len(TabFile.current_trapped_file) > 0 :
+                range = TabFile.question_mark_range;
+                if range < 0 :
+                    range = 1000000000
                 return_string = subprocess.check_output(["cobcd-rw", \
                                                           TabFile.current_trapped_file, \
                                                           str(TabFile.current_trapped_line), \
-                                                          str(TabFile.question_mark_range) ])
+                                                          str(range) ])
                 tokens = return_string.split()
-                ss = set()
+                new_dogs = set()
                 for token in tokens :
                     token = token.decode("utf-8")
-                    ss = ss.union(set(TabFile.var_trie.GetListOfExactPossibilities(token)))
-                possibilities = list(ss)
+                    new_dogs = new_dogs.union(set(TabFile.var_trie.GetListOfExactPossibilities(token)))
+                possibilities = list(TabFile.old_dogs.union(new_dogs))
+                TabFile.old_dogs = new_dogs
         elif args[0].isdigit() :
             # if the first, presumably single, argument is a number, then he is looking
             # for a short-term memory entry.
@@ -2986,14 +3142,27 @@ def MetaPossibilities(args,TabFile,machine_interface_mode) :
             # to come up with the possibilities:
             possibilities = TabFile.var_trie.GetListOfPossibilities(args)
 
-        # What we do now depends on how many possibilities there are
+    # What we do now depends on how many possibilities there are
+    possibilities.sort()
+
+    if len(possibilities) == 1 and machine_interface_mode and not rside and args[0] != '*' and args[0] != '?' :
+        # Very special case.  This was a `p/m something`, which is what happens when
+        # the -data-evaluate-expression command is issued by Visual Studio Code
+        payload_index = possibilities[0]
+        payload = TabFile.var_trie.storage_list[payload_index]
+        payload.FetchVariableData(TabFile.line_list , False)
+        s = 'value="' + payload.display_body.replace(r'"',r'\"') + '"'
+        print(s)
+        possibilities = []
+        return possibilities
 
     if len(possibilities) > 1 or machine_interface_mode :
         # There is more than one possibility:
         if machine_interface_mode :
-        # This is machine interface mode
-        # Our mission is to emulate the
-        # '-stack-list-variables --simple-values'
+            # This is machine interface mode
+            # Our mission is to emulate the
+            # '-stack-list-variables --simple-values'
+            # e.g.,    variables=[{name="b_70",arg="1",type="unsigned char *",value="0x555555759df0 <b_39> \"James     K Lowden    \""}]
             s = "variables=["
             for payload_index in possibilities :
                 payload = TabFile.var_trie.storage_list[payload_index]
@@ -3008,30 +3177,24 @@ def MetaPossibilities(args,TabFile,machine_interface_mode) :
                     if n > -1 :
                         name = name[:n]
 
-                        # Everything after the final slash is the program
-                        # name, which is redundant and takes up valuable
-                        # screen real estate.  Clear it out.
+                    # Everything after the final slash is the program
+                    # name, which is redundant and takes up valuable
+                    # screen real estate.  Clear it out.
 
                     n = name.rfind('/')
                     if n > -1 :
                         name = name[:n]
 
-                    body , body_length = MachineInterfaceBody(payload.display_body)
+                    body = MachineInterfaceBody(payload.display_body)
 
                     s += '{name="'
                     s += name
-                    s += '"'
-
-                    s += ',type="char *"'
-
-                    s += r',value="'
-                    s += payload.location
-                    s += r' \"'
+                    s += '",type="char *",value="'
                     s += body
-                    s += r'\""},'
-                    if s[-1] == ',' :
-                        s = s[:-1]  # Strip off final comma
-                    s += ']'
+                    s += '"},'
+            if s[-1] == ',' :
+                s = s[:-1]  # Strip off final comma
+            s += ']'
             print(NoNulls(s))
 
         else :
@@ -3183,7 +3346,7 @@ class CPrintWorker() :
         args = self.ProcessDisplayMode(args)
         TabFile.question_mark_range = self.question_mark_range
 
-        possibilities = MetaPossibilities(args,TabFile,self.machine_interface_mode)
+        possibilities = MetaPossibilities(args,TabFile,self.machine_interface_mode,rside)
         if len(possibilities) == 1 :
             # There is but one possibility
             # Pick up the payload from the list
@@ -3193,7 +3356,7 @@ class CPrintWorker() :
                 payload.SetToRside(TabFile.line_list, rside)
 
                 if self.machine_interface_mode :
-                    body , body_length = MachineInterfaceBody(payload.display_body)
+                    body = MachineInterfaceBody(payload.display_body)
 
                     s = payload.display_name + " set to " + body
                     print(s)
@@ -3230,7 +3393,7 @@ class CWatchWorker() :
 
         args = arguments.split()
 
-        possibilities = MetaPossibilities(args,TabFile,ShortTermMemory, False)
+        possibilities = MetaPossibilities(args,TabFile,ShortTermMemory, False, False)
 
         if len(possibilities) == 1 :
             payload_number = possibilities[0]
