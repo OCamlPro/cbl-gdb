@@ -179,6 +179,16 @@ def NoNulls(s) :
         ss += ch
     return ss
 
+def OurPrint(s) :
+    ## This routine is needed because otherwise, when GDB gets many lines
+    ## and says, "Type <RET> for more..." and somebody enters a Ctrl+C,
+    ## we sometimes trap the KeyboardInterrupt and end up reporting the
+    ## traceback.  This will kill that.
+    try :
+        print(s)
+    except :
+        pass
+
 def LeftRight(s,splitchar) :
     """Splits what is presumably a numeric string with a possible
     splitting character into left and right pieces"""
@@ -3012,6 +3022,7 @@ class TabFileInformation() :
         self.current_trapped_file = ""
         self.current_trapped_line = 0
         self.question_mark_range = 6
+        self.current_full_path = ""
 
     def ReadVariableString(self, string_name) :
         retval = ""
@@ -3083,34 +3094,48 @@ class TabFileInformation() :
         file_and_line = tokens[-1].split(':')
         self.current_trapped_line = int(file_and_line[1])
 
-        if file_and_line[0] != self.current_trapped_file :
-            # We are in a new file
-            self.current_trapped_file = file_and_line[0]
+        try :
 
-            # Find the address of the VARIABLE_STRING for this file
+            if file_and_line[0] != self.current_trapped_file :
+                # We are in a new file
+                self.current_trapped_file = file_and_line[0]
 
-            name_root = self.current_trapped_file
-            name_root = name_root.split('/')
-            name_root = name_root[-1]
-            name_root = name_root.replace('.','_')
-            string_name = "VARIABLE_STRING_" + name_root.upper()
+                # Find the address of the VARIABLE_STRING for this file
 
-            self.ReadVariableString(string_name)
+                name_root = self.current_trapped_file
+                name_root = name_root.split('/')
+                name_root = name_root[-1]
+                name_root = name_root.replace('.','_')
+                string_name = "VARIABLE_STRING_" + name_root.upper()
 
-            # We have us a new variable string
-            # Clear out the tables:
-            # Load the new tables
-            self.var_trie = VarTrie()
-            self.line_list = LineList()
+                self.ReadVariableString(string_name)
 
-            # Pull apart the variable_string
-            variable_lines = self.current_variable_string.split("~")
-            for variable_line in variable_lines :
-                self.line_list.LoadFromLine(variable_line)
-                self.var_trie.LoadFromLine(variable_line)
+                # We have us a new variable string
+                # Clear out the tables:
+                # Load the new tables
+                self.var_trie = VarTrie()
+                self.line_list = LineList()
 
-            # Put a fencepost at the end of the line_list
-            self.line_list.Insert(self.line_list.EndOfTheWorld,"Ragnarok")
+                # Pull apart the variable_string
+                variable_lines = self.current_variable_string.split("~")
+                for variable_line in variable_lines :
+                    self.line_list.LoadFromLine(variable_line)
+                    self.var_trie.LoadFromLine(variable_line)
+
+                # Put a fencepost at the end of the line_list
+                self.line_list.Insert(self.line_list.EndOfTheWorld,"Ragnarok")
+
+                # Get the full path for the source file
+                info_source = gdb.execute("info source",False,True)
+                info_source = info_source.split('\n')
+                for line in info_source :
+                    pattern = re.compile(r"Located in (.*)$")
+                    match = re.search(pattern,line)
+                    if match :
+                        self.current_full_path = match.group(1)
+                        break
+        except :
+            traceback.print_exc()
 
     def ReadSymbolTableText(self) :
 
@@ -3151,12 +3176,12 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
             # rather than NEXT.  By keeping one stage of stickiness, the display of variables
             # will be a bit more like what the user probably expects.
 
-            if len(TabFile.current_trapped_file) > 0 :
+            if len(TabFile.current_full_path) > 0 :
                 range = TabFile.question_mark_range;
                 if range < 0 :
                     range = 1000000000
                 return_string = subprocess.check_output(["cobcd-rw", \
-                                                          TabFile.current_trapped_file, \
+                                                          TabFile.current_full_path, \
                                                           str(TabFile.current_trapped_line), \
                                                           str(range) ])
                 tokens = return_string.split()
@@ -3264,7 +3289,7 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
                     s += payload.display_name
                     s += " : "
                     s += payload.display_body
-                    print(NoNulls(s))
+                    OurPrint(NoNulls(s))
                     line_counter += 1
 
     return possibilities
