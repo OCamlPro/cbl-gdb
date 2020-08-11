@@ -126,6 +126,16 @@ def NoNulls(s) :
         ss += ch
     return ss
 
+def OurPrint(s) :
+    ## This routine is needed because otherwise, when GDB gets many lines
+    ## and says, "Type <RET> for more..." and somebody enters a Ctrl+C,
+    ## we sometimes trap the KeyboardInterrupt and end up reporting the
+    ## traceback.  This will kill that.
+    try :
+        print(s)
+    except :
+        pass
+
 def LeftRight(s,splitchar) :
     """Splits what is presumably a numeric string with a possible
     splitting character into left and right pieces"""
@@ -2911,7 +2921,7 @@ class TabFileInformation() :
 
         file_and_line = tokens[-1].split(':')
         self.current_trapped_line = int(file_and_line[1])
-        
+
         try :
 
             if file_and_line[0] != self.current_trapped_file :
@@ -3099,7 +3109,7 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode,rside)
                     s += payload.display_name
                     s += " : "
                     s += payload.display_body
-                    print(NoNulls(s))
+                    OurPrint(NoNulls(s))
                     line_counter += 1
 
     return possibilities
