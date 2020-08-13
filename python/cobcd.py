@@ -129,14 +129,8 @@ class GlobalVariables() :
         if nfound != -1 :
             self.SizeofPointer = 8
 
-        ## Now, we have to jump through a hoop to figure out the size of
-        ## an int
-        ## Assume it is a 64-bit number....
-        self.SizeofInt = 8
-        oversize = c_int(1<<32)
-        if oversize.value == 0 :
-            ## ...unless 2^32 doesn't fit
-            self.SizeofInt = 4
+        ## Establish the size of a c-side int
+        self.SizeofInt = ctypes.sizeof(ctypes.c_int)
 
         self.libraries_loaded = False
 
@@ -605,7 +599,6 @@ def GetAddressOf(variable) :
         # print("gdb.execute failed in GetAddressOf:",command)
         return None
 
-
 class VarTrie() :
     def __init__(self):
         self.storage_list = []
@@ -666,6 +659,8 @@ class VarTrie() :
                 if tokens[self.IndexType] in ('F','W','L','I') :
                     ## We are working with a variable.  We need to erode the
                     ## stack of names down to the variable who is our parent:
+                    if tokens[self.IndexLevel] == "" :
+                        tokens[self.IndexLevel] = '0'
                     our_level = int(tokens[self.IndexLevel])
                     if our_level in (77,78) :
                         our_level = 1
@@ -1026,9 +1021,58 @@ class CobolVariable() :
     def SetToRside(self, line_list , rside) :
         print( "Inside SetToRside", self.Name, rside)
 
-    def GetPictureString(self,location_of_pic) :
+    def GetPicSymbols(self) :
         retval = []
+        # Picture data is a variable-sized list of
+        #   typedef struct __cob_pic_symbol
+        #        {
+        #        char	symbol;
+        #        int 	times_repeated;
+        #        } cob_pic_symbol;
+        #
+        # The final one is flagged by a symbol value of '\0'
+        # The only slightly tricky thing is that the structure can be
+        # padded
+        #
+        if self.location_of_pic :
+            p = self.location_of_pic
+            sizeof_pic_symbol = sizeof(COB_PIC_SYMBOL)
+            while True :
+                psym = GetBytesAt(p,sizeof_pic_symbol)
+                retval = retval + psym
+                if psym[0] == 0 :
+                    break;
+                p += sizeof_pic_symbol
         return retval
+
+    def GetWorkingCopyOfCobField(self) :
+        cob_field = COB_FIELD()
+
+        ## Copy over the data into the COB_FIELD object
+        p_variable_data = create_string_buffer(len(self.data))
+        for i in range(len(self.data)) :
+            p_variable_data[i] = self.data[i]
+
+        ## Get the picture string, if there is one, as a list of integers
+        picture_data = self.GetPicSymbols()
+        p_picture_data = 0
+        if len(picture_data) :
+            p_picture_data = create_string_buffer(len(picture_data))
+            for i in range(len(picture_data)) :
+                p_picture_data[i] = picture_data[i]
+
+        cob_field_attr = COB_FIELD_ATTR()
+        cob_field_attr.type   = self.AttrType
+        cob_field_attr.digits = self.AttrDigits
+        cob_field_attr.scale  = self.AttrScale
+        cob_field_attr.flags  = self.AttrFlags
+        cob_field_attr.pic    = cast(p_picture_data, POINTER(COB_PIC_SYMBOL))
+
+        cob_field = COB_FIELD()
+        cob_field.size = self.Length
+        cob_field.data = cast(p_variable_data,c_char_p)
+        cob_field.attr = pointer(cob_field_attr)
+        return cob_field
 
     def GetDataAsString(self) :
         retval = ""
@@ -1056,32 +1100,9 @@ class CobolVariable() :
         ## We can't feed those pointers directly to libcob from here, because they
         ## came from the memory space of a different process, and thus
         ## we get segmentation faults.  So, we are going to build a local
-        ## copy that we can send to libcob:
-        ## We've got everything except the field->data and field->attr->pic stuff.
+        ## copy that we can send to libcob using ctypes
 
-        ## Let's get the cob_field.data.  This one is relatively easy, because we have a length and a pointer:
-
-        p_variable_data = create_string_buffer(len(self.data))
-        for i in range(len(self.data)) :
-            p_variable_data[i] = self.data[i]
-
-        ## Get the picture string, if there is one
-        picture_data = self.GetPictureString(self.location_of_pic)
-        p_picture_data = create_string_buffer(len(picture_data))
-        for i in range(len(picture_data)) :
-            p_picture_data[i] = picture_data[i]
-
-        cob_field_attr = COB_FIELD_ATTR()
-        cob_field_attr.type   = self.AttrType
-        cob_field_attr.digits = self.AttrDigits
-        cob_field_attr.scale  = self.AttrScale
-        cob_field_attr.flags  = self.AttrFlags
-        cob_field_attr.pic    = cast(p_picture_data, POINTER(COB_PIC_SYMBOL))
-
-        cob_field = COB_FIELD()
-        cob_field.size = self.Length
-        cob_field.data = cast(p_variable_data,c_char_p)
-        cob_field.attr = pointer(cob_field_attr)
+        cob_field = self.GetWorkingCopyOfCobField()
 
         ## cob_field is now a duplicate, in our GDB/Python memory space, of the
         ## relevant f_ (or synthesized f0 equivalent) cob_field variable that
@@ -1112,11 +1133,15 @@ class CobolVariable() :
         except :
             # While 3.1 was still in the release candidate stage,
             # an attempt to get at some variables resulted in
-            # utf-8 failures.
+            # utf-8 failures.  Whether or this is still the case as you
+            # read this... Reply hazy, try again.
             retval = "<non-utf-8 return from cob_get_field_str>"
             self.not_in_context = True
 
         return retval
+
+    def PutDataAsString(self,str) :
+        pass
 
     def FetchVariableData(self, line_list , show_failure ) :
         # print("FetchVariableData:",self.Name,self.Section)
