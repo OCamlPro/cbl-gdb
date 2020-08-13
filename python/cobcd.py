@@ -257,7 +257,7 @@ class COB_FIELD_ATTR(Structure) :
 
 class COB_FIELD(Structure) :
     _fields_ = [("size", c_size_t),
-                ("data", c_char_p),
+                ("data", c_void_p),
                 ("attr", POINTER(COB_FIELD_ATTR))]
 
     def __init__(self) :
@@ -1018,9 +1018,6 @@ class CobolVariable() :
                 tokens.append(xtoken)
         return tokens
 
-    def SetToRside(self, line_list , rside) :
-        print( "Inside SetToRside", self.Name, rside)
-
     def GetPicSymbols(self) :
         retval = []
         # Picture data is a variable-sized list of
@@ -1046,6 +1043,10 @@ class CobolVariable() :
         return retval
 
     def GetWorkingCopyOfCobField(self) :
+        # This routine returns, here in GDB/Python space, a duplicate
+        # of this CobolVariable's cob_field variable as defined in the
+        # the target COBOL executable's space
+
         cob_field = COB_FIELD()
 
         ## Copy over the data into the COB_FIELD object
@@ -1070,7 +1071,7 @@ class CobolVariable() :
 
         cob_field = COB_FIELD()
         cob_field.size = self.Length
-        cob_field.data = cast(p_variable_data,c_char_p)
+        cob_field.data = cast(p_variable_data,c_void_p)
         cob_field.attr = pointer(cob_field_attr)
         return cob_field
 
@@ -1140,8 +1141,30 @@ class CobolVariable() :
 
         return retval
 
-    def PutDataAsString(self,str) :
-        pass
+    def PutDataAsString(self,rside) :
+        cob_field = self.GetWorkingCopyOfCobField()
+
+        string_length = len(rside)
+        buffer = ctypes.create_string_buffer(b'\000' * string_length)
+        rbytes = rside.encode("utf-8")
+        for i in range(string_length) :
+            buffer[i] = rbytes[i];
+
+        #print("About to call cob_put_field_str")
+        GV_GlobalVariables.LIBCOB.cob_put_field_str.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        retval = GV_GlobalVariables.LIBCOB.cob_put_field_str(byref(cob_field),buffer)
+        if retval == 0 :
+            # We got a SUCCESS response from cob_put_field
+            p = self.location_of_data
+            p_cob_field_data = cast(cob_field.data,POINTER(c_byte))
+
+            ## Take the bytes we got back from cob_put_field_str and
+            ## shove them into place in the COBOL process's memory:
+            for i in range(self.Length) :
+                self.data[i] = p_cob_field_data[i]
+                command = "set {char}" + hex(p) + "=" + hex(self.data[i])
+                gdb.execute(command,False,True)
+                p += 1
 
     def FetchVariableData(self, line_list , show_failure ) :
         # print("FetchVariableData:",self.Name,self.Section)
@@ -1827,7 +1850,7 @@ class CPrintWorker() :
             payload = TabFile.var_trie.storage_list[possibilities[0]]
 
             if rside :
-                payload.SetToRside(TabFile.line_list, rside)
+                payload.PutDataAsString(rside)
 
                 if self.machine_interface_mode :
                     body = MachineInterfaceBody(payload.display_body)
