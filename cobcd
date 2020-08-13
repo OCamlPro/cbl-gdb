@@ -197,31 +197,106 @@ DASH_V=""
 T_FLAG=""
 SOURCEFILE=""
 
-while [ "$#" != "0" ]
+# This disturbing amount of code addresses the issue of combined
+# single-character flags, e.g., "-xgd".  It is complex because cobc
+# accepts a number of switches that start with a single hyphen, but
+# nonetheless have more than one letter, e.g., "-ext".  So, although
+# we want "-xgd" to turn into "-x -g -d", we need to leave "-ext" alone:
+
+params=""
+for p in $@
   do
-  if [ X"$1" = X"--help" ]
+  if echo $p | grep -qs "^[^-]"
+    then
+    ## It doesn't start with a single hyphen
+    params="$params $p"
+    continue
+    fi
+  if echo $p | grep -qs "^[-][-]"
+    then
+    ## It starts with a double hyphen
+    params="$params $p"
+    continue
+    fi
+  if echo $p | grep -qs "^[-]f"
+    then
+    params="$params $p"
+    continue
+    fi
+  if echo $p | grep -qs "^[-]W"
+    then
+    params="$params $p"
+    continue
+    fi
+  if echo $p | grep -qs "^[-]O"
+    then
+    params="$params $p"
+    continue
+    fi
+  if echo $p | grep -qs "^[-]list"
+    then
+    params="$params $p"
+    continue
+    fi
+  ## When you get here, you have a token with a single hyphen:
+  if [ ${#p} -le 2 ]
+    then
+    ## It is only one or two characters long
+    params="$params $p"
+    continue
+    fi
+
+  # We have a hyphen and some letters
+  # extract those letters:
+  token=$(echo $p | sed -E "s/[-]([^=]+).*/\\1/g")
+
+  case "$token" in
+    "help"|"version"|"info"|"brief"|"###"|"verbose"|"vv"|"vvv"| \
+    "job"|"std"|"free"|"fixed"|"debug"|"Xref"|"conf"|"save-temps"|"ext" \
+      )
+      params="$params $p"
+      continue
+    esac
+
+  ## Arriving here means that you have, or you are supposed to have,
+  ## some combined single-character switches
+
+  letters=$(echo $p | sed -E "s/(.)/\\1 /g")
+  for letter in $letters
+    do
+    if [ X"$letter" = X"-" ]
+      then
+      continue
+      fi
+    params="$params -$letter"
+    done
+
+  done
+
+for param in $params
+  do
+  if [ X"$param" = X"--help" ]
     then
     ASKED_FOR_HELP=yes
     fi
-  if [ X"$1" = X"--version" ]
+  if [ X"$param" = X"--version" ]
     then
     ASKED_FOR_VERSION=yes
     fi
-  if [ X"$1" = X"-v" ]
+  if [ X"$param" = X"-v" ]
     then
     DASH_V=-v
     fi
-  if echo $1 | grep -iqs -e "-t"
+  if echo $param | grep -iqs -e "-t"
     then
     T_FLAG=yes
     fi
-  case $1 in
+  case $param in
     -x|-m|-b)
-      COBCDXM=$1
+      COBCDXM=$param
       ;;
     esac
-  COMMAND_LINE="$COMMAND_LINE $1"
-  shift
+  COMMAND_LINE="$COMMAND_LINE $param"
   done
 
 if [ "$COBCDXM" = "" ]
@@ -381,7 +456,7 @@ case "$os_name" in
     DASH_F=""
     DASH_S=""
   esac
-  
+
 if [ "ECHO" ]
   then
   DASH_Q=-q
