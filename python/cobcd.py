@@ -1825,24 +1825,20 @@ class CWatchWorker() :
         self.current_display_mode = "0"
 
     def SetTheWatchpoint(self, TabFile, payload ) :
-        the_address = payload.GetTheAddress(TabFile.line_list)
-
-        #print("SetTheWatchpoint", hex(the_address))
-
         command = "watch *(char(*)"
         command += '[' + str(payload.Length) +'])'
-        command += '(' + hex(the_address) + ')'
+        command += '(' + hex(payload.location_of_data) + ')'
 
         #print("The command is:",command)
         watch_text = gdb.execute(command,False,True)
         print(watch_text)
 
-    def ProcessWArgumentsW(self, TabFile, ShortTermMemory, arguments) :
+    def ProcessWArgumentsW(self, TabFile, arguments) :
         # The command is typically "cw A
 
         args = arguments.split()
 
-        possibilities = MetaPossibilities(args,TabFile,ShortTermMemory, False, False)
+        possibilities = MetaPossibilities(args,TabFile, False, False)
 
         if len(possibilities) == 1 :
             payload_number = possibilities[0]
@@ -1850,6 +1846,7 @@ class CWatchWorker() :
 
             # Pick up the payload from the list
             payload = TabFile.var_trie.storage_list[payload_number]
+            payload.FetchVariableData(TabFile.line_list , False)
 
             # And go set the Watchpoint
             self.SetTheWatchpoint(TabFile, payload)
@@ -1888,9 +1885,10 @@ class CWatch (gdb.Command) :
         self.TabFile = TabFileInformation();
 
     def invoke (self, arguments, from_tty):
+        GV_GlobalVariables.LoadLibcob()
         try :
             self.TabFile.ReadSymbolTableText()
-            self.Worker.ProcessWArgumentsW(self.TabFile,GV_ShortTermMemory,arguments)
+            self.Worker.ProcessWArgumentsW(self.TabFile,arguments)
         except :
             traceback.print_exc()
 
