@@ -31,6 +31,7 @@
 #include <iostream>
 #include <iomanip>
 #include <map>
+#include <sstream>
 #include "variables.h"
 #include "profiler.h"
 #include "utils.h"

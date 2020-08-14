@@ -40,7 +40,7 @@
 #include "cobcd_py.h"
 #include "fields.h"
 #include "variables.h"
-
+#include "utils.h"
 #define EQ ==
 #define AND &&
 #define OR ||

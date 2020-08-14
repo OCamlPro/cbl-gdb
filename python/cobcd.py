@@ -214,7 +214,7 @@ class GlobalVariables() :
             ## We now have to shove them into the cob_module we established
             ## with cob_module_global_enter() here in the GDB process.
 
-            pp = cast(self.pModule,POINTER(c_char))
+            pp = cast(self.pModule,POINTER(c_byte))
             pp[offset+0] = decimal_point
             pp[offset+1] = currency_symbol
             pp[offset+2] = numeric_separator
@@ -673,7 +673,7 @@ class VarTrie() :
                     self.StackOfNames.append(tokens[self.IndexName])
                     self.StackOfLevels.append(our_level)
 
-                    reversed = self.StackOfNames.copy()
+                    reversed = self.StackOfNames[:]
                     reversed.reverse()
 
                     payload = CobolVariable()
@@ -1050,9 +1050,11 @@ class CobolVariable() :
         cob_field = COB_FIELD()
 
         ## Copy over the data into the COB_FIELD object
+        pp = bytearray(self.data)
         p_variable_data = create_string_buffer(len(self.data))
+        p_variable_data = cast(p_variable_data,POINTER(c_byte))
         for i in range(len(self.data)) :
-            p_variable_data[i] = self.data[i]
+            p_variable_data[i] = pp[i]
 
         ## Get the picture string, if there is one, as a list of integers
         picture_data = self.GetPicSymbols()
