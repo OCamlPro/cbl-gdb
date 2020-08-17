@@ -137,6 +137,7 @@ class GlobalVariables() :
         self.ShortTermMemory = []
         self.pModule = c_void_p(0)
         self.pCobGlobPtr = c_void_p(0)
+        self.repeat_count = 11  # Default value for "'0' <repeats 11 times>" logic
 
     def CobModuleGlobalEnter(self) :
         # We need to call
@@ -339,27 +340,53 @@ def Picture(s) :
     return r
 
 def MachineInterfaceBody(s) :
-    #print("MachineInterfaceBody 1:", s)
-    ### convert display_body for machine interface:
-    came_with_quotes = False
-    if len(s) >= 2 and s[0] == '"' and s[-1] == '"' :
-        s = s[1:-1]
-        came_with_quotes = True
+
+#   This sequence:
+#   variables=[{name="L00L",value="{_groupvalue=\"Sn\\\"ap!\",fullname=\"Robert\\\"Dubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"\\\"Dubner\\\"\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]
+#
+#   Results in a heirarchical display:
+#
+#    L00L: Sn"ap!
+#        fullname : Robert"Dubner
+#        L02: Crackle!
+#            firstname: Robert
+#            lastname: "Dubner"
+#            L03: Pop!
+#                firstname: Judy
+#                lastname: Ruderman
+#
+#   This one:  variables=[{name="L01",value="===\">\\/<\"==="}]
+#
+#   Results in      ===">\/<"===
+#
+#   Counting up the backslashes is, to say the least, tricky
 
     # Replace double-quotes and backslashes
     retval = ""
     for ch in s :
         if ch == '"' :
-            retval += '\\\\\\\"'
+            retval += r'\\\"'
         elif ch == '\\' :
-            retval += '\\\\\\\\'
+            retval += r'\\\\'
         else :
             retval += ch
 
-    if came_with_quotes :
-        retval = '\\"' + retval + '\\"'
-    #print("MachineInterfaceBody 2:", retval)
     return retval
+
+def MachineInterfaceBodyAlt(s) :
+
+    # Replace double-quotes and backslashes
+    retval = ""
+    for ch in s :
+        if ch == '"' :
+            retval += r'\"'
+        elif ch == '\\' :
+            retval += r'\\'
+        else :
+            retval += ch
+
+    return retval
+
 
 def ReplaceWithRepeatCountQuoted(s) :
     # We know this guy has a leading quote, and presumably a trailing one
@@ -389,17 +416,17 @@ def ReplaceWithRepeatCountQuoted(s) :
 
         ## We have either run out of characters, or else
         ## rabbit points to a character other than char
-        if rabbit - fox >= 11 : ## This is a magic number
+        if rabbit - fox >= GV_GlobalVariables.repeat_count : ## This is a magic number
             ## At 29, the <repeats> clause will be shorter than the replaced text
             ## At 11, the string will be longer.  But 11 matches what gdb does
             if in_a_quoted_run:
                 ## We have to end the current ongoing string
                 ## and start this contraction with a prelude
-                retval += '", '
+                retval += "\", "
             ## and now we can start the contraction:
-            retval += '\''
+            retval += "\'"
             retval += char
-            retval += "' <repeats "
+            retval += "\' <repeats "
             retval += str(rabbit-fox)
             retval += ' times>, '
             prior_contraction = True
@@ -410,7 +437,7 @@ def ReplaceWithRepeatCountQuoted(s) :
             ## into place
             if not in_a_quoted_run :
                 ## We have to start the quote:
-                retval += '"'
+                retval += "\""
                 in_a_quoted_run = True
             ## Copy over characters until the fox catches up with the rabbit
             while fox < rabbit :
@@ -423,7 +450,7 @@ def ReplaceWithRepeatCountQuoted(s) :
         ## strip off the unnecessary ', '
         retval = retval[:-2]
     if in_a_quoted_run :
-        retval += '"'
+        retval += "\""
 
     #print("ReplaceWithRepeatCountQuoted(2)", retval)
     return retval
@@ -461,7 +488,7 @@ def ReplaceWithRepeatCountBracketed(s) :
 
         ## We have either run out of characters, or else
         ## rabbit points to a character other than char
-        if (rabbit - fox)//2 >= 11 : ## This is a magic number.  See the
+        if (rabbit - fox)//2 >= GV_GlobalVariables.repeat_count : ## This is a magic number.  See the
                                      ## comment in ReplaceWithRepeatCountQuoted()
             if in_a_quoted_run:
                 ## We have to end the current ongoing string
@@ -497,7 +524,7 @@ def ReplaceWithRepeatCountBracketed(s) :
 
 def ReplaceWithRepeatCount(s) :
     try :
-        if s and s[0] == '"' :
+        if s and (s[0] == '"' or s[0] == '<' ):
             return ReplaceWithRepeatCountQuoted(s)
         if s and s[0] == '[' :
             return ReplaceWithRepeatCountBracketed(s)
@@ -1080,7 +1107,7 @@ class CobolVariable() :
     def GetDataAsString(self) :
         retval = ""
 
-        if False :
+        if False :  # For development
             print("GetData AsString         Name:"   ,self.Name);
             print("GetData AsString      Section:"   ,self.Section);
             print("GetData AsString        Fname:"   ,self.Fname);
@@ -1096,6 +1123,22 @@ class CobolVariable() :
             print("GetData AsString  loc_of_attr:"   ,hex(self.location_of_attribute));
             print("GetData AsString   loc_of_pic:"   ,hex(self.location_of_pic));
 
+
+        ## Something we need to know:
+        is_alphanumeric = False
+        if self.AttrType in ( COB_TYPE_UNKNOWN,
+                              COB_TYPE_GROUP,
+                              COB_TYPE_BOOLEAN,
+                              COB_TYPE_ALNUM,
+                              COB_TYPE_ALPHANUMERIC,
+                              COB_TYPE_ALPHANUMERIC_ALL,
+                              COB_TYPE_ALPHANUMERIC_EDITED,
+                              COB_TYPE_NUMERIC_EDITED,
+                              COB_TYPE_NATIONAL,
+                              COB_TYPE_NATIONAL_EDITED ) :
+            is_alphanumeric = True
+
+
         ## By the time we get here, we have pulled all the information we
         ## can from the data we got from the compiler, and also from the
         ## run-time information that the compiler pointed us to.
@@ -1106,6 +1149,18 @@ class CobolVariable() :
         ## copy that we can send to libcob using ctypes
 
         cob_field = self.GetWorkingCopyOfCobField()
+
+        if is_alphanumeric :
+            # It's not impossible for there to be bum characters in what we call
+            # an alphanumeric field.  If a GROUP has a mixture of numeric and alphanumeric
+            # characters, for example.  Or if the COBOL is trapped in a place before a
+            # variable has been initialized.  Let's give the cob_get_field_string a
+            # helping hand with that
+            pd = cast(cob_field.data,POINTER(c_byte))
+            for i in range(self.Length) :
+                # Assume ASCII
+                if pd[i] < 32 or pd[i] >= 127 :
+                    pd[i] = ord('.')
 
         ## cob_field is now a duplicate, in our GDB/Python memory space, of the
         ## relevant f_ (or synthesized f0 equivalent) cob_field variable that
@@ -1121,16 +1176,7 @@ class CobolVariable() :
 
         try :
             retval = buffer.value.decode("utf-8")
-            if self.AttrType in ( COB_TYPE_UNKNOWN,
-                                  COB_TYPE_GROUP,
-                                  COB_TYPE_BOOLEAN,
-                                  COB_TYPE_ALNUM,
-                                  COB_TYPE_ALPHANUMERIC,
-                                  COB_TYPE_ALPHANUMERIC_ALL,
-                                  COB_TYPE_ALPHANUMERIC_EDITED,
-                                  COB_TYPE_NUMERIC_EDITED,
-                                  COB_TYPE_NATIONAL,
-                                  COB_TYPE_NATIONAL_EDITED ) :
+            if is_alphanumeric :
                 retval = '"' + retval + '"'
 
         except :
@@ -1580,6 +1626,161 @@ class TabFileInformation() :
             #traceback.print_exc()
             print( "No stack.")
 
+def MachineInterfaceFlat(TabFile,possibilities) :
+    # This is the machine interface mode for returning the
+    # the variables in a flat manner.
+    # Our mission is to emulate
+    # '-stack-list-variables --simple-values'
+    # e.g.,    variables=[{name="b_70",arg="1",type="unsigned char *",value="0x555555759df0 <b_39> \"James     K Lowden    \""}]
+    s = "variables=["
+    for payload_index in possibilities :
+        payload = TabFile.var_trie.storage_list[payload_index]
+        payload.FetchVariableData(TabFile.line_list , False)
+        if not payload.not_in_context :
+            name = ""
+            name += payload.display_name;
+            n = name.find(' ')
+            if n > -1 :
+                name = name[:n] + '-' + name[n+1:]
+            n = name.find(' ')
+            if n > -1 :
+                name = name[:n]
+
+            # Everything after the final slash is the program
+            # name, which is redundant and takes up valuable
+            # screen real estate.  Clear it out.
+
+            n = name.rfind('/')
+            if n > -1 :
+                name = name[:n]
+
+            body = MachineInterfaceBody(payload.display_body)
+
+            s += '{name="'
+            s += name
+            s += '",type="char *",value="'
+            s += body
+            s += '"},'
+    if s[-1] == ',' :
+        s = s[:-1]  # Strip off final comma
+    s += ']'
+    s = NoNulls(s)
+    return s
+
+class HNode() :
+    def __init__(self) :
+        self.Level = 0
+        self.BaseName = "" # Just A of A/B/C
+        self.display_body = ""
+        self.parent = None
+        self.children = []
+
+def TrimComma(s) :
+    if s and s[-1] == ',' :
+        s = s[:-1]  # Strip off final comma
+    return s
+
+def BuildHString(node) :
+    s = ""
+    if node.Level == 0 :
+        # This is the root.  We live only for our children
+        for child in node.children :
+            s += BuildHString(child)
+    else :
+        if node.Level in (1,77,78) :
+            ## Top level variables are treated this way:
+            s += r'{name="'
+            s += node.BaseName
+            s += r'",value="'
+            if len(node.children) == 0 :
+                ## There are no children, which means this is just
+                ## a simple variable:
+                s += r'\"'
+                s += MachineInterfaceBody(node.display_body)
+                s += r'\"'
+                s += r'"'
+            else :
+                ## This is a top-level node with children:
+                s += r'{_groupvalue=\"'
+                s += MachineInterfaceBody(node.display_body)
+                s += r'\",'
+                for child in node.children :
+                    s += BuildHString(child)
+                s=TrimComma(s)
+                s += r'}"'
+            s += '},'
+        else :
+            # This is a node whose level is 01-49, 66
+            if len(node.children) == 0 :
+                s += node.BaseName
+                s += r'=\"'
+                s += MachineInterfaceBody(node.display_body)
+                s += r'\",'
+            else :
+                s += node.BaseName
+                s += r'={_groupvalue=\"'
+                s += MachineInterfaceBody(node.display_body)
+                s += r'\",'
+                for child in node.children :
+                    s += BuildHString(child)
+                s=TrimComma(s)
+                s += r'},'
+    return s
+
+def MachineInterfaceHeirarchical(TabFile,possibilities) :
+    # This is the machine interface mode for returning the
+    # the variables in a flat manner.
+    # Our mission is to emulate
+    # '-stack-list-variables --all-values'
+    # e.g.,
+    # variables=[{name="L00",value="\"Standalone\""},{name="L01",value="{fullname = \"RobertDubner\", L02 = {firstname = \"Robert\", lastname = \"Dubner\"}}"},{name="L01_2",value="{fullname = \"JudyRuderman\", L02 = {firstname = \"Judy\", lastname = \"Ruderman\"}}"}]
+
+    # We will use a stack to build a tree from the ordered variables
+    root = HNode()
+    stack = [root]
+
+    retval = "variables=["
+    for payload_index in possibilities :
+        payload = TabFile.var_trie.storage_list[payload_index]
+        payload.FetchVariableData(TabFile.line_list , False)
+        if not payload.not_in_context :
+            # print("MIH", payload.Level, payload.Name, payload.display_body)
+            # First, if the stack has nephews of ours,
+            # let's get them off of the stack:
+            while stack[-1].Level > payload.Level :
+                stack.pop()
+
+            # Create the new node"
+            new_node = HNode()
+            new_node.Level = payload.Level
+            new_node.BaseName = payload.Name.split('/')[0]
+            new_node.display_body = payload.display_body
+
+            if payload.Level in (77,78) :
+                stack = [root]
+            if stack[-1].Level == payload.Level or payload.Level == 66 :
+                # The element on the stack is our brother, so
+                # so we are going to share parents:
+                new_node.parent = stack[-1].parent
+            else : # stack[-1].Level < payload.Level
+                # The element on the stack is our parent
+                new_node.parent = stack[-1]
+            # And now we become the final stack entry
+            if payload.Level != 66 : # 66 is just a pain in the patootie.
+                stack.append(new_node)
+            # And let's let our parent know they have another child
+            new_node.parent.children.append(new_node)
+
+    # We now have a tree that can be used to create the variables string
+    retval += BuildHString(root)
+
+    retval = TrimComma(retval)
+    retval += ']'
+    retval = NoNulls(retval)
+    #retval = r'variables=[{name="L01",value="{_groupvalue=\"Snap!\",fullname=\"RobertDubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"Dubner\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]'
+    return retval
+
+
 def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
     possibilities_1 = []
     if len(args) >= 1 :
@@ -1599,13 +1800,13 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
             # will be a bit more like what the user probably expects.
 
             if len(TabFile.current_full_path) > 0 :
-                range = TabFile.question_mark_range;
-                if range < 0 :
-                    range = 1000000000
+                qmrange = TabFile.question_mark_range;
+                if qmrange < 0 :
+                    qmrange = 1000000000
                 return_string = subprocess.check_output(["cobcd-rw", \
                                                           TabFile.current_full_path, \
                                                           str(TabFile.current_trapped_line), \
-                                                          str(range) ])
+                                                          str(qmrange) ])
                 tokens = return_string.split()
                 new_dogs = set()
                 for token in tokens :
@@ -1650,51 +1851,44 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
         payload_index = possibilities[0]
         payload = TabFile.var_trie.storage_list[payload_index]
         payload.FetchVariableData(TabFile.line_list , False)
-        s = 'value="' + payload.display_body.replace(r'"',r'\"') + '"'
+        s = 'value="' + MachineInterfaceBodyAlt(payload.display_body) + '"'
         print(s)
         possibilities = []
         return possibilities
 
     if len(possibilities) > 1 or machine_interface_mode :
-        # There is more than one possibility:
+        # In machine_interface mode, we just return the possibility(ies).  In human
+        # mode, if there is more than one, we create a numbered list; the user can later
+        # specify a variable by the number
         if machine_interface_mode :
-            # This is machine interface mode
-            # Our mission is to emulate the
-            # '-stack-list-variables --simple-values'
-            # e.g.,    variables=[{name="b_70",arg="1",type="unsigned char *",value="0x555555759df0 <b_39> \"James     K Lowden    \""}]
-            s = "variables=["
-            for payload_index in possibilities :
-                payload = TabFile.var_trie.storage_list[payload_index]
-                payload.FetchVariableData(TabFile.line_list , False)
-                if not payload.not_in_context :
-                    name = ""
-                    name += payload.display_name;
-                    n = name.find(' ')
-                    if n > -1 :
-                        name = name[:n] + '-' + name[n+1:]
-                    n = name.find(' ')
-                    if n > -1 :
-                        name = name[:n]
+            # Because we are going to be showing the data in a heirarchical way,
+            # we want to be sure every sub-level of a 01 Level variable is visible:
+            ppp = set(possibilities);
+            for i in possibilities :
+                tokens = TabFile.var_trie.storage_list[i].Name.split('/')
+                var  = tokens[-2]
+                prog = tokens[-1]
+                u = i-1;
+                while u >= 0 :
+                    tokens = TabFile.var_trie.storage_list[u].Name.split('/')
+                    if tokens[-2] != var or tokens[-1] != prog :
+                        break;
+                    ppp.add(u)
+                    u -= 1 ;
+                d = i+1;
+                while d < len(TabFile.var_trie.storage_list) :
+                    tokens = TabFile.var_trie.storage_list[d].Name.split('/')
+                    if tokens[-2] != var or tokens[-1] != prog :
+                        break;
+                    ppp.add(d)
+                    d += 1 ;
 
-                    # Everything after the final slash is the program
-                    # name, which is redundant and takes up valuable
-                    # screen real estate.  Clear it out.
+            possibilities = list(ppp)
+            possibilities.sort()
 
-                    n = name.rfind('/')
-                    if n > -1 :
-                        name = name[:n]
-
-                    body = MachineInterfaceBody(payload.display_body)
-
-                    s += '{name="'
-                    s += name
-                    s += '",type="char *",value="'
-                    s += body
-                    s += '"},'
-            if s[-1] == ',' :
-                s = s[:-1]  # Strip off final comma
-            s += ']'
-            print(NoNulls(s))
+            #s = MachineInterfaceFlat(TabFile,possibilities)
+            s = MachineInterfaceHeirarchical(TabFile,possibilities)
+            print(s)
 
         else :
             GV_GlobalVariables.ShortTermMemory = []
@@ -1855,9 +2049,9 @@ class CPrintWorker() :
                 payload.PutDataAsString(rside)
 
                 if self.machine_interface_mode :
-                    body = MachineInterfaceBody(payload.display_body)
+                    #body = MachineInterfaceBody(payload.display_body)
 
-                    s = payload.display_name + " set to " + body
+                    s = payload.display_name + " set to " + payload.display_body
                     print(s)
 
             if not self.machine_interface_mode :
@@ -1920,6 +2114,15 @@ class CPrint (gdb.Command) :
         GV_GlobalVariables.LoadLibcob()
         # pick up the name of the current source file
         try :
+            # Check if this is a special case.  (Enough of these will
+            # mean putting this in a separate function.)
+            tokens = arguments.split()
+            if len(tokens) == 3 and tokens[0] == "set" and tokens[1] == "repeat" and tokens[2].isdigit() :
+                GV_GlobalVariables.repeat_count = int(tokens[2])
+                if GV_GlobalVariables.repeat_count < 1 :
+                    GV_GlobalVariables.repeat_count = 1000000
+                return
+
             self.TabFile.ReadSymbolTableText()
             self.Worker.ProcessArguments(self.TabFile,arguments)
         except :
