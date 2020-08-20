@@ -1691,7 +1691,7 @@ def BuildHString(node) :
         if node.Level in (1,77,78) :
             ## Top level variables are treated this way:
             s += r'{name="'
-            s += node.BaseName + "/" + str(node.storage_table_index)
+            s += node.BaseName #  + "/" + str(node.storage_table_index)
             s += r'",value="'
             if len(node.children) == 0 :
                 ## There are no children, which means this is just
@@ -1713,12 +1713,12 @@ def BuildHString(node) :
         else :
             # This is a node whose level is 01-49, 66
             if len(node.children) == 0 :
-                s += node.BaseName + "/" + str(node.storage_table_index)
+                s += node.BaseName # + "/" + str(node.storage_table_index)
                 s += r'=\"'
                 s += MachineInterfaceBody(node.display_body)
                 s += r'\",'
             else :
-                s += node.BaseName + "/" + str(node.storage_table_index)
+                s += node.BaseName # + "/" + str(node.storage_table_index)
                 s += r'={_groupvalue=\"'
                 s += MachineInterfaceBody(node.display_body)
                 s += r'\",'
@@ -1751,11 +1751,21 @@ def MachineInterfaceHeirarchical(TabFile,possibilities) :
             while stack[-1].Level > payload.Level :
                 stack.pop()
 
-            # Create the new node"
+            # Create the new node
             new_node = HNode()
             new_node.storage_table_index = payload_index
             new_node.Level = payload.Level
-            new_node.BaseName = payload.Name.split('/')[0]
+            split_name = payload.Name.split('/')
+            if len(split_name) == 2 :
+                # If it's just the two pieces, then use the whole name/program
+                # pair.  (This is a file record or 01/77, and we might need
+                # the whole name to accurately handle a "print var=x request")
+                new_node.BaseName = payload.Name
+            else :
+                # Just use the lowest level.  When necessary, the VSC code will
+                # be able to walk up through the containers to get the full name
+                new_node.BaseName = split_name[0]
+            
             new_node.display_body = payload.display_body
 
             if payload.Level in (77,78) :
