@@ -156,7 +156,7 @@ erase %BASENAME%.o
 IF NOT ERRORLEVEL 0 GOTO bail
 
 :: Run COBST to create basename.sym.c
-cobcd-st -q %BASENAME%
+cobcd-st -q %BASENAME% %SOURCEFILE%
 IF NOT ERRORLEVEL 0 GOTO bail
 
 :: Compile basename.sym.c to create basename.sym.o
