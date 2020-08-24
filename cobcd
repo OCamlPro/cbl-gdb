@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/python
 
 #######################################################################
 # Copyright (c) 2019-2020 COBOLworx
@@ -28,553 +28,600 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#######################################################################
-
-usage()
-  {
-  echo "This is the cobc debugging wrapper $1 $2"
-  }
-
-print_help()
-  {
-  echo "This is the cobc debugging wrapper $1 $2"
-  echo "Use it as you would 'cobc'"
-  echo ""
-  echo "It doesn't take any switches except --help and --version"
-  echo ""
-  echo "If there is a -T or -t switch, the unmodified cobc compile will take place to generate"
-  echo "the listing file before the more complex debug build is done."
-  echo ""
-  echo "It can be controlled by a few environment variables:"
-  echo "COBCD_COBC=alt     Replaces 'cobc' with 'alt'"
-  echo "COBC=alt           Also replaces 'cobc' with 'alt'"
-  echo "COBCDEVEL=1        Use development toolchain instead of production toolchain"
-  echo "COBCDNOCLEAN=1     Don't delete intermediate files"
-  echo "COBCDFLAGS=xyz     These flags are passed to cobc"
-  echo "COBCDXM=[-x|-m|-b] cobc assumes a default of -m"
-  echo "ECHO=1             Causes line-by-line command echoing"
-  echo ""
-  echo "If you need help with cobc, use the command 'cobc --help'"
-  }
-
-###########################################################################
-## The version number in the next line is updated by a Linux bash script. #
-## The text "Version x.x" has to appear in square brackets.               #
-## Don't mess with it!                                                    #
-###########################################################################
-
-SCRIPT_VERSION="[Version 3.16]"
-
-# This script, nominally named cobcd, packages up the process of compiling
-# a single COBOL source module and processing it so that gdb can be used for
-# source-level debugging of that module. Found in the root folder of the
-# cbl-gdb repository, it is designed to operate there pointing at the development
-# versions of the processing programs as controlled by the external environment
-# variables COBCDEVEL and COBCDNOCLEAN.  Once installed in, say, /usr/local/bin,
-# it will use production versions of the processing programs
-#
-# Usage:
-# cobcd source.cbl ## Uses production toolchain.  Any switches before the source
-# module are incorporated in the part of the process that creates the .C module,
-# and any switches after the source module are included in the final link.
-#
-# Recall that this script is good for compiling a single source module; at this
-# writing we don't handle executables created from multiple source modules.
-#
-# Environment variable control:
-# COBCDEVEL=1 ## Causes the use of the development toolchain rather than the
-#             ## production toolchain.
-#
-# COBCDNOCLEAN=1 ## For development. The intermediate files will find their way
-#                ## into the current working directory, instead of being
-#                ## deleted after the compilation is complete.
-#
-# COBCDFLAGS ## Use for things like --free
-#
-# COBCDXM=[-x|-m|-b] ## cobc assumes a default of -m
-#
-# COBCD_COBC=alt (or COBC, for that matter) replaces 'cobc' with 'alt'
-#
-# ECHO=1 causes massive debugging output
-
-if [ X"$#" = X"0" ]
-  then
-  usage $SCRIPT_VERSION
-  echo "Use it as you would 'cobc'"
-  exit 1
-  fi
-
-set +e  ## This kind of needs to be +e in order to make sure intermediate files
-        ## get cleaned up in the event of compilation errors
-#set -x ## This turns on shell echoing
-#ECHO=1  ## This turns on *my* echoing
-
-if uname -m | grep -qs x86_64 ; then
-  platform=x86_64
-  fi
-
-if uname -m | grep -qs arm ; then
-  platform=arm
-  fi
-
-if grep -qs debian /etc/os-release ; then
-  os_name=debian
-  fi
-
-if grep -qs centos /etc/os-release ; then
-  os_name=centos
-  fi
-
-if uname -r | grep -qs el7 ; then
-  os_name=rhel7
-  fi
-
-if uname | grep -qs MINGW32_NT ; then
-  os_name=MINGW32_NT
-  fi
-
-if uname | grep -qs MINGW64_NT ; then
-  os_name=MINGW64_NT
-  fi
-
-if uname | grep -qs MSYS_NT ; then
-  os_name=MSYS_NT
-  fi
-
-## We need to know the directory that our script is in.
-SCRIPTDIR=$(dirname $(realpath $0))
-
-# set COBCD to COBCD_COBC or COBCD if provided, or "cobc" by default
-if [ X"$COBCD_COBC" != X"" ] ; then
-  COBC="$COBCD_COBC"
-elif [ X"$COBC" = X"" ] ; then
-  COBC=cobc
-  fi
-
-if [ "$COBCDEVEL" ]; then
-  ## For development purposes, pick up executables from subdirectories
-  ## from where the cobcd script was found
-  COBST=$SCRIPTDIR/cobcd-st/cobcd-st
-  SFIX=$SCRIPTDIR/cobcd-sfix/cobcd-sfix
-  PYTHON=$SCRIPTDIR/python/cobcd.py
-
-  # for COBCDEVEL, we embed the script
-  DASH_F=""
-  DASH_S=-s
-else
-  # In normal operation, the executables are found in the same folder
-  # as the cobcd script
-  COBST=$SCRIPTDIR/cobcd-st
-  SFIX=$SCRIPTDIR/cobcd-sfix
-  PYTHON=$SCRIPTDIR/cobcd.py
-
-  # In normal operation, we embed a pointer
-  DASH_F="-f"
-  DASH_S=""
-  fi
-
-## However, -s doesn't work in RHEL7:
-if [ "$os_name" = "rhel7" ]
-  then
-  DASH_F="-f"
-  DASH_S=""
-  fi
-
-## We need to extract the COB_CFLAGS information from `cobc --info`
-## in case we need to augment COB_CFLAGS when we actually use cobc.
-
-cobc_info=`$COBC --info | sed 's/\n/ /g'`
-cob_cflags=$(echo $cobc_info | sed 's/.*COB_CFLAGS\s\+:\s\+\(.*\)COB_LDFLAGS.*/\1/')
-
-#echo cob_cflags is $cob_cflags
-
-## Build up the entire original set of parameters:
-
-COMMAND_LINE=""
-ASKED_FOR_HELP=""
-ASKED_FOR_VERSION=""
-DASH_V=""
-T_FLAG=""
-SOURCEFILE=""
-
-# This disturbing amount of code addresses the issue of combined
-# single-character flags, e.g., "-xgd".  It is complex because cobc
-# accepts a number of switches that start with a single hyphen, but
-# nonetheless have more than one letter, e.g., "-ext".  So, although
-# we want "-xgd" to turn into "-x -g -d", we need to leave "-ext" alone:
-
-params=""
-for p in $@
-  do
-  if echo $p | grep -qs "^[^-]"
-    then
-    ## It doesn't start with a single hyphen
-    params="$params $p"
-    continue
-    fi
-  if echo $p | grep -qs "^[-][-]"
-    then
-    ## It starts with a double hyphen
-    params="$params $p"
-    continue
-    fi
-  if echo $p | grep -qs "^[-]f"
-    then
-    params="$params $p"
-    continue
-    fi
-  if echo $p | grep -qs "^[-]W"
-    then
-    params="$params $p"
-    continue
-    fi
-  if echo $p | grep -qs "^[-]O"
-    then
-    params="$params $p"
-    continue
-    fi
-  if echo $p | grep -qs "^[-]list"
-    then
-    params="$params $p"
-    continue
-    fi
-  ## When you get here, you have a token with a single hyphen:
-  if [ ${#p} -le 2 ]
-    then
-    ## It is only one or two characters long
-    params="$params $p"
-    continue
-    fi
-
-  # We have a hyphen and some letters
-  # extract those letters:
-  token=$(echo $p | sed -E "s/[-]([^=]+).*/\\1/g")
-
-  case "$token" in
-    "help"|"version"|"info"|"brief"|"###"|"verbose"|"vv"|"vvv"| \
-    "job"|"std"|"free"|"fixed"|"debug"|"Xref"|"conf"|"save-temps"|"ext" \
-      )
-      params="$params $p"
-      continue
-    esac
-
-  ## Arriving here means that you have, or you are supposed to have,
-  ## some combined single-character switches
-
-  letters=$(echo $p | sed -E "s/(.)/\\1 /g")
-  for letter in $letters
-    do
-    if [ X"$letter" = X"-" ]
-      then
-      continue
-      fi
-    params="$params -$letter"
-    done
-
-  done
-
-for param in $params
-  do
-  if [ X"$param" = X"--help" ]
-    then
-    ASKED_FOR_HELP=yes
-    fi
-  if [ X"$param" = X"--version" ]
-    then
-    ASKED_FOR_VERSION=yes
-    fi
-  if [ X"$param" = X"-v" ]
-    then
-    DASH_V=-v
-    fi
-  if echo $param | grep -iqs -e "-t"
-    then
-    T_FLAG=yes
-    fi
-  case $param in
-    -x|-m|-b)
-      COBCDXM=$param
-      ;;
-    esac
-  COMMAND_LINE="$COMMAND_LINE $param"
-  done
-
-if [ "$COBCDXM" = "" ]
-  then
-  COBCDXM=-m
-  fi
-
-if [ $ASKED_FOR_HELP ]
-  then
-  print_help $SCRIPT_VERSION
-  fi
-
-if [ $ASKED_FOR_VERSION ]
-  then
-  usage $SCRIPT_VERSION
-  $COBST -v
-  $SFIX -v
-  $COBC --version
-  exit 0
-  fi
-
-result="0"
-
-## If he is doing something that requires a straight cobc compilation
-## with a -t or -T switch, do it now.
-if [ "$result" = "0" ]
-  then
-  if [ "$T_FLAG" = "yes" ]
-    then
-    if [ "$ECHO" ]
-      then
-      echo $COBC $COBCDFLAGS $DASH_V $COMMAND_LINE
-      fi
-    echo "Performing original"
-    $COBC $COBCDFLAGS $DASH_V $COMMAND_LINE
-    result=$?
-
-    ## Strip the -t/-T stuff out of the command line so that it doesn't
-    ## interfere with our subsequent processing:
-    COMMAND_LINE=$(echo $COMMAND_LINE | sed 's/\s\+-t\s*\S\+/ /gi')
-    fi
-else
-  exit 1
-  fi
-
-## Strip out things that will cause trouble for us if they are there:
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -v / /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -v$/ /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-v / /g')
-
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -x / /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -x$/ /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-x / /g')
-
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -b / /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -b$/ /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-b / /g')
-
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -m / /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -m$/ /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-m / /g')
-
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -c / /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -c$/ /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-c / /g')
-
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -C / /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -C$/ /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-C$/ /g')
-
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -g / /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -g$/ /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-g / /g')
-
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -S / /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -S$/ /g')
-
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -debug/ /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-debug / /g')
-
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -d / /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/ -d$/ /g')
-COMMAND_LINE=$(echo $COMMAND_LINE | sed -e 's/^-d / /g')
-
-# Let's find out what the original input and output parameters are from
-# the slightly modified original command line:
-
-## The actual information we need is in stderr, and we need to get
-## rid of the stuff from stdout because it ends up at the end of the
-## the string, and later on we'll need the stuff from the final -###
-## entry, and I can't figure out how to isolate it from the stdout stuff
-
-TRIPLE_X_COMMAND="$COBCDXM $COBCDFLAGS $COMMAND_LINE"
-
-TFILE=/tmp/$$triplex
-$COBC -### $TRIPLE_X_COMMAND 1>/dev/null 2>$TFILE
-TRIPLE_X_PRIME=$(cat $TFILE | sed 's/\n/ /g')
-rm $TFILE
-
-## The COBOL source file is last thing before " preprocessing: "
-FILE_CBL=$(echo $TRIPLE_X_PRIME | sed -e 's/.* \(\S\+\) preprocessing: .*/\1/')
-
-## Come up with TRIPLE_X for the -S command:
-OUR_COMMAND="-S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels $COBCDXM $COBCDFLAGS $COMMAND_LINE"
-## If we were supplied with a -o switch, it screws things up at this point.  So, let's get rid of it, if it is there
-OUR_COMMAND=$(echo $OUR_COMMAND | sed 's/\s\+-o\s*\S\+/ /')
-TRIPLE_X=$($COBC -### $OUR_COMMAND 2>&1)
-
-## The .s file name is first thing after the last " -o "
-FILE_S=$(echo $TRIPLE_X | sed -e 's/.* -o //' | cut -d ' ' -f 1)
-## Get rid of the quotation marks
-FILE_S=$(echo $FILE_S | sed -e 's/"//g')
-
-## Strip off the .s to get the file root:
-FILE_ROOT=$(echo $FILE_S | sed -e 's/[.]s//g')
-
-## Create some other names
-FILE_C=$FILE_ROOT.c
-FILE_O=$FILE_ROOT.o
-FILE_LST=$FILE_ROOT.cbl.lst
-FILE_SYM_C=$FILE_ROOT.sym.c
-FILE_SYM_O=$FILE_ROOT.sym.o
-
-if [ $ECHO ]
-  then
-  echo "platform   is $platform   "
-  echo "os_name    is $os_name    "
-  echo "COBCDEVEL  is $COBCDEVEL    "
-  echo "COBST      is $COBST      "
-  echo "SFIX       is $SFIX       "
-  echo "PYTHON     is $PYTHON     "
-  echo "FILE_ROOT  is $FILE_ROOT  "
-  echo "FILE_CBL   is $FILE_CBL   "
-  echo "FILE_LST   is $FILE_LST   "
-  echo "FILE_C     is $FILE_C     "
-  echo "FILE_S     is $FILE_S     "
-  echo "FILE_O     is $FILE_O     "
-  echo "FILE_SYM_C is $FILE_SYM_C "
-  echo "FILE_SYM_O is $FILE_SYM_O "
-  fi
-
-## Do the initial compilation that gives us the .c .h .i and .s files
-## Rebuild our command, this time with our -T directive:
-OUR_COMMAND="-S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels -T $FILE_LST --tlines=0 --tsymbols $COBCDXM $COBCDFLAGS $COMMAND_LINE"
-OUR_COMMAND=$(echo $OUR_COMMAND | sed 's/\s\+-o\s*\S\+/ /')
-
-if [ "$ECHO" ]
-  then
-  echo $COBC $DASH_V $OUR_COMMAND
-  fi
-$COBC $DASH_V $OUR_COMMAND
-result=$?
-
-## In the Windows universe, we can't embed anything into the executable
-case "$os_name" in
-  "MINGW32_NT"|"MINGW64_NT"|"MSYS_NT")
-    DASH_F=""
-    DASH_S=""
-  esac
-
-if [ "ECHO" ]
-  then
-  DASH_Q=-q
-  fi
-
-## We can now create the .sym.c file:
-if [ "$result" = "0" ]
-  then
-  if [ "$ECHO" ]
-    then
-    echo $COBST $DASH_Q $DASH_F $DASH_S $FILE_ROOT $FILE_CBL
-    fi
-  $COBST $DASH_Q $DASH_F $DASH_S $FILE_ROOT $FILE_CBL
-  result=$?
-  fi
-
-## We can now compile the .sym.c file:
-if [ "$result" = "0" ]
-  then
-  if [ "$ECHO" ]
-    then
-    echo $COBC $DASH_V -c -o $FILE_SYM_O $FILE_SYM_C
-    fi
-  $COBC $DASH_V -c -o $FILE_SYM_O $FILE_SYM_C
-  result=$?
-  fi
-
-## It is time to modify the .s file
-if [ "$result" = "0" ]; then
-  # Modify the .s file, removing all .loc references to
-  # FILE_ROOT.c and any .h files.  The modification is done "in-place".
-  if [ "$ECHO" ]; then
-    echo $SFIX $DASH_Q $FILE_S $FILE_S $FILE_C $FILE_CBL
-    fi
-  $SFIX $DASH_Q $FILE_S $FILE_S $FILE_C $FILE_CBL
-  result=$?
-  fi
-
-## We can now compile that .s file:
-
-OUR_COMMAND="-c -g -d $COBCDXM $COBCDFLAGS -o $FILE_O $FILE_S"
-
-if [ "$result" = "0" ]; then
-  if [ "$ECHO" ]; then
-    echo $COBC $DASH_V $OUR_COMMAND
-    fi
-  $COBC $DASH_V $OUR_COMMAND
-  result=$?
-  fi
-
-## It's time to put everything together
-
-## Find the final "to be executed: " string
-FINAL_COMMAND=$(echo $TRIPLE_X_PRIME | sed 's/.*to be executed: //g')
-## When compiling with -x, there is something like "/tmp/cob2458_0.o"
-## in that command.  Replace it with our .o files:
-FINAL_COMMAND=$(echo $FINAL_COMMAND | sed "s|\"/.*[.]o\"|$FILE_O $FILE_SYM_O|g")
-## When compiling with -m, there is something like "/tmp/cob2458_0.c"
-## in that command.  Replace it with our .o files:
-FINAL_COMMAND=$(echo $FINAL_COMMAND | sed "s|\"/.*[.]c\"|$FILE_O $FILE_SYM_O|g")
-##
-## The FINAL_COMMAND can be, oddly, littered with double quotes.  Let's get rid of them, under the
-## assumption that naming files with double quotes is a really bad thing.
-FINAL_COMMAND=$(echo $FINAL_COMMAND | sed "s|\"||g")
-
-if [ "$result" = "0" ]; then
-  # Modify the .s file, removing all .loc references to
-  # BASENAME.c and any .h files.
-  if [ "$ECHO" ]; then
-    echo $FINAL_COMMAND $DASH_V
-    fi
-  $FINAL_COMMAND $DASH_V
-  result=$?
-  fi
-
-## And we have a debuggable executable
-
-## Some operating systems, notably Windows, require that a
-## copy of the Python code be placed next to the executable:
-if [ "$result" = "0" ]; then
-  if [ -z $DASH_S ] && [ -z $DASH_F ]
-    then
-    ## Because we didn't embed a pointer or the script, we need to
-    ## make a local copy
-    if [ -f $PYTHON ]
-      then
-        if [ -z $PYTHON_DESTINATION ]
-          then
-          ## The destination is the first thing after the -o:
-          PYTHON_DESTINATION=$(echo $FINAL_COMMAND | sed 's/.* -o //' | cut -d ' ' -f 1)
-          PYTHON_DESTINATION=$(realpath $PYTHON_DESTINATION)
-          PYTHON_DESTINATION=$(dirname $PYTHON_DESTINATION)
-          echo $PYTHON_DESTINATION
-          fi
-        if [ -z $PYTHON_NAME ]
-          then
-          PYTHON_NAME="$FILE_ROOT-gdb.py"
-          fi
-
-        if [ $ECHO ]
-          then
-          echo "cp $PYTHON $PYTHON_DESTINATION/$PYTHON_NAME"
-          fi
-      cp $PYTHON $PYTHON_DESTINATION/$PYTHON_NAME
-    else
-      echo ERROR: "Couldn't find a copy of cobcd.py"
-      fi
-    fi
-  fi
-
-## clean up after ourselves, assuming that's desired
-if [ -z "$COBCDNOCLEAN" ];
-    then
-    rm -fr $FILE_ROOT.[csio]
-    rm -fr $FILE_ROOT*.h
-    rm -fr $FILE_LST
-    rm -fr $FILE_O
-    rm -fr $FILE_ROOT.sym.[co]
-    fi
-
-exit $result
+#   This module implements the gdb extension commands cprint and cwatch
+#EndOfCopyright########################################################
+
+from __future__ import print_function
+
+import re
+import sys
+import os
+import platform
+import traceback
+import subprocess
+import tempfile
+
+def usage(version) :
+    print("This is the cobc debugging wrapper", version)
+
+def print_help(version) :
+    usage(version)
+    print("Use it as you would 'cobc'")
+    print("")
+    print("It doesn't take any switches except --help and --version")
+    print("")
+    print("If there is a -T or -t switch, the unmodified cobc compile will take place to generate")
+    print("the listing file before the more complex debug build is done.")
+    print("")
+    print("It can be controlled by a few environment variables:")
+    print("COBCD_COBC=alt     Replaces 'cobc' with 'alt'")
+    print("COBC=alt           Also replaces 'cobc' with 'alt', (takes priority over COBCD_COBC")
+    print("COBCDEVEL=1        Use development toolchain instead of production toolchain")
+    print("COBCDNOCLEAN=1     Don't delete intermediate files")
+    print("COBCDFLAGS=xyz     These flags are passed to cobc")
+    print("ECHO=1             Causes line-by-line command echoing")
+    print("")
+    print("If you need help with cobc, use the command 'cobc --help'")
+
+def DeleteAFile(fname) :
+    try :
+        os.remove(fname)
+    except :
+        pass
+
+def DeSpace(command) :
+    ## This routine removes extraneous embedded spaces and empty list elements:
+    if isinstance(command,list) :
+        # We have a list, so join the elements
+        command = ' '.join(command)
+        # And then split them, eliminating any '' list elements and extra spaces
+        return command.split()
+    elif isinstance(command,str) :
+        # Starting as string, return a list
+        return command.split()
+
+    # On his head be it
+    return command
+
+def SubprocessCall(command) :
+    command = DeSpace(command)
+    try :
+        resultcode = subprocess.call(command)
+    except subprocess.CalledProcessError as err:
+        print( err.output )
+        resultcode = err.returncode
+    except :
+        traceback.print_exc()
+        print("Something went wrong with the command:")
+        print("   ", ' '.join(command))
+        resultcode = 1
+    return resultcode
+
+def Main() :
+    ###########################################################################
+    ## The version number in the next line is updated by a Linux bash script. #
+    ## The text "Version x.x" has to appear in square brackets.               #
+    ## Don't mess with it!                                                    #
+    ###########################################################################
+    SCRIPT_VERSION="[Version 3.16]"
+
+    windows = False
+    EXE_SUFFIX = ""
+    SO_SOFFIX  = ".so"
+    os_name = platform.system()
+    if os_name == "Windows" :
+        windows = True
+        EXE_SUFFIX = ".exe"
+        SO_SOFFIX  = ".dll"
+
+    rhel7 = False
+    if platform.uname()[2].find("el7") != -1 :
+        os_name = "RHEL7"
+        rhel7 = True
+
+    # This script, invoked by the command `cobcd`, packages up the process of compiling
+    # a single COBOL source module and processing it so that gdb can be used for
+    # source-level debugging of that module. Found in the root folder of the
+    # cbl-gdb repository, it is designed to operate there pointing at the development
+    # versions of the processing programs as controlled by the external environment
+    # variables COBCDEVEL and COBCDNOCLEAN.  Once installed in, say, /usr/local/bin,
+    # it will use production versions of the processing programs
+    #
+    # You use it the same way you use cobc.  It works pretty hard at being invisible.
+    #
+    # That this script is good for compiling a single source module; at this
+    # writing we don't handle executables created from multiple source modules.
+    #
+    # Environment variable control:
+    # COBCDEVEL=1     ## Causes the use of the development toolchain rather than the
+    #                 ## production toolchain.
+    #
+    # COBCDNOCLEAN=1  ## For development. The intermediate files will find their way
+    #                 ## into the current working directory, instead of being
+    #                 ## deleted after the compilation is complete.
+    #
+    # COBCDFLAGS      ## Addition parameters passed to COBC
+    #
+    # COBCD_COBC=alt 'cobc' with 'alt'
+    # COBCD     =alt 'cobc' with 'alt'  If both are non-blank, this one wins
+    #
+    # COBCDXM         ## equivalent to -E -C -S -c -m -b or -x.  If other
+    #                 ## than -m or -x, processing will end early
+    #
+    # ECHO=1 causes massive debugging output
+
+    COBCDEVEL    = os.environ.get("COBCDEVEL") or ""
+    COBCDNOCLEAN = os.environ.get("COBCDNOCLEAN") or ""
+    COBCDFLAGS   = (os.environ.get("COBCDFLAGS") or "").split()
+    COBCD_COBC   = os.environ.get("COBCD_COBC") or ""
+    COBCD        = os.environ.get("COBCD") or ""
+    ECHO         = os.environ.get("ECHO") or ""
+    COBC         = os.environ.get("COBC") or os.environ.get("COBCD_COBC") or "cobc"
+
+    #ECHO = "1"  # This overrides the environment.  If this is uncommented,
+                # then you are probably doing development work on this script
+
+    if len(sys.argv) == 1 :
+        usage(SCRIPT_VERSION)
+        print("Use it as you would 'cobc'")
+        os._exit(1)
+
+    ## We need to know the directory that our script is in.
+    SCRIPTDIR='/' + '/'.join(os.path.abspath(sys.argv[0]).split('/')[1:-1])
+
+    if COBCDEVEL :
+        ## For development purposes, pick up executables from subdirectories
+        ## from where the cobcd script was found
+        COBST  = SCRIPTDIR + "/cobcd-st/cobcd-st"
+        SFIX   = SCRIPTDIR + "/cobcd-sfix/cobcd-sfix"
+        PYTHON = SCRIPTDIR + "/python/cobcd.py"
+        DASH_F = ""
+        DASH_S = "-s"
+    else :
+        # In normal operation, the executables are found in the same folder
+        # as the cobcd script
+        COBST  = SCRIPTDIR + "/cobcd-st"
+        SFIX   = SCRIPTDIR + "/cobcd-sfix"
+        PYTHON = SCRIPTDIR + "/cobcd.py"
+
+    # In normal operation, we embed a pointer
+    DASH_F = "-f"
+    DASH_S = ""
+
+    if rhel7 :
+        ## -s doesn't, however, work in RHEL7:
+        DASH_F="-f"
+        DASH_S=""
+
+    if windows :
+        ## and in Windows, neither works:
+        DASH_F=""
+        DASH_S=""
+
+    COMMAND_LINE=[]
+    ASKED_FOR_HELP=False
+    ASKED_FOR_VERSION=False
+    DASH_V     = ""
+    DASH_T     = ""
+    COBCDXM    ="-m"    # This is the default
+    resultcode = 0
+    TARGET     = ""
+    FILE_ROOT  = ""
+    FILE_S     = ""
+    FILE_C     = ""
+    FILE_O     = ""
+    FILE_LST   = ""
+    FILE_SYM_C = ""
+    FILE_SYM_O = ""
+
+    ## Here is where we pre-preprocess the command line parameters.
+    ## Anything that starts without a hyphen, or starts with two hyphens,
+    ## passes straight through.  Anything with one hypen gets checked.
+    ## Some things with one hyphen pass through intact.  Anything else, like -abc, gets
+    ## passed along as -a -b -c
+    ##
+    params = []
+    for param in sys.argv[1:] + COBCDFLAGS : ## Skip the program name, and add in the switches from the environment
+        if len(param[0]) == 1 or param[0] != '-' :
+            params.append(param)
+            continue
+        ## Getting here means you have -something
+        if param[1:].find('-') != -1 or param.find('=') != -1 :
+            # Anything with an embedded hyphen or '=' goes straight through
+            params.append(param)
+            continue
+        if param[1] in (    'f' ,
+                            'W' ,
+                            'O' ,
+                            't' ,
+                            'T' ,
+                            'o' ,
+                            'j' ,
+                            'I' ,
+                            'L' ,
+                            'l' ,
+                            'A' ,
+                            'Q' ,
+                            'D' ,
+                            'K'
+                                ) :
+            # These prefix letters always precede something that goes through intact
+            params.append(param)
+            continue
+        ## Now we handle the leftover specific words:
+        if param[1:] in (   "help"    ,
+                            "cob" ,
+                            "info"    ,
+                            "verbose" ,
+                            "brief"   ,
+                            "###"     ,
+                            "free"    ,
+                            "fixed"   ,
+                            "Xref"    ,
+                            "debug"   ,
+                            "ext"     ,
+                            "acucomment"
+                        ) :
+            params.append(param)
+            continue
+        ## Arriving here means a stacked set of switches that need to be unstacked:
+        for ch in param[1:] :
+            params.append( '-' + ch )
+
+    ## We can now pre-process the pre-preprocessed tokens.  There are a few
+    ## things we have to do.  There is some bookkeeping with version and help
+    ## requests that we need to know about.  And we need to strip out some
+    ## switches that will otherwise interfere with our expanded processes.  For
+    ## example, if the caller specifies -x or -m, they will conflict with the
+    ## the -S we need to start with.  So, we have to pull that out to work with later
+
+    for param in params :
+        if param in ("-h","-help","--help") :
+            ASKED_FOR_HELP=True
+            continue
+        if param in ("-V","-version","--version") :
+            ASKED_FOR_VERSION=True
+            continue
+        if param in ("-E","-C","-S") :
+            # We eliminate the appearance of any of these, because they interfere with
+            # the way we expand the command
+            continue
+        if param in ("-m","-b","-x") :
+            ## We segregate this out because of the way we expand the command
+            COBCDXM=param
+            continue
+        if param in ("-v","-vv","-vvv") or param[0:len("-verbose")] == "-verbose" or param[0:len("--verbose")] == "--verbose" :
+            # Requests for verbosity mess up our -### processing, so we filter them out for later
+            DASH_V = param
+            continue
+        if param[0:2] in ("-t","-T") :
+            DASH_T=param[0:2]
+        COMMAND_LINE.append(param)
+
+    if ASKED_FOR_HELP :
+        print_help(SCRIPT_VERSION)
+        os._exit(1)
+
+    if ASKED_FOR_VERSION :
+        SubprocessCall(["cobc","-V"])
+        usage(SCRIPT_VERSION)
+        os._exit(1)
+
+    if DASH_T :
+        ## He requires a straight cobc compilation
+        ## with a -t or -T switch, so do it now.
+        command = DeSpace(["cobc"] + [COBCDXM] + COMMAND_LINE)
+        if ECHO :
+            print(' '.join(command))
+        resultcode = SubprocessCall(command)
+        ## Having done that, we need to remove the -T command elements;
+        ## if we don't, they'll interfere with our process
+
+        C1 = COMMAND_LINE[:] # This is a copy
+        COMMAND_LINE = []
+        i = 0
+        while i < len(C1) :
+            if C1[i][0:2] not in ("-t","-T") :
+                COMMAND_LINE.append(C1[i])
+            else :
+                # We will not transfer the -T element
+                if len(C1[i]) == 2 :
+                    # And if it is alone, then we skip the next one as well
+                    i += 1;
+            i += 1
+
+    ## We are going to leverage cobc's parsing and processing by using the -###
+    ## option.  When that's used, the useful information goes to stderr, so we'll
+    ## arrange to capture that in result_file.
+    ##
+    ## First, just build command line as we were given it.  The only thing
+    ## we will pull out of it is the final `-o target` text, which gives us
+    ## the name of the final result target file:
+
+    if resultcode == 0 :
+        TRIPLE_X_COMMAND = ["cobc", "-###", COBCDXM] + COMMAND_LINE
+        TRIPLE_X_COMMAND = DeSpace(TRIPLE_X_COMMAND)
+        resultcode = 0
+        try :
+            result_file = tempfile.TemporaryFile();
+            if ECHO :
+                print( ' '.join(TRIPLE_X_COMMAND) )
+            subprocess.check_output(TRIPLE_X_COMMAND,stderr=result_file)
+            result_file.seek(0)
+            result_text = result_file.read()
+            result_text = result_text.decode("utf-8")
+            FINAL_COMMAND = ""
+            for line in result_text.split('\n') :
+                line = line.replace('\t',' ')
+                #print("     1-line:",line)
+                if FINAL_COMMAND and line and line[0] in (' ') :
+                    FINAL_COMMAND += line
+                    continue
+                if line.find("to be executed:") == 0 :
+                    FINAL_COMMAND = line
+            result_file.close()
+            #print("FINAL_COMMAND:", FINAL_COMMAND)
+            nfound = FINAL_COMMAND.find(" -o ")
+            if nfound != -1 :
+                TARGET = FINAL_COMMAND[nfound:].split()[1]
+                TARGET = TARGET.replace('"','')
+        except subprocess.CalledProcessError as err:
+            print( err.output )
+            resultcode = err.returncode
+        except :
+            traceback.print_exc()
+            resultcode = 1
+
+        if TARGET == "" :
+            result_file.seek(0)
+            result_text = result_file.read()
+            result_text = result_text.decode("utf-8")
+            print(result_text)
+            resultcode = 1
+
+    if resultcode == 0 :
+        ## Now that we know the name of the final target, we have to remove
+        ## any "-o xxx" or "-oxxx" from the COMMAND_LINE.  If we leave it in there
+        ## it messes up the stage where we create the .s file, because instead of
+        ## root.s, it creates a file named xxx
+        C1 = COMMAND_LINE[:]
+        COMMAND_LINE = []
+        i = 0
+        while i < len(C1) :
+            if C1[i] == "-o" :
+                i += 2
+                continue;
+            if C1[i][0:2] == "-o" :
+                i += 1
+                continue;
+            COMMAND_LINE.append(C1[i])
+            i += 1
+
+    if resultcode == 0 :
+        ## We have a desired target name which could be .so, .dll, .exe, or any damned
+        ## thing that the user, bless them, might have put after an explicit -o
+
+        ## We are now ready to create a -S command line, which will allow us to
+        ## learn the original source file name, along with the root for the
+        ## the other file names we will be working with
+        try :
+            TRIPLE_X_COMMAND = ["cobc", "-###", COBCDXM] + "-S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels".split() + COMMAND_LINE
+            TRIPLE_X_COMMAND = DeSpace(TRIPLE_X_COMMAND)
+            if ECHO :
+                print( ' '.join(TRIPLE_X_COMMAND) )
+            result_file = tempfile.TemporaryFile();
+            subprocess.check_output(TRIPLE_X_COMMAND,stderr=result_file)
+            result_file.seek(0)
+            result_text = result_file.read()
+            result_text = result_text.decode("utf-8")
+            for line in result_text.split('\n') :
+                line = line.replace('\t',' ')
+                #print("     2-line:",line)
+                if line.find("preprocessing:") == 0 :
+                    FILE_CBL  = line.split()[1]         # second element is the relative file name
+                    FILE_ROOT = line.split()[3][0:-2]   # fourth element is name.i; strip off the last two chars
+                    break
+            result_file.close()
+            FILE_S     = FILE_ROOT + ".s"
+            FILE_C     = FILE_ROOT + ".c"
+            FILE_O     = FILE_ROOT + ".o"
+            FILE_LST   = FILE_ROOT + ".cbl.lst"
+            FILE_SYM_C = FILE_ROOT + ".sym.c"
+            FILE_SYM_O = FILE_ROOT + ".sym.o"
+        except subprocess.CalledProcessError as err:
+            print( err.output )
+            resultcode = err.returncode
+        except :
+            traceback.print_exc()
+            resultcode = 1
+
+        if FILE_ROOT == "" :
+            result_file.seek(0)
+            result_text = result_file.read()
+            result_text = result_text.decode("utf-8")
+            print(result_text)
+            resultcode = 1
+
+    if resultcode == 0 :
+        if ECHO :
+            print("os_name    is ",os_name    )
+            print("SCRIPTDIR  is ",SCRIPTDIR  )
+            print("COBCDEVEL  is ",COBCDEVEL  )
+            print("COBST      is ",COBST      )
+            print("SFIX       is ",SFIX       )
+            print("PYTHON     is ",PYTHON     )
+            print("FILE_ROOT  is ",FILE_ROOT  )
+            print("FILE_CBL   is ",FILE_CBL   )
+            print("FILE_LST   is ",FILE_LST   )
+            print("FILE_C     is ",FILE_C     )
+            print("FILE_S     is ",FILE_S     )
+            print("FILE_O     is ",FILE_O     )
+            print("FILE_SYM_C is ",FILE_SYM_C )
+            print("FILE_SYM_O is ",FILE_SYM_O )
+            print("DASH_F     is ",DASH_F     )
+            print("DASH_S     is ",DASH_S     )
+
+    if resultcode == 0 :
+        ## Do the initial compilation that gives us the .c .h .i and .s files
+        ## Rebuild our command, this time with our -T directive:
+        OUR_COMMAND = DeSpace("cobc -S" + " " + COBCDXM + " -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels -T " + FILE_LST + " " + "--tlines=0 --tsymbols" + " " + DASH_V + " " + ' '.join(COMMAND_LINE))
+        if ECHO :
+            print(' '.join(OUR_COMMAND))
+        resultcode = SubprocessCall(OUR_COMMAND)
+
+    if resultcode == 0 :
+
+        ## Normally, let's be quiet.
+        DASH_Q = "-q"
+        ## If verbose, then be a little noisy
+        if DASH_V :
+            DASH_Q = ""
+        ## But if ECHO is on, go back to quiet so that the line doesn't
+        ## come out twice:
+        if ECHO :
+            DASH_Q = "-q"
+
+        ## We can now create the .sym.c file:
+        OUR_COMMAND = DeSpace([COBST,DASH_Q,DASH_F,DASH_S,FILE_ROOT,FILE_CBL])
+        if ECHO :
+            print(' '.join(OUR_COMMAND))
+        resultcode = SubprocessCall(OUR_COMMAND)
+
+    if resultcode == 0 :
+        ## It is time to compile the .sym.c file we just created
+        OUR_COMMAND = DeSpace([COBC,"-c","-o",FILE_SYM_O,FILE_SYM_C])
+        if ECHO :
+            print(' '.join(OUR_COMMAND))
+        resultcode = SubprocessCall(OUR_COMMAND)
+
+    if resultcode == 0 :
+        ## It is time to modify the .s file
+        # Modify the .s file, removing all .loc references to
+        # FILE_ROOT.c and any .h files.  The modification is done "in-place".
+        OUR_COMMAND = DeSpace([SFIX, DASH_Q, FILE_S, FILE_S, FILE_C, FILE_CBL])
+        if ECHO :
+            print(' '.join(OUR_COMMAND))
+        resultcode = SubprocessCall(OUR_COMMAND)
+
+    if resultcode == 0 :
+        ## We can now use COBC to assemble that that .s file:
+        OUR_COMMAND=DeSpace([COBC,"-c", "-g", "-o", FILE_O, FILE_S])
+
+        if ECHO :
+            print(' '.join(OUR_COMMAND))
+        resultcode = SubprocessCall(OUR_COMMAND)
+
+    if resultcode == 0 :
+        # It is now time to build up the final link command.  Based on the
+        # one of the -### commands we executed up above, we have to replace
+        # the -o target with our TARGET, and we need to replace either
+        # "/tmp/cob7653_0.o" (from a -x or -b compilation) or "/tmp/cob7684_0.c"
+        # (from a -m compilation) with our .o files:
+        FINAL_COMMAND = FINAL_COMMAND[FINAL_COMMAND.find(':')+2:]
+        C1 = FINAL_COMMAND.split()
+        FINAL_COMMAND = []
+        i = 0
+        while i < len(C1) :
+            token = C1[i].replace('"','')
+            if token == '-o' :
+                FINAL_COMMAND.append(token)
+                FINAL_COMMAND.append(TARGET)
+                i += 2
+                continue
+            elif token[-2:] in (".o",".c") :
+                FINAL_COMMAND.append(FILE_SYM_O)
+                FINAL_COMMAND.append(FILE_O)
+                i += 1
+                continue
+            FINAL_COMMAND.append(token)
+            i += 1
+        if ECHO :
+            print(' '.join(FINAL_COMMAND))
+        resultcode = SubprocessCall(FINAL_COMMAND)
+
+    if resultcode == 0 :
+        ## And we have a debuggable executable
+        pass
+
+#^#  ## And we have a debuggable executable
+#^#
+#^#  ## Some operating systems, notably Windows, require that a
+#^#  ## copy of the Python code be placed next to the executable:
+#^#  if [ "$result" = "0" ]; then
+#^#    if [ -z $DASH_S ] && [ -z $DASH_F ]
+#^#      then
+#^#      ## Because we didn't embed a pointer or the script, we need to
+#^#      ## make a local copy
+#^#      if [ -f $PYTHON ]
+#^#        then
+#^#          if [ -z $PYTHON_DESTINATION ]
+#^#            then
+#^#            ## The destination is the first thing after the -o:
+#^#            PYTHON_DESTINATION=$(echo $FINAL_COMMAND | sed 's/.* -o //' | cut -d ' ' -f 1)
+#^#            PYTHON_DESTINATION=$(realpath $PYTHON_DESTINATION)
+#^#            PYTHON_DESTINATION=$(dirname $PYTHON_DESTINATION)
+#^#            echo $PYTHON_DESTINATION
+#^#            fi
+#^#          if [ -z $PYTHON_NAME ]
+#^#            then
+#^#            PYTHON_NAME="$FILE_ROOT-gdb.py"
+#^#            fi
+#^#
+#^#          if [ $ECHO ]
+#^#            then
+#^#            echo "cp $PYTHON $PYTHON_DESTINATION/$PYTHON_NAME"
+#^#            fi
+#^#        cp $PYTHON $PYTHON_DESTINATION/$PYTHON_NAME
+#^#      else
+#^#        echo ERROR: "Couldn't find a copy of cobcd.py"
+#^#        fi
+#^#      fi
+#^#    fi
+#^#
+    if COBCDNOCLEAN == "" :
+        ## We are supposed to be cleaning up after ourselves:
+        DeleteAFile(FILE_S    )
+        DeleteAFile(FILE_C    )
+        DeleteAFile(FILE_O    )
+        DeleteAFile(FILE_LST  )
+        DeleteAFile(FILE_SYM_C)
+        DeleteAFile(FILE_SYM_O)
+
+        starting_dir = FILE_ROOT.split('/')[0:-1]
+        starting_dir = '/'.join(starting_dir)
+        if len(starting_dir) == 0 :
+            starting_dir = '.'
+        files = os.listdir(starting_dir)
+        for h_file in files :
+            if h_file[-2:] in (".i",".h") :
+                DeleteAFile(h_file)
+
+#^#  ## clean up after ourselves, assuming that's desired
+#^#  if [ -z "$COBCDNOCLEAN" ];
+#^#      then
+#^#      rm -fr $FILE_ROOT.[csio]
+#^#      rm -fr $FILE_ROOT*.h
+#^#      rm -fr $FILE_LST
+#^#      rm -fr $FILE_O
+#^#      rm -fr $FILE_ROOT.sym.[co]
+#^#        fi
+#^#
+#^#  exit $result
+#^#
+
+
+
+
+
+
+
+
+
+
+
+
+
+try :
+    Main()
+except :
+    traceback.print_exc()
