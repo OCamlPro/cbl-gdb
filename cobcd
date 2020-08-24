@@ -79,6 +79,10 @@ def DeSpace(command) :
     elif isinstance(command,str) :
         # Starting as string, return a list
         return command.split()
+    elif isinstance(command,unicode) :
+        # This will come into play with Python2
+        command = command.encode('ascii','replace')
+        return command.split()
 
     # On his head be it
     return command
