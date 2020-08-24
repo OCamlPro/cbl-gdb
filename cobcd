@@ -155,6 +155,7 @@ def Main() :
     COBCDFLAGS   = (os.environ.get("COBCDFLAGS") or "").split()
     COBCD_COBC   = os.environ.get("COBCD_COBC") or ""
     COBCD        = os.environ.get("COBCD") or ""
+    COBCDXM      = os.environ.get("COBCDXM") or "-m"
     ECHO         = os.environ.get("ECHO") or ""
     COBC         = os.environ.get("COBC") or os.environ.get("COBCD_COBC") or "cobc"
 
@@ -203,7 +204,6 @@ def Main() :
     ASKED_FOR_VERSION=False
     DASH_V     = ""
     DASH_T     = ""
-    COBCDXM    ="-m"    # This is the default
     resultcode = 0
     TARGET     = ""
     FILE_ROOT  = ""
@@ -595,31 +595,6 @@ def Main() :
         for h_file in files :
             if h_file[-2:] in (".i",".h") :
                 DeleteAFile(h_file)
-
-#^#  ## clean up after ourselves, assuming that's desired
-#^#  if [ -z "$COBCDNOCLEAN" ];
-#^#      then
-#^#      rm -fr $FILE_ROOT.[csio]
-#^#      rm -fr $FILE_ROOT*.h
-#^#      rm -fr $FILE_LST
-#^#      rm -fr $FILE_O
-#^#      rm -fr $FILE_ROOT.sym.[co]
-#^#        fi
-#^#
-#^#  exit $result
-#^#
-
-
-
-
-
-
-
-
-
-
-
-
 
 try :
     Main()
