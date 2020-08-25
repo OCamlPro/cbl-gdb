@@ -566,42 +566,6 @@ def Main() :
                 print("Copying",PYTHON,"to",DEST)
             shutil.copyfile(PYTHON,DEST)
 
-#^#  ## And we have a debuggable executable
-#^#
-#^#  ## Some operating systems, notably Windows, require that a
-#^#  ## copy of the Python code be placed next to the executable:
-#^#  if [ "$result" = "0" ]; then
-#^#    if [ -z $DASH_S ] && [ -z $DASH_F ]
-#^#      then
-#^#      ## Because we didn't embed a pointer or the script, we need to
-#^#      ## make a local copy
-#^#      if [ -f $PYTHON ]
-#^#        then
-#^#          if [ -z $PYTHON_DESTINATION ]
-#^#            then
-#^#            ## The destination is the first thing after the -o:
-#^#            PYTHON_DESTINATION=$(echo $FINAL_COMMAND | sed 's/.* -o //' | cut -d ' ' -f 1)
-#^#            PYTHON_DESTINATION=$(realpath $PYTHON_DESTINATION)
-#^#            PYTHON_DESTINATION=$(dirname $PYTHON_DESTINATION)
-#^#            echo $PYTHON_DESTINATION
-#^#            fi
-#^#          if [ -z $PYTHON_NAME ]
-#^#            then
-#^#            PYTHON_NAME="$FILE_ROOT-gdb.py"
-#^#            fi
-#^#
-#^#          if [ $ECHO ]
-#^#            then
-#^#            echo "cp $PYTHON $PYTHON_DESTINATION/$PYTHON_NAME"
-#^#            fi
-#^#        cp $PYTHON $PYTHON_DESTINATION/$PYTHON_NAME
-#^#      else
-#^#        echo ERROR: "Couldn't find a copy of cobcd.py"
-#^#        fi
-#^#      fi
-#^#    fi
-#^#
->>>>>>> b7073a9eaa22a2b31441155e289452a39c13dbbd
     if COBCDNOCLEAN == "" :
         ## We are supposed to be cleaning up after ourselves:
         DeleteAFile(FILE_S    )
@@ -619,6 +583,8 @@ def Main() :
         for h_file in files :
             if h_file[-2:] in (".i",".h") :
                 DeleteAFile(h_file)
+
+    os._exit(resultcode)
 
 try :
     Main()
