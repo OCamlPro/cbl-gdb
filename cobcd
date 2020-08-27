@@ -111,7 +111,7 @@ def Main() :
     ## The text "Version x.x" has to appear in square brackets.               #
     ## Don't mess with it!                                                    #
     ###########################################################################
-    SCRIPT_VERSION="[Version 3.16]"
+    SCRIPT_VERSION="[Version 3.17]"
 
     windows = False
     EXE_SUFFIX = ""
@@ -233,10 +233,12 @@ def Main() :
     ##
     params = []
     for param in sys.argv[1:] + COBCDFLAGS : ## Skip the program name, and add in the switches from the environment
-        if len(param[0]) == 1 or param[0] != '-' :
+        if len(param) == 1 or param[0] != '-' :
+            ## If it is a single character, or it doesn't start with '-',
+            ## just pass it along:
             params.append(param)
             continue
-        ## Getting here means you have -something
+        ## Getting here means param starts with a single hyphen.
         if param[1:].find('-') != -1 or param.find('=') != -1 :
             # Anything with an embedded hyphen or '=' goes straight through
             params.append(param)
@@ -256,7 +258,7 @@ def Main() :
                             'D' ,
                             'K'
                                 ) :
-            # These prefix letters always precede something that goes through intact
+            # These initial letters always precede something that goes through intact
             params.append(param)
             continue
         ## Now we handle the leftover specific words:
@@ -385,8 +387,11 @@ def Main() :
             resultcode = 1
 
         if TARGET == "" :
-            print("Couldn't find the target executable in")
+            ## Something went wrong
+            print("Couldn't find the target executable in the output of")
             print("the command '",' '.join(TRIPLE_X_COMMAND),"'")
+            ## Do the execution again, so that the user can see what happened
+            SubprocessCall(TRIPLE_X_COMMAND)
             resultcode = 1
 
     if resultcode == 0 :
@@ -447,10 +452,11 @@ def Main() :
             resultcode = 1
 
         if FILE_ROOT == "" :
-            result_file.seek(0)
-            result_text = result_file.read()
-            result_text = result_text.decode("utf-8")
-            print(result_text)
+            ## Something went wrong
+            print("Couldn't find the source file name in the output of the")
+            print("the command '",' '.join(TRIPLE_X_COMMAND),"'")
+            ## Do the execution again, so that the user can see what happened
+            SubprocessCall(TRIPLE_X_COMMAND)
             resultcode = 1
 
     if resultcode == 0 :
