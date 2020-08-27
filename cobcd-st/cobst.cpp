@@ -48,7 +48,7 @@
 
 using namespace std;
 
-// #define DUMPING
+//#define DUMPING
 
 void
 scan_test(const string &filename)
@@ -336,9 +336,7 @@ main(int argc, char *argv[])
                   );
 
     variable_tree.ReadFromFile(params.cbl_lst);
-    variable_tree.Dump();
     variable_tree.BuildCanonicalName(cob_data);
-    variable_tree.Dump();
 
     // The f_/b_ cross reference is as complete as we know how to make it.
     // Scan cob_fields, updating the parent variables and building the lookup map
