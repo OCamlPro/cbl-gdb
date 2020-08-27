@@ -205,6 +205,22 @@ VARIABLE_TREE::ReadFromFile(std::ifstream &ifs)
                 continue;
             }
 
+            /*  It's possible for the default FIXED formatting to be
+                overridden by a >> SOURCE ... FREE CDF directive.  Let's do
+                a fairly clumsy, but probably effective, job of finding one
+                of those.  Keep in mind that as I write this, I am working with
+                Simon Sobisch to make this whole module obsolete, hopefully in
+                the next couple of weeks.  RJD 2020-08-27 */
+
+            string lowered = Upper(input);
+            size_t nf1 = lowered.find(">>");
+            size_t nf2 = lowered.find("SOURCE");
+            size_t nf3 = lowered.find("FREE");
+            if( nf3 != string::npos AND nf1 < nf2 AND nf2 < nf3 ) {
+                free_form = true;
+                continue;
+            }
+
             if(first_program_id.empty()) {
                 // Here's where we look for "PROGRAM-ID. <program-id>."
                 // Ain't simple.  We need to deal with fixed and free input,
