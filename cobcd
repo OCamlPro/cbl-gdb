@@ -96,9 +96,9 @@ def SubprocessCall(command) :
         print( err.output )
         resultcode = err.returncode
     except :
-        traceback.print_exc()
         print("Something went wrong with the command:")
         print("   ", ' '.join(command))
+        traceback.print_exc()
         resultcode = 1
     return resultcode
 
@@ -166,7 +166,6 @@ def Main() :
     COBCDXM      = os.environ.get("COBCDXM") or "-m"
     ECHO         = os.environ.get("ECHO") or ""
     COBC         = os.environ.get("COBC") or os.environ.get("COBCD_COBC") or "cobc"
-
     #ECHO = "1"  # This overrides the environment.  If this is uncommented,
                 # then you are probably doing development work on this script
 
@@ -178,8 +177,8 @@ def Main() :
     ## We need to know the directory that our script is in.
     SCRIPTDIR = os.path.abspath(sys.argv[0]).replace('\\','/').split('/')[0:-1]
     SCRIPTDIR = '/'.join(SCRIPTDIR)
-    if not windows :
-        SCRIPTDIR = '/' + SCRIPTDIR
+    #if not windows :
+    #    SCRIPTDIR = '/' + SCRIPTDIR
 
     if COBCDEVEL :
         ## For development purposes, pick up executables from subdirectories
@@ -464,6 +463,7 @@ def Main() :
             print("os_name    is ",os_name    )
             print("SCRIPTDIR  is ",SCRIPTDIR  )
             #print("COBCDEVEL  is ",COBCDEVEL  )
+            print("COBC       is ",COBC       )
             print("COBST      is ",COBST      )
             print("SFIX       is ",SFIX       )
             print("PYTHON     is ",PYTHON     )
