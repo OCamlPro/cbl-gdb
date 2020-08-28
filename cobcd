@@ -504,7 +504,7 @@ def Main() :
     if resultcode == 0 :
         ## Do the initial compilation that gives us the .c .h .i and .s files
         ## Rebuild our command, this time with our -T directive:
-        OUR_COMMAND = DeSpace(COBC + " -S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels -T " + FILE_LST + " " + "--tlines=0 --tsymbols" + " " + DASH_V + " " + ' '.join(COMMAND_LINE))
+        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels -T " + FILE_LST + " " + "--tlines=0 --tsymbols" + " " + DASH_V + " " + ' '.join(COMMAND_LINE))
         if ECHO :
             print(' '.join(OUR_COMMAND))
         resultcode = SubprocessCall(OUR_COMMAND)
@@ -529,7 +529,7 @@ def Main() :
 
     if resultcode == 0 :
         ## It is time to compile the .sym.c file we just created
-        OUR_COMMAND = DeSpace([COBC,"-c","-o",FILE_SYM_O,FILE_SYM_C])
+        OUR_COMMAND = DeSpace([COBC,DASH_V,"-c","-o",FILE_SYM_O,FILE_SYM_C])
         if ECHO :
             print(' '.join(OUR_COMMAND))
         resultcode = SubprocessCall(OUR_COMMAND)
@@ -545,7 +545,7 @@ def Main() :
 
     if resultcode == 0 :
         ## We can now use COBC to assemble that that .s file:
-        OUR_COMMAND=DeSpace([COBC,"-c", "-g", "-o", FILE_O, FILE_S])
+        OUR_COMMAND=DeSpace([COBC,DASH_V,"-c", "-g", "-o", FILE_O, FILE_S])
 
         if ECHO :
             print(' '.join(OUR_COMMAND))
@@ -575,6 +575,8 @@ def Main() :
                 continue
             FINAL_COMMAND.append(token)
             i += 1
+        if DASH_V :
+            FINAL_COMMAND.append("-v")
         if ECHO :
             print(' '.join(FINAL_COMMAND))
         resultcode = SubprocessCall(FINAL_COMMAND)
