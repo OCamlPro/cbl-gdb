@@ -3133,6 +3133,7 @@ class CPrintWorker() :
         self.current_source_file = ""
         self.sticky_display_mode = os.environ.get('CPRINT_V', '0')
         self.question_mark_range = int(os.environ.get('CPRINT_R', '6'))
+        self.use_cprint = int(os.environ.get('CPRINT', '0'))
         self.machine_interface_mode = False
 
     def ProcessDisplayMode(self,args) :
@@ -3158,6 +3159,7 @@ class CPrintWorker() :
                 print("'print/r N': set the range for 'print ?' to plus/minus R (the default is 6; -1 means 'all')")
                 print("The default v-level can be set with the environment variable CPRINT_V=n")
                 print("The default r-level can be set with the environment variable CPRINT_R=n")
+                print("The 'print' command can be changed to 'cprint' with the environment variable CPRINT=1")
                 args = [""]
                 return args
 
@@ -3313,16 +3315,20 @@ if 'gdb' in sys.modules :
         """Prints COBOL-NAMED variables when debugging cobst processed object files."""
 
         def __init__ (self):
-            super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
             ###########################################################################
             ## The version number in the next line is updated by a Linux bash script. #
             ## The text "Version x.x" has to appear in square brackets.               #
             ## Don't mess with it!                                                    #
             ###########################################################################
-            print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 3.18]')
             self.Worker = CPrintWorker()
             self.TabFile = TabFileInformation();
             self.TabFile.question_mark_range = self.Worker.question_mark_range
+
+            actual_command = "print"
+            if self.Worker.use_cprint == 1 :
+                actual_command = "cprint"
+            print('registering CPrint (Usage is "' + actual_command + " <COBOL identifier>") [Version 3.18]')
+            super (CPrint, self).__init__ (actual_command, gdb.COMMAND_USER)
 
         def invoke (self, arguments, from_tty):
             # pick up the name of the current source file

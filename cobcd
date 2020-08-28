@@ -222,6 +222,7 @@ def Main() :
     ASKED_FOR_VERSION=False
     DASH_V     = ""
     DASH_T     = ""
+    end_early  = False
     resultcode = 0
     TARGET     = ""
     FILE_ROOT  = ""
@@ -319,6 +320,9 @@ def Main() :
             DASH_T=param[0:2]
         elif param in ("-D","-A","-Q") :
             quote_me = True
+        elif param in ("-E","-C","-S","-c") :
+            end_early = True
+        
         COMMAND_LINE.append(param)
 
     if ASKED_FOR_HELP :
@@ -330,8 +334,7 @@ def Main() :
         usage(SCRIPT_VERSION)
         os._exit(1)
 
-    print("DASH_T",DASH_T)
-    if DASH_T :
+    if DASH_T or end_early :
         ## He requires a straight cobc compilation
         ## with a -t or -T switch, so do it now.
         command = DeSpace(["cobc"] + COMMAND_LINE)
@@ -358,6 +361,9 @@ def Main() :
                     i += 1;
             i += 1
 
+    if end_early :
+        os._exit(0)
+
     ## We are going to leverage cobc's parsing and processing by using the -###
     ## option.  When that's used, the useful information goes to stderr, so we'll
     ## arrange to capture that in result_file.
@@ -367,7 +373,7 @@ def Main() :
     ## the name of the final result target file:
 
     if resultcode == 0 :
-        TRIPLE_X_COMMAND = ["cobc", "-###"] + COMMAND_LINE
+        TRIPLE_X_COMMAND = [COBC, "-###"] + COMMAND_LINE
         TRIPLE_X_COMMAND = DeSpace(TRIPLE_X_COMMAND)
         resultcode = 0
         try :
@@ -381,7 +387,7 @@ def Main() :
             FINAL_COMMAND = ""
             for line in result_text.split('\n') :
                 line = line.replace('\t',' ')
-                #print("     1-line:",line)
+                print("     1-line:",line)
                 if FINAL_COMMAND and line and line[0] in (' ') :
                     FINAL_COMMAND += line
                     continue
@@ -435,7 +441,7 @@ def Main() :
         ## learn the original source file name, along with the root for the
         ## the other file names we will be working with
         try :
-            TRIPLE_X_COMMAND = ["cobc", "-###"] + "-S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels".split() + COMMAND_LINE
+            TRIPLE_X_COMMAND = [COBC, "-###"] + " -S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels".split() + COMMAND_LINE
             TRIPLE_X_COMMAND = DeSpace(TRIPLE_X_COMMAND)
             if ECHO :
                 print( ' '.join(TRIPLE_X_COMMAND) )
@@ -446,12 +452,12 @@ def Main() :
             result_text = StripReturns(result_text.decode("utf-8"))
             for line in result_text.split('\n') :
                 line = line.replace('\t',' ')
-                #print("     2-line:",line)
+                print("     2-line:",line)
                 if line.find("preprocessing:") == 0 :
                     FILE_CBL  = line.split()[1]         # second element is the relative file name
                     FILE_ROOT = line.split()[3][0:-2]   # fourth element is name.i; strip off the last two chars
                     FILE_ROOT = FILE_ROOT.replace('\\','/')
-                    break
+                    #break
             result_file.close()
             FILE_S     = FILE_ROOT + ".s"
             FILE_C     = FILE_ROOT + ".c"
@@ -491,13 +497,14 @@ def Main() :
             print("FILE_O     is ",FILE_O     )
             print("FILE_SYM_C is ",FILE_SYM_C )
             print("FILE_SYM_O is ",FILE_SYM_O )
+            print("TARGET     is ",TARGET     )
             #print("DASH_F     is ",DASH_F     )
             #print("DASH_S     is ",DASH_S     )
 
     if resultcode == 0 :
         ## Do the initial compilation that gives us the .c .h .i and .s files
         ## Rebuild our command, this time with our -T directive:
-        OUR_COMMAND = DeSpace("cobc -S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels -T " + FILE_LST + " " + "--tlines=0 --tsymbols" + " " + DASH_V + " " + ' '.join(COMMAND_LINE))
+        OUR_COMMAND = DeSpace(COBC + " -S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels -T " + FILE_LST + " " + "--tlines=0 --tsymbols" + " " + DASH_V + " " + ' '.join(COMMAND_LINE))
         if ECHO :
             print(' '.join(OUR_COMMAND))
         resultcode = SubprocessCall(OUR_COMMAND)
