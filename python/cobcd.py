@@ -127,14 +127,19 @@ def NoNulls(s) :
     return ss
 
 def OurPrint(s) :
-    ## This routine is needed because otherwise, when GDB gets many lines
-    ## and says, "Type <RET> for more..." and somebody enters a Ctrl+C,
-    ## we sometimes trap the KeyboardInterrupt and end up reporting the
-    ## traceback.  This will kill that.
+    ## Use this routine when GDB might halt with a
+    ##    --Type <RET> for more, q to quit, c to continue without paging--
+
+    ## The following code catches the 'q' Quit option
+    retval = None
     try :
         print(s)
+    except KeyboardInterrupt as ki:
+        print("Quit")
+        retval = str(ki)
     except :
-        pass
+        traceback.print_exc()
+    return retval
 
 def LeftRight(s,splitchar) :
     """Splits what is presumably a numeric string with a possible
@@ -3106,11 +3111,13 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode,rside)
                 if not payload.not_in_context :
                     ShortTermMemory.short_term_memory.append(payload_index)
                     s = "{0:2} : ".format(line_counter)
+                    line_counter += 1
                     s += payload.display_name
                     s += " : "
                     s += payload.display_body
-                    OurPrint(NoNulls(s))
-                    line_counter += 1
+                    retval = OurPrint(NoNulls(s))
+                    if retval == "Quit" :
+                        break;
 
     return possibilities
 
