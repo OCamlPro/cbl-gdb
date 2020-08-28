@@ -30,12 +30,8 @@
 #
 #######################################################################
 
-## Nasty command line for testing: 
-## mkdir -p /tmp/lis
-## sudo mkdir -p /home/me
-## sudo chown bob:bob /home/me
-## sudo cp ~/repos/cbl-gdb-samples/ref_test_2/rtest.cbl /home/me
-## cobc -g -T /tmp/lis/TEST.lis -Xref -ftsymbols -tlines=0 -Wall -fno-ec=DATA-INCOMPATIBLE -foptional-file -ext lib -fdump=all -D 'MY-COMPILER=2' -D 'MY-OS=Linux' -fno-ec=bound-ref-mod -o TEST.so /home/me/rtest.cbl
+## Nasty command line for testing:
+## cobcd -gv -T /tmp/lis/TEST.lis -Xref -ftsymbols -tlines=0 -Wall -fno-ec=DATA-INCOMPATIBLE -foptional-file -ext lib -fdump=all -D 'MY-COMPILER=2' -D 'MY-OS=Linux' -fno-ec=bound-ref-mod -lgmp -o TEST.so /home/bob/repos/cbl-gdb-samples/ref_test_2/rtest.cbl
 
 from __future__ import print_function
 
@@ -66,7 +62,7 @@ def print_help(version) :
     print("COBCDEVEL=1        Use development toolchain instead of production toolchain")
     print("COBCDNOCLEAN=1     Don't delete intermediate files")
     print("COBCDFLAGS=xyz     These flags are passed to cobc")
-    print("ECHO=1             Causes line-by-line command echoing")
+    print("ECHO=1             Causes line-by-line command echoing (also turned on by -v)")
     print("")
     print("If you need help with cobc, use the command 'cobc --help'")
 
@@ -110,7 +106,7 @@ def SubprocessCall(command) :
 
 def StripReturns(s) :
     return s.replace('\r','')
-    
+
 def QuoteMe(param) :
     if param and param[0] not in ('\'','"') :
         # It's not already quoted, so put apostrophes around it:
@@ -162,8 +158,8 @@ def Main() :
     #
     # COBCDFLAGS      ## Addition parameters passed to COBC
     #
-    # COBCD_COBC=alt 'cobc' with 'alt'
-    # COBCD     =alt 'cobc' with 'alt'  If both are non-blank, this one wins
+    # COBCD_COBC=alt replace 'cobc' with 'alt'
+    # COBCD     =alt replace 'cobc' with 'alt'  If both are non-blank, this one wins
     #
     # ECHO=1 causes massive debugging output
 
@@ -225,6 +221,7 @@ def Main() :
     end_early  = False
     resultcode = 0
     TARGET     = ""
+    FILE_CBL   = ""
     FILE_ROOT  = ""
     FILE_S     = ""
     FILE_C     = ""
@@ -308,10 +305,6 @@ def Main() :
         if param in ("-V","-version","--version") :
             ASKED_FOR_VERSION=True
             continue
-        if param in ("-E","-C","-S") :
-            # We eliminate the appearance of any of these, because they interfere with
-            # the way we expand the command
-            continue
         if param in ("-v","-vv","-vvv") or param[0:len("-verbose")] == "-verbose" or param[0:len("--verbose")] == "--verbose" :
             # Requests for verbosity mess up our -### processing, so we filter them out for later
             DASH_V = param
@@ -322,29 +315,31 @@ def Main() :
             quote_me = True
         elif param in ("-E","-C","-S","-c") :
             end_early = True
-        
+
         COMMAND_LINE.append(param)
+
+    if DASH_V :
+        ECHO = 1
 
     if ASKED_FOR_HELP :
         print_help(SCRIPT_VERSION)
         os._exit(1)
 
     if ASKED_FOR_VERSION :
-        SubprocessCall(["cobc","-V"])
+        SubprocessCall([COBC,DASH_V,"-V"])
         usage(SCRIPT_VERSION)
         os._exit(1)
 
     if DASH_T or end_early :
         ## He requires a straight cobc compilation
         ## with a -t or -T switch, so do it now.
-        command = DeSpace(["cobc"] + COMMAND_LINE)
+        command = DeSpace([COBC,DASH_V] + COMMAND_LINE)
         if ECHO :
             print(' '.join(command))
-        print("command",' '.join(command))
         resultcode = SubprocessCall(command)
         ## Having done that, we need to remove the -T command elements;
         ## if we don't, they'll interfere with our process
-        
+
         ## Likewise, we have to get rid of -Xref; it causes an error when there
         ## is no listing file, and when using -###, there is no listing file.
 
@@ -387,7 +382,9 @@ def Main() :
             FINAL_COMMAND = ""
             for line in result_text.split('\n') :
                 line = line.replace('\t',' ')
-                print("     1-line:",line)
+                # print("     ###-line:",line)
+                if line.find("preprocessing:") == 0 :
+                    FILE_CBL  = line.split()[1]         # second element is the relative file name
                 if FINAL_COMMAND and line and line[0] in (' ') :
                     FINAL_COMMAND += line
                     continue
@@ -409,11 +406,37 @@ def Main() :
 
         if TARGET == "" :
             ## Something went wrong
-            print("Couldn't find the target executable in the output of")
+            print("Couldn't find the '-o target' in the output of")
             print("the command '",' '.join(TRIPLE_X_COMMAND),"'")
             ## Do the execution again, so that the user can see what happened
             SubprocessCall(TRIPLE_X_COMMAND)
             resultcode = 1
+
+        if FILE_CBL == "" :
+            ## Something went wrong
+            print("Couldn't find 'preprocessing: source-code-module' in the output of")
+            print("the command '",' '.join(TRIPLE_X_COMMAND),"'")
+            ## Do the execution again, so that the user can see what happened
+            SubprocessCall(TRIPLE_X_COMMAND)
+            resultcode = 1
+
+    FILE_CBL = FILE_CBL.replace('\'','/')   # Ah, Microsoft
+
+    ## We will create the root from the source file name:
+    FILE_ROOT = '/'.join(FILE_CBL.split('/')[-1:])
+    if FILE_ROOT == "" :
+        # There is no path; back up
+        FILE_ROOT = FILE_CBL
+    ## Strip out the final extension, if there is one:
+    if FILE_ROOT.find('.') != -1 :
+        FILE_ROOT = '.'.join(FILE_ROOT.split('.')[0:-1])
+
+    FILE_S     = FILE_ROOT + ".s"
+    FILE_C     = FILE_ROOT + ".c"
+    FILE_O     = FILE_ROOT + ".o"
+    FILE_LST   = FILE_ROOT + ".cbl.lst"
+    FILE_SYM_C = FILE_ROOT + ".sym.c"
+    FILE_SYM_O = FILE_ROOT + ".sym.o"
 
     if resultcode == 0 :
         ## Now that we know the name of the final target, we have to remove
@@ -432,53 +455,6 @@ def Main() :
                 continue;
             COMMAND_LINE.append(C1[i])
             i += 1
-
-    if resultcode == 0 :
-        ## We have a desired target name which could be .so, .dll, .exe, or any damned
-        ## thing that the user, bless them, might have put after an explicit -o
-
-        ## We are now ready to create a -S command line, which will allow us to
-        ## learn the original source file name, along with the root for the
-        ## the other file names we will be working with
-        try :
-            TRIPLE_X_COMMAND = [COBC, "-###"] + " -S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels".split() + COMMAND_LINE
-            TRIPLE_X_COMMAND = DeSpace(TRIPLE_X_COMMAND)
-            if ECHO :
-                print( ' '.join(TRIPLE_X_COMMAND) )
-            result_file = tempfile.TemporaryFile();
-            subprocess.check_output(TRIPLE_X_COMMAND,stderr=result_file)
-            result_file.seek(0)
-            result_text = result_file.read()
-            result_text = StripReturns(result_text.decode("utf-8"))
-            for line in result_text.split('\n') :
-                line = line.replace('\t',' ')
-                print("     2-line:",line)
-                if line.find("preprocessing:") == 0 :
-                    FILE_CBL  = line.split()[1]         # second element is the relative file name
-                    FILE_ROOT = line.split()[3][0:-2]   # fourth element is name.i; strip off the last two chars
-                    FILE_ROOT = FILE_ROOT.replace('\\','/')
-                    #break
-            result_file.close()
-            FILE_S     = FILE_ROOT + ".s"
-            FILE_C     = FILE_ROOT + ".c"
-            FILE_O     = FILE_ROOT + ".o"
-            FILE_LST   = FILE_ROOT + ".cbl.lst"
-            FILE_SYM_C = FILE_ROOT + ".sym.c"
-            FILE_SYM_O = FILE_ROOT + ".sym.o"
-        except subprocess.CalledProcessError as err:
-            print( err.output )
-            resultcode = err.returncode
-        except :
-            traceback.print_exc()
-            resultcode = 1
-
-        if FILE_ROOT == "" :
-            ## Something went wrong
-            print("Couldn't find the source file name in the output of the")
-            print("the command '",' '.join(TRIPLE_X_COMMAND),"'")
-            ## Do the execution again, so that the user can see what happened
-            SubprocessCall(TRIPLE_X_COMMAND)
-            resultcode = 1
 
     if resultcode == 0 :
         if ECHO :
