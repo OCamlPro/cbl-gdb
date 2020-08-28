@@ -28,8 +28,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#   This module implements the gdb extension commands cprint and cwatch
-#EndOfCopyright########################################################
+#######################################################################
+
+## Nasty command line for testing: 
+## mkdir -p /tmp/lis
+## sudo mkdir -p /home/me
+## sudo chown bob:bob /home/me
+## sudo cp ~/repos/cbl-gdb-samples/ref_test_2/rtest.cbl /home/me
+## cobc -g -T /tmp/lis/TEST.lis -Xref -ftsymbols -tlines=0 -Wall -fno-ec=DATA-INCOMPATIBLE -foptional-file -ext lib -fdump=all -D 'MY-COMPILER=2' -D 'MY-OS=Linux' -fno-ec=bound-ref-mod -o TEST.so /home/me/rtest.cbl
 
 from __future__ import print_function
 
@@ -104,6 +110,12 @@ def SubprocessCall(command) :
 
 def StripReturns(s) :
     return s.replace('\r','')
+    
+def QuoteMe(param) :
+    if param and param[0] not in ('\'','"') :
+        # It's not already quoted, so put apostrophes around it:
+        param = "'" + param + "'"
+    return param
 
 def Main() :
     ###########################################################################
@@ -111,7 +123,7 @@ def Main() :
     ## The text "Version x.x" has to appear in square brackets.               #
     ## Don't mess with it!                                                    #
     ###########################################################################
-    SCRIPT_VERSION="[Version 3.17]"
+    SCRIPT_VERSION="[Version 3.18]"
 
     windows = False
     EXE_SUFFIX = ""
@@ -153,9 +165,6 @@ def Main() :
     # COBCD_COBC=alt 'cobc' with 'alt'
     # COBCD     =alt 'cobc' with 'alt'  If both are non-blank, this one wins
     #
-    # COBCDXM         ## equivalent to -E -C -S -c -m -b or -x.  If other
-    #                 ## than -m or -x, processing will end early
-    #
     # ECHO=1 causes massive debugging output
 
     COBCDEVEL    = os.environ.get("COBCDEVEL") or ""
@@ -163,7 +172,6 @@ def Main() :
     COBCDFLAGS   = (os.environ.get("COBCDFLAGS") or "").split()
     COBCD_COBC   = os.environ.get("COBCD_COBC") or ""
     COBCD        = os.environ.get("COBCD") or ""
-    COBCDXM      = os.environ.get("COBCDXM") or "-m"
     ECHO         = os.environ.get("ECHO") or ""
     COBC         = os.environ.get("COBC") or os.environ.get("COBCD_COBC") or "cobc"
     #ECHO = "1"  # This overrides the environment.  If this is uncommented,
@@ -232,6 +240,7 @@ def Main() :
     ##
     params = []
     for param in sys.argv[1:] + COBCDFLAGS : ## Skip the program name, and add in the switches from the environment
+        ##print("param:",param)
         if len(param) == 1 or param[0] != '-' :
             ## If it is a single character, or it doesn't start with '-',
             ## just pass it along:
@@ -287,7 +296,11 @@ def Main() :
     ## example, if the caller specifies -x or -m, they will conflict with the
     ## the -S we need to start with.  So, we have to pull that out to work with later
 
+    quote_me = False
     for param in params :
+        if quote_me :
+            param = QuoteMe(param)
+            quote_me = False
         if param in ("-h","-help","--help") :
             ASKED_FOR_HELP=True
             continue
@@ -298,16 +311,14 @@ def Main() :
             # We eliminate the appearance of any of these, because they interfere with
             # the way we expand the command
             continue
-        if param in ("-m","-b","-x") :
-            ## We segregate this out because of the way we expand the command
-            COBCDXM=param
-            continue
         if param in ("-v","-vv","-vvv") or param[0:len("-verbose")] == "-verbose" or param[0:len("--verbose")] == "--verbose" :
             # Requests for verbosity mess up our -### processing, so we filter them out for later
             DASH_V = param
             continue
         if param[0:2] in ("-t","-T") :
             DASH_T=param[0:2]
+        elif param in ("-D","-A","-Q") :
+            quote_me = True
         COMMAND_LINE.append(param)
 
     if ASKED_FOR_HELP :
@@ -319,21 +330,26 @@ def Main() :
         usage(SCRIPT_VERSION)
         os._exit(1)
 
+    print("DASH_T",DASH_T)
     if DASH_T :
         ## He requires a straight cobc compilation
         ## with a -t or -T switch, so do it now.
-        command = DeSpace(["cobc"] + [COBCDXM] + COMMAND_LINE)
+        command = DeSpace(["cobc"] + COMMAND_LINE)
         if ECHO :
             print(' '.join(command))
+        print("command",' '.join(command))
         resultcode = SubprocessCall(command)
         ## Having done that, we need to remove the -T command elements;
         ## if we don't, they'll interfere with our process
+        
+        ## Likewise, we have to get rid of -Xref; it causes an error when there
+        ## is no listing file, and when using -###, there is no listing file.
 
         C1 = COMMAND_LINE[:] # This is a copy
         COMMAND_LINE = []
         i = 0
         while i < len(C1) :
-            if C1[i][0:2] not in ("-t","-T") :
+            if C1[i][0:2] not in ("-t","-T") and C1[i] != "-Xref" :
                 COMMAND_LINE.append(C1[i])
             else :
                 # We will not transfer the -T element
@@ -351,7 +367,7 @@ def Main() :
     ## the name of the final result target file:
 
     if resultcode == 0 :
-        TRIPLE_X_COMMAND = ["cobc", "-###", COBCDXM] + COMMAND_LINE
+        TRIPLE_X_COMMAND = ["cobc", "-###"] + COMMAND_LINE
         TRIPLE_X_COMMAND = DeSpace(TRIPLE_X_COMMAND)
         resultcode = 0
         try :
@@ -419,7 +435,7 @@ def Main() :
         ## learn the original source file name, along with the root for the
         ## the other file names we will be working with
         try :
-            TRIPLE_X_COMMAND = ["cobc", "-###", COBCDXM] + "-S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels".split() + COMMAND_LINE
+            TRIPLE_X_COMMAND = ["cobc", "-###"] + "-S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels".split() + COMMAND_LINE
             TRIPLE_X_COMMAND = DeSpace(TRIPLE_X_COMMAND)
             if ECHO :
                 print( ' '.join(TRIPLE_X_COMMAND) )
@@ -481,7 +497,7 @@ def Main() :
     if resultcode == 0 :
         ## Do the initial compilation that gives us the .c .h .i and .s files
         ## Rebuild our command, this time with our -T directive:
-        OUR_COMMAND = DeSpace("cobc -S" + " " + COBCDXM + " -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels -T " + FILE_LST + " " + "--tlines=0 --tsymbols" + " " + DASH_V + " " + ' '.join(COMMAND_LINE))
+        OUR_COMMAND = DeSpace("cobc -S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels -T " + FILE_LST + " " + "--tlines=0 --tsymbols" + " " + DASH_V + " " + ' '.join(COMMAND_LINE))
         if ECHO :
             print(' '.join(OUR_COMMAND))
         resultcode = SubprocessCall(OUR_COMMAND)
