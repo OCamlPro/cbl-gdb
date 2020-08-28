@@ -645,6 +645,7 @@ class VarTrie() :
             # there was more than one) and give him some options:
 
             fragment = desired.split()[0]
+            print("fragment",fragment)
 
             pattern1 = re.compile("^"  + fragment)
             pattern2 = re.compile(".+" + fragment)
@@ -3000,12 +3001,12 @@ GV_ShortTermMemory = ShortTermMemory()
 def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode,rside) :
     possibilities = []
     if len(args) >= 1 :
-        if args[0] == '*' :
-            # If the first, presumably single, argument is an asterisk, then
+        if args[0].find('*') != -1 :
+            # If the first, presumably single, argument contains an asterisk, then
             # he is asking for a list of variables and values:
             possibilities = TabFile.var_trie.GetAllPossibilities()
-        elif args[0] == '?' :
-            # If the first, presumably single, argument is a question mark,
+        elif args[0].find('?') != -1 :
+            # If the first, presumably single, argument contains a question mark,
             # then we need to round up the usual suspects.
 
             # But first, we are going to keep a rogue's gallery of the current list
