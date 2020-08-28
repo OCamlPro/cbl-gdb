@@ -3144,7 +3144,7 @@ class CPrintWorker() :
         self.use_cprint = int(os.environ.get('CPRINT', '0'))
         self.machine_interface_mode = False
 
-    def ProcessDisplayMode(self,args) :
+    def ProcessDisplayMode(self,args,TabFile) :
         self.machine_interface_mode = False
         # Make sure the current display mode is the same as the session mode
         self.current_display_mode = self.sticky_display_mode
@@ -3196,6 +3196,7 @@ class CPrintWorker() :
                 # This is a request to change the question_mark_range
                 self.question_mark_range = int(args[1])
                 print("The 'p ?' range has been set to +/-", self.question_mark_range, "lines")
+                TabFile.old_dogs = set()
                 args = ['?']
             elif len(args[0]) > 2 and args[0][0:2] == '/r'  :
                 # This is a request to change the question_mark_range
@@ -3250,7 +3251,7 @@ class CPrintWorker() :
             args.append(arg)
 
         self.question_mark_range = TabFile.question_mark_range
-        args = self.ProcessDisplayMode(args)
+        args = self.ProcessDisplayMode(args,TabFile)
         TabFile.question_mark_range = self.question_mark_range
 
         possibilities = MetaPossibilities(args,TabFile,ShortTermMemory,self.machine_interface_mode,rside)
