@@ -97,6 +97,11 @@ def SubprocessCall(command) :
     except subprocess.CalledProcessError as err:
         print( err.output )
         resultcode = err.returncode
+    except FileNotFoundError as err:
+        print("Something went wrong with the command:")
+        print("   ", ' '.join(command))
+        print( err )
+        resultcode = 1
     except :
         print("Something went wrong with the command:")
         print("   ", ' '.join(command))
@@ -400,10 +405,18 @@ def Main() :
         except subprocess.CalledProcessError as err:
             print( err.output )
             resultcode = err.returncode
+        except FileNotFoundError as err:
+            print("Something went wrong with the command:")
+            print("   ", ' '.join(TRIPLE_X_COMMAND))
+            print( err )
+            resultcode = 1
         except :
+            print("Something went wrong with the command:")
+            print("   ", ' '.join(TRIPLE_X_COMMAND))
             traceback.print_exc()
             resultcode = 1
 
+    if resultcode == 0 :
         if TARGET == "" :
             ## Something went wrong
             print("Couldn't find the '-o target' in the output of")
@@ -412,6 +425,7 @@ def Main() :
             SubprocessCall(TRIPLE_X_COMMAND)
             resultcode = 1
 
+    if resultcode == 0 :
         if FILE_CBL == "" :
             ## Something went wrong
             print("Couldn't find 'preprocessing: source-code-module' in the output of")
