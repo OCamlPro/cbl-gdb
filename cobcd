@@ -90,22 +90,25 @@ def DeSpace(command) :
     # On his head be it
     return command
 
-def SubprocessCall(command) :
+def SubprocessCall(command,suppress_error) :
     command = DeSpace(command)
     try :
         resultcode = subprocess.call(command)
     except subprocess.CalledProcessError as err:
-        print( err.output )
+        if not suppress_error :
+            print( err.output )
         resultcode = err.returncode
     except FileNotFoundError as err:
-        print("Something went wrong with the command:")
-        print("   ", ' '.join(command))
-        print( err )
+        if not suppress_error :
+            print("Something went wrong with the command:")
+            print("   ", ' '.join(command))
+            print( err )
         resultcode = 1
     except :
-        print("Something went wrong with the command:")
-        print("   ", ' '.join(command))
-        traceback.print_exc()
+        if not suppress_error :
+            print("Something went wrong with the command:")
+            print("   ", ' '.join(command))
+            traceback.print_exc()
         resultcode = 1
     return resultcode
 
@@ -331,7 +334,7 @@ def Main() :
         os._exit(1)
 
     if ASKED_FOR_VERSION :
-        SubprocessCall([COBC,DASH_V,"-V"])
+        SubprocessCall([COBC,DASH_V,"-V"],False)
         usage(SCRIPT_VERSION)
         os._exit(1)
 
@@ -341,7 +344,7 @@ def Main() :
         command = DeSpace([COBC,DASH_V] + COMMAND_LINE)
         if ECHO :
             print(' '.join(command))
-        resultcode = SubprocessCall(command)
+        resultcode = SubprocessCall(command,False)
         ## Having done that, we need to remove the -T command elements;
         ## if we don't, they'll interfere with our process
 
@@ -403,18 +406,20 @@ def Main() :
                 TARGET = TARGET.replace('"','')
                 TARGET = TARGET.replace('\\','/')
         except subprocess.CalledProcessError as err:
-            print( err.output )
+            print("Something went wrong with the command:")
+            print("   ", ' '.join(TRIPLE_X_COMMAND))
+            SubprocessCall(TRIPLE_X_COMMAND,True)
             resultcode = err.returncode
         except OSError as err:
             print("Something went wrong with the command:")
             print("   ", ' '.join(TRIPLE_X_COMMAND))
+            SubprocessCall(TRIPLE_X_COMMAND,True)
             print( err )
             resultcode = 1
-
         except :
             print("Something went wrong with the command:")
             print("   ", ' '.join(TRIPLE_X_COMMAND))
-            traceback.print_exc()
+            SubprocessCall(TRIPLE_X_COMMAND,True)
             resultcode = 1
 
     if resultcode == 0 :
@@ -423,7 +428,7 @@ def Main() :
             print("Couldn't find the '-o target' in the output of")
             print("the command '",' '.join(TRIPLE_X_COMMAND),"'")
             ## Do the execution again, so that the user can see what happened
-            SubprocessCall(TRIPLE_X_COMMAND)
+            SubprocessCall(TRIPLE_X_COMMAND,False)
             resultcode = 1
 
     if resultcode == 0 :
@@ -432,7 +437,7 @@ def Main() :
             print("Couldn't find 'preprocessing: source-code-module' in the output of")
             print("the command '",' '.join(TRIPLE_X_COMMAND),"'")
             ## Do the execution again, so that the user can see what happened
-            SubprocessCall(TRIPLE_X_COMMAND)
+            SubprocessCall(TRIPLE_X_COMMAND,False)
             resultcode = 1
 
     FILE_CBL = FILE_CBL.replace('\'','/')   # Ah, Microsoft
@@ -498,7 +503,7 @@ def Main() :
         OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -g -fec=PROGRAM-ARG-OMITTED --fgen-c-line-directives --fgen-c-labels -T " + FILE_LST + " " + "--tlines=0 --tsymbols" + " " + DASH_V + " " + ' '.join(COMMAND_LINE))
         if ECHO :
             print(' '.join(OUR_COMMAND))
-        resultcode = SubprocessCall(OUR_COMMAND)
+        resultcode = SubprocessCall(OUR_COMMAND,False)
 
     if resultcode == 0 :
 
@@ -516,14 +521,14 @@ def Main() :
         OUR_COMMAND = DeSpace([COBST,DASH_Q,DASH_F,DASH_S,FILE_ROOT,FILE_CBL])
         if ECHO :
             print(' '.join(OUR_COMMAND))
-        resultcode = SubprocessCall(OUR_COMMAND)
+        resultcode = SubprocessCall(OUR_COMMAND,False)
 
     if resultcode == 0 :
         ## It is time to compile the .sym.c file we just created
         OUR_COMMAND = DeSpace([COBC,DASH_V,"-c","-o",FILE_SYM_O,FILE_SYM_C])
         if ECHO :
             print(' '.join(OUR_COMMAND))
-        resultcode = SubprocessCall(OUR_COMMAND)
+        resultcode = SubprocessCall(OUR_COMMAND,False)
 
     if resultcode == 0 :
         ## It is time to modify the .s file
@@ -532,7 +537,7 @@ def Main() :
         OUR_COMMAND = DeSpace([SFIX, DASH_Q, FILE_S, FILE_S, FILE_C, FILE_CBL])
         if ECHO :
             print(' '.join(OUR_COMMAND))
-        resultcode = SubprocessCall(OUR_COMMAND)
+        resultcode = SubprocessCall(OUR_COMMAND,False)
 
     if resultcode == 0 :
         ## We can now use COBC to assemble that that .s file:
@@ -540,7 +545,7 @@ def Main() :
 
         if ECHO :
             print(' '.join(OUR_COMMAND))
-        resultcode = SubprocessCall(OUR_COMMAND)
+        resultcode = SubprocessCall(OUR_COMMAND,False)
 
     if resultcode == 0 :
         # It is now time to build up the final link command.  Based on the
@@ -570,7 +575,7 @@ def Main() :
             FINAL_COMMAND.append("-v")
         if ECHO :
             print(' '.join(FINAL_COMMAND))
-        resultcode = SubprocessCall(FINAL_COMMAND)
+        resultcode = SubprocessCall(FINAL_COMMAND,False)
 
     if resultcode == 0 :
         ## And we have a debuggable executable
