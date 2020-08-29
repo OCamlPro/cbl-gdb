@@ -95,8 +95,6 @@ def SubprocessCall(command,suppress_error) :
     try :
         resultcode = subprocess.call(command)
     except subprocess.CalledProcessError as err:
-        if not suppress_error :
-            print( err.output )
         resultcode = err.returncode
     except OSError as err:
         if not suppress_error :
@@ -414,6 +412,7 @@ def Main() :
             print("Something went wrong with the command:")
             print("   ", ' '.join(TRIPLE_X_COMMAND))
             SubprocessCall(TRIPLE_X_COMMAND,True)
+            print( err )
             resultcode = 1
         except :
             print("Something went wrong with the command:")
