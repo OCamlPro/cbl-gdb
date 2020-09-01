@@ -1,4 +1,4 @@
-#######################################################################
+################################################################################
 # Copyright (c) 2019-2020 COBOLworx
 # All rights reserved.
 #
@@ -11,7 +11,7 @@
 #      notice, this list of conditions and the following disclaimer in
 #      the documentation and/or other materials provided with the
 #      distribution.
-#    * Neither the name of the COBOLworx nor the names of its
+#    * Neither the name of the COBOLworx Corporation nor the names of its
 #      contributors may be used to endorse or promote products derived
 #      from this software without specific prior written permission.
 #
@@ -26,8 +26,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+################################################################################
+
 #   This module implements the gdb extension commands cprint and cwatch
-#EndOfCopyright########################################################
 
 from __future__ import print_function
 
@@ -273,14 +274,19 @@ def NoNulls(s) :
     return ss
 
 def OurPrint(s) :
-    ## This routine is needed because otherwise, when GDB gets many lines
-    ## and says, "Type <RET> for more..." and somebody enters a Ctrl+C,
-    ## we sometimes trap the KeyboardInterrupt and end up reporting the
-    ## traceback.  This will kill that.
+    ## Use this routine when GDB might halt with a
+    ##    --Type <RET> for more, q to quit, c to continue without paging--
+
+    ## The following code catches the 'q' Quit option
+    retval = None
     try :
         print(s)
+    except KeyboardInterrupt as ki:
+        print("Quit")
+        retval = str(ki)
     except :
-        pass
+        traceback.print_exc()
+    return retval
 
 def LeftRight(s,splitchar) :
     """Splits what is presumably a numeric string with a possible
@@ -845,7 +851,7 @@ class VarTrie() :
         if isinstance(desired,list) :
             # We were handed a bunch of pieces.  Let's
             # glue them back together into a single space-separated string:
-            desired = " ".join(desired)
+            desired = " ".join(desired).upper()
 
         # Go handle our various "A of B" possibilities:
         name_tokens = self.TokenizeCanonicalName(desired)
@@ -859,45 +865,47 @@ class VarTrie() :
 
         self.NameMatcher(name_tokens,0,self.storage_trie,paths)
 
-        if len(paths) == 1 :
-            index = paths[0]
-
-        if len(paths) == 0 :
+        if len(paths) != 1 :
             # A strict attempt at matching what we were given has come up
-            # with bupkis.  Let's start again with the very first element (if
-            # there was more than one) and give him some options:
+            # with bupkis.  So far we have either no possibilities, or
+            # more than one possibility.
 
-            fragment = desired.split()[0]
+            # Put what we have so far into a set:
+            set1 = set(paths)
 
-            pattern1 = re.compile("^"  + fragment)
-            pattern2 = re.compile(".+" + fragment)
-            pattern3 = re.compile("^"  + fragment,re.IGNORECASE)
-            pattern4 = re.compile(".+" + fragment,re.IGNORECASE)
+            ## When given something like FIRST IN HOLDER, we want
+            ## to find 10 FIRSTNAME/NAME/ACCOUNTHOLDER
+            ##
+            ## But we don't want that request to pull up
+            ##  10 HOLDER/NAME/FIRST
+            ##
+            ## So, we are going to march through all of the names
+            ## in storage_list, and then we will make sure all of
+            ## the pieces show up in left-to-right order
 
-            set1 = set()  # same case, from the beginning
-            set2 = set()  # case-insensitive, from the beginning
-            set3 = set()  # same case, anywhere
-            set4 = set()  # case-insensitive, anywhere
             for index in range(len(self.storage_list)) :
-                if re.search(pattern1,self.storage_list[index].Name) :
+                whole_name = self.storage_list[index].Name.upper()
+                prior_index = -1
+                for fragment in name_tokens :
+                    fragment = fragment.upper()
+                    current_index = whole_name.find(fragment,prior_index+1)
+                    if current_index == -1 :
+                        ## This fragment isn't in that name, so, sayonara
+                        prior_index = -1
+                        break
+                    if current_index < prior_index :
+                        ## Going backward isn't permitted
+                        prior_index = -1
+                        break;
+                    ## Rightward, ho!
+                    prior_index = current_index
+                if prior_index != -1 :
+                    ## We have found a contender!
                     set1.add(index)
-                if re.search(pattern2,self.storage_list[index].Name) :
-                    set2.add(index)
-                if re.search(pattern3,self.storage_list[index].Name) :
-                    set3.add(index)
-                if re.search(pattern4,self.storage_list[index].Name) :
-                    set4.add(index)
 
+            ## Turn the set back into a list:
             paths = list(set1)
-            for index in set2 :
-                if index not in paths :
-                    paths.append(index)
-            for index in set3 :
-                if index not in paths :
-                    paths.append(index)
-            for index in set4 :
-                if index not in paths :
-                    paths.append(index)
+
         return paths
 
 class LineList() :
@@ -1796,12 +1804,12 @@ def MachineInterfaceHeirarchical(TabFile,possibilities) :
 def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
     possibilities_1 = []
     if len(args) >= 1 :
-        if args[0] == '*' :
-            # If the first, presumably single, argument is an asterisk, then
+        if args[0].find('*') != -1 :
+            # If the first, presumably single, argument contains an asterisk, then
             # he is asking for a list of variables and values:
-            possibilities_1 = TabFile.var_trie.GetAllPossibilities()
-        elif args[0] == '?' :
-            # If the first, presumably single, argument is a question mark,
+            possibilities = TabFile.var_trie.GetAllPossibilities()
+        elif args[0].find('?') != -1 :
+            # If the first, presumably single, argument contains a question mark,
             # then we need to round up the usual suspects.
 
             # But first, we are going to keep a rogue's gallery of the current list
@@ -1914,11 +1922,15 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
                 if not payload.not_in_context :
                     GV_GlobalVariables.ShortTermMemory.append(payload_index)
                     s = "{0:2} : ".format(line_counter)
+                    line_counter += 1
                     s += payload.display_name
                     s += " : "
                     s += payload.display_body
-                    OurPrint(NoNulls(s))
-                    line_counter += 1
+                    retval = OurPrint(NoNulls(s))
+                    if retval == "Quit" :
+                        break;
+    if len(possibilities) == 1 :
+        ShortTermMemory.short_term_memory = [possibilities[0]]
 
     return possibilities
 
@@ -1941,9 +1953,10 @@ class CPrintWorker() :
         self.current_source_file = ""
         self.sticky_display_mode = os.environ.get('CPRINT_V', '0')
         self.question_mark_range = int(os.environ.get('CPRINT_R', '6'))
+        self.use_cprint = int(os.environ.get('CPRINT', '0'))
         self.machine_interface_mode = False
 
-    def ProcessDisplayMode(self,args) :
+    def ProcessDisplayMode(self,args,TabFile) :
         self.machine_interface_mode = False
         # Make sure the current display mode is the same as the session mode
         self.current_display_mode = self.sticky_display_mode
@@ -1966,6 +1979,7 @@ class CPrintWorker() :
                 print("'print/r N': set the range for 'print ?' to plus/minus R (the default is 6; -1 means 'all')")
                 print("The default v-level can be set with the environment variable CPRINT_V=n")
                 print("The default r-level can be set with the environment variable CPRINT_R=n")
+                print("The 'print' command can be changed to 'cprint' with the environment variable CPRINT=1")
                 args = [""]
                 return args
 
@@ -1994,6 +2008,7 @@ class CPrintWorker() :
                 # This is a request to change the question_mark_range
                 self.question_mark_range = int(args[1])
                 print("The 'p ?' range has been set to +/-", self.question_mark_range, "lines")
+                TabFile.old_dogs = set()
                 args = ['?']
             elif len(args[0]) > 2 and args[0][0:2] == '/r'  :
                 # This is a request to change the question_mark_range
@@ -2048,7 +2063,7 @@ class CPrintWorker() :
             args.append(arg)
 
         self.question_mark_range = TabFile.question_mark_range
-        args = self.ProcessDisplayMode(args)
+        args = self.ProcessDisplayMode(args,TabFile)
         TabFile.question_mark_range = self.question_mark_range
 
         possibilities = MetaPossibilities(args,TabFile,self.machine_interface_mode,rside)
@@ -2118,9 +2133,15 @@ class CPrint (gdb.Command) :
         ## Don't mess with it!                                                    #
         ###########################################################################
         print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 4.1]')
-        self.Worker = CPrintWorker()
-        self.TabFile = TabFileInformation();
-        self.TabFile.question_mark_range = self.Worker.question_mark_range
+            self.Worker = CPrintWorker()
+            self.TabFile = TabFileInformation();
+            self.TabFile.question_mark_range = self.Worker.question_mark_range
+
+            actual_command = "print"
+            if self.Worker.use_cprint == 1 :
+                actual_command = "cprint"
+            print('registering CPrint (Usage is "' + actual_command + '" <COBOL identifier>") [Version 3.19]')
+            super (CPrint, self).__init__ (actual_command, gdb.COMMAND_USER)
 
     def invoke (self, arguments, from_tty):
         GV_GlobalVariables.LoadLibcob()

@@ -47,7 +47,7 @@
 
 using namespace std;
 
-// #define DUMPING
+//#define DUMPING
 
 static void
 CreateSymc(PARAMETERS &params,
