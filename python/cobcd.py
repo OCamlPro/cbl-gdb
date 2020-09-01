@@ -1,4 +1,4 @@
-#######################################################################
+################################################################################
 # Copyright (c) 2019-2020 COBOLworx
 # All rights reserved.
 #
@@ -11,7 +11,7 @@
 #      notice, this list of conditions and the following disclaimer in
 #      the documentation and/or other materials provided with the
 #      distribution.
-#    * Neither the name of the COBOLworx nor the names of its
+#    * Neither the name of the COBOLworx Corporation nor the names of its
 #      contributors may be used to endorse or promote products derived
 #      from this software without specific prior written permission.
 #
@@ -26,8 +26,9 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+################################################################################
+
 #   This module implements the gdb extension commands cprint and cwatch
-#EndOfCopyright########################################################
 
 from __future__ import print_function
 
@@ -622,7 +623,7 @@ class VarTrie() :
         if isinstance(desired,list) :
             # We were handed a bunch of pieces.  Let's
             # glue them back together into a single space-separated string:
-            desired = " ".join(desired)
+            desired = " ".join(desired).upper()
 
         # Go handle our various "A of B" possibilities:
         name_tokens = self.TokenizeCanonicalName(desired)
@@ -636,46 +637,46 @@ class VarTrie() :
 
         self.NameMatcher(name_tokens,0,self.storage_trie,paths)
 
-        if len(paths) == 1 :
-            index = paths[0]
-
-        if len(paths) == 0 :
+        if len(paths) != 1 :
             # A strict attempt at matching what we were given has come up
-            # with bupkis.  Let's start again with the very first element (if
-            # there was more than one) and give him some options:
+            # with bupkis.  So far we have either no possibilities, or
+            # more than one possibility.
 
-            fragment = desired.split()[0]
-            print("fragment",fragment)
+            # Put what we have so far into a set:
+            set1 = set(paths)
 
-            pattern1 = re.compile("^"  + fragment)
-            pattern2 = re.compile(".+" + fragment)
-            pattern3 = re.compile("^"  + fragment,re.IGNORECASE)
-            pattern4 = re.compile(".+" + fragment,re.IGNORECASE)
+            ## When given something like FIRST IN HOLDER, we want
+            ## to find 10 FIRSTNAME/NAME/ACCOUNTHOLDER
+            ##
+            ## But we don't want that request to pull up
+            ##  10 HOLDER/NAME/FIRST
+            ##
+            ## So, we are going to march through all of the names
+            ## in storage_list, and then we will make sure all of
+            ## the pieces show up in left-to-right order
 
-            set1 = set()  # same case, from the beginning
-            set2 = set()  # case-insensitive, from the beginning
-            set3 = set()  # same case, anywhere
-            set4 = set()  # case-insensitive, anywhere
             for index in range(len(self.storage_list)) :
-                if re.search(pattern1,self.storage_list[index].Name) :
+                whole_name = self.storage_list[index].Name.upper()
+                prior_index = -1
+                for fragment in name_tokens :
+                    fragment = fragment.upper()
+                    current_index = whole_name.find(fragment,prior_index+1)
+                    if current_index == -1 :
+                        ## This fragment isn't in that name, so, sayonara
+                        prior_index = -1
+                        break
+                    if current_index < prior_index :
+                        ## Going backward isn't permitted
+                        prior_index = -1
+                        break;
+                    ## Rightward, ho!
+                    prior_index = current_index
+                if prior_index != -1 :
+                    ## We have found a contender!
                     set1.add(index)
-                if re.search(pattern2,self.storage_list[index].Name) :
-                    set2.add(index)
-                if re.search(pattern3,self.storage_list[index].Name) :
-                    set3.add(index)
-                if re.search(pattern4,self.storage_list[index].Name) :
-                    set4.add(index)
 
+            ## Turn the set back into a list:
             paths = list(set1)
-            for index in set2 :
-                if index not in paths :
-                    paths.append(index)
-            for index in set3 :
-                if index not in paths :
-                    paths.append(index)
-            for index in set4 :
-                if index not in paths :
-                    paths.append(index)
 
         return paths
 
@@ -688,7 +689,6 @@ class VarTrie() :
         self.NameMatcher([token],0,self.storage_trie,paths)
 
         return paths
-
 
 class LineList() :
     """List of starting lines of ProgramNames"""
@@ -3119,6 +3119,8 @@ def MetaPossibilities(args,TabFile,ShortTermMemory,machine_interface_mode,rside)
                     retval = OurPrint(NoNulls(s))
                     if retval == "Quit" :
                         break;
+    if len(possibilities) == 1 :
+        ShortTermMemory.short_term_memory = [possibilities[0]]
 
     return possibilities
 
