@@ -223,7 +223,6 @@ def Main() :
     ASKED_FOR_HELP=False
     ASKED_FOR_VERSION=False
     DASH_V     = ""
-    DASH_T     = ""
     end_early  = False
     resultcode = 0
     TARGET     = ""
@@ -315,8 +314,6 @@ def Main() :
             # Requests for verbosity mess up our -### processing, so we filter them out for later
             DASH_V = param
             continue
-        if param[0:2] in ("-t","-T") :
-            DASH_T=param[0:2]
         elif param in ("-D","-A","-Q") :
             quote_me = True
         elif param in ("-E","-C","-S","-c") :
@@ -336,7 +333,7 @@ def Main() :
         usage(SCRIPT_VERSION)
         os._exit(1)
 
-    if DASH_T or end_early :
+    if end_early :
         ## He requires a straight cobc compilation
         ## with a -t or -T switch, so do it now.
         command = DeSpace([COBC,DASH_V] + COMMAND_LINE)
