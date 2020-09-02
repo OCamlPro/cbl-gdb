@@ -1807,7 +1807,7 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
         if args[0].find('*') != -1 :
             # If the first, presumably single, argument contains an asterisk, then
             # he is asking for a list of variables and values:
-            possibilities = TabFile.var_trie.GetAllPossibilities()
+            possibilities_1 = TabFile.var_trie.GetAllPossibilities()
         elif args[0].find('?') != -1 :
             # If the first, presumably single, argument contains a question mark,
             # then we need to round up the usual suspects.
@@ -1930,7 +1930,7 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
                     if retval == "Quit" :
                         break;
     if len(possibilities) == 1 :
-        ShortTermMemory.short_term_memory = [possibilities[0]]
+        GV_GlobalVariables.ShortTermMemory = [possibilities[0]]
 
     return possibilities
 
@@ -2126,22 +2126,20 @@ class CPrint (gdb.Command) :
     """Prints COBOL-NAMED variables when debugging cobst processed object files."""
 
     def __init__ (self):
-        super (CPrint, self).__init__ ("print", gdb.COMMAND_USER)
         ###########################################################################
         ## The version number in the next line is updated by a Linux bash script. #
         ## The text "Version x.x" has to appear in square brackets.               #
         ## Don't mess with it!                                                    #
         ###########################################################################
-        print('registering CPrint (Usage is "print  <COBOL identifier>") [Version 4.1]')
-            self.Worker = CPrintWorker()
-            self.TabFile = TabFileInformation();
-            self.TabFile.question_mark_range = self.Worker.question_mark_range
+        self.Worker = CPrintWorker()
+        self.TabFile = TabFileInformation();
+        self.TabFile.question_mark_range = self.Worker.question_mark_range
 
-            actual_command = "print"
-            if self.Worker.use_cprint == 1 :
-                actual_command = "cprint"
-            print('registering CPrint (Usage is "' + actual_command + '" <COBOL identifier>") [Version 4.1]')
-            super (CPrint, self).__init__ (actual_command, gdb.COMMAND_USER)
+        actual_command = "print"
+        if self.Worker.use_cprint == 1 :
+            actual_command = "cprint"
+        print('registering CPrint (Usage is "' + actual_command + '" <COBOL identifier>") [Version 4.1]')
+        super (CPrint, self).__init__ (actual_command, gdb.COMMAND_USER)
 
     def invoke (self, arguments, from_tty):
         GV_GlobalVariables.LoadLibcob()
