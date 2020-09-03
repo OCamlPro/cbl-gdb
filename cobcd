@@ -31,7 +31,7 @@
 #######################################################################
 
 ## Nasty command line for testing:
-## cobcd -gv -T /tmp/lis/TEST.lis -Xref -ftsymbols -tlines=0 -Wall -fno-ec=DATA-INCOMPATIBLE -foptional-file -ext lib -fdump=all -D 'MY-COMPILER=2' -D 'MY-OS=Linux' -fno-ec=bound-ref-mod -lgmp -o TEST.so /home/bob/repos/cbl-gdb-samples/ref_test_2/rtest.cbl
+## mkdir -p /tmp/list && cobcd -gv -T /tmp/lis/TEST.lis -Xref -ftsymbols -tlines=0 -Wall -fno-ec=DATA-INCOMPATIBLE -foptional-file -ext lib -fdump=all -D 'MY-COMPILER=2' -D 'MY-OS=Linux' -fno-ec=bound-ref-mod -lgmp -o TEST.so /home/bob/repos/cbl-gdb-samples/ref_test_2/rtest.cbl
 
 from __future__ import print_function
 
@@ -242,8 +242,18 @@ def Main() :
     ## passed along as -a -b -c
     ##
     params = []
+    quote_me = False
     for param in sys.argv[1:] + COBCDFLAGS : ## Skip the program name, and add in the switches from the environment
-        ##print("param:",param)
+        #print("param:",param)
+        if quote_me :
+            param = QuoteMe(param)
+            quote_me = False
+            params.append(param)
+            continue
+        if param in ("-D","-A","-Q") :
+            quote_me = True
+            params.append(param)
+            continue
         if len(param) == 1 or param[0] != '-' :
             ## If it is a single character, or it doesn't start with '-',
             ## just pass it along:
@@ -299,11 +309,8 @@ def Main() :
     ## example, if the caller specifies -x or -m, they will conflict with the
     ## the -S we need to start with.  So, we have to pull that out to work with later
 
-    quote_me = False
     for param in params :
-        if quote_me :
-            param = QuoteMe(param)
-            quote_me = False
+        #print("param",param)
         if param in ("-h","-help","--help") :
             ASKED_FOR_HELP=True
             continue
@@ -314,12 +321,13 @@ def Main() :
             # Requests for verbosity mess up our -### processing, so we filter them out for later
             DASH_V = param
             continue
-        elif param in ("-D","-A","-Q") :
-            quote_me = True
+        if param[0:2] in ("-t","-T") :
+            DASH_T=param[0:2]
         elif param in ("-E","-C","-S","-c") :
             end_early = True
 
         COMMAND_LINE.append(param)
+
 
     if DASH_V :
         ECHO = 1
