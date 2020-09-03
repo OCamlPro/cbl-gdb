@@ -584,7 +584,6 @@ def GetDataAt(address,bytes) :
         return None
 
 def GetBytesAt(address,N) :
-    print("GetBytesAt",hex(address), N)
     # Pick up N bytes from address, return them as a list of ints
     retval = []
     command = "x/" + str(N) + "xb " + hex(address)
@@ -596,7 +595,6 @@ def GetBytesAt(address,N) :
             bytes = line[nfound+1:].split( )
             for byte in bytes :
                 retval.append( int(byte,16) )
-    print("GetBytesAt","returning")
     return retval;
 
 def ExtractHexValueFrom(s) :
@@ -624,16 +622,22 @@ def GetAddressOf(variable) :
     try :
         command = "info address " + variable
         address_string = gdb.execute(command,False,True)
-        retval = ExtractHexValueFrom(address_string)
-        if retval == None :
-            command = "x/1db " + variable  ## Notice d for decimal, not hex, because 
-                                           ## a second 0x messes up ExtractHexValue
-            address_string = gdb.execute(command,False,True)
-            retval = ExtractHexValueFrom(address_string)
-        return retval;
+        val_info = ExtractHexValueFrom(address_string)
     except gdb.error:
-        # print("gdb.execute failed in GetAddressOf:",command)
-        return None
+        val_info = None
+
+    try :
+        command = "x/1db " + variable  ## Notice d for decimal, not hex, because
+                                       ## a second 0x messes up ExtractHexValue
+        address_string = gdb.execute(command,False,True)
+        val_x1db = ExtractHexValueFrom(address_string)
+    except :
+        val_x1db = None
+
+    retval = val_x1db
+    if val_x1db == None :
+        retval = val_info
+    return retval
 
 class VarTrie() :
     def __init__(self):
@@ -688,7 +692,7 @@ class VarTrie() :
                     self.StackOfLevels = [-2]
 
                 if len(self.StackOfNames) == 0 :
-                    print("Please save your program for Dubner at COBOLworx")
+                    print("Please save your program for Bob Dubner at support@COBOLworx.com")
                     print("self.StackOfNames is empty, and it shouldn't be")
                     sys.exit(1)
 
@@ -1117,8 +1121,8 @@ class CobolVariable() :
 
     def GetDataAsString(self) :
         retval = ""
-        
-        if True :  # For development
+
+        if False :  # For development
             print("GetData AsString          Name:"   ,self.Name);
             print("GetData AsString       Section:"   ,self.Section);
             print("GetData AsString         Fname:"   ,self.Fname);
@@ -1148,7 +1152,7 @@ class CobolVariable() :
                               COB_TYPE_NATIONAL,
                               COB_TYPE_NATIONAL_EDITED ) :
             is_alphanumeric = True
-            
+
         ## By the time we get here, we have pulled all the information we
         ## can from the data we got from the compiler, and also from the
         ## run-time information that the compiler pointed us to.
@@ -1159,7 +1163,7 @@ class CobolVariable() :
         ## copy that we can send to libcob using ctypes
 
         cob_field = self.GetWorkingCopyOfCobField()
-        
+
         if is_alphanumeric :
             # It's not impossible for there to be bum characters in what we call
             # an alphanumeric field.  If a GROUP has a mixture of numeric and alphanumeric
@@ -1179,10 +1183,8 @@ class CobolVariable() :
         length = self.Length + 128
         #buffer = ctypes.create_string_buffer(b'\000' * length)
         buffer = ctypes.create_string_buffer(length)
-        print("DDDD-2A", length)
         size = ctypes.c_size_t(length)
-        print("DDDD-2B")
-        
+
         #print("About to call cob_get_field_str")
         GV_GlobalVariables.LIBCOB.cob_get_field_str.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
         GV_GlobalVariables.LIBCOB.cob_get_field_str(byref(cob_field),buffer,size)
@@ -1227,7 +1229,7 @@ class CobolVariable() :
                 p += 1
 
     def FetchVariableData(self, line_list , show_failure ) :
-        print("FetchVariableData:",self.Name,self.Section)
+        #print("FetchVariableData:",self.Name,self.Section)
         self.location_of_field = 0;
         self.location_of_data = 0;
         self.location_of_attribute = 0;
@@ -1245,7 +1247,7 @@ class CobolVariable() :
 
         if self.Fname :
             # We have a field name
-            print("FetchVariableData Fname", self.Fname)
+            #print("FetchVariableData Fname", self.Fname)
             self.location_of_field = GetAddressOf(self.Fname)
             if self.location_of_field == None :
                 self.not_in_context = True
@@ -1373,12 +1375,14 @@ class CobolVariable() :
 
         self.display_body = self.GetDataAsString()
         self.display_body = ReplaceWithRepeatCount(self.display_body)
-        
-        print("FetchVariableData lengths",self.Length, len(self.data))
-        
+
         if self.Length != len(self.data) :
-            raise
-        
+            ## This probably should never happen.  But when it did, during debugging,
+            ## it actually corrupted memory during the process of creating a
+            ## cfields.cob_field.
+            ##
+            ## So, let's put up a fence:
+            self.not_in_context = True
         return
 
     def NameToString(self) :
@@ -1396,12 +1400,13 @@ class CobolVariable() :
         return s
 
     def ShowFields(self) :
+        bname_location = GetAddressOf(self.Bname) or 0
         print("Name:       " , self.display_name    )
         print("Field:      " , self.Fname,'   (',hex(self.location_of_field),')' )
-        print("Base:       " , self.Bname,         )
+        print("Base:       " , self.Bname,'   (',hex(bname_location),')' )
         print("Attr:       " , self.Aname,'   (',hex(self.location_of_attribute),')' )
         print("Offset:     " , self.Offset          )
-        print("location:   " , hex(self.location_of_data) );
+        print("Field.loc:  " , hex(self.location_of_data) );
         print("Length:     " , self.Length          )
 
         print("AttrType:   " , self.AttrType ,end="")
@@ -1793,7 +1798,7 @@ def MachineInterfaceHeirarchical(TabFile,possibilities) :
                 # Just use the lowest level.  When necessary, the VSC code will
                 # be able to walk up through the containers to get the full name
                 new_node.BaseName = split_name[0]
-            
+
             new_node.display_body = payload.display_body
 
             if payload.Level in (77,78) :
@@ -1823,6 +1828,7 @@ def MachineInterfaceHeirarchical(TabFile,possibilities) :
 
 def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
     possibilities_1 = []
+    from_digit = False
     if len(args) >= 1 :
         if args[0].find('*') != -1 :
             # If the first, presumably single, argument contains an asterisk, then
@@ -1855,6 +1861,7 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
                 possibilities_1 = list(TabFile.old_dogs.union(new_dogs))
                 TabFile.old_dogs = new_dogs
         elif args[0].isdigit() :
+            from_digit = True
             # if the first, presumably single, argument is a number, then he is looking
             # for a short-term memory entry.
 
@@ -1949,7 +1956,7 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
                     retval = OurPrint(NoNulls(s))
                     if retval == "Quit" :
                         break;
-    if len(possibilities) == 1 :
+    if len(possibilities) == 1 and not from_digit :
         GV_GlobalVariables.ShortTermMemory = [possibilities[0]]
 
     return possibilities
