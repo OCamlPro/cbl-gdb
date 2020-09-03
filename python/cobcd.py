@@ -584,6 +584,7 @@ def GetDataAt(address,bytes) :
         return None
 
 def GetBytesAt(address,N) :
+    print("GetBytesAt",hex(address), N)
     # Pick up N bytes from address, return them as a list of ints
     retval = []
     command = "x/" + str(N) + "xb " + hex(address)
@@ -595,6 +596,7 @@ def GetBytesAt(address,N) :
             bytes = line[nfound+1:].split( )
             for byte in bytes :
                 retval.append( int(byte,16) )
+    print("GetBytesAt","returning")
     return retval;
 
 def ExtractHexValueFrom(s) :
@@ -624,7 +626,8 @@ def GetAddressOf(variable) :
         address_string = gdb.execute(command,False,True)
         retval = ExtractHexValueFrom(address_string)
         if retval == None :
-            command = "x/1xb " + variable
+            command = "x/1db " + variable  ## Notice d for decimal, not hex, because 
+                                           ## a second 0x messes up ExtractHexValue
             address_string = gdb.execute(command,False,True)
             retval = ExtractHexValueFrom(address_string)
         return retval;
@@ -1114,23 +1117,23 @@ class CobolVariable() :
 
     def GetDataAsString(self) :
         retval = ""
-
-        if False :  # For development
-            print("GetData AsString         Name:"   ,self.Name);
-            print("GetData AsString      Section:"   ,self.Section);
-            print("GetData AsString        Fname:"   ,self.Fname);
-            print("GetData AsString        Bname:"   ,self.Bname);
-            print("GetData AsString        Aname:"   ,self.Aname);
-            print("GetData AsString       Offset:"   ,self.Offset);
-            print("GetData AsString       Length:"   ,self.Length);
-            print("GetData AsString     AttrType:"   ,hex(self.AttrType));
-            print("GetData AsString   AttrDigits:"   ,self.AttrDigits);
-            print("GetData AsString    AttrScale:"   ,self.AttrScale);
-            print("GetData AsString    AttrFlags:"   ,hex(self.AttrFlags));
-            print("GetData AsString  loc_of_data:"   ,hex(self.location_of_data));
-            print("GetData AsString  loc_of_attr:"   ,hex(self.location_of_attribute));
-            print("GetData AsString   loc_of_pic:"   ,hex(self.location_of_pic));
-
+        
+        if True :  # For development
+            print("GetData AsString          Name:"   ,self.Name);
+            print("GetData AsString       Section:"   ,self.Section);
+            print("GetData AsString         Fname:"   ,self.Fname);
+            print("GetData AsString         Bname:"   ,self.Bname);
+            print("GetData AsString         Aname:"   ,self.Aname);
+            print("GetData AsString        Offset:"   ,self.Offset);
+            print("GetData AsString        Length:"   ,self.Length);
+            print("GetData AsString len(self.data)"  ,len(self.data));
+            print("GetData AsString      AttrType:"   ,hex(self.AttrType));
+            print("GetData AsString    AttrDigits:"   ,self.AttrDigits);
+            print("GetData AsString     AttrScale:"   ,self.AttrScale);
+            print("GetData AsString     AttrFlags:"   ,hex(self.AttrFlags));
+            print("GetData AsString   loc_of_data:"   ,hex(self.location_of_data));
+            print("GetData AsString   loc_of_attr:"   ,hex(self.location_of_attribute));
+            print("GetData AsString    loc_of_pic:"   ,hex(self.location_of_pic));
 
         ## Something we need to know:
         is_alphanumeric = False
@@ -1145,8 +1148,7 @@ class CobolVariable() :
                               COB_TYPE_NATIONAL,
                               COB_TYPE_NATIONAL_EDITED ) :
             is_alphanumeric = True
-
-
+            
         ## By the time we get here, we have pulled all the information we
         ## can from the data we got from the compiler, and also from the
         ## run-time information that the compiler pointed us to.
@@ -1157,7 +1159,7 @@ class CobolVariable() :
         ## copy that we can send to libcob using ctypes
 
         cob_field = self.GetWorkingCopyOfCobField()
-
+        
         if is_alphanumeric :
             # It's not impossible for there to be bum characters in what we call
             # an alphanumeric field.  If a GROUP has a mixture of numeric and alphanumeric
@@ -1175,9 +1177,12 @@ class CobolVariable() :
         ## we used GDB to pick up from the COBOL memory space.
 
         length = self.Length + 128
-        buffer = ctypes.create_string_buffer(b'\000' * length)
+        #buffer = ctypes.create_string_buffer(b'\000' * length)
+        buffer = ctypes.create_string_buffer(length)
+        print("DDDD-2A", length)
         size = ctypes.c_size_t(length)
-
+        print("DDDD-2B")
+        
         #print("About to call cob_get_field_str")
         GV_GlobalVariables.LIBCOB.cob_get_field_str.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
         GV_GlobalVariables.LIBCOB.cob_get_field_str(byref(cob_field),buffer,size)
@@ -1186,7 +1191,6 @@ class CobolVariable() :
             retval = buffer.value.decode("utf-8")
             if is_alphanumeric :
                 retval = '"' + retval + '"'
-
         except :
             # While 3.1 was still in the release candidate stage,
             # an attempt to get at some variables resulted in
@@ -1223,7 +1227,7 @@ class CobolVariable() :
                 p += 1
 
     def FetchVariableData(self, line_list , show_failure ) :
-        # print("FetchVariableData:",self.Name,self.Section)
+        print("FetchVariableData:",self.Name,self.Section)
         self.location_of_field = 0;
         self.location_of_data = 0;
         self.location_of_attribute = 0;
@@ -1241,6 +1245,7 @@ class CobolVariable() :
 
         if self.Fname :
             # We have a field name
+            print("FetchVariableData Fname", self.Fname)
             self.location_of_field = GetAddressOf(self.Fname)
             if self.location_of_field == None :
                 self.not_in_context = True
@@ -1260,6 +1265,9 @@ class CobolVariable() :
             if possible_location_of_data :
                 self.location_of_data = possible_location_of_data
             self.location_of_attribute = GetDataAt(self.location_of_field+2*GV_GlobalVariables.SizeofPointer,GV_GlobalVariables.SizeofPointer)
+        else :
+            #print("There is no self.Fname")
+            pass
 
         if self.location_of_data == 0 :
             # When the COBOL code doesn't reference a variable, there is no f_ cob_field.  But
@@ -1273,6 +1281,9 @@ class CobolVariable() :
                     self.not_in_context = True
                     return
                 self.location_of_data += self.Offset
+            else :
+                #print("There is no self.Bname")
+                pass
 
         if self.location_of_attribute == 0 :
             if self.Aname :
@@ -1280,6 +1291,9 @@ class CobolVariable() :
                 if self.location_of_attribute == None :
                     self.not_in_context = True
                     return
+            else :
+                #print("There is no self.Aname")
+                pass
 
         if self.location_of_attribute != 0 :
             #   typedef struct __cob_field_attr
@@ -1359,6 +1373,12 @@ class CobolVariable() :
 
         self.display_body = self.GetDataAsString()
         self.display_body = ReplaceWithRepeatCount(self.display_body)
+        
+        print("FetchVariableData lengths",self.Length, len(self.data))
+        
+        if self.Length != len(self.data) :
+            raise
+        
         return
 
     def NameToString(self) :
