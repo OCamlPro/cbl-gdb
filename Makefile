@@ -3,7 +3,8 @@ export CPP
 CXXFLAGS:=-std=c++11 -Wall -O3
 export CXXFLAGS
 
-DESTDIR ?=/usr/local
+DESTDIR_DEFAULT = /usr/local
+DESTDIR ?= $(DESTDIR_DEFAULT)
 
 # Don't try to build the optfde01 example until the cobcd script
 # can be found in /usr/local/bin/
@@ -35,12 +36,19 @@ clean:
 	$(MAKE) -C cobcd-sfix clean
 	$(MAKE) -C cobcd-rw clean
 	$(MAKE) -C optfde01 clean
+	rm -rf .gdbinit
 
 cobcd : include/version.h
 	bin/version-replace.sh $@ $^
 
 cobcd.bat : include/version.h
 	bin/version-replace.sh $@ $^
+
+.gdbinit:
+	@echo "# enable use of COBOL cbl-dbg extension" > $@
+	@echo "add-auto-load-safe-path $(DESTDIR)/bin" >> $@
+	@echo "set directories $(DESTDIR)/bin"         >> $@
+	@echo "set auto-load python-scripts on"        >> $@
 
 .PHONY : install
 install:
@@ -58,6 +66,12 @@ install:
 	@echo "      add-auto-load-safe-path $(DESTDIR)/bin"
 	@echo "      set directories $(DESTDIR)/bin"
 	@echo "      set auto-load python-scripts on"
+	@echo ""
+	@echo "You may use"
+	@if [ X"$(DESTDIR)" = X"$(DESTDIR_DEFAULT)" ]    ; then \
+	 echo "      $(MAKE) .gdbinit"                   ; else \
+	 echo "      $(MAKE) .gdbinit DESTDIR=$(DESTDIR)"; fi
+	@echo "to create a sample file with this content."
 	@echo ""
 	@echo "See https://sourceware.org/gdb/onlinedocs/gdb/Auto_002dloading-safe-path.html for more information"
 	@/bin/echo -e "\033[0m"
