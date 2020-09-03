@@ -229,7 +229,13 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
 void
 VARIABLES::FillInTheBlanks(COB_FIELDS &cob_fields)
 {
+    string current_bname = "";
     for( V_VARIABLES::iterator it = variables.begin(); it!=variables.end(); it++) {
+        if( it->level <= 2 OR it->level EQ 78 OR it->level EQ 77 ) {
+            // This is a root variable, so reset the current name
+            current_bname = "";
+        }
+
         if( it->a_name.empty() ) {
             const COB_FIELD *pfield = cob_fields.Find(it->f_name);
             if( pfield ) {
@@ -250,6 +256,34 @@ VARIABLES::FillInTheBlanks(COB_FIELDS &cob_fields)
                 }
             }
         }
+        if( it->b_name.empty() ) {
+            it->b_name = current_bname;
+        } else {
+            current_bname = it->b_name;
+        }
+
+        V_VARIABLES::iterator it2 = it;
+        while( it2 > variables.begin() ) {
+            if( it2->b_name.empty() ) {
+                // We have nothing to propogate upward
+                break;
+            }
+            if( it2->level EQ 77 OR it2->level EQ 77 ) {
+                // Level 77 doesn't propogate upward
+                break;
+            }
+            V_VARIABLES::iterator it1 = it2-1;
+            if( !it1->b_name.empty() ) {
+                // The one before ours is already populated
+                break;
+            }
+            // When you get here, it1 has no b_name, and it2 does
+            if( it1->level <= it2->level AND it2->level >= 2 ) {
+                it1->b_name = it2->b_name;
+            }
+            it2--;
+        }
+
     }
 }
 
@@ -257,7 +291,7 @@ void
 VARIABLES::Dump() const
 {
     CPROFILER;
-    cout << "COB_FIELDS:" << endl;
+    cout << "VARIABLES:" << endl;
     cout << setw( 3) << "RT" ;
     cout << setw( 4) << "lvl";
     cout << setw(20) << "name" ;

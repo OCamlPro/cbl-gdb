@@ -91,6 +91,7 @@ CreateSymc(PARAMETERS &params,
     ss << "char VARIABLE_STRING_" << Upper(fname) << "[]=" << endl;
 
     // Break up the actual data into smaller pieces, so that it will compile.
+#if 0
     const int SEGMENT_LENGTH = 78;
     int walker = 0;
     int remaining = (int)s.length();
@@ -100,6 +101,21 @@ CreateSymc(PARAMETERS &params,
         remaining -= SEGMENT_LENGTH;
     }
     if( remaining ) {
+        ss << "\"" << s.substr(walker) << "\"" << endl;
+    }
+#endif
+    size_t walker = 0;
+    size_t length = (int)s.length();
+    while( walker < length ) {
+        size_t squiggle = s.find('~',walker);
+        if( squiggle EQ string::npos ) {
+            break;
+        }
+        squiggle +=1;
+        ss << "\"" << s.substr(walker,squiggle-walker) << "\"" << endl;
+        walker = squiggle;
+    }
+    if( walker < length ) {
         ss << "\"" << s.substr(walker) << "\"" << endl;
     }
     ss << ";" << endl << endl;
