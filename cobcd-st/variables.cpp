@@ -88,6 +88,12 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
         static const char COB_SET_FLD[] = "COB_SET_FLD";
         char *p = ach;
 
+        // We have a special case to consider.  REDEFINES lines start with a /* comment indication:
+        if( *p EQ '/' AND *(p+1) EQ '*' )
+            {
+            p += 2;
+            }
+
         // Skip over spaces
         while( *p EQ ' ' OR *p EQ '\t' ) {
             p += 1;
