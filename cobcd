@@ -243,16 +243,15 @@ def Main() :
     ## passed along as -a -b -c
     ##
     params = []
-    quote_me = False
+    do_not_process = False
     for param in sys.argv[1:] + COBCDFLAGS : ## Skip the program name, and add in the switches from the environment
         #print("param:",param)
-        if quote_me :
-            param = QuoteMe(param)
-            quote_me = False
+        if do_not_process :
+            do_not_process = False
             params.append(param)
             continue
         if param in ("-D","-A","-Q") :
-            quote_me = True
+            do_not_process = True
             params.append(param)
             continue
         if len(param) == 1 or param[0] != '-' :
