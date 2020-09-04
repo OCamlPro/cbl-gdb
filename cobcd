@@ -324,7 +324,7 @@ def Main() :
             continue
         if param[0:2] in ("-t","-T") :
             DASH_T=param[0:2]
-        elif param in ("-E","-C","-S","-c") :
+        elif param in ("-E","-C","-S","-c","-###") :
             end_early = True
 
         COMMAND_LINE.append(param)
