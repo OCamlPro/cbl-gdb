@@ -3321,57 +3321,49 @@ class CWatchWorker() :
             # And go set the Watchpoint
             self.SetTheWatchpoint(TabFile, payload)
 
-if 'gdb' in sys.modules :
-    class CPrint (gdb.Command) :
-        """Prints COBOL-NAMED variables when debugging cobst processed object files."""
+class CPrint (gdb.Command) :
+    """Prints COBOL-NAMED variables when debugging cobst processed object files."""
 
-        def __init__ (self):
-            ###########################################################################
-            ## The version number in the next line is updated by a Linux bash script. #
-            ## The text "Version x.x" has to appear in square brackets.               #
-            ## Don't mess with it!                                                    #
-            ###########################################################################
-            self.Worker = CPrintWorker()
-            self.TabFile = TabFileInformation();
-            self.TabFile.question_mark_range = self.Worker.question_mark_range
+    def __init__ (self):
+        ###########################################################################
+        ## The version number in the next line is updated by a Linux bash script. #
+        ## The text "Version x.x" has to appear in square brackets.               #
+        ## Don't mess with it!                                                    #
+        ###########################################################################
+        self.Worker = CPrintWorker()
+        self.TabFile = TabFileInformation();
+        self.TabFile.question_mark_range = self.Worker.question_mark_range
 
-            actual_command = "print"
-            if self.Worker.use_cprint == 1 :
-                actual_command = "cprint"
-            print('registering CPrint (Usage is "' + actual_command + '" <COBOL identifier>") [Version 3.21]')
-            super (CPrint, self).__init__ (actual_command, gdb.COMMAND_USER)
+        actual_command = "print"
+        if self.Worker.use_cprint == 1 :
+            actual_command = "cprint"
+        print('registering CPrint (Usage is "' + actual_command + '" <COBOL identifier>") [Version 3.21]')
+        super (CPrint, self).__init__ (actual_command, gdb.COMMAND_USER)
 
-        def invoke (self, arguments, from_tty):
-            # pick up the name of the current source file
-            try :
-                self.TabFile.ReadSymbolTableText()
-                self.Worker.ProcessArguments(self.TabFile,GV_ShortTermMemory,arguments)
-            except :
-                traceback.print_exc()
+    def invoke (self, arguments, from_tty):
+        # pick up the name of the current source file
+        try :
+            self.TabFile.ReadSymbolTableText()
+            self.Worker.ProcessArguments(self.TabFile,GV_ShortTermMemory,arguments)
+        except :
+            traceback.print_exc()
 
-    class CWatch (gdb.Command) :
-        """Used for creating COBOL-NAMED watchpoints when debugging cobst processed object files."""
+class CWatch (gdb.Command) :
+    """Used for creating COBOL-NAMED watchpoints when debugging cobst processed object files."""
 
-        def __init__ (self):
-            super (CWatch, self).__init__ ("cwatch", gdb.COMMAND_USER)
-            print('registering CWatch (Usage is "cwatch <COBOL identifier>")')
-            self.Worker = CWatchWorker()
-            self.TabFile = TabFileInformation();
+    def __init__ (self):
+        super (CWatch, self).__init__ ("cwatch", gdb.COMMAND_USER)
+        print('registering CWatch (Usage is "cwatch <COBOL identifier>")')
+        self.Worker = CWatchWorker()
+        self.TabFile = TabFileInformation();
 
-        def invoke (self, arguments, from_tty):
-            try :
-                self.TabFile.ReadSymbolTableText()
-                self.Worker.ProcessWArgumentsW(self.TabFile,GV_ShortTermMemory,arguments)
-            except :
-                traceback.print_exc()
+    def invoke (self, arguments, from_tty):
+        try :
+            self.TabFile.ReadSymbolTableText()
+            self.Worker.ProcessWArgumentsW(self.TabFile,GV_ShortTermMemory,arguments)
+        except :
+            traceback.print_exc()
 
-if 'gdb' not in sys.modules:
-    # I debug with Visual Studio in Windows, which doesn't provide a gdb object.
-    # Test code goes here
-    #Worker = CPrintWorker()
-    #Worker.ProcessInfoSource("|Located in C:\projects\1-symas\cbl-gdb\samples\ref_test_3\rtest.cbl ")
-    pass
-else:
-    CPrint()
-    CWatch()
+CPrint()
+CWatch()
 
