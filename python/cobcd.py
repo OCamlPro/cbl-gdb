@@ -162,64 +162,65 @@ class GlobalVariables() :
             # We now have a cob_module and a cob_global set up in the GDB
             # process.  There's some information we need to copy over
             # from the target workspace:
-
+            cob_current_module = None
             cobglobptr = GetPointerAt("cobglobptr")
-            ## The beginning of cob_global looks like this (libcob/common.h)
-            #    typedef struct __cob_global {
-            #        cob_file     *cob_error_file;       /* Last error file */
-            #        cob_module   *cob_current_module;   /* Current module */
-            ## We need cob_module:
-            cob_current_module = GetDataAt(cobglobptr+GV_GlobalVariables.SizeofPointer,GV_GlobalVariables.SizeofPointer)
+            if cobglobptr :
+                ## The beginning of cob_global looks like this (libcob/common.h)
+                #    typedef struct __cob_global {
+                #        cob_file     *cob_error_file;       /* Last error file */
+                #        cob_module   *cob_current_module;   /* Current module */
+                ## We need cob_module:
+                cob_current_module = GetDataAt(cobglobptr+GV_GlobalVariables.SizeofPointer,GV_GlobalVariables.SizeofPointer)
 
-            ## The information I need from the target, so that I can copy it into the
-            ## GDB process space, are the last four char values seen below.  To find them
-            ## I assume that and int is the same size as a pointer.  This is true for
-            ## Linux/GCC.  It's not always true.  (WIN32, for instance, has them at 8 and 4 bytes in 64-bit mode)
-            #
-            #    typedef struct __cob_module {
-            #        struct __cob_module    *next;          /* Next pointer */
-            #        cob_field              **cob_procedure_params; /* Arguments */
-            #        const char             *module_name;       /* Module name */
-            #        const char             *module_formatted_date; /* Module full date */
-            #        const char             *module_source;     /* Module source */
-            #        cob_call_union         module_entry;       /* Module entry */
-            #        cob_call_union         module_cancel;      /* Module cancel */
-            #        const unsigned char    *collating_sequence;    /* COLLATING */
-            #        cob_field              *crt_status;        /* CRT STATUS */
-            #        cob_field              *cursor_pos;        /* CURSOR */
-            #        unsigned int           *module_ref_count;  /* Module ref count */
-            #        const char             **module_path;      /* Module path */
-            #
-            #        unsigned int       module_active;      /* Module is active */
-            #        unsigned int       module_date;        /* Module num date */
-            #        unsigned int       module_time;        /* Module num time */
-            #        unsigned int       module_type;        /* Module type (program = 0, function = 1) */
-            #        unsigned int       module_param_cnt;   /* Module param count */
-            #        unsigned int       module_returning;   /* Module return type, currently unset+unused */
-            #        int                module_num_params;  /* Module arg count */
-            #
-            #        unsigned char      ebcdic_sign;        /* DISPLAY SIGN */
-            #        unsigned char      decimal_point;      /* DECIMAL POINT */
-            #        unsigned char      currency_symbol;    /* CURRENCY */
-            #        unsigned char      numeric_separator;  /* Separator */
-            #
-            ## Calculate offset of decimal_point
-            offset = 12*GV_GlobalVariables.SizeofPointer + 7*GV_GlobalVariables.SizeofInt + 1
-            characters = GetBytesAt(cob_current_module+offset,3)
-            characters = bytearray(characters)
+                ## The information I need from the target, so that I can copy it into the
+                ## GDB process space, are the last four char values seen below.  To find them
+                ## I assume that and int is the same size as a pointer.  This is true for
+                ## Linux/GCC.  It's not always true.  (WIN32, for instance, has them at 8 and 4 bytes in 64-bit mode)
+                #
+                #    typedef struct __cob_module {
+                #        struct __cob_module    *next;          /* Next pointer */
+                #        cob_field              **cob_procedure_params; /* Arguments */
+                #        const char             *module_name;       /* Module name */
+                #        const char             *module_formatted_date; /* Module full date */
+                #        const char             *module_source;     /* Module source */
+                #        cob_call_union         module_entry;       /* Module entry */
+                #        cob_call_union         module_cancel;      /* Module cancel */
+                #        const unsigned char    *collating_sequence;    /* COLLATING */
+                #        cob_field              *crt_status;        /* CRT STATUS */
+                #        cob_field              *cursor_pos;        /* CURSOR */
+                #        unsigned int           *module_ref_count;  /* Module ref count */
+                #        const char             **module_path;      /* Module path */
+                #
+                #        unsigned int       module_active;      /* Module is active */
+                #        unsigned int       module_date;        /* Module num date */
+                #        unsigned int       module_time;        /* Module num time */
+                #        unsigned int       module_type;        /* Module type (program = 0, function = 1) */
+                #        unsigned int       module_param_cnt;   /* Module param count */
+                #        unsigned int       module_returning;   /* Module return type, currently unset+unused */
+                #        int                module_num_params;  /* Module arg count */
+                #
+                #        unsigned char      ebcdic_sign;        /* DISPLAY SIGN */
+                #        unsigned char      decimal_point;      /* DECIMAL POINT */
+                #        unsigned char      currency_symbol;    /* CURRENCY */
+                #        unsigned char      numeric_separator;  /* Separator */
+                #
+                ## Calculate offset of decimal_point
+                offset = 12*GV_GlobalVariables.SizeofPointer + 7*GV_GlobalVariables.SizeofInt + 1
+                characters = GetBytesAt(cob_current_module+offset,3)
+                characters = bytearray(characters)
 
-            decimal_point = characters[0]
-            currency_symbol = characters[1]
-            numeric_separator = characters[2]
+                decimal_point = characters[0]
+                currency_symbol = characters[1]
+                numeric_separator = characters[2]
 
-            ## We got those parameters, through GDB, from the COBOL process.
-            ## We now have to shove them into the cob_module we established
-            ## with cob_module_global_enter() here in the GDB process.
+                ## We got those parameters, through GDB, from the COBOL process.
+                ## We now have to shove them into the cob_module we established
+                ## with cob_module_global_enter() here in the GDB process.
 
-            pp = cast(self.pModule,POINTER(c_byte))
-            pp[offset+0] = decimal_point
-            pp[offset+1] = currency_symbol
-            pp[offset+2] = numeric_separator
+                pp = cast(self.pModule,POINTER(c_byte))
+                pp[offset+0] = decimal_point
+                pp[offset+1] = currency_symbol
+                pp[offset+2] = numeric_separator
 
         except :
             traceback.print_exc()
@@ -619,24 +620,25 @@ def GetPointerAt(variable) :
 def GetAddressOf(variable) :
     # Use this form when you know variable is the name of a block.
     retval = None
-    try :
-        command = "info address " + variable
-        address_string = gdb.execute(command,False,True)
-        val_info = ExtractHexValueFrom(address_string)
-    except gdb.error:
-        val_info = None
+    if variable :
+        try :
+            command = "info address " + variable
+            address_string = gdb.execute(command,False,True)
+            val_info = ExtractHexValueFrom(address_string)
+        except gdb.error:
+            val_info = None
 
-    try :
-        command = "x/1db " + variable  ## Notice d for decimal, not hex, because
-                                       ## a second 0x messes up ExtractHexValue
-        address_string = gdb.execute(command,False,True)
-        val_x1db = ExtractHexValueFrom(address_string)
-    except :
-        val_x1db = None
+        try :
+            command = "x/1db " + variable  ## Notice d for decimal, not hex, because
+                                           ## a second 0x messes up ExtractHexValue
+            address_string = gdb.execute(command,False,True)
+            val_x1db = ExtractHexValueFrom(address_string)
+        except :
+            val_x1db = None
 
-    retval = val_x1db
-    if val_x1db == None :
-        retval = val_info
+        retval = val_x1db
+        if val_x1db == None :
+            retval = val_info
     return retval
 
 class VarTrie() :
@@ -1278,6 +1280,7 @@ class CobolVariable() :
             # been set up.  But, again, sometimes we have advance knowledge of what is going to be
             # there because we got information from the compiler.
             if self.Bname :
+                #print("FetchVariableData Fname", self.Bname)
                 self.location_of_data  = GetAddressOf(self.Bname)
                 if self.location_of_data == None :
                     self.not_in_context = True
@@ -1401,12 +1404,21 @@ class CobolVariable() :
 
     def ShowFields(self) :
         bname_location = GetAddressOf(self.Bname) or 0
+        bname_text = ""
+        if bname_location :
+            bname_text = "( %s )" % hex(self.location_of_field)
+
+        if self.Section == 'L' :
+            field_loc = "cob_local_ptr (" + hex(self.location_of_data) + ")"
+        else :
+            field_loc = hex(self.location_of_data)
+
         print("Name:       " , self.display_name    )
         print("Field:      " , self.Fname,'   (',hex(self.location_of_field),')' )
-        print("Base:       " , self.Bname,'   (',hex(bname_location),')' )
+        print("Base:       " , self.Bname,'  ',bname_text     )
         print("Attr:       " , self.Aname,'   (',hex(self.location_of_attribute),')' )
         print("Offset:     " , self.Offset          )
-        print("Field.loc:  " , hex(self.location_of_data) );
+        print("Field.loc:  " , field_loc );
         print("Length:     " , self.Length          )
 
         print("AttrType:   " , self.AttrType ,end="")
