@@ -401,7 +401,6 @@ def GetAddressOf(variable) :
                 address = int(address_string,16)
                 return address
         except gdb.error:
-            print("gdb.execute failed:",command)
             return None
     else :
         # We are running off-line
@@ -2859,7 +2858,7 @@ class TabFileInformation() :
         self.current_full_path = ""
 
     def ReadVariableString(self, string_name) :
-        retval = ""
+        retval = False
 
         # We are going to use the x/ns "memory as string" command, which reads
         # in n blocks of some number of characters.  On gdb 8.3, each block seems
@@ -2870,45 +2869,50 @@ class TabFileInformation() :
         # how how many characters per line we're going to get:
 
         the_address = GetAddressOf(string_name)
-        command = "x/1s " + str(the_address)
-        the_data = gdb.execute(command,False,True)
-        index1 = the_data.find('"')
-        if index1 != -1 :
-            index2 = the_data.find('"',index1+1)
-            if( index2 != -1 ) :
-                total_length = int(the_data[index1+1:index1+1+9])
-                chars_each_line = index2-(index1+1);
-
-                # We know the total length, and we know the number of
-                # chars we will get in each block.  So, we can calculate
-                # the number of blocks we need to ask for, and build
-                # that command:
-                blocks = (total_length + chars_each_line-1) // chars_each_line
-                command = "x/" + str(blocks) + "s " + str(the_address)
-
-                # And we can get that data
+        if the_address :
+            command = "x/1s " + str(the_address)
+            try :
                 the_data = gdb.execute(command,False,True)
-
-                # And now we loop through the data, extracting each chunk
-                is_first_line = True
-                index2 = 0
-                lines = []
-                while True :
-                    index1 = the_data.find('"',index2+1)
-                    if index1 == -1 :
-                        break;
+                index1 = the_data.find('"')
+                if index1 != -1 :
                     index2 = the_data.find('"',index1+1)
-                    if index2 == -1 :
-                        break;
-                    if is_first_line :
-                        index1 += 9
-                        is_first_line = False
-                    lines.append(the_data[index1+1:index2])
+                    if( index2 != -1 ) :
+                        total_length = int(the_data[index1+1:index1+1+9])
+                        chars_each_line = index2-(index1+1);
 
-                # and now that we have all the chunks, we can assemble
-                # them into the VARIABLE_STRING_xxx
-                self.current_variable_string = "".join(lines)
-        return
+                        # We know the total length, and we know the number of
+                        # chars we will get in each block.  So, we can calculate
+                        # the number of blocks we need to ask for, and build
+                        # that command:
+                        blocks = (total_length + chars_each_line-1) // chars_each_line
+                        command = "x/" + str(blocks) + "s " + str(the_address)
+
+                        # And we can get that data
+                        the_data = gdb.execute(command,False,True)
+
+                        # And now we loop through the data, extracting each chunk
+                        is_first_line = True
+                        index2 = 0
+                        lines = []
+                        while True :
+                            index1 = the_data.find('"',index2+1)
+                            if index1 == -1 :
+                                break;
+                            index2 = the_data.find('"',index1+1)
+                            if index2 == -1 :
+                                break;
+                            if is_first_line :
+                                index1 += 9
+                                is_first_line = False
+                            lines.append(the_data[index1+1:index2])
+
+                        # and now that we have all the chunks, we can assemble
+                        # them into the VARIABLE_STRING_xxx
+                        self.current_variable_string = "".join(lines)
+                        retval = True
+            except :
+                pass
+        return retval
 
     def ProcessInfoStack(self, info_stack) :
         """ Figures out which routine we are currently trapped in"""
@@ -2929,20 +2933,29 @@ class TabFileInformation() :
         self.current_trapped_line = int(file_and_line[1])
 
         try :
-
             if file_and_line[0] != self.current_trapped_file :
                 # We are in a new file
                 self.current_trapped_file = file_and_line[0]
 
-                # Find the address of the VARIABLE_STRING for this file
+                ## Because it's possible that we are trapped in a copybook,
+                ## we can't assume that VARIABLE_STRING has the name
+                ## of the current_trapped_file.  We need to work our
+                ## way through the stack:
 
-                name_root = self.current_trapped_file
-                name_root = name_root.split('/')
-                name_root = name_root[-1]
-                name_root = name_root.replace('.','_')
-                string_name = "VARIABLE_STRING_" + name_root.upper()
+                # Find the address of the VARIABLE_STRING for this trap point
 
-                self.ReadVariableString(string_name)
+                backtrace = gdb.execute("bt",False,True).split('\n')
+                for possibility in backtrace :
+                    # Pull out the file name, which is before the colon in the last token
+                    possible_file = possibility.split(' ')[-1].split(':')[0]
+                    name_root = possible_file
+                    name_root = name_root.split('/')
+                    name_root = name_root[-1]
+                    name_root = name_root.replace('.','_')
+                    string_name = "VARIABLE_STRING_" + name_root.upper()
+
+                    if self.ReadVariableString(string_name) :
+                        break
 
                 # We have us a new variable string
                 # Clear out the tables:
@@ -3337,7 +3350,7 @@ class CPrint (gdb.Command) :
         actual_command = "print"
         if self.Worker.use_cprint == 1 :
             actual_command = "cprint"
-        print('registering CPrint (Usage is "' + actual_command + '" <COBOL identifier>") [Version 3.21]')
+        print('registering CPrint (Usage is "' + actual_command + '" <COBOL identifier>") [Version 3.22]')
         super (CPrint, self).__init__ (actual_command, gdb.COMMAND_USER)
 
     def invoke (self, arguments, from_tty):
