@@ -98,13 +98,13 @@ def SubprocessCall(command,suppress_error) :
         resultcode = err.returncode
     except OSError as err:
         if not suppress_error :
-            print("Something went wrong with the command:")
+            print("(1) Something went wrong with the command:")
             print("   ", ' '.join(command))
             print( err )
         resultcode = 1
     except :
         if not suppress_error :
-            print("Something went wrong with the command:")
+            print("(2) Something went wrong with the command:")
             print("   ", ' '.join(command))
             traceback.print_exc()
         resultcode = 1
@@ -320,6 +320,9 @@ def Main() :
             # Requests for verbosity mess up our -### processing, so we filter them out for later
             DASH_V = param
             continue
+        if param in ("-g") :
+            # If he asked for -g, then leave the intermediate files:
+            COBCDNOCLEAN=1
         if param[0:2] in ("-t","-T") :
             DASH_T=param[0:2]
         elif param in ("-E","-C","-S","-c","-###") :
@@ -406,22 +409,15 @@ def Main() :
                 TARGET = FINAL_COMMAND[nfound:].split()[1]
                 TARGET = TARGET.replace('"','')
                 TARGET = TARGET.replace('\\','/')
-        except subprocess.CalledProcessError as err:
-            print("Something went wrong with the command:")
-            print("   ", ' '.join(TRIPLE_X_COMMAND))
-            SubprocessCall(TRIPLE_X_COMMAND,True)
-            resultcode = err.returncode
-        except OSError as err:
-            print("Something went wrong with the command:")
-            print("   ", ' '.join(TRIPLE_X_COMMAND))
-            SubprocessCall(TRIPLE_X_COMMAND,True)
-            print( err )
-            resultcode = 1
         except :
-            print("Something went wrong with the command:")
-            print("   ", ' '.join(TRIPLE_X_COMMAND))
-            SubprocessCall(TRIPLE_X_COMMAND,True)
-            resultcode = 1
+            ## It is common for something to go wrong with that first attempt; anything
+            ## from bad file names to syntax errors in the code.  Let's go for a minimal
+            ## response by emulating the end_early
+            command = DeSpace([COBC,DASH_V] + COMMAND_LINE)
+            if ECHO :
+                print(' '.join(command))
+            resultcode = SubprocessCall(command,True)
+            os._exit(resultcode)
 
     if resultcode == 0 :
         if TARGET == "" :
