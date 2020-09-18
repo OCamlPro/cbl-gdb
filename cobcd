@@ -87,7 +87,8 @@ def DeSpace(command) :
         command = command.encode('ascii','replace')
         return command.split()
 
-    # On his head be it
+    # It's not a list, or a string, or a Python2 unicode string, so 
+    # we don't know what to do with it.
     return command
 
 def SubprocessCall(command,suppress_error) :
@@ -131,7 +132,7 @@ def Main() :
     EXE_SUFFIX = ""
     SO_SOFFIX  = ".so"
     os_name = platform.system()
-    if os_name == "Windows" :
+    if os_name == "Windows" or os_name.find("MINGW") != -1 :
         windows = True
         EXE_SUFFIX = ".exe"
         SO_SOFFIX  = ".dll"

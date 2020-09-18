@@ -300,8 +300,8 @@ main(int argc, char **argv)
         while( ftells.size() AND lindex >= 0 AND lcount < range ) {
             long floc = ftells[lindex--];
             fseek(f,floc,SEEK_SET);
-            fgets(ach,sizeof(ach),f);
-            if( FindTokensIn(ach,results) ) {
+            char *result = fgets(ach,sizeof(ach),f);
+            if(result AND FindTokensIn(ach,results) ) {
                 // ach isn't empty, so it counts for range
                 lcount += 1;
             }
