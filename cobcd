@@ -321,8 +321,8 @@ def Main() :
             # Requests for verbosity mess up our -### processing, so we filter them out for later
             DASH_V = param
             continue
-        if param in ("-g") :
-            # If he asked for -g, then leave the intermediate files:
+        if param in ("-g","-save-temps","--save-temps") :
+            # If he asked for -g or --save-temps, then leave the intermediate files:
             COBCDNOCLEAN=1
         if param[0:2] in ("-t","-T") :
             DASH_T=param[0:2]
