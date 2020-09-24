@@ -87,7 +87,7 @@ def DeSpace(command) :
         command = command.encode('ascii','replace')
         return command.split()
 
-    # It's not a list, or a string, or a Python2 unicode string, so 
+    # It's not a list, or a string, or a Python2 unicode string, so
     # we don't know what to do with it.
     return command
 
@@ -223,6 +223,8 @@ def Main() :
     COMMAND_LINE=[]
     ASKED_FOR_HELP=False
     ASKED_FOR_VERSION=False
+    ASKED_FOR_FDUMP=False
+
     DASH_V     = ""
     end_early  = False
     resultcode = 0
@@ -324,8 +326,8 @@ def Main() :
         if param in ("-g","-save-temps","--save-temps") :
             # If he asked for -g or --save-temps, then leave the intermediate files:
             COBCDNOCLEAN=1
-        if param[0:2] in ("-t","-T") :
-            DASH_T=param[0:2]
+        elif param.find("--fdump") == 0 or param.find("-fdump") == 0 :
+            ASKED_FOR_FDUMP=True
         elif param in ("-E","-C","-S","-c","-###") :
             end_early = True
 
@@ -374,7 +376,7 @@ def Main() :
 
     ## If we are going to proceed from here, we have to have a version of
     ## GnuCOBOL that will work for us.
-    needed_version = "cobc (GnuCOBOL) 3.1-dev.20200923"
+    needed_version = "cobc (GnuCOBOL) 3.1-dev.20200924"
     command = [COBC, "--version"]
     result = subprocess.check_output(command).decode("utf-8").split('\n');
     if result[0] != needed_version  :
@@ -506,16 +508,18 @@ def Main() :
             #print("DASH_F     is ",DASH_F     )
             #print("DASH_S     is ",DASH_S     )
 
+        comment_fdump = ""
+        if not ASKED_FOR_FDUMP :
+            comment_fdump = " -fgen-c-comment-fdump "
+
     if resultcode == 0 :
         ## Do the initial compilation that gives us the .c .h .i and .s files
-        ## Rebuild our command, this time with our -T directive:
-        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -g -fdump=ALL --fgen-c-line-directives --fgen-c-labels " + DASH_V + " " + ' '.join(COMMAND_LINE))
+        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -g -fdump=ALL --fgen-c-line-directives --fgen-c-labels -fdump=WS -fdump=LS -fdump=LO " + comment_fdump + " " + ' '.join(COMMAND_LINE))
         if ECHO :
             print(' '.join(OUR_COMMAND))
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
     if resultcode == 0 :
-
         ## Normally, let's be quiet.
         DASH_Q = "-q"
         ## If verbose, then be a little noisy
@@ -533,13 +537,6 @@ def Main() :
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
     if resultcode == 0 :
-        ## It is time to compile the .sym.c file we just created
-        OUR_COMMAND = DeSpace([COBC,DASH_V,"-c","-o",FILE_SYM_O,FILE_SYM_C])
-        if ECHO :
-            print(' '.join(OUR_COMMAND))
-        resultcode = SubprocessCall(OUR_COMMAND,False)
-
-    if resultcode == 0 :
         ## It is time to modify the .s file
         # Modify the .s file, removing all .loc references to
         # FILE_ROOT.c and any .h files.  The modification is done "in-place".
@@ -549,7 +546,14 @@ def Main() :
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
     if resultcode == 0 :
-        ## We can now use COBC to assemble that that .s file:
+        ## It is time to compile the .sym.c file we created
+        OUR_COMMAND = DeSpace([COBC,DASH_V,"-c","-o",FILE_SYM_O,FILE_SYM_C])
+        if ECHO :
+            print(' '.join(OUR_COMMAND))
+        resultcode = SubprocessCall(OUR_COMMAND,False)
+
+    if resultcode == 0 :
+        ## We can now use COBC to assemble that the .s file we modified:
         OUR_COMMAND=DeSpace([COBC,DASH_V,"-c", "-g", "-o", FILE_O, FILE_S])
 
         if ECHO :
