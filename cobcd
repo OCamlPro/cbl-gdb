@@ -372,6 +372,17 @@ def Main() :
     if end_early :
         os._exit(0)
 
+    ## If we are going to proceed from here, we have to have a version of
+    ## GnuCOBOL that will work for us.
+    needed_version = "cobc (GnuCOBOL) 3.1-dev.20200923"
+    command = [COBC, "--version"]
+    result = subprocess.check_output(command).decode("utf-8").split('\n');
+    if result[0] != needed_version  :
+        print("cobc is reporting: %s" % result[0])
+        print("          We need: %s" % needed_version)
+        print("Check https://cobolworx.com/pages/downloads.html for more information")
+        os._exit(1)
+
     ## We are going to leverage cobc's parsing and processing by using the -###
     ## option.  When that's used, the useful information goes to stderr, so we'll
     ## arrange to capture that in result_file.
