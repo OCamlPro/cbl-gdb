@@ -378,10 +378,10 @@ def Main() :
     ## GnuCOBOL that will work for us.
     needed_version = "cobc (GnuCOBOL) 3.1-dev.20200924"
     command = [COBC, "--version"]
-    result = subprocess.check_output(command).decode("utf-8").split('\n');
+    result = subprocess.check_output(command).decode("utf-8").replace('\r','').split('\n');
     if result[0] != needed_version  :
-        print("cobc is reporting: %s" % result[0])
-        print("          We need: %s" % needed_version)
+        print("cobc is reporting: \"%s\"" % result[0])
+        print("          We need: \"%s\"" % needed_version)
         print("Check https://cobolworx.com/pages/downloads.html for more information")
         os._exit(1)
 
