@@ -234,7 +234,8 @@ class GlobalVariables() :
             self.LIBCOB = None
             libcob_name = None
             for slib in shared_libraries :
-                m = re.match(r'.*[ ](.*libcob[.].*)$',slib)
+                # match "libcob.so" or "libcob-4.dll"
+                m = re.match(r'.*[ ](.*libcob[.|-].*)$',slib)
                 if m :
                     libcob_name = m.group(1)
                     break
