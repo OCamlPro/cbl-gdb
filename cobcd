@@ -381,13 +381,23 @@ def Main() :
 
     ## If we are going to proceed from here, we have to have a version of
     ## GnuCOBOL that will work for us.
-    needed_version = "cobc (GnuCOBOL) 3.1-dev.3841"
-    command = [COBC, "--version"]
-    result = subprocess.check_output(command).decode("utf-8").replace('\r','').split('\n');
-    if result[0] != needed_version  :
-        print("cobc is reporting: \"%s\"" % result[0])
-        print("          We need: \"%s\"" % needed_version)
-        print("Check https://cobolworx.com/pages/downloads.html for more information")
+    result_file = tempfile.TemporaryFile();
+    ## If it knows about the comment-fdump switch, we can use it:
+    command = [COBC, "--fgen-c-comment-fdump"]
+    try:
+        subprocess.check_output(command,stderr=result_file)
+    except:
+        ## We're expecting an error
+        pass
+    result_file.seek(0)
+    result_text = result_file.read().decode("utf-8")
+    result_file.close()
+    ## The two possible results are "no input files" and
+    ## "unrecognized option".  If we get the second one, the COBC compiler
+    ## is no good to us.
+    if result_text.find("unrecognized") != -1 :
+        print("The COBC compiler does not recognize the '--fgen-c-comment-fdump' option.")
+        print("You need a newer version, at least the GnuCOBOL-3.1 release.")
         os._exit(1)
 
     ## We are going to leverage cobc's parsing and processing by using the -###
