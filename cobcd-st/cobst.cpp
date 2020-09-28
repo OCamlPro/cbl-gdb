@@ -282,13 +282,13 @@ main(int argc, char *argv[])
                         params.c_filename.GetFname() );
     variables.FillInTheBlanks(cob_fields);
     variables.FixLocalStorageOffsets();
-#if defined(DUMPING)
+#if defined(DUMPING) 
     variables.Dump();
 #endif
 
     bool tack_on_python = params.insert_python;
     bool tack_on_filename = params.insert_filename;
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
     tack_on_python = false;
 #endif
     CreateSymc(params,
