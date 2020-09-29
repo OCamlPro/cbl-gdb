@@ -3,8 +3,8 @@ export CPP
 CXXFLAGS:=-std=c++11 -Wall -O3
 export CXXFLAGS
 
-prefix_default = /usr/local
-prefix ?= $(prefix_default)
+PREFIX_DEFAULT = /usr/local
+PREFIX ?= $(PREFIX_DEFAULT)
 
 # Don't try to build the optfde01 example until the cobcd script
 # can be found in /usr/local/bin/
@@ -46,15 +46,15 @@ cobcd.bat : include/version.h
 
 .gdbinit:
 	@echo "# enable use of COBOL cbl-dbg extension" > $@
-	@echo "add-auto-load-safe-path $(prefix)/bin" >> $@
-	@echo "set directories $(prefix)/bin"         >> $@
+	@echo "add-auto-load-safe-path $(PREFIX)/bin" >> $@
+	@echo "set directories $(PREFIX)/bin"         >> $@
 	@echo "set auto-load python-scripts on"        >> $@
 
 .PHONY : install
 install:
-	mkdir -p $(DESTDIR)$(prefix)/bin/
-	install cobcd $(DESTDIR)$(prefix)/bin/
-	install cobcd.bat $(DESTDIR)$(prefix)/bin/
+	mkdir -p $(DESTDIR)$(PREFIX)/bin/
+	install cobcd $(DESTDIR)$(PREFIX)/bin/
+	install cobcd.bat $(DESTDIR)$(PREFIX)/bin/
 	$(MAKE) -C cobcd-st install
 	$(MAKE) -C cobcd-sfix install
 	$(MAKE) -C cobcd-rw install
@@ -66,14 +66,14 @@ install:
 	@if [ X"$(DESTDIR)" = X"" ] ; then echo "In order for gdb to be able to load the Python script that displays COBOL variables," ; fi
 	@if [ X"$(DESTDIR)" = X"" ] ; then echo "you will have to create a ~/.gdbinit file that has the following lines in it:" ; fi
 	@if [ X"$(DESTDIR)" = X"" ] ; then echo "" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then echo "      add-auto-load-safe-path $(prefix)/bin" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then echo "      set directories $(prefix)/bin" ; fi
+	@if [ X"$(DESTDIR)" = X"" ] ; then echo "      add-auto-load-safe-path $(PREFIX)/bin" ; fi
+	@if [ X"$(DESTDIR)" = X"" ] ; then echo "      set directories $(PREFIX)/bin" ; fi
 	@if [ X"$(DESTDIR)" = X"" ] ; then echo "      set auto-load python-scripts on" ; fi
 	@if [ X"$(DESTDIR)" = X"" ] ; then echo "" ; fi
 	@if [ X"$(DESTDIR)" = X"" ] ; then echo "You may use" ; fi
 	@if [ X"$(DESTDIR)" = X"" ] ; then echo "" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] && [ X"$(prefix)"  = X"$(prefix_default)" ] ; then echo "      $(MAKE) .gdbinit" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] && [ X"$(prefix)" != X"$(prefix_default)" ] ; then echo "      $(MAKE) .gdbinit prefix=$(prefix)" ; fi
+	@if [ X"$(DESTDIR)" = X"" ] && [ X"$(PREFIX)"  = X"$(PREFIX_DEFAULT)" ] ; then echo "      $(MAKE) .gdbinit" ; fi
+	@if [ X"$(DESTDIR)" = X"" ] && [ X"$(PREFIX)" != X"$(PREFIX_DEFAULT)" ] ; then echo "      $(MAKE) .gdbinit PREFIX=$(PREFIX)" ; fi
 	@if [ X"$(DESTDIR)" = X"" ] ; then echo "" ; fi
 	@if [ X"$(DESTDIR)" = X"" ] ; then 	echo "to create a sample file (in this folder) with that content." ; fi
 	@if [ X"$(DESTDIR)" = X"" ] ; then 	echo "" ; fi
@@ -82,8 +82,8 @@ install:
 
 .PHONY : uninstall
 uninstall:
-	rm -f $(DESTDIR)$(prefix)/bin/cobcd
-	rm -f $(DESTDIR)$(prefix)/bin/cobcd.bat
+	rm -f $(DESTDIR)$(PREFIX)/bin/cobcd
+	rm -f $(DESTDIR)$(PREFIX)/bin/cobcd.bat
 	$(MAKE) -C cobcd-st uninstall
 	$(MAKE) -C cobcd-sfix uninstall
 	$(MAKE) -C cobcd-rw uninstall

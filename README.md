@@ -19,14 +19,14 @@ Building the source, and installing the binaries and scripts operates as you'd g
 
 By default, the executables are installed in /usr/local/bin.  If you choose to install them elsewhere, you can do it like this:
 
-	sudo make DESTDIR=<prefix> install
+	sudo make PREFIX=<prefix> install
 
 will cause the executables to be installed in <prefix>/bin
 
 The installation can be reversed with one or the other of
 
 	sudo make uninstall
-	sudo make DESTDIR=<prefix> uninstall
+	sudo make PREFIX=<prefix> uninstall
 
 ## How to use the debugging extensions
 
