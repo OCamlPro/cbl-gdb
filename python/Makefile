@@ -2,7 +2,7 @@
 
 project=cobcd.py
 
-DESTDIR ?=/usr/local
+prefix ?=/usr/local
 
 AUTO_LOAD_FOUND := $(shell grep -s -e "^[ \t]*set auto-load safe-path /" ~/.gdbinit | wc -l)
 AUTO_SCRIPTS_FOUND := $(shell grep -s -e "^[ \t]*set auto-load python-scripts on" ~/.gdbinit | wc -l)
@@ -30,9 +30,9 @@ pregit:
 #
 .PHONY : install
 install :
-	mkdir -p $(DESTDIR)/bin/
-	install $(project) $(DESTDIR)/bin/
+	mkdir -p $(DESTDIR)$(prefix)/bin/
+	install $(project) $(DESTDIR)$(prefix)/bin/
 
 .PHONY : uninstall
 uninstall :
-	rm -f $(DESTDIR)/bin/$(project)
+	rm -f $(DESTDIR)$(prefix)/bin/$(project)
