@@ -1,6 +1,6 @@
 project=cobcd-rw
 
-PREFIX ?=/usr/local
+prefix ?=/usr/local
 
 src := $(wildcard *.cpp)
 obj := $(src:.cpp=.o)
@@ -26,9 +26,9 @@ pregit:
 
 .PHONY : install
 install :
-	mkdir -p $(DESTDIR)$(PREFIX)/bin/
-	install $(project) $(DESTDIR)$(PREFIX)/bin/
+	mkdir -p $(DESTDIR)$(prefix)/bin/
+	install $(project) $(DESTDIR)$(prefix)/bin/
 
 .PHONY : uninstall
 uninstall :
-	rm -f $(DESTDIR)$(PREFIX)/bin/$(project)
+	rm -f $(DESTDIR)$(prefix)/bin/$(project)
