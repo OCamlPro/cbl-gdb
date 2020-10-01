@@ -179,6 +179,7 @@ def Main() :
     COBC         = os.environ.get("COBC") or os.environ.get("COBCD_COBC") or "cobc"
     #ECHO = "1"  # This overrides the environment.  If this is uncommented,
                 # then you are probably doing development work on this script
+    SAVE_TEMPS=""
 
     if len(sys.argv) == 1 :
         usage(SCRIPT_VERSION)
@@ -234,7 +235,7 @@ def Main() :
     FILE_S     = ""
     FILE_C     = ""
     FILE_O     = ""
-    FILE_LST   = ""
+    FILE_I     = ""
     FILE_SYM_C = ""
     FILE_SYM_O = ""
 
@@ -328,9 +329,11 @@ def Main() :
             # Requests for verbosity mess up our -### processing, so we filter them out for later
             DASH_V = param
             continue
-        if param in ("-g","-save-temps","--save-temps") :
-            # If he asked for -g or --save-temps, then leave the intermediate files:
-            COBCDNOCLEAN=1
+        if param.find("-save-temps") in (0,1) :
+            # If he asked for --save-temps, we have to suppress the COBC processing of it
+            # We'll take care of it at the end.
+            SAVE_TEMPS=param
+            continue;
         elif param.find("--fdump") == 0 or param.find("-fdump") == 0 :
             ASKED_FOR_FDUMP=True
         elif param in ("-E","-C","-S","-c","-###") :
@@ -480,7 +483,7 @@ def Main() :
     FILE_S     = FILE_ROOT + ".s"
     FILE_C     = FILE_ROOT + ".c"
     FILE_O     = FILE_ROOT + ".o"
-    FILE_LST   = FILE_ROOT + ".cbl.lst"
+    FILE_I     = FILE_ROOT + ".i"
     FILE_SYM_C = FILE_ROOT + ".sym.c"
     FILE_SYM_O = FILE_ROOT + ".sym.o"
 
@@ -513,8 +516,8 @@ def Main() :
             print("PYTHON     is ",PYTHON     )
             print("FILE_ROOT  is ",FILE_ROOT  )
             print("FILE_CBL   is ",FILE_CBL   )
-            print("FILE_LST   is ",FILE_LST   )
             print("FILE_C     is ",FILE_C     )
+            print("FILE_I     is ",FILE_I     )
             print("FILE_S     is ",FILE_S     )
             print("FILE_O     is ",FILE_O     )
             print("FILE_SYM_C is ",FILE_SYM_C )
@@ -529,7 +532,8 @@ def Main() :
 
     if resultcode == 0 :
         ## Do the initial compilation that gives us the .c .h .i and .s files
-        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -g -fdump=ALL --fgen-c-line-directives --fgen-c-labels -fdump=WS -fdump=LS -fdump=LO " + comment_fdump + " " + ' '.join(COMMAND_LINE))
+#!#        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -g -fdump=ALL --fgen-c-line-directives --fgen-c-labels -fdump=WS -fdump=LS -fdump=LO " + comment_fdump + " " + ' '.join(COMMAND_LINE))
+        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -fsource-location -A -ggdb --save-temps --fgen-c-line-directives --fgen-c-labels -fdump=WS -fdump=LS -fdump=LO " + comment_fdump + " " + ' '.join(COMMAND_LINE))
         if ECHO :
             print(' '.join(OUR_COMMAND))
         resultcode = SubprocessCall(OUR_COMMAND,False)
@@ -569,7 +573,7 @@ def Main() :
 
     if resultcode == 0 :
         ## We can now use COBC to assemble that the .s file we modified:
-        OUR_COMMAND=DeSpace([COBC,DASH_V,"-c", "-g", "-o", FILE_O, FILE_S])
+        OUR_COMMAND=DeSpace([COBC,DASH_V,"-c", "-o", FILE_O, FILE_S])
 
         if ECHO :
             print(' '.join(OUR_COMMAND))
@@ -621,12 +625,45 @@ def Main() :
                 print("Copying",PYTHON,"to",DEST)
             shutil.copyfile(PYTHON,DEST)
 
-    if COBCDNOCLEAN == "" :
-        ## We are supposed to be cleaning up after ourselves:
+    ## At the present time, all of the intermediate files are still in
+    ## the current working directory.  If we were given -save--temps=x,
+    ## we need to move the temp folders to x, assuming x exists.
+
+    if SAVE_TEMPS != "" :
+        # It's non-blank:
+        temps_dest = SAVE_TEMPS.split('=')
+        if len(temps_dest) == 2 :
+           # A destination was specified
+            temps_dest = temps_dest[1]
+            if os.path.isdir(temps_dest) :
+                # The destination is a directory, so copy our intermediate files there
+                # don't include the .s file; historically COBC didn't include that in
+                # the temp-files, because in normal processing it wasn't generated explicitly;
+                # it was piped from 'cc1' to 'as'
+                shutil.copy(FILE_C     ,temps_dest)
+                shutil.copy(FILE_I     ,temps_dest)
+                shutil.copy(FILE_O     ,temps_dest)
+                starting_dir = FILE_ROOT.split('/')[0:-1]
+                starting_dir = '/'.join(starting_dir)
+                if len(starting_dir) == 0 :
+                    starting_dir = '.'
+                files = os.listdir(starting_dir)
+                for h_file in files :
+                    if h_file[-2:] in (".h") :
+                        shutil.copy(h_file     ,temps_dest)
+                ## Having done the copy, we set SAVE_TEMPS to "", which
+                ## means the local files will be deleted (unless COBCDNOCLEAN is on)
+                SAVE_TEMPS = ""
+            else :
+                print("cobcd: warning: '%s' is not a directory, defaulting to current directory" % temps_dest)
+
+    ## When you get here, it's time to clean up, unless we've been told not to.
+    if COBCDNOCLEAN == "" and SAVE_TEMPS == "":
+        ## With both switches off, we remove everything
         DeleteAFile(FILE_S    )
         DeleteAFile(FILE_C    )
+        DeleteAFile(FILE_I    )
         DeleteAFile(FILE_O    )
-        DeleteAFile(FILE_LST  )
         DeleteAFile(FILE_SYM_C)
         DeleteAFile(FILE_SYM_O)
 
@@ -636,9 +673,15 @@ def Main() :
             starting_dir = '.'
         files = os.listdir(starting_dir)
         for h_file in files :
-            if h_file[-2:] in (".i",".h") :
+            if h_file[-2:] in (".h") :
                 DeleteAFile(h_file)
-
+    elif COBCDNOCLEAN == "" and SAVE_TEMPS != "" :
+        ## With just SAVE_TEMPS, we just leave the files that
+        ## COBC historically left around:
+        DeleteAFile(FILE_S)
+        DeleteAFile(FILE_SYM_C)
+        DeleteAFile(FILE_SYM_O)
+    # else : ## COBCDNOCLEAN is on, so we leave everything
     os._exit(resultcode)
 
 try :
