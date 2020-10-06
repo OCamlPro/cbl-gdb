@@ -230,6 +230,9 @@ def Main() :
         ## -s doesn't, however, work in RHEL7:
         DASH_F="-f"
         DASH_S=""
+        FCF_PROTECTION = ""
+    else :
+        FCF_PROTECTION = "-fcf-protection=none"
 
     if windows :
         ## and in Windows, neither works:
@@ -567,8 +570,7 @@ def Main() :
 
     if resultcode == 0 :
         ## Do the initial compilation that gives us the .c .h .i and .s files
-#!#        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -g -fdump=ALL --fgen-c-line-directives --fgen-c-labels -fdump=WS -fdump=LS -fdump=LO " + comment_fdump + " " + ' '.join(COMMAND_LINE))
-        s = COB_CFLAGS_BASE + ["-fcf-protection=none"];
+        s = COB_CFLAGS_BASE + [FCF_PROTECTION];
         os.environ["COB_CFLAGS"]= ' '.join(s)
         OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -fsource-location -A -ggdb --save-temps --fgen-c-line-directives --fgen-c-labels -fdump=WS -fdump=LS -fdump=LO " + comment_fdump + " " + ' '.join(COMMAND_LINE))
         if ECHO :
