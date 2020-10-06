@@ -339,17 +339,7 @@ build(PARAMETERS &params,
             continue;
         }
 
-        if( !strstr(ach,"endbr64") ) {
-            // When gcc went from version 8 to version 9, the compiler started
-            // inserting endbr64 assembly language instructions.  It's safer, says
-            // the documentation.
-            //
-            // They screw up our efforts to trick GDB into doing our bidding -- GDB loses
-            // track of what lines to display after subroutine calls -- so I took the easy
-            // way out and just removed the suckers.
-            //ss << input_file[i] << endl;
-            fprintf(f,"%s\n",ach);
-        }
+        fprintf(f,"%s\n",ach);
     }
 
     fclose(f);

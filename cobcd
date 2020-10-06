@@ -120,6 +120,21 @@ def QuoteMe(param) :
         param = "'" + param + "'"
     return param
 
+def InfoFetch(linelist,var) :
+    retval = []
+    lines = len(linelist)
+    for i in range(lines) :
+        if linelist[i].find(var) == 0 :
+            tokens = linelist[i].split()
+            retval = tokens[2:]
+            i += 1
+            while i < lines :
+                if linelist[i][0:1] not in (' ','\t') :
+                    break;
+                retval += linelist[i].split()
+                i += 1
+    return retval
+
 def Main() :
     ###########################################################################
     ## The version number in the next line is updated by a Linux bash script. #
@@ -403,6 +418,25 @@ def Main() :
         print("You need a newer version, at least the GnuCOBOL-3.1 release.")
         os._exit(1)
 
+    ## Now we have to call `COBC --info`, because we are going to be modifying
+    ## COB_CFLAGS, which means we need to know what they are in the first place:
+
+    result_file = tempfile.TemporaryFile();
+    command = [COBC, "--info"]
+    try:
+        info_string = subprocess.check_output(command,stderr=result_file).decode("utf-8")
+    except:
+        print("Really unexpected error on COBC --info")
+        os_exit(1)
+        pass
+    result_file.seek(0)
+    result_text = result_file.read().decode("utf-8")
+    result_file.close()
+
+    info_string = info_string.replace('\r','')  # A nod to Windows
+    info_string = info_string.split('\n')
+    COB_CFLAGS_BASE  = InfoFetch(info_string,"COB_CFLAGS")
+
     ## We are going to leverage cobc's parsing and processing by using the -###
     ## option.  When that's used, the useful information goes to stderr, so we'll
     ## arrange to capture that in result_file.
@@ -450,6 +484,7 @@ def Main() :
                 print(' '.join(command))
             resultcode = SubprocessCall(command,True)
             os._exit(resultcode)
+
 
     if resultcode == 0 :
         if TARGET == "" :
@@ -533,8 +568,11 @@ def Main() :
     if resultcode == 0 :
         ## Do the initial compilation that gives us the .c .h .i and .s files
 #!#        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -g -fdump=ALL --fgen-c-line-directives --fgen-c-labels -fdump=WS -fdump=LS -fdump=LO " + comment_fdump + " " + ' '.join(COMMAND_LINE))
+        s = COB_CFLAGS_BASE + ["-fcf-protection=none"];
+        os.environ["COB_CFLAGS"]= ' '.join(s)
         OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -fsource-location -A -ggdb --save-temps --fgen-c-line-directives --fgen-c-labels -fdump=WS -fdump=LS -fdump=LO " + comment_fdump + " " + ' '.join(COMMAND_LINE))
         if ECHO :
+            print("COB_CFLAGS:",os.environ["COB_CFLAGS"])
             print(' '.join(OUR_COMMAND))
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
@@ -682,6 +720,43 @@ def Main() :
         DeleteAFile(FILE_SYM_C)
         DeleteAFile(FILE_SYM_O)
     # else : ## COBCDNOCLEAN is on, so we leave everything
+
+    result=""
+    it_worked = True
+    he_needs_advice = False
+    try :
+        command=["apt","list","--installed","libc6-dbg"]
+        result_file = tempfile.TemporaryFile();
+        result = subprocess.check_output(command,stderr=result_file).decode("utf-8")
+        result_file.close()
+    except :
+        it_worked = False
+
+    if it_worked :
+        if result.find("libc6-dbg") != -1 :
+            he_needs_advice = True
+    else :
+        pass
+
+    if he_needs_advice :
+        print("###   ")
+        print("###   There is something you need to know.")
+        print("###   ")
+        print("###   Your system has the libc6-dbg package installed.")
+        print("###   ")
+        print("###   This means that when you use the GDB STEP command, GDB will sometimes")
+        print("###   step into the debuggable libc6 routines.  Often, when that occurs, GDB")
+        print("###   loses track of where the COBOL program was stopped at the point you")
+        print("###   issued the STEP command, and GDB will behave as if you entered CONTINUE")
+        print("###   instead of STEP.")
+        print("###   ")
+        print("###   This behavior is annoying.")
+        print("###   ")
+        print("###   The solution is to remove the libc6-dgb package with")
+        print("###   ")
+        print("###        sudu apt remove libc6-dbg")
+        print("###   ")
+
     os._exit(resultcode)
 
 try :
