@@ -151,6 +151,14 @@ def RunCommand(command) :
     err_file.seek(0)
     result_err = err_file.read().decode("utf-8").replace('\r','')  # A nod to Windows
     err_file.close()
+
+    if not isinstance(result_std,str) and isinstance(result_std,unicode) :
+        # This will come into play with Python2
+        result_std = result_std.encode('ascii','replace')
+    if not isinstance(result_err,str) and isinstance(result_err,unicode) :
+        # This will come into play with Python2
+        result_err = result_err.encode('ascii','replace')
+
     return errcode, result_std, result_err
 
 def Main() :
