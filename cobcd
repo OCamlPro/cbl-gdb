@@ -443,7 +443,7 @@ def Main() :
 
     ## We need to know what underlying compiler is in use:
     GCC = InfoFetch(info_string,"CC")
-    if len(GCC) == 1 :
+    if len(GCC) >= 1 :
         GCC = GCC[0]
 
     ## We are going to be modifying COB_CFLAGS, which means we need to
