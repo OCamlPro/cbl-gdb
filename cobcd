@@ -757,7 +757,7 @@ def Main() :
             print("###   ")
             print("###   This behavior can be annoying.")
             print("###   ")
-            print("###   The solution is to remove the libc6-dgb package with")
+            print("###   The solution is to remove the libc6-dbg package with")
             print("###   ")
             print("###        sudu apt remove libc6-dbg")
             print("###   ")
