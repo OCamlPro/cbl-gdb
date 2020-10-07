@@ -62,6 +62,7 @@ def print_help(version) :
     print("COBCDEVEL=1        Use development toolchain instead of production toolchain")
     print("COBCDNOCLEAN=1     Don't delete intermediate files")
     print("COBCDFLAGS=xyz     These flags are passed to cobc")
+    print("COBCDMSG=1         Suppresses the libcd6-dbg/glibc-debuginfo warning message")
     print("ECHO=1             Causes line-by-line command echoing (also turned on by -v)")
     print("")
     print("If you need help with cobc, use the command 'cobc --help'")
@@ -134,6 +135,23 @@ def InfoFetch(linelist,var) :
                 retval += linelist[i].split()
                 i += 1
     return retval
+
+def RunCommand(command) :
+    std_file = tempfile.TemporaryFile();
+    err_file = tempfile.TemporaryFile();
+    errcode = -2;
+    try:
+        errcode = subprocess.call(command,stdout=std_file,stderr=err_file)
+    except:
+        errcode = -1
+        pass
+    std_file.seek(0)
+    result_std = std_file.read().decode("utf-8").replace('\r','')  # A nod to Windows
+    std_file.close()
+    err_file.seek(0)
+    result_err = err_file.read().decode("utf-8").replace('\r','')  # A nod to Windows
+    err_file.close()
+    return errcode, result_std, result_err
 
 def Main() :
     ###########################################################################
@@ -230,9 +248,6 @@ def Main() :
         ## -s doesn't, however, work in RHEL7:
         DASH_F="-f"
         DASH_S=""
-        FCF_PROTECTION = ""
-    else :
-        FCF_PROTECTION = "-fcf-protection=none"
 
     if windows :
         ## and in Windows, neither works:
@@ -404,41 +419,43 @@ def Main() :
     ## GnuCOBOL that will work for us.
     result_file = tempfile.TemporaryFile();
     ## If it knows about the comment-fdump switch, we can use it:
-    command = [COBC, "--fgen-c-comment-fdump"]
-    try:
-        subprocess.check_output(command,stderr=result_file)
-    except:
-        ## We're expecting an error
-        pass
-    result_file.seek(0)
-    result_text = result_file.read().decode("utf-8")
-    result_file.close()
+    errcode, std, err = RunCommand([COBC, "--fgen-c-comment-fdump"])
     ## The two possible results are "no input files" and
     ## "unrecognized option".  If we get the second one, the COBC compiler
     ## is no good to us.
-    if result_text.find("unrecognized") != -1 :
+    if err.find("unrecognized") != -1 :
         print("The COBC compiler does not recognize the '--fgen-c-comment-fdump' option.")
-        print("You need a newer version, at least the GnuCOBOL-3.1 release.")
+        print("You need GnuCOBOL-3.1 (The release version of November 2020) or newer.")
         os._exit(1)
 
-    ## Now we have to call `COBC --info`, because we are going to be modifying
-    ## COB_CFLAGS, which means we need to know what they are in the first place:
+    ## Now we have to call `COBC --info`; there are some things we need to know:
+    errcode, std, err = RunCommand([COBC, "--info"])
 
-    result_file = tempfile.TemporaryFile();
-    command = [COBC, "--info"]
-    try:
-        info_string = subprocess.check_output(command,stderr=result_file).decode("utf-8")
-    except:
-        print("Really unexpected error on COBC --info")
-        os_exit(1)
-        pass
-    result_file.seek(0)
-    result_text = result_file.read().decode("utf-8")
-    result_file.close()
+    info_string = std.split('\n')
 
-    info_string = info_string.replace('\r','')  # A nod to Windows
-    info_string = info_string.split('\n')
+    ## We need to know what underlying compiler is in use:
+    GCC = InfoFetch(info_string,"CC")
+    if len(GCC) == 1 :
+        GCC = GCC[0]
+
+    ## We are going to be modifying COB_CFLAGS, which means we need to
+    ## know what they are in the first place:
     COB_CFLAGS_BASE  = InfoFetch(info_string,"COB_CFLAGS")
+
+    ## If the underlying C compiler understands the -fcf-protection switch(GCC-9 and later?), we
+    ## need to turn it off when using COBC.  If the compiler doesn't understand it, we have to leave
+    ## it out of our commands:
+    errcode, std, err = RunCommand([GCC, "-fcf-protection"])
+    if err.find("unrecognized") != -1 :
+        # The compiler doesn't recognize the -fcf-protection switch, so we
+        # will be issuing an empty string:
+        FCF_PROTECTION = ""
+    else :
+        # The compiler recognizes the -fcf-protection switch, so we
+        # will be using that switch to turn off the protection, which defaults
+        # to ON, and which causes trouble for us when the debugger encounters
+        # endbr64 assembly-language instructions:
+        FCF_PROTECTION = "-fcf-protection=none"
 
     ## We are going to leverage cobc's parsing and processing by using the -###
     ## option.  When that's used, the useful information goes to stderr, so we'll
@@ -723,41 +740,33 @@ def Main() :
         DeleteAFile(FILE_SYM_O)
     # else : ## COBCDNOCLEAN is on, so we leave everything
 
-    result=""
-    it_worked = True
-    he_needs_advice = False
-    try :
-        command=["apt","list","--installed","libc6-dbg"]
-        result_file = tempfile.TemporaryFile();
-        result = subprocess.check_output(command,stderr=result_file).decode("utf-8")
-        result_file.close()
-    except :
-        it_worked = False
-
-    if it_worked :
-        if result.find("libc6-dbg") != -1 :
-            he_needs_advice = True
+    ## If the debugging versions of libc.so.6 are installed, the unsuspecting user will be startled
+    ## by unexpectedly stepping into the library when debugging COBOL code.  Let's forestall a lot
+    ## of questions by warning about it now, and suggesting a solution:
+    errcode, std, err = RunCommand(["apt","list","--installed","libc6-dbg"])
+    suppress = os.getenv("COBCDMSG") or '0'
+    if errcode == 0 :
+        if std.find("libc6-dbg") != -1 and suppress != '1':
+            print("###   ")
+            print("###   There is something you need to know.")
+            print("###   ")
+            print("###   Your system has the libc6-dbg package installed.")
+            print("###   ")
+            print("###   This means that when you use the GDB STEP command, GDB will sometimes")
+            print("###   step into the debuggable libc6 routines.")
+            print("###   ")
+            print("###   This behavior can be annoying.")
+            print("###   ")
+            print("###   The solution is to remove the libc6-dgb package with")
+            print("###   ")
+            print("###        sudu apt remove libc6-dbg")
+            print("###   ")
+            print("###   Should you need to keep the libc6-dbg package installed,")
+            print("###   this informational message can be suppressed with the environment")
+            print("###   variable COBCDMSG=1")
+            print("###   ")
     else :
         pass
-
-    if he_needs_advice :
-        print("###   ")
-        print("###   There is something you need to know.")
-        print("###   ")
-        print("###   Your system has the libc6-dbg package installed.")
-        print("###   ")
-        print("###   This means that when you use the GDB STEP command, GDB will sometimes")
-        print("###   step into the debuggable libc6 routines.  Often, when that occurs, GDB")
-        print("###   loses track of where the COBOL program was stopped at the point you")
-        print("###   issued the STEP command, and GDB will behave as if you entered CONTINUE")
-        print("###   instead of STEP.")
-        print("###   ")
-        print("###   This behavior is annoying.")
-        print("###   ")
-        print("###   The solution is to remove the libc6-dgb package with")
-        print("###   ")
-        print("###        sudu apt remove libc6-dbg")
-        print("###   ")
 
     os._exit(resultcode)
 
