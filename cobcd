@@ -450,6 +450,11 @@ def Main() :
     ## know what they are in the first place:
     COB_CFLAGS_BASE  = InfoFetch(info_string,"COB_CFLAGS")
 
+    ## We need to get rid of '-Wp,-D_FORTIFY_SOURCE=2':
+    COB_CFLAGS_BASE = ' '.join(COB_CFLAGS_BASE)
+    COB_CFLAGS_BASE = COB_CFLAGS_BASE.replace("-Wp,-D_FORTIFY_SOURCE=2","")
+    COB_CFLAGS_BASE = COB_CFLAGS_BASE.split()
+
     ## If the underlying C compiler understands the -fcf-protection switch(GCC-9 and later?), we
     ## need to turn it off when using COBC.  If the compiler doesn't understand it, we have to leave
     ## it out of our commands:
