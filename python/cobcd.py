@@ -163,7 +163,10 @@ class GlobalVariables() :
 
             # We now have a cob_module and a cob_global set up in the GDB
             # process.  There's some information we need to copy over
-            # from the target workspace:
+            # from the inferior's workspace:
+            ## Calculate offset of decimal_point in cob_module
+            offset = 12*GV_GlobalVariables.SizeofPointer + 7*GV_GlobalVariables.SizeofInt + 1
+            
             cob_current_module = None
             cobglobptr = GetPointerAt("cobglobptr")
             if cobglobptr :
@@ -206,23 +209,38 @@ class GlobalVariables() :
                 #        unsigned char      currency_symbol;    /* CURRENCY */
                 #        unsigned char      numeric_separator;  /* Separator */
                 #
-                ## Calculate offset of decimal_point
-                offset = 12*GV_GlobalVariables.SizeofPointer + 7*GV_GlobalVariables.SizeofInt + 1
                 characters = GetBytesAt(cob_current_module+offset,3)
                 characters = bytearray(characters)
 
                 decimal_point = characters[0]
                 currency_symbol = characters[1]
                 numeric_separator = characters[2]
+            else :
+                default_editing_characters = os.environ.get('CPRINT_E')
+                if default_editing_characters :
+                    decimal_point = ord(default_editing_characters[0])
+                    currency_symbol = ord(default_editing_characters[1])
+                    numeric_separator = ord(default_editing_characters[2])
+                else :
+                    print("##### ")
+                    print("##### We couldn't find cobglobptr in libcob. The symbols must have been stripped")
+                    print("##### from libcob, which usually means GnuCOBOL was packaged by Debian or Centos")
+                    print("##### without the default stripping behavior suppressed.  We will set the numeric")
+                    print("##### editing characters to '.$,'  You can suppress this message with the environment")
+                    print("##### variable CPRINT_E='.$,' (or with other characters as necessary).");
+                    print("##### ")
+                    decimal_point = ord('.')
+                    currency_symbol = ord('$')
+                    numeric_separator = ord(',')
 
-                ## We got those parameters, through GDB, from the COBOL process.
-                ## We now have to shove them into the cob_module we established
-                ## with cob_module_global_enter() here in the GDB process.
+            ## By hook or by crook, we now have the three numeric editing characters.
+            ## We now have to shove them into the cob_module we established
+            ## with cob_module_global_enter() here in the GDB process.
 
-                pp = cast(self.pModule,POINTER(c_byte))
-                pp[offset+0] = decimal_point
-                pp[offset+1] = currency_symbol
-                pp[offset+2] = numeric_separator
+            pp = cast(self.pModule,POINTER(c_byte))
+            pp[offset+0] = decimal_point
+            pp[offset+1] = currency_symbol
+            pp[offset+2] = numeric_separator
 
         except :
             traceback.print_exc()
@@ -1190,7 +1208,6 @@ class CobolVariable() :
         buffer = ctypes.create_string_buffer(length)
         size = ctypes.c_size_t(length)
 
-        #print("About to call cob_get_field_str")
         GV_GlobalVariables.LIBCOB.cob_get_field_str.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
         GV_GlobalVariables.LIBCOB.cob_get_field_str(byref(cob_field),buffer,size)
 
