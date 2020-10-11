@@ -43,6 +43,7 @@ import traceback
 import subprocess
 import tempfile
 import shutil
+import time
 
 def usage(version) :
     print("This is the cobc debugging wrapper", version)
@@ -161,6 +162,35 @@ def RunCommand(command) :
 
     return errcode, result_std, result_err
 
+def CheckForDebugLibraries() :
+    ## If the debugging versions of libc.so.6 are installed, the unsuspecting user will be startled
+    ## by unexpectedly stepping into the library when debugging COBOL code.  Let's forestall a lot
+    ## of questions by warning about it now, and suggesting a solution:
+    errcode, std, err = RunCommand(["apt","list","--installed","libc6-dbg"])
+    suppress = os.getenv("COBCDMSG") or '0'
+    if errcode == 0 :
+        if std.find("libc6-dbg") != -1 and suppress != '1':
+            print("###   ")
+            print("###   There is something you need to know.")
+            print("###   ")
+            print("###   Your system has the libc6-dbg package installed.")
+            print("###   ")
+            print("###   This means that when you use the GDB STEP command, GDB will sometimes")
+            print("###   step into the debuggable libc6 routines.")
+            print("###   ")
+            print("###   This behavior can be annoying.")
+            print("###   ")
+            print("###   The solution is to remove the libc6-dbg package with")
+            print("###   ")
+            print("###        sudu apt remove libc6-dbg")
+            print("###   ")
+            print("###   Should you need to keep the libc6-dbg package installed,")
+            print("###   this informational message can be suppressed with the environment")
+            print("###   variable COBCDMSG=1")
+            print("###   ")
+    else :
+        pass
+
 def Main() :
     ###########################################################################
     ## The version number in the next line is updated by a Linux bash script. #
@@ -168,6 +198,12 @@ def Main() :
     ## Don't mess with it!                                                    #
     ###########################################################################
     SCRIPT_VERSION="[Version 4.1]"
+
+    SHOW_TIME = True    # For timing analysis.  Won't work on Python2
+    SHOW_TIME = False
+    if SHOW_TIME :
+        clock_start = time.monotonic()
+        lap_start = 0;
 
     windows = False
     EXE_SUFFIX = ""
@@ -392,6 +428,7 @@ def Main() :
     if ASKED_FOR_VERSION :
         SubprocessCall([COBC,DASH_V,"-V"],False)
         usage(SCRIPT_VERSION)
+        CheckForDebugLibraries()
         os._exit(1)
 
     if end_early :
@@ -423,6 +460,11 @@ def Main() :
     if end_early :
         os._exit(0)
 
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("startup overhead", time_now - lap_start, time_now))
+        lap_start = time_now
+
     ## If we are going to proceed from here, we have to have a version of
     ## GnuCOBOL that will work for us.
     result_file = tempfile.TemporaryFile();
@@ -435,6 +477,11 @@ def Main() :
         print("The COBC compiler does not recognize the '--fgen-c-comment-fdump' option.")
         print("You need GnuCOBOL-3.1 (The release version of November 2020) or newer.")
         os._exit(1)
+
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("check c-comment", time_now - lap_start, time_now))
+        lap_start = time_now
 
     ## Now we have to call `COBC --info`; there are some things we need to know:
     errcode, std, err = RunCommand([COBC, "--info"])
@@ -455,6 +502,11 @@ def Main() :
     COB_CFLAGS_BASE = COB_CFLAGS_BASE.replace("-Wp,-D_FORTIFY_SOURCE=2","")
     COB_CFLAGS_BASE = COB_CFLAGS_BASE.split()
 
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("COBC --info", time_now - lap_start, time_now))
+        lap_start = time_now
+
     ## If the underlying C compiler understands the -fcf-protection switch(GCC-9 and later?), we
     ## need to turn it off when using COBC.  If the compiler doesn't understand it, we have to leave
     ## it out of our commands:
@@ -469,6 +521,11 @@ def Main() :
         # to ON, and which causes trouble for us when the debugger encounters
         # endbr64 assembly-language instructions:
         FCF_PROTECTION = "-fcf-protection=none"
+
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("check fcf-protection", time_now - lap_start, time_now))
+        lap_start = time_now
 
     ## We are going to leverage cobc's parsing and processing by using the -###
     ## option.  When that's used, the useful information goes to stderr, so we'll
@@ -518,6 +575,10 @@ def Main() :
             resultcode = SubprocessCall(command,True)
             os._exit(resultcode)
 
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("COBC -###", time_now - lap_start, time_now))
+        lap_start = time_now
 
     if resultcode == 0 :
         if TARGET == "" :
@@ -608,6 +669,11 @@ def Main() :
             print(' '.join(OUR_COMMAND))
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("COBC -S", time_now - lap_start, time_now))
+        lap_start = time_now
+
     if resultcode == 0 :
         ## Normally, let's be quiet.
         DASH_Q = "-q"
@@ -625,6 +691,11 @@ def Main() :
             print(' '.join(OUR_COMMAND))
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("COBST", time_now - lap_start, time_now))
+        lap_start = time_now
+
     if resultcode == 0 :
         ## It is time to modify the .s file
         # Modify the .s file, removing all .loc references to
@@ -634,6 +705,11 @@ def Main() :
             print(' '.join(OUR_COMMAND))
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("SFIX", time_now - lap_start, time_now))
+        lap_start = time_now
+
     if resultcode == 0 :
         ## It is time to compile the .sym.c file we created
         OUR_COMMAND = DeSpace([COBC,DASH_V,"-c","-o",FILE_SYM_O,FILE_SYM_C])
@@ -641,13 +717,22 @@ def Main() :
             print(' '.join(OUR_COMMAND))
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("Compile C", time_now - lap_start, time_now))
+        lap_start = time_now
+
     if resultcode == 0 :
         ## We can now use COBC to assemble that the .s file we modified:
         OUR_COMMAND=DeSpace([COBC,DASH_V,"-c", "-o", FILE_O, FILE_S])
-
         if ECHO :
             print(' '.join(OUR_COMMAND))
         resultcode = SubprocessCall(OUR_COMMAND,False)
+
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("Assemble S", time_now - lap_start, time_now))
+        lap_start = time_now
 
     if resultcode == 0 :
         # It is now time to build up the final link command.  Based on the
@@ -678,6 +763,11 @@ def Main() :
         if ECHO :
             print(' '.join(FINAL_COMMAND))
         resultcode = SubprocessCall(FINAL_COMMAND,False)
+
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("Final link", time_now - lap_start, time_now))
+        lap_start = time_now
 
     if resultcode == 0 :
         ## And we have a debuggable executable
@@ -727,6 +817,11 @@ def Main() :
             else :
                 print("cobcd: warning: '%s' is not a directory, defaulting to current directory" % temps_dest)
 
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("About to clean up", time_now - lap_start, time_now))
+        lap_start = time_now
+
     ## When you get here, it's time to clean up, unless we've been told not to.
     if COBCDNOCLEAN == "" and SAVE_TEMPS == "":
         ## With both switches off, we remove everything
@@ -753,33 +848,10 @@ def Main() :
         DeleteAFile(FILE_SYM_O)
     # else : ## COBCDNOCLEAN is on, so we leave everything
 
-    ## If the debugging versions of libc.so.6 are installed, the unsuspecting user will be startled
-    ## by unexpectedly stepping into the library when debugging COBOL code.  Let's forestall a lot
-    ## of questions by warning about it now, and suggesting a solution:
-    errcode, std, err = RunCommand(["apt","list","--installed","libc6-dbg"])
-    suppress = os.getenv("COBCDMSG") or '0'
-    if errcode == 0 :
-        if std.find("libc6-dbg") != -1 and suppress != '1':
-            print("###   ")
-            print("###   There is something you need to know.")
-            print("###   ")
-            print("###   Your system has the libc6-dbg package installed.")
-            print("###   ")
-            print("###   This means that when you use the GDB STEP command, GDB will sometimes")
-            print("###   step into the debuggable libc6 routines.")
-            print("###   ")
-            print("###   This behavior can be annoying.")
-            print("###   ")
-            print("###   The solution is to remove the libc6-dbg package with")
-            print("###   ")
-            print("###        sudu apt remove libc6-dbg")
-            print("###   ")
-            print("###   Should you need to keep the libc6-dbg package installed,")
-            print("###   this informational message can be suppressed with the environment")
-            print("###   variable COBCDMSG=1")
-            print("###   ")
-    else :
-        pass
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("Finished", time_now - lap_start, time_now))
+        lap_start = time_now
 
     os._exit(resultcode)
 
