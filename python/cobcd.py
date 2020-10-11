@@ -1617,6 +1617,15 @@ class TabFileInformation() :
     def ProcessInfoStack(self, info_stack) :
         """ Figures out which routine we are currently trapped in"""
 
+        ## It's possible we are not actually trapped anywhere; it could be
+        ## before the program has been run, or after it stopped.
+        self.current_trapped_routine = ""
+        self.current_trapped_file = ""
+        self.current_trapped_line = 0
+
+        if len(info_stack) == 0 or info_stack[0] != '#' :
+            return
+
         # What we need to know is on the very first line:
         m = info_stack.find('\n')
         if m > -1 :
@@ -2215,7 +2224,6 @@ class CPrint (gdb.Command) :
         super (CPrint, self).__init__ (actual_command, gdb.COMMAND_USER)
 
     def invoke (self, arguments, from_tty):
-        GV_GlobalVariables.LoadLibcob()
         # pick up the name of the current source file
         try :
             # Check if this is a special case.  (Enough of these will
@@ -2228,6 +2236,8 @@ class CPrint (gdb.Command) :
                 return
 
             self.TabFile.ReadSymbolTableText()
+            if self.TabFile.current_trapped_line > 0 :
+                GV_GlobalVariables.LoadLibcob()
             self.Worker.ProcessArguments(self.TabFile,arguments)
         except :
             traceback.print_exc()
