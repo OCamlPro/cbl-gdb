@@ -1,0 +1,27 @@
+set height 0
+set width 0
+
+define stutter_step
+    set variable $_exitcode=$void
+    while $_isvoid ($_exitcode)
+        step
+        if $_isvoid ($_exitcode)
+            p *
+            p ?
+            end
+        end
+    end
+
+file test
+echo KNOWN GOOD LINE 2:\n
+p/r 6
+echo KNOWN GOOD LINE 1:\n
+p *
+r
+echo KNOWN GOOD LINE 1:\n
+p *
+
+b 27
+r
+stutter_step
+

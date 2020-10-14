@@ -1697,6 +1697,9 @@ class TabFileInformation() :
 
         # Figure out where we are
         try :
+            self.current_trapped_routine = ""
+            self.current_trapped_file = ""
+            self.current_trapped_line = 0
             original_info_stack = gdb.execute("info stack",False,True)
             self.ProcessInfoStack(original_info_stack)
 
@@ -1883,57 +1886,59 @@ def MachineInterfaceHeirarchical(TabFile,possibilities) :
 
 def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
     possibilities_1 = []
-    from_digit = False
-    if len(args) >= 1 :
-        if args[0].find('*') != -1 :
-            # If the first, presumably single, argument contains an asterisk, then
-            # he is asking for a list of variables and values:
-            possibilities_1 = TabFile.var_trie.GetAllPossibilities()
-        elif args[0].find('?') != -1 :
-            # If the first, presumably single, argument contains a question mark,
-            # then we need to round up the usual suspects.
+    if TabFile.current_trapped_line > 0 :
+        ## We are validly trapped someplace, so we can actually look for variables.
+        from_digit = False
+        if len(args) >= 1 :
+            if args[0].find('*') != -1 :
+                # If the first, presumably single, argument contains an asterisk, then
+                # he is asking for a list of variables and values:
+                possibilities_1 = TabFile.var_trie.GetAllPossibilities()
+            elif args[0].find('?') != -1 :
+                # If the first, presumably single, argument contains a question mark,
+                # then we need to round up the usual suspects.
 
-            # But first, we are going to keep a rogue's gallery of the current list
-            # suspects.  The idea here is that sometimes MOVE A TO B is the last line
-            # of a PARAGRAPH, so as soon as it is executed control jumps elsewhere and
-            # B falls out of context.  Or perhaps the next GDB command is a CONTINUE,
-            # rather than NEXT.  By keeping one stage of stickiness, the display of variables
-            # will be a bit more like what the user probably expects.
+                # But first, we are going to keep a rogue's gallery of the current list
+                # suspects.  The idea here is that sometimes MOVE A TO B is the last line
+                # of a PARAGRAPH, so as soon as it is executed control jumps elsewhere and
+                # B falls out of context.  Or perhaps the next GDB command is a CONTINUE,
+                # rather than NEXT.  By keeping one stage of stickiness, the display of variables
+                # will be a bit more like what the user probably expects.
 
-            if len(TabFile.current_full_path) > 0 :
-                qmrange = TabFile.question_mark_range;
-                if qmrange < 0 :
-                    qmrange = 1000000000
-                return_string = subprocess.check_output(["cobcd-rw", \
-                                                          TabFile.current_full_path, \
-                                                          str(TabFile.current_trapped_line), \
-                                                          str(qmrange) ])
-                tokens = return_string.split()
-                new_dogs = set()
-                for token in tokens :
-                    token = token.decode("utf-8")
-                    new_dogs = new_dogs.union(set(TabFile.var_trie.GetListOfExactPossibilities(token)))
-                possibilities_1 = list(TabFile.old_dogs.union(new_dogs))
-                TabFile.old_dogs = new_dogs
-        elif args[0].isdigit() :
-            from_digit = True
-            # if the first, presumably single, argument is a number, then he is looking
-            # for a short-term memory entry.
+                if len(TabFile.current_full_path) > 0 :
+                    qmrange = TabFile.question_mark_range;
+                    if qmrange < 0 :
+                        qmrange = 1000000000
+                    return_string = subprocess.check_output(["cobcd-rw", \
+                                                              TabFile.current_full_path, \
+                                                              str(TabFile.current_trapped_line), \
+                                                              str(qmrange) ])
+                    tokens = return_string.split()
+                    new_dogs = set()
+                    for token in tokens :
+                        token = token.decode("utf-8")
+                        new_dogs = new_dogs.union(set(TabFile.var_trie.GetListOfExactPossibilities(token)))
+                    possibilities_1 = list(TabFile.old_dogs.union(new_dogs))
+                    TabFile.old_dogs = new_dogs
+            elif args[0].isdigit() :
+                from_digit = True
+                # if the first, presumably single, argument is a number, then he is looking
+                # for a short-term memory entry.
 
-            # Pick up the 1-based value indexed by the argument:
-            index = int(args[0])-1
-            if index >= 0 and index < len(GV_GlobalVariables.ShortTermMemory) :
-                # If index is valid, pick up the short-term memory entry
-                possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
-        else :
-            # There are one or more arguments.  Use our clever routine
-            # to come up with the possibilities_1:
-            possibilities_1 = TabFile.var_trie.GetListOfPossibilities(args)
+                # Pick up the 1-based value indexed by the argument:
+                index = int(args[0])-1
+                if index >= 0 and index < len(GV_GlobalVariables.ShortTermMemory) :
+                    # If index is valid, pick up the short-term memory entry
+                    possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
+            else :
+                # There are one or more arguments.  Use our clever routine
+                # to come up with the possibilities_1:
+                possibilities_1 = TabFile.var_trie.GetListOfPossibilities(args)
 
     # We now have a list of possibilities_1 based on the names of the variables
     # typically, some of them will not be in context.  We wish, at this point
     # to eliminate such variables.  The bad news is that this means we
-    # have to fetch all the variable data twice.  But, heck.
+    # have to fetch all the variables data twice.  But, heck.
 
     possibilities = []
     for payload_index in possibilities_1 :
@@ -2220,7 +2225,7 @@ class CPrint (gdb.Command) :
         actual_command = "print"
         if self.Worker.use_cprint == 1 :
             actual_command = "cprint"
-        print('registering CPrint (Usage is "' + actual_command + '" <COBOL identifier>") [Version 4.1]')
+        print('registering CPrint (Usage is "' + actual_command + '" <COBOL identifier>") [Version 4.2]')
         super (CPrint, self).__init__ (actual_command, gdb.COMMAND_USER)
 
     def invoke (self, arguments, from_tty):

@@ -1,0 +1,60 @@
+GNU gdb (GDB) 8.3
+Copyright (C) 2019 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "x86_64-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word".
+registering CPrint (Usage is "print" <COBOL identifier>") [Version 4.1]
+registering CWatch (Usage is "cwatch <COBOL identifier>")
+KNOWN GOOD LINE 2:No stack.
+The 'p ?' range has been set to +/- 6 lines
+KNOWN GOOD LINE 1:No stack.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+KNOWN GOOD START
+GEORGE    
+WASHINGTON
+CARVER    
+123.456789
+123456.789
+Wabash    
+KNOWN GOOD FINISH
+[Inferior 1 (process 27502) exited normally]
+KNOWN GOOD LINE 1:No stack.
+Breakpoint 1 at 0x400faa: file test.cbl, line 27.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+
+Breakpoint 1, test_ (entry=0) at test.cbl:27
+27	    DISPLAY "KNOWN GOOD START".
+KNOWN GOOD START
+29	    DISPLAY NAME-FIRST of GEORGE.
+GEORGE    
+30	    DISPLAY NAME-FIRST of WASHINGTON.
+WASHINGTON
+31	    DISPLAY NAME-FIRST of CARVER.
+CARVER    
+32	    DISPLAY NAME-FIRST of PEANUTS.
+123.456789
+33	    DISPLAY NAME-FIRST of LEGUMES.
+123456.789
+34	    MOVE "Wabash" TO WABASH.
+35	    DISPLAY NAME-FIRST of WASHINGTON.
+Wabash    
+36	    DISPLAY "KNOWN GOOD FINISH".
+KNOWN GOOD FINISH
+[Inferior 1 (process 27506) exited normally]
+[?1034h(gdb) 
+(gdb) 
+(gdb) 
+(gdb) 
+(gdb) ^C(gdb) q
