@@ -1,0 +1,77 @@
+#!/usr/bin/python3
+
+import sys
+import re
+
+def main() :
+
+    if len(sys.argv) > 1 :
+        KNOWN_GOOD_PREFIX="KNOWN GOOD "
+        LEN_KNOWN_GOOD_PREFIX = len(KNOWN_GOOD_PREFIX)
+        LINES="LINES: "
+        LEN_LINES=len(LINES)
+
+        in_print_block = False
+        in_print_count = 0
+
+        f = open(sys.argv[1], "r")
+        whole_file = f.read()
+        whole_file.replace('\r','') # Windows.  Always Windows
+        lines = whole_file.split('\n')
+
+        for line in lines :
+            print_this_line = False
+            if line.find(KNOWN_GOOD_PREFIX) == 0 :
+                suffix = line[LEN_KNOWN_GOOD_PREFIX:]
+                if suffix.find("START") == 0 :
+                    in_print_block = True
+                    in_print_count = 0
+                elif suffix.find("FINISH") == 0 :
+                    ## Print out the control line, because we are
+                    ## about to turn off the print switches
+                    print(line)
+                    in_print_block = False
+                    in_print_count = 0
+                elif suffix.find(LINES) == 0 :
+                    in_print_count = int(suffix[LEN_LINES:]) + 1
+                else :
+                    ## This is an unknown "KNOWN GOOD " continuation
+                    ## We will ignore it.
+                    pass
+            print_this_line = in_print_block
+            if in_print_count > 0 :
+                print_this_line = True
+                in_print_count -= 1
+
+            if print_this_line :
+                ## In general, when a process ends, it puts up a message like this:
+                ##      [Inferior 1 (process 14969) exited normally]
+                ## Let's replace the process number with "99999"
+                p = re.compile( '(^.*process )([0-9]+)(.*$)' )
+                m = p.match(line)
+                if m :
+                    print(m.group(1) + "99999" + m.group(3))
+                    print_this_line = False
+
+            if print_this_line :
+                ## If a line starts with a hex number, it's an address, usually. And
+                ## they can change from one run to the next.  Suppress them.
+                if line.find("0x") == 0 :
+                    print_this_line = False
+
+            if print_this_line :
+                if line.find("[Thread debugging ") == 0 :
+                    print_this_line = False
+
+            if print_this_line :
+                if line.find("Using host ") == 0 :
+                    print_this_line = False
+
+            if print_this_line :
+                if line.find("Missing separate ") == 0 :
+                    print_this_line = False
+
+            if print_this_line :
+                print(line)
+
+main()
