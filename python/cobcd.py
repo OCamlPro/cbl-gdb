@@ -135,14 +135,15 @@ class GlobalVariables() :
         ## Establish the size of a c-side int
         self.SizeofInt = ctypes.sizeof(ctypes.c_int)
 
-        self.libraries_loaded = False
+        self.libcob_loaded            = False # Goes true when the library is loaded
+        self.cob_current_module_valid = False # This can take a while to go true after libcob is available
 
         self.ShortTermMemory = []
         self.pModule = c_void_p(0)
         self.pCobGlobPtr = c_void_p(0)
         self.repeat_count = 11  # Default value for "'0' <repeats 11 times>" logic
 
-    def CobModuleGlobalEnter(self) :
+    def CobModuleGlobalEnter(self,cob_current_module) :
         # We need to call
         #cob_module_global_enter (&module,       /* cob_module **module,  */
         #                         &cob_glob_ptr, /* cob_global **mglobal, */
@@ -166,16 +167,13 @@ class GlobalVariables() :
             # from the inferior's workspace:
             ## Calculate offset of decimal_point in cob_module
             offset = 12*GV_GlobalVariables.SizeofPointer + 7*GV_GlobalVariables.SizeofInt + 1
-            
-            cob_current_module = None
-            cobglobptr = GetPointerAt("cobglobptr")
-            if cobglobptr :
+
+            if cob_current_module :
                 ## The beginning of cob_global looks like this (libcob/common.h)
                 #    typedef struct __cob_global {
                 #        cob_file     *cob_error_file;       /* Last error file */
                 #        cob_module   *cob_current_module;   /* Current module */
                 ## We need cob_module:
-                cob_current_module = GetDataAt(cobglobptr+GV_GlobalVariables.SizeofPointer,GV_GlobalVariables.SizeofPointer)
 
                 ## The information I need from the target, so that I can copy it into the
                 ## GDB process space, are the last four char values seen below.  To find them
@@ -247,7 +245,9 @@ class GlobalVariables() :
             sys.exit(1)
 
     def LoadLibcob(self) :
-        if not self.libraries_loaded :
+        #print("Entering LoadLibCob with", self.libcob_loaded, self.cob_current_module_valid)
+        if not self.libcob_loaded :
+            # First order of business: find the library:
             shared_libraries = gdb.execute("info sharedlibrary",False,True)
             shared_libraries = shared_libraries.split('\n')
 
@@ -261,10 +261,34 @@ class GlobalVariables() :
                     break
             if libcob_name :
                 self.LIBCOB = ctypes.CDLL(libcob_name)
-                # And while we are in the neighborhood:
-                ##self.LIBCOB.bob_standalone_initializer()
-                self.CobModuleGlobalEnter()
-                self.libraries_loaded = True
+                self.libcob_loaded = True
+
+        if self.libcob_loaded :
+            if not self.cob_current_module_valid :
+
+                # We have a corner case to deal with.  If libcob has been stripped of symbols, we need
+                # to issue a warning, set defaults, and move on with our lives.
+
+                try :
+                    ExtractHexValueFrom( gdb.execute("info address cobglobptr",False,True) )
+                except:
+                    ## There is no symbol "cobglobptr"
+                    self.CobModuleGlobalEnter(None)
+                    self.cob_current_module_valid = True
+
+                if not self.cob_current_module_valid :
+                    ## There is a symbol "cobglobptr"
+
+                    cobglobptr = GetPointerAt("cobglobptr")
+                    ## After a 'start' command, it can be zero, in which case we aren't ready to use it yet.
+                    if cobglobptr :
+                        cob_current_module = GetDataAt(cobglobptr+GV_GlobalVariables.SizeofPointer,GV_GlobalVariables.SizeofPointer)
+                        # cob_current_module can be zero even when cobglobptr is valid.  This
+                        # can happen when you do 'file' 'start' 'step'. So, we make sure it it non-zero
+                        # before we try to use it.
+                        if cob_current_module :
+                            self.CobModuleGlobalEnter(cob_current_module)
+                            self.cob_current_module_valid = True
 
 GV_GlobalVariables = GlobalVariables()
 
@@ -1088,8 +1112,8 @@ class CobolVariable() :
         # Picture data is a variable-sized list of
         #   typedef struct __cob_pic_symbol
         #        {
-        #        char	symbol;
-        #        int 	times_repeated;
+        #        char   symbol;
+        #        int    times_repeated;
         #        } cob_pic_symbol;
         #
         # The final one is flagged by a symbol value of '\0'
@@ -1260,6 +1284,13 @@ class CobolVariable() :
         self.display_pic = ""
         self.display_name = self.NameToString()
         self.not_in_context = False
+
+        if not GV_GlobalVariables.cob_current_module_valid :
+            ## This can happen if the user tries to print variables
+            ## before the program has run far enough.  For example,
+            ## 'file', then 'start', then 'print'
+                self.not_in_context = True
+                return
 
         ## Let's update everything we might need:
 
@@ -2136,7 +2167,6 @@ class CPrintWorker() :
         # The command is typically "print A B C" or "print/d A B C"
         # There is also the possibility of an '=' character, whereby the
         # value after the '=' is assigned to the variable described to the left
-
         preargs = arguments.split('=',1)
 
         rside = None
