@@ -1,0 +1,6 @@
+2020-10-15  Bob Dubner <rdubner@symas.com>
+
+	* Inaugurated this ChangeLog
+	* First cut at a regression testing system, starting with test001 and test002
+
+

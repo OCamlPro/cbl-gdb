@@ -4,7 +4,6 @@ import sys
 import re
 
 def main() :
-
     if len(sys.argv) > 1 :
         KNOWN_GOOD_PREFIX="KNOWN GOOD "
         LEN_KNOWN_GOOD_PREFIX = len(KNOWN_GOOD_PREFIX)
@@ -13,13 +12,26 @@ def main() :
 
         in_print_block = False
         in_print_count = 0
+        in_call_count  = 0
 
         f = open(sys.argv[1], "r")
         whole_file = f.read()
         whole_file.replace('\r','') # Windows.  Always Windows
         lines = whole_file.split('\n')
+        
+        pattern_source = re.compile("^[0-9]+\t")
+        pattern_call = re.compile("^[0-9]+\t[ ]*cALl",re.IGNORECASE)
 
         for line in lines :
+            is_source_line = False
+            is_call_line   = False
+            ## A source line is GDB echoing a source line.
+            ## A source line starts with a number, followed by a tab
+            is_source_line = pattern_source.search(line)
+            if is_source_line :
+                ## Some source lines are call lines
+                is_call_line = pattern_call.search(line)
+        
             print_this_line = False
             if line.find(KNOWN_GOOD_PREFIX) == 0 :
                 suffix = line[LEN_KNOWN_GOOD_PREFIX:]
@@ -27,8 +39,8 @@ def main() :
                     in_print_block = True
                     in_print_count = 0
                 elif suffix.find("FINISH") == 0 :
-                    ## Print out the control line, because we are
-                    ## about to turn off the print switches
+                    ## Print out the input line.  If we don't do it here, it won't
+                    ## happen at all because we about to turn off the print switches
                     print(line)
                     in_print_block = False
                     in_print_count = 0
@@ -70,6 +82,29 @@ def main() :
             if print_this_line :
                 if line.find("Missing separate ") == 0 :
                     print_this_line = False
+
+            ##  In the sequence 
+            ##      10 CALL
+            ##          vars1
+            ##      60 PROCEDURE
+            ##          vars2
+            ##      61 MOVE...
+            ##          vars3
+            ##  we want to skip everything after line 66 until line 77, because
+            ##  the trap at line 60 occurs before the linkage variables have been initialized
+            ##  and they generally contain unpredictable values.
+            ##  
+            ##  This little state machine accomplishes that.
+            if in_call_count and is_source_line :
+                in_call_count += 1
+                if in_call_count == 2 :
+                    print(line)
+                if in_call_count > 2 :
+                    in_call_count = 0
+            if is_call_line :
+                in_call_count = 1
+            if in_call_count == 2 :
+                print_this_line = False;
 
             if print_this_line :
                 print(line)

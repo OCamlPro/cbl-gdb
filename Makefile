@@ -21,15 +21,6 @@ all: cobcd cobcd.bat
 	$(MAKE) -C cobcd-sfix
 	$(MAKE) -C cobcd-rw
 
-.PHONY : test
-test:
-	$(MAKE) -C cobcd-st
-	$(MAKE) -C cobcd-sfix
-	$(MAKE) -C cobcd-rw
-ifeq ($(COBCDEXISTS), $(COBCD))
-	$(MAKE) -C optfde01
-endif
-
 .PHONY : clean
 clean:
 	$(MAKE) -C cobcd-st clean
@@ -105,3 +96,17 @@ pregit:
 	$(MAKE) -C cobcd-sfix pregit
 	$(MAKE) -C cobcd-rw pregit
 	$(MAKE) -C python pregit
+
+#	Provision for regression testing:
+#	'make known-good' creates a series of known-good files, while
+#	'make test' does a similar run, but compares the under_test to known_good files
+
+.PHONY : known-good
+
+known-good :
+	$(MAKE) -C tests known-good 
+
+.PHONY : test
+test :
+	$(MAKE) -C tests test
+
