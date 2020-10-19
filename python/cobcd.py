@@ -1147,11 +1147,12 @@ class CobolVariable() :
 
         ## Get the picture string, if there is one, as a list of integers
         picture_data = self.GetPicSymbols()
-        p_picture_data = 0
         if len(picture_data) :
             p_picture_data = create_string_buffer(len(picture_data))
             for i in range(len(picture_data)) :
-                p_picture_data[i] = picture_data[i]
+                p_picture_data[i] = chr(picture_data[i])
+        else :
+            p_picture_data = 0  ## This is a NULL pointer
 
         cob_field_attr = COB_FIELD_ATTR()
         cob_field_attr.type   = self.AttrType
