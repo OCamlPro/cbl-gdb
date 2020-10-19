@@ -117,7 +117,7 @@ $    1.23+
 +988776654.1223345   def-COMPUTATIONAL-X         
 009887766541223345   def-COMP-XX                 
 +988776654.1223345   def-DISPLAY                 
-[Inferior 1 (process 9701) exited normally]
+[Inferior 1 (process 10609) exited normally]
 KNOWN GOOD FINISH
 KNOWN GOOD LINES: 1
 No stack.
@@ -6237,5 +6237,5 @@ $    1.23+
  5 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
  6 : 01 def-COMP-XX/test [W-S] : 009887766541223345
  7 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-[Inferior 1 (process 9705) exited normally]
+[Inferior 1 (process 10613) exited normally]
 KNOWN GOOD FINISH
