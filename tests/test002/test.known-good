@@ -117,22 +117,20 @@ $    1.23+
 +988776654.1223345   def-COMPUTATIONAL-X         
 009887766541223345   def-COMP-XX                 
 +988776654.1223345   def-DISPLAY                 
-[Inferior 1 (process 9233) exited normally]
+[Inferior 1 (process 9701) exited normally]
 KNOWN GOOD FINISH
 KNOWN GOOD LINES: 1
 No stack.
-Breakpoint 1 at 0x400a3b: /home/bob/repos/cbl-gdb/tests/test002/test.cbl:126. (3 locations)
-KNOWN GOOD START
+Temporary breakpoint 1 at 0x400a3b: file test.cbl, line 126.
 [Thread debugging using libthread_db enabled]
 Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
 
-Breakpoint 1, 0x0000000000400a3b in main (argc=0, argv=0x7fffffffe300) at test.cbl:126
+Temporary breakpoint 1, 0x0000000000400a3b in main (argc=0, argv=0x7fffffffe2f0) at test.cbl:126
 126	000-Main.
-
-Breakpoint 1, 0x0000000000400a6c in test () at test.cbl:126
+KNOWN GOOD START
+0x0000000000400a6c in test () at test.cbl:126
 126	000-Main.
-
-Breakpoint 1, test_ (entry=0) at test.cbl:127
+test_ (entry=0) at test.cbl:127
 127	DISPLAY "On this system, with this build of GnuCOBOL, the"
  1 : 01 header/test [W-S] : ' ' <repeats 40 times>
  2 : 01 withpic/test [W-S] : "$    1.23+"
@@ -6239,5 +6237,5 @@ $    1.23+
  5 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
  6 : 01 def-COMP-XX/test [W-S] : 009887766541223345
  7 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-[Inferior 1 (process 9237) exited normally]
+[Inferior 1 (process 9705) exited normally]
 KNOWN GOOD FINISH

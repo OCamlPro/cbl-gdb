@@ -68,16 +68,20 @@ CARVER
 123.456789
 123456.789
 Wabash    
-[Inferior 1 (process 9123) exited normally]
+[Inferior 1 (process 9455) exited normally]
 KNOWN GOOD FINISH
 KNOWN GOOD LINES: 1
 No stack.
-Breakpoint 1 at 0x40100a: file test.cbl, line 27.
-KNOWN GOOD START
+Temporary breakpoint 1 at 0x400d0b: file test.cbl, line 26.
 [Thread debugging using libthread_db enabled]
 Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
 
-Breakpoint 1, test_ (entry=0) at test.cbl:27
+Temporary breakpoint 1, 0x0000000000400d0b in main (argc=0, argv=0x7fffffffe2f0) at test.cbl:26
+26	PROCEDURE DIVISION.
+KNOWN GOOD START
+0x0000000000400d3c in test () at test.cbl:26
+26	PROCEDURE DIVISION.
+test_ (entry=0) at test.cbl:27
 27	    CALL 'JIMBOB'.
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
@@ -1120,7 +1124,7 @@ JIMBOB_ (entry=0) at test.cbl:77
 18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-0x0000000000402782 in DISPLAY__JIM__OR__BOB_1__ (b_65=0x20c6ad48d2f1ba00 <error: Cannot access memory at address 0x20c6ad48d2f1ba00>, b_70=0x7fffffffc130 "\220\321\377\377\377\177") at test.cbl:116
+0x0000000000402782 in DISPLAY__JIM__OR__BOB_1__ (b_65=0x2b877b8b13eb5900 <error: Cannot access memory at address 0x2b877b8b13eb5900>, b_70=0x7fffffffc120 "\200\321\377\377\377\177") at test.cbl:116
 116	PROCEDURE DIVISION USING LS-JORB, LS-JORB-2.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -1231,7 +1235,7 @@ JIMBOB_ (entry=0) at test.cbl:78
  3 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  4 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-0x0000000000402c20 in JUST_ONE_1__ (b_79=0x20c6ad48d2f1ba00 <error: Cannot access memory at address 0x20c6ad48d2f1ba00>) at test.cbl:129
+0x0000000000402c20 in JUST_ONE_1__ (b_79=0x2b877b8b13eb5900 <error: Cannot access memory at address 0x2b877b8b13eb5900>) at test.cbl:129
 129	PROCEDURE DIVISION USING A_BINARY_NUMBER.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -1240,7 +1244,7 @@ JIMBOB_ (entry=0) at test.cbl:78
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-JUST_ONE_1_ (entry=0, b_79=0x7fffffffc178 "\a\004") at test.cbl:130
+JUST_ONE_1_ (entry=0, b_79=0x7fffffffc168 "\a\004") at test.cbl:130
 130	    DISPLAY "entering: JUST_ONE"
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -1587,5 +1591,5 @@ CARVER
 15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
 16 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 Wabash    
-[Inferior 1 (process 9127) exited normally]
+[Inferior 1 (process 9459) exited normally]
 KNOWN GOOD FINISH

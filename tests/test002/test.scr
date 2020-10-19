@@ -32,11 +32,9 @@ echo KNOWN GOOD FINISH\n
 echo KNOWN GOOD LINES: 1\n
 p *
 
-### In general, what preceded this line is boilerplate. This
-### first breakpoint will need to be different for each test.cbl program
-b 126
+### Acid test: use 'start' to start before the start.
+start
 echo KNOWN GOOD START\n
-r
 stutter_step
 echo KNOWN GOOD FINISH\n
 

@@ -1,7 +1,10 @@
 COBCD?=../../cobcd
 GDB?=gdb
 
-.PHONY : known-good test
+.PHONY : known-good test all
+
+all:
+	@echo "Your choices are 'make known-good' and 'make test'"
 
 known-good:
 	COBCDEVEL=1 $(COBCD) -x test.cbl

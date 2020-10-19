@@ -1150,7 +1150,13 @@ class CobolVariable() :
         if len(picture_data) :
             p_picture_data = create_string_buffer(len(picture_data))
             for i in range(len(picture_data)) :
-                p_picture_data[i] = chr(picture_data[i])
+                x = picture_data[i]
+                if sys.version[0] == '2' :
+                    ## This is Python2
+                    p_picture_data[i] = chr(x)
+                else :
+                    ## This is Python3
+                    p_picture_data[i] = x
         else :
             p_picture_data = 0  ## This is a NULL pointer
 
