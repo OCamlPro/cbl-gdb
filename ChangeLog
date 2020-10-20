@@ -2,6 +2,7 @@
 
 	* Initial regression testing seems operable. See ../tests
 	  Implemented p/x hexadecimal display
+	  In p/d display, fixed Base: so that it actually displays base instead of field
 
 2020-10-15  Bob Dubner <rdubner@symas.com>
 

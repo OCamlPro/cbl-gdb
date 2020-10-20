@@ -1482,7 +1482,7 @@ class CobolVariable() :
         bname_location = GetAddressOf(self.Bname) or 0
         bname_text = ""
         if bname_location :
-            bname_text = "( %s )" % hex(self.location_of_field)
+            bname_text = "( %s )" % hex(bname_location)
 
         if self.Section == 'L' :
             field_loc = "cob_local_ptr (" + hex(self.location_of_data) + ")"
