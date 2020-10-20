@@ -439,7 +439,6 @@ def MachineInterfaceBodyAlt(s) :
 
     return retval
 
-
 def ReplaceWithRepeatCountQuoted(s) :
     # We know this guy has a leading quote, and presumably a trailing one
     #print("ReplaceWithRepeatCountQuoted(1)", s)
@@ -1281,6 +1280,23 @@ class CobolVariable() :
                 gdb.execute(command,False,True)
                 p += 1
 
+    def GetDataAsHex(self) :
+        retval = ""
+        if len(self.data) > 16 :
+            return "<see below>"
+        if len(self.data) > 0 :
+            retval = "0x"
+
+            output_bytes = self.data
+            if self.AttrFlags & COB_FLAG_BINARY_SWAP :
+                output_bytes.reverse()
+            for byte in output_bytes :
+                hexout = hex(byte)[-2:]
+                if hexout[0:1] == 'x' :
+                    hexout = '0' + hexout[-1:]
+                retval += hexout
+        return retval
+
     def FetchVariableData(self, line_list , show_failure ) :
         #print("FetchVariableData:",self.Name,self.Section)
         self.location_of_field = 0;
@@ -1288,6 +1304,7 @@ class CobolVariable() :
         self.location_of_attribute = 0;
         self.data = []
         self.display_body = ""
+        self.display_body_hex = ""
         self.display_pic = ""
         self.display_name = self.NameToString()
         self.not_in_context = False
@@ -1434,6 +1451,7 @@ class CobolVariable() :
         if self.location_of_data != 0 :
             self.data = GetBytesAt(self.location_of_data,self.Length)
 
+        self.display_body_hex = self.GetDataAsHex()
         self.display_body = self.GetDataAsString()
         self.display_body = ReplaceWithRepeatCount(self.display_body)
 
@@ -1471,13 +1489,15 @@ class CobolVariable() :
         else :
             field_loc = hex(self.location_of_data)
 
-        print("Name:       " , self.display_name    )
+        print("Name:       " , self.display_name       )
+        print("Display:    " , self.display_body       )
+        print("Hex:        " , self.display_body_hex   )
         print("Field:      " , self.Fname,'   (',hex(self.location_of_field),')' )
         print("Base:       " , self.Bname,'  ',bname_text     )
         print("Attr:       " , self.Aname,'   (',hex(self.location_of_attribute),')' )
-        print("Offset:     " , self.Offset          )
-        print("Field.loc:  " , field_loc );
-        print("Length:     " , self.Length          )
+        print("Offset:     " , self.Offset             )
+        print("Field.loc:  " , field_loc               );
+        print("Length:     " , self.Length             )
 
         print("AttrType:   " , self.AttrType ,end="")
         print(" (",hex(self.AttrType),") ", sep='', end="")
@@ -1921,8 +1941,7 @@ def MachineInterfaceHeirarchical(TabFile,possibilities) :
     #retval = r'variables=[{name="L01",value="{_groupvalue=\"Snap!\",fullname=\"RobertDubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"Dubner\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]'
     return retval
 
-
-def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
+def MetaPossibilities(args,TabFile,machine_interface_mode,rside,submode) :
     possibilities_1 = []
     if TabFile.current_trapped_line > 0 :
         ## We are validly trapped someplace, so we can actually look for variables.
@@ -2050,7 +2069,12 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside) :
                     line_counter += 1
                     s += payload.display_name
                     s += " : "
-                    s += payload.display_body
+
+                    body = payload.display_body
+                    if submode == 'x' and len(payload.data) <= 16 :
+                        body = payload.display_body_hex
+
+                    s += body
                     retval = OurPrint(NoNulls(s))
                     if retval == "Quit" :
                         break;
@@ -2086,6 +2110,8 @@ class CPrintWorker() :
         # Make sure the current display mode is the same as the session mode
         self.current_display_mode = self.sticky_display_mode
 
+        self.current_display_submode = ''
+
         # Now see if he wants to change it
         if len(args) >= 1 :
             if args[0] == '/h' :
@@ -2096,6 +2122,7 @@ class CPrintWorker() :
                 print("'print/v0' : name and variable on one line (this is the default)")
                 print("'print/v1' : just the variable")
                 print("'print/v2' : two-line display with name, then variable")
+                print("'print/x   : show numeric value in hexadecimal")
                 print("'print/d   : expanded information")
                 print("'print/v<n>' with no arguments sets the session formatting")
                 print("'print/m'  : generate output compatible with '-stack-list-variables --simple-values'")
@@ -2111,6 +2138,9 @@ class CPrintWorker() :
             # if the first argument is /d, turn on our debug flag:
             if args[0] == '/d' :
                 self.current_display_mode = 'd'
+                args.pop(0)
+            if args[0] == '/x' :
+                self.current_display_submode = 'x'
                 args.pop(0)
             elif args[0] == '/m' :
                 self.machine_interface_mode = True
@@ -2156,15 +2186,19 @@ class CPrintWorker() :
 
     def FormattedDisplay(self,payload ) :
         # see the comments in ProcessDisplayMode()
+        body = payload.display_body
+        if self.current_display_submode == 'x' and len(payload.data) <= 16 :
+            body = payload.display_body_hex
+
         if self.current_display_mode == '0' :
-            print(payload.display_name," : ",payload.display_body)
+            print(payload.display_name," : ",body)
             pass
         elif self.current_display_mode ==  '1' :
-            print(payload.display_body)
+            print(body)
             pass
         elif self.current_display_mode ==  '2' :
             print(payload.display_name)
-            print(payload.display_body)
+            print(body)
             pass
         else : # self.current_display_mode ==  'd' :
             payload.ShowFields()
@@ -2190,7 +2224,7 @@ class CPrintWorker() :
         args = self.ProcessDisplayMode(args,TabFile)
         TabFile.question_mark_range = self.question_mark_range
 
-        possibilities = MetaPossibilities(args,TabFile,self.machine_interface_mode,rside)
+        possibilities = MetaPossibilities(args,TabFile,self.machine_interface_mode,rside,self.current_display_submode)
         if len(possibilities) == 1 :
             # There is but one possibility
             # Pick up the payload from the list
@@ -2233,7 +2267,7 @@ class CWatchWorker() :
 
         args = arguments.split()
 
-        possibilities = MetaPossibilities(args,TabFile, False, False)
+        possibilities = MetaPossibilities(args,TabFile, False, False,'')
 
         if len(possibilities) == 1 :
             payload_number = possibilities[0]
@@ -2300,7 +2334,6 @@ class CWatch (gdb.Command) :
             self.Worker.ProcessWArgumentsW(self.TabFile,arguments)
         except :
             traceback.print_exc()
-
 
 CPrint()
 CWatch()

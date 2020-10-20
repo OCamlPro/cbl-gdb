@@ -1,3 +1,8 @@
+2020-10-19  Bob Dubner <rdubner@symas.com>
+
+	* Initial regression testing seems operable. See ../tests
+	  Implemented p/x hexadecimal display
+
 2020-10-15  Bob Dubner <rdubner@symas.com>
 
 	* Inaugurated this ChangeLog
