@@ -1287,8 +1287,8 @@ class CobolVariable() :
         if len(self.data) > 0 :
             retval = "0x"
 
-            output_bytes = self.data
-            if self.AttrFlags & COB_FLAG_BINARY_SWAP :
+            output_bytes = self.data[:]
+            if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
                 output_bytes.reverse()
             for byte in output_bytes :
                 hexout = hex(byte)[-2:]
@@ -1585,7 +1585,7 @@ class CobolVariable() :
 
         ## At this point, if BINARY_SWAP is on, our data are reversed.
         ## We want to unreverse them for this display:
-        output_bytes = self.data
+        output_bytes = self.data[:]
         if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
             output_bytes.reverse()
 
