@@ -60,7 +60,6 @@ COB_FIELDS::Insert(std::string f_name_,
     v_cob_fields.push_back(cf);
 }
 
-
 void
 COB_FIELDS::ScanDotHFile(ifstream &ifs, const string &source)
 {
@@ -187,11 +186,56 @@ COB_FIELDS::ScanDotHFile(ifstream &ifs, const string &source)
     }
 }
 
+static VSTRING
+GetHfilesFrom(const std::string &path, const std::string &fname)
+{
+    VSTRING retval;
+
+    string fn = path;
+    fn += fname;
+    fn += ".c";
+
+    FILE *f = fopen(fn.c_str(),"r");
+    if( f ) {
+        char ach[16384];
+        while( fgets(ach,sizeof(ach),f) ) {
+            if( strstr(ach,"#include") ) {
+                string s = ach;
+                size_t n1 = s.find('"');
+                if( n1 != string::npos ) {
+                    size_t n2 = s.find('"',n1+1);
+                    if( n2 != string::npos ) {
+                        string hname = s.substr(n1+1,n2-(n1+1));
+                        if( hname.find(fname) != string::npos ) {
+                            retval.push_back(path + hname);
+                        }
+                    }
+                }
+            }
+        }
+
+        fclose(f);
+    }
+
+    fn = path;
+    fn += fname;
+    fn += ".delete_us";
+
+    f = fopen(fn.c_str(),"w");
+    if( f ) {
+        for( size_t i=0; i<retval.size(); i++ ) {
+            fprintf(f,"%s\n",retval[i].c_str());
+        }
+        fclose(f);
+    }
+    return retval;
+}
+
 void
 COB_FIELDS::ScanAllDotHFiles(const std::string &path, const std::string &fname )
 {
     CPROFILER;
-    vector<string>AllDotHFiles = DirectoryScan(path,fname,"*.h");
+    vector<string>AllDotHFiles = GetHfilesFrom(path,fname);
     for(vector<string>::const_iterator filename = AllDotHFiles.begin(); filename != AllDotHFiles.end(); filename++) {
         ifstream ifs;
         OpenOrFail(ifs,*filename);
