@@ -1611,6 +1611,7 @@ class TabFileInformation() :
         self.current_variable_string = ""
         self.current_trapped_routine = ""
         self.current_trapped_file = ""
+        self.current_trapped_frame = -1
         self.current_trapped_line = 0
         self.question_mark_range = 6
         self.current_full_path = ""
@@ -1776,13 +1777,21 @@ class TabFileInformation() :
                     print("that \"frame\" and \"info stack\" don't match in ProcessStack()")
                     return False
 
-                ## At this point, file_and_line[0] matches the file name from "frame"
+                ## Unexpected and confusing things happen when the frame is set
+                ## to a PROCEDURE DIVISION line. So, if an adjustment is necessary,
+                ## we make it here:
 
+                if frame_from_frame != frame_from_stack :
+                    command = "frame " + str(frame_from_stack)
+                    gdb.execute(command,False,True)
+
+                ## At this point, file_and_line[0] matches the file name from "frame"
                 self.current_trapped_line = int(file_and_line[1])
 
-                if file_and_line[0] != self.current_trapped_file :
-                    # We are in a new file
+                if file_and_line[0] != self.current_trapped_file or frame_from_frame != frame_from_stack:
+                    # We are in a new file, or perhaps a new frame
                     self.current_trapped_file = file_and_line[0]
+                    self.current_trapped_frame = frame_from_stack
 
                     ## clear out the persistent 'p ?' memory; it has suddenly
                     ## become obsolete
@@ -1808,14 +1817,6 @@ class TabFileInformation() :
                         if self.ReadVariableString(string_name) :
                             break
                         stack_line += 1
-
-                    ## Unexpected and confusing things happen when the frame is set
-                    ## to a PROCEDURE DIVISION line. So, if an adjustment is necessary,
-                    ## we make it here:
-
-                    if frame_from_frame != frame_from_stack :
-                        command = "frame " + str(frame_from_stack)
-                        gdb.execute(command,False,True)
 
                     # We have us a new variable string
                     # Clear out the tables:
@@ -1849,6 +1850,7 @@ class TabFileInformation() :
         except :
             self.current_trapped_routine = ""
             self.current_trapped_file = ""
+            self.current_trapped_frame = -1
             self.current_trapped_line = 0
 
         return retval

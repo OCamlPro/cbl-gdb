@@ -104,7 +104,7 @@ pregit:
 .PHONY : known-good
 
 known-good :
-	$(MAKE) -C tests known-good 
+	@echo "For safety, you need to 'cd tests' and then issue 'make known-good'"
 
 .PHONY : test
 test :
