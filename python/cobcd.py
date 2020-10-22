@@ -1783,6 +1783,9 @@ class TabFileInformation() :
 
                 if frame_from_frame != frame_from_stack :
                     command = "frame " + str(frame_from_stack)
+                    ## For unknown reasons, this next command always (GDB versions 7 and 8, at least)
+                    ## output visible on the screen and in stdout.  It shouldn't, but it does.
+                    ## Weird.
                     gdb.execute(command,False,True)
 
                 ## At this point, file_and_line[0] matches the file name from "frame"

@@ -39,52 +39,65 @@ echo KNOWN GOOD START\n
 stutter_step
 echo KNOWN GOOD FINISH\n
 
+## I want to check the 'frame N' handling, but, weirdly,
+## GDB 7 generates output on a gdb.execute("frame N",False,True) command
+## Hence the START/FINISH pairs sprinkled here.
+
 b INDENTER.cpy:2
 
 echo KNOWN GOOD START\n
 r
-echo SETTING FRAME 8\n
+echo KNOWN GOOD FINISH\n
 frame 8
+echo KNOWN GOOD START\n
 p *
 p ?
 p/x 1
-echo SETTING FRAME 7\n
+echo KNOWN GOOD FINISH\n
 frame 7
+echo KNOWN GOOD START\n
 p *
 p ?
 p/x 1
-echo SETTING FRAME 6\n
+echo KNOWN GOOD FINISH\n
 frame 6
+echo KNOWN GOOD START\n
 p *
 p ?
 p/x 1
-echo SETTING FRAME 5\n
+echo KNOWN GOOD FINISH\n
 frame 5
+echo KNOWN GOOD START\n
 p *
 p ?
 p/x 1
-echo SETTING FRAME 4\n
+echo KNOWN GOOD FINISH\n
 frame 4
+echo KNOWN GOOD START\n
 p *
 p ?
 p/x 1
-echo SETTING FRAME 3\n
+echo KNOWN GOOD FINISH\n
 frame 3
+echo KNOWN GOOD START\n
 p *
 p ?
 p/x 1
-echo SETTING FRAME 2\n
+echo KNOWN GOOD FINISH\n
 frame 2
+echo KNOWN GOOD START\n
 p *
 p ?
 p/x 1
-echo SETTING FRAME 1\n
+echo KNOWN GOOD FINISH\n
 frame 1
+echo KNOWN GOOD START\n
 p *
 p ?
 p/x 1
-echo SETTING FRAME 0\n
+echo KNOWN GOOD FINISH\n
 frame 0
+echo KNOWN GOOD START\n
 p *
 p ?
 p/x 1
