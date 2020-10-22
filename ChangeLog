@@ -1,8 +1,10 @@
-2020-10-19  Bob Dubner <rdubner@symas.com>
+2020-10-22  Bob Dubner <rdubner@symas.com>
 
 	* Initial regression testing seems operable. See ../tests
-	  Implemented p/x hexadecimal display
-	  In p/d display, fixed Base: so that it actually displays base instead of field
+	* Implemented p/x hexadecimal display
+	* In p/d display, fixed Base: so that it actually displays base instead of field
+	* Add ability for Python to change the frame
+	* Change cobcd-st to use the list of .h files inside the .c file
 
 2020-10-15  Bob Dubner <rdubner@symas.com>
 

@@ -615,6 +615,7 @@ def Main() :
     FILE_I     = FILE_ROOT + ".i"
     FILE_SYM_C = FILE_ROOT + ".sym.c"
     FILE_SYM_O = FILE_ROOT + ".sym.o"
+    FILE_DELETE_US = FILE_ROOT + ".delete_us"
 
     if resultcode == 0 :
         ## Now that we know the name of the final target, we have to remove
@@ -832,14 +833,13 @@ def Main() :
         DeleteAFile(FILE_SYM_C)
         DeleteAFile(FILE_SYM_O)
 
-        starting_dir = FILE_ROOT.split('/')[0:-1]
-        starting_dir = '/'.join(starting_dir)
-        if len(starting_dir) == 0 :
-            starting_dir = '.'
-        files = os.listdir(starting_dir)
-        for h_file in files :
-            if h_file[-2:] in (".h") :
-                DeleteAFile(h_file)
+        ## Time to delete all the files in FILE_DELETE_US
+        f = open(FILE_DELETE_US,"r")
+        all_the_files = f.read()
+        all_the_files = all_the_files.replace('\r','')  # Windows.  Always Windows
+        all_the_files = all_the_files.split('\n')
+        for file in all_the_files :
+            DeleteAFile(file)
     elif COBCDNOCLEAN == "" and SAVE_TEMPS != "" :
         ## With just SAVE_TEMPS, we just leave the files that
         ## COBC historically left around:
@@ -847,6 +847,9 @@ def Main() :
         DeleteAFile(FILE_SYM_C)
         DeleteAFile(FILE_SYM_O)
     # else : ## COBCDNOCLEAN is on, so we leave everything
+
+    ## In any event, get rid of this bit of confusing fluff:
+    DeleteAFile(FILE_DELETE_US)
 
     if SHOW_TIME :
         time_now = time.monotonic() - clock_start
