@@ -1,5 +1,5 @@
 test
-known-good
-under-test
-*.under-test
-
+*.so
+known-good.txt
+under-test.txt
+under-test.stripped

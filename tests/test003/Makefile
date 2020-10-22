@@ -1,0 +1,23 @@
+COBCD?=../../cobcd
+GDB?=gdb
+
+.PHONY : known-good test all
+
+all:
+	@echo "Your choices are 'make known-good' and 'make test'"
+known-good:
+	COBCDEVEL=1 $(COBCD) -o test -x MAIN.cbl
+	COBCDEVEL=1 $(COBCD) -m A.cbl
+	COBCDEVEL=1 $(COBCD) -m B.cbl
+	COBCDEVEL=1 $(COBCD) -m C.cbl
+	$(GDB) -x test.scr > known-good.txt
+	../strip-diff known-good.txt >known-good.stripped
+
+test:
+	COBCDEVEL=1 $(COBCD) -o test -x MAIN.cbl
+	COBCDEVEL=1 $(COBCD) -m A.cbl
+	COBCDEVEL=1 $(COBCD) -m B.cbl
+	COBCDEVEL=1 $(COBCD) -m C.cbl
+	$(GDB) -x test.scr > under-test.txt
+	../strip-diff under-test.txt >under-test.stripped
+	diff -u under-test.stripped known-good.stripped

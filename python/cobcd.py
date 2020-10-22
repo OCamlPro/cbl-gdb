@@ -1672,96 +1672,191 @@ class TabFileInformation() :
                 pass
         return retval
 
-    def ProcessInfoStack(self, info_stack) :
+    def ProcessStack(self) :
         """ Figures out which routine we are currently trapped in"""
 
-        ## It's possible we are not actually trapped anywhere; it could be
-        ## before the program has been run, or after it stopped.
-        self.current_trapped_routine = ""
-        self.current_trapped_file = ""
-        self.current_trapped_line = 0
+        ## That's seems innocent enough.  But we're dealing with a multitude of sins.
 
-        if len(info_stack) == 0 or info_stack[0] != '#' :
-            return
+        ## In the simplest incarnation, we have a simple program with a simple trap, in which
+        ## case the results of the "frame" and "info stack" commands look like this:
 
-        # What we need to know is on the very first line:
-        m = info_stack.find('\n')
-        if m > -1 :
-            info_stack = info_stack[:m]
-        tokens = info_stack.split(' ')
+        ##    (gdb) frame
+        ##    #0  MAIN_ (entry=0) at MAIN.cbl:11
 
-        # That line looks like this:
-        #
-        # #0  optfde01_ (entry=0) at optfde01.cbl:59
-        #
-        # We need the information from the final token:
+        ##    (gdb) info stack
+        ##    #0  MAIN_ (entry=0) at MAIN.cbl:11
+        ##    #1  0x0000555555554cc9 in MAIN () at MAIN.cbl:8
+        ##    #2  0x0000555555554cb4 in main (argc=1, argv=0x7fffffffe368) at MAIN.cbl:8
 
-        file_and_line = tokens[-1].split(':')
-        self.current_trapped_line = int(file_and_line[1])
+        ## But we can trap through copybooks.  That can look like this:
 
+        ##    (gdb) frame
+        ##    #0  C_ (entry=0, b_11=0x7ffff35172f0 <b_8> "B   4") at INDENTER.cpy:2
+
+        ##    (gdb) info stack
+        ##    #0  C_ (entry=0, b_11=0x7ffff35172f0 <b_8> "B   4") at INDENTER.cpy:2
+        ##    #1  0x00007ffff3112ddf in C (b_11=0x7ffff35172f0 <b_8> "B   4") at C.cbl:10
+        ##    #2  0x00007ffff331622d in B_ (entry=0, b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:18
+        ##    #3  0x00007ffff3315e3f in B (b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:10
+        ##    #4  0x0000555555554fa3 in MAIN_ (entry=0) at MAIN.cbl:11
+        ##    #5  0x0000555555554cc9 in MAIN () at MAIN.cbl:8
+        ##    #6  0x0000555555554cb4 in main (argc=1, argv=0x7fffffffe368) at MAIN.cbl:8
+
+        ## Our problem with that is there is no VARIABLE_STRING_INDENTER_CPY; we have to look down
+        ## through the stack until we find VARIABLE_STRING_C_CBL in order to have a hope of being
+        ## able to show the right variables.
+
+        ## The third case is when the user wants to look at variables in a different frame.  As
+        ## an example, suppose the user trapped at INDENTER.cpy:2 issues a "frame 3" command.  Here's
+        ## what we see:
+
+        ##    (gdb) frame
+        ##    #3  0x00007ffff3315e3f in B (b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:10
+
+        ##    (gdb) info stack
+        ##    #0  C_ (entry=0, b_11=0x7ffff35172f0 <b_8> "B   4") at INDENTER.cpy:2
+        ##    #1  0x00007ffff3112ddf in C (b_11=0x7ffff35172f0 <b_8> "B   4") at C.cbl:10
+        ##    #2  0x00007ffff331622d in B_ (entry=0, b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:18
+        ##--> #3  0x00007ffff3315e3f in B (b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:10
+        ##    #4  0x0000555555554fa3 in MAIN_ (entry=0) at MAIN.cbl:11
+        ##    #5  0x0000555555554cc9 in MAIN () at MAIN.cbl:8
+        ##    #6  0x0000555555554cb4 in main (argc=1, argv=0x7fffffffe368) at MAIN.cbl:8
+
+        ## The algorithm that handles those cases seems to be this:
+        ##   * Pull the file.name from the "frame" results.
+        ##   * Walk through "info stack" results until the first instance of file.name is found;
+        ##     that becomes current_trapped_file and current_trapped_line
+        ##   * Starting at that "info stack" line, walk downward until a valid VARIABLE_STRING
+        ##     is found.
+        ## That might give a bogus result.  For example, if the frame is set to a module that
+        ## wasn't compiled with debugging, then the walk will take you to a module that does
+        ## have debugging.  That's not what you want, but I don't see how to avoid the problem
+        ## if you also want to be able to handle code in COPYBOOKs.
+
+        retval = False
         try :
-            if file_and_line[0] != self.current_trapped_file :
-                # We are in a new file
-                self.current_trapped_file = file_and_line[0]
+            info_frame = gdb.execute("frame",False,True)
+            info_stack = gdb.execute("info stack",False,True)
+            if len(info_stack) > 0 and info_stack[0] == '#' :
+                retval = True
 
-                ## Because it's possible that we are trapped in a copybook,
-                ## we can't assume that VARIABLE_STRING has the name
-                ## of the current_trapped_file.  We need to work our
-                ## way through the stack:
+                ## Get the frame number from info_frame:
+                frame_from_frame = int(info_frame.split(' ')[0][1:])
 
-                # Find the address of the VARIABLE_STRING for this trap point
+                ## Get the file name from the first line of the "frame" information:
+                m = info_frame.find('\n')
+                if m > -1 :
+                    info_frame = info_frame[:m]
+                tokens = info_frame.rstrip().split(' ')
+                filename = tokens[-1].split(':')[0]
 
-                backtrace = gdb.execute("bt",False,True).split('\n')
-                for possibility in backtrace :
-                    # Pull out the file name, which is before the colon in the last token
-                    possible_file = possibility.split(' ')[-1].split(':')[0]
-                    name_root = possible_file
-                    name_root = name_root.split('/')
-                    name_root = name_root[-1]
-                    name_root = name_root.replace('.','_')
-                    string_name = "VARIABLE_STRING_" + name_root.upper()
+                ## We now march through the info_stack lines, looking for the
+                ## first line whose filename matches filename:
 
-                    if self.ReadVariableString(string_name) :
+                stack = info_stack.split('\n')
+                stack_line = 0
+                while stack_line < len(stack) :
+                    tokens = stack[stack_line].split(' ')
+
+                    frame_from_stack = int(tokens[0][1:])
+
+                    # That line looks like this:
+                    #
+                    # #0  optfde01_ (entry=0) at optfde01.cbl:59
+                    #
+                    # We need the information from the final token:
+
+                    file_and_line = tokens[-1].split(':')
+                    if file_and_line[0] == filename :
                         break
+                    stack_line += 1
 
-                # We have us a new variable string
-                # Clear out the tables:
-                # Load the new tables
-                self.var_trie = VarTrie()
-                self.line_list = LineList()
+                if stack_line >= len(stack) :
+                    print("Bad things are happening.  Save this program for Dubner, and tell him")
+                    print("that \"frame\" and \"info stack\" don't match in ProcessStack()")
+                    return False
 
-                # Pull apart the variable_string
-                variable_lines = self.current_variable_string.split("~")
-                for variable_line in variable_lines :
-                    self.line_list.LoadFromLine(variable_line)
-                    self.var_trie.LoadFromLine(variable_line)
+                ## At this point, file_and_line[0] matches the file name from "frame"
 
-                # Put a fencepost at the end of the line_list
-                self.line_list.Insert(self.line_list.EndOfTheWorld,"Ragnarok")
+                self.current_trapped_line = int(file_and_line[1])
 
-                # Get the full path for the source file
-                info_source = gdb.execute("info source",False,True)
-                info_source = info_source.split('\n')
-                for line in info_source :
-                    pattern = re.compile(r"Located in (.*)$")
-                    match = re.search(pattern,line)
-                    if match :
-                        self.current_full_path = match.group(1)
-                        break
+                if file_and_line[0] != self.current_trapped_file :
+                    # We are in a new file
+                    self.current_trapped_file = file_and_line[0]
+
+                    ## clear out the persistent 'p ?' memory; it has suddenly
+                    ## become obsolete
+                    self.old_dogs = set()
+
+                    ## Because it's possible that we are trapped in a copybook,
+                    ## we can't assume that VARIABLE_STRING has the name
+                    ## of the current_trapped_file.  We need to work our
+                    ## way through the stack:
+
+                    # Find the address of the VARIABLE_STRING for this trap point
+
+                    while stack_line < len(stack) :
+                        possibility = stack[stack_line];
+                        # Pull out the file name, which is before the colon in the last token
+                        possible_file = possibility.split(' ')[-1].split(':')[0]
+                        name_root = possible_file
+                        name_root = name_root.split('/')
+                        name_root = name_root[-1]
+                        name_root = name_root.replace('.','_')
+                        string_name = "VARIABLE_STRING_" + name_root.upper()
+
+                        if self.ReadVariableString(string_name) :
+                            break
+                        stack_line += 1
+
+                    ## Unexpected and confusing things happen when the frame is set
+                    ## to a PROCEDURE DIVISION line. So, if an adjustment is necessary,
+                    ## we make it here:
+
+                    if frame_from_frame != frame_from_stack :
+                        command = "frame " + str(frame_from_stack)
+                        gdb.execute(command,False,True)
+
+                    # We have us a new variable string
+                    # Clear out the tables:
+                    # Load the new tables
+                    self.var_trie = VarTrie()
+                    self.line_list = LineList()
+
+                    if stack_line >= len(stack) :
+                        ## For whatever reasons, we couldn't find any information in
+                        ## the stack above the "frame" point
+                        return False
+
+                    # Pull apart the variable_string
+                    variable_lines = self.current_variable_string.split("~")
+                    for variable_line in variable_lines :
+                        self.line_list.LoadFromLine(variable_line)
+                        self.var_trie.LoadFromLine(variable_line)
+
+                    # Put a fencepost at the end of the line_list
+                    self.line_list.Insert(self.line_list.EndOfTheWorld,"Ragnarok")
+
+                    # Get the full path for the source file
+                    info_source = gdb.execute("info source",False,True)
+                    info_source = info_source.split('\n')
+                    for line in info_source :
+                        pattern = re.compile(r"Located in (.*)$")
+                        match = re.search(pattern,line)
+                        if match :
+                            self.current_full_path = match.group(1)
+                            break
         except :
-            traceback.print_exc()
-
-    def ReadSymbolTableText(self) :
-
-        # Figure out where we are
-        try :
             self.current_trapped_routine = ""
             self.current_trapped_file = ""
             self.current_trapped_line = 0
-            original_info_stack = gdb.execute("info stack",False,True)
-            self.ProcessInfoStack(original_info_stack)
 
-            # And now figure out what routine we are trapped in, from
+        return retval
+
+    def ReadSymbolTableText(self) :
+        ## Go read the frame and stack, and fetch the VariableStringData
+        if self.ProcessStack() :
+            # Figure out what routine we are trapped in, from
             # the line number
             for line in self.line_list.line_list :
                if line[0] > self.current_trapped_line :
@@ -1770,9 +1865,7 @@ class TabFileInformation() :
                    break;
                # Keep looking
                self.current_trapped_routine = line[1]
-
-        except :
-            #traceback.print_exc()
+        else :
             print( "No stack.")
 
 def MachineInterfaceFlat(TabFile,possibilities) :

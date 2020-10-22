@@ -1,28 +1,9 @@
-GNU gdb (GDB) 8.3
-Copyright (C) 2019 Free Software Foundation, Inc.
-License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
-This is free software: you are free to change and redistribute it.
-There is NO WARRANTY, to the extent permitted by law.
-Type "show copying" and "show warranty" for details.
-This GDB was configured as "x86_64-linux-gnu".
-Type "show configuration" for configuration details.
-For bug reporting instructions, please see:
-<http://www.gnu.org/software/gdb/bugs/>.
-Find the GDB manual and other documentation resources online at:
-    <http://www.gnu.org/software/gdb/documentation/>.
-
-For help, type "help".
-Type "apropos word" to search for commands related to "word".
-registering CPrint (Usage is "print" <COBOL identifier>") [Version 4.2]
-registering CWatch (Usage is "cwatch <COBOL identifier>")
 KNOWN GOOD LINES: 2
 No stack.
 The 'p ?' range has been set to +/- 6 lines
 KNOWN GOOD LINES: 1
 No stack.
 KNOWN GOOD START
-[Thread debugging using libthread_db enabled]
-Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
 entering: jimbob
 1234567.8
 123456.78
@@ -68,18 +49,11 @@ CARVER
 123.456789
 123456.789
 Wabash    
-[Inferior 1 (process 10497) exited normally]
+[Inferior 1 (process 99999) exited normally]
 KNOWN GOOD FINISH
 KNOWN GOOD LINES: 1
 No stack.
-Temporary breakpoint 1 at 0x400d0b: file test.cbl, line 26.
-[Thread debugging using libthread_db enabled]
-Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
-
-Temporary breakpoint 1, 0x0000000000400d0b in main (argc=0, argv=0x7fffffffe2f0) at test.cbl:26
-26	PROCEDURE DIVISION.
 KNOWN GOOD START
-0x0000000000400d3c in test () at test.cbl:26
 26	PROCEDURE DIVISION.
 test_ (entry=0) at test.cbl:27
 27	    CALL 'JIMBOB'.
@@ -112,18 +86,8 @@ test_ (entry=0) at test.cbl:27
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
 10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-0x000000000040158d in JIMBOB () at test.cbl:67
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 67	PROCEDURE DIVISION.
- 1 : 01 WS-JIM/JIMBOB [W-S] : '.' <repeats 22 times>
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : ".........."
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : "."
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : ".........."
- 5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 0
- 1 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : ".........."
- 2 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : "."
- 3 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : ".........."
- 4 : 01 WS-FLOATTEST/JIMBOB [W-S] : 0
-JIMBOB_ (entry=0) at test.cbl:68
 68	    MOVE    SPACES to WS-BOB.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
@@ -160,6 +124,7 @@ JIMBOB_ (entry=0) at test.cbl:68
 13 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
+77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 69	    MOVE    "Robert" to WS-FIRSTNAME IN WS-BOB.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
@@ -196,6 +161,7 @@ JIMBOB_ (entry=0) at test.cbl:68
 13 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
+77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 70	    MOVE    "J" to WS-MIDDLE-INITIAL IN WS-BOB.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
@@ -232,6 +198,7 @@ JIMBOB_ (entry=0) at test.cbl:68
 13 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
+77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 71	    MOVE    "Dubner" to WS-LASTNAME IN WS-BOB.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
@@ -270,6 +237,7 @@ JIMBOB_ (entry=0) at test.cbl:68
 15 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 16 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 17 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
+77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 72	    DISPLAY "entering: jimbob"
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
@@ -307,6 +275,7 @@ JIMBOB_ (entry=0) at test.cbl:68
 14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
 15 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 16 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
+77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 entering: jimbob
 73	    DISPLAY TEST-NUMBER-B1.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
@@ -344,6 +313,7 @@ entering: jimbob
 13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
 14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
+77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 1234567.8
 74	    DISPLAY TEST-NUMBER-B2.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
@@ -381,6 +351,7 @@ entering: jimbob
 13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
 14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
+77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 123456.78
 75	    CALL 'JIM'.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
@@ -418,19 +389,8 @@ entering: jimbob
 13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
 14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-0x0000000000402012 in JIM_1__ () at test.cbl:84
+77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 84	PROCEDURE DIVISION.
- 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
- 5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
- 5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-JIM_1_ (entry=0) at test.cbl:85
 85	    DISPLAY "entering: jim"
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -439,6 +399,7 @@ JIM_1_ (entry=0) at test.cbl:85
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 entering: jim
 86	    DISPLAY WS-JIM.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -448,6 +409,7 @@ entering: jim
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 James     " Lowden    
 87	    DISPLAY "by pargraphs:"
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -457,6 +419,7 @@ James     " Lowden
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 by pargraphs:
 88	    PERFORM ParaFirstName.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -464,6 +427,7 @@ by pargraphs:
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 97	    ParaFirstName.      DISPLAY WS-FIRSTNAME OF WS-JIM.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -475,6 +439,7 @@ by pargraphs:
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 James     
 89	    PERFORM ParaMiddleInitial.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -486,6 +451,7 @@ James
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 98	    ParaMiddleInitial.  DISPLAY WS-MIDDLE-INITIAL OF WS-JIM.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -496,6 +462,7 @@ James
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 "
 90	    PERFORM ParaLastName.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -507,6 +474,7 @@ James
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 99	    ParaLastName.       DISPLAY WS-LASTNAME OF WS-JIM.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -517,6 +485,7 @@ James
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Lowden    
 91	    DISPLAY "by threw"
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -528,6 +497,7 @@ Lowden
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 by threw
 92	    PERFORM ParaFirstName THRU ParaLastName.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -538,6 +508,7 @@ by threw
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 97	    ParaFirstName.      DISPLAY WS-FIRSTNAME OF WS-JIM.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -548,6 +519,7 @@ by threw
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 James     
 98	    ParaMiddleInitial.  DISPLAY WS-MIDDLE-INITIAL OF WS-JIM.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -559,6 +531,7 @@ James
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 "
 99	    ParaLastName.       DISPLAY WS-LASTNAME OF WS-JIM.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -570,6 +543,7 @@ James
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Lowden    
 93	    DISPLAY "by sekshun:"
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -581,6 +555,7 @@ Lowden
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 by sekshun:
 94	    PERFORM FirstMiddleLast.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -592,6 +567,7 @@ by sekshun:
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 97	    ParaFirstName.      DISPLAY WS-FIRSTNAME OF WS-JIM.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -602,6 +578,7 @@ by sekshun:
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 James     
 98	    ParaMiddleInitial.  DISPLAY WS-MIDDLE-INITIAL OF WS-JIM.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -613,6 +590,7 @@ James
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 "
 99	    ParaLastName.       DISPLAY WS-LASTNAME OF WS-JIM.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -624,6 +602,7 @@ James
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Lowden    
 95	    GOBACK.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -635,6 +614,7 @@ Lowden
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 JIMBOB_ (entry=0) at test.cbl:76
 76	    CALL 'BOB'.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
@@ -672,19 +652,8 @@ JIMBOB_ (entry=0) at test.cbl:76
 13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
 14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-0x00000000004031ba in BOB_1__ () at test.cbl:147
+77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 147	PROCEDURE DIVISION.
- 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
- 5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
- 5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-BOB_1_ (entry=0) at test.cbl:148
 148	    DISPLAY "entering: bob"
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -702,6 +671,7 @@ BOB_1_ (entry=0) at test.cbl:148
  5 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  6 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  7 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S]  :  0x4a616d65732020202020
 entering: bob
 149	    DISPLAY WS-BOB.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -720,6 +690,7 @@ entering: bob
  5 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  6 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  7 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S]  :  0x4a616d65732020202020
 Robert    J Dubner    
 150	    DISPLAY "by pargraphs:"
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -738,6 +709,7 @@ Robert    J Dubner
  5 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  6 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  7 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S]  :  0x4a616d65732020202020
 by pargraphs:
 151	    PERFORM ParaFirstName.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -754,6 +726,7 @@ by pargraphs:
  3 : 01 WS-BOB/BOB [W-S] : "Robert    J Dubner    "
  4 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  5 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S]  :  0x22
 161	    ParaFirstName.      DISPLAY WS-FIRSTNAME OF WS-BOB.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -773,6 +746,7 @@ by pargraphs:
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Robert    
 152	    PERFORM ParaMiddleInitial.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -793,6 +767,7 @@ Robert
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 162	    ParaMiddleInitial.  DISPLAY WS-MIDDLE-INITIAL OF WS-BOB.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -812,6 +787,7 @@ Robert
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 J
 153	    PERFORM ParaLastName.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -832,6 +808,7 @@ J
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 163	    ParaLastName.       DISPLAY WS-LASTNAME OF WS-BOB.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -851,6 +828,7 @@ J
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Dubner    
 154	    DISPLAY "by threw"
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -871,6 +849,7 @@ Dubner
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 by threw
 155	    PERFORM ParaFirstName THROUGH ParaLastName.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -886,6 +865,7 @@ by threw
  2 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  3 : 01 WS-BOB/BOB [W-S] : "Robert    J Dubner    "
  4 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
+02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S]  :  0x4a616d65732020202020
 161	    ParaFirstName.      DISPLAY WS-FIRSTNAME OF WS-BOB.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -905,6 +885,7 @@ by threw
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Robert    
 162	    ParaMiddleInitial.  DISPLAY WS-MIDDLE-INITIAL OF WS-BOB.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -925,6 +906,7 @@ Robert
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 J
 163	    ParaLastName.       DISPLAY WS-LASTNAME OF WS-BOB.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -945,6 +927,7 @@ J
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Dubner    
 156	    DISPLAY "by sekshun:"
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -965,6 +948,7 @@ Dubner
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 by sekshun:
 157	    PERFORM FirstMiddleLast.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -984,6 +968,7 @@ by sekshun:
  6 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  7 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  8 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S]  :  0x4a616d65732020202020
 161	    ParaFirstName.      DISPLAY WS-FIRSTNAME OF WS-BOB.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -1003,6 +988,7 @@ by sekshun:
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Robert    
 162	    ParaMiddleInitial.  DISPLAY WS-MIDDLE-INITIAL OF WS-BOB.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -1023,6 +1009,7 @@ Robert
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 J
 163	    ParaLastName.       DISPLAY WS-LASTNAME OF WS-BOB.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -1043,6 +1030,7 @@ J
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Dubner    
 158	    MOVE 4.321 TO WS-FLOATTEST
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -1063,6 +1051,7 @@ Dubner
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 159	    GOBACK.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -1082,6 +1071,7 @@ Dubner
  7 : 02 WS-FIRSTNAME/WS-BOB/BOB [W-S] : "Robert    "
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 JIMBOB_ (entry=0) at test.cbl:77
 77	    CALL 'DISPLAY-JIM-OR-BOB' USING WS-JUDY,WS-JIM
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
@@ -1124,21 +1114,8 @@ JIMBOB_ (entry=0) at test.cbl:77
 18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-0x0000000000402782 in DISPLAY__JIM__OR__BOB_1__ (b_65=0x5d3c17db5db26600 <error: Cannot access memory at address 0x5d3c17db5db26600>, b_70=0x7fffffffc120 "\200\321\377\377\377\177") at test.cbl:116
+77 TEST-NUMBER-A/JIMBOB [W-S]  :  0x313233343536373839
 116	PROCEDURE DIVISION USING LS-JORB, LS-JORB-2.
- 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
- 5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 6 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "........W."
- 7 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "......0*i."
- 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
- 2 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
- 3 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 4 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "........W."
- 5 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "......0*i."
-DISPLAY__JIM__OR__BOB_1_ (entry=0, b_65=0x605d60 <b_49> "Judy      L Ruderman  ", b_70=0x605ce0 <b_39> "James     \" Lowden    ") at test.cbl:117
 117	    DISPLAY "entering: jorb"
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -1161,6 +1138,7 @@ DISPLAY__JIM__OR__BOB_1_ (entry=0, b_65=0x605d60 <b_49> "Judy      L Ruderman  "
  6 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     "
  7 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : """
  8 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "Lowden    "
+01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK]  :  "Judy      L Ruderman  "
 entering: jorb
 119	    DISPLAY LS-MIDDLE-INITIAL OF LS-JORB.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -1184,6 +1162,7 @@ entering: jorb
  6 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     "
  7 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : """
  8 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "Lowden    "
+01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK]  :  "Judy      L Ruderman  "
 L
 121	    DISPLAY LS-MIDDLE-INITIAL OF LS-JORB-2.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -1207,6 +1186,7 @@ L
  6 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     "
  7 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : """
  8 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "Lowden    "
+01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK]  :  "Judy      L Ruderman  "
 "
 JIMBOB_ (entry=0) at test.cbl:78
 78	    CALL 'JUST_ONE' USING 1031.
@@ -1235,16 +1215,8 @@ JIMBOB_ (entry=0) at test.cbl:78
  3 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  4 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-0x0000000000402c20 in JUST_ONE_1__ (b_79=0x5d3c17db5db26600 <error: Cannot access memory at address 0x5d3c17db5db26600>) at test.cbl:129
+77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 129	PROCEDURE DIVISION USING A_BINARY_NUMBER.
- 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
- 5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
- 2 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-JUST_ONE_1_ (entry=0, b_79=0x7fffffffc168 "\a\004") at test.cbl:130
 130	    DISPLAY "entering: JUST_ONE"
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -1253,6 +1225,7 @@ JUST_ONE_1_ (entry=0, b_79=0x7fffffffc168 "\a\004") at test.cbl:130
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
  6 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001031
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001031
+01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x07040000
 entering: JUST_ONE
 131	    DISPLAY A_BINARY_NUMBER.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -1262,6 +1235,7 @@ entering: JUST_ONE
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
  6 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001031
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001031
+01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x07040000
 +0000001031
 132	    ADD 1 to A_BINARY_NUMBER.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -1271,6 +1245,7 @@ entering: JUST_ONE
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
  6 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001031
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001031
+01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x07040000
 133	    DISPLAY A_BINARY_NUMBER.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -1279,6 +1254,7 @@ entering: JUST_ONE
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
  6 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001032
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001032
+01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x08040000
 +0000001032
 134	    ADD 1 to A_BINARY_NUMBER.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -1288,6 +1264,7 @@ entering: JUST_ONE
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
  6 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001032
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001032
+01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x08040000
 135	    DISPLAY A_BINARY_NUMBER.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -1296,6 +1273,7 @@ entering: JUST_ONE
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
  6 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001033
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001033
+01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x09040000
 +0000001033
 JIMBOB_ (entry=0) at test.cbl:79
 79	    DISPLAY WS-FLOATTEST.
@@ -1325,6 +1303,7 @@ JIMBOB_ (entry=0) at test.cbl:79
  4 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
  5 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
  6 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
+77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 4.3210001
 80	    GOBACK.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
@@ -1352,6 +1331,7 @@ JIMBOB_ (entry=0) at test.cbl:79
  3 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  4 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
+77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 test_ (entry=0) at test.cbl:28
 28	    DISPLAY NAME-FIRST of GEORGE.
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
@@ -1385,6 +1365,7 @@ test_ (entry=0) at test.cbl:28
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 12 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
 13 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 GEORGE    
 29	    DISPLAY NAME-FIRST of WASHINGTON.
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
@@ -1416,6 +1397,7 @@ GEORGE
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
 10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 WASHINGTON
 30	    DISPLAY NAME-FIRST of CARVER.
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
@@ -1447,6 +1429,7 @@ WASHINGTON
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
 10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 CARVER    
 31	    DISPLAY NAME-FIRST of PEANUTS.
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
@@ -1483,6 +1466,7 @@ CARVER
 14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
 15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
 16 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 123.456789
 32	    DISPLAY NAME-FIRST of LEGUMES.
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
@@ -1519,6 +1503,7 @@ CARVER
 14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
 15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
 16 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 123456.789
 33	    MOVE "Wabash" TO WABASH.
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
@@ -1555,6 +1540,7 @@ CARVER
 14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
 15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
 16 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 34	    DISPLAY NAME-FIRST of WASHINGTON.
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
@@ -1590,6 +1576,7 @@ CARVER
 14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
 15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
 16 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 Wabash    
-[Inferior 1 (process 10501) exited normally]
+[Inferior 1 (process 99999) exited normally]
 KNOWN GOOD FINISH

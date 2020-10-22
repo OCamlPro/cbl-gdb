@@ -8,11 +8,13 @@ all:
 
 known-good:
 	COBCDEVEL=1 $(COBCD) -x test.cbl
-	$(GDB) -x test.scr > test.known-good
+	$(GDB) -x test.scr > known-good.txt
+	../strip-diff known-good.txt >known-good.stripped
 
 test:
 	COBCDEVEL=1 $(COBCD) -x test.cbl
-	$(GDB) -x test.scr > test.under-test
-	../strip-diff test.known-good >known-good
-	../strip-diff test.under-test >under-test
-	diff -u under-test known-good
+	$(GDB) -x test.scr > under-test.txt
+	../strip-diff under-test.txt >under-test.stripped
+	diff -u under-test.stripped known-good.stripped
+
+
