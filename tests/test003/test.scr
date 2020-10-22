@@ -43,38 +43,47 @@ b INDENTER.cpy:2
 
 echo KNOWN GOOD START\n
 r
+echo SETTING FRAME 8\n
 frame 8
 p *
 p ?
 p/x 1
+echo SETTING FRAME 7\n
 frame 7
 p *
 p ?
 p/x 1
+echo SETTING FRAME 6\n
 frame 6
 p *
 p ?
 p/x 1
+echo SETTING FRAME 5\n
 frame 5
 p *
 p ?
 p/x 1
+echo SETTING FRAME 4\n
 frame 4
 p *
 p ?
 p/x 1
+echo SETTING FRAME 3\n
 frame 3
 p *
 p ?
 p/x 1
+echo SETTING FRAME 2\n
 frame 2
 p *
 p ?
 p/x 1
+echo SETTING FRAME 1\n
 frame 1
 p *
 p ?
 p/x 1
+echo SETTING FRAME 0\n
 frame 0
 p *
 p ?
