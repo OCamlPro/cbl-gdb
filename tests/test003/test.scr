@@ -47,57 +47,57 @@ b INDENTER.cpy:2
 
 echo KNOWN GOOD START\n
 r
-echo KNOWN GOOD FINISH\n
+echo IGNORE START\n
 frame 8
-echo KNOWN GOOD START\n
+echo IGNORE FINISH\n
 p *
 p ?
 p/x 1
-echo KNOWN GOOD FINISH\n
+echo IGNORE START\n
 frame 7
-echo KNOWN GOOD START\n
+echo IGNORE FINISH\n
 p *
 p ?
 p/x 1
-echo KNOWN GOOD FINISH\n
+echo IGNORE START\n
 frame 6
-echo KNOWN GOOD START\n
+echo IGNORE FINISH\n
 p *
 p ?
 p/x 1
-echo KNOWN GOOD FINISH\n
+echo IGNORE START\n
 frame 5
-echo KNOWN GOOD START\n
+echo IGNORE FINISH\n
 p *
 p ?
 p/x 1
-echo KNOWN GOOD FINISH\n
+echo IGNORE START\n
 frame 4
-echo KNOWN GOOD START\n
+echo IGNORE FINISH\n
 p *
 p ?
 p/x 1
-echo KNOWN GOOD FINISH\n
+echo IGNORE START\n
 frame 3
-echo KNOWN GOOD START\n
+echo IGNORE FINISH\n
 p *
 p ?
 p/x 1
-echo KNOWN GOOD FINISH\n
+echo IGNORE START\n
 frame 2
-echo KNOWN GOOD START\n
+echo IGNORE FINISH\n
 p *
 p ?
 p/x 1
-echo KNOWN GOOD FINISH\n
+echo IGNORE START\n
 frame 1
-echo KNOWN GOOD START\n
+echo IGNORE FINISH\n
 p *
 p ?
 p/x 1
-echo KNOWN GOOD FINISH\n
+echo IGNORE START\n
 frame 0
-echo KNOWN GOOD START\n
+echo IGNORE FINISH\n
 p *
 p ?
 p/x 1
