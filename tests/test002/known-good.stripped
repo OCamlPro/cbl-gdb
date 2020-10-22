@@ -104,7 +104,6 @@ KNOWN GOOD LINES: 1
 No stack.
 KNOWN GOOD START
 126	000-Main.
-test_ (entry=0) at test.cbl:127
 127	DISPLAY "On this system, with this build of GnuCOBOL, the"
  1 : 01 header/test [W-S] : ' ' <repeats 40 times>
  2 : 01 withpic/test [W-S] : "$    1.23+"

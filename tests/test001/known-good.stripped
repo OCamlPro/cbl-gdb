@@ -55,7 +55,6 @@ KNOWN GOOD LINES: 1
 No stack.
 KNOWN GOOD START
 26	PROCEDURE DIVISION.
-test_ (entry=0) at test.cbl:27
 27	    CALL 'JIMBOB'.
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
@@ -615,7 +614,6 @@ Lowden
  3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
  4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
 01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
-JIMBOB_ (entry=0) at test.cbl:76
 76	    CALL 'BOB'.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
@@ -1072,7 +1070,6 @@ Dubner
  8 : 02 WS-MIDDLE-INITIAL/WS-BOB/BOB [W-S] : "J"
  9 : 02 WS-LASTNAME/WS-BOB/BOB [W-S] : "Dubner    "
 01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
-JIMBOB_ (entry=0) at test.cbl:77
 77	    CALL 'DISPLAY-JIM-OR-BOB' USING WS-JUDY,WS-JIM
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
@@ -1188,7 +1185,6 @@ L
  8 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "Lowden    "
 01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK]  :  "Judy      L Ruderman  "
 "
-JIMBOB_ (entry=0) at test.cbl:78
 78	    CALL 'JUST_ONE' USING 1031.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
@@ -1275,7 +1271,6 @@ entering: JUST_ONE
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001033
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x09040000
 +0000001033
-JIMBOB_ (entry=0) at test.cbl:79
 79	    DISPLAY WS-FLOATTEST.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
@@ -1332,7 +1327,6 @@ JIMBOB_ (entry=0) at test.cbl:79
  4 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
-test_ (entry=0) at test.cbl:28
 28	    DISPLAY NAME-FIRST of GEORGE.
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "

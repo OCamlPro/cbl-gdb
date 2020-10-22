@@ -21,6 +21,8 @@ def main() :
         
         pattern_source = re.compile("^[0-9]+\t")
         pattern_call = re.compile("^[0-9]+\t[ ]*cALl",re.IGNORECASE)
+        pattern_entry = re.compile("^.* [(]entry=.*$")
+        pattern_frame = re.compile("^#[0-9]+[ ]+0x.*$")
 
         for line in lines :
             is_source_line = False
@@ -81,6 +83,18 @@ def main() :
 
             if print_this_line :
                 if line.find("Missing separate ") == 0 :
+                    print_this_line = False
+
+            if print_this_line :
+                if line.find("Missing separate ") == 0 :
+                    print_this_line = False
+
+            if print_this_line :
+                if pattern_entry.search(line) :
+                    print_this_line = False
+
+            if print_this_line :
+                if pattern_frame.search(line) :
                     print_this_line = False
 
             ##  In the sequence 
