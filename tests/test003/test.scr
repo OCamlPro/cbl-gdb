@@ -47,57 +47,39 @@ b INDENTER.cpy:2
 
 echo KNOWN GOOD START\n
 r
-echo IGNORE START\n
-frame 8
-echo IGNORE FINISH\n
+select-frame 8
 p *
 p ?
 p/x 1
-echo IGNORE START\n
-frame 7
-echo IGNORE FINISH\n
+select-frame 7
 p *
 p ?
 p/x 1
-echo IGNORE START\n
-frame 6
-echo IGNORE FINISH\n
+select-frame 6
 p *
 p ?
 p/x 1
-echo IGNORE START\n
-frame 5
-echo IGNORE FINISH\n
+select-frame 5
 p *
 p ?
 p/x 1
-echo IGNORE START\n
-frame 4
-echo IGNORE FINISH\n
+select-frame 4
 p *
 p ?
 p/x 1
-echo IGNORE START\n
-frame 3
-echo IGNORE FINISH\n
+select-frame 3
 p *
 p ?
 p/x 1
-echo IGNORE START\n
-frame 2
-echo IGNORE FINISH\n
+select-frame 2
 p *
 p ?
 p/x 1
-echo IGNORE START\n
-frame 1
-echo IGNORE FINISH\n
+select-frame 1
 p *
 p ?
 p/x 1
-echo IGNORE START\n
-frame 0
-echo IGNORE FINISH\n
+select-frame 0
 p *
 p ?
 p/x 1
