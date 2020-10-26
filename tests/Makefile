@@ -16,3 +16,9 @@ test : $(DIRECTORIES)
 	do \
 	$(MAKE) -C $$dir test ; \
 	done
+
+testprod : $(DIRECTORIES)
+	@for dir in $(DIRECTORIES) ; \
+	do \
+	$(MAKE) -C $$dir testprod ; \
+	done

@@ -110,3 +110,6 @@ known-good :
 test :
 	$(MAKE) -C tests test
 
+.PHONY : testprod
+test :
+	$(MAKE) -C tests testprod
