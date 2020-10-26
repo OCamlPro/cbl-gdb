@@ -33,8 +33,9 @@ echo KNOWN GOOD FINISH\n
 echo KNOWN GOOD LINES: 1\n
 p *
 
-### Acid test: use 'start' to start before the start.
-start
+### Run program after a known good starting breakpoint
+b 127
+run
 echo KNOWN GOOD START\n
 stutter_step
 echo KNOWN GOOD FINISH\n

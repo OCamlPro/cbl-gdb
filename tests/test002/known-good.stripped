@@ -103,8 +103,6 @@ KNOWN GOOD FINISH
 KNOWN GOOD LINES: 1
 No stack.
 KNOWN GOOD START
-126	000-Main.
-127	DISPLAY "On this system, with this build of GnuCOBOL, the"
  1 : 01 header/test [W-S] : ' ' <repeats 40 times>
  2 : 01 withpic/test [W-S] : "$    1.23+"
  3 : 01 def-BINARY-CHAR/test [W-S] : +001
@@ -160,11 +158,10 @@ KNOWN GOOD START
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
  1 : 01 header/test [W-S] : ' ' <repeats 40 times>
- 2 : 01 def-COMP-6/test [W-S] : 88776654.1223345
- 3 : 01 def-COMP-X/test [W-S] : +988776654.1223345
- 4 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
- 5 : 01 def-COMP-XX/test [W-S] : 009887766541223345
- 6 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
+ 2 : 01 def-COMP-X/test [W-S] : +988776654.1223345
+ 3 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
+ 4 : 01 def-COMP-XX/test [W-S] : 009887766541223345
+ 5 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 01 header/test [W-S]  :  ' ' <repeats 40 times>
 On this system, with this build of GnuCOBOL, the
 128	DISPLAY "PICTURE-less USAGE’s have these lengths (in bytes):"

@@ -54,8 +54,6 @@ KNOWN GOOD FINISH
 KNOWN GOOD LINES: 1
 No stack.
 KNOWN GOOD START
-26	PROCEDURE DIVISION.
-27	    CALL 'JIMBOB'.
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
  3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "

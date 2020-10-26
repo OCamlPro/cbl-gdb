@@ -34,10 +34,12 @@ echo KNOWN GOOD FINISH\n
 echo KNOWN GOOD LINES: 1\n
 p *
 
-start
+b 9
+run
 echo KNOWN GOOD START\n
 stutter_step
 echo KNOWN GOOD FINISH\n
+clear 9
 
 ## I want to check the 'frame N' handling, but, weirdly,
 ## GDB 7 generates output on a gdb.execute("frame N",False,True) command
