@@ -111,5 +111,5 @@ test :
 	$(MAKE) -C tests test
 
 .PHONY : testprod
-test :
+testprod :
 	$(MAKE) -C tests testprod
