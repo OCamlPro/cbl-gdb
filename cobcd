@@ -840,6 +840,7 @@ def Main() :
         all_the_files = all_the_files.split('\n')
         for file in all_the_files :
             DeleteAFile(file)
+        f.close()
     elif COBCDNOCLEAN == "" and SAVE_TEMPS != "" :
         ## With just SAVE_TEMPS, we just leave the files that
         ## COBC historically left around:
