@@ -83,7 +83,9 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
             continue;
         }
 
-        static const char COB_DUMP_FIELD[] = "cob_dump_field";
+        // In the run-up to GnuCOBOL 3.2, Simon Sobisch changed the dump output slightly
+        static const char COB_DUMP_FIELD[]  = "cob_dump_field";
+        static const char COB_DUMP_OUTPUT[] = "cob_dump_output";
         static const char COB_SET_DATA[] = "COB_SET_DATA";
         static const char COB_SET_FLD[] = "COB_SET_FLD";
         char *p = ach;
@@ -98,9 +100,16 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
         while( *p EQ ' ' OR *p EQ '\t' ) {
             p += 1;
         }
+        bool caught_a_fish=false;
         if( strncmp(p, COB_DUMP_FIELD, strlen(COB_DUMP_FIELD)) EQ 0 ) {
             p += strlen(COB_DUMP_FIELD);
-
+            caught_a_fish=true;
+        }
+        if( strncmp(p, COB_DUMP_OUTPUT, strlen(COB_DUMP_OUTPUT)) EQ 0 ) {
+            p += strlen(COB_DUMP_OUTPUT);
+            caught_a_fish=true;
+            }
+        if( caught_a_fish ) {
             SkipPast(p,'(');
             string level;
             while( *p != ',' ) {
