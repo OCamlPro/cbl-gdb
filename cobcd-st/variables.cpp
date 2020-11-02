@@ -91,10 +91,9 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
         char *p = ach;
 
         // We have a special case to consider.  REDEFINES lines start with a /* comment indication:
-        if( *p EQ '/' AND *(p+1) EQ '*' )
-            {
+        if( *p EQ '/' AND *(p+1) EQ '*' ) {
             p += 2;
-            }
+        }
 
         // Skip over spaces
         while( *p EQ ' ' OR *p EQ '\t' ) {
@@ -108,12 +107,24 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
         if( strncmp(p, COB_DUMP_OUTPUT, strlen(COB_DUMP_OUTPUT)) EQ 0 ) {
             p += strlen(COB_DUMP_OUTPUT);
             caught_a_fish=true;
-            }
+        }
         if( caught_a_fish ) {
             SkipPast(p,'(');
             string level;
-            while( *p != ',' ) {
-                level += *p++;
+
+            // This boneheaded logic is because at the 3.1rc2 release, Simon changed
+            // the output of header lines from
+            //       /*cob_dump_field (-1, "WORKING-STORAGE", NULL, 0, 0);*/
+            // to    /*cob_dump_output("WORKING-STORAGE");*/
+
+            if( p[0] != ' ' AND !isdigit(p[0]) ) {
+                // It's the new style.  Force it to look like the old, which we understand.
+                level = "-1";
+            } else {
+                // It's the old style.
+                while( *p != ',' ) {
+                    level += *p++;
+                }
             }
 
             if( stoi(level) EQ -2 ) {
