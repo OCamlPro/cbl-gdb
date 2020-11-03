@@ -42,6 +42,7 @@ import datetime
 import subprocess
 import ctypes
 from ctypes import *
+from inspect import currentframe, getframeinfo
 
 #   This module implements the gdb extension commands cprint and cwatch
 #
@@ -123,12 +124,41 @@ COB_FLAG_REAL_SIGN      = (1 << 10)  # /* 0x0400 */
 COB_FLAG_BINARY_TRUNC   = (1 << 11)  # /* 0x0800 */
 COB_FLAG_CONSTANT       = (1 << 12)  # /* 0x1000 */
 
+def GdbExecute(curframe,command) :
+    # It is up to the caller to handle exceptions
+    limiting_debug_level = 1
+    if GV_GlobalVariables.debug_level >= limiting_debug_level :
+        print("#### ",getframeinfo(curframe).lineno,": gdb.execute: '",command,"'",sep='')
+    retval = gdb.execute(command,False,True)
+    if GV_GlobalVariables.debug_level >= limiting_debug_level :
+        lines = retval.split('\n')
+        for line in lines :
+            if len(line) > 0 :
+                print("####       retval:",line)
+    return retval
+
+def GdbExecute2(curframe,command,debug_level) :
+    # It is up to the caller to handle exceptions
+    limiting_debug_level = 1
+    if debug_level >= limiting_debug_level :
+        print("#### ",getframeinfo(curframe).lineno,": gdb.execute: '",command,"'",sep='')
+    retval = gdb.execute(command,False,True)
+    if debug_level >= limiting_debug_level :
+        lines = retval.split('\n')
+        for line in lines :
+            if len(line) > 0 :
+                print("####       retval:",line)
+    return retval
+
 class GlobalVariables() :
     def __init__(self) :
+        ## Establish the debugging verbosity level:
+        self.debug_level = int(os.environ.get('CPRINT_D','0'))
+
         ## Let's figure out if we are a 32-bit or 64-bit machine:
         self.SizeofPointer = 4     # Assume 32-bit
         command="show architecture"
-        arch = gdb.execute(command,False,True)
+        arch = GdbExecute2(currentframe(),command,self.debug_level)
         nfound = arch.find("x86-64")
         if nfound != -1 :
             self.SizeofPointer = 8
@@ -250,7 +280,7 @@ class GlobalVariables() :
         if not self.libcob_loaded :
             # First order of business: find the library:
             command="info sharedlibrary"
-            shared_libraries = gdb.execute(command,False,True)
+            shared_libraries = GdbExecute(currentframe(),command)
             shared_libraries = shared_libraries.split('\n')
 
             self.LIBCOB = None
@@ -273,7 +303,7 @@ class GlobalVariables() :
 
                 try :
                     command="info address cobglobptr"
-                    result=gdb.execute(command,False,True)
+                    result = GdbExecute(currentframe(),command)
                     ExtractHexValueFrom( result )
                 except:
                     ## There is no symbol "cobglobptr"
@@ -620,7 +650,7 @@ def GetDataAt(address,bytes) :
             return None
 
         command = "x/1" + u + "d " + str(address)
-        value_back = gdb.execute(command,False,True)
+        value_back = GdbExecute(currentframe(),command)
 
         nfound = value_back.find(":")
         if nfound == -1 :
@@ -629,14 +659,15 @@ def GetDataAt(address,bytes) :
         return value
 
     except gdb.error:
-        print("gdb.execute failed in GetDataAt:",command)
+        print("gdb .execute failed in GetDataAt:",command)
         return None
 
 def GetBytesAt(address,N) :
     # Pick up N bytes from address, return them as a list of ints
     retval = []
     command = "x/" + str(N) + "xb " + hex(address)
-    all_the_bytes = gdb.execute(command,False,True)
+    all_the_bytes = GdbExecute(currentframe(),command)
+
     lines = all_the_bytes.split('\n')
     for line in lines :
         nfound = line.find(':')
@@ -662,7 +693,7 @@ def GetPointerAt(variable) :
     # cob_global block it pointed to.
     try :
         command="x/1db (char *) " + variable
-        result=gdb.execute(command,False,True)
+        result = GdbExecute(currentframe(),command)
         return ExtractHexValueFrom(result)
     except :
         return None
@@ -673,7 +704,7 @@ def GetAddressOf(variable) :
     if variable :
         try :
             command = "info address " + variable
-            address_string = gdb.execute(command,False,True)
+            address_string = GdbExecute(currentframe(),command)
             val_info = ExtractHexValueFrom(address_string)
         except gdb.error:
             val_info = None
@@ -681,7 +712,7 @@ def GetAddressOf(variable) :
         try :
             command = "x/1db " + variable  ## Notice d for decimal, not hex, because
                                            ## a second 0x messes up ExtractHexValue
-            address_string = gdb.execute(command,False,True)
+            address_string = GdbExecute(currentframe(),command)
             val_x1db = ExtractHexValueFrom(address_string)
         except :
             val_x1db = None
@@ -1283,7 +1314,7 @@ class CobolVariable() :
             for i in range(self.Length) :
                 self.data[i] = p_cob_field_data[i]
                 command = "set {char}" + hex(p) + "=" + hex(self.data[i])
-                result=gdb.execute(command,False,True)
+                result = GdbExecute(currentframe(),command)
                 p += 1
 
     def GetDataAsHex(self) :
@@ -1410,7 +1441,7 @@ class CobolVariable() :
                 # Pick up the decimal line number where we are trapped
                 line_number = -1
                 command="frame"
-                frame_string = gdb.execute(command,False,True)
+                frame_string = GdbExecute(currentframe(),command)
                 # Look for a number after a colon
                 nfound = frame_string.find(':')
                 if nfound > -1 :
@@ -1443,7 +1474,7 @@ class CobolVariable() :
                 # LOCAL-STORAGE variable, so we can look for it in cob_local_ptr
                 # we need GDB's help finding out where cob_local_ptr + offset is:
                 command = "x " + "cob_local_ptr + " + str(self.Offset)
-                address_string = gdb.execute(command,False,True)
+                address_string = GdbExecute(currentframe(),command)
                 nfound = address_string.find(':')
                 if nfound != -1 :
                     self.location_of_data = int( address_string[:nfound], 16 )
@@ -1638,7 +1669,7 @@ class TabFileInformation() :
         if the_address :
             command = "x/1s " + str(the_address)
             try :
-                the_data = gdb.execute(command,False,True)
+                the_data = GdbExecute(currentframe(),command)
                 index1 = the_data.find('"')
                 if index1 != -1 :
                     index2 = the_data.find('"',index1+1)
@@ -1654,7 +1685,7 @@ class TabFileInformation() :
                         command = "x/" + str(blocks) + "s " + str(the_address)
 
                         # And we can get that data
-                        the_data = gdb.execute(command,False,True)
+                        the_data = GdbExecute(currentframe(),command)
 
                         # And now we loop through the data, extracting each chunk
                         is_first_line = True
@@ -1744,9 +1775,9 @@ class TabFileInformation() :
         retval = False
         try :
             command="frame"
-            info_frame = gdb.execute(command,False,True)
+            info_frame = GdbExecute(currentframe(),command)
             command="info stack"
-            info_stack = gdb.execute(command,False,True)
+            info_stack = GdbExecute(currentframe(),command)
             if len(info_stack) > 0 and info_stack[0] == '#' :
                 retval = True
 
@@ -1792,7 +1823,7 @@ class TabFileInformation() :
 
                 if frame_from_frame != frame_from_stack :
                     command = "select-frame " + str(frame_from_stack)
-                    result=gdb.execute(command,False,True)
+                    result = GdbExecute(currentframe(),command)
 
                 ## At this point, file_and_line[0] matches the file name from "frame"
                 self.current_trapped_line = int(file_and_line[1])
@@ -1849,7 +1880,7 @@ class TabFileInformation() :
 
                     # Get the full path for the source file
                     command="info source"
-                    info_source = gdb.execute(command,False,True)
+                    info_source = GdbExecute(currentframe(),command)
                     info_source = info_source.split('\n')
                     for line in info_source :
                         pattern = re.compile(r"Located in (.*)$")
@@ -2363,7 +2394,7 @@ class CWatchWorker() :
         command += '[' + str(payload.Length) +'])'
         command += '(' + hex(payload.location_of_data) + ')'
 
-        watch_text = gdb.execute(command,False,True)
+        watch_text = GdbExecute(currentframe(),command)
         print(watch_text)
 
     def ProcessWArgumentsW(self, TabFile, arguments) :
@@ -2388,11 +2419,11 @@ class CPrint (gdb.Command) :
     """Prints COBOL-NAMED variables when debugging cobst processed object files."""
 
     def __init__ (self):
-        ###########################################################################
-        ## The version number in the next line is updated by a Linux bash script. #
-        ## The text "Version x.x" has to appear in square brackets.               #
-        ## Don't mess with it!                                                    #
-        ###########################################################################
+        ##############################################################################
+        ## The version number in the next section is updated by a Linux bash script. #
+        ## The text "Version x.x" has to appear in square brackets.                  #
+        ## Don't mess with it!                                                       #
+        ##############################################################################
         self.Worker = CPrintWorker()
         self.TabFile = TabFileInformation();
         self.TabFile.question_mark_range = self.Worker.question_mark_range
