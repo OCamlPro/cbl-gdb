@@ -127,7 +127,8 @@ class GlobalVariables() :
     def __init__(self) :
         ## Let's figure out if we are a 32-bit or 64-bit machine:
         self.SizeofPointer = 4     # Assume 32-bit
-        arch = gdb.execute("show architecture",False,True)
+        command="show architecture"
+        arch = gdb.execute(command,False,True)
         nfound = arch.find("x86-64")
         if nfound != -1 :
             self.SizeofPointer = 8
@@ -248,7 +249,8 @@ class GlobalVariables() :
         #print("Entering LoadLibCob with", self.libcob_loaded, self.cob_current_module_valid)
         if not self.libcob_loaded :
             # First order of business: find the library:
-            shared_libraries = gdb.execute("info sharedlibrary",False,True)
+            command="info sharedlibrary"
+            shared_libraries = gdb.execute(command,False,True)
             shared_libraries = shared_libraries.split('\n')
 
             self.LIBCOB = None
@@ -270,7 +272,9 @@ class GlobalVariables() :
                 # to issue a warning, set defaults, and move on with our lives.
 
                 try :
-                    ExtractHexValueFrom( gdb.execute("info address cobglobptr",False,True) )
+                    command="info address cobglobptr"
+                    result=gdb.execute(command,False,True)
+                    ExtractHexValueFrom( result )
                 except:
                     ## There is no symbol "cobglobptr"
                     self.CobModuleGlobalEnter(None)
@@ -657,7 +661,9 @@ def GetPointerAt(variable) :
     # didn't really care where cobglobptr was; I cared about the memory
     # cob_global block it pointed to.
     try :
-        return ExtractHexValueFrom(gdb.execute("x/1db (char *) " + variable,False,True))
+        command="x/1db (char *) " + variable
+        result=gdb.execute(command,False,True)
+        return ExtractHexValueFrom(result)
     except :
         return None
 
@@ -1277,7 +1283,7 @@ class CobolVariable() :
             for i in range(self.Length) :
                 self.data[i] = p_cob_field_data[i]
                 command = "set {char}" + hex(p) + "=" + hex(self.data[i])
-                gdb.execute(command,False,True)
+                result=gdb.execute(command,False,True)
                 p += 1
 
     def GetDataAsHex(self) :
@@ -1403,7 +1409,8 @@ class CobolVariable() :
 
                 # Pick up the decimal line number where we are trapped
                 line_number = -1
-                frame_string = gdb.execute("frame",False,True)
+                command="frame"
+                frame_string = gdb.execute(command,False,True)
                 # Look for a number after a colon
                 nfound = frame_string.find(':')
                 if nfound > -1 :
@@ -1736,8 +1743,10 @@ class TabFileInformation() :
 
         retval = False
         try :
-            info_frame = gdb.execute("frame",False,True)
-            info_stack = gdb.execute("info stack",False,True)
+            command="frame"
+            info_frame = gdb.execute(command,False,True)
+            command="info stack"
+            info_stack = gdb.execute(command,False,True)
             if len(info_stack) > 0 and info_stack[0] == '#' :
                 retval = True
 
@@ -1783,7 +1792,7 @@ class TabFileInformation() :
 
                 if frame_from_frame != frame_from_stack :
                     command = "select-frame " + str(frame_from_stack)
-                    gdb.execute(command,False,True)
+                    result=gdb.execute(command,False,True)
 
                 ## At this point, file_and_line[0] matches the file name from "frame"
                 self.current_trapped_line = int(file_and_line[1])
@@ -1839,7 +1848,8 @@ class TabFileInformation() :
                     self.line_list.Insert(self.line_list.EndOfTheWorld,"Ragnarok")
 
                     # Get the full path for the source file
-                    info_source = gdb.execute("info source",False,True)
+                    command="info source"
+                    info_source = gdb.execute(command,False,True)
                     info_source = info_source.split('\n')
                     for line in info_source :
                         pattern = re.compile(r"Located in (.*)$")
@@ -2353,7 +2363,6 @@ class CWatchWorker() :
         command += '[' + str(payload.Length) +'])'
         command += '(' + hex(payload.location_of_data) + ')'
 
-        #print("The command is:",command)
         watch_text = gdb.execute(command,False,True)
         print(watch_text)
 
