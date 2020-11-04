@@ -301,7 +301,6 @@ def Main() :
     COMMAND_LINE=[]
     ASKED_FOR_HELP=False
     ASKED_FOR_VERSION=False
-    ASKED_FOR_FDUMP=False
 
     DASH_V     = ""
     end_early  = False
@@ -411,8 +410,6 @@ def Main() :
             # We'll take care of it at the end.
             SAVE_TEMPS=param
             continue;
-        elif param.find("--fdump") == 0 or param.find("-fdump") == 0 :
-            ASKED_FOR_FDUMP=True
         elif param in ("-E","-C","-S","-c","-###") :
             end_early = True
 
@@ -464,19 +461,6 @@ def Main() :
         time_now = time.monotonic() - clock_start
         print("timer: %30s %5.4f %5.4f" % ("startup overhead", time_now - lap_start, time_now))
         lap_start = time_now
-
-    ## If we are going to proceed from here, we have to have a version of
-    ## GnuCOBOL that will work for us.
-    result_file = tempfile.TemporaryFile();
-    ## If it knows about the comment-fdump switch, we can use it:
-    errcode, std, err = RunCommand([COBC, "--fgen-c-comment-fdump"])
-    ## The two possible results are "no input files" and
-    ## "unrecognized option".  If we get the second one, the COBC compiler
-    ## is no good to us.
-    if err.find("unrecognized") != -1 :
-        print("The COBC compiler does not recognize the '--fgen-c-comment-fdump' option.")
-        print("You need GnuCOBOL-3.1 (The release version of November 2020) or newer.")
-        os._exit(1)
 
     if SHOW_TIME :
         time_now = time.monotonic() - clock_start
@@ -656,17 +640,15 @@ def Main() :
             #print("DASH_F     is ",DASH_F     )
             #print("DASH_S     is ",DASH_S     )
 
-        comment_fdump = ""
-        if not ASKED_FOR_FDUMP :
-            comment_fdump = " -fgen-c-comment-fdump "
-
     if resultcode == 0 :
         ## Do the initial compilation that gives us the .c .h .i and .s files
         s = COB_CFLAGS_BASE + [FCF_PROTECTION];
         os.environ["COB_CFLAGS"]= ' '.join(s)
-        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -fsource-location -A -ggdb --save-temps --fgen-c-line-directives --fgen-c-labels -fdump=WS -fdump=LS -fdump=LO " + comment_fdump + " " + ' '.join(COMMAND_LINE))
+        os.environ["COBC_GEN_DUMP_COMMENTS"]= '1'
+        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -fsource-location -A -ggdb --save-temps --fgen-c-line-directives --fgen-c-labels " + ' '.join(COMMAND_LINE))
         if ECHO :
             print("COB_CFLAGS:",os.environ["COB_CFLAGS"])
+            print("COBC_GEN_DUMP_COMMENTS:",os.environ["COBC_GEN_DUMP_COMMENTS"])
             print(' '.join(OUR_COMMAND))
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
