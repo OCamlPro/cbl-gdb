@@ -83,14 +83,20 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
             continue;
         }
 
-        // In the run-up to GnuCOBOL 3.2, Simon Sobisch changed the dump output slightly
+        static const char COB_DUMP_FILE[]   = "cob_dump_file";
         static const char COB_DUMP_FIELD[]  = "cob_dump_field";
         static const char COB_DUMP_OUTPUT[] = "cob_dump_output";
         static const char COB_SET_DATA[] = "COB_SET_DATA";
         static const char COB_SET_FLD[] = "COB_SET_FLD";
         char *p = ach;
 
-        // We have a special case to consider.  REDEFINES lines start with a /* comment indication:
+        // Skip over leading spaces
+        while( *p EQ ' ' OR *p EQ '\t' ) {
+            p += 1;
+        }
+
+        // The lines we are looking for can be commented out.
+        // So, we just ignore the "/*" if it's the first thing on a line:
         if( *p EQ '/' AND *(p+1) EQ '*' ) {
             p += 2;
         }
@@ -99,56 +105,44 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
         while( *p EQ ' ' OR *p EQ '\t' ) {
             p += 1;
         }
-        bool caught_a_fish=false;
-        if( strncmp(p, COB_DUMP_FIELD, strlen(COB_DUMP_FIELD)) EQ 0 ) {
-            p += strlen(COB_DUMP_FIELD);
-            caught_a_fish=true;
-        }
+
         if( strncmp(p, COB_DUMP_OUTPUT, strlen(COB_DUMP_OUTPUT)) EQ 0 ) {
-            p += strlen(COB_DUMP_OUTPUT);
-            caught_a_fish=true;
+            /* cob_dump_output("WORKING-STORAGE"); */
+            /* cob_dump_output("LINKAGE"); */
+            /* cob_dump_output("LOCAL-STORAGE"); */
+            p += strlen(COB_DUMP_OUTPUT) + 2;
+            if( strstr(p,"WORKING-STORAGE") EQ p ) {
+                current_record_type = "W";
+            } else if( strstr(p,"LOCAL-STORAGE") EQ p ) {
+                current_record_type = "L";
+            } else if( strstr(p,"LINKAGE") EQ p ) {
+                current_record_type = "I";
+            }
+            // There are other types: REPORT and SCREEN.  We don't care about them
+            continue;
         }
-        if( caught_a_fish ) {
+
+        if( strncmp(p, COB_DUMP_FILE, strlen(COB_DUMP_FILE)) EQ 0 ) {
+            /* cob_dump_file ("FD pgm-input", h_PGM_INPUT); */
+            /* cob_dump_file ("SD pgm-input", h_PGM_INPUT); */
+            p += strlen(COB_DUMP_FILE) + 3;
+            if( strstr(p,"SD ") EQ p ) {
+                current_record_type = "S";
+            } else if( strstr(p,"FD ") EQ p ) {
+                current_record_type = "F";
+            }
+            continue;
+        }
+
+        if( strncmp(p, COB_DUMP_FIELD, strlen(COB_DUMP_FIELD)) EQ 0 ) {
+            p += strlen(COB_DUMP_FIELD) ;
             SkipPast(p,'(');
             string level;
 
-            // This boneheaded logic is because at the 3.1rc2 release, Simon changed
-            // the output of header lines from
-            //       /*cob_dump_field (-1, "WORKING-STORAGE", NULL, 0, 0);*/
-            // to    /*cob_dump_output("WORKING-STORAGE");*/
-
-            if( p[0] != ' ' AND !isdigit(p[0]) ) {
-                // It's the new style.  Force it to look like the old, which we understand.
-                level = "-1";
-            } else {
-                // It's the old style.
-                while( *p != ',' ) {
-                    level += *p++;
-                }
+            while( *p != ',' ) {
+                level += *p++;
             }
 
-            if( stoi(level) EQ -2 ) {
-                continue;
-            }
-
-            if( stoi(level) EQ -1 ) {
-                if( strstr(p, "FD") ) {
-                    current_record_type = "F";
-                } else if( strstr(p, "SD") ) {
-                    current_record_type = "S";
-                } else if( strstr(p, "WORKING") ) {
-                    current_record_type = "W";
-                } else if( strstr(p, "LOCAL") ) {
-                    current_record_type = "L";
-                } else if( strstr(p, "LINKAGE") ) {
-                    current_record_type = "I";
-                } else {
-                    cout << "We don't understand this line:" << endl;
-                    cout << ach;
-                    current_record_type = "X";
-                }
-                continue;
-            }
             VARIABLE variable;
             variable.level = stoi(level);
 

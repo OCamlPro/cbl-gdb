@@ -282,7 +282,7 @@ main(int argc, char *argv[])
                         params.c_filename.GetFname() );
     variables.FillInTheBlanks(cob_fields);
     variables.FixLocalStorageOffsets();
-#if defined(DUMPING) 
+#if defined(DUMPING)
     variables.Dump();
 #endif
 
