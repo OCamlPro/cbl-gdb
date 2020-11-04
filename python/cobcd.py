@@ -160,6 +160,8 @@ class GlobalVariables() :
         command="show architecture"
         arch = GdbExecute2(currentframe(),command,self.debug_level)
         nfound = arch.find("x86-64")
+        if nfound == -1 :
+            nfound = arch.find("sparc")
         if nfound != -1 :
             self.SizeofPointer = 8
 
