@@ -19,7 +19,7 @@ all: $(project)
 # Note that it is this srule/script that will have to be copied elsewhere to
 # compile .cbl sources for gdb debugging
 $(project) : $(project).cbl 
-	COBCDXM=-x $(COBCD) $< 
+	COBCDXM=-x $(COBCD) $<
 
 # This cleans up the various project files, along with any additional
 # $(CLEAN) files specified by the parent Makefile It also clobbers any

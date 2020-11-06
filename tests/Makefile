@@ -3,7 +3,7 @@ DIRECTORIES = $(sort $(wildcard */))
 .PHONY : known-good test $(DIRECTORIES) all
 
 all :
-	@echo "Your choices are 'make known-good' and 'make test'"
+	@echo "Your choices are 'make known-good' and 'make test' and 'make testprod'"
 
 known-good : $(DIRECTORIES)
 	@for dir in $(DIRECTORIES) ; \

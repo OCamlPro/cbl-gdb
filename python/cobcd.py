@@ -32,6 +32,15 @@
 
 #   This module implements the gdb extension commands cprint and cwatch
 
+## Catalog of environment variables interpreted by this module:
+##
+## os.environ.get('CPRINT_D','0')   When non-zero, causes verbose output
+## os.environ.get('CPRINT_E')       Can be present when cobglobptr isn't available.
+##                                  three-character string e.g., ".$," for "decimal, currency, separator"
+## os.environ.get('CPRINT_V', '0')  Default formatting p/v N value
+## os.environ.get('CPRINT_R', '6')) Default p/? range
+## os.environ.get('CPRINT', '0'))   When non-zero, registers "cprint" instead of "print" as the command
+
 from __future__ import print_function
 
 import re
@@ -43,6 +52,7 @@ import subprocess
 import ctypes
 from ctypes import *
 from inspect import currentframe, getframeinfo
+from struct import calcsize
 
 #   This module implements the gdb extension commands cprint and cwatch
 #
@@ -156,14 +166,7 @@ class GlobalVariables() :
         self.debug_level = int(os.environ.get('CPRINT_D','0'))
 
         ## Let's figure out if we are a 32-bit or 64-bit machine:
-        self.SizeofPointer = 4     # Assume 32-bit
-        command="show architecture"
-        arch = GdbExecute2(currentframe(),command,self.debug_level)
-        nfound = arch.find("x86-64")
-        if nfound == -1 :
-            nfound = arch.find("sparc")
-        if nfound != -1 :
-            self.SizeofPointer = 8
+        self.SizeofPointer = calcsize('P')  # Returns 4 or 8
 
         ## Establish the size of a c-side int
         self.SizeofInt = ctypes.sizeof(ctypes.c_int)

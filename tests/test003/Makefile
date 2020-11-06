@@ -4,7 +4,8 @@ GDB?=gdb
 .PHONY : known-good test all testprod
 
 all:
-	@echo "Your choices are 'make known-good' and 'make test'"
+	@echo "Your choices are 'make known-good' and 'make test' and 'make testprod'"
+
 known-good:
 	COBCDEVEL=1 $(COBCD) -o test -x MAIN.cbl
 	COBCDEVEL=1 $(COBCD) -m A.cbl
