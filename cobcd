@@ -75,16 +75,20 @@ def DeleteAFile(fname) :
         pass
 
 def DeSpace(command) :
-    ## This routine removes extraneous embedded spaces and empty list elements:
-    if isinstance(command,list) :
-        # We have a list, so join the elements
-        command = ' '.join(command)
-        # And then split them, eliminating any '' list elements and extra spaces
-        return command.split()
-    elif isinstance(command,str) :
+    ## This routine removes extraneous spaces and empty list elements:
+    if isinstance(command,str) :
         # Starting as string, return a list
         return command.split()
-    elif isinstance(command,unicode) :
+
+    if isinstance(command,list) :
+        retval = []
+        for element in command :
+            element = element.strip()
+            if len(element) :
+                retval.append(element)
+        return retval
+
+    if isinstance(command,unicode) :
         # This will come into play with Python2
         command = command.encode('ascii','replace')
         return command.split()
@@ -94,7 +98,7 @@ def DeSpace(command) :
     return command
 
 def SubprocessCall(command,suppress_error) :
-    command = DeSpace(command)
+    ## command must be a list of strings
     try :
         resultcode = subprocess.call(command)
     except subprocess.CalledProcessError as err:
@@ -138,6 +142,7 @@ def InfoFetch(linelist,var) :
     return retval
 
 def RunCommand(command) :
+    # command must be a list of strings
     std_file = tempfile.TemporaryFile();
     err_file = tempfile.TemporaryFile();
     errcode = -2;
@@ -191,13 +196,21 @@ def CheckForDebugLibraries() :
     else :
         pass
 
+def SmartPrint(parameters) :
+    # parameters is a list of strings:
+    for param in parameters :
+        if param.find(' ') != -1 :
+            param = '"' + param + '"'
+        print(param,' ',sep='',end='')
+    print('')
+
 def Main() :
     ###########################################################################
     ## The version number in the next line is updated by a Linux bash script. #
     ## The text "Version x.x" has to appear in square brackets.               #
     ## Don't mess with it!                                                    #
     ###########################################################################
-    SCRIPT_VERSION="[Version 4.3]"
+    SCRIPT_VERSION="[Version 4.4]"
 
     SHOW_TIME = True    # For timing analysis.  Won't work on Python2
     SHOW_TIME = False
@@ -299,6 +312,8 @@ def Main() :
         DASH_S=""
 
     COMMAND_LINE=[]
+    COMMANDS_REMOVED=[]
+
     ASKED_FOR_HELP=False
     ASKED_FOR_VERSION=False
 
@@ -330,6 +345,8 @@ def Main() :
             params.append(param)
             continue
         if param in ("-D","-A","-Q") :
+            # These three can be followed by a quoted item that has to go through intact,
+            # because `-Q "l gdb"` is very different from `-Q -l gdb`
             do_not_process = True
             params.append(param)
             continue
@@ -343,6 +360,7 @@ def Main() :
             # Anything with an embedded hyphen or '=' goes straight through
             params.append(param)
             continue
+        ## At this point, the param starts with a single '-'
         if param[1] in (    'f' ,
                             'W' ,
                             'O' ,
@@ -363,7 +381,8 @@ def Main() :
             # These initial letters always precede something that goes through intact
             params.append(param)
             continue
-        ## Now we handle the leftover specific words:
+        ## Now we handle the leftover specific words.
+        ## (See cobc/cobc.c "long_options")
         if param[1:] in (   "help"    ,
                             "cob" ,
                             "info"    ,
@@ -397,26 +416,33 @@ def Main() :
         #print("param",param)
         if param in ("-h","-help","--help") :
             ASKED_FOR_HELP=True
+            COMMANDS_REMOVED.append(param)
             continue
         if param in ("-V","-version","--version") :
             ASKED_FOR_VERSION=True
+            COMMANDS_REMOVED.append(param)
             continue
         if param in ("-v","-vv","-vvv") or param[0:len("-verbose")] == "-verbose" or param[0:len("--verbose")] == "--verbose" :
             # Requests for verbosity mess up our -### processing, so we filter them out for later
             DASH_V = param
+            COMMANDS_REMOVED.append(param)
             continue
         if param.find("-save-temps") in (0,1) :
             # If he asked for --save-temps, we have to suppress the COBC processing of it
             # We'll take care of it at the end.
             SAVE_TEMPS=param
+            COMMANDS_REMOVED.append(param)
             continue;
         elif param in ("-E","-C","-S","-c","-###") :
             end_early = True
 
         COMMAND_LINE.append(param)
 
-    if DASH_V :
-        ECHO = 1
+    ## From here on out, COMMAND_LINE represents a list which is the best
+    ## approximation of what the user wants to happen.
+
+    ## COMMANDS_REMOVED contains any that we pulled out because they interfere with COBCD
+    ## processing.  Under some circumstances we need to put them back in.
 
     if ASKED_FOR_HELP :
         print_help(SCRIPT_VERSION)
@@ -430,32 +456,19 @@ def Main() :
 
     if end_early :
         ## He requires a straight cobc compilation
-        ## with a -t or -T switch, so do it now.
-        command = DeSpace([COBC,DASH_V] + COMMAND_LINE)
+        ## Put the command back together:
+
+        command = [COBC] + COMMANDS_REMOVED + COMMAND_LINE
         if ECHO :
-            print(' '.join(command))
+            SmartPrint(command)
+
+        ## Execute it:
         resultcode = SubprocessCall(command,False)
-        ## Having done that, we need to remove the -T command elements;
-        ## if we don't, they'll interfere with our process
+        os._exit(resultcode)
 
-        ## Likewise, we have to get rid of -Xref; it causes an error when there
-        ## is no listing file, and when using -###, there is no listing file.
-
-        C1 = COMMAND_LINE[:] # This is a copy
-        COMMAND_LINE = []
-        i = 0
-        while i < len(C1) :
-            if C1[i][0:2] not in ("-t","-T") and C1[i] != "-Xref" :
-                COMMAND_LINE.append(C1[i])
-            else :
-                # We will not transfer the -T element
-                if len(C1[i]) == 2 :
-                    # And if it is alone, then we skip the next one as well
-                    i += 1;
-            i += 1
-
-    if end_early :
-        os._exit(0)
+    if DASH_V :
+        ## If there was a -v request, we need to show the user everything we're doing
+        ECHO = 1
 
     if SHOW_TIME :
         time_now = time.monotonic() - clock_start
@@ -521,12 +534,11 @@ def Main() :
 
     if resultcode == 0 :
         TRIPLE_X_COMMAND = [COBC, "-###"] + COMMAND_LINE
-        TRIPLE_X_COMMAND = DeSpace(TRIPLE_X_COMMAND)
         resultcode = 0
         try :
             result_file = tempfile.TemporaryFile();
             if ECHO :
-                print( ' '.join(TRIPLE_X_COMMAND) )
+                SmartPrint(TRIPLE_X_COMMAND)
             subprocess.check_output(TRIPLE_X_COMMAND,stderr=result_file)
             result_file.seek(0)
             result_text = result_file.read()
@@ -553,9 +565,9 @@ def Main() :
             ## It is common for something to go wrong with that first attempt; anything
             ## from bad file names to syntax errors in the code.  Let's go for a minimal
             ## response by emulating the end_early
-            command = DeSpace([COBC,DASH_V] + COMMAND_LINE)
+            command = [COBC] + COMMANDS_REMOVED + COMMAND_LINE
             if ECHO :
-                print(' '.join(command))
+                SmartPrint(command)
             resultcode = SubprocessCall(command,True)
             os._exit(resultcode)
 
@@ -645,11 +657,11 @@ def Main() :
         s = COB_CFLAGS_BASE + [FCF_PROTECTION];
         os.environ["COB_CFLAGS"]= ' '.join(s)
         os.environ["COBC_GEN_DUMP_COMMENTS"]= '1'
-        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -fsource-location -A -ggdb --save-temps --fgen-c-line-directives --fgen-c-labels " + ' '.join(COMMAND_LINE))
+        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -fsource-location -A -ggdb --save-temps --fgen-c-line-directives --fgen-c-labels ") + COMMAND_LINE
         if ECHO :
             print("COB_CFLAGS:",os.environ["COB_CFLAGS"])
             print("COBC_GEN_DUMP_COMMENTS:",os.environ["COBC_GEN_DUMP_COMMENTS"])
-            print(' '.join(OUR_COMMAND))
+            SmartPrint(OUR_COMMAND)
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
     if SHOW_TIME :
@@ -671,7 +683,7 @@ def Main() :
         ## We can now create the .sym.c file:
         OUR_COMMAND = DeSpace([COBST,DASH_Q,DASH_F,DASH_S,FILE_ROOT,FILE_CBL])
         if ECHO :
-            print(' '.join(OUR_COMMAND))
+            SmartPrint(OUR_COMMAND)
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
     if SHOW_TIME :
@@ -685,7 +697,7 @@ def Main() :
         # FILE_ROOT.c and any .h files.  The modification is done "in-place".
         OUR_COMMAND = DeSpace([SFIX, DASH_Q, FILE_S, FILE_S, FILE_C, FILE_CBL])
         if ECHO :
-            print(' '.join(OUR_COMMAND))
+            SmartPrint(OUR_COMMAND)
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
     if SHOW_TIME :
@@ -697,7 +709,7 @@ def Main() :
         ## It is time to compile the .sym.c file we created
         OUR_COMMAND = DeSpace([COBC,DASH_V,"-c","-o",FILE_SYM_O,FILE_SYM_C])
         if ECHO :
-            print(' '.join(OUR_COMMAND))
+            SmartPrint(OUR_COMMAND)
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
     if SHOW_TIME :
@@ -709,7 +721,7 @@ def Main() :
         ## We can now use COBC to assemble that the .s file we modified:
         OUR_COMMAND=DeSpace([COBC,DASH_V,"-c", "-o", FILE_O, FILE_S])
         if ECHO :
-            print(' '.join(OUR_COMMAND))
+            SmartPrint(OUR_COMMAND)
         resultcode = SubprocessCall(OUR_COMMAND,False)
 
     if SHOW_TIME :
@@ -744,7 +756,7 @@ def Main() :
         if DASH_V :
             FINAL_COMMAND.append("-v")
         if ECHO :
-            print(' '.join(FINAL_COMMAND))
+            SmartPrint(FINAL_COMMAND)
         resultcode = SubprocessCall(FINAL_COMMAND,False)
 
     if SHOW_TIME :
