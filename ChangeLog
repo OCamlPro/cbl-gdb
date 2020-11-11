@@ -1,3 +1,9 @@
+2020-11-11  Bob Dubner <rdubner@symas.com>
+
+	* First appearance of Version 4.5
+	* Handles 'cobcd -x rtest.cbl say.o'
+	* Eliminate traceback from 'cobcd --info'
+
 2020-10-22  Bob Dubner <rdubner@symas.com>
 
 	* Initial regression testing seems operable. See ../tests

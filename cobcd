@@ -210,7 +210,7 @@ def Main() :
     ## The text "Version x.x" has to appear in square brackets.               #
     ## Don't mess with it!                                                    #
     ###########################################################################
-    SCRIPT_VERSION="[Version 4.4]"
+    SCRIPT_VERSION="[Version 4.5]"
 
     SHOW_TIME = True    # For timing analysis.  Won't work on Python2
     SHOW_TIME = False
@@ -317,6 +317,8 @@ def Main() :
     ASKED_FOR_HELP=False
     ASKED_FOR_VERSION=False
 
+    TO_BE_LINKED_AT_THE_END=[]
+
     DASH_V     = ""
     end_early  = False
     resultcode = 0
@@ -343,6 +345,10 @@ def Main() :
         if do_not_process :
             do_not_process = False
             params.append(param)
+            continue
+        if param[-2:] == ".o" or param[-2:] == ".O" :
+            ## Sequester .o object files until the final link
+            TO_BE_LINKED_AT_THE_END.append(param)
             continue
         if param in ("-D","-A","-Q") :
             # These three can be followed by a quoted item that has to go through intact,
@@ -730,25 +736,26 @@ def Main() :
         lap_start = time_now
 
     if resultcode == 0 :
+        TO_BE_LINKED_AT_THE_END += [FILE_SYM_O,FILE_O]
         # It is now time to build up the final link command.  Based on the
         # -### command we executed up above, we have to replace
         # the -o target with our TARGET, and we need to replace either
         # "/tmp/cob7653_0.o" (from a -x or -b compilation) or "/tmp/cob7684_0.c"
         # (from a -m compilation) with our .o files:
         FINAL_COMMAND = FINAL_COMMAND[FINAL_COMMAND.find(':')+2:]
+        FINAL_COMMAND = FINAL_COMMAND.replace('"','')
         C1 = FINAL_COMMAND.split()
         FINAL_COMMAND = []
         i = 0
         while i < len(C1) :
-            token = C1[i].replace('"','')
+            token = C1[i]
             if token == '-o' :
                 FINAL_COMMAND.append(token)
                 FINAL_COMMAND.append(TARGET)
                 i += 2
                 continue
             elif token[-2:] in (".o",".c") :
-                FINAL_COMMAND.append(FILE_SYM_O)
-                FINAL_COMMAND.append(FILE_O)
+                FINAL_COMMAND += TO_BE_LINKED_AT_THE_END
                 i += 1
                 continue
             FINAL_COMMAND.append(token)
@@ -828,13 +835,17 @@ def Main() :
         DeleteAFile(FILE_SYM_O)
 
         ## Time to delete all the files in FILE_DELETE_US
-        f = open(FILE_DELETE_US,"r")
-        all_the_files = f.read()
-        all_the_files = all_the_files.replace('\r','')  # Windows.  Always Windows
-        all_the_files = all_the_files.split('\n')
-        for file in all_the_files :
-            DeleteAFile(file)
-        f.close()
+        try :
+            f = open(FILE_DELETE_US,"r")
+            all_the_files = f.read()
+            all_the_files = all_the_files.replace('\r','')  # Windows.  Always Windows
+            all_the_files = all_the_files.split('\n')
+            for file in all_the_files :
+                DeleteAFile(file)
+            f.close()
+        except :
+            ## If the file doesn't exist, then it doesn't exist
+            pass
     elif COBCDNOCLEAN == "" and SAVE_TEMPS != "" :
         ## With just SAVE_TEMPS, we just leave the files that
         ## COBC historically left around:

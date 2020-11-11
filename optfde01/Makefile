@@ -1,6 +1,4 @@
 project = optfde01
-#free = --free
-free = 
 
 # disable built-in rules:
 .SUFFIXES:
@@ -19,14 +17,12 @@ all: $(project)
 # Note that it is this srule/script that will have to be copied elsewhere to
 # compile .cbl sources for gdb debugging
 $(project) : $(project).cbl 
-	COBCDXM=-x $(COBCD) $<
+	$(COBCD) -x $<
 
-# This cleans up the various project files, along with any additional
-# $(CLEAN) files specified by the parent Makefile It also clobbers any
-# .txt files that might be lying around; I often create .txt files
-# from dwarfdump and hexdump.
+# This cleans up the various intermediate project files
+
 .PHONY : clean
-suffixes = .c *.h .i .lst .cbl.lst .full.tab .tab .o .cbl.o 
+suffixes = .c *.h .i .o .sym.o .sym.c .s
 clean:
 	@rm -f $(addprefix $(project),$(suffixes)) $(project) *.txt $(CLEAN) $(project)-gdb.py
 
