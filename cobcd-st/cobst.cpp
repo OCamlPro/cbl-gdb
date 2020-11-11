@@ -49,6 +49,9 @@ using namespace std;
 
 //#define DUMPING
 
+// When this global variable is on, every input line is echoed
+bool GV_echo_line = false;
+
 static void
 CreateSymc(PARAMETERS &params,
            const VARIABLES &variables,
@@ -260,6 +263,16 @@ int
 main(int argc, char *argv[])
 {
     PROFILER;
+
+    char *noisy=getenv("COBST_NOISY");
+    if( noisy )
+        {
+        int nnoisy=atoi(noisy);
+        if( nnoisy )
+            {
+            GV_echo_line = true;
+            }
+        }
 
     // Decode the command line for our purposes.
     PARAMETERS params;

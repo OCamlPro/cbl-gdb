@@ -3,17 +3,25 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerCommandArguments>-f C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest.cbl</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerEnvironment>
+    </LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerCommandArguments>-f C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest.cbl</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerEnvironment>
+    </LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommandArguments>-f C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest.cbl</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerEnvironment>
+    </LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommandArguments>-f C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest.cbl</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerEnvironment>
+    </LocalDebuggerEnvironment>
   </PropertyGroup>
 </Project>

@@ -310,7 +310,13 @@ COB_FIELDS::ScanCFile(const string &path, const string &fname)
 
     char ach[16384];
     static const char COB_SET_DATA[] = "COB_SET_DATA";
+    int line_number = 1;
     while( fgets(ach,sizeof(ach),f) ) {
+        extern bool GV_echo_line;
+        if( GV_echo_line )
+            {
+            printf("B-%d %s",line_number++,ach);
+            }
         char *pcsd;
         if( (pcsd=strstr(ach,COB_SET_DATA)) ) {
             // This line has COB_SET_DATA in it.

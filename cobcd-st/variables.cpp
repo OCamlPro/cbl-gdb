@@ -59,7 +59,13 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
     char ach[16384];
 
     string current_record_type = "X" ;
+    int line_number = 1;
     while( fgets(ach,sizeof(ach),f) ) {
+        extern bool GV_echo_line;
+        if( GV_echo_line )
+            {
+            printf("A-%d %s",line_number++,ach);
+            }
         if( strstr(ach, ": Entry ") ) {
             string input = ach;
 
