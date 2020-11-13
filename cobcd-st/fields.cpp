@@ -88,7 +88,7 @@ COB_FIELDS::ScanDotHFile(ifstream &ifs, const string &source)
             string f_name = "f_" ;
             while( nfound < input.length() ) {
                 char ch = input[nfound++];
-                if( !isdigit(ch) ) {
+                if( !isdigit(ch) OR ch != '_' ) {
                     break;
                 }
                 f_name += ch;
