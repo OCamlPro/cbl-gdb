@@ -265,14 +265,12 @@ main(int argc, char *argv[])
     PROFILER;
 
     char *noisy=getenv("COBST_NOISY");
-    if( noisy )
-        {
+    if( noisy ) {
         int nnoisy=atoi(noisy);
-        if( nnoisy )
-            {
+        if( nnoisy ) {
             GV_echo_line = true;
-            }
         }
+    }
 
     // Decode the command line for our purposes.
     PARAMETERS params;

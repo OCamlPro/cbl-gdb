@@ -25,7 +25,8 @@ private:
     std::string b_name;         // Name of the location of the data
     std::string a_name;         // Name of the associated cob_field_attrib variable
     int         offset;         // When f_name exists, offset should have the same runtime value as f_name->data - b_name;
-    int         length;         // When f_name exists, length should be the same as f_name->size
+    std::string length;         // When f_name exists, length should be the same as f_name->size.
+    //                          // But for variable-length items, this can be a b_ value
     int         occurs_min;     //
     int         occurs_max;     // -1 for unbounded
     bool        redefines;      // Means that we redefine our immediately elder sibling
@@ -38,7 +39,7 @@ public:
     {
         level = 0;
         offset = 0;
-        length = 0;
+        length = "0";
         occurs_min = 0;
         occurs_max = 1;
         redefines = false;

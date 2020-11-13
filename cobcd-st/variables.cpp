@@ -62,10 +62,9 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
     int line_number = 1;
     while( fgets(ach,sizeof(ach),f) ) {
         extern bool GV_echo_line;
-        if( GV_echo_line )
-            {
+        if( GV_echo_line ) {
             printf("A-%d %s",line_number++,ach);
-            }
+        }
         if( strstr(ach, ": Entry ") ) {
             string input = ach;
 
@@ -220,23 +219,50 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                     variables.push_back(variable);
                 }
             } else if( strncmp(p, COB_SET_FLD, strlen(COB_SET_FLD)) EQ 0 ) {
+                // Various things we will encounter:
+                //      /* cob_dump_field ( 1, "argument", COB_SET_FLD(f0, 1, b_9, &a_1), 0, 0); ANYLENGTH */
+                //      /* cob_dump_field ( 1, "result", COB_SET_FLD(f0, (*(int *)(b_8)), b_10, &a_3), 0, 0); */
+                //      /* cob_dump_field ( 5, "oeitl-prodnum", COB_SET_FLD(f0, 8, cob_local_ptr + 128 + 2, &a_5), 0, 0); */
+                //      /* cob_dump_field ( 2, "LK-PARAM-2", COB_SET_FLD(f0, 4, b_45 + 8, &a_4), 0, 0); */
+
                 p += strlen(COB_SET_FLD);
-                SkipPast(p,'(');
-                string s;
-                while( *p != ')' ) {
-                    if( *p != ' ' AND *p != '\t' ) {
-                        s += *p;
-                    }
-                    p += 1;
-                }
+                // p now points to the parenthesis after COB_SET_FIELD
+                char *p2 = FindMatchingParenthesis(p);
+                string s = p;
+                s = s.substr(1,(p2-p)-1);
+                // s is now the stuff inside the parentheses of COB_SET_FIELD
+                VSTRING tokens = Split(s,",");
 
-                SkipPast(p,',');
-                int occurrence = atoi(p);
-                if(occurrence EQ 0) {
-                    VSTRING tokens = Split(s," ,");
-
+                SkipPast(p2,',');
+                int occurrence = atoi(p2);
+                if( occurrence EQ 0 AND tokens.size() >= 4 ) {
                     VSTRING tokens_base_offset = Split(tokens[2],"+");
-                    variable.length = stoi(tokens[1]);
+
+                    // The length item is usually an integer.  But for variable-length items, like
+                    // variable-length arrays, it will look like (*(int *)b_10)
+                    string slength = Trim(tokens[1]);
+                    size_t nfound=slength.find("_");
+                    if( nfound != string::npos ) {
+                        // Extract the b_10 from around the '_' character
+                        size_t nleft  = nfound;
+                        size_t nright = nfound+1;
+
+                        while( nleft >= 1 ) {
+                            if( !isalpha(slength[nleft-1]) ) {
+                                break;
+                            }
+                            nleft -= 1;
+                        }
+                        while( nright < slength.size() ) {
+                            if( !isdigit(slength[nright]) ) {
+                                break;
+                            }
+                            nright += 1;
+                        }
+                        slength = slength.substr(nleft,nright-nleft);
+                    }
+
+                    variable.length = slength;
                     variable.b_name = tokens_base_offset[0];
                     for( size_t i=1; i<tokens_base_offset.size(); i++) {
                         variable.offset += stoi(tokens_base_offset[i]);
@@ -275,7 +301,7 @@ VARIABLES::FillInTheBlanks(COB_FIELDS &cob_fields)
                 }
                 it->a_name = pfield->a_name;
                 if( pfield->size) {
-                    it->length = pfield->size;
+                    it->length = to_string(pfield->size);
                 }
                 if( pfield->offset) {
                     it->offset = pfield->offset;
@@ -341,7 +367,7 @@ VARIABLES::Dump() const
         cout << setw(20) << variable->b_name;         // Name of the location of the data
         cout << setw(20) << variable->a_name;         // Name of the associated cob_field_attrib variable
         cout << setw( 7) << variable->offset;         // When f_name exists, offset should have the same runtime value as f_name->data - b_name;
-        cout << setw( 7) << variable->length;         // When f_name exists, length should be the same as f_name->size
+        cout << setw( 7) << variable->length;      // When f_name exists, length should be the same as f_name->size.  But it might be a b_ variable
         cout << setw( 6) << variable->occurs_min;     //
         cout << setw( 6) << variable->occurs_max;     // -1 for unbounded
         cout << setw( 6) << (variable->redefines ? "REDEF" : "");
@@ -367,7 +393,7 @@ VARIABLES::FormatVariablesInfo(stringstream &ss) const
         ss << (variable->b_name EQ "cob_local_ptr" ? "" : variable->b_name) << "|" ;
         ss << variable->a_name                  << "|" ;
         ss << ZeroIsNull(variable->offset)      << "|" ;
-        ss << ZeroIsNull(variable->length)      << "|" ;
+        ss << variable->length               << "|" ;
         ss << ZeroIsNull(variable->occurs_min)  << "|" ;
         if( variable->occurs_min EQ 0 AND variable->occurs_max EQ 1 ) {
             // This is the default, so output nothing
@@ -456,7 +482,10 @@ VARIABLES::FixLocalStorageOffsets()
                 if( it->record_type EQ "L" AND our_level EQ VARIABLE_LEVEL(it->level) ) {
                     // We have found our immediately elder sibling
                     // Replace us with his offset plus his length:
-                    variable->offset = it->offset + it->length;
+                    variable->offset = it->offset;
+                    if( isdigit(it->length[0]) ) {
+                        variable->offset += stoi(it->length);
+                    }
 
                     // cob_local_ptr idiosyncracy:  Level 01 variables are allocated on
                     // 16-byte boundaries:

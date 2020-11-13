@@ -193,3 +193,25 @@ SkipPast(PCHAR &p,char ch)
     }
 }
 
+char *
+FindMatchingParenthesis(char *p)
+{
+    // Pretty simple-minded.  Assumes there are no comments involved, and
+    // it assumes the string at p is well-formed.
+    char *retval = p ;
+    int pcount = 0;
+    if( *p++ EQ '(' ) {
+        pcount = 1;
+    }
+    while( pcount && *p ) {
+        char ch = *p;
+        if( ch EQ '(' ) {
+            pcount += 1;
+        } else if (ch EQ ')') {
+            pcount -= 1;
+            retval = p;
+        }
+        p += 1;
+    }
+    return retval;
+}
