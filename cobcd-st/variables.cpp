@@ -117,19 +117,18 @@ SquishAwayStarIntStar(const string &s_)
         if( nfound1 != string::npos ) {
             nfound2 = s.find(')',nfound1 + strlen("(*(int *)") );
             if( nfound2 != string::npos ) {
-                nfound2 += 1;
+                nfound2 += 2;
                 string param = ExtractVariableNameFrom( s.substr(nfound1 + strlen("(*(int *)")) );
                 retval = s.substr(0,nfound1);
                 retval += ' ';
                 retval += param;
                 retval += ' ';
-                retval += s.substr(nfound2);
             }
         } else {
             nfound1 = s.size();
             nfound2 = nfound1;
+            retval += s;
         }
-        retval += s.substr(0,nfound1);
         s = s.substr(nfound2);
     }
 

@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>-f C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest.cbl</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-f C:\Users\Bob\repos\cbl-gdb-samples\ref_test_14\rtest C:\Users\Bob\repos\cbl-gdb-samples\ref_test_14\rtest.cbl</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerEnvironment>COBST_NOISY=1</LocalDebuggerEnvironment>
+    <LocalDebuggerEnvironment>COBST_NOISYx=1</LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments>-f C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest.cbl</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-f C:\Users\Bob\repos\cbl-gdb-samples\ref_test_14\rtest C:\Users\Bob\repos\cbl-gdb-samples\ref_test_14\rtest.cbl</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerEnvironment>COBST_NOISY=1</LocalDebuggerEnvironment>
+    <LocalDebuggerEnvironment>COBST_NOISYx=1</LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-f C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest.cbl</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-f C:\Users\Bob\repos\cbl-gdb-samples\ref_test_14\rtest C:\Users\Bob\repos\cbl-gdb-samples\ref_test_14\rtest.cbl</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerEnvironment>COBST_NOISY=1</LocalDebuggerEnvironment>
+    <LocalDebuggerEnvironment>COBST_NOISYx=1</LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-f C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest C:\Users\Bob\repos\cbl-gdb-samples\ref_test_2\rtest.cbl</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-f C:\Users\Bob\repos\cbl-gdb-samples\ref_test_14\rtest C:\Users\Bob\repos\cbl-gdb-samples\ref_test_14\rtest.cbl</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerEnvironment>COBST_NOISY=1</LocalDebuggerEnvironment>
+    <LocalDebuggerEnvironment>COBST_NOISYx=1</LocalDebuggerEnvironment>
   </PropertyGroup>
 </Project>
