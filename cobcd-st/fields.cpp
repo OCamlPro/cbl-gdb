@@ -48,7 +48,7 @@ COB_FIELDS::Insert(std::string f_name_,
 {
     M_COB_FIELDS_2::const_iterator it = m_cob_fields.find(f_name_);
     if( it != m_cob_fields.end() ) {
-        std::cout << "Creating the symbol " << f_name_ << " more than once in COB_FIELDS::Insert()\n" ;
+        std::cerr << "Creating the symbol " << f_name_ << " more than once in COB_FIELDS::Insert()\n" ;
         exit(1);
     }
     COB_FIELD cf(f_name_,
@@ -63,7 +63,7 @@ COB_FIELDS::Insert(std::string f_name_,
 void
 COB_FIELDS::ScanDotHFile(ifstream &ifs, const string &source)
 {
-    int current_line_number = 0;
+    int line_number = 0;
 
     string input;
     for(;;) {
@@ -71,7 +71,10 @@ COB_FIELDS::ScanDotHFile(ifstream &ifs, const string &source)
         if(ifs.eof()) {
             break;
         }
-        current_line_number += 1;
+        extern bool GV_echo_line;
+        if( GV_echo_line ) {
+            cout << "H-" << line_number++ << " " << input << endl;
+        }
 
         // Look for f_xxx fields:
         // static cob_field f_8    = {120, b_10 + 10, &a_10};   /* PRINT-REC */
@@ -88,10 +91,11 @@ COB_FIELDS::ScanDotHFile(ifstream &ifs, const string &source)
             string f_name = "f_" ;
             while( nfound < input.length() ) {
                 char ch = input[nfound++];
-                if( !isdigit(ch) OR ch != '_' ) {
+                if( isdigit(ch) OR ch EQ '_' ) {
+                    f_name += ch;
+                } else {
                     break;
                 }
-                f_name += ch;
             }
 
             // Let's refuse to be fooled:
@@ -304,7 +308,7 @@ COB_FIELDS::ScanCFile(const string &path, const string &fname)
 
     FILE *f = fopen(full_path.c_str(),"r");
     if( !f ) {
-        cout << "Couldn't open the input file " << full_path << endl;
+        cerr << "Couldn't open the input file " << full_path << endl;
         exit(1);
     }
 

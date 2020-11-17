@@ -157,6 +157,19 @@ ZeroIsNull(const LONGLONG &v)
     return ss.str();
 }
 
+string
+ZeroIsNull(const string &v)
+{
+    PROFILER;
+    string retval;
+    stringstream ss;
+    if( v != "0" ) {
+        ss << v;
+    }
+    return ss.str();
+}
+
+
 int
 STOI(const string &s)
 {

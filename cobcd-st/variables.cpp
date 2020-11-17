@@ -32,6 +32,7 @@
 #include <iomanip>
 #include <map>
 #include <sstream>
+#include <assert.h>
 #include "variables.h"
 #include "profiler.h"
 #include "utils.h"
@@ -41,6 +42,144 @@ using namespace std;
 #define EQ ==
 #define AND &&
 #define OR ||
+
+static string
+ExtractVariableNameFrom(const string &p)
+{
+    string retval = Trim(p);
+    size_t nfound=retval.find("_");
+    if( nfound != string::npos ) {
+        // Extract the b_10 from around the '_' character
+        size_t nleft  = nfound;
+        size_t nright = nfound+1;
+
+        while( nleft >= 1 ) {
+            if( !isalpha(retval[nleft-1]) ) {
+                break;
+            }
+            nleft -= 1;
+        }
+        while( nright < retval.size() ) {
+            if( !isdigit(retval[nright]) ) {
+                break;
+            }
+            nright += 1;
+        }
+        retval = retval.substr(nleft,nright-nleft);
+    }
+    return retval;
+}
+
+static string
+HackAwayCobGetNumdisp(const string &p_)
+{
+    string p = p_;
+    // cob_dump_field ( 1, "G-1", COB_SET_FLD(f0, cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1), b_9, &a_1), 0, 0);
+    // Let's hack at that last one first. Anyplace we see "cob_get_numdisp (b_8, 1)", we want to replace it with, simply, "b_8"
+
+    string retval;
+    while(!p.empty()) {
+        size_t nfound1 = p.find("cob_get_numdisp");
+        if( nfound1 EQ string::npos ) {
+            nfound1 = p.size();
+        }
+        // nfound1 is where cob_get_numdisp starts
+        size_t nfound2 = p.find(')',nfound1);
+        string replacement = "";
+        if( nfound2 != string::npos ) {
+            size_t nfoundm = nfound1 + strlen("cob_get_numdisp");
+            nfound2 += 1;
+            string fragment = p.substr(nfoundm,nfound2-nfoundm);
+            // Fragment looks like
+            //      " (b_8, 1)"
+            replacement = " " + ExtractVariableNameFrom(fragment) + " ";
+        } else {
+            nfound2 = nfound1;
+        }
+
+        retval += p.substr(0,nfound1);
+        retval += replacement;
+        p = p.substr(nfound2);
+    }
+    return retval;
+}
+
+static string
+SquishAwayStarIntStar(const string &s_)
+{
+    string s = s_;
+    string retval;
+
+    while( !s.empty() ) {
+        size_t nfound1 = s.find( "(*(int *)" );
+        size_t nfound2;
+        string stripped;
+        if( nfound1 != string::npos ) {
+            nfound2 = s.find(')',nfound1 + strlen("(*(int *)") );
+            if( nfound2 != string::npos ) {
+                nfound2 += 1;
+                string param = ExtractVariableNameFrom( s.substr(nfound1 + strlen("(*(int *)")) );
+                retval = s.substr(0,nfound1);
+                retval += ' ';
+                retval += param;
+                retval += ' ';
+                retval += s.substr(nfound2);
+            }
+        } else {
+            nfound1 = s.size();
+            nfound2 = nfound1;
+        }
+        retval += s.substr(0,nfound1);
+        s = s.substr(nfound2);
+    }
+
+    return retval;
+}
+
+VSTRING
+ParametersInsideParentheses(const string &s, size_t &final)
+{
+    VSTRING retval;
+    final = 0;
+    string next;
+    const char *p = s.c_str();
+
+    int pcount = 0;
+    if( *p++ EQ '(' ) {
+        pcount = 1;
+    }
+    while( pcount && *p ) {
+        char ch = *p++;
+        final += 1;
+        if( ch EQ '(' ) {
+            pcount += 1;
+            next += ch;
+            continue;
+        }
+        if( ch EQ ')' ) {
+            if( --pcount ) {
+                next += ch;
+            }
+            continue;
+        }
+        if( pcount > 1 ) {
+            next += ch;
+            continue;
+        }
+        // Arriving here means pcount is 1
+        if( ch EQ ',' ) {
+            retval.push_back(Trim(next));
+            next.clear();
+            continue;
+        }
+        next += ch;
+    }
+    if( !retval.empty() ) {
+        retval.push_back(Trim(next));
+    }
+
+    return retval;
+}
 
 void
 VARIABLES::ScanCFile(const string &path, const string &fname)
@@ -78,7 +217,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                     AND tokens[8] EQ "*/\n" ) {
                 VARIABLE variable;
                 variable.record_type = "P";
-                variable.offset = stoi(tokens[2]);
+                variable.offset = tokens[2];
                 variable.name = tokens[5];
                 variable.f_name = tokens[7];
                 Insert(variable);
@@ -140,135 +279,122 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
         }
 
         if( strncmp(p, COB_DUMP_FIELD, strlen(COB_DUMP_FIELD)) EQ 0 ) {
-            p += strlen(COB_DUMP_FIELD) ;
-            SkipPast(p,'(');
-            string level;
+            // As time has gone on, and I have been exposed to steadily more complex COBOL
+            // constructions, this routine has been forced to become more and more complex.
+            // The cob_dump_field routine takes these parameters
+            //   cob_dump_field (const int level, const char *name, cob_field *f_addr, const int offset, const int indexes, ...)
+            // What makes this generally useful is that the field pointer gets built at dump time using the
+            // COB_SET_FLD() macro
+            //   COB_SET_FLD(f_name, length, bname + offset, aname)
+            //
+            // Where it gets complicated is when the length and/or the offset are themselves variable
 
-            while( *p != ',' ) {
-                level += *p++;
-            }
+            // So, examples:
 
-            VARIABLE variable;
-            variable.level = stoi(level);
+            //  /* cob_dump_field ( 1, "WRK-DU-1V0-1", COB_SET_FLD(f0, 1, b_52, &a_7), 0, 0); */
+            //  /* cob_dump_field (10, "datyr", COB_SET_FLD(f0, 4, b_15 + 17, &a_7), 0, 0); */
+            //  /* cob_dump_field ( 5, "new-dat1", COB_SET_FLD(f0, 8, b_15 + 17, &a_3), 0, 0); REDEFINES */
+            //  /* cob_dump_field ( 2, "ELMT", &f_278, 0, 1, i_1, 1); OCCURS 1 3 */
+            //  /* cob_dump_field ( 2, "G-2", COB_SET_FLD(f0, cob_get_numdisp (b_8, 1), b_9, &a_1), 0, 0); */
+            //  /* cob_dump_field ( 1, "result", COB_SET_FLD(f0, (*(int *)(b_8)), b_10, &a_3), 0, 0); */
+            //  /* cob_dump_field ( 1, "G-1", COB_SET_FLD(f0, cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1), b_9, &a_1), 0, 0); */
+            //  /* cob_dump_field ( 2, "G-3", COB_SET_FLD(f0, cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1), b_9 + 0 + cob_get_numdisp (b_8, 1), &a_1), 0, 0); */
+            //  /* cob_dump_field ( 3, "G-4", COB_SET_FLD(f1, cob_get_numdisp (b_8, 1), b_9 + 0 + cob_get_numdisp (b_8, 1), &a_1), 0, 0); */
+            //  /* cob_dump_field ( 4, "X", COB_SET_FLD(f0, 1, b_9 + 0 + cob_get_numdisp (b_8, 1), &a_4), 0, 1, i_1, 1); OCCURS 1 3 */
+            //  /* cob_dump_field ( 3, "G-5", COB_SET_FLD(f2, cob_get_numdisp (b_8, 1), b_9 + 0 + cob_get_numdisp (b_8, 1) + 0 + cob_get_numdisp (b_8, 1), &a_1), 0, 0); */
+            //  /* cob_dump_field ( 4, "X", COB_SET_FLD(f0, 1, b_9 + 0 + cob_get_numdisp (b_8, 1) + 0 + cob_get_numdisp (b_8, 1), &a_4), 0, 1, i_1, 1); OCCURS 1 3 */
+            //
+            // Arriving here means that the first thing on the line after removing "/*" is "cob_dump_field"
 
-            SkipPast(p,'\"');
-
-            while( *p != '\"' ) {
-                variable.name += *p++ ;
-            }
-
-            char *poccurs = strstr(ach," OCCURS ");
-            char *redef = strstr(ach," REDEFINES ");
-            if( poccurs OR redef ) {
-                string s = GetCommentText(ach);
-                VSTRING t = Split(s," ");
-
-                // Just make sure what we are looking for is in comment
-                // text, and not inside a fiendish text literal or really
-                // weird variable name.  This probably isn't necessary; we already
-                // know that we are on a cob_dump_field line.  And the spaces that
-                // surround OCCURS and REDEFINES will prevent a false positive
-                // on a variable named "REDEFINES-OCCURS", for example.
-                //
-                // But still...
-
-                for( size_t i=0; i<t.size(); i++ ) {
-                    if( t[i] EQ "REDEFINES") {
-                        variable.redefines = true;
-                        continue;
-                    }
-                    if( t[i] EQ "OCCURS ") {
-                        variable.occurs_min = stoi(t[i+1]);
-                        variable.occurs_max = stoi(t[i+2]);
-                        continue;
-                    }
-                }
-            }
-
-            SkipPast(p,',');
-            SkipPast(p,' ');
-
-            if( *p EQ '&' ) {
-                // Minimal association: name with f_name
-                p += 1;
-                while(*p != ',') {
-                    variable.f_name += *p++;
-                }
+            string cdf = p;
+            size_t nfound = cdf.find('(');
+            if( nfound != string::npos ) {
+                cdf = cdf.substr(nfound);
+                VARIABLE variable;
                 variable.record_type = current_record_type;
-                variables.push_back(variable);
-            } else if( strncmp(p, COB_SET_DATA, strlen(COB_SET_DATA)) EQ 0 ) {
-                p += strlen(COB_SET_DATA);
-                SkipPast(p,'(');
-                string s;
-                while( *p != ')' ) {
-                    if( *p != ' ' AND *p != '\t' ) {
-                        s += *p;
+
+                // If this variable is a REDEFINES, that word, flanked by spaces, will be on the line.
+                variable.redefines = strstr(p," REDEFINES ") != NULL;
+
+                // If this variable is an OCCURS, that word, flanked by spaces, will be on the line:
+
+                char *poccurs = strstr(ach," OCCURS ");
+                if( poccurs ) {
+                    VSTRING t = Split(poccurs," ");
+                    if( t.size() >= 3 ) {
+                        variable.occurs_min = stoi(t[1]);
+                        variable.occurs_max = stoi(t[2]);
                     }
-                    p += 1;
                 }
-                VSTRING tokens = Split(s,",");
-                if( tokens.size() EQ 2 ) {
-                    variable.f_name = tokens[0];
 
-                    VSTRING tokens_base_offset = Split(tokens[1],"+");
-                    variable.b_name = tokens_base_offset[0];
-                    for( size_t i=1; i<tokens_base_offset.size(); i++) {
-                        variable.offset += stoi(tokens_base_offset[i]);
-                    }
-                    variable.record_type = current_record_type;
-                    variables.push_back(variable);
-                }
-            } else if( strncmp(p, COB_SET_FLD, strlen(COB_SET_FLD)) EQ 0 ) {
-                // Various things we will encounter:
-                //      /* cob_dump_field ( 1, "argument", COB_SET_FLD(f0, 1, b_9, &a_1), 0, 0); ANYLENGTH */
-                //      /* cob_dump_field ( 1, "result", COB_SET_FLD(f0, (*(int *)(b_8)), b_10, &a_3), 0, 0); */
-                //      /* cob_dump_field ( 5, "oeitl-prodnum", COB_SET_FLD(f0, 8, cob_local_ptr + 128 + 2, &a_5), 0, 0); */
-                //      /* cob_dump_field ( 2, "LK-PARAM-2", COB_SET_FLD(f0, 4, b_45 + 8, &a_4), 0, 0); */
 
-                p += strlen(COB_SET_FLD);
-                // p now points to the parenthesis after COB_SET_FIELD
-                char *p2 = FindMatchingParenthesis(p);
-                string s = p;
-                s = s.substr(1,(p2-p)-1);
-                // s is now the stuff inside the parentheses of COB_SET_FIELD
-                VSTRING tokens = Split(s,",");
+                // Hack away at cob_get_numdisp() entries:
+                cdf = HackAwayCobGetNumdisp(cdf);
+                // Squish away any (*(int *)b_8) entries:
+                cdf = SquishAwayStarIntStar(cdf);
 
-                SkipPast(p2,',');
-                int occurrence = atoi(p2);
-                if( occurrence EQ 0 AND tokens.size() >= 4 ) {
-                    VSTRING tokens_base_offset = Split(tokens[2],"+");
+                size_t final_paren;
+                VSTRING cdf_parameters = ParametersInsideParentheses(cdf,final_paren);
+                if( cdf_parameters.size() >= 5  ) {
+                    variable.level = stoi(Trim(cdf_parameters[0]));
+                    variable.name  = StripQuotes(cdf_parameters[1]);
+                    string field_pointer = Trim(cdf_parameters[2]);
+                    string occurs_offset = Trim(cdf_parameters[3]);
+                    string occurs_indexes = Trim(cdf_parameters[4]);
 
-                    // The length item is usually an integer.  But for variable-length items, like
-                    // variable-length arrays, it will look like (*(int *)b_10)
-                    string slength = Trim(tokens[1]);
-                    size_t nfound=slength.find("_");
-                    if( nfound != string::npos ) {
-                        // Extract the b_10 from around the '_' character
-                        size_t nleft  = nfound;
-                        size_t nright = nfound+1;
+                    if( !field_pointer.empty() && field_pointer[0] EQ '&') {
+                        // Minimal association: COBOL_name with f_name
+                        variable.f_name = field_pointer.substr(1);
+                    } else {
+                        if( field_pointer.find(COB_SET_FLD) != string::npos) {
+                            nfound = field_pointer.find( '(' );
+                            if( nfound != string::npos ) {
+                                field_pointer = field_pointer.substr(nfound);
+                                VSTRING csf_parameters = ParametersInsideParentheses(field_pointer,final_paren);
+                                if( csf_parameters.size() EQ 4 ) {
+                                    //   COB_SET_FLD(f_name, length, bname + offset, aname)
+                                    // fname is meaningless in this context
+                                    // length might be combinations of integer constants and/or text :
 
-                        while( nleft >= 1 ) {
-                            if( !isalpha(slength[nleft-1]) ) {
-                                break;
+                                    for(size_t i=0; i<csf_parameters[1].size(); i++ ) {
+                                        char ch = csf_parameters[1][i];
+                                        if( ch != ' ' ) {
+                                            variable.length += ch;
+                                        }
+                                    }
+
+                                    // The third parameter is the b_name with, possibly, an offset added to it.
+                                    VSTRING base_offset = Split(csf_parameters[2],"+");
+                                    if( base_offset.size() ) {
+                                        variable.b_name = Trim(base_offset[0]);
+                                    }
+                                    size_t i = 1;
+                                    while( i < base_offset.size() ) {
+                                        string offset = Trim(base_offset[i++]);
+                                        if( offset != "0" ) {
+                                            if( !variable.offset.empty() ) {
+                                                variable.offset += '+';
+                                            }
+                                            variable.offset += offset ;
+                                        }
+                                    }
+                                    variable.a_name = csf_parameters[3].substr(1);
+                                } else {
+                                    cerr << "VARIABLES::ScanCFile() doesn't know how to handle the COB_SET_FLD macro in" << endl ;
+                                    cerr << "   " << ach ;
+                                    cerr << "Please alert Bob Dubner at support@cobolworx.com" << endl;
+                                    cerr << "Thank you." << endl;
+                                    continue;
+                                }
                             }
-                            nleft -= 1;
+                        } else {
+                            cerr << "VARIABLES::ScanCFile() doesn't know how to handle the field pointer in" << endl ;
+                            cerr << "   " << ach ;
+                            cerr << "Please alert Bob Dubner at support@cobolworx.com" << endl;
+                            cerr << "Thank you." << endl;
+                            continue;
                         }
-                        while( nright < slength.size() ) {
-                            if( !isdigit(slength[nright]) ) {
-                                break;
-                            }
-                            nright += 1;
-                        }
-                        slength = slength.substr(nleft,nright-nleft);
                     }
-
-                    variable.length = slength;
-                    variable.b_name = tokens_base_offset[0];
-                    for( size_t i=1; i<tokens_base_offset.size(); i++) {
-                        variable.offset += stoi(tokens_base_offset[i]);
-                    }
-                    variable.a_name = tokens[3].substr(1);
-                    variable.record_type = current_record_type;
                     variables.push_back(variable);
                 }
             }
@@ -350,8 +476,8 @@ VARIABLES::Dump() const
     cout << setw(20) << "f_name";
     cout << setw(20) << "b_name";
     cout << setw(20) << "a_name" ;
-    cout << setw( 7) << "offset" ;
-    cout << setw( 7) << "length";
+    cout << setw(20) << "offset" ;
+    cout << setw(20) << "length";
     cout << setw( 6) << "o_min";
     cout << setw( 6) << "o_max";
     cout << setw( 6) << "redef";
@@ -366,8 +492,8 @@ VARIABLES::Dump() const
         cout << setw(20) << variable->f_name;         // Name of the associated cob_field variable
         cout << setw(20) << variable->b_name;         // Name of the location of the data
         cout << setw(20) << variable->a_name;         // Name of the associated cob_field_attrib variable
-        cout << setw( 7) << variable->offset;         // When f_name exists, offset should have the same runtime value as f_name->data - b_name;
-        cout << setw( 7) << variable->length;      // When f_name exists, length should be the same as f_name->size.  But it might be a b_ variable
+        cout << setw(20) << variable->offset;         // When f_name exists, offset should have the same runtime value as f_name->data - b_name;
+        cout << setw(20) << variable->length;      // When f_name exists, length should be the same as f_name->size.  But it might be a b_ variable
         cout << setw( 6) << variable->occurs_min;     //
         cout << setw( 6) << variable->occurs_max;     // -1 for unbounded
         cout << setw( 6) << (variable->redefines ? "REDEF" : "");
@@ -465,7 +591,7 @@ VARIABLES::FixLocalStorageOffsets()
 
             elder_sibling[our_level] = variable;
 
-            if( variable->offset EQ 0 ) {
+            if( variable->offset EQ "0" ) {
                 // We have a possible rework here:
                 // Find somebody older than us.  And, yes, this, too, is O(N-squared) in
                 // the insane limit.  I half-thought of a couple of Nlog(N) ways of avoiding the N-squared,
@@ -490,7 +616,7 @@ VARIABLES::FixLocalStorageOffsets()
                     // cob_local_ptr idiosyncracy:  Level 01 variables are allocated on
                     // 16-byte boundaries:
                     if( our_level EQ 1 ) {
-                        variable->offset = (variable->offset + 15) & ~15;
+                        variable->offset = (stoi(variable->offset) + 15) & ~15;
                     }
                 } else if( it->record_type EQ "L" AND our_level > VARIABLE_LEVEL(it->level) ) {
                     // We have found our parent.  Our offset is their offset

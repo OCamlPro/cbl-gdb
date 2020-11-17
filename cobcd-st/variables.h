@@ -24,7 +24,7 @@ private:
     std::string f_name;         // Name of the associated cob_field variable
     std::string b_name;         // Name of the location of the data
     std::string a_name;         // Name of the associated cob_field_attrib variable
-    int         offset;         // When f_name exists, offset should have the same runtime value as f_name->data - b_name;
+    std::string offset;         // When f_name exists, offset should have the same runtime value as f_name->data - b_name;
     std::string length;         // When f_name exists, length should be the same as f_name->size.
     //                          // But for variable-length items, this can be a b_ value
     int         occurs_min;     //
@@ -38,8 +38,8 @@ public:
     VARIABLE()
     {
         level = 0;
-        offset = 0;
-        length = "0";
+        offset = "";
+        length = "";
         occurs_min = 0;
         occurs_max = 1;
         redefines = false;
