@@ -41,6 +41,7 @@
 #include "fields.h"
 #include "variables.h"
 #include "utils.h"
+#include "ctype.h"
 #define EQ ==
 #define AND &&
 #define OR ||
@@ -86,12 +87,18 @@ CreateSymc(PARAMETERS &params,
     ss.str("");
 
     // Start with the name
+    string fname2;
     for(size_t i=0; i<fname.size(); i++) {
-        if( fname[i] EQ '.' ) {
-            fname[i] = '_' ;
+        char ch = fname[i];
+        if( isalpha(ch) OR isdigit(ch) OR ch EQ '_'  ) {
+            fname2 += ch ;
+        } else {
+            char ach[3];
+            sprintf(ach,"%2.2X",ch);
+            fname2 += ach;
         }
     }
-    ss << "char VARIABLE_STRING_" << Upper(fname) << "[]=" << endl;
+    ss << "char VARIABLE_STRING_" << fname2 << "[]=" << endl;
 
     // Break up the actual data into smaller pieces, so that it will compile.
 #if 0
