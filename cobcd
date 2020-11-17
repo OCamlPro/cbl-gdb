@@ -317,6 +317,7 @@ def Main() :
     COMMAND_LINE=[]
     COMMANDS_REMOVED=[]
     TO_BE_LINKED_AT_THE_END=[]
+    c_module_count=0
 
     ASKED_FOR_HELP=False
     ASKED_FOR_VERSION=False
@@ -341,15 +342,22 @@ def Main() :
     ## passed along as -a -b -c
     ##
     params = []
+    prior_param = ["",""]
     do_not_process = False
     for param in sys.argv[1:] + COBCDFLAGS : ## Skip the program name, and add in the switches from the environment
+        prior_param[0] = prior_param[1]
+        prior_param[1] = param
         ORIGINAL_COMMAND_LINE.append(param)
         #print("param:",param)
         if do_not_process :
             do_not_process = False
             params.append(param)
             continue
-        if param[-2:] == ".o" or param[-2:] == ".O" or param[-2:] == ".i" or param[-2:] == ".I" :
+        last_two = param[-2:]
+        last_two.lower()
+        if last_two in (".c") :
+            c_module_count += 1
+        if last_two in (".o") and prior_param[0] != "-o" :
             ## Sequester .o object files until the final link
             TO_BE_LINKED_AT_THE_END.append(param)
             continue
@@ -442,7 +450,7 @@ def Main() :
             SAVE_TEMPS=param
             COMMANDS_REMOVED.append(param)
             continue;
-        elif param in ("-E","-C","-S","-c","-###") :
+        elif param in ("-E","-C","-S","-c","-###","-") :
             end_early = True
 
         COMMAND_LINE.append(param)
@@ -469,12 +477,23 @@ def Main() :
 
         command = [COBC] + ORIGINAL_COMMAND_LINE
         if ECHO :
-            print('#### Termination due to one or more of "-E","-C","-S","-c","-###"')
+            print('#### Termination due to one or more of "-E","-C","-S","-c","-###","-"')
             SmartPrint(command)
 
         ## Execute it:
         resultcode = SubprocessCall(command,False)
         os._exit(resultcode)
+
+    if c_module_count :
+        command = [COBC] + ORIGINAL_COMMAND_LINE
+        if ECHO :
+            print('#### Termination due to presence of .c inputs')
+            SmartPrint(command)
+
+        ## Execute it:
+        resultcode = SubprocessCall(command,False)
+        os._exit(resultcode)
+
 
     if DASH_V :
         ## If there was a -v request, we need to show the user everything we're doing

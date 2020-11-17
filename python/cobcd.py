@@ -727,6 +727,14 @@ def GetAddressOf(variable) :
             retval = val_info
     return retval
 
+def AddEmUp(expression) :
+    retval = 0
+    tokens = expression.split('+')
+    for token in tokens :
+        if token.isnumeric() :
+            retval += int(token)
+    return retval
+
 class VarTrie() :
     def __init__(self):
         self.storage_list = []
@@ -812,10 +820,10 @@ class VarTrie() :
                     payload.Fname      = tokens[self.IndexFname]
                     payload.Bname      = tokens[self.IndexBname]
                     payload.Aname      = tokens[self.IndexAname]
-                    payload.Offset     = int(tokens[self.IndexOffset] or "0")
-                    payload.Length     = int(tokens[self.IndexLength] or "0")
-                    payload.OccursMin  = int(tokens[self.IndexOffset] or "0")
-                    payload.OccursMax  = int(tokens[self.IndexLength] or "0")
+                    payload.Offset     = AddEmUp(tokens[self.IndexOffset])
+                    payload.Length     = AddEmUp(tokens[self.IndexLength])
+                    payload.OccursMin  = int(tokens[self.IndexOccursMin] or "0")
+                    payload.OccursMax  = int(tokens[self.IndexOccursMax] or "0")
 
                     payload.payload_index = len(self.storage_list)
                     self.storage_list.append(payload)
@@ -1856,8 +1864,16 @@ class TabFileInformation() :
                         name_root = possible_file
                         name_root = name_root.split('/')
                         name_root = name_root[-1]
-                        name_root = name_root.replace('.','_')
-                        string_name = "VARIABLE_STRING_" + name_root.upper()
+
+                        name_root2 = ""
+                        for ch in name_root :
+                            if ch.isalnum() :
+                                name_root2 += ch
+                            else :
+                                hh = hex(ord(ch))[-2:]
+                                name_root2 += hh.upper()
+
+                        string_name = "VARIABLE_STRING_" + name_root2
 
                         if self.ReadVariableString(string_name) :
                             break
