@@ -633,7 +633,7 @@ VARIABLES::FixLocalStorageOffsets()
 
             elder_sibling[our_level] = variable;
 
-            if( variable->offset EQ "0" ) {
+            if( variable->offset.empty() OR variable->offset EQ "0" ) {
                 // We have a possible rework here:
                 // Find somebody older than us.  And, yes, this, too, is O(N-squared) in
                 // the insane limit.  I half-thought of a couple of Nlog(N) ways of avoiding the N-squared,
@@ -673,7 +673,6 @@ VARIABLES::FixLocalStorageOffsets()
                     variable->offset = it->offset;
                 }
             }
-
         }
     }
 }
