@@ -303,6 +303,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
             //  /* cob_dump_field ( 4, "X", COB_SET_FLD(f0, 1, b_9 + 0 + cob_get_numdisp (b_8, 1), &a_4), 0, 1, i_1, 1); OCCURS 1 3 */
             //  /* cob_dump_field ( 3, "G-5", COB_SET_FLD(f2, cob_get_numdisp (b_8, 1), b_9 + 0 + cob_get_numdisp (b_8, 1) + 0 + cob_get_numdisp (b_8, 1), &a_1), 0, 0); */
             //  /* cob_dump_field ( 4, "X", COB_SET_FLD(f0, 1, b_9 + 0 + cob_get_numdisp (b_8, 1) + 0 + cob_get_numdisp (b_8, 1), &a_4), 0, 1, i_1, 1); OCCURS 1 3 */
+            //  /* cob_dump_field ( 2, "WS-LASTNAME", COB_SET_DATA (f_88, b_84 + 12), 0, 0); EXTERNAL */
             //
             // Arriving here means that the first thing on the line after removing "/*" is "cob_dump_field"
 
@@ -346,7 +347,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                         // Minimal association: COBOL_name with f_name
                         variable.f_name = field_pointer.substr(1);
                     } else {
-                        if( field_pointer.find(COB_SET_FLD) != string::npos) {
+                        if( field_pointer.find(COB_SET_FLD) != string::npos ) {
                             nfound = field_pointer.find( '(' );
                             if( nfound != string::npos ) {
                                 field_pointer = field_pointer.substr(nfound);
@@ -387,6 +388,31 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                                     continue;
                                 }
                             }
+                        } else if( field_pointer.find(COB_SET_DATA) != string::npos ) {
+                            nfound = field_pointer.find( '(' );
+                            if( nfound != string::npos ) {
+                                field_pointer = field_pointer.substr(nfound);
+                                VSTRING csd_parameters = ParametersInsideParentheses(field_pointer,final_paren);
+                                if(csd_parameters.size() == 2) {
+                                    variable.f_name = csd_parameters[0];
+                                }
+
+                                // The second parameter is the b_name with, possibly, an offset added to it.
+                                VSTRING base_offset = Split(csd_parameters[1],"+");
+                                if( base_offset.size() ) {
+                                    variable.b_name = Trim(base_offset[0]);
+                                }
+                                size_t i = 1;
+                                while( i < base_offset.size() ) {
+                                    string offset = Trim(base_offset[i++]);
+                                    if( offset != "0" ) {
+                                        if( !variable.offset.empty() ) {
+                                            variable.offset += '+';
+                                        }
+                                        variable.offset += offset ;
+                                    }
+                                }
+                            }
                         } else {
                             cerr << "VARIABLES::ScanCFile() doesn't know how to handle the field pointer in" << endl ;
                             cerr << "   " << ach ;
@@ -395,7 +421,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                             continue;
                         }
                     }
-                    variables.push_back(variable);
+                    Insert(variable);
                 }
             }
         }
@@ -429,8 +455,8 @@ VARIABLES::FillInTheBlanks(COB_FIELDS &cob_fields)
                 if( pfield->size) {
                     it->length = to_string(pfield->size);
                 }
-                if( pfield->offset) {
-                    it->offset = pfield->offset;
+                if( pfield->offset ) {
+                    it->offset = to_string(pfield->offset);
                 }
             }
         }
@@ -544,6 +570,22 @@ VARIABLE_LEVEL(int a)
     return ((a EQ 77 OR a EQ 78) ? 1 : a);
 }
 
+static int
+AddEmUp(const string &s)
+{
+    int retval = 0;
+
+    VSTRING tokens = Split(s,"+");
+    for(size_t i=0; i<tokens.size(); i++) {
+        string token = Trim(tokens[i]);
+        if( !token.empty() AND isdigit(token[0]) ) {
+            retval += stoi(token);
+        }
+    }
+
+    return retval;
+}
+
 void
 VARIABLES::FixLocalStorageOffsets()
 {
@@ -566,7 +608,7 @@ VARIABLES::FixLocalStorageOffsets()
     //
     // It would take an extremely long time to become N-squared, and even that
     // would require a huge input file with a lot of REDEFINES and other odd
-    // circumstances.  But good habits are good habits.
+    // circumstances.  But I couldn't make myself skip it.
 
     map<int,V_VARIABLES::iterator>elder_sibling;
 
@@ -608,16 +650,24 @@ VARIABLES::FixLocalStorageOffsets()
                 if( it->record_type EQ "L" AND our_level EQ VARIABLE_LEVEL(it->level) ) {
                     // We have found our immediately elder sibling
                     // Replace us with his offset plus his length:
-                    variable->offset = it->offset;
-                    if( isdigit(it->length[0]) ) {
-                        variable->offset += stoi(it->length);
-                    }
+
+                    // When I learned that offsets and lengths could variable, I turned
+                    // variable.length and variable.offset into strings, rather than
+                    // integers.  For this code, assume we have integers and names
+                    // separated by plus signs.  Ignore names.  That's all I can do
+                    // without samples.
+
+                    int parent_offset = AddEmUp(it->offset);
+                    int parent_length = AddEmUp(it->length);
+
+                    int our_offset = parent_offset + parent_length;
 
                     // cob_local_ptr idiosyncracy:  Level 01 variables are allocated on
                     // 16-byte boundaries:
                     if( our_level EQ 1 ) {
-                        variable->offset = (stoi(variable->offset) + 15) & ~15;
+                        our_offset = (our_offset + 15) & ~15;
                     }
+                    variable->offset = to_string(our_offset);
                 } else if( it->record_type EQ "L" AND our_level > VARIABLE_LEVEL(it->level) ) {
                     // We have found our parent.  Our offset is their offset
                     variable->offset = it->offset;
