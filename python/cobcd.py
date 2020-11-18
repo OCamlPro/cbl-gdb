@@ -728,10 +728,14 @@ def GetAddressOf(variable) :
     return retval
 
 def AddEmUp(expression) :
+    expression = expression or "0"
     retval = 0
     tokens = expression.split('+')
     for token in tokens :
-        if token.isnumeric() :
+        if token[0:1] in "0123456789" : # Python2/3 ecumenical
+            if sys.version[0] == '2' :
+                ## This is Python2
+                token = token.decode("latin1")
             retval += int(token)
     return retval
 
