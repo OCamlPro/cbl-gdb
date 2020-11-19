@@ -2456,7 +2456,7 @@ class CPrint (gdb.Command) :
         actual_command = "print"
         if self.Worker.use_cprint == 1 :
             actual_command = "cprint"
-        print('registering CPrint (Usage is "' + actual_command + '" <COBOL identifier>") [Version 4.5]')
+        print('registering CPrint (Usage is "' + actual_command + '" <COBOL identifier>") [Version 4.6]')
         super (CPrint, self).__init__ (actual_command, gdb.COMMAND_USER)
 
     def invoke (self, arguments, from_tty):

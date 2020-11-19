@@ -7,6 +7,12 @@
 ##
 ## Usage is version-replace in-file version.h
 
+SED=sed
+if echo $(uname -o) | grep -qi solaris
+  then
+  SED=gsed
+  fi
+
 if ! test -f $1 ; then
   echo "Couldn't find the target file $1"
   exit 1
@@ -27,7 +33,7 @@ while read -r line
     ## Find the line in question:
     if test X"${arrIN[0]}" == X"#define" && test X"${arrIN[1]}" == X"VERSION" ; then
       # Remove the leading and trailing double-quotes:
-      VERSION=$(sed -e 's/^"//' -e 's/"$//' <<<"${arrIN[2]}")
+      VERSION=$($SED -e 's/^"//' -e 's/"$//' <<<"${arrIN[2]}")
       fi
   done < "$input"
 
@@ -36,5 +42,5 @@ VERSION_STRING='[Version '$VERSION']'
 ## We need to replace the existing out-of-date version string
 ## with our new one
 echo Updating $1 to $VERSION_STRING
-sed -i -r "s/[[]Version.*[]]/$VERSION_STRING/g" $1 
+$SED -i -r "s/[[]Version.*[]]/$VERSION_STRING/g" $1
 
