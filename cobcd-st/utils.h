@@ -77,6 +77,8 @@ std::vector<std::string>Split(const std::string &s,const std::string &delimiters
 std::string Replace(const std::string &s,const char was, const char is);
 std::string Upper(const std::string&s);
 std::string ZeroIsNull(const LONGLONG &v);
+std::string ZeroIsNull(const std::string &v);
 int STOI(const std::string &s);
 std::string GetCommentText(const std::string &s);
 void SkipPast(PCHAR &p,char ch);
+char *FindMatchingParenthesis(char *p);

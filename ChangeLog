@@ -1,3 +1,21 @@
+2020-11-18  Bob Dubner <rdubner@symas.com>
+
+	* Released Version 4.5
+	* The COBCD processing tolerates the presence of symbolic names in size and offset
+	  fields of the cob_dump_field() records.  (The Python doesn't handle them, yet.)
+	* The VARIABLE_STRING_<filename> processing both in COBST and the Python GDB extension
+	  has been modified to cope with filenames that contain characters that can't be
+	  used in a C++ identifier.
+	* The GnuCOBOL atlocal file can be modified to point to 'cobcd' instead of 'cobc'.
+	  'make check' then runs successfully with only a few errors caused by the cobcd's use
+	  of the -fsource-location switch.
+
+2020-11-11  Bob Dubner <rdubner@symas.com>
+
+	* First appearance of Version 4.5
+	* Handles 'cobcd -x rtest.cbl say.o'
+	* Eliminate traceback from 'cobcd --info'
+
 2020-10-22  Bob Dubner <rdubner@symas.com>
 
 	* Initial regression testing seems operable. See ../tests
