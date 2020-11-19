@@ -714,7 +714,7 @@ def Main() :
         s = COB_CFLAGS_BASE + [FCF_PROTECTION];
         os.environ["COB_CFLAGS"]= ' '.join(s)
         os.environ["COBC_GEN_DUMP_COMMENTS"]= '1'
-        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -fsource-location -A -ggdb --save-temps --fgen-c-line-directives --fgen-c-labels ") + COMMAND_LINE
+        OUR_COMMAND = DeSpace(COBC + " " + DASH_V + " -S -fsource-location -A -ggdb --save-temps -fgen-c-line-directives -fgen-c-labels ") + COMMAND_LINE
         if ECHO :
             print("COB_CFLAGS:",os.environ["COB_CFLAGS"])
             print("COBC_GEN_DUMP_COMMENTS:",os.environ["COBC_GEN_DUMP_COMMENTS"])
