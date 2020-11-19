@@ -50,6 +50,8 @@ install:
 	$(MAKE) -C cobcd-sfix install
 	$(MAKE) -C cobcd-rw install
 	$(MAKE) -C python install
+# If requested adjust python interpreter line
+	@if [ X"$(PYTHON)" != X"" ] ; then sed -i "s#/usr/bin/python3#$(PYTHON)#" $(DESTDIR)$(prefix)/bin/cobcd ; fi
 # Output .gdbinit instructions only if DESTDIR is empty.
 # When non-empty, this is almost certainly part of a package building exercise,
 # and the message is irrelevant and confusing.
