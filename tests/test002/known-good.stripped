@@ -5,7 +5,7 @@ KNOWN GOOD LINES: 1
 No stack.
 KNOWN GOOD START
 On this system, with this build of GnuCOBOL, the
-PICTURE-less USAGE’s have these lengths (in bytes):
+PICTURE-less USAGE's have these lengths (in bytes):
  
 BINARY-CHAR             1
 BINARY-CHAR SIGNED      1
@@ -164,7 +164,7 @@ KNOWN GOOD START
  5 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 01 header/test [W-S]  :  ' ' <repeats 40 times>
 On this system, with this build of GnuCOBOL, the
-128	DISPLAY "PICTURE-less USAGE’s have these lengths (in bytes):"
+128	DISPLAY "PICTURE-less USAGE's have these lengths (in bytes):"
  1 : 01 header/test [W-S] : ' ' <repeats 40 times>
  2 : 01 withpic/test [W-S] : "$    1.23+"
  3 : 01 def-BINARY-CHAR/test [W-S] : +001
@@ -225,7 +225,7 @@ On this system, with this build of GnuCOBOL, the
  4 : 01 def-COMP-XX/test [W-S] : 009887766541223345
  5 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 01 header/test [W-S]  :  ' ' <repeats 40 times>
-PICTURE-less USAGE’s have these lengths (in bytes):
+PICTURE-less USAGE's have these lengths (in bytes):
 129	MOVE "An extravaganza of variables!" to HEADER.
  1 : 01 header/test [W-S] : ' ' <repeats 40 times>
  2 : 01 withpic/test [W-S] : "$    1.23+"
@@ -3490,7 +3490,7 @@ $    1.23+
 12 : 01 def-BINARY-SHORT/test [W-S] : +00015
 13 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
 14 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
-01 def-BINARY-C-LONG/test [W-S]  :  0x0400000000000000
+01 def-BINARY-C-LONG/test [W-S]  :  0x0000000000000004
 +0000000011   def-BINARY-LONG             
 188	DISPLAY def-BINARY-LONG-SIGNED     "   def-BINARY-LONG-SIGNED      " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -3561,7 +3561,7 @@ $    1.23+
 12 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
 13 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-BINARY-C-LONG-SIGNED/test [W-S]  :  0xfbffffffffffffff
+01 def-BINARY-C-LONG-SIGNED/test [W-S]  :  0xfffffffffffffffb
 -0000000012   def-BINARY-LONG-SIGNED      
 189	DISPLAY def-BINARY-LONG-UNSIGNED   "   def-BINARY-LONG-UNSIGNED    " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -3632,7 +3632,7 @@ $    1.23+
 12 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
 13 : 01 def-COMP-1/test [W-S] : 1.11
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-BINARY-C-LONG-UNSIGNED/test [W-S]  :  0x0600000000000000
+01 def-BINARY-C-LONG-UNSIGNED/test [W-S]  :  0x0000000000000006
 0000000013   def-BINARY-LONG-UNSIGNED    
 190	DISPLAY def-BINARY-LONG-LONG       "   def-BINARY-LONG-LONG        " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -3703,7 +3703,7 @@ $    1.23+
 12 : 01 def-COMP-1/test [W-S] : 1.11
 13 : 01 def-COMP-2/test [W-S] : 2.22
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-BINARY-DOUBLE/test [W-S]  :  0x0700000000000000
+01 def-BINARY-DOUBLE/test [W-S]  :  0x0000000000000007
 +00000000000000000014   def-BINARY-LONG-LONG        
 191	DISPLAY def-BINARY-SHORT           "   def-BINARY-SHORT            " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -3774,7 +3774,7 @@ $    1.23+
 12 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
 13 : 01 def-COMP-2/test [W-S] : 2.22
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-BINARY-DOUBLE-SIGNED/test [W-S]  :  0xf8ffffffffffffff
+01 def-BINARY-DOUBLE-SIGNED/test [W-S]  :  0xfffffffffffffff8
 +00015   def-BINARY-SHORT            
 192	DISPLAY def-BINARY-SHORT-SIGNED    "   def-BINARY-SHORT-SIGNED     " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -3845,7 +3845,7 @@ $    1.23+
 12 : 01 def-COMP-2/test [W-S] : 2.22
 13 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-BINARY-DOUBLE-UNSIGNED/test [W-S]  :  0x0900000000000000
+01 def-BINARY-DOUBLE-UNSIGNED/test [W-S]  :  0x0000000000000009
 -00016   def-BINARY-SHORT-SIGNED     
 193	DISPLAY def-BINARY-SHORT-UNSIGNED  "   def-BINARY-SHORT-UNSIGNED   " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -3916,7 +3916,7 @@ $    1.23+
 12 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
 13 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-BINARY-INT/test [W-S]  :  0x0a000000
+01 def-BINARY-INT/test [W-S]  :  0x0000000a
 00017   def-BINARY-SHORT-UNSIGNED   
 194	DISPLAY def-COMPUTATIONAL          "   def-COMPUTATIONAL           " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -3987,7 +3987,7 @@ $    1.23+
 12 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
 13 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9999999999999999999999999999999999
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-BINARY-LONG/test [W-S]  :  0x0b000000
+01 def-BINARY-LONG/test [W-S]  :  0x0000000b
 -988776654.1223345   def-COMPUTATIONAL           
 195	DISPLAY def-COMP-1                 "   def-COMP-1                  " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -4058,7 +4058,7 @@ $    1.23+
 12 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9999999999999999999999999999999999
 13 : 01 def-FLOAT-LONG/test [W-S] : 7.77
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-BINARY-LONG-SIGNED/test [W-S]  :  0xf4ffffff
+01 def-BINARY-LONG-SIGNED/test [W-S]  :  0xfffffff4
 1.11   def-COMP-1                  
 196	DISPLAY def-COMP-2                 "   def-COMP-2                  " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -4129,7 +4129,7 @@ $    1.23+
 12 : 01 def-FLOAT-LONG/test [W-S] : 7.77
 13 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-BINARY-LONG-UNSIGNED/test [W-S]  :  0x0d000000
+01 def-BINARY-LONG-UNSIGNED/test [W-S]  :  0x0000000d
 2.22   def-COMP-2                  
 197	DISPLAY def-COMPUTATIONAL-1        "   def-COMPUTATIONAL-1         " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -4200,7 +4200,7 @@ $    1.23+
 12 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
 13 : 01 def-INDEX/test [W-S] : +000000019
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-BINARY-LONG-LONG/test [W-S]  :  0x0e00000000000000
+01 def-BINARY-LONG-LONG/test [W-S]  :  0x000000000000000e
 3.3299999   def-COMPUTATIONAL-1         
 198	DISPLAY def-COMPUTATIONAL-2        "   def-COMPUTATIONAL-2         " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -4271,7 +4271,7 @@ $    1.23+
 12 : 01 def-INDEX/test [W-S] : +000000019
 13 : 01 def-SIGNED-INT/test [W-S] : +0000000023
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-BINARY-SHORT/test [W-S]  :  0x0f00
+01 def-BINARY-SHORT/test [W-S]  :  0x000f
 4.44   def-COMPUTATIONAL-2         
 199	DISPLAY def-FLOAT-DECIMAL-16       "   def-FLOAT-DECIMAL-16        " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -4342,7 +4342,7 @@ $    1.23+
 12 : 01 def-SIGNED-INT/test [W-S] : +0000000023
 13 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-BINARY-SHORT-SIGNED/test [W-S]  :  0xf0ff
+01 def-BINARY-SHORT-SIGNED/test [W-S]  :  0xfff0
 5.55   def-FLOAT-DECIMAL-16        
 200	DISPLAY def-FLOAT-DECIMAL-34       "   def-FLOAT-DECIMAL-34        " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -4413,7 +4413,7 @@ $    1.23+
 12 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
 13 : 01 def-SIGNED-SHORT/test [W-S] : +00025
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-BINARY-SHORT-UNSIGNED/test [W-S]  :  0x1100
+01 def-BINARY-SHORT-UNSIGNED/test [W-S]  :  0x0011
 9999999999999999999999999999999999   def-FLOAT-DECIMAL-34        
 201	DISPLAY def-FLOAT-LONG             "   def-FLOAT-LONG              " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -5123,7 +5123,7 @@ $    1.23+
 12 : 01 def-BINARY/test [W-S] : +000000001.0000000
 13 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
 14 : 01 def-COMP/test [W-S] : +988776654.1223345
-01 def-INDEX/test [W-S]  :  0x13000000
+01 def-INDEX/test [W-S]  :  0x00000013
 +988776654.1223345   def-COMP-3                  
 211	DISPLAY def-COMPUTATIONAL-3        "   def-COMPUTATIONAL-3         " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -5194,7 +5194,7 @@ $    1.23+
 12 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
 13 : 01 def-COMP/test [W-S] : +988776654.1223345
 14 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
-01 def-SIGNED-INT/test [W-S]  :  0x17000000
+01 def-SIGNED-INT/test [W-S]  :  0x00000017
 -988776654.1223345   def-COMPUTATIONAL-3         
 212	DISPLAY def-PACKED-DECIMAL         "   def-PACKED-DECIMAL          " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -5265,7 +5265,7 @@ $    1.23+
 12 : 01 def-COMP/test [W-S] : +988776654.1223345
 13 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
 14 : 01 def-COMP-4/test [W-S] : +988776654.1223345
-01 def-SIGNED-LONG/test [W-S]  :  0x1800000000000000
+01 def-SIGNED-LONG/test [W-S]  :  0x0000000000000018
 +988776654.1223345   def-PACKED-DECIMAL          
 213	DISPLAY def-PACKED-DECIMAL-S       "   def-PACKED-DECIMAL-S        " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -5336,7 +5336,7 @@ $    1.23+
 12 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
 13 : 01 def-COMP-4/test [W-S] : +988776654.1223345
 14 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
-01 def-SIGNED-SHORT/test [W-S]  :  0x1900
+01 def-SIGNED-SHORT/test [W-S]  :  0x0019
 -88776654.1223345   def-PACKED-DECIMAL-S        
 214	DISPLAY def-BINARY                 "   def-BINARY                  " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -5407,7 +5407,7 @@ $    1.23+
 12 : 01 def-COMP-4/test [W-S] : +988776654.1223345
 13 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
 14 : 01 def-COMP-5/test [W-S] : +00009887766541223345
-01 def-UNSIGNED-INT/test [W-S]  :  0x1a000000
+01 def-UNSIGNED-INT/test [W-S]  :  0x0000001a
 +000000001.0000000   def-BINARY                  
 215	DISPLAY def-BINARY-S               "   def-BINARY-S                " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -5478,7 +5478,7 @@ $    1.23+
 12 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
 13 : 01 def-COMP-5/test [W-S] : +00009887766541223345
 14 : 01 def-COMPUTATIONAL-5/test [W-S] : -00009887766541223345
-01 def-UNSIGNED-LONG/test [W-S]  :  0x1b00000000000000
+01 def-UNSIGNED-LONG/test [W-S]  :  0x000000000000001b
 -988776654.1223345   def-BINARY-S                
 216	DISPLAY def-COMP                   "   def-COMP                    " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -5549,7 +5549,7 @@ $    1.23+
 12 : 01 def-COMP-5/test [W-S] : +00009887766541223345
 13 : 01 def-COMPUTATIONAL-5/test [W-S] : -00009887766541223345
 14 : 01 def-COMP-6/test [W-S] : 88776654.1223345
-01 def-UNSIGNED-SHORT/test [W-S]  :  0x1c00
+01 def-UNSIGNED-SHORT/test [W-S]  :  0x001c
 +988776654.1223345   def-COMP                    
 217	DISPLAY def-COMPUTATIONAL          "   def-COMPUTATIONAL           " 
  1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
@@ -6302,6 +6302,6 @@ $    1.23+
  5 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
  6 : 01 def-COMP-XX/test [W-S] : 009887766541223345
  7 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-01 def-COMP-5/test [W-S]  :  0xb1c54f0cdf202300
+01 def-COMP-5/test [W-S]  :  0x002320df0c4fc5b1
 [Inferior 1 (process 99999) exited normally]
 KNOWN GOOD FINISH
