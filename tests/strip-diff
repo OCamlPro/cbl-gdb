@@ -71,7 +71,7 @@ def main() :
                 ## In general, when a process ends, it puts up a message like this:
                 ##      [Inferior 1 (process 14969) exited normally]
                 ## Let's replace the process number with "99999"
-                p = re.compile( '(^.*process )([0-9]+[ ]+)(.*$)' )
+                p = re.compile( '(^.*process )([0-9]+[ ]*)(.*$)' )
                 m = p.match(line)
                 if m :
                     print(m.group(1) + "99999" + m.group(3))
