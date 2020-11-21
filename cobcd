@@ -223,6 +223,7 @@ def Main() :
     EXE_SUFFIX = ""
     SO_SOFFIX  = ".so"
     os_name = platform.system()
+    processor = platform.processor()
     if os_name == "Windows" or os_name.find("MINGW") != -1 :
         windows = True
         EXE_SUFFIX = ".exe"
@@ -308,8 +309,8 @@ def Main() :
         DASH_F="-f"
         DASH_S=""
 
-    if windows :
-        ## and in Windows, neither works:
+    if windows or os_name == "SunOS" :
+        ## and in Windows and Solaris, neither works:
         DASH_F=""
         DASH_S=""
 
@@ -689,6 +690,7 @@ def Main() :
     if resultcode == 0 :
         if ECHO :
             print("os_name    is ",os_name    )
+            print("processor  is ",processor  )
             print("SCRIPTDIR  is ",SCRIPTDIR  )
             #print("COBCDEVEL  is ",COBCDEVEL  )
             print("COBC       is ",COBC       )
@@ -706,8 +708,8 @@ def Main() :
             print("TARGET     is ",TARGET     )
             print("TMPDIR     is ",TMPDIR     )
             print("TMP        is ",TMP        )
-            #print("DASH_F     is ",DASH_F    )
-            #print("DASH_S     is ",DASH_S    )
+            print("DASH_F     is ",DASH_F    )
+            print("DASH_S     is ",DASH_S    )
 
     if resultcode == 0 :
         ## Do the initial compilation that gives us the .c .h .i and .s files
@@ -829,7 +831,7 @@ def Main() :
         ## the Python extension be in the same directory as the
         ## executable, suitably renamed.
 
-        if windows :
+        if windows or os_name == "SunOS" :
             DEST = TARGET
             DEST = TARGET.split('/')[0:-1]
             DEST.append(TARGET+"-gdb.py")

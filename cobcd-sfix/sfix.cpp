@@ -133,11 +133,14 @@ FindFunctionReferences(WHOLEFILE &fd)
             }
         }
 
-        if( strstr(ach,"@function") ) {
+        if( strstr(ach,"function") ) {
             string s = ach;
             VSTRING tokens = Split(s,"\t ");
-            if( tokens[3] EQ "@function" ) {
-                cheating.insert(nline+3);  // This is where our synthetic .loc will go
+            if( tokens[3] EQ "@function") {
+                cheating.insert(nline+3);  // This is where our synthetic .loc will go; intel and arm compilers
+            }
+            if( tokens[3] EQ "#function" ) {
+                cheating.insert(nline+4);  // This is where our synthetic .loc will go; sparc compiler
             }
         }
         nline += 1;
