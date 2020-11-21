@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 
+from __future__ import print_function
+
 import sys
 import re
+import os
 
 def main() :
     if len(sys.argv) > 1 :
@@ -14,8 +17,20 @@ def main() :
         in_print_count = 0
         in_call_count  = 0
 
-        f = open(sys.argv[1], "r")
-        whole_file = f.read()
+        f=open(sys.argv[1],"rb")
+        whole_file_x = f.read()
+        f.close()
+
+        whole_file = ""
+        if sys.version[0] == '2' :
+            for ch in whole_file_x :
+                if ord(ch) < 128 :
+                    whole_file += ch
+        else :
+            for ch in whole_file_x :
+                if ch < 128 :
+                    whole_file += chr(ch)
+
         whole_file.replace('\r','') # Windows.  Always Windows
         lines = whole_file.split('\n')
 
