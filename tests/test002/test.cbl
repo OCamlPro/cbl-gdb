@@ -125,7 +125,7 @@ WORKING-STORAGE SECTION.
 PROCEDURE DIVISION.
 000-Main.
 DISPLAY "On this system, with this build of GnuCOBOL, the"
-DISPLAY "PICTURE-less USAGE’s have these lengths (in bytes):"
+DISPLAY "PICTURE-less USAGE's have these lengths (in bytes):"
 MOVE "An extravaganza of variables!" to HEADER.
 DISPLAY " "
 DISPLAY "BINARY-CHAR             " len-BINARY-CHAR            
