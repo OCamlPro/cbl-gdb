@@ -1346,11 +1346,11 @@ class CobolVariable() :
             retval = "0x"
 
             output_bytes = self.data[:]
-            if (self.AttrFlags & (COB_FLAG_REAL_BINARY | COB_FLAG_IS_POINTER)) \
-                    and GV_GlobalVariables.byteorder == "little" != 0 :
-                output_bytes.reverse()
-            if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
-                output_bytes.reverse()
+            if GV_GlobalVariables.byteorder == "little" :
+                if (self.AttrFlags & COB_FLAG_BINARY_SWAP) == 0 : # If this is ON, then it is already in display order
+                    if (self.AttrFlags & (COB_FLAG_REAL_BINARY | COB_FLAG_IS_POINTER | COB_FLAG_IS_FP )) != 0 :
+                        # These three types are little-endian; flip them so they display with the big byte to the left
+                        output_bytes.reverse()
             for byte in output_bytes :
                 hexout = hex(byte)[-2:]
                 if hexout[0:1] == 'x' :
