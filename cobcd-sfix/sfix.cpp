@@ -133,11 +133,17 @@ FindFunctionReferences(WHOLEFILE &fd)
             }
         }
 
-        if( strstr(ach,"@function") ) {
+        if( strstr(ach,"function") ) {
             string s = ach;
             VSTRING tokens = Split(s,"\t ");
-            if( tokens[3] EQ "@function" ) {
-                cheating.insert(nline+3);  // This is where our synthetic .loc will go
+            if( tokens[3] EQ "@function") {
+                cheating.insert(nline+3);  // This is where our synthetic .loc will go; Intel assembly
+            }
+            if( tokens[3] EQ "%function") {
+                cheating.insert(nline+3);  // This is where our synthetic .loc will go; ARM assembly
+            }
+            if( tokens[3] EQ "#function" ) {
+                cheating.insert(nline+4);  // This is where our synthetic .loc will go; SPARC assembly
             }
         }
         nline += 1;
@@ -283,6 +289,8 @@ build(PARAMETERS &params,
         i += 1;
         // We have learned that the GDB trapping can get confused if there isn't
         // a .loc reference in the first few lines after a function declaration.
+
+        // This is particularly a problem with GDB-9; GDB-8 seems to be less finicky.
 
         // When we created the function_references array, we added the offset we
         // need to put a .loc into the right place.  So, when i = function_references,

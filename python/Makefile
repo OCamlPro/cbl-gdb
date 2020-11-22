@@ -4,9 +4,6 @@ project=cobcd.py
 
 prefix ?=/usr/local
 
-AUTO_LOAD_FOUND := $(shell grep -s -e "^[ \t]*set auto-load safe-path /" ~/.gdbinit | wc -l)
-AUTO_SCRIPTS_FOUND := $(shell grep -s -e "^[ \t]*set auto-load python-scripts on" ~/.gdbinit | wc -l)
-
 .PHONY: all
 all : cobcd.py
 

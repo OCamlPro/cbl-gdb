@@ -50,7 +50,7 @@ WORKING-STORAGE SECTION.
         02 WS-MIDDLE-INITIAL    PIC X(1)    VALUE '"'.
         02 FILLER               PIC A(1)    VALUE SPACE.
         02 WS-LASTNAME          PIC A(10)   VALUE "Lowden".
-   01 WS-BOB EXTERNAL.
+   01 WS-BOB GLOBAL.
         02 WS-FIRSTNAME         PIC A(10)   .
         02 WS-MIDDLE-INITIAL    PIC A(1)    .
         02 FILLER               PIC A(1)    .
@@ -137,13 +137,6 @@ PROCEDURE DIVISION USING A_BINARY_NUMBER.
 
 IDENTIFICATION DIVISION.
 PROGRAM-ID. BOB.
-DATA DIVISION.
-WORKING-STORAGE SECTION.
-   01 WS-BOB EXTERNAL.
-        02 WS-FIRSTNAME         PIC A(10)   .
-        02 WS-MIDDLE-INITIAL    PIC A(1)    .
-        02 FILLER               PIC A(1)    .
-        02 WS-LASTNAME          PIC A(10)   .
 PROCEDURE DIVISION.
     DISPLAY "entering: bob"
     DISPLAY WS-BOB.

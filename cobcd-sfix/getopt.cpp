@@ -44,13 +44,17 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifndef __sun
 #include "getopt.h"
+#endif
 
 int    opterr = 1,        /* if error message should be printed */
        optind = 1,            /* index into parent argv vector */
        optopt,                /* character checked for validity */
        optreset = 0;        /* reset getopt */
+#ifndef __sun
 char const * optarg;    /* argument associated with option */
+#endif
 
 #undef    BADCH
 #define    BADCH    (int)'?'
@@ -101,7 +105,7 @@ getopt(int nargc, char * const * nargv, const char * ostr)
     } else {
         /* need an argument */
         if (*place)            /* no white space */
-            optarg = place;
+            optarg = (char *)place;
         else if (nargc <= ++optind) {    /* no arg */
             place = EMSG;
             if (*ostr == ':')

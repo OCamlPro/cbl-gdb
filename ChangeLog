@@ -1,3 +1,8 @@
+2020-11-21  Bob Dubner <rdubner@symas.com>
+	* Released Version 4.6
+	* Changes for proper operation on Solaris/SPARC, handling the big-endian architecture
+	  and 64-bit addresses that look like negative numbers.
+
 2020-11-18  Bob Dubner <rdubner@symas.com>
 
 	* Released Version 4.5

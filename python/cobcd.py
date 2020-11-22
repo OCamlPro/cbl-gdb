@@ -165,11 +165,15 @@ class GlobalVariables() :
         ## Establish the debugging verbosity level:
         self.debug_level = int(os.environ.get('CPRINT_D','0'))
 
-        ## Let's figure out if we are a 32-bit or 64-bit machine:
+        ## Let's figure out some stuff about the environment
         self.SizeofPointer = calcsize('P')  # Returns 4 or 8
+        self.byteorder = sys.byteorder # Returns "big" or "little"
+        self.SizeofInt = ctypes.sizeof(ctypes.c_int) # Returns size of C-side int
 
-        ## Establish the size of a c-side int
-        self.SizeofInt = ctypes.sizeof(ctypes.c_int)
+        if self.debug_level >= 1 :
+            print("#### SizeofPointer",self.SizeofPointer)
+            print("#### byteorder",self.byteorder)
+            print("#### SizeofInt",self.SizeofInt)
 
         self.libcob_loaded            = False # Goes true when the library is loaded
         self.cob_current_module_valid = False # This can take a while to go true after libcob is available
@@ -654,7 +658,9 @@ def GetDataAt(address,bytes) :
         else :
             return None
 
-        command = "x/1" + u + "d " + str(address)
+        ## When an integer is long enough, Python appends a 'L' to the hex
+        ## number.  This came up in SPARC, with addresses like 0xffffffff7b407700
+        command = "x/1" + u + "u " + hex(address).replace('L','')
         value_back = GdbExecute(currentframe(),command)
 
         nfound = value_back.find(":")
@@ -704,27 +710,25 @@ def GetPointerAt(variable) :
         return None
 
 def GetAddressOf(variable) :
-    # Use this form when you know variable is the name of a block.
+    # Use this routine when you know variable is the name of a block.
     retval = None
     if variable :
         try :
             command = "info address " + variable
             address_string = GdbExecute(currentframe(),command)
-            val_info = ExtractHexValueFrom(address_string)
+            retval = ExtractHexValueFrom(address_string)
         except gdb.error:
-            val_info = None
+            retval = None
 
-        try :
-            command = "x/1db " + variable  ## Notice d for decimal, not hex, because
-                                           ## a second 0x messes up ExtractHexValue
-            address_string = GdbExecute(currentframe(),command)
-            val_x1db = ExtractHexValueFrom(address_string)
-        except :
-            val_x1db = None
+        if not retval :
+            try :
+                command = "x/1db " + variable  ## Notice d for decimal, not hex, because
+                                               ## a second 0x messes up ExtractHexValue
+                address_string = GdbExecute(currentframe(),command)
+                retval = ExtractHexValueFrom(address_string)
+            except :
+                retval = None
 
-        retval = val_x1db
-        if val_x1db == None :
-            retval = val_info
     return retval
 
 def AddEmUp(expression) :
@@ -1342,8 +1346,11 @@ class CobolVariable() :
             retval = "0x"
 
             output_bytes = self.data[:]
-            if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
-                output_bytes.reverse()
+            if GV_GlobalVariables.byteorder == "little" :
+                if (self.AttrFlags & COB_FLAG_BINARY_SWAP) == 0 : # If this is ON, then it is already in display order
+                    if (self.AttrFlags & (COB_FLAG_REAL_BINARY | COB_FLAG_IS_POINTER | COB_FLAG_IS_FP )) != 0 :
+                        # These three types are little-endian; flip them so they display with the big byte to the left
+                        output_bytes.reverse()
             for byte in output_bytes :
                 hexout = hex(byte)[-2:]
                 if hexout[0:1] == 'x' :
@@ -1638,20 +1645,14 @@ class CobolVariable() :
 
         print("data: (HEX)   [" , end= " ")
 
-        ## At this point, if BINARY_SWAP is on, our data are reversed.
-        ## We want to unreverse them for this display:
-        output_bytes = self.data[:]
-        if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
-            output_bytes.reverse()
-
-        for byte in output_bytes :
+        for byte in self.data :
             hexout = hex(byte)[-2:]
             if hexout[0:1] == 'x' :
                 hexout = '0' + hexout[-1:]
             print(hexout,end=" ")
         print("]")
         print("data: (ASCII) \"", end = "")
-        for byte in output_bytes :
+        for byte in self.data :
             if 32 <= byte < 128 :   # valid ASCII characters
                 print(chr(byte),end="")
             else :
@@ -2456,7 +2457,7 @@ class CPrint (gdb.Command) :
         actual_command = "print"
         if self.Worker.use_cprint == 1 :
             actual_command = "cprint"
-        print('registering CPrint (Usage is "' + actual_command + ' <COBOL identifier>") [Version 4.5]')
+        print('Registering CPrint (Usage is "' + actual_command + ' <COBOL identifier>") [Version 4.6]')
         super (CPrint, self).__init__ (actual_command, gdb.COMMAND_USER)
 
     def invoke (self, arguments, from_tty):
@@ -2483,7 +2484,7 @@ class CWatch (gdb.Command) :
 
     def __init__ (self):
         super (CWatch, self).__init__ ("cwatch", gdb.COMMAND_USER)
-        print('registering CWatch (Usage is "cwatch <COBOL identifier>")')
+        print('Registering CWatch (Usage is "cwatch <COBOL identifier>")')
         self.Worker = CWatchWorker()
         self.TabFile = TabFileInformation();
 
