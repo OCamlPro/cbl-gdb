@@ -63,6 +63,7 @@ def print_help(version) :
     print("COBCDNOCLEAN=1     Don't delete intermediate files")
     print("COBCDFLAGS=xyz     These flags are passed to cobc")
     print("COBCDMSG=1         Suppresses the libcd6-dbg/glibc-debuginfo warning message")
+    print("COBCDFMODE=N       Overrides cobcd.py insertion mode.  See cobcd script.")
     print("ECHO=1             Causes line-by-line command echoing (also turned on by -v)")
     print("")
     print("If you need help with cobc, use the command 'cobc --help'")
@@ -211,7 +212,7 @@ def Main() :
     ## The text "Version x.x" has to appear in square brackets.               #
     ## Don't mess with it!                                                    #
     ###########################################################################
-    SCRIPT_VERSION="[Version 4.6]"
+    SCRIPT_VERSION="[Version 4.7]"
 
     SHOW_TIME = True    # For timing analysis.  Won't work on Python2
     SHOW_TIME = False
@@ -229,10 +230,11 @@ def Main() :
         EXE_SUFFIX = ".exe"
         SO_SOFFIX  = ".dll"
 
-    rhel7 = False
     if platform.uname()[2].find("el7") != -1 :
-        os_name = "RHEL7"
-        rhel7 = True
+        os_name = "rhel7"
+
+    if platform.uname()[2].find("el8") != -1 :
+        os_name = "rhel8"
 
     # This script, invoked by the command `cobcd`, packages up the process of compiling
     # a single COBOL source module and processing it so that gdb can be used for
@@ -259,6 +261,14 @@ def Main() :
     #
     # COBCD_COBC=alt replace 'cobc' with 'alt'
     #
+    # COBCDFMODE=N    ## Overrides the cobcd idea of how the cobcd.py script should
+    #                 ## be attached to the executable.
+    #                 ## 0 Don't do anything
+    #                 ## 1 Embed a pointer to cobcd.py in the ELF executable .debug-gdb-scripts section
+    #                 ## 2 Embed the entire script into the ELF executable
+    #                 ## 3 Create a soft link named TARGET-gdb.py to cobcd.py next to TARGET
+    #                 ## 4 Make a copy of cobcd.py named TARGET-gdb.py next to TARGET
+    #
     # ECHO=1 causes massive debugging output
 
     COBCDEVEL    = os.environ.get("COBCDEVEL") or ""
@@ -270,9 +280,11 @@ def Main() :
     COBC         = os.environ.get("COBCD_COBC") or "cobc"
     TMPDIR       = os.environ.get("TMPDIR") or ""
     TMP          = os.environ.get("TMP") or ""
+    COBCDFMODE   = os.environ.get("COBCDFMODE") or ""
     #ECHO = "1"  # This overrides the environment.  If this is uncommented,
                 # then you are probably doing development work on this script
     SAVE_TEMPS=""
+    FMODE=""
 
     if len(sys.argv) == 1 :
         usage(SCRIPT_VERSION)
@@ -291,28 +303,29 @@ def Main() :
         COBST  = SCRIPTDIR + "/cobcd-st/cobcd-st"
         SFIX   = SCRIPTDIR + "/cobcd-sfix/cobcd-sfix"
         PYTHON = SCRIPTDIR + "/python/cobcd.py"
-        DASH_F = ""
-        DASH_S = "-s"
+        FMODE  = COBCDFMODE or "2"  # '2' because most development takes place on Ubuntu/Intel
     else :
         # In normal operation, the executables are found in the same folder
         # as the cobcd script
         COBST  = SCRIPTDIR + "/cobcd-st"
         SFIX   = SCRIPTDIR + "/cobcd-sfix"
         PYTHON = SCRIPTDIR + "/cobcd.py"
+        # In normal operation, we embed a pointer
+        FMODE  = COBCDFMODE or "1"
 
-    # In normal operation, we embed a pointer
-    DASH_F = "-f"
-    DASH_S = ""
+    if os_name == "rhel7" :
+        ## Embedding the entire file doesn't work in RHEL7:
+        FMODE  = COBCDFMODE or "1"
 
-    if rhel7 :
-        ## -s doesn't, however, work in RHEL7:
-        DASH_F="-f"
-        DASH_S=""
+    if windows :
+        ## In Windows and Solaris/SPARC, attempting to embed either the filename
+        ## or the file fails.
+        FMODE  = COBCDFMODE or "3"  ## We will create a Windows "soft link" with "mklink"
 
-    if windows or os_name == "SunOS" :
-        ## and in Windows and Solaris, neither works:
-        DASH_F=""
-        DASH_S=""
+    if os_name == "SunOS" and processor == "sparc" :
+        ## In Solaris/SPARC, attempting to embed either the filename
+        ## or the file fails.
+        FMODE  = COBCDFMODE or "3"  ## We will create a Unix "soft link" with "ln"
 
     ORIGINAL_COMMAND_LINE=[]
     COMMAND_LINE=[]
@@ -495,7 +508,6 @@ def Main() :
         resultcode = SubprocessCall(command,False)
         os._exit(resultcode)
 
-
     if DASH_V :
         ## If there was a -v request, we need to show the user everything we're doing
         ECHO = 1
@@ -661,6 +673,11 @@ def Main() :
     if FILE_ROOT.find('.') != -1 :
         FILE_ROOT = '.'.join(FILE_ROOT.split('.')[0:-1])
 
+    PY_DEST = TARGET
+    PY_DEST = TARGET.split('/')[0:-1]
+    PY_DEST .append(TARGET+"-gdb.py")
+    PY_DEST = '/'.join(PY_DEST)
+
     FILE_S     = FILE_ROOT + ".s"
     FILE_C     = FILE_ROOT + ".c"
     FILE_O     = FILE_ROOT + ".o"
@@ -691,8 +708,10 @@ def Main() :
         if ECHO :
             print("os_name    is ",os_name    )
             print("processor  is ",processor  )
+            print("TMPDIR     is ",TMPDIR     )
+            print("TMP        is ",TMP        )
             print("SCRIPTDIR  is ",SCRIPTDIR  )
-            #print("COBCDEVEL  is ",COBCDEVEL  )
+            print("COBCDEVEL  is ",COBCDEVEL  )
             print("COBC       is ",COBC       )
             print("COBST      is ",COBST      )
             print("SFIX       is ",SFIX       )
@@ -706,10 +725,8 @@ def Main() :
             print("FILE_SYM_C is ",FILE_SYM_C )
             print("FILE_SYM_O is ",FILE_SYM_O )
             print("TARGET     is ",TARGET     )
-            print("TMPDIR     is ",TMPDIR     )
-            print("TMP        is ",TMP        )
-            print("DASH_F     is ",DASH_F    )
-            print("DASH_S     is ",DASH_S    )
+            print("PY_DEST    is ",PY_DEST    )
+            print("FMODE      is ",FMODE )
 
     if resultcode == 0 :
         ## Do the initial compilation that gives us the .c .h .i and .s files
@@ -740,7 +757,12 @@ def Main() :
             DASH_Q = "-q"
 
         ## We can now create the .sym.c file:
-        OUR_COMMAND = DeSpace([COBST,DASH_Q,DASH_F,DASH_S,FILE_ROOT,FILE_CBL])
+        DASH_M = ""
+        if FMODE == "1" :
+            DASH_M = "-m1"
+        if FMODE == "2" :
+            DASH_M = "-m2"
+        OUR_COMMAND = DeSpace([COBST,DASH_Q,DASH_M,FILE_ROOT,FILE_CBL])
         if ECHO :
             SmartPrint(OUR_COMMAND)
         resultcode = SubprocessCall(OUR_COMMAND,False)
@@ -827,18 +849,23 @@ def Main() :
     if resultcode == 0 :
         ## And we have a debuggable executable
 
-        ## At the present time, Windows requires that a copy of
-        ## the Python extension be in the same directory as the
-        ## executable, suitably renamed.
+        ## There are a number of options for what to do about the cobcd.py
+        ## Python extension to GDB.  If FMODE is 0, 1, or 2, we do nothing,
+        ## either because 0 means do nothing, and 1 and 2 mean the disposition
+        ## is already embedded in the executable.
 
-        if windows or os_name == "SunOS" :
-            DEST = TARGET
-            DEST = TARGET.split('/')[0:-1]
-            DEST.append(TARGET+"-gdb.py")
-            DEST = '/'.join(DEST)
+        if FMODE == "3" : ## This means make a soft link:
+            ## This won't work on Python2.  So don't try.
+            DeleteAFile(PY_DEST)
             if ECHO :
-                print("Copying",PYTHON,"to",DEST)
-            shutil.copyfile(PYTHON,DEST)
+                print("Creating symlink: os.symlink(" + PYTHON + "," + PY_DEST +")")
+            os.symlink(PYTHON,PY_DEST)
+
+        if FMODE == "4" : ## This means make a copy:
+            DeleteAFile(PY_DEST)
+            if ECHO :
+                print("Copying",PYTHON,"to",PY_DEST)
+            shutil.copyfile(PYTHON,PY_DEST)
 
     ## At the present time, all of the intermediate files are still in
     ## the current working directory.  If we were given -save--temps=x,
