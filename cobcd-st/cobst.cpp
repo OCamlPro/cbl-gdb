@@ -56,8 +56,8 @@ bool GV_echo_line = false;
 static void
 CreateSymc(PARAMETERS &params,
            const VARIABLES &variables,
-           bool tack_on_python,
-           bool tack_on_filename)
+           const INSERT_MODE insert_mode
+          )
 {
     PROFILER;
     /*  This routine creates the .sym.c file, which contains a global
@@ -177,7 +177,7 @@ CreateSymc(PARAMETERS &params,
 
     delete[] py;
 
-    if(tack_on_python) {
+    if(insert_mode EQ IM_MODE_TEXT) {
 
         /*  As per https://sourceware.org/gdb/current/onlinedocs/gdb/dotdebug_005fgdb_005fscripts-section.html,
             we are going to format that string in a way that reflects this example:
@@ -237,7 +237,7 @@ CreateSymc(PARAMETERS &params,
         params.symc << ");" << endl;
     }
 
-    if(tack_on_filename) {
+    if(insert_mode EQ IM_MODE_FILE) {
 
         /*  As per https://sourceware.org/gdb/current/onlinedocs/gdb/dotdebug_005fgdb_005fscripts-section.html,
         we are going to format that string in a way that reflects this example:
@@ -304,15 +304,10 @@ main(int argc, char *argv[])
     variables.Dump();
 #endif
 
-    bool tack_on_python = params.insert_python;
-    bool tack_on_filename = params.insert_filename;
-#if defined(_WIN32) || defined(__MINGW32__) || defined(__MINGW64__)
-    tack_on_python = false;
-#endif
     CreateSymc(params,
                variables,
-               tack_on_python,
-               tack_on_filename);
+               params.insert_mode
+              );
 
     return 0;
 

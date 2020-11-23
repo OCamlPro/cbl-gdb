@@ -106,6 +106,14 @@ public:
 
 };
 
+typedef enum {
+    // See https://sourceware.org/gdb/current/onlinedocs/gdb/dotdebug_005fgdb_005fscripts-section.html
+    // In particular, reference the .debug_gdb_scripts section
+    IM_MODE_NONE,   // Don't include any reference to the cobcd.py script
+    IM_MODE_FILE,   // Embed pointer to the script. See SECTION_SCRIPT_ID_PYTHON_FILE
+    IM_MODE_TEXT,   // Embed entire script.  See SECTION_SCRIPT_ID_PYTHON_TEXT at
+} INSERT_MODE;
+
 class PARAMETERS
 {
 public:
@@ -123,8 +131,7 @@ public:
     std::ofstream symc;
 
     bool quiet;
-    bool insert_python;
-    bool insert_filename;
+    INSERT_MODE insert_mode;
 
     void GetParameters(int argc, char *argv[]);
 };

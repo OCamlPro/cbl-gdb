@@ -203,13 +203,15 @@ static void
 Usage()
 {
     cerr << "cobst: Cobol Symbol Table generator version: " << VERSION << endl;
-    cerr << "cobst [-v] [-q] [-f] [-s] root CobolSourceFilename\n";
+    cerr << "cobst [-v] [-q] [-m MODE] root CobolSourceFilename\n";
     cerr << "Reads various other files with the same root;\n";
     cerr << "Generates root.sym.c containing the symbol table data\n";
     cerr << "-q suppresses the one-line version announcement\n";
     cerr << "-v generates the one-line version announcement and exits\n";
-    cerr << "-f inserts a Type1 pointer to cobcd.py into SOURCE.sym.c\n";
-    cerr << "-n inserts a Type3 copy of cobcb.py into SOURCE.sym.c\n";
+    cerr << "-m MODE specifies the cobcd.py insertion mode\n";
+    cerr << "   MODE is 0 (the default) - No insertion\n";
+    cerr << "   MODE is 1               - Embed a pointer to cobcd.py\n";
+    cerr << "   MODE is 2               - Embed entire text of cobcd.py\n";
 }
 
 void
@@ -238,12 +240,12 @@ void
 PARAMETERS::GetParameters(int argc, char *argv[])
 {
     quiet = false;
-    insert_python = false;
-    insert_filename = false;
+    insert_mode = IM_MODE_NONE;
 
     string root;
     int c;
-    while ((c = getopt (argc, argv, "qvfs")) != -1) {
+    int n;
+    while ((c = getopt (argc, argv, "qvm:")) != -1) {
         switch (c) {
         case 'q':
             quiet = true;
@@ -253,17 +255,26 @@ PARAMETERS::GetParameters(int argc, char *argv[])
                  << VERSION << endl;
             exit(0);
             break;
-        case 's':
-            insert_python = true;
-            break;
-        case 'f':
-            insert_filename = true;
+        case 'm':
+            n = atoi(optarg);
+            if( n EQ 0 ) {
+                insert_mode = IM_MODE_NONE;
+            } else if( n EQ 1 ) {
+                insert_mode = IM_MODE_FILE;
+            } else if( n EQ 2 ) {
+                insert_mode = IM_MODE_TEXT;
+            } else {
+                fprintf (stderr, "-m parameter must be 0, 1, or 2");
+                exit(1);
+            }
             break;
         case '?':
             fprintf (stderr, "Unknown option '-%c'.\n", optopt);
+            Usage();
             exit(1);
             break;
         default:
+            Usage();
             exit(1);
             break;
         }
@@ -271,17 +282,17 @@ PARAMETERS::GetParameters(int argc, char *argv[])
 
     if(argc < 3) {
         Usage();
-        exit(1);
+        exit(0);
     }
 
     if( optind >= argc ) {
         Usage();
-        exit(1);
+        exit(0);
     }
     basename   = argv[optind++];
     if( optind >= argc ) {
         Usage();
-        exit(1);
+        exit(0);
     }
     sourcename = argv[optind++];
 
