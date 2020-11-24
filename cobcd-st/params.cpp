@@ -297,12 +297,8 @@ PARAMETERS::GetParameters(int argc, char *argv[])
     sourcename = argv[optind++];
 
     c_filename.Decode(basename + ".c");
-    symc_filename.Decode(basename + ".sym.c");
 
     cbl_filename.Decode(sourcename);
-
-    OpenOrFail(c_file,c_filename.WholePath());
-    OpenOrFail(symc,symc_filename.WholePath());
 
 }
 
