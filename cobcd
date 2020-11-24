@@ -206,6 +206,24 @@ def SmartPrint(parameters) :
         print(param,' ',sep='',end='')
     print('')
 
+def CollapseFoldedLines(lines) :
+    output = ""
+    for line in lines.split('\n') :
+        if line and line[0] != ' ' and line[0] != '\t' :
+            ## This is the beginning of a new line:
+            output += '\n'
+            output += line
+        else :
+            ## skip spaces:
+            i = 0
+            while i < len(line) :
+                if line[i] != ' ' and line[i] != '\t' :
+                    break;
+                i += 1
+            output += ' '
+            output += line[i:]
+    return output
+
 def Main() :
     ###########################################################################
     ## The version number in the next line is updated by a Linux bash script. #
@@ -337,7 +355,6 @@ def Main() :
     ASKED_FOR_VERSION=False
 
     DASH_V     = ""
-    end_early  = False
     resultcode = 0
     TARGET     = ""
     FILE_CBL   = ""
@@ -346,12 +363,10 @@ def Main() :
     FILE_C     = ""
     FILE_O     = ""
     FILE_I     = ""
-    FILE_SYM_C = ""
-    FILE_SYM_O = ""
 
     ## Here is where we pre-preprocess the command line parameters.
     ## Anything that starts without a hyphen, or starts with two hyphens,
-    ## passes straight through.  Anything with one hypen gets checked.
+    ## passes straight through.  Anything with one hyphen gets checked.
     ## Some things with one hyphen pass through intact.  Anything else, like -abc, gets
     ## passed along as -a -b -c
     ##
@@ -363,24 +378,24 @@ def Main() :
         prior_param[1] = param
         ORIGINAL_COMMAND_LINE.append(param)
         #print("param:",param)
-        if do_not_process :
-            do_not_process = False
-            params.append(param)
-            continue
-        last_two = param[-2:]
-        last_two.lower()
-        if last_two in (".c") :
-            c_module_count += 1
-        if last_two in (".o") and prior_param[0] != "-o" :
-            ## Sequester .o object files until the final link
-            TO_BE_LINKED_AT_THE_END.append(param)
-            continue
-        if param in ("-D","-A","-Q") :
-            # These three can be followed by a quoted item that has to go through intact,
-            # because `-Q "l gdb"` is very different from `-Q -l gdb`
-            do_not_process = True
-            params.append(param)
-            continue
+#        if do_not_process :
+#            do_not_process = False
+#            params.append(param)
+#            continue
+#        last_two = param[-2:]
+#        last_two.lower()
+#        if last_two in (".c") :
+#            c_module_count += 1
+#        if last_two in (".o") and prior_param[0] != "-o" :
+#            ## Sequester .o object files until the final link
+#            TO_BE_LINKED_AT_THE_END.append(param)
+#            continue
+#        if param in ("-D","-A","-Q") :
+#            # These three can be followed by a quoted item that has to go through intact,
+#            # because `-Q "l gdb"` is very different from `-Q -l gdb`
+#            do_not_process = True
+#            params.append(param)
+#            continue
         if len(param) == 1 or param[0] != '-' :
             ## If it is a single character, or it doesn't start with '-',
             ## just pass it along:
@@ -458,22 +473,29 @@ def Main() :
             DASH_V = param
             COMMANDS_REMOVED.append(param)
             continue
-        if param.find("-save-temps") in (0,1) :
+        if param.find("-save-temp") in (0,1) : # covers -save-temp -save-temps --save-temp and --save-temps
             # If he asked for --save-temps, we have to suppress the COBC processing of it
             # We'll take care of it at the end.
             SAVE_TEMPS=param
             COMMANDS_REMOVED.append(param)
             continue;
-        elif param in ("-E","-C","-S","-c","-###","-") :
-            end_early = True
+        elif param in ("-E","-###","-") :
+            command = [COBC] + ORIGINAL_COMMAND_LINE
+            if ECHO :
+                print('#### Ordinary compile due to one or more of "-E","-###","-"')
+                SmartPrint(command)
+            ## Execute it:
+            resultcode = SubprocessCall(command,False)
+            os._exit(resultcode)
 
         COMMAND_LINE.append(param)
 
-    ## From here on out, COMMAND_LINE represents a list which is the best
-    ## approximation of what the user wants to happen.
+    ## ORIGINAL_COMMAND_LINE is the original set of parameters
 
     ## COMMANDS_REMOVED contains any that we pulled out because they interfere with COBCD
-    ## processing.  Under some circumstances we need to put them back in.
+    ## processing.
+    
+    ## COMMAND_LINE + COMMANDS_REMOVED is ORIGINAL_COMAND_LINE
 
     if ASKED_FOR_HELP :
         print_help(SCRIPT_VERSION)
@@ -485,28 +507,15 @@ def Main() :
         CheckForDebugLibraries()
         os._exit(0)
 
-    if end_early :
-        ## He requires a straight cobc compilation
-        ## Put the command back together:
+#    if c_module_count :
+#        command = [COBC] + ORIGINAL_COMMAND_LINE
+#        if ECHO :
+#            print('#### Ordinary compile due to presence of .c inputs')
+#            SmartPrint(command)
 
-        command = [COBC] + ORIGINAL_COMMAND_LINE
-        if ECHO :
-            print('#### Termination due to one or more of "-E","-C","-S","-c","-###","-"')
-            SmartPrint(command)
-
-        ## Execute it:
-        resultcode = SubprocessCall(command,False)
-        os._exit(resultcode)
-
-    if c_module_count :
-        command = [COBC] + ORIGINAL_COMMAND_LINE
-        if ECHO :
-            print('#### Termination due to presence of .c inputs')
-            SmartPrint(command)
-
-        ## Execute it:
-        resultcode = SubprocessCall(command,False)
-        os._exit(resultcode)
+#        ## Execute it:
+#        resultcode = SubprocessCall(command,False)
+#        os._exit(resultcode)
 
     if DASH_V :
         ## If there was a -v request, we need to show the user everything we're doing
@@ -515,11 +524,6 @@ def Main() :
     if SHOW_TIME :
         time_now = time.monotonic() - clock_start
         print("timer: %30s %5.4f %5.4f" % ("startup overhead", time_now - lap_start, time_now))
-        lap_start = time_now
-
-    if SHOW_TIME :
-        time_now = time.monotonic() - clock_start
-        print("timer: %30s %5.4f %5.4f" % ("check c-comment", time_now - lap_start, time_now))
         lap_start = time_now
 
     ## Now we have to call `COBC --info`; there are some things we need to know:
@@ -574,18 +578,30 @@ def Main() :
         print("timer: %30s %5.4f %5.4f" % ("check fcf-protection", time_now - lap_start, time_now))
         lap_start = time_now
 
+    ## Normally, let's be quiet.
+    DASH_Q = "-q"
+    ## If verbose, then be a little noisy
+    if DASH_V :
+        DASH_Q = ""
+    ## But if ECHO is on, go back to quiet so that the line doesn't
+    ## come out twice:
+    if ECHO :
+        DASH_Q = "-q"
+
+    ## The preliminary jousting is over.  It's now time to get serious.
+
     ## We are going to leverage cobc's parsing and processing by using the -###
-    ## option.  When that's used, the useful information goes to stderr, so we'll
+    ## option.  That option sends the useful information goes to stderr, so we'll
     ## arrange to capture that in result_file.
     ##
-    ## First, just build command line as we were given it.  The only thing
-    ## we will pull out of it is the final `-o target` text, which gives us
-    ## the name of the final result target file:
+    ## We know that COMMAND_LINE doesn't have -### or -save-temps or -v in it.  We
+    ## will add the first two switches in order to get what we need:
 
-    preprocessing_count = 0
     if resultcode == 0 :
-        TRIPLE_X_COMMAND = [COBC, "-###"] + COMMAND_LINE
-        resultcode = 0
+        s = COB_CFLAGS_BASE + [FCF_PROTECTION];
+        os.environ["COB_CFLAGS"]= ' '.join(s)
+        os.environ["COBC_GEN_DUMP_COMMENTS"]= '1'
+        TRIPLE_X_COMMAND = DeSpace(COBC + " -### --save-temps -fsource-location -A -ggdb -fgen-c-line-directives -fgen-c-labels ") + COMMAND_LINE
         try :
             result_file = tempfile.TemporaryFile();
             if ECHO :
@@ -595,56 +611,148 @@ def Main() :
             result_text = result_file.read()
             result_file.close()
             result_text = StripReturns(result_text.decode("utf-8"))
-            FINAL_COMMAND = ""
-            for line in result_text.split('\n') :
-                line = line.replace('\t',' ')
-                # print("     ###-line:",line)
-                if line.find("libcob: warning: ") == 0 :
-                    ## This cropped up when using cobcd instead of cobc in
-                    ## the GnuCOBOL "make check".  The test is considered successful
-                    ## when the warning is issued on stderr.  So, to handle that, I am
-                    ## declaring that the presence of a warning is ground for an abort:
-                    ## Emulate end_early
-                    command = [COBC] + ORIGINAL_COMMAND_LINE
-                    if ECHO :
-                        print('#### Termination due to "libcob: warning:...')
-                        SmartPrint(command)
-                    resultcode = SubprocessCall(command,False)
-                    os._exit(resultcode)
-                if line.find("preprocessing:") == 0 :
-                    preprocessing_count += 1
-                    FILE_CBL  = line.split()[1]         # second element is the relative file name
-                if FINAL_COMMAND and line and line[0] in (' ') :
-                    FINAL_COMMAND += line
-                    continue
-                if line.find("to be executed:") == 0 :
-                    FINAL_COMMAND = line
-            #print("FINAL_COMMAND:", FINAL_COMMAND)
-            nfound = FINAL_COMMAND.find(" -o ")
-            if nfound != -1 :
-                TARGET = FINAL_COMMAND[nfound:].split()[1]
-                TARGET = TARGET.replace('"','')
-                TARGET = TARGET.replace('\\','/')
         except :
             ## It is common for something to go wrong with that first attempt; anything
             ## from bad file names to syntax errors in the code.  Let's go for a minimal
-            ## response by emulating the end_early
+            ## response with an ordinary compilation and exit
             command = [COBC] + ORIGINAL_COMMAND_LINE
             if ECHO :
-                print('#### Termination due to thrown exception')
+                print('#### Ordinary compile due to thrown exception')
                 SmartPrint(command)
             resultcode = SubprocessCall(command,True)
             os._exit(resultcode)
 
-    if preprocessing_count != 1 :
-        ## At the present time, this script is able to process one, and only one, source code
-        ## module.  Anything else means an end_early style bailout:
-        command = [COBC] + ORIGINAL_COMMAND_LINE
+    translating = []
+    to_be_executed = []
+
+    ## Let's parse the results we got back from the -### request.
+
+    result_lines = CollapseFoldedLines(result_text)
+    for line in result_lines.split('\n') :
+        if line.find("libcob: warning: ") == 0 :
+            ## This cropped up when using cobcd instead of cobc in
+            ## the GnuCOBOL "make check".  The test is considered successful
+            ## when the warning is issued on stderr.  So, to handle that, I am
+            ## declaring that the presence of a warning is ground for an abort:
+            command = [COBC] + ORIGINAL_COMMAND_LINE
+            if ECHO :
+                print('#### Ordinary compile due to "libcob: warning:...')
+                SmartPrint(command)
+            resultcode = SubprocessCall(command,False)
+            os._exit(resultcode)
+
+        test_for = "translating:"
+        n = line.find(test_for)
+        if n == 0 :
+            translating.append(line[len(test_for):].replace('\t',''))
+            continue
+
+        test_for = "to be executed:"
+        n = line.find(test_for)
+        if n == 0 :
+            to_be_executed.append(line[len(test_for):].replace('\t',''))
+            continue
+
+    ## The result of any "translating" line is a .c file.  We need to run each one
+    ## through COBST in order to append the debugging information:
+
+    matching_execution = 0
+    for line in translating:
+        tokens = line.split()
+        c_file_name = tokens[2]
+        c_root_name = c_file_name[:-2]
+        cbl_name = tokens[3].replace('(','').replace(')','')
+        o_name = c_root_name + ".o"
+        s_name = c_root_name + ".s"
+        so_name = c_root_name + ".so"
+        dll_name = c_root_name + ".dll"
+
+        ## We can now modify the .c file(s):
+        DASH_M = ""
+        if FMODE == "1" :
+            DASH_M = "-m1"
+        if FMODE == "2" :
+            DASH_M = "-m2"
+        OUR_COMMAND = DeSpace([COBST,DASH_Q,DASH_M,c_root_name,cbl_name])
         if ECHO :
-            print('#### Termination due to zero or more than one source modules')
-            SmartPrint(command)
-        resultcode = SubprocessCall(command,True)
-        os._exit(resultcode)
+            SmartPrint(OUR_COMMAND)
+        resultcode = SubprocessCall(OUR_COMMAND,False)
+
+        ## With the C file modified, we can now compile it into a .s module:
+        compile_command = to_be_executed[matching_execution]
+        compile_command = compile_command.replace(" -c "," ")
+        compile_command += " -S"
+        compile_command = compile_command.replace(o_name,s_name)    # For -x compilations
+        compile_command = compile_command.replace(so_name,s_name)   # For -m compilations on Linux
+        compile_command = compile_command.replace(dll_name,s_name)  # For -m on Windows
+        compile_command = compile_command.replace('"','')
+        compile_command = compile_command.split()
+        if ECHO :
+            SmartPrint(compile_command)
+        resultcode = SubprocessCall(compile_command,False)
+
+        ## We now have a .s file, so we can run SFIX on it:
+        OUR_COMMAND = DeSpace([SFIX, DASH_Q, s_name, s_name, c_file_name, cbl_name])
+        if ECHO :
+            SmartPrint(OUR_COMMAND)
+        resultcode = SubprocessCall(OUR_COMMAND,False)
+
+        ## We now need to assemble the modified .s into an object file:
+        assembly_command = to_be_executed[matching_execution]
+        assembly_command = assembly_command.replace(c_root_name+".c",c_root_name+".s")
+        assembly_command = assembly_command.replace('"','')
+        assembly_command = assembly_command.split()
+        if ECHO :
+            SmartPrint(assembly_command)
+        resultcode = SubprocessCall(assembly_command,False)
+
+        matching_execution += 1
+
+        ## One special thing we need to do.  
+    ## We've preprocessed, modified, and compiled all of the .CBL source modules
+    ## If there were any remaining "to be executed" instructions, we can now
+    ## simply execute them as given
+    while matching_execution < len(to_be_executed) :
+        final_command = to_be_executed[matching_execution]
+        final_command = final_command.replace('"','')
+        final_command = final_command.split()
+        matching_execution += 1
+        if ECHO :
+            SmartPrint(final_command)
+        resultcode = SubprocessCall(final_command,False)
+
+    os._exit(0)
+    
+    FINAL_COMMAND = ""
+    for line in result_text.split('\n') :
+        # print("     ###-line:",line)
+        if line.find("libcob: warning: ") == 0 :
+            ## This cropped up when using cobcd instead of cobc in
+            ## the GnuCOBOL "make check".  The test is considered successful
+            ## when the warning is issued on stderr.  So, to handle that, I am
+            ## declaring that the presence of a warning is ground for an abort:
+            command = [COBC] + ORIGINAL_COMMAND_LINE
+            if ECHO :
+                print('#### Ordinary compile due to "libcob: warning:...')
+                SmartPrint(command)
+            resultcode = SubprocessCall(command,False)
+            os._exit(resultcode)
+        if line.find("preprocessing:") == 0 :
+            preprocessing_count += 1
+            FILE_CBL  = line.split()[1]         # second element is the relative file name
+        if FINAL_COMMAND and line and line[0] in (' ') :
+            FINAL_COMMAND += line
+            continue
+        if line.find("to be executed:") == 0 :
+            FINAL_COMMAND = line
+    #print("FINAL_COMMAND:", FINAL_COMMAND)
+    nfound = FINAL_COMMAND.find(" -o ")
+    if nfound != -1 :
+        TARGET = FINAL_COMMAND[nfound:].split()[1]
+        TARGET = TARGET.replace('"','')
+        TARGET = TARGET.replace('\\','/')
+
+
 
     if SHOW_TIME :
         time_now = time.monotonic() - clock_start
@@ -654,10 +762,10 @@ def Main() :
     if resultcode == 0 :
         if TARGET == "" or FILE_CBL == "":
             ## We couldn't find the desired TARGET and/or the SOURCE file.
-            ## Errors like this get treated as if they were end_early:
+            ## Do an ordinary compilation and exit
             command = [COBC] + ORIGINAL_COMMAND_LINE
             if ECHO :
-                print('#### Termination due to lack of executable target')
+                print('#### Ordinary compile due to lack of executable target')
                 SmartPrint(command)
             resultcode = SubprocessCall(command,True)
             os._exit(resultcode)
@@ -682,8 +790,6 @@ def Main() :
     FILE_C     = FILE_ROOT + ".c"
     FILE_O     = FILE_ROOT + ".o"
     FILE_I     = FILE_ROOT + ".i"
-    FILE_SYM_C = FILE_ROOT + ".sym.c"
-    FILE_SYM_O = FILE_ROOT + ".sym.o"
     FILE_DELETE_US = FILE_ROOT + ".delete_us"
 
     if resultcode == 0 :
@@ -722,8 +828,6 @@ def Main() :
             print("FILE_I     is ",FILE_I     )
             print("FILE_S     is ",FILE_S     )
             print("FILE_O     is ",FILE_O     )
-            print("FILE_SYM_C is ",FILE_SYM_C )
-            print("FILE_SYM_O is ",FILE_SYM_O )
             print("TARGET     is ",TARGET     )
             print("PY_DEST    is ",PY_DEST    )
             print("FMODE      is ",FMODE )
@@ -756,7 +860,7 @@ def Main() :
         if ECHO :
             DASH_Q = "-q"
 
-        ## We can now create the .sym.c file:
+        ## We can now modify the .c file:
         DASH_M = ""
         if FMODE == "1" :
             DASH_M = "-m1"
@@ -787,18 +891,6 @@ def Main() :
         lap_start = time_now
 
     if resultcode == 0 :
-        ## It is time to compile the .sym.c file we created
-        OUR_COMMAND = DeSpace([COBC,DASH_V,"-c","-o",FILE_SYM_O,FILE_SYM_C])
-        if ECHO :
-            SmartPrint(OUR_COMMAND)
-        resultcode = SubprocessCall(OUR_COMMAND,False)
-
-    if SHOW_TIME :
-        time_now = time.monotonic() - clock_start
-        print("timer: %30s %5.4f %5.4f" % ("Compile C", time_now - lap_start, time_now))
-        lap_start = time_now
-
-    if resultcode == 0 :
         ## We can now use COBC to assemble that the .s file we modified:
         OUR_COMMAND=DeSpace([COBC,DASH_V,"-c", "-o", FILE_O, FILE_S])
         if ECHO :
@@ -811,7 +903,7 @@ def Main() :
         lap_start = time_now
 
     if resultcode == 0 :
-        TO_BE_LINKED_AT_THE_END += [FILE_SYM_O,FILE_O]
+        TO_BE_LINKED_AT_THE_END += [FILE_O]
         # It is now time to build up the final link command.  Based on the
         # -### command we executed up above, we have to replace
         # the -o target with our TARGET, and we need to replace either
@@ -911,8 +1003,6 @@ def Main() :
         DeleteAFile(FILE_C    )
         DeleteAFile(FILE_I    )
         DeleteAFile(FILE_O    )
-        DeleteAFile(FILE_SYM_C)
-        DeleteAFile(FILE_SYM_O)
 
         ## Time to delete all the files in FILE_DELETE_US
         try :
@@ -930,8 +1020,6 @@ def Main() :
         ## With just SAVE_TEMPS, we just leave the files that
         ## COBC historically left around:
         DeleteAFile(FILE_S)
-        DeleteAFile(FILE_SYM_C)
-        DeleteAFile(FILE_SYM_O)
     # else : ## COBCDNOCLEAN is on, so we leave everything
 
     ## In any event, get rid of this bit of confusing fluff:
