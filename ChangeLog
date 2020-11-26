@@ -1,3 +1,6 @@
+2020-11-26  Bob Dubner <rdubner@symas.com>
+	* Major rework to COBCD; it now handles all command lines in the 'make check' suite
+
 2020-11-21  Bob Dubner <rdubner@symas.com>
 	* Released Version 4.6
 	* Changes for proper operation on Solaris/SPARC, handling the big-endian architecture

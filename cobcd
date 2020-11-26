@@ -115,6 +115,8 @@ def SubprocessCall(command,suppress_error) :
             print("   ", ' '.join(command))
             traceback.print_exc()
         resultcode = 1
+    sys.stdout.flush()
+    sys.stderr.flush()
     return resultcode
 
 def StripReturns(s) :
@@ -153,6 +155,8 @@ def RunCommand(command) :
     except:
         errcode = -1
         pass
+    sys.stdout.flush()
+    sys.stderr.flush()
     std_file.seek(0)
     result_std = std_file.read().decode("utf-8").replace('\r','')  # A nod to Windows
     std_file.close()
@@ -223,6 +227,14 @@ def CollapseFoldedLines(lines) :
             output += ' '
             output += line[i:]
     return output
+
+def FindThisInThat(this,that) :
+    retval = None
+    for i in range(len(that)) :
+        if that[i] == this :
+            retval = i
+            break
+    return retval
 
 def Main() :
     ###########################################################################
@@ -356,6 +368,7 @@ def Main() :
     DASH_S     = ""
     resultcode = 0
     TARGET     = ""
+    TARGET_EXT = ""
 
     ## Here is where we pre-preprocess the command line parameters.
     ## Anything that starts without a hyphen, or starts with two hyphens,
@@ -475,11 +488,9 @@ def Main() :
         if param in ("-c") :
             DASH_C = param
         elif param in ("-C") :
-            SAVE_TEMPS="-save-temps"
             DASH_BIGC = param
         elif param in ("-S") :
             DASH_S = param
-            SAVE_TEMPS="-save-temps"
         elif param in ("-fsyntax-only","--fsyntax-only") :
             end_early = True
 
@@ -581,6 +592,15 @@ def Main() :
     if ECHO :
         DASH_Q = "-q"
 
+    save_temps_split = SAVE_TEMPS.split('=')
+    cleaning_up = True
+    if COBCDNOCLEAN :
+        cleaning_up = False
+    if save_temps_split and save_temps_split[0] == "" :
+        save_temps_split = []
+    if len(save_temps_split) >= 1 :
+        cleaning_up = False
+
     ## The preliminary jousting is over.  It's now time to get serious.
 
     ## We are going to leverage cobc's parsing and processing by using the -###
@@ -599,7 +619,14 @@ def Main() :
             result_file = tempfile.TemporaryFile();
             if ECHO :
                 SmartPrint(TRIPLE_X_COMMAND)
-            subprocess.check_output(TRIPLE_X_COMMAND,stderr=result_file)
+            compiler_out = subprocess.check_output(TRIPLE_X_COMMAND,stderr=result_file)
+            compiler_out = StripReturns(compiler_out.decode("utf-8")).split('\n')
+            ## The first three lines are boilerplate.  Anything after that is a compiler output,
+            ## like a >> DISPLAY directive, and so on
+            for line in compiler_out[3:-1] :    # the split puts a spurious ' ' at the end
+                print(line)
+            sys.stdout.flush()
+            sys.stderr.flush()
             result_file.seek(0)
             result_text = result_file.read()
             result_file.close()
@@ -615,308 +642,295 @@ def Main() :
             resultcode = SubprocessCall(command,True)
             os._exit(resultcode)
 
-    translating = []
-    to_be_executed = []
-    c_roots=[]
+    if SHOW_TIME :
+        time_now = time.monotonic() - clock_start
+        print("timer: %30s %5.4f %5.4f" % ("COBC -###", time_now - lap_start, time_now))
+        lap_start = time_now
 
-    ## Let's parse the results we got back from the -### request.
-
+    ## Let's process the results we got back from the -### request.
+    result_text = result_text.replace('"','')
     result_lines = CollapseFoldedLines(result_text)
+    waiting_for_initial_file = True;
+    cbl_file = ""
+    c_file = ""
+    i_file = ""
+    to_be_deleted = []
+    source_files = []
+    to_be_executed_count = 0
     if ECHO :
         for line in result_lines.split('\n') :
             print("   ",line)
+        print("")
     for line in result_lines.split('\n') :
-        if line.find("warning:") != -1 :
-            ## This cropped up when using cobcd instead of cobc in
-            ## the GnuCOBOL "make check".  The test is considered successful
-            ## when the warning is issued on stderr.  So, to handle that, I am
-            ## declaring that the presence of a warning is ground for an abort:
-            print(line,file=sys.stderr)
+        #print("")
+        #print("Processing line:",line,waiting_for_initial_file)
+        if line and ( line.find("warning:") != -1 or line.find("note:") != -1 or line[-1] == ':' ) :
+            line += '\n'
+            sys.stderr.write(line)
+            sys.stderr.flush()
 #            command = [COBC] + ORIGINAL_COMMAND_LINE
 #            if ECHO :
 #                print('#### Ordinary compile due to "libcob: warning:...')
 #                SmartPrint(command)
 #            resultcode = SubprocessCall(command,False)
 #            os._exit(resultcode)
+        test_for = "preprocessing:"
+        n = line.find(test_for)
+        if n == 0:
+            tokens = line.split()
+            cbl_file = tokens[1]
+            i_file = tokens[3]
+            to_be_deleted.append(i_file)
+            if waiting_for_initial_file :
+                source_files.append(cbl_file)
+                waiting_for_initial_file = False
+            continue
 
         test_for = "translating:"
         n = line.find(test_for)
         if n == 0 :
-            translating.append(line[len(test_for):].replace('\t',''))
+            tokens = line.split()
+            i_file = tokens[1]
+            c_file = tokens[3]
+            cbl_file = tokens[4].replace('(','').replace(')','')
+            to_be_deleted.append(c_file)
+            to_be_deleted.append(i_file)
+            if waiting_for_initial_file :
+                source_files.append(i_file)
+                waiting_for_initial_file = False
+
+            root = c_file.split('/')[-1]
+            root = '.'.join(root.split('.')[0:-1])
+            path_and_root = '.'.join(c_file.split('.')[0:-1])
+            ## We need to process the C file with COBST
+            DASH_M = ""
+            if FMODE == "1" :
+                DASH_M = "-m1"
+            if FMODE == "2" :
+                DASH_M = "-m2"
+            OUR_COMMAND = DeSpace([COBST,DASH_Q,DASH_M,path_and_root,cbl_file])
+            if ECHO :
+                SmartPrint(OUR_COMMAND)
+            resultcode = SubprocessCall(OUR_COMMAND,False)
+            if resultcode :
+                os._exit(resultcode)
+            if SHOW_TIME :
+                time_now = time.monotonic() - clock_start
+                print("timer: %30s %5.4f %5.4f" % ("COBST", time_now - lap_start, time_now))
+                lap_start = time_now
+
+            FILE_DELETE_US = root + ".delete_us"
+            try :
+                f = open(FILE_DELETE_US,"r")
+                all_the_files = f.read()
+                all_the_files = all_the_files.replace('\r','')  # Windows.  Always Windows
+                all_the_files = all_the_files.split('\n')
+                for file in all_the_files :
+                    if file :
+                        to_be_deleted.append(file)
+                f.close()
+            except :
+                ## If the file doesn't exist, then it doesn't exist
+                pass
+            DeleteAFile(FILE_DELETE_US)
             continue
 
         test_for = "to be executed:"
         n = line.find(test_for)
         if n == 0 :
-            to_be_executed.append(line[len(test_for):].replace('\t',''))
-            continue
-
-    if SHOW_TIME :
-        time_now = time.monotonic() - clock_start
-        print("timer: %30s %5.4f %5.4f" % ("COBC -###", time_now - lap_start, time_now))
-        lap_start = time_now
-
-    ## The result of any "translating" line is a .c file.  We need to run each one
-    ## through COBST/SFIX in order to append the debugging information:
-
-    ## If to_be_executed is empty, then assume this is a preprocessing deal of some kind,
-    ## which means that we need to keep the intermediate files around
-    
-    if not to_be_executed :
-        SAVE_TEMPS = "-save-temps"
-
-    save_temps_split = SAVE_TEMPS.split('=')
-
-    matching_execution = 0
-    for line in translating:
-        if matching_execution < len(to_be_executed) :
-            executing = to_be_executed[matching_execution]
-        else :
-            executing = ""
-        matching_execution += 1
-        if ECHO :
-            print("")
-
-        tokens = line.split()
-        c_file_name = tokens[2]
-        c_root_name = c_file_name[:-2]
-        c_roots.append(c_root_name)
-        cbl_name = tokens[3].replace('(','').replace(')','')
-        o_name = c_root_name + ".o"
-        s_name = c_root_name + ".s"
-        i_name = c_root_name + ".i"
-        so_name = c_root_name + ".so"
-        dll_name = c_root_name + ".dll"
-        FILE_DELETE_US = c_root_name + ".delete_us"
-
-        if ECHO :
-            print("c_file_name    ",c_file_name)
-            print("c_root_name    ",c_root_name)
-            print("cbl_name       ",cbl_name   )
-            print("o_name         ",o_name     )
-            print("s_name         ",s_name     )
-            print("i_name         ",i_name     )
-            print("so_name        ",so_name    )
-            print("dll_name       ",dll_name   )
-            print("COBST          ",COBST      )
-            print("SFIX           ",SFIX       )
-            print("PYTHON         ",PYTHON     )
-            print("FMODE          ",FMODE      )
-
-        ## We can now modify the .c file(s):
-        DASH_M = ""
-        if FMODE == "1" :
-            DASH_M = "-m1"
-        if FMODE == "2" :
-            DASH_M = "-m2"
-        OUR_COMMAND = DeSpace([COBST,DASH_Q,DASH_M,c_root_name,cbl_name])
-        if ECHO :
-            SmartPrint(OUR_COMMAND)
-        resultcode = SubprocessCall(OUR_COMMAND,False)
-        if resultcode :
-            os._exit(resultcode)
-
-        if SHOW_TIME :
-            time_now = time.monotonic() - clock_start
-            print("timer: %30s %5.4f %5.4f" % ("COBST", time_now - lap_start, time_now))
-            lap_start = time_now
-
-        if not DASH_BIGC :
-            ## the -C flag means stop after creating the generated .c file
-
-            ## With the C file modified, we can now compile it into a .s module:
-            if executing :
-                compile_command = executing
-                compile_command = compile_command.replace('"','')
-                compile_command = compile_command.replace(" -c "," ")
-                compile_command += " -S"
-                compile_command = compile_command.split()
-                
-                i = 0
-                while i < len(compile_command) :
-                    if compile_command[i] == "-o" :
-                        compile_command[i+1] = s_name
-                        break
-                    i += 1;
+            to_be_executed_count += 1
+            execution_line = line[len(test_for)+1:]
+            execution_command = execution_line.split()
+            nTarget = FindThisInThat("-o",execution_command)
+            if nTarget :
+                src_file = execution_command[nTarget+2]
+                TARGET = execution_command[nTarget+1]
+                TARGET_EXT = extension = TARGET.split('.')[-1]
+                to_be_deleted.append(TARGET)
+            if waiting_for_initial_file :
+                ## When encountering a "to be executed" when there was
+                ## no foreplay, you just execute it.
+                if src_file :
+                    source_files.append(src_file)
                 if ECHO :
-                    SmartPrint(compile_command)
-                resultcode = SubprocessCall(compile_command,False)
+                    SmartPrint(execution_command)
+                resultcode = SubprocessCall(execution_command,False)
                 if resultcode :
                     os._exit(resultcode)
-
                 if SHOW_TIME :
                     time_now = time.monotonic() - clock_start
-                    print("timer: %30s %5.4f %5.4f" % ("cobc .C -> .S", time_now - lap_start, time_now))
+                    print("timer: %30s %5.4f %5.4f" % ("Unchanged command", time_now - lap_start, time_now))
                     lap_start = time_now
-
-                ## We now have a .s file, so we can run SFIX on it:
-                OUR_COMMAND = DeSpace([SFIX, DASH_Q, s_name, s_name, c_file_name, cbl_name])
-                if ECHO :
-                    SmartPrint(OUR_COMMAND)
-                resultcode = SubprocessCall(OUR_COMMAND,False)
-                if resultcode :
-                    os._exit(resultcode)
-
-                if SHOW_TIME :
-                    time_now = time.monotonic() - clock_start
-                    print("timer: %30s %5.4f %5.4f" % ("SFIX", time_now - lap_start, time_now))
-                    lap_start = time_now
-
-            if not DASH_S :
-            ## the -S flag means stop after creating the generated .s file
-
-                ## We now need to assemble the modified .s into an object file:
-                if executing:
-                    assembly_command = executing
-                    assembly_command = assembly_command.replace(c_root_name+".c",c_root_name+".s")
-                    assembly_command = assembly_command.replace('"','')
-                    assembly_command = assembly_command.split()
+            else :
+                if TARGET_EXT == "s" :
+                    s_file = TARGET
+                    # This must be the result of something like a -S switch
+                    # we can run the command "as is"
                     if ECHO :
-                        SmartPrint(assembly_command)
-                    resultcode = SubprocessCall(assembly_command,False)
+                        SmartPrint(execution_command)
+                    resultcode = SubprocessCall(execution_command,False)
                     if resultcode :
                         os._exit(resultcode)
-
                     if SHOW_TIME :
                         time_now = time.monotonic() - clock_start
-                        print("timer: %30s %5.4f %5.4f" % ("compile .S -> .O", time_now - lap_start, time_now))
+                        print("timer: %30s %5.4f %5.4f" % ("Generate .c -> .s explicitly", time_now - lap_start, time_now))
                         lap_start = time_now
 
-                if not DASH_C :
-                ## the -c flag means stop after creating the generated .o file
+                    # And having created .s, we can now SFIX it
+                    OUR_COMMAND = DeSpace([SFIX, DASH_Q, s_file, s_file, c_file, cbl_file])
+                    if ECHO :
+                        SmartPrint(OUR_COMMAND)
+                    resultcode = SubprocessCall(OUR_COMMAND,False)
+                    if resultcode :
+                        os._exit(resultcode)
+                    if SHOW_TIME :
+                        time_now = time.monotonic() - clock_start
+                        print("timer: %30s %5.4f %5.4f" % ("SFIX", time_now - lap_start, time_now))
+                        lap_start = time_now
+                else :
+                    if execution_line.find(c_file) != -1 :
+                        ## We have something other than .s as a target
+                        root = c_file.split('/')[-1]
+                        root = '.'.join(root.split('.')[0:-1])
+                        s_file = root and root + ".s"
+                        if s_file :
+                           to_be_deleted.append(s_file)
+                        if ECHO :
+                            print("")
+                            print("to_be_executed:",execution_line)
+                            if cbl_file :
+                                print("cbl_file...",cbl_file)
+                            if i_file :
+                                print("i_file.....",i_file)
+                            if c_file :
+                                print("c_file.....",c_file)
+                            if s_file :
+                                print("s_file.....",s_file)
+                            if src_file :
+                                print("src_file...",src_file)
 
-                    if executing:
-                        ## When compiling .so or .dll, we might, at this point, have to
-                        ## put a link to, or a copy of, cobcd.py next to the executable
-                        TARGET=""
-                        for i in range(len(assembly_command)) :
-                            if assembly_command[i] == "-o" :
-                                extension = assembly_command[i+1].split('.')[-1]
-                                if extension in (".so",".dll",".exe") :
-                                    TARGET=assembly_command[i+1]
-                                elif assembly_command[i] == c_root_name :
-                                    TARGET=assembly_command[i+1]
-                        if TARGET :
-                            TARGET=os.path.abspath(TARGET)
-                            PY_DEST = TARGET
-                            PY_DEST = TARGET.split('/')[0:-1]
-                            PY_DEST .append(TARGET+"-gdb.py")
-                            PY_DEST = '/'.join(PY_DEST)
-                            if FMODE == "3" : ## This means make a soft link:
-                                ## This won't work on Python2.  So don't try.
-                                DeleteAFile(PY_DEST)
-                                if ECHO :
-                                    print("Creating symlink: os.symlink(" + PYTHON + "," + PY_DEST +")")
-                                os.symlink(PYTHON,PY_DEST)
-                            if FMODE == "4" : ## This means make a copy:
-                                DeleteAFile(PY_DEST)
-                                if ECHO :
-                                    print("Copying",PYTHON,"to",PY_DEST)
-                                shutil.copyfile(PYTHON,PY_DEST)
+                        ## Now we compile the modified .C into a .S file:
+                        if DASH_BIGC :
+                            ## the -C flag means stop after creating the generated .c file
+                            continue
 
-        ## It is now time to clean up after ourselves.
-        ## create the list of things we might move or delete
-        sources = []
+                        ## With the C file modified, we can now compile it into a .s module:
+                        compile_command = execution_line
+                        compile_command = compile_command.replace(" -c "," ")
+                        compile_command += " -S"
+                        compile_command = compile_command.split()
+                        nTarget = FindThisInThat("-o",compile_command)
+                        compile_command[nTarget+1] = s_file
+                        if ECHO :
+                            SmartPrint(compile_command)
+                        resultcode = SubprocessCall(compile_command,False)
+                        if resultcode :
+                            os._exit(resultcode)
+                        if SHOW_TIME :
+                            time_now = time.monotonic() - clock_start
+                            print("timer: %30s %5.4f %5.4f" % ("cobc .C -> .S", time_now - lap_start, time_now))
+                            lap_start = time_now
+
+                        ## We now have a .s file, so we can run SFIX on it:
+                        OUR_COMMAND = DeSpace([SFIX, DASH_Q, s_file, s_file, c_file, cbl_file or i_file])
+                        if ECHO :
+                            SmartPrint(OUR_COMMAND)
+                        resultcode = SubprocessCall(OUR_COMMAND,False)
+                        if resultcode :
+                            os._exit(resultcode)
+
+                        if SHOW_TIME :
+                            time_now = time.monotonic() - clock_start
+                            print("timer: %30s %5.4f %5.4f" % ("SFIX", time_now - lap_start, time_now))
+                            lap_start = time_now
+
+                        if DASH_S :
+                            ## the -S flag means stop after creating the generated .s file
+                            continue
+
+                        assembly_command = execution_line
+                        assembly_command = assembly_command.split()
+                        nfound = FindThisInThat(c_file,assembly_command)
+                        assembly_command[nfound] = s_file
+                        if ECHO :
+                            SmartPrint(assembly_command)
+                        resultcode = SubprocessCall(assembly_command,False)
+                        if resultcode :
+                            os._exit(resultcode)
+                        if SHOW_TIME :
+                            time_now = time.monotonic() - clock_start
+                            print("timer: %30s %5.4f %5.4f" % ("compile .S -> .O", time_now - lap_start, time_now))
+                            lap_start = time_now
+
+                        if DASH_C :
+                            continue
+                            ## the -c flag means stop after creating the generated .o file
+
+            bare_name = TARGET.split('/')[-1].find('.') == -1
+
+            ## When compiling .so or .dll, we might, at this point, have to
+            ## put a link to, or a copy of, cobcd.py next to the executable
+            extension = TARGET.split('.')[-1]
+            if extension in (".so",".dll",".exe") or bare_name:
+                if TARGET :
+                    source_files.append(TARGET)
+                    PY_DEST=os.path.abspath(TARGET)
+                    PY_DEST = PY_DEST.split('/')[0:-1]
+                    PY_DEST .append(TARGET+"-gdb.py")
+                    PY_DEST = '/'.join(PY_DEST)
+                    if FMODE == "3" : ## This means make a soft link:
+                        ## This won't work on Python2.  So don't try.
+                        DeleteAFile(PY_DEST)
+                        if ECHO :
+                            print("Creating symlink: os.symlink(" + PYTHON + "," + PY_DEST +")")
+                        os.symlink(PYTHON,PY_DEST)
+                    if FMODE == "4" : ## This means make a copy:
+                        DeleteAFile(PY_DEST)
+                        if ECHO :
+                            print("Copying",PYTHON,"to",PY_DEST)
+                        shutil.copyfile(PYTHON,PY_DEST)
+
+            waiting_for_initial_file = True
+            cbl_file = ""
+            c_file = ""
+            i_file = ""
+            TARGET = ""
+            TARGET_EXT = ""
+            src_file = ""
+            continue
+
+    if to_be_executed_count <= 1 :
+        # If we didn't do much, then we want to keep the intermediate files
+        cleaning_up = False;
+
+    if len(save_temps_split) >= 2 :
+        ## We are dealing with a -save-temps=<dest>
+        dest = save_temps_split[-1]
         try :
-            f = open(FILE_DELETE_US,"r")
-            all_the_files = f.read()
-            all_the_files = all_the_files.replace('\r','')  # Windows.  Always Windows
-            all_the_files = all_the_files.split('\n')
-            for file in all_the_files :
-                sources.append(file)
-            f.close()
+            os.mkdir(dest)
         except :
-            ## If the file doesn't exist, then it doesn't exist
             pass
 
-        if i_name != cbl_name :
-            sources.append(i_name)
-        if not DASH_BIGC :
-            sources.append(c_file_name)
-        if not DASH_S :
-            sources.append(s_name)
+        for file in to_be_deleted :
+            extension = file.split('.')[-1]
+            if extension in ("c","i","s","o","h") :
+                d = dest + '/' + file.split('/')[-1]
+                DeleteAFile(d)
+                shutil.move(file,dest)
 
-        if len(save_temps_split) == 1 and not save_temps_split[0] :
-            save_temps_split = []
-        if len(save_temps_split) >= 2 :
-            ## We are dealing with a -save-temps=<dest>
-            dest = save_temps_split[-1]
-            try :
-                os.mkdir(dest)
-            except :
-                pass
-            for source in sources :
-                if source :
-                    d = dest + '/' + source.split('/')[-1]
-                    DeleteAFile(d)
-                    shutil.move(source,dest)
-            d = dest + '/' + o_name.split('/')[-1]
-            DeleteAFile(d)
-            shutil.copyfile(o_name,d)
-
-        if len(save_temps_split) == 0 and COBCDNOCLEAN == "" :
-            # with no SAVE-TEMPS and no COBCDNOCLEAN:
-            for source in sources :
-                if source :
-                    DeleteAFile(source)
-
-        ## And there is never any reason to keep this fellow
-        DeleteAFile(FILE_DELETE_US)
-
-    ## We've preprocessed, modified, and compiled all of the .CBL source modules
-    ## If there were any remaining "to be executed" instructions, we can now
-    ## simply execute them as given
-    while matching_execution < len(to_be_executed) :
-        final_command = to_be_executed[matching_execution]
-        matching_execution += 1
-        final_command = final_command.replace('"','')
-        final_command = final_command.split()
-        if ECHO :
-            SmartPrint(final_command)
-        resultcode = SubprocessCall(final_command,False)
-        if resultcode :
-            os._exit(resultcode)
-
-        if SHOW_TIME :
-            time_now = time.monotonic() - clock_start
-            print("timer: %30s %5.4f %5.4f" % ("Additional 'to be executed' ", time_now - lap_start, time_now))
-            lap_start = time_now
-
-        ## When compiling .so or .dll, we might, at this point, have to
-        ## put a link to, or a copy of, cobcd.py next to the executable
-        TARGET=""
-        for i in range(len(final_command)) :
-            if final_command[i] == "-o" :
-                extension = final_command[i+1].split('.')[-1]
-                if extension in (".so",".dll",".exe") :
-                    TARGET=final_command[i+1]
-                elif final_command[i] in c_roots :
-                    TARGET=final_command[i+1]
-        if TARGET :
-            TARGET=os.path.abspath(TARGET)
-            PY_DEST = TARGET
-            PY_DEST = TARGET.split('/')[0:-1]
-            PY_DEST .append(TARGET+"-gdb.py")
-            PY_DEST = '/'.join(PY_DEST)
-            if FMODE == "3" : ## This means make a soft link:
-                ## This won't work on Python2.  So don't try.
-                DeleteAFile(PY_DEST)
-                if ECHO :
-                    print("Creating symlink: os.symlink(" + PYTHON + "," + PY_DEST +")")
-                os.symlink(PYTHON,PY_DEST)
-            if FMODE == "4" : ## This means make a copy:
-                DeleteAFile(PY_DEST)
-                if ECHO :
-                    print("Copying",PYTHON,"to",PY_DEST)
-                shutil.copyfile(PYTHON,PY_DEST)
-    ## Final cleanup.  I believe at this point in time, we have nothing left except
-    ## possibly a bunch of .o files that make up a multiple compilation:
-
-    if not COBCDNOCLEAN :   ## If COBCDNOCLEAN is off, then we might delete...
-        if len(save_temps_split) in (0,2) : # ...provided save-temps lets us
-            for c_root in c_roots :
-                source = c_root + ".o"
-                DeleteAFile(source)
+    if cleaning_up :
+        for file in to_be_deleted :
+            if file not in source_files :
+                extension = file.split('.')[-1]
+                if extension in ("so","exe","dll") :
+                    continue
+                if DASH_C and extension == "o" :
+                    continue
+                if DASH_BIGC and extension in ("c","h"):
+                    continue
+                if DASH_S and extension=="s":
+                    continue
+                DeleteAFile(file)
 
     if SHOW_TIME :
         time_now = time.monotonic() - clock_start
