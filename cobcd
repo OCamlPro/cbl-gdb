@@ -39,6 +39,7 @@ import re
 import sys
 import os
 import platform
+import platform
 import traceback
 import subprocess
 import tempfile
@@ -300,14 +301,17 @@ def Main() :
     # ECHO=1 causes massive debugging output
     # SHOW_TIME=1 produces stage-by-stage timing analysis
 
-    COBCDEVEL    = os.environ.get("COBCDEVEL") or ""
+    COBCDEVEL    = os.environ.get("COBCDEVEL")    or ""
     COBCDNOCLEAN = os.environ.get("COBCDNOCLEAN") or ""
-    COBCDFLAGS   = (os.environ.get("COBCDFLAGS") or "").split()
-    COBCD_COBC   = os.environ.get("COBCD_COBC") or ""
-    COBCD        = os.environ.get("COBCD") or ""
-    ECHO         = os.environ.get("ECHO") or ""
-    COBC         = os.environ.get("COBCD_COBC") or "cobc"
-    COBCDFMODE   = os.environ.get("COBCDFMODE") or ""
+    COBCDFLAGS   = (os.environ.get("COBCDFLAGS")  or "").split()
+    COBCD_COBC   = os.environ.get("COBCD_COBC")   or ""
+    COBCD        = os.environ.get("COBCD")        or ""
+    ECHO         = os.environ.get("ECHO")         or ""
+    COBC         = os.environ.get("COBCD_COBC")   or "cobc"
+    COBCDFMODE   = os.environ.get("COBCDFMODE")   or "@COBCDFMODE@" ## This construction allows for ./configure or "make install" modifications
+    if COBCDFMODE == "@COBCDFMODE@" :
+        COBCDFMODE =  ""
+    SAVE_S       = os.environ.get("SAVE_S")       or ""
     #ECHO = "1"  # This overrides the environment.  If this is uncommented,
                 # then you are probably doing development work on this script
     SAVE_TEMPS=""
@@ -614,11 +618,12 @@ def Main() :
         s = COB_CFLAGS_BASE + [FCF_PROTECTION];
         os.environ["COB_CFLAGS"]= ' '.join(s)
         os.environ["COBC_GEN_DUMP_COMMENTS"]= '1'
+#S        TRIPLE_X_COMMAND = DeSpace(COBC + " -### --save-temps -A -ggdb -fgen-c-line-directives -fgen-c-labels ") + COMMAND_LINE
         TRIPLE_X_COMMAND = DeSpace(COBC + " -### --save-temps -fsource-location -A -ggdb -fgen-c-line-directives -fgen-c-labels ") + COMMAND_LINE
         try :
             result_file = tempfile.TemporaryFile();
             if ECHO :
-                SmartPrint(TRIPLE_X_COMMAND)
+                SmartPrint(["COBC_GEN_DUMP_COMMENTS=1"]+TRIPLE_X_COMMAND)
             compiler_out = subprocess.check_output(TRIPLE_X_COMMAND,stderr=result_file)
             compiler_out = StripReturns(compiler_out.decode("utf-8")).split('\n')
             ## The first three lines are boilerplate.  Anything after that is a compiler output,
@@ -797,17 +802,18 @@ def Main() :
                            to_be_deleted.append(s_file)
                         if ECHO :
                             print("")
-                            print("to_be_executed:",execution_line)
+                            print("   to_be_executed:",execution_line)
                             if cbl_file :
-                                print("cbl_file...",cbl_file)
+                                print("   cbl_file...",cbl_file)
                             if i_file :
-                                print("i_file.....",i_file)
+                                print("   i_file.....",i_file)
                             if c_file :
-                                print("c_file.....",c_file)
+                                print("   c_file.....",c_file)
                             if s_file :
-                                print("s_file.....",s_file)
+                                print("   s_file.....",s_file)
                             if src_file :
-                                print("src_file...",src_file)
+                                print("   src_file...",src_file)
+                            print("")
 
                         ## Now we compile the modified .C into a .S file:
                         if DASH_BIGC :
@@ -832,6 +838,8 @@ def Main() :
                             lap_start = time_now
 
                         ## We now have a .s file, so we can run SFIX on it:
+                        if SAVE_S :
+                            shutil.copyfile(s_file,s_file+".original.s")
                         OUR_COMMAND = DeSpace([SFIX, DASH_Q, s_file, s_file, c_file, cbl_file or i_file])
                         if ECHO :
                             SmartPrint(OUR_COMMAND)
