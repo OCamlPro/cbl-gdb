@@ -292,8 +292,22 @@ build(PARAMETERS &params,
         // the program.cob text, has inserted cob_nop() calls before the
         // beginning of the generated C for each COBOL statement.
         //
-        // In return for his generosity, we strip them out here:
-        //
+        // This still requires some research.  But for a program fragment like this:
+        //      PERFORM 2 TIMES
+        //        DISPLAY 'xxx'
+        //        END-PERFORM
+        // The generated assembly code has this:
+        //    jmp L18:
+        // L19:
+        //    call cob_nop
+        //    .loc 1 123 discriminator 3
+        //    call cob_display
+        // L18: # perform loop test
+        //    jg L19
+        // I have learned that if I just drop the cob_nop, then GDB-8.3 never
+        // traps at line 123
+        // But if I turn the cob_nop into an actual nop, then it works
+
         if( strstr(ach,"call\tcob_nop") ) {
             continue;
         }
@@ -333,6 +347,10 @@ build(PARAMETERS &params,
                     if( new_num != 0 ) {
                         // Build the replacement line:
                         int new_line = atoi(premainder) - 1 ;
+                        if( strstr(premainder,"discriminator") )
+                        {
+                            fprintf(f,"\tnop\n");
+                        }
                         fprintf(f,"\t.loc %d %d\n",new_num,new_line);
                         break;
                     }
@@ -353,6 +371,10 @@ build(PARAMETERS &params,
             int newnum = replacements[oldnum];
             if( newnum != 0 ) {
                 // Rebuild the .loc line
+                if( strstr(premainder,"discriminator") )
+                {
+                    fprintf(f,"\tnop\n");
+                }
                 fprintf(f,"\t.loc %d%s\n",newnum,premainder);
             }
             continue;
