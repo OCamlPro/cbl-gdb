@@ -309,7 +309,7 @@ def Main() :
     ECHO         = os.environ.get("ECHO")         or ""
     COBC         = os.environ.get("COBCD_COBC")   or "cobc"
     COBCDFMODE   = os.environ.get("COBCDFMODE")   or "@COBCDFMODE@" ## This construction allows for ./configure or "make install" modifications
-    if COBCDFMODE == "@COBCDFMODE@" :
+    if COBCDFMODE[0] == "@" :
         COBCDFMODE =  ""
     SAVE_S       = os.environ.get("SAVE_S")       or ""
     #ECHO = "1"  # This overrides the environment.  If this is uncommented,
@@ -618,8 +618,8 @@ def Main() :
         s = COB_CFLAGS_BASE + [FCF_PROTECTION];
         os.environ["COB_CFLAGS"]= ' '.join(s)
         os.environ["COBC_GEN_DUMP_COMMENTS"]= '1'
-#       TRIPLE_X_COMMAND = DeSpace(COBC + " -### --save-temps -fsource-location -A -ggdb -fgen-c-line-directives -fgen-c-labels ") + COMMAND_LINE
-        TRIPLE_X_COMMAND = DeSpace(COBC + " -### --save-temps -A -ggdb -fgen-c-line-directives -fgen-c-labels ") + COMMAND_LINE
+#        TRIPLE_X_COMMAND = DeSpace(COBC + " -### --save-temps -A -ggdb -fgen-c-line-directives -fgen-c-labels ") + COMMAND_LINE
+        TRIPLE_X_COMMAND = DeSpace(COBC + " -### --save-temps -fsource-location -A -ggdb -fgen-c-line-directives -fgen-c-labels ") + COMMAND_LINE
         try :
             result_file = tempfile.TemporaryFile();
             if ECHO :

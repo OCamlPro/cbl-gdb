@@ -39,7 +39,8 @@
 ##                                  three-character string e.g., ".$," for "decimal, currency, separator"
 ## os.environ.get('CPRINT_V', '0')  Default formatting p/v N value
 ## os.environ.get('CPRINT_R', '6')) Default p/? range
-## os.environ.get('CPRINT', '0'))   When non-zero, registers "cprint" instead of "print" as the command
+## os.environ.get('CPRINT', '<cmd>'))   When non-blank, registers "cmd" instead of "print" as the command
+##                                      Legacy: if "1", registers "cprint"
 
 from __future__ import print_function
 
@@ -732,15 +733,29 @@ def GetAddressOf(variable) :
     return retval
 
 def AddEmUp(expression) :
+    ## Originally written when I thought only integers would appear
+    ## here, I have since learned that expressions can be more complex.
+    ## For now I am simply punting when when confronted with something
+    ## that isn't an integer or a simple addition of integers
+    ##
+    ## Processing of arrays can involve 123*b_37 + 456, and I've been warned
+    ## that there might even be parentheses involved.  We'll burn those bridges
+    ## in times to come.
     expression = expression or "0"
     retval = 0
     tokens = expression.split('+')
     for token in tokens :
         if token[0:1] in "0123456789" : # Python2/3 ecumenical
-            if sys.version[0] == '2' :
-                ## This is Python2
-                token = token.decode("latin1")
-            retval += int(token)
+            try :
+                if sys.version[0] == '2' :
+                    ## This is Python2
+                    token = token.decode("latin1")
+                retval += int(token)
+            except :
+                ## if the latin decode fails, or if token isn't an integer,
+                ## an exception will be thrown.  As described above, just
+                ## ignore that for now.
+                pass
     return retval
 
 class VarTrie() :
@@ -2262,9 +2277,13 @@ class CPrintWorker() :
     # handle everything that doesn't actually need the gdb object
     def __init__(self):
         self.current_source_file = ""
-        self.sticky_display_mode = os.environ.get('CPRINT_V', '0')
-        self.question_mark_range = int(os.environ.get('CPRINT_R', '6'))
-        self.use_cprint = int(os.environ.get('CPRINT', '0'))
+        self.sticky_display_mode = os.environ.get("CPRINT_V", '0')
+        self.question_mark_range = int(os.environ.get("CPRINT_R", '6'))
+        self.use_cprint = os.environ.get("CPRINT", "@CPRINT@")
+        if self.use_cprint[0] == '@' :
+            self.use_cprint = "print" # this is the default
+        elif self.use_cprint == "1" :
+            self.use_cprint = "cprint" # this is legacy behavior, before I generalized it to "anything"
         self.machine_interface_mode = False
 
     def ProcessDisplayMode(self,args,TabFile) :
@@ -2454,11 +2473,8 @@ class CPrint (gdb.Command) :
         self.TabFile = TabFileInformation();
         self.TabFile.question_mark_range = self.Worker.question_mark_range
 
-        actual_command = "print"
-        if self.Worker.use_cprint == 1 :
-            actual_command = "cprint"
-        print('Registering CPrint (Usage is "' + actual_command + ' <COBOL identifier>") [Version 4.7]')
-        super (CPrint, self).__init__ (actual_command, gdb.COMMAND_USER)
+        print('Registering CPrint (Usage is "' + self.Worker.use_cprint + ' <COBOL identifier>") [Version 4.7]')
+        super (CPrint, self).__init__ (self.Worker.use_cprint, gdb.COMMAND_USER)
 
     def invoke (self, arguments, from_tty):
         # pick up the name of the current source file

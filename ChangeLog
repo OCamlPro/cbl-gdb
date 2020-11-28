@@ -1,6 +1,7 @@
 2020-11-28  Bob Dubner <rdubner@symas.com>
 	* eliminate need for -fsource-location by processing the new call cob_nop statements
 	  when SFIX replaces and eliminates ./loc directives
+	* Added capability for 'make install CPRINT=this COBCDFMODE=that'
 
 2020-11-26  Bob Dubner <rdubner@symas.com>
 	* Major rework to COBCD; it now handles all command lines in the 'make check' suite
