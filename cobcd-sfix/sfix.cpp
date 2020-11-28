@@ -287,6 +287,17 @@ build(PARAMETERS &params,
 
     while(fgets(ach,sizeof(ach),fd)) {
         i += 1;
+
+        // Simon Sobisch, in order to facilitate file number mappings back to
+        // the program.cob text, has inserted cob_nop() calls before the
+        // beginning of the generated C for each COBOL statement.
+        //
+        // In return for his generosity, we strip them out here:
+        //
+        if( strstr(ach,"call\tcob_nop") ) {
+            continue;
+        }
+
         // We have learned that the GDB trapping can get confused if there isn't
         // a .loc reference in the first few lines after a function declaration.
 
