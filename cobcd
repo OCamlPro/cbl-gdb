@@ -353,9 +353,13 @@ def Main() :
         ## or the file fails.
         FMODE  = COBCDFMODE or "3"  ## We will create a Windows "soft link" with "mklink"
 
-    if os_name == "SunOS" and processor == "sparc" :
-        ## In Solaris/SPARC, attempting to embed either the filename
-        ## or the file fails.
+    if os_name == "SunOS"  :
+        ## In Solaris attempting to embed either the filename
+        ## or the file fails.  The problem is that the Solaris ld loader silently
+        ## discards the .debug_gdb_scripts section that gcc puts into the .o file
+        ## The environment variable LD_ALTEXEC=/usr/bin/gld (or `which gld`) fixes the
+        ## which loader, but the command line has to have "-lgmp -lncurses -ldb -lxml2 -lz" on it
+        ## I am not going to try to fix any of that until I understand it better
         FMODE  = COBCDFMODE or "3"  ## We will create a Unix "soft link" with "ln"
 
     ORIGINAL_COMMAND_LINE=[]
@@ -533,6 +537,11 @@ def Main() :
         time_now = time.monotonic() - clock_start
         print("timer: %30s %5.4f %5.4f" % ("startup overhead", time_now - lap_start, time_now))
         lap_start = time_now
+
+#    if ECHO :
+#        print("   os_name....",os_name)
+#        print("   processor..",processor)
+#        print("")
 
     ## Now we have to call `COBC --info`; there are some things we need to know:
     errcode, std, err = RunCommand([COBC, "--info"])
