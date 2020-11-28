@@ -52,6 +52,10 @@ install:
 	$(MAKE) -C python install
 # If requested adjust python interpreter line
 	@if [ X"$(PYTHON)" != X"" ] ; then sed -i "s#/usr/bin/python3#$(PYTHON)#" $(DESTDIR)$(prefix)/bin/cobcd ; fi
+# If requested adjust default COBCDFMODE
+	@if [ X"$(COBCDFMODE)" != X"" ] ; then sed -i "s#@COBCDFMODE@#$(COBCDFMODE)#" $(DESTDIR)$(prefix)/bin/cobcd ; fi
+# If requested adjust default CPRINT command
+	@if [ X"$(CPRINT)" != X"" ] ; then sed -i "s#@CPRINT@#$(CPRINT)#" $(DESTDIR)$(prefix)/bin/cobcd.py ; fi
 # Output .gdbinit instructions only if DESTDIR is empty.
 # When non-empty, this is almost certainly part of a package building exercise,
 # and the message is irrelevant and confusing.
