@@ -459,13 +459,21 @@ def Main() :
 
     ## We can now pre-process the pre-preprocessed tokens.  There are a few
     ## things we have to do.  There is some bookkeeping with version and help
-    ## requests that we need to know about.  And we need to strip out some
-    ## switches that will otherwise interfere with our expanded processes.  For
-    ## example, if the caller specifies -x or -m, they will conflict with the
-    ## the -S we need to start with.  So, we have to pull that out to work with later
+    ## requests that we need to know about.  And we need to do some bookkeeping
+    ## to make sure that source files don't get deleted while unwanted intermediate
+    ## files do get deleted
+
+    to_be_deleted = []
+    keepers = []
+
+
     end_early = False
+    index=0
     for param in params :
         #print("param",param)
+        index += 1
+        if param and param[0] != '-' :
+            keepers.append(param)
         if param in ("-h","-help","--help") :
             ASKED_FOR_HELP=True
             COMMANDS_REMOVED.append(param)
@@ -607,6 +615,7 @@ def Main() :
 
     save_temps_split = SAVE_TEMPS.split('=')
     cleaning_up = True
+    we_translated_something = False
     if COBCDNOCLEAN :
         cleaning_up = False
     if save_temps_split and save_temps_split[0] == "" :
@@ -668,8 +677,6 @@ def Main() :
     cbl_file = ""
     c_file = ""
     i_file = ""
-    to_be_deleted = []
-    source_files = []
     to_be_executed_count = 0
     if ECHO :
         for line in result_lines.split('\n') :
@@ -696,13 +703,13 @@ def Main() :
             i_file = tokens[3]
             to_be_deleted.append(i_file)
             if waiting_for_initial_file :
-                source_files.append(cbl_file)
                 waiting_for_initial_file = False
             continue
 
         test_for = "translating:"
         n = line.find(test_for)
         if n == 0 :
+            we_translated_something = True
             tokens = line.split()
             i_file = tokens[1]
             c_file = tokens[3]
@@ -710,7 +717,6 @@ def Main() :
             to_be_deleted.append(c_file)
             to_be_deleted.append(i_file)
             if waiting_for_initial_file :
-                source_files.append(i_file)
                 waiting_for_initial_file = False
 
             root = c_file.split('/')[-1]
@@ -757,15 +763,12 @@ def Main() :
             execution_command = execution_line.split()
             nTarget = FindThisInThat("-o",execution_command)
             if nTarget :
-                src_file = execution_command[nTarget+2]
                 TARGET = execution_command[nTarget+1]
                 TARGET_EXT = extension = TARGET.split('.')[-1]
                 to_be_deleted.append(TARGET)
             if waiting_for_initial_file :
                 ## When encountering a "to be executed" when there was
                 ## no foreplay, you just execute it.
-                if src_file :
-                    source_files.append(src_file)
                 if ECHO :
                     SmartPrint(execution_command)
                 resultcode = SubprocessCall(execution_command,False)
@@ -820,8 +823,6 @@ def Main() :
                                 print("   c_file.....",c_file)
                             if s_file :
                                 print("   s_file.....",s_file)
-                            if src_file :
-                                print("   src_file...",src_file)
                             print("")
 
                         ## Now we compile the modified .C into a .S file:
@@ -884,13 +885,14 @@ def Main() :
                             ## the -c flag means stop after creating the generated .o file
 
             bare_name = TARGET.split('/')[-1].find('.') == -1
+            if bare_name :
+                keepers.append(TARGET)
 
             ## When compiling .so or .dll, we might, at this point, have to
             ## put a link to, or a copy of, cobcd.py next to the executable
             extension = TARGET.split('.')[-1]
             if extension in (".so",".dll",".exe") or bare_name:
                 if TARGET :
-                    source_files.append(TARGET)
                     PY_DEST=os.path.abspath(TARGET)
                     PY_DEST = PY_DEST.split('/')[0:-1]
                     PY_DEST .append(TARGET+"-gdb.py")
@@ -913,11 +915,10 @@ def Main() :
             i_file = ""
             TARGET = ""
             TARGET_EXT = ""
-            src_file = ""
             continue
 
-    if to_be_executed_count <= 1 :
-        # If we didn't do much, then we want to keep the intermediate files
+    if not we_translated_something :
+        ## If we didn't translate something, then don't clean up.
         cleaning_up = False;
 
     if len(save_temps_split) >= 2 :
@@ -937,7 +938,7 @@ def Main() :
 
     if cleaning_up :
         for file in to_be_deleted :
-            if file not in source_files :
+            if file not in keepers :
                 extension = file.split('.')[-1]
                 if extension in ("so","exe","dll") :
                     continue

@@ -1,3 +1,7 @@
+2020-11-30  Bob Dubner <rdubner@symas.com>
+	* Release 4.8
+	* COBCD behavior for -x, -m, -C, -S, -b, and -c matches COBC
+
 2020-11-28  Bob Dubner <rdubner@symas.com>
 	* eliminate need for -fsource-location by processing the new call cob_nop statements
 	  when SFIX replaces and eliminates ./loc directives

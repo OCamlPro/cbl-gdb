@@ -22,7 +22,7 @@ $(project) : $(project).cbl
 # This cleans up the various intermediate project files
 
 .PHONY : clean
-suffixes = .c *.h .i .o .sym.o .sym.c .s
+suffixes = .c *.h .i .o .so .s 
 clean:
-	@rm -f $(addprefix $(project),$(suffixes)) $(project) *.txt $(CLEAN) $(project)-gdb.py
+	@rm -f $(addprefix $(project),$(suffixes)) $(project) $(project)-gdb.py 
 
