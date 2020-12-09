@@ -243,7 +243,7 @@ def Main() :
     ## The text "Version x.x" has to appear in square brackets.               #
     ## Don't mess with it!                                                    #
     ###########################################################################
-    SCRIPT_VERSION="[Version 4.9]"
+    SCRIPT_VERSION="[Version 4.10]"
 
     show_time = os.environ.get("SHOW_TIME","0")
     SHOW_TIME = False
@@ -465,7 +465,6 @@ def Main() :
 
     to_be_deleted = []
     keepers = []
-
 
     end_early = False
     index=0
@@ -937,6 +936,15 @@ def Main() :
                 shutil.move(file,dest)
 
     if cleaning_up :
+        for file in keepers :
+            extension = file.split('.')[-1]
+            if extension == 'c' :
+                ## If .c is a keeper, then we have to keep all the
+                ## .h files around as well  Setting DASH_BIGC at this
+                ## point is an easy way of doing that
+                DASH_BIGC = 'xxx'
+                break;
+
         for file in to_be_deleted :
             if file not in keepers :
                 extension = file.split('.')[-1]

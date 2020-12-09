@@ -2473,7 +2473,7 @@ class CPrint (gdb.Command) :
         self.TabFile = TabFileInformation();
         self.TabFile.question_mark_range = self.Worker.question_mark_range
 
-        print('Registering CPrint (Usage is "' + self.Worker.use_cprint + ' <COBOL identifier>") [Version 4.9]')
+        print('Registering CPrint (Usage is "' + self.Worker.use_cprint + ' <COBOL identifier>") [Version 4.10]')
         super (CPrint, self).__init__ (self.Worker.use_cprint, gdb.COMMAND_USER)
 
     def invoke (self, arguments, from_tty):

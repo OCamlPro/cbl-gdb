@@ -1,3 +1,11 @@
+2020-12-09  Bob Dubner <rdubner@symas.com>
+	* Release 4.10 -- depends on GnuCOBOL 3.1.1
+	* Change COBCD so that when a .c file is not cleaned up, neither are the .h files
+
+2020-12-09  Bob Dubner <rdubner@symas.com>
+	* Release 4.9 -- depends on GnuCOBOL 3.1.1
+	* Modify COBCD script so that -fsource-location is no longer used in COBC invocation
+
 2020-11-30  Bob Dubner <rdubner@symas.com>
 	* Release 4.8
 	* COBCD behavior for -x, -m, -C, -S, -b, and -c matches COBC
