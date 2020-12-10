@@ -349,9 +349,9 @@ def Main() :
         FMODE  = COBCDFMODE or "1"
 
     if windows :
-        ## In Windows and Solaris/SPARC, attempting to embed either the filename
-        ## or the file fails.
-        FMODE  = COBCDFMODE or "3"  ## We will create a Windows "soft link" with "mklink"
+        ## In Windows attempting to embed either the filename or the file fails.
+        ## And we can't create a symlink because we don't have admin privileges
+        FMODE = COBCDFMODE or "4"  ## We will create make a renamed copy of cobcd.py next to the executable
 
     if os_name == "SunOS"  :
         ## In Solaris attempting to embed either the filename
@@ -545,10 +545,10 @@ def Main() :
         print("timer: %30s %5.4f %5.4f" % ("startup overhead", time_now - lap_start, time_now))
         lap_start = time_now
 
-#    if ECHO :
-#        print("   os_name....",os_name)
-#        print("   processor..",processor)
-#        print("")
+    if ECHO :
+        print("   os_name....",os_name)
+        print("   processor..",processor)
+        print("")
 
     ## Now we have to call `COBC --info`; there are some things we need to know:
     errcode, std, err = RunCommand([COBC, "--info"])
@@ -890,14 +890,15 @@ def Main() :
             ## When compiling .so or .dll, we might, at this point, have to
             ## put a link to, or a copy of, cobcd.py next to the executable
             extension = TARGET.split('.')[-1]
-            if extension in (".so",".dll",".exe") or bare_name:
+            if extension in ("so","dll","exe") or bare_name:
                 if TARGET :
                     PY_DEST=os.path.abspath(TARGET)
                     PY_DEST = PY_DEST.split('/')[0:-1]
                     PY_DEST .append(TARGET+"-gdb.py")
                     PY_DEST = '/'.join(PY_DEST)
                     if FMODE == "3" : ## This means make a soft link:
-                        ## This won't work on Python2.  So don't try.
+                        ## This won't work on Python2.  So don't try.  And on Windows, you
+                        ## need admin privileges, so don't try there, either.
                         DeleteAFile(PY_DEST)
                         if ECHO :
                             print("Creating symlink: os.symlink(" + PYTHON + "," + PY_DEST +")")
