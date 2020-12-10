@@ -53,19 +53,26 @@ def print_help(version) :
     usage(version)
     print("Use it as you would 'cobc'")
     print("")
-    print("It doesn't take any switches except --help and --version")
-    print("")
-    print("If there is a -T or -t switch, the unmodified cobc compile will take place to generate")
-    print("the listing file before the more complex debug build is done.")
+    print("It doesn't see any switches except --help, --version, and -v")
     print("")
     print("It can be controlled by a few environment variables:")
-    print("COBCD_COBC=alt     Replaces 'cobc' with 'alt'")
-    print("COBCDEVEL=1        Use development toolchain instead of production toolchain")
-    print("COBCDNOCLEAN=1     Don't delete intermediate files")
-    print("COBCDFLAGS=xyz     These flags are passed to cobc")
+    print("COBCD_COBC=alt     Invokes the GnuCOBOL compiler with 'alt' instead of 'cobc'")
+    print("COBCDFLAGS=xyz     These flags are passed to the GnuCOBOL compiler")
     print("COBCDMSG=1         Suppresses the libcd6-dbg/glibc-debuginfo warning message")
-    print("COBCDFMODE=N       Overrides cobcd.py insertion mode.  See cobcd script.")
+    print("COBCDFMODE=N       Overrides how the cobcd.py script is attached to the executable:")
+    print("                   0 : Don't do anything")
+    print("                   1 : Embed a pointer to cobcd.py in the ELF executable .debug-gdb-scripts section")
+    print("                   2 : Embed the entire script in the ELF executable")
+    print("                   3 : Create a soft link named TARGET-gdb.py to cobcd.py next to TARGET")
+    print("                   4 : Make a copy of cobcd.py named TARGET-gdb.py next to TARGET")
+    print("")
+    print("The variables below are useful in development.  Don't count on them staying stable, or even existing")
+    print("")
     print("ECHO=1             Causes line-by-line command echoing (also turned on by -v)")
+    print("COBCDEVEL=1        Use cbl-gdb development toolchain instead of production toolchain")
+    print("COBCDNOCLEAN=1     Don't delete intermediate files (similar to -save-temps, but also keeps .s)")
+    print("SAVE_S=1           Keeps a copy of the .s as it is before COBCD-SFIX processing")
+    print("SHOW_TIME=1        Outputs execution time analysis during cobcd processing")
     print("")
     print("If you need help with cobc, use the command 'cobc --help'")
 
@@ -243,7 +250,7 @@ def Main() :
     ## The text "Version x.x" has to appear in square brackets.               #
     ## Don't mess with it!                                                    #
     ###########################################################################
-    SCRIPT_VERSION="[Version 4.10]"
+    SCRIPT_VERSION="[Version 4.12]"
 
     show_time = os.environ.get("SHOW_TIME","0")
     SHOW_TIME = False
@@ -294,7 +301,7 @@ def Main() :
     #                 ## be attached to the executable.
     #                 ## 0 Don't do anything
     #                 ## 1 Embed a pointer to cobcd.py in the ELF executable .debug-gdb-scripts section
-    #                 ## 2 Embed the entire script into the ELF executable
+    #                 ## 2 Embed the entire script in the ELF executable
     #                 ## 3 Create a soft link named TARGET-gdb.py to cobcd.py next to TARGET
     #                 ## 4 Make a copy of cobcd.py named TARGET-gdb.py next to TARGET
     #
@@ -305,7 +312,6 @@ def Main() :
     COBCDNOCLEAN = os.environ.get("COBCDNOCLEAN") or ""
     COBCDFLAGS   = (os.environ.get("COBCDFLAGS")  or "").split()
     COBCD_COBC   = os.environ.get("COBCD_COBC")   or ""
-    COBCD        = os.environ.get("COBCD")        or ""
     ECHO         = os.environ.get("ECHO")         or ""
     COBC         = os.environ.get("COBCD_COBC")   or "cobc"
     COBCDFMODE   = os.environ.get("COBCDFMODE")   or "@COBCDFMODE@" ## This construction allows for ./configure or "make install" modifications
@@ -775,7 +781,7 @@ def Main() :
                     os._exit(resultcode)
                 if SHOW_TIME :
                     time_now = time.monotonic() - clock_start
-                    print("timer: %30s %5.4f %5.4f" % ("Unchanged command", time_now - lap_start, time_now))
+                    print("timer: %30s %5.4f %5.4f" % ("command execution", time_now - lap_start, time_now))
                     lap_start = time_now
             else :
                 if TARGET_EXT == "s" :
@@ -843,7 +849,7 @@ def Main() :
                             os._exit(resultcode)
                         if SHOW_TIME :
                             time_now = time.monotonic() - clock_start
-                            print("timer: %30s %5.4f %5.4f" % ("cobc .C -> .S", time_now - lap_start, time_now))
+                            print("timer: %30s %5.4f %5.4f" % ("COBC .C -> .S", time_now - lap_start, time_now))
                             lap_start = time_now
 
                         ## We now have a .s file, so we can run SFIX on it:

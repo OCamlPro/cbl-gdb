@@ -1,4 +1,9 @@
 2020-12-09  Bob Dubner <rdubner@symas.com>
+	* Release 4.12
+	* Repaired a naming problem where 4.11 was reporting 4.10
+	* Updated (one might say repaired) the COBCD --help output
+
+2020-12-09  Bob Dubner <rdubner@symas.com>
 	* Release 4.10 -- depends on GnuCOBOL 3.1.1
 	* Change COBCD so that when a .c file is not cleaned up, neither are the .h files
 
