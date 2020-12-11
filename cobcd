@@ -250,7 +250,7 @@ def Main() :
     ## The text "Version x.x" has to appear in square brackets.               #
     ## Don't mess with it!                                                    #
     ###########################################################################
-    SCRIPT_VERSION="[Version 4.12]"
+    SCRIPT_VERSION="[Version 4.13]"
 
     show_time = os.environ.get("SHOW_TIME","0")
     SHOW_TIME = False
@@ -442,20 +442,65 @@ def Main() :
         ## Now we handle the leftover specific words.
         ## (See cobc/cobc.c "long_options")
         if param[1:] in (   "help"    ,
-                            "cob" ,
+                            "hel"     ,
+                            "he"      ,
+                            "h"       ,
+                            "cob"     ,
                             "info"    ,
+                            "inf"     ,
+                            "in"      ,
+                            "i"       ,
                             "version" ,
+                            "versio"  ,
+                            "versi"   ,
+                            "vers"    ,
                             "verbose" ,
+                            "verbos"  ,
+                            "verbo"   ,
+                            "verb"    ,
                             "brief"   ,
+                            "brie"    ,
+                            "bri"     ,
+                            "br"      ,
+                            "b"       ,
                             "###"     ,
-                            "Xref"    ,
+                            "##"      ,
+                            "#"       ,
+                            "Xref"     ,
+                            "Xre"     ,
+                            "Xr"      ,
+                            "X"       ,
                             "debug"   ,
+                            "debu"    ,
+                            "deb"     ,
+                            "de"      ,
+                            "d"       ,
                             "ext"     ,
+                            "ex"      ,
+                            "e"       ,
                             "std"     ,
                             "conf"    ,
+                            "con"     ,
+                            "co"      ,
                             "static"  ,
+                            "stati"   ,
+                            "stat"    ,
+                            "sta"     ,
                             "dynamic" ,
-                            "job"
+                            "dynami"  ,
+                            "dynam"   ,
+                            "dyna"    ,
+                            "dyn"     ,
+                            "dy"      ,
+                            "job"     ,
+                            "jo"      ,
+                            "j"       ,
+                            "fsyntax" ,
+                            "fsynta"  ,
+                            "fsynt"   ,
+                            "save"    ,
+                            "sav"     ,
+                            "sa"
                         ) :
             params.append(param)
             continue
@@ -472,36 +517,50 @@ def Main() :
     to_be_deleted = []
     keepers = []
 
-    end_early = False
     index=0
     for param in params :
         #print("param",param)
         index += 1
         if param and param[0] != '-' :
             keepers.append(param)
-        if param in ("-h","-help","--help") :
+        ## We know there is a dash...
+        paramw = param[1:]
+        if paramw and paramw[0] == '-' :
+            ## There were two!
+            paramw = paramw[1:]
+        if paramw in ("h","he","hel","help") or param.find("-h") == 0 :
+            ## Empirically, any option starting with "-h" is the same as "--help".
+            ## The double-dash versions require h, he, hel, or help
             ASKED_FOR_HELP=True
             COMMANDS_REMOVED.append(param)
             continue
-        if param in ("-V","-version","--version") :
+        if paramw in ("V","vers","versi","versio","version") :
             ASKED_FOR_VERSION=True
             COMMANDS_REMOVED.append(param)
             continue
-        if param in ("-v","-vv","-vvv") or param[0:len("-verbose")] == "-verbose" or param[0:len("--verbose")] == "--verbose" :
+        if paramw in ("v","vv","vvv","verb","verbo","verbos","verbose") :
             # Requests for verbosity mess up our -### processing, so we filter them out for later
             DASH_V = param
             COMMANDS_REMOVED.append(param)
             continue
-        if param.find("-save-temp") in (0,1) : # covers -save-temp -save-temps --save-temp and --save-temps
-            # If he asked for --save-temps, we have to suppress the COBC processing of it
+        if paramw in ("sa","sav","save","save-","save-t","save-te","save-tem","save-temp","save-temps") :
+            # If he asked for -save-temps, we have to suppress the COBC processing of it
             # We'll take care of it at the end.
             SAVE_TEMPS=param
             COMMANDS_REMOVED.append(param)
             continue;
-        if param in ("-E","-###","-") :
+        if param in ("-E","-###","--###","-") :
             command = [COBC] + ORIGINAL_COMMAND_LINE
             if ECHO :
                 print('#### Ordinary compile due to one or more of "-E","-###","-"')
+                SmartPrint(command)
+            ## Execute it:
+            resultcode = SubprocessCall(command,False)
+            os._exit(resultcode)
+        elif paramw in ("fsynt","fsynta","fsyntax","fsyntax-","fsyntax-o","fsyntax-on","fsyntax-onl","fsyntax-only") :
+            command = [COBC] + ORIGINAL_COMMAND_LINE
+            if ECHO :
+                print('#### Ordinary compile due to "-fsyntax-only"')
                 SmartPrint(command)
             ## Execute it:
             resultcode = SubprocessCall(command,False)
@@ -512,8 +571,6 @@ def Main() :
             DASH_BIGC = param
         elif param in ("-S") :
             DASH_S = param
-        elif param in ("-fsyntax-only","--fsyntax-only") :
-            end_early = True
 
         COMMAND_LINE.append(param)
 
@@ -538,23 +595,15 @@ def Main() :
         ## If there was a -v request, we need to show the user everything we're doing
         ECHO = 1
 
-    if end_early :
-        command = [COBC] + ORIGINAL_COMMAND_LINE
-        if ECHO :
-            print('#### Ordinary compile because of a switch (e.g., -fsyntax-only)')
-            SmartPrint(command)
-        resultcode = SubprocessCall(command,True)
-        os._exit(resultcode)
-
     if SHOW_TIME :
         time_now = time.monotonic() - clock_start
         print("timer: %30s %5.4f %5.4f" % ("startup overhead", time_now - lap_start, time_now))
         lap_start = time_now
 
-    if ECHO :
-        print("   os_name....",os_name)
-        print("   processor..",processor)
-        print("")
+    #if ECHO :
+    #    print("   os_name....",os_name)
+    #    print("   processor..",processor)
+    #    print("")
 
     ## Now we have to call `COBC --info`; there are some things we need to know:
     errcode, std, err = RunCommand([COBC, "--info"])
@@ -641,8 +690,7 @@ def Main() :
         s = COB_CFLAGS_BASE + [FCF_PROTECTION];
         os.environ["COB_CFLAGS"]= ' '.join(s)
         os.environ["COBC_GEN_DUMP_COMMENTS"]= '1'
-#        TRIPLE_X_COMMAND = DeSpace(COBC + " -### --save-temps -fsource-location -A -ggdb -fgen-c-line-directives -fgen-c-labels ") + COMMAND_LINE
-        TRIPLE_X_COMMAND = DeSpace(COBC + " -### --save-temps -A -ggdb -fgen-c-line-directives -fgen-c-labels ") + COMMAND_LINE
+        TRIPLE_X_COMMAND = DeSpace(COBC + " -### -save-temps -A -ggdb -fgen-c-line-directives -fgen-c-labels ") + COMMAND_LINE
         try :
             result_file = tempfile.TemporaryFile();
             if ECHO :
@@ -955,14 +1003,20 @@ def Main() :
         for file in to_be_deleted :
             if file not in keepers :
                 extension = file.split('.')[-1]
-                if extension in ("so","exe","dll") :
+                if extension in ("so","exe","dll","s") :
                     continue
                 if DASH_C and extension == "o" :
                     continue
                 if DASH_BIGC and extension in ("c","h"):
                     continue
-                if DASH_S and extension=="s":
-                    continue
+                DeleteAFile(file)
+
+    ## Special processing for .s files:  If DASH_S is on, or COBCDNOCLEAN is on
+    ## we keep it. Otherwise, it gets deleted
+    if not DASH_S and not COBCDNOCLEAN :
+        for file in to_be_deleted :
+            extension = file.split('.')[-1]
+            if extension == "s" :
                 DeleteAFile(file)
 
     if SHOW_TIME :
