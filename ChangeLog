@@ -1,4 +1,11 @@
 2020-12-09  Bob Dubner <rdubner@symas.com>
+	* Release 4.13
+	* Made -save-temps processing delete .s files, per Simon's request
+	* Made COBCD switch processing look like COBC's getopt() processing,
+	  with sa, sav, save, save-, save-t, save-te, save-tem, save-temp, and
+	  save-temps all being recognized with either one or two dashes.
+
+2020-12-09  Bob Dubner <rdubner@symas.com>
 	* Release 4.12
 	* Repaired a naming problem where 4.11 was reporting 4.10
 	* Updated (one might say repaired) the COBCD --help output
