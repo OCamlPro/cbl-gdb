@@ -1265,93 +1265,42 @@ class CobolVariable() :
             print("GetData AsString   loc_of_attr:"   ,hex(self.location_of_attribute));
             print("GetData AsString    loc_of_pic:"   ,hex(self.location_of_pic));
 
-        ## Something we need to know:
-        is_alphanumeric = False
-        if self.AttrType in ( COB_TYPE_UNKNOWN,
-                              COB_TYPE_GROUP,
-                              COB_TYPE_BOOLEAN,
-                              COB_TYPE_ALNUM,
-                              COB_TYPE_ALPHANUMERIC,
-                              COB_TYPE_ALPHANUMERIC_ALL,
-                              COB_TYPE_ALPHANUMERIC_EDITED,
-                              COB_TYPE_NUMERIC_EDITED,
-                              COB_TYPE_NATIONAL,
-                              COB_TYPE_NATIONAL_EDITED ) :
-            is_alphanumeric = True
+        ## Use libcob to convert this field to a character string suitable
+        ## for output
+        command = "call (const char *)cob_get_field_str(&"
+        command += self.Fname
+        command += ",__cobcd_debugging_buffer,8192)"
 
-        ## By the time we get here, we have pulled all the information we
-        ## can from the data we got from the compiler, and also from the
-        ## run-time information that the compiler pointed us to.
+        gdb.execute(command,False,True)
 
-        ## We can't feed those pointers directly to libcob from here, because they
-        ## came from the memory space of a different process, and thus
-        ## we get segmentation faults.  So, we are going to build a local
-        ## copy that we can send to libcob using ctypes
-
-        cob_field = self.GetWorkingCopyOfCobField()
-
-        if is_alphanumeric :
-            # It's not impossible for there to be bum characters in what we call
-            # an alphanumeric field.  If a GROUP has a mixture of numeric and alphanumeric
-            # characters, for example.  Or if the COBOL is trapped in a place before a
-            # variable has been initialized.  Let's give the cob_get_field_string a
-            # helping hand with that
-            pd = cast(cob_field.data,POINTER(c_byte))
-            for i in range(self.Length) :
-                # Assume ASCII
-                if pd[i] < 32 or pd[i] >= 127 :
-                    pd[i] = ord('.')
-
-        ## cob_field is now a duplicate, in our GDB/Python memory space, of the
-        ## relevant f_ (or synthesized f0 equivalent) cob_field variable that
-        ## we used GDB to pick up from the COBOL memory space.
-
-        length = self.Length + 128
-        #buffer = ctypes.create_string_buffer(b'\000' * length)
-        buffer = ctypes.create_string_buffer(length)
-        size = ctypes.c_size_t(length)
-
-        GV_GlobalVariables.LIBCOB.cob_get_field_str.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_size_t]
-        GV_GlobalVariables.LIBCOB.cob_get_field_str(byref(cob_field),buffer,size)
-
-        try :
-            retval = buffer.value.decode("utf-8")
-            if is_alphanumeric :
-                retval = '"' + retval + '"'
-        except :
-            # While 3.1 was still in the release candidate stage,
-            # an attempt to get at some variables resulted in
-            # utf-8 failures.  Whether or this is still the case as you
-            # read this... Reply hazy, try again.
-            retval = "<non-utf-8 return from cob_get_field_str>"
-            self.not_in_context = True
+        ## The formatted variable string is in __cobcd_debugging_buffer
+        p = GetAddressOf("__cobcd_debugging_buffer");
+        while True :
+            ch = GetDataAt(p,1)
+            if ch == 0 :
+                break;
+            retval += chr(ch);
+            p += 1
 
         return retval
 
     def PutDataAsString(self,rside) :
         cob_field = self.GetWorkingCopyOfCobField()
 
-        string_length = len(rside)
-        buffer = ctypes.create_string_buffer(b'\000' * string_length)
-        rbytes = rside.encode("utf-8")
-        for i in range(string_length) :
-            buffer[i] = rbytes[i];
+        ## Let's leverage GDB to set our buffer to rside:
+        command = 'x  __cobcd_debugging_buffer="'
+        command += rside
+        command += '"'
+        print("COMMAND is",command);
+        gdb.execute(command,False,True)
 
-        #print("About to call cob_put_field_str")
-        GV_GlobalVariables.LIBCOB.cob_put_field_str.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
-        retval = GV_GlobalVariables.LIBCOB.cob_put_field_str(byref(cob_field),buffer)
-        if retval == 0 :
-            # We got a SUCCESS response from cob_put_field
-            p = self.location_of_data
-            p_cob_field_data = cast(cob_field.data,POINTER(c_byte))
+        ## Now use libcob to convert the string to the field:
+        command = "call (const char *)cob_put_field_str(&"
+        command += self.Fname
+        command += ",__cobcd_debugging_buffer)"
 
-            ## Take the bytes we got back from cob_put_field_str and
-            ## shove them into place in the COBOL process's memory:
-            for i in range(self.Length) :
-                self.data[i] = p_cob_field_data[i]
-                command = "set {char}" + hex(p) + "=" + hex(self.data[i])
-                result = GdbExecute(currentframe(),command)
-                p += 1
+        print("COMMAND is",command);
+        gdb.execute(command,False,True)
 
     def GetDataAsHex(self) :
         retval = ""
