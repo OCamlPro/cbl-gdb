@@ -2304,7 +2304,8 @@ class CPrintWorker() :
                 print("'print/v1' : just the variable")
                 print("'print/v2' : two-line display with name, then variable")
                 print("'print/x   : show numeric value in hexadecimal")
-                print("'print/d   : expanded information")
+                print("'print/b   : show numeric value in binary")
+                print("'print/d   : show expanded information")
                 print("'print/v<n>' with no arguments sets the session formatting")
                 print("'print/m'  : generate output compatible with '-stack-list-variables --simple-values'")
                 print("'print *'  : print all variables that are currently in context")
@@ -2313,6 +2314,7 @@ class CPrintWorker() :
                 print("The default v-level can be set with the environment variable CPRINT_V=n")
                 print("The default r-level can be set with the environment variable CPRINT_R=n")
                 print("The 'print' command can be changed to 'cprint' with the environment variable CPRINT=1")
+                print("The 'print' command can be changed to 'anything' with the environment variable CPRINT=anything")
                 args = [""]
                 return args
 
@@ -2322,6 +2324,9 @@ class CPrintWorker() :
                 args.pop(0)
             if args[0] == '/x' :
                 self.current_display_submode = 'x'
+                args.pop(0)
+            if args[0] == '/b' :
+                self.current_display_submode = 'b'
                 args.pop(0)
             elif args[0] == '/m' :
                 self.machine_interface_mode = True
@@ -2370,6 +2375,21 @@ class CPrintWorker() :
         body = payload.display_body
         if self.current_display_submode == 'x' and len(payload.data) <= 16 :
             body = payload.display_body_hex
+
+        if self.current_display_submode == 'b' and len(payload.data) <= 8 :
+            ## kludge.  Convert the hex to binary:
+            body = ""
+            index = 2
+            while index < len(payload.display_body_hex) and index < 8*2+2 :
+                hexchar = int(payload.display_body_hex[index]) ;
+                mask = 8
+                while mask > 0 :
+                    if hexchar & mask :
+                        body += '1'
+                    else :
+                        body += '0'
+                    mask >>= 1
+                index += 1
 
         if self.current_display_mode == '0' :
             print(payload.display_name," : ",body)
