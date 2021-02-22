@@ -519,12 +519,13 @@ def Main() :
 
     index=0
     for param in params :
-        #print("param",param)
         index += 1
         if param and param[0] != '-' :
             keepers.append(param)
         ## We know there is a dash...
         paramw = param[1:]
+        ## If there is an equals sign, then we remove everything past it
+        paramw1 = paramw.split('=')[0]
         if paramw and paramw[0] == '-' :
             ## There were two!
             paramw = paramw[1:]
@@ -543,7 +544,7 @@ def Main() :
             DASH_V = param
             COMMANDS_REMOVED.append(param)
             continue
-        if paramw in ("sa","sav","save","save-","save-t","save-te","save-tem","save-temp","save-temps") :
+        if paramw1 in ("sa","sav","save","save-","save-t","save-te","save-tem","save-temp","save-temps") :
             # If he asked for -save-temps, we have to suppress the COBC processing of it
             # We'll take care of it at the end.
             SAVE_TEMPS=param
@@ -988,7 +989,12 @@ def Main() :
             if extension in ("c","i","s","o","h") :
                 d = dest + '/' + file.split('/')[-1]
                 DeleteAFile(d)
-                shutil.move(file,dest)
+                try :
+                    shutil.move(file,dest)
+                except:
+                    ## This can happen when a file doesn't exist.
+                    ## to_be_deleted can have .i
+                    pass
 
     if cleaning_up :
         for file in keepers :
