@@ -128,7 +128,7 @@ FindFunctionReferences(WHOLEFILE &fd)
         if( strstr(ach,".globl") ) {
             string s = ach;
             VSTRING tokens = Split(s,"\t ");
-            if( tokens[1] EQ ".globl" ) {
+            if( tokens.size() > 1 AND tokens[1] EQ ".globl" ) {
                 cheating.insert(nline+4);  // This is where our synthetic .loc will go
             }
         }
@@ -136,13 +136,13 @@ FindFunctionReferences(WHOLEFILE &fd)
         if( strstr(ach,"function") ) {
             string s = ach;
             VSTRING tokens = Split(s,"\t ");
-            if( tokens[3] EQ "@function") {
+            if( tokens.size() > 3 AND tokens[3] EQ "@function") {
                 cheating.insert(nline+3);  // This is where our synthetic .loc will go; Intel assembly
             }
-            if( tokens[3] EQ "%function") {
+            if( tokens.size() > 3 AND tokens[3] EQ "%function") {
                 cheating.insert(nline+3);  // This is where our synthetic .loc will go; ARM assembly
             }
-            if( tokens[3] EQ "#function" ) {
+            if( tokens.size() > 3 AND tokens[3] EQ "#function" ) {
                 cheating.insert(nline+4);  // This is where our synthetic .loc will go; SPARC assembly
             }
         }
