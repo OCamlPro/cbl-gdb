@@ -35,8 +35,6 @@
 ## Catalog of environment variables interpreted by this module:
 ##
 ## os.environ.get('CPRINT_D','0')   When non-zero, causes verbose output
-## os.environ.get('CPRINT_E')       Can be present when cobglobptr isn't available.
-##                                  three-character string e.g., ".$," for "decimal, currency, separator"
 ## os.environ.get('CPRINT_V', '0')  Default formatting p/v N value
 ## os.environ.get('CPRINT_R', '6')) Default p/? range
 ## os.environ.get('CPRINT', '<cmd>'))   When non-blank, registers "cmd" instead of "print" as the command
@@ -50,8 +48,6 @@ import os
 import traceback
 import datetime
 import subprocess
-import ctypes
-from ctypes import *
 from inspect import currentframe, getframeinfo
 from struct import calcsize
 
@@ -169,191 +165,15 @@ class GlobalVariables() :
         ## Let's figure out some stuff about the environment
         self.SizeofPointer = calcsize('P')  # Returns 4 or 8
         self.byteorder = sys.byteorder # Returns "big" or "little"
-        self.SizeofInt = ctypes.sizeof(ctypes.c_int) # Returns size of C-side int
 
         if self.debug_level >= 1 :
             print("#### SizeofPointer",self.SizeofPointer)
             print("#### byteorder",self.byteorder)
-            print("#### SizeofInt",self.SizeofInt)
-
-        self.libcob_loaded            = False # Goes true when the library is loaded
-        self.cob_current_module_valid = False # This can take a while to go true after libcob is available
 
         self.ShortTermMemory = []
-        self.pModule = c_void_p(0)
-        self.pCobGlobPtr = c_void_p(0)
         self.repeat_count = 11  # Default value for "'0' <repeats 11 times>" logic
 
-    def CobModuleGlobalEnter(self,cob_current_module) :
-        # We need to call
-        #cob_module_global_enter (&module,       /* cob_module **module,  */
-        #                         &cob_glob_ptr, /* cob_global **mglobal, */
-        #                         1,             /* const int auto_init,  */
-        #                         0,             /* const int entry,      */
-        #                         0);            /* const unsigned int *name_hash) */
-        try :
-            ppModule = pointer(self.pModule)
-            ppCobGlobPtr = pointer(self.pCobGlobPtr)
-            One = c_int(1)
-            Zero = c_int(0)
-
-            self.LIBCOB.cob_module_global_enter(ppModule,
-                                                ppCobGlobPtr,
-                                                One,
-                                                Zero,
-                                                Zero)
-
-            # We now have a cob_module and a cob_global set up in the GDB
-            # process.  There's some information we need to copy over
-            # from the inferior's workspace:
-            ## Calculate offset of decimal_point in cob_module
-            offset = 12*GV_GlobalVariables.SizeofPointer + 7*GV_GlobalVariables.SizeofInt + 1
-
-            if cob_current_module :
-                ## The beginning of cob_global looks like this (libcob/common.h)
-                #    typedef struct __cob_global {
-                #        cob_file     *cob_error_file;       /* Last error file */
-                #        cob_module   *cob_current_module;   /* Current module */
-                ## We need cob_module:
-
-                ## The information I need from the target, so that I can copy it into the
-                ## GDB process space, are the last four char values seen below.  To find them
-                ## I assume that and int is the same size as a pointer.  This is true for
-                ## Linux/GCC.  It's not always true.  (WIN32, for instance, has them at 8 and 4 bytes in 64-bit mode)
-                #
-                #    typedef struct __cob_module {
-                #        struct __cob_module    *next;          /* Next pointer */
-                #        cob_field              **cob_procedure_params; /* Arguments */
-                #        const char             *module_name;       /* Module name */
-                #        const char             *module_formatted_date; /* Module full date */
-                #        const char             *module_source;     /* Module source */
-                #        cob_call_union         module_entry;       /* Module entry */
-                #        cob_call_union         module_cancel;      /* Module cancel */
-                #        const unsigned char    *collating_sequence;    /* COLLATING */
-                #        cob_field              *crt_status;        /* CRT STATUS */
-                #        cob_field              *cursor_pos;        /* CURSOR */
-                #        unsigned int           *module_ref_count;  /* Module ref count */
-                #        const char             **module_path;      /* Module path */
-                #
-                #        unsigned int       module_active;      /* Module is active */
-                #        unsigned int       module_date;        /* Module num date */
-                #        unsigned int       module_time;        /* Module num time */
-                #        unsigned int       module_type;        /* Module type (program = 0, function = 1) */
-                #        unsigned int       module_param_cnt;   /* Module param count */
-                #        unsigned int       module_returning;   /* Module return type, currently unset+unused */
-                #        int                module_num_params;  /* Module arg count */
-                #
-                #        unsigned char      ebcdic_sign;        /* DISPLAY SIGN */
-                #        unsigned char      decimal_point;      /* DECIMAL POINT */
-                #        unsigned char      currency_symbol;    /* CURRENCY */
-                #        unsigned char      numeric_separator;  /* Separator */
-                #
-                characters = GetBytesAt(cob_current_module+offset,3)
-                characters = bytearray(characters)
-
-                decimal_point = characters[0]
-                currency_symbol = characters[1]
-                numeric_separator = characters[2]
-            else :
-                default_editing_characters = os.environ.get('CPRINT_E')
-                if default_editing_characters :
-                    decimal_point = ord(default_editing_characters[0])
-                    currency_symbol = ord(default_editing_characters[1])
-                    numeric_separator = ord(default_editing_characters[2])
-                else :
-                    print("##### ")
-                    print("##### We couldn't find cobglobptr in libcob. The symbols must have been stripped")
-                    print("##### from libcob, which usually means GnuCOBOL was packaged by Debian or Centos")
-                    print("##### without the default stripping behavior suppressed.  We will set the numeric")
-                    print("##### editing characters to '.$,'  You can suppress this message with the environment")
-                    print("##### variable CPRINT_E='.$,' (or with other characters as necessary).");
-                    print("##### ")
-                    decimal_point = ord('.')
-                    currency_symbol = ord('$')
-                    numeric_separator = ord(',')
-
-            ## By hook or by crook, we now have the three numeric editing characters.
-            ## We now have to shove them into the cob_module we established
-            ## with cob_module_global_enter() here in the GDB process.
-
-            pp = cast(self.pModule,POINTER(c_byte))
-            pp[offset+0] = decimal_point
-            pp[offset+1] = currency_symbol
-            pp[offset+2] = numeric_separator
-
-        except :
-            traceback.print_exc()
-            sys.exit(1)
-
-    def LoadLibcob(self) :
-        #print("Entering LoadLibCob with", self.libcob_loaded, self.cob_current_module_valid)
-        if not self.libcob_loaded :
-            # First order of business: find the library:
-            command="info sharedlibrary"
-            shared_libraries = GdbExecute(currentframe(),command)
-            shared_libraries = shared_libraries.split('\n')
-
-            self.LIBCOB = None
-            libcob_name = None
-            for slib in shared_libraries :
-                # match "libcob.so" or "libcob-4.dll"
-                m = re.match(r'.*[ ](.*libcob[.|-].*)$',slib)
-                if m :
-                    libcob_name = m.group(1)
-                    break
-            if libcob_name :
-                self.LIBCOB = ctypes.CDLL(libcob_name)
-                self.libcob_loaded = True
-
-        if self.libcob_loaded :
-            if not self.cob_current_module_valid :
-
-                # We have a corner case to deal with.  If libcob has been stripped of symbols, we need
-                # to issue a warning, set defaults, and move on with our lives.
-
-                try :
-                    command="info address cobglobptr"
-                    result = GdbExecute(currentframe(),command)
-                    ExtractHexValueFrom( result )
-                except:
-                    ## There is no symbol "cobglobptr"
-                    self.CobModuleGlobalEnter(None)
-                    self.cob_current_module_valid = True
-
-                if not self.cob_current_module_valid :
-                    ## There is a symbol "cobglobptr"
-
-                    cobglobptr = GetPointerAt("cobglobptr")
-                    ## After a 'start' command, it can be zero, in which case we aren't ready to use it yet.
-                    if cobglobptr :
-                        cob_current_module = GetDataAt(cobglobptr+GV_GlobalVariables.SizeofPointer,GV_GlobalVariables.SizeofPointer)
-                        # cob_current_module can be zero even when cobglobptr is valid.  This
-                        # can happen when you do 'file' 'start' 'step'. So, we make sure it it non-zero
-                        # before we try to use it.
-                        if cob_current_module :
-                            self.CobModuleGlobalEnter(cob_current_module)
-                            self.cob_current_module_valid = True
-
 GV_GlobalVariables = GlobalVariables()
-
-class COB_PIC_SYMBOL(Structure) :
-    _fields_ = [("symbol"        , c_char),
-                ("times_repeated", c_int)]
-
-class COB_FIELD_ATTR(Structure) :
-    _fields_ = [("type"  , c_ushort),
-                ("digits", c_ushort),
-                ("scale" , c_short) ,
-                ("flags" , c_ushort),
-                ("pic"   , POINTER(COB_PIC_SYMBOL))]
-
-class COB_FIELD(Structure) :
-    _fields_ = [("size", c_size_t),
-                ("data", c_void_p),
-                ("attr", POINTER(COB_FIELD_ATTR))]
-
-    def __init__(self) :
-        self.cob_field_attr = COB_FIELD_ATTR()
 
 def NoNulls(s) :
     ss = ""
@@ -1179,74 +999,10 @@ class CobolVariable() :
                 tokens.append(xtoken)
         return tokens
 
-    def GetPicSymbols(self) :
-        retval = []
-        # Picture data is a variable-sized list of
-        #   typedef struct __cob_pic_symbol
-        #        {
-        #        char   symbol;
-        #        int    times_repeated;
-        #        } cob_pic_symbol;
-        #
-        # The final one is flagged by a symbol value of '\0'
-        # The only slightly tricky thing is that the structure can be
-        # padded
-        #
-        if self.location_of_pic :
-            p = self.location_of_pic
-            sizeof_pic_symbol = sizeof(COB_PIC_SYMBOL)
-            while True :
-                psym = GetBytesAt(p,sizeof_pic_symbol)
-                retval = retval + psym
-                if psym[0] == 0 :
-                    break;
-                p += sizeof_pic_symbol
-        return retval
-
-    def GetWorkingCopyOfCobField(self) :
-        # This routine returns, here in GDB/Python space, a duplicate
-        # of this CobolVariable's cob_field variable as defined in the
-        # the target COBOL executable's space
-
-        cob_field = COB_FIELD()
-
-        ## Copy over the data into the COB_FIELD object
-        pp = bytearray(self.data)
-        p_variable_data = create_string_buffer(len(self.data))
-        p_variable_data = cast(p_variable_data,POINTER(c_byte))
-        for i in range(len(self.data)) :
-            p_variable_data[i] = pp[i]
-
-        ## Get the picture string, if there is one, as a list of integers
-        picture_data = self.GetPicSymbols()
-        if len(picture_data) :
-            p_picture_data = create_string_buffer(len(picture_data))
-            for i in range(len(picture_data)) :
-                x = picture_data[i]
-                if sys.version[0] == '2' :
-                    ## This is Python2
-                    p_picture_data[i] = chr(x)
-                else :
-                    ## This is Python3
-                    p_picture_data[i] = x
-        else :
-            p_picture_data = 0  ## This is a NULL pointer
-
-        cob_field_attr = COB_FIELD_ATTR()
-        cob_field_attr.type   = self.AttrType
-        cob_field_attr.digits = self.AttrDigits
-        cob_field_attr.scale  = self.AttrScale
-        cob_field_attr.flags  = self.AttrFlags
-        cob_field_attr.pic    = cast(p_picture_data, POINTER(COB_PIC_SYMBOL))
-
-        cob_field = COB_FIELD()
-        cob_field.size = self.Length
-        cob_field.data = cast(p_variable_data,c_void_p)
-        cob_field.attr = pointer(cob_field_attr)
-        return cob_field
-
     def GetDataAsString(self) :
         retval = ""
+        if not self.Fname :
+            return retval
 
         if False :  # For development
             print("GetData AsString          Name:"   ,self.Name);
@@ -1265,13 +1021,17 @@ class CobolVariable() :
             print("GetData AsString   loc_of_attr:"   ,hex(self.location_of_attribute));
             print("GetData AsString    loc_of_pic:"   ,hex(self.location_of_pic));
 
-        ## Use libcob to convert this field to a character string suitable
+        ## Use the target executable's libcob to convert this field to a character string suitable
         ## for output
         command = "call (const char *)cob_get_field_str(&"
         command += self.Fname
         command += ",__cobcd_debugging_buffer,8192)"
 
-        gdb.execute(command,False,True)
+        try :
+            gdb.execute(command,False,True)
+        except :
+            print("Command failed in GetDataAsString:",command)
+            return "<Error in GetDataAsString>"
 
         ## The formatted variable string is in __cobcd_debugging_buffer
         p = GetAddressOf("__cobcd_debugging_buffer");
@@ -1285,7 +1045,6 @@ class CobolVariable() :
         return retval
 
     def PutDataAsString(self,rside) :
-        cob_field = self.GetWorkingCopyOfCobField()
 
         ## Let's leverage GDB to set our buffer to rside:
         command = 'x  __cobcd_debugging_buffer="'
@@ -1294,13 +1053,15 @@ class CobolVariable() :
         print("COMMAND is",command);
         gdb.execute(command,False,True)
 
-        ## Now use libcob to convert the string to the field:
+        ## Now use the target executable's libcob to convert the string to the field:
         command = "call (const char *)cob_put_field_str(&"
         command += self.Fname
         command += ",__cobcd_debugging_buffer)"
 
-        print("COMMAND is",command);
-        gdb.execute(command,False,True)
+        try:
+            gdb.execute(command,False,True)
+        except :
+            print("COMMAND failed in PutDataAsString: ",command);
 
     def GetDataAsHex(self) :
         retval = ""
@@ -1333,13 +1094,6 @@ class CobolVariable() :
         self.display_pic = ""
         self.display_name = self.NameToString()
         self.not_in_context = False
-
-        if not GV_GlobalVariables.cob_current_module_valid :
-            ## This can happen if the user tries to print variables
-            ## before the program has run far enough.  For example,
-            ## 'file', then 'start', then 'print'
-                self.not_in_context = True
-                return
 
         ## Let's update everything we might need:
 
@@ -2458,8 +2212,6 @@ class CPrint (gdb.Command) :
                 return
 
             self.TabFile.ReadSymbolTableText()
-            if self.TabFile.current_trapped_line > 0 :
-                GV_GlobalVariables.LoadLibcob()
             self.Worker.ProcessArguments(self.TabFile,arguments)
         except :
             traceback.print_exc()
@@ -2474,7 +2226,6 @@ class CWatch (gdb.Command) :
         self.TabFile = TabFileInformation();
 
     def invoke (self, arguments, from_tty):
-        GV_GlobalVariables.LoadLibcob()
         try :
             self.TabFile.ReadSymbolTableText()
             self.Worker.ProcessWArgumentsW(self.TabFile,arguments)
