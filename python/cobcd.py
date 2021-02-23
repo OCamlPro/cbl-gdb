@@ -29,6 +29,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ################################################################################
+# pylint: disable=line-too-long,unused-argument,unused-wildcard-import
+#
+# flake8 settings used
+# [flake8]
+# ignore = E402
+# max-line-length = 160
+################################################################################
+
 
 #   This module implements the gdb extension commands cprint and cwatch
 
@@ -37,8 +45,7 @@
 ## os.environ.get('CPRINT_D','0')   When non-zero, causes verbose output
 ## os.environ.get('CPRINT_V', '0')  Default formatting p/v N value
 ## os.environ.get('CPRINT_R', '6')) Default p/? range
-## os.environ.get('CPRINT', '<cmd>'))   When non-blank, registers "cmd" instead of "print" as the command
-##                                      Legacy: if "1", registers "cprint"
+## os.environ.get('CPRINT', '<cmd>'))   When non-blank, registers "cmd" instead of "cprint" as the command
 
 from __future__ import print_function
 
@@ -131,115 +138,115 @@ COB_FLAG_REAL_SIGN      = (1 << 10)  # /* 0x0400 */
 COB_FLAG_BINARY_TRUNC   = (1 << 11)  # /* 0x0800 */
 COB_FLAG_CONSTANT       = (1 << 12)  # /* 0x1000 */
 
-def GdbExecute(curframe,command) :
+def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
     limiting_debug_level = 1
-    if GV_GlobalVariables.debug_level >= limiting_debug_level :
-        print("#### ",getframeinfo(curframe).lineno,": gdb.execute: '",command,"'",sep='')
-    retval = gdb.execute(command,False,True)
-    if GV_GlobalVariables.debug_level >= limiting_debug_level :
+    if GV_GlobalVariables.debug_level >= limiting_debug_level:
+        print("#### ", getframeinfo(curframe).lineno, ": gdb.execute: '", command, "'", sep='')
+    retval = gdb.execute(command, False, True)
+    if GV_GlobalVariables.debug_level >= limiting_debug_level:
         lines = retval.split('\n')
-        for line in lines :
-            if len(line) > 0 :
-                print("####       retval:",line)
+        for line in lines:
+            if len(line) > 0:
+                print("####       retval:", line)
     return retval
 
-def GdbExecute2(curframe,command,debug_level) :
+def GdbExecute2(curframe, command, debug_level):
     # It is up to the caller to handle exceptions
     limiting_debug_level = 1
-    if debug_level >= limiting_debug_level :
-        print("#### ",getframeinfo(curframe).lineno,": gdb.execute: '",command,"'",sep='')
-    retval = gdb.execute(command,False,True)
-    if debug_level >= limiting_debug_level :
+    if debug_level >= limiting_debug_level:
+        print("#### ", getframeinfo(curframe).lineno, ": gdb.execute: '", command, "'", sep='')
+    retval = gdb.execute(command, False, True)
+    if debug_level >= limiting_debug_level:
         lines = retval.split('\n')
-        for line in lines :
-            if len(line) > 0 :
-                print("####       retval:",line)
+        for line in lines:
+            if len(line) > 0:
+                print("####       retval:", line)
     return retval
 
-class GlobalVariables() :
-    def __init__(self) :
+class GlobalVariables():
+    def __init__(self):
         ## Establish the debugging verbosity level:
-        self.debug_level = int(os.environ.get('CPRINT_D','0'))
+        self.debug_level = int(os.environ.get('CPRINT_D', '0'))
 
         ## Let's figure out some stuff about the environment
         self.SizeofPointer = calcsize('P')  # Returns 4 or 8
         self.byteorder = sys.byteorder # Returns "big" or "little"
 
-        if self.debug_level >= 1 :
-            print("#### SizeofPointer",self.SizeofPointer)
-            print("#### byteorder",self.byteorder)
+        if self.debug_level >= 1:
+            print("#### SizeofPointer", self.SizeofPointer)
+            print("#### byteorder", self.byteorder)
 
         self.ShortTermMemory = []
         self.repeat_count = 11  # Default value for "'0' <repeats 11 times>" logic
 
 GV_GlobalVariables = GlobalVariables()
 
-def NoNulls(s) :
+def NoNulls(s):
     ss = ""
     for ch in s:
-        if ord(ch) < 32 or ord(ch) >= 128 :
+        if ord(ch) < 32 or ord(ch) >= 128:
             ch = '.'
         ss += ch
     return ss
 
-def OurPrint(s) :
+def OurPrint(s):
     ## Use this routine when GDB might halt with a
     ##    --Type <RET> for more, q to quit, c to continue without paging--
 
     ## The following code catches the 'q' Quit option
     retval = None
-    try :
+    try:
         print(s)
     except KeyboardInterrupt as ki:
         print("Quit")
         retval = str(ki)
-    except :
+    except:
         traceback.print_exc()
     return retval
 
-def LeftRight(s,splitchar) :
+def LeftRight(s, splitchar):
     """Splits what is presumably a numeric string with a possible
     splitting character into left and right pieces"""
     left = ""
     right = ""
     i = 0
-    while i < len(s) :
+    while i < len(s):
         ch = s[i]
         i += 1
-        if ch == splitchar :
+        if ch == splitchar:
             break
         left += ch
-    while i < len(s) :
+    while i < len(s):
         ch = s[i]
         i += 1
         right += ch
     return left, right
 
-def Picture(s) :
+def Picture(s):
     """ Expands a 9(3)V9(2) to 999V999 """
     r = ""
     lch = ''
     ch = ''
     i = 0
     ncount = 0
-    while i < len(s) :
+    while i < len(s):
         ch = s[i].upper()
         i += 1
-        if ch == '(' :
+        if ch == '(':
             ncount = 0
-            while i < len(s) :
+            while i < len(s):
                 ch = s[i]
                 i += 1
-                if ch == ')' :
-                    break;
+                if ch == ')':
+                    break
                 ncount *= 10
                 ncount += ord(ch) - ord('0')
             ncount -= 1
-            while ncount > 0 :
+            while ncount > 0:
                 ncount -= 1
                 r += lch
-        else :
+        else:
             lch = ch
             r += ch
     # To avoid certain types of twitching on the part of your poor beleagured
@@ -247,15 +254,15 @@ def Picture(s) :
     # that CR or DB, if present, are the final characters of the string.
 
     n = r.find("DB")
-    if n > -1 :
+    if n > -1:
         r = r[:n] + 'd'
     n = r.find("CR")
-    if n > -1 :
+    if n > -1:
         r = r[:n] + 'c'
 
     return r
 
-def MachineInterfaceBody(s) :
+def MachineInterfaceBody(s):
 
 #   This sequence:
 #   variables=[{name="L00L",value="{_groupvalue=\"Sn\\\"ap!\",fullname=\"Robert\\\"Dubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"\\\"Dubner\\\"\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]
@@ -279,43 +286,43 @@ def MachineInterfaceBody(s) :
 
     # Replace double-quotes and backslashes
     retval = ""
-    for ch in s :
-        if ch == '"' :
+    for ch in s:
+        if ch == '"':
             retval += r'\\\"'
-        elif ch == '\\' :
+        elif ch == '\\':
             retval += r'\\\\'
-        else :
+        else:
             retval += ch
 
     return retval
 
-def MachineInterfaceBodyAlt(s) :
+def MachineInterfaceBodyAlt(s):
 
     # Replace double-quotes and backslashes
     retval = ""
-    for ch in s :
-        if ch == '"' :
+    for ch in s:
+        if ch == '"':
             retval += r'\"'
-        elif ch == '\\' :
+        elif ch == '\\':
             retval += r'\\'
-        else :
+        else:
             retval += ch
 
     return retval
 
-def ReplaceWithRepeatCountQuoted(s) :
+def ReplaceWithRepeatCountQuoted(s):
     # We know this guy has a leading quote, and presumably a trailing one
     #print("ReplaceWithRepeatCountQuoted(1)", s)
     retval = ""
     ## Strip off the leading and trailing quotes
-    s  = s[1:-1]
+    s = s[1:-1]
     rabbit = 0
     fox = 0
     count = 0
     prior_contraction = False
     in_a_quoted_run = False
     number_of_repeated_runs = 0
-    while rabbit < len(s) :
+    while rabbit < len(s):
         ## Arriving here means:
         ## We're here for the first time, or we just finished a run
         ## So, we are going to pick up 'char', which is a candidate
@@ -324,14 +331,14 @@ def ReplaceWithRepeatCountQuoted(s) :
         fox = rabbit
         char = s[rabbit]
         rabbit += 1
-        while rabbit < len(s) and s[rabbit] == char :
+        while rabbit < len(s) and s[rabbit] == char:
             ## This is where we proceed in a run.  Swallow up characters
             ## that are the same as our candidate:
             rabbit += 1
 
         ## We have either run out of characters, or else
         ## rabbit points to a character other than char
-        if rabbit - fox >= GV_GlobalVariables.repeat_count : ## This is a magic number
+        if rabbit - fox >= GV_GlobalVariables.repeat_count: ## This is a magic number
             ## At 29, the <repeats> clause will be shorter than the replaced text
             ## At 11, the string will be longer.  But 11 matches what gdb does
             if in_a_quoted_run:
@@ -347,31 +354,31 @@ def ReplaceWithRepeatCountQuoted(s) :
             prior_contraction = True
             in_a_quoted_run = False
             number_of_repeated_runs += 1
-        else :
+        else:
             ## The run is short enough that we just put the characters
             ## into place
-            if not in_a_quoted_run :
+            if not in_a_quoted_run:
                 ## We have to start the quote:
                 retval += "\""
                 in_a_quoted_run = True
             ## Copy over characters until the fox catches up with the rabbit
-            while fox < rabbit :
+            while fox < rabbit:
                 fox += 1
                 retval += char
             prior_contraction = False
 
     ## We have reached the end
-    if prior_contraction :
+    if prior_contraction:
         ## strip off the unnecessary ', '
         retval = retval[:-2]
-    if in_a_quoted_run :
+    if in_a_quoted_run:
         retval += "\""
 
     #print("ReplaceWithRepeatCountQuoted(2)", retval)
     return retval
 
-def ReplaceWithRepeatCountBracketed(s) :
-    if (len(s) % 2) == 1 :
+def ReplaceWithRepeatCountBracketed(s):
+    if (len(s) % 2) == 1:
         ## We don't know what to do with an odd-length string.  We just don't
         return s
     # We know this guy has a leading bracket, and presumably a trailing one
@@ -380,14 +387,14 @@ def ReplaceWithRepeatCountBracketed(s) :
     #print("ReplaceWithRepeatCountBracketed(1)", s)
     retval = "["
     ## Strip off the leading and trailing brackets
-    s  = s[1:-1]
+    s = s[1:-1]
     rabbit = 0
     fox = 0
     count = 0
     prior_contraction = False
     in_a_quoted_run = False
     number_of_repeated_runs = 0
-    while rabbit < len(s) :
+    while rabbit < len(s):
         ## Arriving here means:
         ## We're here for the first time, or we just finished a run
         ## So, we are going to pick up 'char', which is a candidate
@@ -396,14 +403,14 @@ def ReplaceWithRepeatCountBracketed(s) :
         fox = rabbit
         char = s[rabbit:rabbit+2]
         rabbit += 2
-        while rabbit < len(s) and s[rabbit:rabbit+2] == char :
+        while rabbit < len(s) and s[rabbit:rabbit+2] == char:
             ## This is where we proceed in a run.  Swallow up characters
             ## that are the same as our candidate:
             rabbit += 2
 
         ## We have either run out of characters, or else
         ## rabbit points to a character other than char
-        if (rabbit - fox)//2 >= GV_GlobalVariables.repeat_count : ## This is a magic number.  See the
+        if (rabbit - fox)//2 >= GV_GlobalVariables.repeat_count: ## This is a magic number.  See the
                                      ## comment in ReplaceWithRepeatCountQuoted()
             if in_a_quoted_run:
                 ## We have to end the current ongoing string
@@ -417,19 +424,19 @@ def ReplaceWithRepeatCountBracketed(s) :
             prior_contraction = True
             in_a_quoted_run = False
             number_of_repeated_runs += 1
-        else :
+        else:
             ## The run is short enough that we just put the characters
             ## into place
-            if not in_a_quoted_run :
+            if not in_a_quoted_run:
                 in_a_quoted_run = True
             ## Copy over characters until the fox catches up with the rabbit
-            while fox < rabbit :
+            while fox < rabbit:
                 fox += 2
                 retval += char
             prior_contraction = False
 
     ## We have reached the end
-    if prior_contraction :
+    if prior_contraction:
         ## strip off the unnecessary ', '
         retval = retval[:-2]
     retval += ']'
@@ -437,18 +444,18 @@ def ReplaceWithRepeatCountBracketed(s) :
     #print("ReplaceWithRepeatCountBracketed(2)", retval)
     return retval
 
-def ReplaceWithRepeatCount(s) :
-    try :
-        if s and (s[0] == '"' or s[0] == '<' ):
+def ReplaceWithRepeatCount(s):
+    try:
+        if s and (s[0] == '"' or s[0] == '<'):
             return ReplaceWithRepeatCountQuoted(s)
-        if s and s[0] == '[' :
+        if s and s[0] == '[':
             return ReplaceWithRepeatCountBracketed(s)
         return s
-    except :
+    except:
         traceback.print_exc()
         sys.exit(1)
 
-class VarTrieNode() :
+class VarTrieNode():
     def __init__(self):
         self.parent = None
         self.children = {}
@@ -456,103 +463,103 @@ class VarTrieNode() :
         self.count = 0
         self.payload_index = None
 
-    def AddCanonicalName(self,name) :
+    def AddCanonicalName(self, name):
         pass
 
-def BlankIsZero(v) :
-    if len(v) == 0 :
+def BlankIsZero(v):
+    if len(v) == 0:
         v = "0"
     return int(v)
 
-def GetDataAt(address,bytes) :
+def GetDataAt(address, bytes):
     # This routine takes an address and returns the
     # value there.  'bytes' can be 1, 2, 4, or 8
-    try :
-        if bytes == 1 :
+    try:
+        if bytes == 1:
             u = 'b'
-        elif bytes == 2 :
+        elif bytes == 2:
             u = 'h'
-        elif bytes == 4 :
+        elif bytes == 4:
             u = 'w'
-        elif bytes == 8 :
+        elif bytes == 8:
             u = 'g'
-        else :
+        else:
             return None
 
         ## When an integer is long enough, Python appends a 'L' to the hex
         ## number.  This came up in SPARC, with addresses like 0xffffffff7b407700
-        command = "x/1" + u + "u " + hex(address).replace('L','')
-        value_back = GdbExecute(currentframe(),command)
+        command = "x/1" + u + "u " + hex(address).replace('L', '')
+        value_back = GdbExecute(currentframe(), command)
 
         nfound = value_back.find(":")
-        if nfound == -1 :
+        if nfound == -1:
             return None
-        value = int(   value_back[nfound+1:] )
+        value = int(value_back[nfound+1:])
         return value
 
     except gdb.error:
-        print("gdb .execute failed in GetDataAt:",command)
+        print("gdb .execute failed in GetDataAt:", command)
         return None
 
-def GetBytesAt(address,N) :
+def GetBytesAt(address, N):
     # Pick up N bytes from address, return them as a list of ints
     retval = []
     command = "x/" + str(N) + "xb " + hex(address)
-    all_the_bytes = GdbExecute(currentframe(),command)
+    all_the_bytes = GdbExecute(currentframe(), command)
 
     lines = all_the_bytes.split('\n')
-    for line in lines :
+    for line in lines:
         nfound = line.find(':')
-        if nfound != -1 :
-            bytes = line[nfound+1:].split( )
-            for byte in bytes :
-                retval.append( int(byte,16) )
-    return retval;
+        if nfound != -1:
+            bytes = line[nfound+1:].split()
+            for byte in bytes:
+                retval.append(int(byte, 16))
+    return retval
 
-def ExtractHexValueFrom(s) :
+def ExtractHexValueFrom(s):
     ## Use this routine to extract an 0x123abc value from a string.
     ## Needed because gdb returns such information in slightly different ways
     retval = None
-    match = re.match(".*(0x[0-9a-fA-F]+).*",s)
-    if match :
-        retval = int(match.group(1),16)
-    return retval;
+    match = re.match(".*(0x[0-9a-fA-F]+).*", s)
+    if match:
+        retval = int(match.group(1), 16)
+    return retval
 
-def GetPointerAt(variable) :
+def GetPointerAt(variable):
     # Use this form when you know variable is the name of a pointer.
     # For example, I wrote this when I needed to pick up cobglobptr.  I
     # didn't really care where cobglobptr was; I cared about the memory
     # cob_global block it pointed to.
-    try :
-        command="x/1db (char *) " + variable
-        result = GdbExecute(currentframe(),command)
+    try:
+        command = "x/1db (char *) " + variable
+        result = GdbExecute(currentframe(), command)
         return ExtractHexValueFrom(result)
-    except :
+    except:
         return None
 
-def GetAddressOf(variable) :
+def GetAddressOf(variable):
     # Use this routine when you know variable is the name of a block.
     retval = None
-    if variable :
-        try :
+    if variable:
+        try:
             command = "info address " + variable
-            address_string = GdbExecute(currentframe(),command)
+            address_string = GdbExecute(currentframe(), command)
             retval = ExtractHexValueFrom(address_string)
         except gdb.error:
             retval = None
 
-        if not retval :
-            try :
+        if not retval:
+            try:
                 command = "x/1db " + variable  ## Notice d for decimal, not hex, because
                                                ## a second 0x messes up ExtractHexValue
-                address_string = GdbExecute(currentframe(),command)
+                address_string = GdbExecute(currentframe(), command)
                 retval = ExtractHexValueFrom(address_string)
-            except :
+            except:
                 retval = None
 
     return retval
 
-def AddEmUp(expression) :
+def AddEmUp(expression):
     ## Originally written when I thought only integers would appear
     ## here, I have since learned that expressions can be more complex.
     ## For now I am simply punting when when confronted with something
@@ -564,21 +571,21 @@ def AddEmUp(expression) :
     expression = expression or "0"
     retval = 0
     tokens = expression.split('+')
-    for token in tokens :
-        if token[0:1] in "0123456789" : # Python2/3 ecumenical
-            try :
-                if sys.version[0] == '2' :
+    for token in tokens:
+        if token[0:1] in "0123456789": # Python2/3 ecumenical
+            try:
+                if sys.version[0] == '2':
                     ## This is Python2
                     token = token.decode("latin1")
                 retval += int(token)
-            except :
+            except:
                 ## if the latin decode fails, or if token isn't an integer,
                 ## an exception will be thrown.  As described above, just
                 ## ignore that for now.
                 pass
     return retval
 
-class VarTrie() :
+class VarTrie():
     def __init__(self):
         self.storage_list = []
         self.storage_trie = VarTrieNode()
@@ -598,11 +605,11 @@ class VarTrie() :
         self.StackOfNames = []
         self.StackOfLevels = []
 
-    def AddToTrie(self,trie,name_tokens,payload_index) :
+    def AddToTrie(self, trie, name_tokens, payload_index):
         our_node = trie
 
-        for name in name_tokens :
-            if name not in our_node.children :
+        for name in name_tokens:
+            if name not in our_node.children:
                 new_child = VarTrieNode()
                 new_child.piece_of_name = name
                 new_child.parent = our_node
@@ -614,36 +621,36 @@ class VarTrie() :
         our_node.count = 1
 
         # Propogate the count back up to the root:
-        while our_node.parent :
+        while our_node.parent:
             our_node.parent.count += our_node.count
             our_node = our_node.parent
 
         # and we are done
 
-    def LoadFromLine(self,variable_line) :
+    def LoadFromLine(self, variable_line):
         tokens = variable_line.split("|")
-        try :
-            if len(tokens) == 11 :
+        try:
+            if len(tokens) == 11:
                 ## We have enough in the way of tokens, so proceed
-                if tokens[self.IndexType] == 'P' :
+                if tokens[self.IndexType] == 'P':
                     ## We are entering a new PROGRAM-ID, so reset our stacks
-                    self.StackOfNames = [ tokens[self.IndexName] ]
+                    self.StackOfNames = [tokens[self.IndexName]]
                     self.StackOfLevels = [-2]
 
-                if len(self.StackOfNames) == 0 :
+                if len(self.StackOfNames) == 0:
                     print("Please save your program for Bob Dubner at support@COBOLworx.com")
                     print("self.StackOfNames is empty, and it shouldn't be")
                     sys.exit(1)
 
-                if tokens[self.IndexType] in ('F','W','L','I') :
+                if tokens[self.IndexType] in ('F', 'W', 'L', 'I'):
                     ## We are working with a variable.  We need to erode the
                     ## stack of names down to the variable who is our parent:
-                    if tokens[self.IndexLevel] == "" :
+                    if tokens[self.IndexLevel] == "":
                         tokens[self.IndexLevel] = '0'
                     our_level = int(tokens[self.IndexLevel])
-                    if our_level in (77,78) :
+                    if our_level in (77, 78):
                         our_level = 1
-                    while self.StackOfLevels[-1] >= our_level :
+                    while self.StackOfLevels[-1] >= our_level:
                         self.StackOfNames.pop(-1)
                         self.StackOfLevels.pop(-1)
 
@@ -674,25 +681,25 @@ class VarTrie() :
                                    reversed,
                                    payload.payload_index)
                     self.program_ids.add(payload.Program)
-        except :
+        except:
             traceback.print_exc()
             sys.exit(1)
 
-    def TokenizeCanonicalName(self,desired) :
+    def TokenizeCanonicalName(self, desired):
         # We allow "A of B in C", where [of|in] is not case sensitive
         # We also allow A.B.C, A/B/C, and "A B C"
 
         # turn IN and OF into spaces
         pattern = re.compile(r"^(.*) (in|In|iN|IN|of|oF|Of|OF) (.*)$")
-        while True :
-            match = re.search(pattern,desired)
-            if not match :
+        while True:
+            match = re.search(pattern, desired)
+            if not match:
                 break
-            else :
+            else:
                 desired = match.group(1) + " " + match.group(3)
 
-        desired = desired.replace("."," ")
-        desired = desired.replace("/"," ")
+        desired = desired.replace(".", " ")
+        desired = desired.replace("/", " ")
         retval = desired.split()
         return retval
 
@@ -700,7 +707,7 @@ class VarTrie() :
                     boys,
                     boy_index,
                     trie,
-                    paths) :
+                    paths):
         # Nomenclature:  We have a list of lost_boys: A/B/C
         # We have a forest, where some of the trees are labeled.
         # The labels might be
@@ -725,47 +732,47 @@ class VarTrie() :
         # possibilities, then the user gets shown those possibilities with a
         # simple option for selecting one.
         #
-        if boy_index < len(boys) :
+        if boy_index < len(boys):
             # we still have at least one boy to leave off at his tree
             boy = boys[boy_index]
             #print("DEBUG boy",boy)
             #print("DEBUG trie.children.keys",trie.children.keys())
             # Do a case-insensitive match:
-            bFound = False;
-            for child in trie.children :
-                if boy.upper() == child.upper() :
+            bFound = False
+            for child in trie.children:
+                if boy.upper() == child.upper():
                     bFound = True
                     boy = child
                     break
-            if bFound :
+            if bFound:
                 # We have found this boy's tree.  Advance both the boy
                 # and the trie.
                 next_trie = trie.children[boy]
                 boy_index += 1
                 # Continue along that path.
-                self.NameMatcher(boys,boy_index,next_trie,paths)
+                self.NameMatcher(boys, boy_index, next_trie, paths)
                 # and terminate.
                 return
-            else :
+            else:
                 # We can't leave that boy at this node.  So, we have to
                 # check for that boy on all possible paths from here:
                 child_tries = list(trie.children.values())
-                for next_trie in child_tries :
-                    self.NameMatcher(boys,boy_index,next_trie,paths)
+                for next_trie in child_tries:
+                    self.NameMatcher(boys, boy_index, next_trie, paths)
                 # and terminate.
                 return
-        else :
+        else:
             # we have dropped off the whole string of boys.  Now it's a
             # question of finding every possible path to the edge of the
             # forest from that point.
-            if len(trie.children) > 0 :
+            if len(trie.children) > 0:
                 # We have not yet reached the edge of the forest:
                 child_tries = list(trie.children.values())
-                for next_trie in child_tries :
-                    self.NameMatcher(boys,boy_index,next_trie,paths)
+                for next_trie in child_tries:
+                    self.NameMatcher(boys, boy_index, next_trie, paths)
                 # and terminate.
                 return
-            else :
+            else:
                 # This node has no children, which means we have reached the
                 # edge of the forest.
 
@@ -775,26 +782,26 @@ class VarTrie() :
                 # and terminate
                 return
 
-    def GetAllPossibilities(self) :
+    def GetAllPossibilities(self):
         # Typically in response to a 'print *'
         paths = []
-        for index in range(len(self.storage_list)) :
+        for index in range(len(self.storage_list)):
             paths.append(index)
         return paths
 
-    def GetListOfExactPossibilities(self,token) :
+    def GetListOfExactPossibilities(self, token):
         # We are going to return variables that contain the given token
         # in its exact, case-insensitive, form.  This is typically used
         # by the 'print ?' form
 
         # Wander through the forest, looking for possible paths:
         paths = []
-        self.NameMatcher([token],0,self.storage_trie,paths)
+        self.NameMatcher([token], 0, self.storage_trie, paths)
 
         return paths
 
-    def GetListOfPossibilities(self,desired) :
-        if isinstance(desired,list) :
+    def GetListOfPossibilities(self, desired):
+        if isinstance(desired, list):
             # We were handed a bunch of pieces.  Let's
             # glue them back together into a single space-separated string:
             desired = " ".join(desired).upper()
@@ -805,13 +812,13 @@ class VarTrie() :
         # Wander through the forest, looking for possible paths:
         paths = []
 
-        if len(name_tokens) == 0 :
+        if len(name_tokens) == 0:
             # if there's nothing, there is nothing
             return paths
 
-        self.NameMatcher(name_tokens,0,self.storage_trie,paths)
+        self.NameMatcher(name_tokens, 0, self.storage_trie, paths)
 
-        if len(paths) != 1 :
+        if len(paths) != 1:
             # A strict attempt at matching what we were given has come up
             # with bupkis.  So far we have either no possibilities, or
             # more than one possibility.
@@ -829,23 +836,23 @@ class VarTrie() :
             ## in storage_list, and then we will make sure all of
             ## the pieces show up in left-to-right order
 
-            for index in range(len(self.storage_list)) :
+            for index in range(len(self.storage_list)):
                 whole_name = self.storage_list[index].Name.upper()
                 prior_index = -1
-                for fragment in name_tokens :
+                for fragment in name_tokens:
                     fragment = fragment.upper()
-                    current_index = whole_name.find(fragment,prior_index+1)
-                    if current_index == -1 :
+                    current_index = whole_name.find(fragment, prior_index+1)
+                    if current_index == -1:
                         ## This fragment isn't in that name, so, sayonara
                         prior_index = -1
                         break
-                    if current_index < prior_index :
+                    if current_index < prior_index:
                         ## Going backward isn't permitted
                         prior_index = -1
-                        break;
+                        break
                     ## Rightward, ho!
                     prior_index = current_index
-                if prior_index != -1 :
+                if prior_index != -1:
                     ## We have found a contender!
                     set1.add(index)
 
@@ -854,7 +861,7 @@ class VarTrie() :
 
         return paths
 
-class LineList() :
+class LineList():
     """List of starting lines of ProgramNames"""
 
     # The point of this list is to be able to figure out, when a trap occurs,
@@ -865,48 +872,48 @@ class LineList() :
     # the .tab file lets us convert line numbers to the original COBOL
     # program-id
 
-    def __init__(self) :
-        self.line_list = [] # This will be a list of (int,str) tuples
+    def __init__(self):
+        self.line_list = [] # This will be a list of (int, str) tuples
         self.EndOfTheWorld = 10000000
 
-    def Insert(self,line_number , program_id ) :
-        self.line_list.append( (line_number,program_id) )
+    def Insert(self, line_number, program_id):
+        self.line_list.append((line_number, program_id))
 
-    def Find(self,line_number ) :
+    def Find(self, line_number):
         # returns the program-id that covers line_number
 
-        if len(self.line_list) == 0 :
+        if len(self.line_list) == 0:
             return ""
 
-        if line_number < self.line_list[0][0] or line_number >= self.line_list[-1][0] :
+        if line_number < self.line_list[0][0] or line_number >= self.line_list[-1][0]:
             return ""
 
         left = 0
         right = len(self.line_list)
 
-        while True :
+        while True:
             middle = (right+left)//2
             if self.line_list[middle][0] <= line_number \
                     and line_number < self.line_list[middle+1][0]:
                 break
-            if self.line_list[middle][0] > line_number :
+            if self.line_list[middle][0] > line_number:
                 right = middle
-            else :
+            else:
                 left = middle
 
         return self.line_list[middle][1]
 
-    def LoadFromLine(self,variable_line) :
-        if len(variable_line) > 0 and variable_line[0] == 'P' :
+    def LoadFromLine(self, variable_line):
+        if len(variable_line) > 0 and variable_line[0] == 'P':
             tokens = variable_line.split("|")
-            if len(tokens) >= 3 :
+            if len(tokens) >= 3:
                 program_id = tokens[2]
                 line_number = int(tokens[6])
-                self.Insert(line_number,program_id)
+                self.Insert(line_number, program_id)
 
-class CobolVariable() :
+class CobolVariable():
     """Manages the field, attributes, flags, and pointers of a GnuCOBOL COBOL variable"""
-    def __init__ (self) :
+    def __init__(self):
         self.index      = None
         self.Program    = ""
         self.Section    = ""
@@ -951,7 +958,7 @@ class CobolVariable() :
         self.rdigits = -1          # this integer is AttrScale...
         #                          # ...but see self.CleanAndScale
 
-    def CleanTokens(self,execute_result) :
+    def CleanTokens(self, execute_result):
         # (This was created during initial development.  During refactoring
         #  to use cobst data rather than collecting field and attribute
         #  information via gdb.execute, it became superfluous.  I am leaving
@@ -970,16 +977,16 @@ class CobolVariable() :
 
         left = execute_result.find('"')
         right = execute_result.rfind('"')
-        if left != -1 and right != -1 :
+        if left != -1 and right != -1:
             execute_result = execute_result[:left] + execute_result[right+1:]
 
         # Turn extraneous characters into spaces, to mollify split()
-        execute_result = execute_result.replace("'",' ')
-        execute_result = execute_result.replace("{",' ')
-        execute_result = execute_result.replace("}",' ')
-        execute_result = execute_result.replace(",",' ')
-        execute_result = execute_result.replace("<",' ')
-        execute_result = execute_result.replace(">",' ')
+        execute_result = execute_result.replace("'", ' ')
+        execute_result = execute_result.replace("{", ' ')
+        execute_result = execute_result.replace("}", ' ')
+        execute_result = execute_result.replace(",", ' ')
+        execute_result = execute_result.replace("<", ' ')
+        execute_result = execute_result.replace(">", ' ')
 
         ex_tokens = execute_result.split()
 
@@ -988,106 +995,103 @@ class CobolVariable() :
         # want 0x55555555, although we will pass through 0x0 (because that's
         # what we see for a picture pointer when there is no picture)
         tokens = []
-        for xtoken in ex_tokens :
+        for xtoken in ex_tokens:
             if      ((ord(xtoken[0]) > 32
                     and xtoken != '='
                     and xtoken != '*'
                     and xtoken != '-'
                     and xtoken[0] != '0')
                     or xtoken == "0"
-                    or xtoken == "0x0") :
+                    or xtoken == "0x0"):
                 tokens.append(xtoken)
         return tokens
 
-    def GetDataAsString(self) :
+    def GetDataAsString(self):
         retval = ""
-        if not self.Fname :
+        if not self.Fname:
             return retval
 
-        if False :  # For development
-            print("GetData AsString          Name:"   ,self.Name);
-            print("GetData AsString       Section:"   ,self.Section);
-            print("GetData AsString         Fname:"   ,self.Fname);
-            print("GetData AsString         Bname:"   ,self.Bname);
-            print("GetData AsString         Aname:"   ,self.Aname);
-            print("GetData AsString        Offset:"   ,self.Offset);
-            print("GetData AsString        Length:"   ,self.Length);
-            print("GetData AsString len(self.data)"  ,len(self.data));
-            print("GetData AsString      AttrType:"   ,hex(self.AttrType));
-            print("GetData AsString    AttrDigits:"   ,self.AttrDigits);
-            print("GetData AsString     AttrScale:"   ,self.AttrScale);
-            print("GetData AsString     AttrFlags:"   ,hex(self.AttrFlags));
-            print("GetData AsString   loc_of_data:"   ,hex(self.location_of_data));
-            print("GetData AsString   loc_of_attr:"   ,hex(self.location_of_attribute));
-            print("GetData AsString    loc_of_pic:"   ,hex(self.location_of_pic));
+        if False:  # For development
+            print("GetData AsString          Name:", self.Name)
+            print("GetData AsString       Section:", self.Section)
+            print("GetData AsString         Fname:", self.Fname)
+            print("GetData AsString         Bname:", self.Bname)
+            print("GetData AsString         Aname:", self.Aname)
+            print("GetData AsString        Offset:", self.Offset)
+            print("GetData AsString        Length:", self.Length)
+            print("GetData AsString len(self.data)", len(self.data))
+            print("GetData AsString      AttrType:", hex(self.AttrType))
+            print("GetData AsString    AttrDigits:", self.AttrDigits)
+            print("GetData AsString     AttrScale:", self.AttrScale)
+            print("GetData AsString     AttrFlags:", hex(self.AttrFlags))
+            print("GetData AsString   loc_of_data:", hex(self.location_of_data))
+            print("GetData AsString   loc_of_attr:", hex(self.location_of_attribute))
+            print("GetData AsString    loc_of_pic:", hex(self.location_of_pic))
 
         ## Use the target executable's libcob to convert this field to a character string suitable
         ## for output
         command = "call (const char *)cob_get_field_str(&"
         command += self.Fname
-        command += ",__cobcd_debugging_buffer,8192)"
+        command += ",__cobcd_debugging_buffer, 8192)"
 
-        try :
-            gdb.execute(command,False,True)
-        except :
-            print("Command failed in GetDataAsString:",command)
+        try:
+            gdb.execute(command, False, True)
+        except:
+            print("Command failed in GetDataAsString:", command)
             return "<Error in GetDataAsString>"
 
         ## The formatted variable string is in __cobcd_debugging_buffer
-        p = GetAddressOf("__cobcd_debugging_buffer");
-        while True :
-            ch = GetDataAt(p,1)
-            if ch == 0 :
-                break;
-            retval += chr(ch);
+        p = GetAddressOf("__cobcd_debugging_buffer")
+        while True:
+            ch = GetDataAt(p, 1)
+            if ch == 0:
+                break
+            retval += chr(ch)
             p += 1
 
         return retval
 
-    def PutDataAsString(self,rside) :
-
-        ## Let's leverage GDB to set our buffer to rside:
-        command = 'x  __cobcd_debugging_buffer="'
-        command += rside
-        command += '"'
-        print("COMMAND is",command);
-        gdb.execute(command,False,True)
-
-        ## Now use the target executable's libcob to convert the string to the field:
-        command = "call (const char *)cob_put_field_str(&"
-        command += self.Fname
-        command += ",__cobcd_debugging_buffer)"
-
+    def PutDataAsString(self, rside):
         try:
-            gdb.execute(command,False,True)
-        except :
-            print("COMMAND failed in PutDataAsString: ",command);
+            ## Let's leverage GDB to set our buffer to rside:
+            command = 'x  __cobcd_debugging_buffer="'
+            command += rside
+            command += '"'
+            gdb.execute(command, False, True)
 
-    def GetDataAsHex(self) :
+            ## Now use the target executable's libcob to convert the string to the field:
+            command = "call (const char *)cob_put_field_str(&"
+            command += self.Fname
+            command += ",__cobcd_debugging_buffer)"
+            gdb.execute(command, False, True)
+        except:
+            print("COMMAND failed in PutDataAsString: ", command)
+
+    def GetDataAsHex(self):
         retval = ""
-        if len(self.data) > 16 :
+        if len(self.data) > 16:
             return "<see below>"
-        if len(self.data) > 0 :
+        if len(self.data) > 0:
             retval = "0x"
 
             output_bytes = self.data[:]
-            if GV_GlobalVariables.byteorder == "little" :
-                if (self.AttrFlags & COB_FLAG_BINARY_SWAP) == 0 : # If this is ON, then it is already in display order
-                    if (self.AttrFlags & (COB_FLAG_REAL_BINARY | COB_FLAG_IS_POINTER | COB_FLAG_IS_FP )) != 0 :
+            if GV_GlobalVariables.byteorder == "little":
+                if (self.AttrFlags & COB_FLAG_BINARY_SWAP) == 0: # If this is ON, then it is already in display order
+                    if (self.AttrFlags & (COB_FLAG_REAL_BINARY | COB_FLAG_IS_POINTER | COB_FLAG_IS_FP)) != 0:
                         # These three types are little-endian; flip them so they display with the big byte to the left
                         output_bytes.reverse()
-            for byte in output_bytes :
+            for byte in output_bytes:
                 hexout = hex(byte)[-2:]
-                if hexout[0:1] == 'x' :
+                if hexout[0:1] == 'x':
                     hexout = '0' + hexout[-1:]
                 retval += hexout
         return retval
 
-    def FetchVariableData(self, line_list , show_failure ) :
-        #print("FetchVariableData:",self.Name,self.Section)
-        self.location_of_field = 0;
-        self.location_of_data = 0;
-        self.location_of_attribute = 0;
+    def FetchVariableData(self, line_list, show_failure):
+        #print("FetchVariableData:", self.Name, self.Section)
+        self.location_of_field = 0
+        self.location_of_data = 0
+        self.location_of_attribute = 0
         self.data = []
         self.display_body = ""
         self.display_body_hex = ""
@@ -1101,11 +1105,11 @@ class CobolVariable() :
         ## the name of the field.  If so, use the run-time values in that named
         ## field to override anything we might have gotten from compile-time
 
-        if self.Fname :
+        if self.Fname:
             # We have a field name
             #print("FetchVariableData Fname", self.Fname)
             self.location_of_field = GetAddressOf(self.Fname)
-            if self.location_of_field == None :
+            if self.location_of_field == None:
                 self.not_in_context = True
                 return
             # The cob_field structure looks like this:
@@ -1115,46 +1119,46 @@ class CobolVariable() :
             #       unsigned char        *data;
             #       const cob_field_attr *attr;
             #       } cob_field;
-            self.Length = GetDataAt(self.location_of_field,GV_GlobalVariables.SizeofPointer)
-            if self.Length == None :
+            self.Length = GetDataAt(self.location_of_field, GV_GlobalVariables.SizeofPointer)
+            if self.Length == None:
                 self.not_in_context = True
                 return
-            possible_location_of_data = GetDataAt(self.location_of_field+GV_GlobalVariables.SizeofPointer,GV_GlobalVariables.SizeofPointer)
-            if possible_location_of_data :
+            possible_location_of_data = GetDataAt(self.location_of_field+GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
+            if possible_location_of_data:
                 self.location_of_data = possible_location_of_data
-            self.location_of_attribute = GetDataAt(self.location_of_field+2*GV_GlobalVariables.SizeofPointer,GV_GlobalVariables.SizeofPointer)
-        else :
+            self.location_of_attribute = GetDataAt(self.location_of_field+2*GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
+        else:
             #print("There is no self.Fname")
             pass
 
-        if self.location_of_data == 0 :
+        if self.location_of_data == 0:
             # When the COBOL code doesn't reference a variable, there is no f_ cob_field.  But
             # sometimes we are able to divine a b_ + offset reference.  Likewise, sometimes
             # there is an f_value, but at this point in the code the cob_field->data value hasn't yet
             # been set up.  But, again, sometimes we have advance knowledge of what is going to be
             # there because we got information from the compiler.
-            if self.Bname :
+            if self.Bname:
                 #print("FetchVariableData Fname", self.Bname)
-                self.location_of_data  = GetAddressOf(self.Bname)
-                if self.location_of_data == None :
+                self.location_of_data = GetAddressOf(self.Bname)
+                if self.location_of_data == None:
                     self.not_in_context = True
                     return
                 self.location_of_data += self.Offset
-            else :
+            else:
                 #print("There is no self.Bname")
                 pass
 
-        if self.location_of_attribute == 0 :
-            if self.Aname :
+        if self.location_of_attribute == 0:
+            if self.Aname:
                 self.location_of_attribute = GetAddressOf(self.Aname)
-                if self.location_of_attribute == None :
+                if self.location_of_attribute == None:
                     self.not_in_context = True
                     return
-            else :
+            else:
                 #print("There is no self.Aname")
                 pass
 
-        if self.location_of_attribute != 0 :
+        if self.location_of_attribute != 0:
             #   typedef struct __cob_field_attr
             #       {
             #       unsigned short      type;       /* Field type */
@@ -1163,16 +1167,16 @@ class CobolVariable() :
             #       unsigned short      flags;      /* Field flags */
             #       const cob_pic_symbol    *pic;       /* Pointer to picture string */
             #       } cob_field_attr;
-            self.AttrType   = GetDataAt(self.location_of_attribute+0,2)
-            self.AttrDigits = GetDataAt(self.location_of_attribute+2,2)
-            self.AttrScale  = GetDataAt(self.location_of_attribute+4,2)
-            self.AttrFlags  = GetDataAt(self.location_of_attribute+6,2)
-            self.location_of_pic = GetDataAt(self.location_of_attribute+8,GV_GlobalVariables.SizeofPointer)
+            self.AttrType   = GetDataAt(self.location_of_attribute+0, 2)
+            self.AttrDigits = GetDataAt(self.location_of_attribute+2, 2)
+            self.AttrScale  = GetDataAt(self.location_of_attribute+4, 2)
+            self.AttrFlags  = GetDataAt(self.location_of_attribute+6, 2)
+            self.location_of_pic = GetDataAt(self.location_of_attribute+8, GV_GlobalVariables.SizeofPointer)
 
-        if self.Section in('F','W','I') :
+        if self.Section in('F', 'W', 'I'):
             pass
-        elif self.Section == 'L' :
-            try :
+        elif self.Section == 'L':
+            try:
                 # We are looking for something in LOCAL-STORAGE.  Local
                 # storage is kept in a calloc-ed memory location named
                 # cob_local_ptr.  The complication is that if we have
@@ -1182,16 +1186,16 @@ class CobolVariable() :
 
                 # Pick up the decimal line number where we are trapped
                 line_number = -1
-                command="frame"
-                frame_string = GdbExecute(currentframe(),command)
+                command = "frame"
+                frame_string = GdbExecute(currentframe(), command)
                 # Look for a number after a colon
                 nfound = frame_string.find(':')
-                if nfound > -1 :
+                if nfound > -1:
                     frame_string = frame_string[nfound+1:]
                     frame_string = frame_string.split()
-                    try :
+                    try:
                         line_number = int(frame_string[0])
-                    except :
+                    except:
                         line_number = -1
 
                 #print("Trapped at ",line_number)
@@ -1208,7 +1212,7 @@ class CobolVariable() :
                 #
                 #print( self.Name )
                 split_name = self.Name.split('/')
-                if split_name[-1] != program_id :
+                if split_name[-1] != program_id:
                     self.not_in_context = True
                     return
 
@@ -1216,26 +1220,26 @@ class CobolVariable() :
                 # LOCAL-STORAGE variable, so we can look for it in cob_local_ptr
                 # we need GDB's help finding out where cob_local_ptr + offset is:
                 command = "x " + "cob_local_ptr + " + str(self.Offset)
-                address_string = GdbExecute(currentframe(),command)
+                address_string = GdbExecute(currentframe(), command)
                 nfound = address_string.find(':')
-                if nfound != -1 :
-                    self.location_of_data = int( address_string[:nfound], 16 )
+                if nfound != -1:
+                    self.location_of_data = int(address_string[:nfound], 16)
 
             except gdb.error:
                 self.not_in_context = True
-        else :
-            print("We don't know how to handle",self.Section, self.Name)
+        else:
+            print("We don't know how to handle", self.Section, self.Name)
             self.not_in_context = True
             return
 
-        if self.location_of_data != 0 :
-            self.data = GetBytesAt(self.location_of_data,self.Length)
+        if self.location_of_data != 0:
+            self.data = GetBytesAt(self.location_of_data, self.Length)
 
         self.display_body_hex = self.GetDataAsHex()
         self.display_body = self.GetDataAsString()
         self.display_body = ReplaceWithRepeatCount(self.display_body)
 
-        if self.Length != len(self.data) :
+        if self.Length != len(self.data):
             ## This probably should never happen.  But when it did, during debugging,
             ## it actually corrupted memory during the process of creating a
             ## cfields.cob_field.
@@ -1244,141 +1248,141 @@ class CobolVariable() :
             self.not_in_context = True
         return
 
-    def NameToString(self) :
+    def NameToString(self):
         storage_type = ""
-        if self.Section == "F" :
+        if self.Section == "F":
             storage_type = "I/O"
-        elif self.Section == "W" :
+        elif self.Section == "W":
             storage_type = "W-S"
-        elif self.Section == "L" :
+        elif self.Section == "L":
             storage_type = "L-S"
-        elif self.Section == "I" :
+        elif self.Section == "I":
             storage_type = "LNK"
 
-        s = "{1:02} {2} [{0}]".format(storage_type,self.Level,self.Name)
+        s = "{1:02} {2} [{0}]".format(storage_type, self.Level, self.Name)
         return s
 
-    def ShowFields(self) :
+    def ShowFields(self):
         bname_location = GetAddressOf(self.Bname) or 0
         bname_text = ""
-        if bname_location :
+        if bname_location:
             bname_text = "( %s )" % hex(bname_location)
 
-        if self.Section == 'L' :
+        if self.Section == 'L':
             field_loc = "cob_local_ptr (" + hex(self.location_of_data) + ")"
-        else :
+        else:
             field_loc = hex(self.location_of_data)
 
-        print("Name:       " , self.display_name       )
-        print("Display:    " , self.display_body       )
-        print("Hex:        " , self.display_body_hex   )
-        print("Field:      " , self.Fname,'   (',hex(self.location_of_field),')' )
-        print("Base:       " , self.Bname,'  ',bname_text     )
-        print("Attr:       " , self.Aname,'   (',hex(self.location_of_attribute),')' )
-        print("Offset:     " , self.Offset             )
-        print("Field.loc:  " , field_loc               );
-        print("Length:     " , self.Length             )
+        print("Name:       ", self.display_name)
+        print("Display:    ", self.display_body)
+        print("Hex:        ", self.display_body_hex)
+        print("Field:      ", self.Fname, '   (', hex(self.location_of_field), ')')
+        print("Base:       ", self.Bname, '  ', bname_text     )
+        print("Attr:       ", self.Aname, '   (', hex(self.location_of_attribute), ')')
+        print("Offset:     ", self.Offset)
+        print("Field.loc:  ", field_loc)
+        print("Length:     ", self.Length)
 
-        print("AttrType:   " , self.AttrType ,end="")
-        print(" (",hex(self.AttrType),") ", sep='', end="")
-        if self.AttrType == 0 :
+        print("AttrType:   ", self.AttrType, end="")
+        print(" (", hex(self.AttrType), ") ", sep='', end="")
+        if self.AttrType == 0:
             print(" (Unknown)", end="")
-        elif self.AttrType == COB_TYPE_UNKNOWN             :
+        elif self.AttrType == COB_TYPE_UNKNOWN:
             print("UNKNOWN            ", end="")
-        elif self.AttrType == COB_TYPE_GROUP               :
+        elif self.AttrType == COB_TYPE_GROUP:
             print("GROUP              ", end="")
-        elif self.AttrType == COB_TYPE_BOOLEAN             :
+        elif self.AttrType == COB_TYPE_BOOLEAN:
             print("BOOLEAN            ", end="")
-        elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY     :
+        elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY:
             print("NUMERIC_DISPLAY    ", end="")
-        elif self.AttrType == COB_TYPE_NUMERIC_BINARY      :
+        elif self.AttrType == COB_TYPE_NUMERIC_BINARY:
             print("NUMERIC_BINARY     ", end="")
-        elif self.AttrType == COB_TYPE_NUMERIC_PACKED      :
+        elif self.AttrType == COB_TYPE_NUMERIC_PACKED:
             print("NUMERIC_PACKED     ", end="")
-        elif self.AttrType == COB_TYPE_NUMERIC_FLOAT       :
+        elif self.AttrType == COB_TYPE_NUMERIC_FLOAT:
             print("NUMERIC_FLOAT      ", end="")
-        elif self.AttrType == COB_TYPE_NUMERIC_DOUBLE      :
+        elif self.AttrType == COB_TYPE_NUMERIC_DOUBLE:
             print("NUMERIC_DOUBLE     ", end="")
-        elif self.AttrType == COB_TYPE_NUMERIC_L_DOUBLE    :
+        elif self.AttrType == COB_TYPE_NUMERIC_L_DOUBLE:
             print("NUMERIC_L_DOUBLE   ", end="")
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC64    :
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC64:
             print("NUMERIC_FP_DEC64   ", end="")
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128   :
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128:
             print("NUMERIC_FP_DEC128  ", end="")
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32    :
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32:
             print("NUMERIC_FP_BIN32   ", end="")
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64    :
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64:
             print("NUMERIC_FP_BIN64   ", end="")
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128   :
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128:
             print("NUMERIC_FP_BIN128  ", end="")
-        elif self.AttrType == COB_TYPE_NUMERIC_COMP5       :
+        elif self.AttrType == COB_TYPE_NUMERIC_COMP5:
             print("NUMERIC_COMP5      ", end="")
-        elif self.AttrType == COB_TYPE_ALNUM               :
+        elif self.AttrType == COB_TYPE_ALNUM:
             print("ALNUM              ", end="")
-        elif self.AttrType == COB_TYPE_ALPHANUMERIC        :
+        elif self.AttrType == COB_TYPE_ALPHANUMERIC:
             print("ALPHANUMERIC       ", end="")
-        elif self.AttrType == COB_TYPE_ALPHANUMERIC_ALL    :
+        elif self.AttrType == COB_TYPE_ALPHANUMERIC_ALL:
             print("ALPHANUMERIC_ALL   ", end="")
-        elif self.AttrType == COB_TYPE_ALPHANUMERIC_EDITED :
+        elif self.AttrType == COB_TYPE_ALPHANUMERIC_EDITED:
             print("ALPHANUMERIC_EDITED", end="")
-        elif self.AttrType == COB_TYPE_NUMERIC_EDITED      :
+        elif self.AttrType == COB_TYPE_NUMERIC_EDITED:
             print("NUMERIC_EDITED     ", end="")
-        elif self.AttrType == COB_TYPE_NATIONAL            :
+        elif self.AttrType == COB_TYPE_NATIONAL:
             print("NATIONAL           ", end="")
-        elif self.AttrType == COB_TYPE_NATIONAL_EDITED     :
+        elif self.AttrType == COB_TYPE_NATIONAL_EDITED:
             print("NATIONAL_EDITED    ", end="")
         print()
 
-        print("AttrDigits: " , self.AttrDigits      )
-        print("AttrScale:  " , self.AttrScale       )
+        print("AttrDigits: ", self.AttrDigits)
+        print("AttrScale:  ", self.AttrScale)
 
-        print("AttrFlags:  " , hex(self.AttrFlags)  , end = '')
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN     ) != 0 :
-            print(" HAVE_SIGN", end = '')
-        if (self.AttrFlags & COB_FLAG_SIGN_SEPARATE ) != 0 :
-            print(" SIGN_SEPARATE", end = '')
-        if (self.AttrFlags & COB_FLAG_SIGN_LEADING  ) != 0 :
-            print(" SIGN_LEADING", end = '')
-        if (self.AttrFlags & COB_FLAG_BLANK_ZERO    ) != 0 :
-            print(" BLANK_ZERO", end = '')
-        if (self.AttrFlags & COB_FLAG_JUSTIFIED     ) != 0 :
-            print(" FLAG_JUSTIFIED", end = '')
-        if (self.AttrFlags & COB_FLAG_BINARY_SWAP   ) != 0 :
-            print(" BINARY_SWAP", end = '')
-        if (self.AttrFlags & COB_FLAG_REAL_BINARY   ) != 0 :
-            print(" REAL_BINARY", end = '')
-        if (self.AttrFlags & COB_FLAG_IS_POINTER    ) != 0 :
-            print(" IS_POINTER", end = '')
-        if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) != 0 :
-            print(" NO_SIGN_NIBBLE", end = '')
-        if (self.AttrFlags & COB_FLAG_IS_FP         ) != 0 :
-            print(" IS_FP", end = '')
-        if (self.AttrFlags & COB_FLAG_REAL_SIGN     ) != 0 :
-            print(" REAL_SIGN", end = '')
-        if (self.AttrFlags & COB_FLAG_BINARY_TRUNC  ) != 0 :
-            print(" BINARY_TRUNC", end = '')
-        if (self.AttrFlags & COB_FLAG_CONSTANT      ) != 0 :
-            print(" CONSTANT ", end = '')
+        print("AttrFlags:  ", hex(self.AttrFlags), end='')
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0:
+            print(" HAVE_SIGN", end='')
+        if (self.AttrFlags & COB_FLAG_SIGN_SEPARATE) != 0:
+            print(" SIGN_SEPARATE", end='')
+        if (self.AttrFlags & COB_FLAG_SIGN_LEADING) != 0:
+            print(" SIGN_LEADING", end='')
+        if (self.AttrFlags & COB_FLAG_BLANK_ZERO) != 0:
+            print(" BLANK_ZERO", end='')
+        if (self.AttrFlags & COB_FLAG_JUSTIFIED) != 0:
+            print(" FLAG_JUSTIFIED", end='')
+        if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0:
+            print(" BINARY_SWAP", end='')
+        if (self.AttrFlags & COB_FLAG_REAL_BINARY) != 0:
+            print(" REAL_BINARY", end='')
+        if (self.AttrFlags & COB_FLAG_IS_POINTER) != 0:
+            print(" IS_POINTER", end='')
+        if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) != 0:
+            print(" NO_SIGN_NIBBLE", end='')
+        if (self.AttrFlags & COB_FLAG_IS_FP) != 0:
+            print(" IS_FP", end='')
+        if (self.AttrFlags & COB_FLAG_REAL_SIGN) != 0:
+            print(" REAL_SIGN", end='')
+        if (self.AttrFlags & COB_FLAG_BINARY_TRUNC) != 0:
+            print(" BINARY_TRUNC", end='')
+        if (self.AttrFlags & COB_FLAG_CONSTANT) != 0:
+            print(" CONSTANT ", end='')
         print()
 
-        print("data: (HEX)   [" , end= " ")
+        print("data: (HEX)   [", end=" ")
 
-        for byte in self.data :
+        for byte in self.data:
             hexout = hex(byte)[-2:]
-            if hexout[0:1] == 'x' :
+            if hexout[0:1] == 'x':
                 hexout = '0' + hexout[-1:]
-            print(hexout,end=" ")
+            print(hexout, end=" ")
         print("]")
-        print("data: (ASCII) \"", end = "")
-        for byte in self.data :
-            if 32 <= byte < 128 :   # valid ASCII characters
-                print(chr(byte),end="")
-            else :
-                print('.',end="")
+        print("data: (ASCII) \"", end="")
+        for byte in self.data:
+            if 32 <= byte < 128:   # valid ASCII characters
+                print(chr(byte), end="")
+            else:
+                print('.', end="")
         print('"')
 
-class TabFileInformation() :
-    def __init__(self) :
+class TabFileInformation():
+    def __init__(self):
         self.var_trie = VarTrie()
         self.old_dogs = set()
         self.line_list = LineList()
@@ -1390,7 +1394,7 @@ class TabFileInformation() :
         self.question_mark_range = 6
         self.current_full_path = ""
 
-    def ReadVariableString(self, string_name) :
+    def ReadVariableString(self, string_name):
         retval = False
 
         # We are going to use the x/ns "memory as string" command, which reads
@@ -1402,16 +1406,16 @@ class TabFileInformation() :
         # how how many characters per line we're going to get:
 
         the_address = GetAddressOf(string_name)
-        if the_address :
+        if the_address:
             command = "x/1s " + str(the_address)
-            try :
-                the_data = GdbExecute(currentframe(),command)
+            try:
+                the_data = GdbExecute(currentframe(), command)
                 index1 = the_data.find('"')
-                if index1 != -1 :
-                    index2 = the_data.find('"',index1+1)
-                    if( index2 != -1 ) :
+                if index1 != -1:
+                    index2 = the_data.find('"', index1+1)
+                    if index2 != -1:
                         total_length = int(the_data[index1+1:index1+1+9])
-                        chars_each_line = index2-(index1+1);
+                        chars_each_line = index2-(index1+1)
 
                         # We know the total length, and we know the number of
                         # chars we will get in each block.  So, we can calculate
@@ -1421,20 +1425,20 @@ class TabFileInformation() :
                         command = "x/" + str(blocks) + "s " + str(the_address)
 
                         # And we can get that data
-                        the_data = GdbExecute(currentframe(),command)
+                        the_data = GdbExecute(currentframe(), command)
 
                         # And now we loop through the data, extracting each chunk
                         is_first_line = True
                         index2 = 0
                         lines = []
-                        while True :
-                            index1 = the_data.find('"',index2+1)
-                            if index1 == -1 :
-                                break;
-                            index2 = the_data.find('"',index1+1)
-                            if index2 == -1 :
-                                break;
-                            if is_first_line :
+                        while True:
+                            index1 = the_data.find('"', index2+1)
+                            if index1 == -1:
+                                break
+                            index2 = the_data.find('"', index1+1)
+                            if index2 == -1:
+                                break
+                            if is_first_line:
                                 index1 += 9
                                 is_first_line = False
                             lines.append(the_data[index1+1:index2])
@@ -1443,11 +1447,11 @@ class TabFileInformation() :
                         # them into the VARIABLE_STRING_xxx
                         self.current_variable_string = "".join(lines)
                         retval = True
-            except :
+            except:
                 pass
         return retval
 
-    def ProcessStack(self) :
+    def ProcessStack(self):
         """ Figures out which routine we are currently trapped in"""
 
         ## That's seems innocent enough.  But we're dealing with a multitude of sins.
@@ -1509,12 +1513,12 @@ class TabFileInformation() :
         ## if you also want to be able to handle code in COPYBOOKs.
 
         retval = False
-        try :
-            command="frame"
-            info_frame = GdbExecute(currentframe(),command)
-            command="info stack"
-            info_stack = GdbExecute(currentframe(),command)
-            if len(info_stack) > 0 and info_stack[0] == '#' :
+        try:
+            command = "frame"
+            info_frame = GdbExecute(currentframe(), command)
+            command = "info stack"
+            info_stack = GdbExecute(currentframe(), command)
+            if len(info_stack) > 0 and info_stack[0] == '#':
                 retval = True
 
                 ## Get the frame number from info_frame:
@@ -1522,7 +1526,7 @@ class TabFileInformation() :
 
                 ## Get the file name from the first line of the "frame" information:
                 m = info_frame.find('\n')
-                if m > -1 :
+                if m > -1:
                     info_frame = info_frame[:m]
                 tokens = info_frame.rstrip().split(' ')
                 filename = tokens[-1].split(':')[0]
@@ -1532,7 +1536,7 @@ class TabFileInformation() :
 
                 stack = info_stack.split('\n')
                 stack_line = 0
-                while stack_line < len(stack) :
+                while stack_line < len(stack):
                     tokens = stack[stack_line].split(' ')
 
                     frame_from_stack = int(tokens[0][1:])
@@ -1544,11 +1548,11 @@ class TabFileInformation() :
                     # We need the information from the final token:
 
                     file_and_line = tokens[-1].split(':')
-                    if file_and_line[0] == filename :
+                    if file_and_line[0] == filename:
                         break
                     stack_line += 1
 
-                if stack_line >= len(stack) :
+                if stack_line >= len(stack):
                     print("Bad things are happening.  Save this program for Dubner, and tell him")
                     print("that \"frame\" and \"info stack\" don't match in ProcessStack()")
                     return False
@@ -1557,9 +1561,9 @@ class TabFileInformation() :
                 ## to a PROCEDURE DIVISION line. So, if an adjustment is necessary,
                 ## we make it here:
 
-                if frame_from_frame != frame_from_stack :
+                if frame_from_frame != frame_from_stack:
                     command = "select-frame " + str(frame_from_stack)
-                    result = GdbExecute(currentframe(),command)
+                    result = GdbExecute(currentframe(), command)
 
                 ## At this point, file_and_line[0] matches the file name from "frame"
                 self.current_trapped_line = int(file_and_line[1])
@@ -1580,8 +1584,8 @@ class TabFileInformation() :
 
                     # Find the address of the VARIABLE_STRING for this trap point
 
-                    while stack_line < len(stack) :
-                        possibility = stack[stack_line];
+                    while stack_line < len(stack):
+                        possibility = stack[stack_line]
                         # Pull out the file name, which is before the colon in the last token
                         possible_file = possibility.split(' ')[-1].split(':')[0]
                         name_root = possible_file
@@ -1589,16 +1593,16 @@ class TabFileInformation() :
                         name_root = name_root[-1]
 
                         name_root2 = ""
-                        for ch in name_root :
-                            if ch.isalnum() :
+                        for ch in name_root:
+                            if ch.isalnum():
                                 name_root2 += ch
-                            else :
+                            else:
                                 hh = hex(ord(ch))[-2:]
                                 name_root2 += hh.upper()
 
                         string_name = "VARIABLE_STRING_" + name_root2
 
-                        if self.ReadVariableString(string_name) :
+                        if self.ReadVariableString(string_name):
                             break
                         stack_line += 1
 
@@ -1608,31 +1612,31 @@ class TabFileInformation() :
                     self.var_trie = VarTrie()
                     self.line_list = LineList()
 
-                    if stack_line >= len(stack) :
+                    if stack_line >= len(stack):
                         ## For whatever reasons, we couldn't find any information in
                         ## the stack above the "frame" point
                         return False
 
                     # Pull apart the variable_string
                     variable_lines = self.current_variable_string.split("~")
-                    for variable_line in variable_lines :
+                    for variable_line in variable_lines:
                         self.line_list.LoadFromLine(variable_line)
                         self.var_trie.LoadFromLine(variable_line)
 
                     # Put a fencepost at the end of the line_list
-                    self.line_list.Insert(self.line_list.EndOfTheWorld,"Ragnarok")
+                    self.line_list.Insert(self.line_list.EndOfTheWorld, "Ragnarok")
 
                     # Get the full path for the source file
-                    command="info source"
-                    info_source = GdbExecute(currentframe(),command)
+                    command = "info source"
+                    info_source = GdbExecute(currentframe(), command)
                     info_source = info_source.split('\n')
-                    for line in info_source :
+                    for line in info_source:
                         pattern = re.compile(r"Located in (.*)$")
-                        match = re.search(pattern,line)
-                        if match :
+                        match = re.search(pattern, line)
+                        if match:
                             self.current_full_path = match.group(1)
                             break
-        except :
+        except:
             self.current_trapped_routine = ""
             self.current_trapped_file = ""
             self.current_trapped_frame = -1
@@ -1640,39 +1644,39 @@ class TabFileInformation() :
 
         return retval
 
-    def ReadSymbolTableText(self) :
+    def ReadSymbolTableText(self):
         ## Go read the frame and stack, and fetch the VariableStringData
-        if self.ProcessStack() :
+        if self.ProcessStack():
             # Figure out what routine we are trapped in, from
             # the line number
-            for line in self.line_list.line_list :
-               if line[0] > self.current_trapped_line :
+            for line in self.line_list.line_list:
+               if line[0] > self.current_trapped_line:
                    # We've gotten past self.current_trapped_line, so the prior entry
                    # was the one we wanted
-                   break;
+                   break
                # Keep looking
                self.current_trapped_routine = line[1]
-        else :
-            print( "No stack.")
+        else:
+            print("No stack.")
 
-def MachineInterfaceFlat(TabFile,possibilities) :
+def MachineInterfaceFlat(TabFile, possibilities):
     # This is the machine interface mode for returning the
     # the variables in a flat manner.
     # Our mission is to emulate
     # '-stack-list-variables --simple-values'
     # e.g.,    variables=[{name="b_70",arg="1",type="unsigned char *",value="0x555555759df0 <b_39> \"James     K Lowden    \""}]
     s = "variables=["
-    for payload_index in possibilities :
+    for payload_index in possibilities:
         payload = TabFile.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(TabFile.line_list , False)
-        if not payload.not_in_context :
+        payload.FetchVariableData(TabFile.line_list, False)
+        if not payload.not_in_context:
             name = ""
-            name += payload.display_name;
+            name += payload.display_name
             n = name.find(' ')
-            if n > -1 :
+            if n > -1:
                 name = name[:n] + '-' + name[n+1:]
             n = name.find(' ')
-            if n > -1 :
+            if n > -1:
                 name = name[:n]
 
             # Everything after the final slash is the program
@@ -1680,7 +1684,7 @@ def MachineInterfaceFlat(TabFile,possibilities) :
             # screen real estate.  Clear it out.
 
             n = name.rfind('/')
-            if n > -1 :
+            if n > -1:
                 name = name[:n]
 
             body = MachineInterfaceBody(payload.display_body)
@@ -1690,14 +1694,14 @@ def MachineInterfaceFlat(TabFile,possibilities) :
             s += '",type="char *",value="'
             s += body
             s += '"},'
-    if s[-1] == ',' :
+    if s[-1] == ',':
         s = s[:-1]  # Strip off final comma
     s += ']'
     s = NoNulls(s)
     return s
 
-class HNode() :
-    def __init__(self) :
+class HNode():
+    def __init__(self):
         self.storage_table_index = -1
         self.Level = 0
         self.BaseName = "" # Just A of A/B/C
@@ -1705,59 +1709,59 @@ class HNode() :
         self.parent = None
         self.children = []
 
-def TrimComma(s) :
-    if s and s[-1] == ',' :
+def TrimComma(s):
+    if s and s[-1] == ',':
         s = s[:-1]  # Strip off final comma
     return s
 
-def BuildHString(node) :
+def BuildHString(node):
     s = ""
-    if node.Level == 0 :
+    if node.Level == 0:
         # This is the root.  We live only for our children
-        for child in node.children :
+        for child in node.children:
             s += BuildHString(child)
-    else :
-        if node.Level in (1,77,78) :
+    else:
+        if node.Level in (1, 77, 78):
             ## Top level variables are treated this way:
             s += r'{name="'
             s += node.BaseName #  + "/" + str(node.storage_table_index)
             s += r'",value="'
-            if len(node.children) == 0 :
+            if len(node.children) == 0:
                 ## There are no children, which means this is just
                 ## a simple variable:
                 s += r'\"'
                 s += MachineInterfaceBody(node.display_body)
                 s += r'\"'
                 s += r'"'
-            else :
+            else:
                 ## This is a top-level node with children:
                 s += r'{_groupvalue=\"'
                 s += MachineInterfaceBody(node.display_body)
                 s += r'\",'
-                for child in node.children :
+                for child in node.children:
                     s += BuildHString(child)
-                s=TrimComma(s)
+                s = TrimComma(s)
                 s += r'}"'
             s += '},'
-        else :
+        else:
             # This is a node whose level is 01-49, 66
-            if len(node.children) == 0 :
+            if len(node.children) == 0:
                 s += node.BaseName # + "/" + str(node.storage_table_index)
                 s += r'=\"'
                 s += MachineInterfaceBody(node.display_body)
                 s += r'\",'
-            else :
+            else:
                 s += node.BaseName # + "/" + str(node.storage_table_index)
                 s += r'={_groupvalue=\"'
                 s += MachineInterfaceBody(node.display_body)
                 s += r'\",'
-                for child in node.children :
+                for child in node.children:
                     s += BuildHString(child)
-                s=TrimComma(s)
+                s = TrimComma(s)
                 s += r'},'
     return s
 
-def MachineInterfaceHeirarchical(TabFile,possibilities) :
+def MachineInterfaceHeirarchical(TabFile, possibilities):
     # This is the machine interface mode for returning the
     # the variables in a flat manner.
     # Our mission is to emulate
@@ -1770,14 +1774,14 @@ def MachineInterfaceHeirarchical(TabFile,possibilities) :
     stack = [root]
 
     retval = "variables=["
-    for payload_index in possibilities :
+    for payload_index in possibilities:
         payload = TabFile.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(TabFile.line_list , False)
-        if not payload.not_in_context :
+        payload.FetchVariableData(TabFile.line_list, False)
+        if not payload.not_in_context:
             # print("MIH", payload.Level, payload.Name, payload.display_body)
             # First, if the stack has nephews of ours,
             # let's get them off of the stack:
-            while stack[-1].Level > payload.Level :
+            while stack[-1].Level > payload.Level:
                 stack.pop()
 
             # Create the new node
@@ -1785,29 +1789,29 @@ def MachineInterfaceHeirarchical(TabFile,possibilities) :
             new_node.storage_table_index = payload_index
             new_node.Level = payload.Level
             split_name = payload.Name.split('/')
-            if len(split_name) == 2 :
+            if len(split_name) == 2:
                 # If it's just the two pieces, then use the whole name/program
                 # pair.  (This is a file record or 01/77, and we might need
                 # the whole name to accurately handle a "print var=x request")
                 new_node.BaseName = payload.Name
-            else :
+            else:
                 # Just use the lowest level.  When necessary, the VSC code will
                 # be able to walk up through the containers to get the full name
                 new_node.BaseName = split_name[0]
 
             new_node.display_body = payload.display_body
 
-            if payload.Level in (77,78) :
+            if payload.Level in (77, 78):
                 stack = [root]
-            if stack[-1].Level == payload.Level or payload.Level == 66 :
+            if stack[-1].Level == payload.Level or payload.Level == 66:
                 # The element on the stack is our brother, so
                 # so we are going to share parents:
                 new_node.parent = stack[-1].parent
-            else : # stack[-1].Level < payload.Level
+            else: # stack[-1].Level < payload.Level
                 # The element on the stack is our parent
                 new_node.parent = stack[-1]
             # And now we become the final stack entry
-            if payload.Level != 66 : # 66 is just a pain in the patootie.
+            if payload.Level != 66: # 66 is just a pain in the patootie.
                 stack.append(new_node)
             # And let's let our parent know they have another child
             new_node.parent.children.append(new_node)
@@ -1821,17 +1825,17 @@ def MachineInterfaceHeirarchical(TabFile,possibilities) :
     #retval = r'variables=[{name="L01",value="{_groupvalue=\"Snap!\",fullname=\"RobertDubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"Dubner\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]'
     return retval
 
-def MetaPossibilities(args,TabFile,machine_interface_mode,rside,submode) :
+def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
     possibilities_1 = []
-    if TabFile.current_trapped_line > 0 :
+    if TabFile.current_trapped_line > 0:
         ## We are validly trapped someplace, so we can actually look for variables.
         from_digit = False
-        if len(args) >= 1 :
-            if args[0].find('*') != -1 :
+        if len(args) >= 1:
+            if args[0].find('*') != -1:
                 # If the first, presumably single, argument contains an asterisk, then
                 # he is asking for a list of variables and values:
                 possibilities_1 = TabFile.var_trie.GetAllPossibilities()
-            elif args[0].find('?') != -1 :
+            elif args[0].find('?') != -1:
                 # If the first, presumably single, argument contains a question mark,
                 # then we need to round up the usual suspects.
 
@@ -1842,32 +1846,32 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside,submode) :
                 # rather than NEXT.  By keeping one stage of stickiness, the display of variables
                 # will be a bit more like what the user probably expects.
 
-                if len(TabFile.current_full_path) > 0 :
-                    qmrange = TabFile.question_mark_range;
-                    if qmrange < 0 :
+                if len(TabFile.current_full_path) > 0:
+                    qmrange = TabFile.question_mark_range
+                    if qmrange < 0:
                         qmrange = 1000000000
                     return_string = subprocess.check_output(["cobcd-rw", \
                                                               TabFile.current_full_path, \
                                                               str(TabFile.current_trapped_line), \
-                                                              str(qmrange) ])
+                                                              str(qmrange)])
                     tokens = return_string.split()
                     new_dogs = set()
-                    for token in tokens :
+                    for token in tokens:
                         token = token.decode("utf-8")
                         new_dogs = new_dogs.union(set(TabFile.var_trie.GetListOfExactPossibilities(token)))
                     possibilities_1 = list(TabFile.old_dogs.union(new_dogs))
                     TabFile.old_dogs = new_dogs
-            elif args[0].isdigit() :
+            elif args[0].isdigit():
                 from_digit = True
                 # if the first, presumably single, argument is a number, then he is looking
                 # for a short-term memory entry.
 
                 # Pick up the 1-based value indexed by the argument:
                 index = int(args[0])-1
-                if index >= 0 and index < len(GV_GlobalVariables.ShortTermMemory) :
+                if index >= 0 and index < len(GV_GlobalVariables.ShortTermMemory):
                     # If index is valid, pick up the short-term memory entry
                     possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
-            else :
+            else:
                 # There are one or more arguments.  Use our clever routine
                 # to come up with the possibilities_1:
                 possibilities_1 = TabFile.var_trie.GetListOfPossibilities(args)
@@ -1878,72 +1882,72 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside,submode) :
     # have to fetch all the variables data twice.  But, heck.
 
     possibilities = []
-    for payload_index in possibilities_1 :
+    for payload_index in possibilities_1:
         payload = TabFile.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(TabFile.line_list , False)
-        if not payload.not_in_context :
+        payload.FetchVariableData(TabFile.line_list, False)
+        if not payload.not_in_context:
             possibilities.append(payload_index)
 
     # What we do now depends on how many possibilities there are
     possibilities.sort()
 
-    if len(possibilities) == 1 and machine_interface_mode and not rside and args[0] != '*' and args[0] != '?' :
+    if len(possibilities) == 1 and machine_interface_mode and not rside and args[0] != '*' and args[0] != '?':
         # Very special case.  This was a `p/m something`, which is what happens when
         # the -data-evaluate-expression command is issued by Visual Studio Code.  I considered creating
         # a unique 'print/e ' command, but then I realized that VSC never issues a 'p/m something' unless there
         # is also an 'rside'.  So, this code is in response to a `-data-evalute-expression` equivalent command
         payload_index = possibilities[0]
         payload = TabFile.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(TabFile.line_list , False)
+        payload.FetchVariableData(TabFile.line_list, False)
         s = 'value="' + MachineInterfaceBodyAlt(payload.display_body) + '"'
         print(s)
         possibilities = []
         return possibilities
 
-    if len(possibilities) > 1 or machine_interface_mode :
+    if len(possibilities) > 1 or machine_interface_mode:
         # In machine_interface mode, we just return the possibility(ies).  In human
         # mode, if there is more than one, we create a numbered list; the user can later
         # specify a variable by the number
-        if machine_interface_mode :
+        if machine_interface_mode:
             # Because we are going to be showing the data in a heirarchical way,
             # we want to be sure every sub-level of a 01 Level variable is visible:
-            ppp = set(possibilities);
-            for i in possibilities :
+            ppp = set(possibilities)
+            for i in possibilities:
                 tokens = TabFile.var_trie.storage_list[i].Name.split('/')
-                var  = tokens[-2]
+                var = tokens[-2]
                 prog = tokens[-1]
-                u = i-1;
-                while u >= 0 :
+                u = i-1
+                while u >= 0:
                     tokens = TabFile.var_trie.storage_list[u].Name.split('/')
-                    if tokens[-2] != var or tokens[-1] != prog :
-                        break;
+                    if tokens[-2] != var or tokens[-1] != prog:
+                        break
                     ppp.add(u)
-                    u -= 1 ;
-                d = i+1;
-                while d < len(TabFile.var_trie.storage_list) :
+                    u -= 1
+                d = i+1
+                while d < len(TabFile.var_trie.storage_list):
                     tokens = TabFile.var_trie.storage_list[d].Name.split('/')
-                    if tokens[-2] != var or tokens[-1] != prog :
-                        break;
+                    if tokens[-2] != var or tokens[-1] != prog:
+                        break
                     ppp.add(d)
-                    d += 1 ;
+                    d += 1
 
             possibilities = list(ppp)
             possibilities.sort()
 
-            #s = MachineInterfaceFlat(TabFile,possibilities)
-            s = MachineInterfaceHeirarchical(TabFile,possibilities)
+            #s = MachineInterfaceFlat(TabFile, possibilities)
+            s = MachineInterfaceHeirarchical(TabFile, possibilities)
             print(s)
 
-        else :
+        else:
             GV_GlobalVariables.ShortTermMemory = []
 
             # This is human-interactive mode
             # and show them to our user
             line_counter = 1
-            for payload_index in possibilities :
+            for payload_index in possibilities:
                 payload = TabFile.var_trie.storage_list[payload_index]
-                payload.FetchVariableData(TabFile.line_list , False)
-                if not payload.not_in_context :
+                payload.FetchVariableData(TabFile.line_list, False)
+                if not payload.not_in_context:
                     GV_GlobalVariables.ShortTermMemory.append(payload_index)
                     s = "{0:2} : ".format(line_counter)
                     line_counter += 1
@@ -1951,14 +1955,14 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside,submode) :
                     s += " : "
 
                     body = payload.display_body
-                    if submode == 'x' and len(payload.data) <= 16 :
+                    if submode == 'x' and len(payload.data) <= 16:
                         body = payload.display_body_hex
 
                     s += body
                     retval = OurPrint(NoNulls(s))
-                    if retval == "Quit" :
-                        break;
-    if len(possibilities) == 1 and not from_digit :
+                    if retval == "Quit":
+                        break
+    if len(possibilities) == 1 and not from_digit:
         GV_GlobalVariables.ShortTermMemory = [possibilities[0]]
 
     return possibilities
@@ -1973,7 +1977,7 @@ def MetaPossibilities(args,TabFile,machine_interface_mode,rside,submode) :
 # do at least *some* debugging in Visual Studio even though the gdb object
 # isn't available.  Bob Dubner, 2019-07-23
 
-class CPrintWorker() :
+class CPrintWorker():
     """Does most of the non-gdb work of CPrint()"""
 
     # By creating this worker, we can use a Python debugging package to
@@ -1982,14 +1986,10 @@ class CPrintWorker() :
         self.current_source_file = ""
         self.sticky_display_mode = os.environ.get("CPRINT_V", '0')
         self.question_mark_range = int(os.environ.get("CPRINT_R", '6'))
-        self.use_cprint = os.environ.get("CPRINT", "@CPRINT@")
-        if self.use_cprint[0] == '@' :
-            self.use_cprint = "print" # this is the default
-        elif self.use_cprint == "1" :
-            self.use_cprint = "cprint" # this is legacy behavior, before I generalized it to "anything"
+        self.use_cprint = os.environ.get("CPRINT", "cprint")
         self.machine_interface_mode = False
 
-    def ProcessDisplayMode(self,args,TabFile) :
+    def ProcessDisplayMode(self, args, TabFile):
         self.machine_interface_mode = False
         # Make sure the current display mode is the same as the session mode
         self.current_display_mode = self.sticky_display_mode
@@ -1997,8 +1997,8 @@ class CPrintWorker() :
         self.current_display_submode = ''
 
         # Now see if he wants to change it
-        if len(args) >= 1 :
-            if args[0] == '/h' :
+        if len(args) >= 1:
+            if args[0] == '/h':
                 print("COBOL print command usage:")
                 print("'print/h' prints this message.")
                 print("'print <arg>' shows <arg> using session-default formatting")
@@ -2022,214 +2022,300 @@ class CPrintWorker() :
                 return args
 
             # if the first argument is /d, turn on our debug flag:
-            if args[0] == '/d' :
+            if args[0] == '/d':
                 self.current_display_mode = 'd'
                 args.pop(0)
-            if args[0] == '/x' :
+            if args[0] == '/x':
                 self.current_display_submode = 'x'
                 args.pop(0)
-            if args[0] == '/b' :
+            if args[0] == '/b':
                 self.current_display_submode = 'b'
                 args.pop(0)
-            elif args[0] == '/m' :
+            elif args[0] == '/m':
                 self.machine_interface_mode = True
                 args.pop(0)
-            elif args[0] == '/v' :
+            elif args[0] == '/v':
                 self.current_display_mode = '0'
                 args.pop(0)
-            elif len(args[0]) >= 3 and args[0][0:2] == '/v' :
+            elif len(args[0]) >= 3 and args[0][0:2] == '/v':
                 # This is a display v-code:
                 v_code = args[0][2]
                 args.pop(0)
-                if v_code in "012d" :
+                if v_code in "012d":
                     # It's a valid display_mode
                     self.current_display_mode = v_code
                     # if len(args) is down to zero, then any /v code established here
                     # becomes the new session default.  Otherwise, it'll apply only once
-                    if len(args) == 0 :
+                    if len(args) == 0:
                         self.sticky_display_mode = self.current_display_mode
-            elif len(args) == 2 and args[0] == '/r' and args[1].lstrip('-').isnumeric()  :
+            elif len(args) == 2 and args[0] == '/r' and args[1].lstrip('-').isnumeric():
                 # This is a request to change the question_mark_range
                 self.question_mark_range = int(args[1])
                 print("The 'p ?' range has been set to +/-", self.question_mark_range, "lines")
                 TabFile.old_dogs = set()
                 args = ['?']
-            elif len(args[0]) > 2 and args[0][0:2] == '/r'  :
+            elif len(args[0]) > 2 and args[0][0:2] == '/r':
                 # This is a request to change the question_mark_range
                 range = args[0][2:]
-                if range.lstrip('-').isnumeric() :
+                if range.lstrip('-').isnumeric():
                     self.question_mark_range = int(range)
-                if int(self.question_mark_range) < 0 :
+                if int(self.question_mark_range) < 0:
                     print("The 'p ?' range has been set to the same as 'p *'")
-                else :
+                else:
                     print("The 'p ?' range has been set to", self.question_mark_range)
                 args = ['?']
-            elif len(args) == 1 and args[0] == '/r' :
-                if int(self.question_mark_range) < 0 :
+            elif len(args) == 1 and args[0] == '/r':
+                if int(self.question_mark_range) < 0:
                     print("The 'p ?' range is currently the same as 'p *'")
-                else :
-                    print("The 'p ?' range is currently +/-", self.question_mark_range,"lines")
+                else:
+                    print("The 'p ?' range is currently +/-", self.question_mark_range, "lines")
                 args = []
 
         return args
 
-    def FormattedDisplay(self,payload ) :
+    def FormattedDisplay(self, payload):
         # see the comments in ProcessDisplayMode()
         body = payload.display_body
-        if self.current_display_submode == 'x' and len(payload.data) <= 16 :
+        if self.current_display_submode == 'x' and len(payload.data) <= 16:
             body = payload.display_body_hex
 
-        if self.current_display_submode == 'b' and len(payload.data) <= 8 :
+        if self.current_display_submode == 'b' and len(payload.data) <= 8:
             ## kludge.  Convert the hex to binary:
             body = ""
             index = 2
-            while index < len(payload.display_body_hex) and index < 8*2+2 :
-                hexchar = int(payload.display_body_hex[index]) ;
+            while index < len(payload.display_body_hex) and index < 8*2+2:
+                hexchar = int(payload.display_body_hex[index])
                 mask = 8
-                while mask > 0 :
-                    if hexchar & mask :
+                while mask > 0:
+                    if hexchar & mask:
                         body += '1'
-                    else :
+                    else:
                         body += '0'
                     mask >>= 1
                 index += 1
 
-        if self.current_display_mode == '0' :
-            print(payload.display_name," : ",body)
+        if self.current_display_mode == '0':
+            print(payload.display_name, " : ", body)
             pass
-        elif self.current_display_mode ==  '1' :
+        elif self.current_display_mode == '1':
             print(body)
             pass
-        elif self.current_display_mode ==  '2' :
+        elif self.current_display_mode == '2':
             print(payload.display_name)
             print(body)
             pass
-        else : # self.current_display_mode ==  'd' :
+        else: # self.current_display_mode ==  'd':
             payload.ShowFields()
             pass
 
-    def ProcessArguments(self, TabFile, arguments) :
+    def ProcessArguments(self, TabFile, arguments):
         # The command is typically "print A B C" or "print/d A B C"
         # There is also the possibility of an '=' character, whereby the
         # value after the '=' is assigned to the variable described to the left
-        preargs = arguments.split('=',1)
+        preargs = arguments.split('=', 1)
 
         rside = None
-        if len(preargs) > 1  :
+        if len(preargs) > 1:
             rside = preargs[1]
 
         # The variable name side is to the left of any '=' character
         args = []
         argsargs = preargs[0].split()
-        for arg in argsargs :
+        for arg in argsargs:
             args.append(arg)
 
         self.question_mark_range = TabFile.question_mark_range
-        args = self.ProcessDisplayMode(args,TabFile)
+        args = self.ProcessDisplayMode(args, TabFile)
         TabFile.question_mark_range = self.question_mark_range
 
-        possibilities = MetaPossibilities(args,TabFile,self.machine_interface_mode,rside,self.current_display_submode)
-        if len(possibilities) == 1 :
+        possibilities = MetaPossibilities(args, TabFile, self.machine_interface_mode, rside, self.current_display_submode)
+        if len(possibilities) == 1:
             # There is but one possibility
             # Pick up the payload from the list
             payload = TabFile.var_trie.storage_list[possibilities[0]]
 
-            if rside :
+            if rside:
                 payload.PutDataAsString(rside)
 
-                if self.machine_interface_mode :
+                if self.machine_interface_mode:
                     #body = MachineInterfaceBody(payload.display_body)
 
                     s = payload.display_name + " set to " + payload.display_body
                     print(s)
 
-            if not self.machine_interface_mode :
+            if not self.machine_interface_mode:
                 # Human-interface:
                 # Fetch the data again, just in case he executed some instructions
                 # since short-term-memory was established
-                payload.FetchVariableData(TabFile.line_list , True)
+                payload.FetchVariableData(TabFile.line_list, True)
                 # And display the variable according to the current list v-level
                 self.FormattedDisplay(payload)
 
-class CWatchWorker() :
+class CWatchWorker():
     """Does most of the non-gdb work of CWatch()"""
 
     def __init__(self):
         self.current_display_mode = "0"
 
-    def SetTheWatchpoint(self, TabFile, payload ) :
-        command = "watch *(char(*)"
-        command += '[' + str(payload.Length) +'])'
-        command += '(' + hex(payload.location_of_data) + ')'
+    def SetTheWatchpoint(self, TabFile, payload, wp_type, wp_lenspec):
+        wp_startloc = payload.location_of_data
+        wp_length = payload.Length
 
-        watch_text = GdbExecute(currentframe(),command)
-        print(watch_text)
+        if wp_lenspec:
+            lenspec = wp_lenspec.split(':')
+            if len(lenspec) != 2:
+                print("Offset and length specification not recognized")
+                return
+            else:
+                if lenspec[0] != '' and int(lenspec[0]) <= wp_length:
+                    wp_startloc += int(lenspec[0]) - 1
+                    wp_length -= int(lenspec[0]) - 1
+                elif lenspec[0] != '' and int(lenspec[0]) > wp_length:
+                    print("Startposition > variable length: {0}".format(wp_length))
+                    return
 
-    def ProcessWArgumentsW(self, TabFile, arguments) :
-        # The command is typically "cw A
+                if lenspec[1] != '' and int(lenspec[1]) <= wp_length:
+                    wp_length = int(lenspec[1])
+                else:
+                    print("Length specifier to large, max: {0}".format(wp_length))
+                    return
+
+        spec = "*(char(*)"
+        spec += '[' + str(wp_length) +'])'
+        spec += '(' + hex(wp_startloc) + ')'
+
+        print(spec)
+        if wp_type == 'WPW':
+            bp = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_WRITE)
+        elif wp_type == 'WPR':
+            bp = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_READ)
+        elif wp_type == 'WPRW':
+            bp = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_ACCESS)
+        else:
+            print("Internal error: Watchpoint type not recognized")
+
+    def print_help(self):
+        print("COBOL cwatch command usage:")
+        print("'cwatch/h' prints this message.")
+        print("'cwatch VARIABLE [(start:length)]'    set a (write) watch on this variable")
+        print("'cwatch/w VARIABLE [(start:length)]'  set a write watch on this variable")
+        print("'cwatch/r VARIABLE [(start:length)]'  set a read watch on this variable")
+        print("'cwatch/rw VARIABLE [(start:length)]' set a read/write watch on this variable")
+
+    def ProcessWArgumentsW(self, TabFile, arguments):
+        wp_type = 'WPW'
+        wp_lenspec = ""
 
         args = arguments.split()
+        if not args:
+            print("No variable given\n")
+            self.print_help()
+            return
 
-        possibilities = MetaPossibilities(args,TabFile, False, False,'')
+        if args[0] == '/r':
+            wp_type = 'WPR'
+            del args[0]
+        elif args[0] == '/w':
+            wp_type = 'WPW'
+            del args[0]
+        elif args[0] == '/rw':
+            wp_type = 'WPRW'
+            del args[0]
+        elif args[0] == '/h':
+            self.print_help()
+            return
+        elif args[0].startswith('/'):
+            print("Option not recognized\n")
+            self.print_help()
+            return
 
-        if len(possibilities) == 1 :
+        if len(args) == 2:
+            if args[1].startswith('(') and args[1].endswith(')'):
+                wp_lenspec = args[1][1:-1]
+                del args[1]
+            else:
+                print("Argument not recognized")
+                return
+        elif len(args) == 1 and args[0].find('(') != -1 and args[0].find(')') != -1:
+            wp_lenspec = args[0][args[0].index('(')+1:-1]
+            args[0] = args[0][:args[0].index('(')]
+
+        possibilities = MetaPossibilities(args, TabFile, False, False, '')
+
+        if len(possibilities) == 1:
             payload_number = possibilities[0]
             #print("Watch Payload number is ", payload_number)
 
             # Pick up the payload from the list
             payload = TabFile.var_trie.storage_list[payload_number]
-            payload.FetchVariableData(TabFile.line_list , False)
+            payload.FetchVariableData(TabFile.line_list, False)
 
             # And go set the Watchpoint
-            self.SetTheWatchpoint(TabFile, payload)
+            self.SetTheWatchpoint(TabFile, payload, wp_type, wp_lenspec)
+        elif len(possibilities) == 0:
+            print("Variable not found")
 
-class CPrint (gdb.Command) :
+class CPrint(gdb.Command):
     """Prints COBOL-NAMED variables when debugging cobst processed object files."""
 
-    def __init__ (self):
+    def __init__(self):
         ##############################################################################
         ## The version number in the next section is updated by a Linux bash script. #
         ## The text "Version x.x" has to appear in square brackets.                  #
         ## Don't mess with it!                                                       #
         ##############################################################################
         self.Worker = CPrintWorker()
-        self.TabFile = TabFileInformation();
+        self.TabFile = TabFileInformation()
         self.TabFile.question_mark_range = self.Worker.question_mark_range
 
-        print('Registering CPrint (Usage is "' + self.Worker.use_cprint + ' <COBOL identifier>") [Version 4.14]')
-        super (CPrint, self).__init__ (self.Worker.use_cprint, gdb.COMMAND_USER)
+        print('Registering CPrint (Usage is "' + self.Worker.use_cprint + ' <COBOL identifier>") [Version 4.15]')
+        super(CPrint, self).__init__(self.Worker.use_cprint, gdb.COMMAND_USER)
 
-    def invoke (self, arguments, from_tty):
+    def invoke(self, arguments, from_tty):
         # pick up the name of the current source file
-        try :
+        try:
             # Check if this is a special case.  (Enough of these will
             # mean putting this in a separate function.)
             tokens = arguments.split()
-            if len(tokens) == 3 and tokens[0] == "set" and tokens[1] == "repeat" and tokens[2].isdigit() :
+            if len(tokens) == 3 and tokens[0] == "set" and tokens[1] == "repeat" and tokens[2].isdigit():
                 GV_GlobalVariables.repeat_count = int(tokens[2])
-                if GV_GlobalVariables.repeat_count < 1 :
+                if GV_GlobalVariables.repeat_count < 1:
                     GV_GlobalVariables.repeat_count = 1000000
                 return
 
             self.TabFile.ReadSymbolTableText()
-            self.Worker.ProcessArguments(self.TabFile,arguments)
-        except :
+            self.Worker.ProcessArguments(self.TabFile, arguments)
+        except:
             traceback.print_exc()
 
-class CWatch (gdb.Command) :
-    """Used for creating COBOL-NAMED watchpoints when debugging cobst processed object files."""
+class CWatch(gdb.Command):
+    """Used for creating COBOL-NAMED watchpoints when debugging cobst processed object files.
 
-    def __init__ (self):
-        super (CWatch, self).__init__ ("cwatch", gdb.COMMAND_USER)
+Set a watchpoint for an expression.
+Usage: cwatch [/h|/r|/w|/rw] VARIABLE [(start:length)]
+A watchpoint stops execution of your program whenever the value of an expression changes.
+
+    cwatch/h             prints this message.
+    cwatch VARIABLE      set a (write) watch on this variable
+    cwatch/w VARIABLE    set a write watch on this variable
+    cwatch/r VARIABLE    set a read watch on this variable
+    cwatch/rw VARIABLE   set a read/write watch on this variable
+
+    if (start:length) is given the VARIABLE is watched with this startpoint and length
+
+    """
+
+    def __init__(self):
+        super(CWatch, self).__init__("cwatch", gdb.COMMAND_USER)
         print('Registering CWatch (Usage is "cwatch <COBOL identifier>")')
         self.Worker = CWatchWorker()
-        self.TabFile = TabFileInformation();
+        self.TabFile = TabFileInformation()
 
-    def invoke (self, arguments, from_tty):
-        try :
+    def invoke(self, arguments, from_tty):
+        try:
             self.TabFile.ReadSymbolTableText()
-            self.Worker.ProcessWArgumentsW(self.TabFile,arguments)
-        except :
+            self.Worker.ProcessWArgumentsW(self.TabFile, arguments)
+        except:
             traceback.print_exc()
 
 CPrint()
