@@ -6,22 +6,22 @@ define stutter_step
     set variable $_exitcode=1031
     while $_exitcode==1031
         echo 
-        p *
-        p ?
-        p/x 1
+        cprint *
+        cprint ?
+        cprint/x 1
         step
         end
     end
 
 file test
 
-### Make sure we have a known 'p ?' range
+### Make sure we have a known 'cprint ?' range
 echo KNOWN GOOD LINES: 2\n
-p/r 6
+cprint/r 6
 
-### Make sure 'p *' is clean at the beginning
+### Make sure 'cprint *' is clean at the beginning
 echo KNOWN GOOD LINES: 1\n
-p *
+cprint *
 
 ### Just run the whole program clean, to establish a baseline
 ### (We don't want to think we have a debugging problem when
@@ -30,9 +30,9 @@ echo KNOWN GOOD START\n
 r
 echo KNOWN GOOD FINISH\n
 
-### Make sure 'p *' is clean at the end
+### Make sure 'cprint *' is clean at the end
 echo KNOWN GOOD LINES: 1\n
-p *
+cprint *
 
 b 9
 run
@@ -50,41 +50,41 @@ b INDENTER.cpy:2
 echo KNOWN GOOD START\n
 r
 select-frame 8
-p *
-p ?
-p/x 1
+cprint *
+cprint ?
+cprint/x 1
 select-frame 7
-p *
-p ?
-p/x 1
+cprint *
+cprint ?
+cprint/x 1
 select-frame 6
-p *
-p ?
-p/x 1
+cprint *
+cprint ?
+cprint/x 1
 select-frame 5
-p *
-p ?
-p/x 1
+cprint *
+cprint ?
+cprint/x 1
 select-frame 4
-p *
-p ?
-p/x 1
+cprint *
+cprint ?
+cprint/x 1
 select-frame 3
-p *
-p ?
-p/x 1
+cprint *
+cprint ?
+cprint/x 1
 select-frame 2
-p *
-p ?
-p/x 1
+cprint *
+cprint ?
+cprint/x 1
 select-frame 1
-p *
-p ?
-p/x 1
+cprint *
+cprint ?
+cprint/x 1
 select-frame 0
-p *
-p ?
-p/x 1
+cprint *
+cprint ?
+cprint/x 1
 c
 echo KNOWN GOOD FINISH\n
 
