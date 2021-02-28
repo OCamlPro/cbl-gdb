@@ -2184,7 +2184,6 @@ class CWatchWorker():
         spec += '[' + str(wp_length) +'])'
         spec += '(' + hex(wp_startloc) + ')'
 
-        print(spec)
         if wp_type == 'WPW':
             bp = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_WRITE)
         elif wp_type == 'WPR':
@@ -2252,8 +2251,110 @@ class CWatchWorker():
 
             # And go set the Watchpoint
             self.SetTheWatchpoint(TabFile, payload, wp_type, wp_lenspec)
-        elif len(possibilities) == 0:
+        elif not possibilities:
             print("Variable not found")
+
+class CBreakWorker():
+
+    def __init__(self):
+        self.init = 1
+
+    def SetBreakPoint(self, spec):
+        break_point = gdb.Breakpoint(spec, gdb.BP_BREAKPOINT)
+        return break_point
+
+    def SetCondition(self, break_point, condition):
+        break_point.condition = condition
+
+    def ProcessBArgumentsB(self, tab_file, arguments):
+        args = arguments.split()
+        if arguments == "":
+            break_point = self.SetBreakPoint("")
+        elif len(args) == 1 and args[0].isdigit():
+            break_point = self.SetBreakPoint(args[0])
+        elif len(args) == 1 and isinstance(args[0], str):
+            spec = "{0}_".format(args[0])
+            try:
+                spec_ref = gdb.parse_and_eval(spec)
+            except:
+                print("Module not found")
+                return
+
+            break_point = self.SetBreakPoint("{0}_:ENTRY_{0}".format(args[0]))
+        elif len(args) == 2 and args[0] == "section" and isinstance(args[1], str):
+            mod_sec = args[1].split(":")
+            if len(mod_sec) == 1:
+                break_section = mod_sec[0].replace('-', '__')
+                break_module = ""
+            elif len(mod_sec) == 2:
+                break_section = mod_sec[1].replace('-', '__')
+                break_module = mod_sec[0]
+
+#            spec = "SECTION_{0}".format(args[1].replace('-', '__'))
+#            print("=={0}==".format(spec))
+#            try:
+#                spec_ref = gdb.parse_and_eval(spec)
+#            except:
+#                print("Section not found")
+#                return
+
+            if not break_module:
+                spec = "SECTION_{0}".format(break_section)
+            else:
+                spec = "{0}_:SECTION_{1}".format(break_module, break_section)
+            break_point = self.SetBreakPoint(spec)
+        elif len(args) == 4:
+            if not args[0].isdigit():
+                print('First argument is not a line number')
+                return
+
+            tab_file.ReadSymbolTableText()
+            possibilities = MetaPossibilities(args[1], tab_file, False, False, '')
+
+            if len(possibilities) == 1:
+                payload_number = possibilities[0]
+
+                # Pick up the payload from the list
+                payload = tab_file.var_trie.storage_list[payload_number]
+                payload.FetchVariableData(tab_file.line_list, False)
+            elif not possibilities:
+                print("Variable not found")
+                return
+
+            if payload.AttrType in (33, 34, 35):
+                if args[2] in ("=", "=i", "==", "==i", "<>", "<>i", "=~", ):
+                    break_point = self.SetBreakPoint(args[0])
+                    if args[2][-1:] == "i":
+                        cmp_func = "strncasecmp"
+                    else:
+                        cmp_func = "strncmp"
+
+                    if args[2] in ("=", "=i", "==", "==i"):
+                        cmp_len = len(args[3])
+                        self.SetCondition(break_point, "(int){0}((char *)cob_get_field_str_buffered(&{1}), \"{2}\", {3}) == 0".format(cmp_func, payload.Fname, args[3], cmp_len))
+                    elif args[2] in ("<>", "<>i"):
+                        cmp_len = len(args[3])
+                        self.SetCondition(break_point, "(int){0}((char *)cob_get_field_str_buffered(&{1}), \"{2}\", {3}) != 0".format(cmp_func, payload.Fname, args[3], cmp_len))
+                    else:
+                        self.SetCondition(break_point, "$_regex((char *)cob_get_field_str_buffered(&{0}), \"{1}\")".format(payload.Fname, args[3]))
+                else:
+                    print("Condition not implemented")
+                    return
+            elif payload.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27) and args[3].isdigit():
+                if args[2] in ("==", "<", "<=", ">", ">=", "<>"):
+                    break_point = self.SetBreakPoint(args[0])
+                    self.SetCondition(break_point, "(double)atof((char *)cob_get_field_str_buffered(&{0})) {1} {2}".format(payload.Fname, args[2], args[3]))
+                else:
+                    print("Condition not implemented")
+            else:
+                print("Not yet implemented")
+                return
+        else:
+            print('Breakpoint parameters not recognized')
+            return
+
+CBLDBG_WORKER = CPrintWorker()
+CBLDBG_TABFILE = TabFileInformation()
 
 class CPrint(gdb.Command):
     """Prints COBOL-NAMED variables when debugging cobst processed object files."""
@@ -2265,10 +2366,10 @@ class CPrint(gdb.Command):
         ## Don't mess with it!                                                       #
         ##############################################################################
         self.Worker = CPrintWorker()
-        self.TabFile = TabFileInformation()
+        self.TabFile = CBLDBG_TABFILE
         self.TabFile.question_mark_range = self.Worker.question_mark_range
 
-        print('Registering CPrint (Usage is "' + self.Worker.use_cprint + ' <COBOL identifier>") [Version 4.15]')
+        print('Registering CPrint (Usage is "' + self.Worker.use_cprint + ' <COBOL identifier>") [Version 4.16]')
         super(CPrint, self).__init__(self.Worker.use_cprint, gdb.COMMAND_USER)
 
     def invoke(self, arguments, from_tty):
@@ -2309,7 +2410,7 @@ A watchpoint stops execution of your program whenever the value of an expression
         super(CWatch, self).__init__("cwatch", gdb.COMMAND_USER)
         print('Registering CWatch (Usage is "cwatch <COBOL identifier>")')
         self.Worker = CWatchWorker()
-        self.TabFile = TabFileInformation()
+        self.TabFile = CBLDBG_TABFILE
 
     def invoke(self, arguments, from_tty):
         try:
@@ -2318,5 +2419,45 @@ A watchpoint stops execution of your program whenever the value of an expression
         except:
             traceback.print_exc()
 
+class CBreak(gdb.Command):
+    """Used for creating COBOL-NAMED breakpoints when debugging cobst processed object files.
+
+Set a breakpoint for an expression.
+Usage: cbreak
+A breakpoint stops execution of your program whenever the expression matches
+
+    cbreak                                  set a breakpoint on the current line
+    cbreak MODULE                           set a breakpoint on MODULE entry
+    cbreak section SECTON                   set a breakpoint on SECTION entry
+    cbreak LINENR                           set a breakpoint on line number (LINENR)
+    cbreak LINENR VARIABLE =[i] MSTRING     set a breakpoint on line number (LINENR)
+                                            for string VARIABLE equals MSTRING
+    cbreak LINENR VARIABLE <>[i] MSTRING    set a breakpoint on line number (LINENR)
+                                            for string VARIABLE not equal MSTRING
+    cbreak LINENR VARIABLE =~ REGEXP        set a breakpoint on line number (LINENR)
+                                            for string VARIABLE when matching REGEXP
+    cbreak LINENR NUMVAR condition VALUE    set a breakpoint on line number (LINENR)
+                                            for numeric VARIABLE condition and value
+                                            where condition is == < <= > >= <>
+
+    break 28 VARIABLE = breakstring
+    break 28 VARIABLE =i breakstring        option i for ignore case
+    break 28 VARIABLE =~ ^break*
+
+    break 29 VARIABLE > 12
+    """
+
+    def __init__(self):
+        self.Worker = CBreakWorker()
+        self.tab_file = CBLDBG_TABFILE
+
+        print('Registering CBreak (Usage is "cbreak <line number> <COBOL identifier> == <value>")')
+        super(CBreak, self).__init__("cbreak", gdb.COMMAND_USER)
+
+    def invoke(self, arguments, from_tty):
+        self.Worker.ProcessBArgumentsB(self.tab_file, arguments)
+
+
 CPrint()
 CWatch()
+CBreak()
