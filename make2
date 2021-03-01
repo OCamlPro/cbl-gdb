@@ -1,0 +1,5 @@
+#!/usr/bin/sh
+# Useful on RH7 systems without Python3
+# Run this script manually so that the following scripts work properly
+sed -i 's|#!/usr/bin/python3|#!/usr/bin/python2|g' cobcd
+sed -i 's|#!/usr/bin/python3|#!/usr/bin/python2|g' tests/strip-diff

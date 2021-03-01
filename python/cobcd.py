@@ -1967,16 +1967,6 @@ def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
 
     return possibilities
 
-# Note on the program structure:
-#
-# The Python extension to gdb is plenty powerful, but it is infuriating
-# in one regard: Debugging.  I've gotten used to source level debugging, and
-# the irony of having to do print-level debugging in an extension to a source-
-# level debugger is delicious, but mainly in the sense that some people like
-# the taste of beetles.  So, I have jumped through some hoops so that I could
-# do at least *some* debugging in Visual Studio even though the gdb object
-# isn't available.  Bob Dubner, 2019-07-23
-
 class CPrintWorker():
     """Does most of the non-gdb work of CPrint()"""
 
@@ -1986,7 +1976,10 @@ class CPrintWorker():
         self.current_source_file = ""
         self.sticky_display_mode = os.environ.get("CPRINT_V", '0')
         self.question_mark_range = int(os.environ.get("CPRINT_R", '6'))
-        self.use_cprint = os.environ.get("CPRINT", "cprint")
+        self.use_cprint = os.environ.get("CPRINT", "@CPRINT@")
+        if self.use_cprint[0] == '@':
+            ## There's a reason for this; please see install: in the Makefile
+            self.use_cprint = "cprint"
         self.machine_interface_mode = False
 
     def ProcessDisplayMode(self, args, TabFile):
