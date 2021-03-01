@@ -55,7 +55,8 @@ install:
 # If requested adjust default COBCDFMODE
 	@if [ X"$(COBCDFMODE)" != X"" ] ; then sed -i "s#@COBCDFMODE@#$(COBCDFMODE)#" $(DESTDIR)$(prefix)/bin/cobcd ; fi
 # If requested adjust default CPRINT command
-	@if [ X"$(CPRINT)" != X"" ] ; then sed -i "s#@CPRINT@#$(CPRINT)#" $(DESTDIR)$(prefix)/bin/cobcd.py ; fi
+# Note: as of 4.17, the following option no longer exists
+#	@if [ X"$(CPRINT)" != X"" ] ; then sed -i "s#@CPRINT@#$(CPRINT)#" $(DESTDIR)$(prefix)/bin/cobcd.py ; fi
 # Output .gdbinit instructions only if DESTDIR is empty.
 # When non-empty, this is almost certainly part of a package building exercise,
 # and the message is irrelevant and confusing.

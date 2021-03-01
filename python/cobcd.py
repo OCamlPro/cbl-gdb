@@ -40,17 +40,18 @@
 
 #   This module implements the gdb extension commands cprint and cwatch
 
-## Catalog of environment variables interpreted by this module:
-##
-## os.environ.get('CPRINT_D','0')   When non-zero, causes verbose output
-## os.environ.get('CPRINT_V', '0')  Default formatting p/v N value
-## os.environ.get('CPRINT_R', '6')) Default p/? range
-## os.environ.get('CPRINT', '<cmd>'))   When non-blank, registers "cmd" instead of "cprint" as the command
+# Catalog of environment variables interpreted by this module:
+#
+# os.environ.get('CPRINT_D','0')   When non-zero, causes verbose output
+# os.environ.get('CPRINT_V', '0')  Default formatting p/v N value
+# os.environ.get('CPRINT_R', '6')) Default p/? range
+# os.environ.get('CPRINT', '<cmd>'))   When non-blank, registers "cmd" instead of "cprint" as the command
 
 from __future__ import print_function
 
 import re
 import sys
+import platform
 import os
 import traceback
 import datetime
@@ -138,6 +139,7 @@ COB_FLAG_REAL_SIGN      = (1 << 10)  # /* 0x0400 */
 COB_FLAG_BINARY_TRUNC   = (1 << 11)  # /* 0x0800 */
 COB_FLAG_CONSTANT       = (1 << 12)  # /* 0x1000 */
 
+
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
     limiting_debug_level = 1
@@ -150,6 +152,7 @@ def GdbExecute(curframe, command):
             if len(line) > 0:
                 print("####       retval:", line)
     return retval
+
 
 def GdbExecute2(curframe, command, debug_level):
     # It is up to the caller to handle exceptions
@@ -164,14 +167,15 @@ def GdbExecute2(curframe, command, debug_level):
                 print("####       retval:", line)
     return retval
 
+
 class GlobalVariables():
     def __init__(self):
-        ## Establish the debugging verbosity level:
+        # Establish the debugging verbosity level:
         self.debug_level = int(os.environ.get('CPRINT_D', '0'))
 
-        ## Let's figure out some stuff about the environment
+        # Let's figure out some stuff about the environment
         self.SizeofPointer = calcsize('P')  # Returns 4 or 8
-        self.byteorder = sys.byteorder # Returns "big" or "little"
+        self.byteorder = sys.byteorder  # Returns "big" or "little"
 
         if self.debug_level >= 1:
             print("#### SizeofPointer", self.SizeofPointer)
@@ -180,7 +184,9 @@ class GlobalVariables():
         self.ShortTermMemory = []
         self.repeat_count = 11  # Default value for "'0' <repeats 11 times>" logic
 
+
 GV_GlobalVariables = GlobalVariables()
+
 
 def NoNulls(s):
     ss = ""
@@ -190,11 +196,12 @@ def NoNulls(s):
         ss += ch
     return ss
 
-def OurPrint(s):
-    ## Use this routine when GDB might halt with a
-    ##    --Type <RET> for more, q to quit, c to continue without paging--
 
-    ## The following code catches the 'q' Quit option
+def OurPrint(s):
+    # Use this routine when GDB might halt with a
+    #    --Type <RET> for more, q to quit, c to continue without paging--
+
+    # The following code catches the 'q' Quit option
     retval = None
     try:
         print(s)
@@ -204,6 +211,7 @@ def OurPrint(s):
     except:
         traceback.print_exc()
     return retval
+
 
 def LeftRight(s, splitchar):
     """Splits what is presumably a numeric string with a possible
@@ -262,15 +270,16 @@ def Picture(s):
 
     return r
 
+
 def MachineInterfaceBody(s):
 
-#   This sequence:
-#   variables=[{name="L00L",value="{_groupvalue=\"Sn\\\"ap!\",fullname=\"Robert\\\"Dubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"\\\"Dubner\\\"\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]
+#  This sequence:
+#  variables=[{name="L00L",value="{_groupvalue=\"Sn\\\"ap!\",fullname=\"Robert\\\"Dubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"\\\"Dubner\\\"\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]
 #
-#   Results in a heirarchical display:
+#  Results in a heirarchical display:
 #
-#    L00L: Sn"ap!
-#        fullname : Robert"Dubner
+#  L00L: Sn"ap!
+#     fullname : Robert"Dubner
 #        L02: Crackle!
 #            firstname: Robert
 #            lastname: "Dubner"
@@ -278,11 +287,11 @@ def MachineInterfaceBody(s):
 #                firstname: Judy
 #                lastname: Ruderman
 #
-#   This one:  variables=[{name="L01",value="===\">\\/<\"==="}]
+#  This one:  variables=[{name="L01",value="===\">\\/<\"==="}]
 #
-#   Results in      ===">\/<"===
+#  Results in      ===">\/<"===
 #
-#   Counting up the backslashes is, to say the least, tricky
+#  Counting up the backslashes is, to say the least, tricky
 
     # Replace double-quotes and backslashes
     retval = ""
@@ -295,6 +304,7 @@ def MachineInterfaceBody(s):
             retval += ch
 
     return retval
+
 
 def MachineInterfaceBodyAlt(s):
 
@@ -310,11 +320,12 @@ def MachineInterfaceBodyAlt(s):
 
     return retval
 
+
 def ReplaceWithRepeatCountQuoted(s):
     # We know this guy has a leading quote, and presumably a trailing one
-    #print("ReplaceWithRepeatCountQuoted(1)", s)
+    # print("ReplaceWithRepeatCountQuoted(1)", s)
     retval = ""
-    ## Strip off the leading and trailing quotes
+    # Strip off the leading and trailing quotes
     s = s[1:-1]
     rabbit = 0
     fox = 0
@@ -323,70 +334,71 @@ def ReplaceWithRepeatCountQuoted(s):
     in_a_quoted_run = False
     number_of_repeated_runs = 0
     while rabbit < len(s):
-        ## Arriving here means:
-        ## We're here for the first time, or we just finished a run
-        ## So, we are going to pick up 'char', which is a candidate
-        ## for the start of a new run
+        # Arriving here means:
+        # We're here for the first time, or we just finished a run
+        # So, we are going to pick up 'char', which is a candidate
+        # for the start of a new run
 
         fox = rabbit
         char = s[rabbit]
         rabbit += 1
         while rabbit < len(s) and s[rabbit] == char:
-            ## This is where we proceed in a run.  Swallow up characters
-            ## that are the same as our candidate:
+            # This is where we proceed in a run.  Swallow up characters
+            # that are the same as our candidate:
             rabbit += 1
 
-        ## We have either run out of characters, or else
-        ## rabbit points to a character other than char
-        if rabbit - fox >= GV_GlobalVariables.repeat_count: ## This is a magic number
-            ## At 29, the <repeats> clause will be shorter than the replaced text
-            ## At 11, the string will be longer.  But 11 matches what gdb does
+        # We have either run out of characters, or else
+        # rabbit points to a character other than char
+        if rabbit - fox >= GV_GlobalVariables.repeat_count:  # This is a magic number
+            # At 29, the <repeats> clause will be shorter than the replaced text
+            # At 11, the string will be longer.  But 11 matches what gdb does
             if in_a_quoted_run:
-                ## We have to end the current ongoing string
-                ## and start this contraction with a prelude
+                # We have to end the current ongoing string
+                # and start this contraction with a prelude
                 retval += "\", "
-            ## and now we can start the contraction:
+            # and now we can start the contraction:
             retval += "\'"
             retval += char
             retval += "\' <repeats "
-            retval += str(rabbit-fox)
+            retval += str(rabbit - fox)
             retval += ' times>, '
             prior_contraction = True
             in_a_quoted_run = False
             number_of_repeated_runs += 1
         else:
-            ## The run is short enough that we just put the characters
-            ## into place
+            # The run is short enough that we just put the characters
+            # into place
             if not in_a_quoted_run:
-                ## We have to start the quote:
+                # We have to start the quote:
                 retval += "\""
                 in_a_quoted_run = True
-            ## Copy over characters until the fox catches up with the rabbit
+            # Copy over characters until the fox catches up with the rabbit
             while fox < rabbit:
                 fox += 1
                 retval += char
             prior_contraction = False
 
-    ## We have reached the end
+    # We have reached the end
     if prior_contraction:
-        ## strip off the unnecessary ', '
+        # strip off the unnecessary ', '
         retval = retval[:-2]
     if in_a_quoted_run:
         retval += "\""
 
-    #print("ReplaceWithRepeatCountQuoted(2)", retval)
+    # print("ReplaceWithRepeatCountQuoted(2)", retval)
     return retval
+
 
 def ReplaceWithRepeatCountBracketed(s):
     if (len(s) % 2) == 1:
-        ## We don't know what to do with an odd-length string.  We just don't
+        # We don't know what to do with an odd-length string.  We just don't
         return s
     # We know this guy has a leading bracket, and presumably a trailing one
     # In between are a stream of undecorated hex characters.  So, this is
     # a lot like the quoted version, except we operate in pairs, rather than characters
-    #print("ReplaceWithRepeatCountBracketed(1)", s)
+    # print("ReplaceWithRepeatCountBracketed(1)", s)
     retval = "["
-    ## Strip off the leading and trailing brackets
+    # Strip off the leading and trailing brackets
     s = s[1:-1]
     rabbit = 0
     fox = 0
@@ -395,54 +407,55 @@ def ReplaceWithRepeatCountBracketed(s):
     in_a_quoted_run = False
     number_of_repeated_runs = 0
     while rabbit < len(s):
-        ## Arriving here means:
-        ## We're here for the first time, or we just finished a run
-        ## So, we are going to pick up 'char', which is a candidate
-        ## for the start of a new run
+        # Arriving here means:
+        # We're here for the first time, or we just finished a run
+        # So, we are going to pick up 'char', which is a candidate
+        # for the start of a new run
 
         fox = rabbit
-        char = s[rabbit:rabbit+2]
+        char = s[rabbit:rabbit + 2]
         rabbit += 2
-        while rabbit < len(s) and s[rabbit:rabbit+2] == char:
-            ## This is where we proceed in a run.  Swallow up characters
-            ## that are the same as our candidate:
+        while rabbit < len(s) and s[rabbit:rabbit + 2] == char:
+            # This is where we proceed in a run.  Swallow up characters
+            # that are the same as our candidate:
             rabbit += 2
 
-        ## We have either run out of characters, or else
-        ## rabbit points to a character other than char
-        if (rabbit - fox)//2 >= GV_GlobalVariables.repeat_count: ## This is a magic number.  See the
-                                     ## comment in ReplaceWithRepeatCountQuoted()
+        # We have either run out of characters, or else
+        # rabbit points to a character other than char
+        if (rabbit - fox) // 2 >= GV_GlobalVariables.repeat_count:  # This is a magic number.  See the
+                                                                    # comment in ReplaceWithRepeatCountQuoted()
             if in_a_quoted_run:
-                ## We have to end the current ongoing string
-                ## and start this contraction with a prelude
+                # We have to end the current ongoing string
+                # and start this contraction with a prelude
                 retval += '", '
-            ## and now we can start the contraction:
+            # and now we can start the contraction:
             retval += char
             retval += " <repeats "
-            retval += str((rabbit-fox)//2)
+            retval += str((rabbit-fox) // 2)
             retval += ' times>, '
             prior_contraction = True
             in_a_quoted_run = False
             number_of_repeated_runs += 1
         else:
-            ## The run is short enough that we just put the characters
-            ## into place
+            # The run is short enough that we just put the characters
+            # into place
             if not in_a_quoted_run:
                 in_a_quoted_run = True
-            ## Copy over characters until the fox catches up with the rabbit
+            # Copy over characters until the fox catches up with the rabbit
             while fox < rabbit:
                 fox += 2
                 retval += char
             prior_contraction = False
 
-    ## We have reached the end
+    # We have reached the end
     if prior_contraction:
-        ## strip off the unnecessary ', '
+        # strip off the unnecessary ', '
         retval = retval[:-2]
     retval += ']'
 
-    #print("ReplaceWithRepeatCountBracketed(2)", retval)
+    # print("ReplaceWithRepeatCountBracketed(2)", retval)
     return retval
+
 
 def ReplaceWithRepeatCount(s):
     try:
@@ -455,6 +468,7 @@ def ReplaceWithRepeatCount(s):
         traceback.print_exc()
         sys.exit(1)
 
+
 class VarTrieNode():
     def __init__(self):
         self.parent = None
@@ -466,10 +480,12 @@ class VarTrieNode():
     def AddCanonicalName(self, name):
         pass
 
+
 def BlankIsZero(v):
     if len(v) == 0:
         v = "0"
     return int(v)
+
 
 def GetDataAt(address, bytes):
     # This routine takes an address and returns the
@@ -486,20 +502,21 @@ def GetDataAt(address, bytes):
         else:
             return None
 
-        ## When an integer is long enough, Python appends a 'L' to the hex
-        ## number.  This came up in SPARC, with addresses like 0xffffffff7b407700
+        # When an integer is long enough, Python appends a 'L' to the hex
+        # number.  This came up in SPARC, with addresses like 0xffffffff7b407700
         command = "x/1" + u + "u " + hex(address).replace('L', '')
         value_back = GdbExecute(currentframe(), command)
 
         nfound = value_back.find(":")
         if nfound == -1:
             return None
-        value = int(value_back[nfound+1:])
+        value = int(value_back[nfound + 1:])
         return value
 
     except gdb.error:
         print("gdb .execute failed in GetDataAt:", command)
         return None
+
 
 def GetBytesAt(address, N):
     # Pick up N bytes from address, return them as a list of ints
@@ -511,19 +528,21 @@ def GetBytesAt(address, N):
     for line in lines:
         nfound = line.find(':')
         if nfound != -1:
-            bytes = line[nfound+1:].split()
+            bytes = line[nfound + 1:].split()
             for byte in bytes:
                 retval.append(int(byte, 16))
     return retval
 
+
 def ExtractHexValueFrom(s):
-    ## Use this routine to extract an 0x123abc value from a string.
-    ## Needed because gdb returns such information in slightly different ways
+    # Use this routine to extract an 0x123abc value from a string.
+    # Needed because gdb returns such information in slightly different ways
     retval = None
     match = re.match(".*(0x[0-9a-fA-F]+).*", s)
     if match:
         retval = int(match.group(1), 16)
     return retval
+
 
 def GetPointerAt(variable):
     # Use this form when you know variable is the name of a pointer.
@@ -536,6 +555,7 @@ def GetPointerAt(variable):
         return ExtractHexValueFrom(result)
     except:
         return None
+
 
 def GetAddressOf(variable):
     # Use this routine when you know variable is the name of a block.
@@ -550,8 +570,8 @@ def GetAddressOf(variable):
 
         if not retval:
             try:
-                command = "x/1db " + variable  ## Notice d for decimal, not hex, because
-                                               ## a second 0x messes up ExtractHexValue
+                command = "x/1db " + variable  # Notice d for decimal, not hex, because
+                                               # a second 0x messes up ExtractHexValue
                 address_string = GdbExecute(currentframe(), command)
                 retval = ExtractHexValueFrom(address_string)
             except:
@@ -559,31 +579,33 @@ def GetAddressOf(variable):
 
     return retval
 
+
 def AddEmUp(expression):
-    ## Originally written when I thought only integers would appear
-    ## here, I have since learned that expressions can be more complex.
-    ## For now I am simply punting when when confronted with something
-    ## that isn't an integer or a simple addition of integers
-    ##
-    ## Processing of arrays can involve 123*b_37 + 456, and I've been warned
-    ## that there might even be parentheses involved.  We'll burn those bridges
-    ## in times to come.
+    # Originally written when I thought only integers would appear
+    # here, I have since learned that expressions can be more complex.
+    # For now I am simply punting when when confronted with something
+    # that isn't an integer or a simple addition of integers
+    #
+    # Processing of arrays can involve 123*b_37 + 456, and I've been warned
+    # that there might even be parentheses involved.  We'll burn those bridges
+    # in times to come.
     expression = expression or "0"
     retval = 0
     tokens = expression.split('+')
     for token in tokens:
-        if token[0:1] in "0123456789": # Python2/3 ecumenical
+        if token[0:1] in "0123456789":  # Python2/3 ecumenical
             try:
                 if sys.version[0] == '2':
-                    ## This is Python2
+                    # This is Python2
                     token = token.decode("latin1")
                 retval += int(token)
             except:
-                ## if the latin decode fails, or if token isn't an integer,
-                ## an exception will be thrown.  As described above, just
-                ## ignore that for now.
+                # if the latin decode fails, or if token isn't an integer,
+                # an exception will be thrown.  As described above, just
+                # ignore that for now.
                 pass
     return retval
+
 
 class VarTrie():
     def __init__(self):
@@ -631,9 +653,9 @@ class VarTrie():
         tokens = variable_line.split("|")
         try:
             if len(tokens) == 11:
-                ## We have enough in the way of tokens, so proceed
+                # We have enough in the way of tokens, so proceed
                 if tokens[self.IndexType] == 'P':
-                    ## We are entering a new PROGRAM-ID, so reset our stacks
+                    # We are entering a new PROGRAM-ID, so reset our stacks
                     self.StackOfNames = [tokens[self.IndexName]]
                     self.StackOfLevels = [-2]
 
@@ -643,8 +665,8 @@ class VarTrie():
                     sys.exit(1)
 
                 if tokens[self.IndexType] in ('F', 'W', 'L', 'I'):
-                    ## We are working with a variable.  We need to erode the
-                    ## stack of names down to the variable who is our parent:
+                    # We are working with a variable.  We need to erode the
+                    # stack of names down to the variable who is our parent:
                     if tokens[self.IndexLevel] == "":
                         tokens[self.IndexLevel] = '0'
                     our_level = int(tokens[self.IndexLevel])
@@ -654,8 +676,8 @@ class VarTrie():
                         self.StackOfNames.pop(-1)
                         self.StackOfLevels.pop(-1)
 
-                    ## and now we put ourselves into the position of
-                    ## most favored child
+                    # and now we put ourselves into the position of
+                    # most favored child
                     self.StackOfNames.append(tokens[self.IndexName])
                     self.StackOfLevels.append(our_level)
 
@@ -735,8 +757,8 @@ class VarTrie():
         if boy_index < len(boys):
             # we still have at least one boy to leave off at his tree
             boy = boys[boy_index]
-            #print("DEBUG boy",boy)
-            #print("DEBUG trie.children.keys",trie.children.keys())
+            # print("DEBUG boy",boy)
+            # print("DEBUG trie.children.keys",trie.children.keys())
             # Do a case-insensitive match:
             bFound = False
             for child in trie.children:
@@ -826,40 +848,41 @@ class VarTrie():
             # Put what we have so far into a set:
             set1 = set(paths)
 
-            ## When given something like FIRST IN HOLDER, we want
-            ## to find 10 FIRSTNAME/NAME/ACCOUNTHOLDER
-            ##
-            ## But we don't want that request to pull up
-            ##  10 HOLDER/NAME/FIRST
-            ##
-            ## So, we are going to march through all of the names
-            ## in storage_list, and then we will make sure all of
-            ## the pieces show up in left-to-right order
+            # When given something like FIRST IN HOLDER, we want
+            # to find 10 FIRSTNAME/NAME/ACCOUNTHOLDER
+            #
+            # But we don't want that request to pull up
+            #  10 HOLDER/NAME/FIRST
+            #
+            # So, we are going to march through all of the names
+            # in storage_list, and then we will make sure all of
+            # the pieces show up in left-to-right order
 
             for index in range(len(self.storage_list)):
                 whole_name = self.storage_list[index].Name.upper()
                 prior_index = -1
                 for fragment in name_tokens:
                     fragment = fragment.upper()
-                    current_index = whole_name.find(fragment, prior_index+1)
+                    current_index = whole_name.find(fragment, prior_index + 1)
                     if current_index == -1:
-                        ## This fragment isn't in that name, so, sayonara
+                        # This fragment isn't in that name, so, sayonara
                         prior_index = -1
                         break
                     if current_index < prior_index:
-                        ## Going backward isn't permitted
+                        # Going backward isn't permitted
                         prior_index = -1
                         break
-                    ## Rightward, ho!
+                    # Rightward, ho!
                     prior_index = current_index
                 if prior_index != -1:
-                    ## We have found a contender!
+                    # We have found a contender!
                     set1.add(index)
 
-            ## Turn the set back into a list:
+            # Turn the set back into a list:
             paths = list(set1)
 
         return paths
+
 
 class LineList():
     """List of starting lines of ProgramNames"""
@@ -873,7 +896,7 @@ class LineList():
     # program-id
 
     def __init__(self):
-        self.line_list = [] # This will be a list of (int, str) tuples
+        self.line_list = []  # This will be a list of (int, str) tuples
         self.EndOfTheWorld = 10000000
 
     def Insert(self, line_number, program_id):
@@ -892,9 +915,9 @@ class LineList():
         right = len(self.line_list)
 
         while True:
-            middle = (right+left)//2
+            middle = (right+left) // 2
             if self.line_list[middle][0] <= line_number \
-                    and line_number < self.line_list[middle+1][0]:
+                    and line_number < self.line_list[middle + 1][0]:
                 break
             if self.line_list[middle][0] > line_number:
                 right = middle
@@ -910,6 +933,7 @@ class LineList():
                 program_id = tokens[2]
                 line_number = int(tokens[6])
                 self.Insert(line_number, program_id)
+
 
 class CobolVariable():
     """Manages the field, attributes, flags, and pointers of a GnuCOBOL COBOL variable"""
@@ -946,17 +970,17 @@ class CobolVariable():
         self.not_in_context = False
         self.display_name = ""
         self.display_body = ""
-        self.display_pic  = ""
+        self.display_pic = ""
 
         # This section is used for "StringToxxx processing
-        self.rvalue = ""           # Original user string, before cleaning
-        self.cleaned_rvalue = ""   # This will have exactly AttrDigits, zero-filled
-        #                          # as necessary to the left and right
-        self.is_negative = False   # True if there was a minus sign
-        self.expanded_picture = "" # "9(4)" becomes "9999" here
-        self.ldigits = -1          # this integer is AttrDigits - AttrScale
-        self.rdigits = -1          # this integer is AttrScale...
-        #                          # ...but see self.CleanAndScale
+        self.rvalue = ""            # Original user string, before cleaning
+        self.cleaned_rvalue = ""    # This will have exactly AttrDigits, zero-filled
+        #                           # as necessary to the left and right
+        self.is_negative = False    # True if there was a minus sign
+        self.expanded_picture = ""  # "9(4)" becomes "9999" here
+        self.ldigits = -1           # this integer is AttrDigits - AttrScale
+        self.rdigits = -1           # this integer is AttrScale...
+        #                           # ...but see self.CleanAndScale
 
     def CleanTokens(self, execute_result):
         # (This was created during initial development.  During refactoring
@@ -978,7 +1002,7 @@ class CobolVariable():
         left = execute_result.find('"')
         right = execute_result.rfind('"')
         if left != -1 and right != -1:
-            execute_result = execute_result[:left] + execute_result[right+1:]
+            execute_result = execute_result[:left] + execute_result[right + 1:]
 
         # Turn extraneous characters into spaces, to mollify split()
         execute_result = execute_result.replace("'", ' ')
@@ -996,13 +1020,13 @@ class CobolVariable():
         # what we see for a picture pointer when there is no picture)
         tokens = []
         for xtoken in ex_tokens:
-            if      ((ord(xtoken[0]) > 32
-                    and xtoken != '='
-                    and xtoken != '*'
-                    and xtoken != '-'
-                    and xtoken[0] != '0')
-                    or xtoken == "0"
-                    or xtoken == "0x0"):
+            if ((ord(xtoken[0]) > 32
+                and xtoken != '='
+                and xtoken != '*'
+                and xtoken != '-'
+                and xtoken[0] != '0')
+                or xtoken == "0"
+                or xtoken == "0x0"):
                 tokens.append(xtoken)
         return tokens
 
@@ -1028,11 +1052,18 @@ class CobolVariable():
             print("GetData AsString   loc_of_attr:", hex(self.location_of_attribute))
             print("GetData AsString    loc_of_pic:", hex(self.location_of_pic))
 
-        ## Use the target executable's libcob to convert this field to a character string suitable
-        ## for output
+        # Use the target executable's libcob to convert this field to a character string suitable
+        # for output
+        free_mem = 0
+        if platform.python_version_tuple()[0] == "2":
+            buffer = gdb.execute("call (char*)cob_malloc(8192)", False, True).split()[2]
+            free_mem = 1
+        else:
+            buffer = "__cobcd_debugging_buffer"
+
         command = "call (const char *)cob_get_field_str(&"
         command += self.Fname
-        command += ",__cobcd_debugging_buffer, 8192)"
+        command += ", {0}, 8192)".format(buffer)
 
         try:
             gdb.execute(command, False, True)
@@ -1040,8 +1071,8 @@ class CobolVariable():
             print("Command failed in GetDataAsString:", command)
             return "<Error in GetDataAsString>"
 
-        ## The formatted variable string is in __cobcd_debugging_buffer
-        p = GetAddressOf("__cobcd_debugging_buffer")
+        # The formatted variable string is in __cobcd_debugging_buffer of preallocated buffer
+        p = GetAddressOf("{0}".format(buffer))
         while True:
             ch = GetDataAt(p, 1)
             if ch == 0:
@@ -1049,17 +1080,19 @@ class CobolVariable():
             retval += chr(ch)
             p += 1
 
+        if free_mem == 1:
+            gdb.execute("call cob_free({0})".format(buffer), False, True)
         return retval
 
     def PutDataAsString(self, rside):
         try:
-            ## Let's leverage GDB to set our buffer to rside:
+        # Let's leverage GDB to set our buffer to rside:
             command = 'x  __cobcd_debugging_buffer="'
             command += rside
             command += '"'
             gdb.execute(command, False, True)
 
-            ## Now use the target executable's libcob to convert the string to the field:
+            # Now use the target executable's libcob to convert the string to the field:
             command = "call (const char *)cob_put_field_str(&"
             command += self.Fname
             command += ",__cobcd_debugging_buffer)"
@@ -1088,7 +1121,7 @@ class CobolVariable():
         return retval
 
     def FetchVariableData(self, line_list, show_failure):
-        #print("FetchVariableData:", self.Name, self.Section)
+        # print("FetchVariableData:", self.Name, self.Section)
         self.location_of_field = 0
         self.location_of_data = 0
         self.location_of_attribute = 0
@@ -1099,17 +1132,17 @@ class CobolVariable():
         self.display_name = self.NameToString()
         self.not_in_context = False
 
-        ## Let's update everything we might need:
+        # Let's update everything we might need:
 
-        ## First, check to see if the compiler provided us with the
-        ## the name of the field.  If so, use the run-time values in that named
-        ## field to override anything we might have gotten from compile-time
+        # First, check to see if the compiler provided us with the
+        # the name of the field.  If so, use the run-time values in that named
+        # field to override anything we might have gotten from compile-time
 
         if self.Fname:
             # We have a field name
-            #print("FetchVariableData Fname", self.Fname)
+            # print("FetchVariableData Fname", self.Fname)
             self.location_of_field = GetAddressOf(self.Fname)
-            if self.location_of_field == None:
+            if self.location_of_field is None:
                 self.not_in_context = True
                 return
             # The cob_field structure looks like this:
@@ -1120,15 +1153,15 @@ class CobolVariable():
             #       const cob_field_attr *attr;
             #       } cob_field;
             self.Length = GetDataAt(self.location_of_field, GV_GlobalVariables.SizeofPointer)
-            if self.Length == None:
+            if self.Length is None:
                 self.not_in_context = True
                 return
-            possible_location_of_data = GetDataAt(self.location_of_field+GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
+            possible_location_of_data = GetDataAt(self.location_of_field + GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
             if possible_location_of_data:
                 self.location_of_data = possible_location_of_data
-            self.location_of_attribute = GetDataAt(self.location_of_field+2*GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
+            self.location_of_attribute = GetDataAt(self.location_of_field + 2 * GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
         else:
-            #print("There is no self.Fname")
+            # print("There is no self.Fname")
             pass
 
         if self.location_of_data == 0:
@@ -1138,24 +1171,24 @@ class CobolVariable():
             # been set up.  But, again, sometimes we have advance knowledge of what is going to be
             # there because we got information from the compiler.
             if self.Bname:
-                #print("FetchVariableData Fname", self.Bname)
+                # print("FetchVariableData Fname", self.Bname)
                 self.location_of_data = GetAddressOf(self.Bname)
-                if self.location_of_data == None:
+                if self.location_of_data is None:
                     self.not_in_context = True
                     return
                 self.location_of_data += self.Offset
             else:
-                #print("There is no self.Bname")
+                # print("There is no self.Bname")
                 pass
 
         if self.location_of_attribute == 0:
             if self.Aname:
                 self.location_of_attribute = GetAddressOf(self.Aname)
-                if self.location_of_attribute == None:
+                if self.location_of_attribute is None:
                     self.not_in_context = True
                     return
             else:
-                #print("There is no self.Aname")
+                # print(" There is no self.Aname")
                 pass
 
         if self.location_of_attribute != 0:
@@ -1167,11 +1200,11 @@ class CobolVariable():
             #       unsigned short      flags;      /* Field flags */
             #       const cob_pic_symbol    *pic;       /* Pointer to picture string */
             #       } cob_field_attr;
-            self.AttrType   = GetDataAt(self.location_of_attribute+0, 2)
-            self.AttrDigits = GetDataAt(self.location_of_attribute+2, 2)
-            self.AttrScale  = GetDataAt(self.location_of_attribute+4, 2)
-            self.AttrFlags  = GetDataAt(self.location_of_attribute+6, 2)
-            self.location_of_pic = GetDataAt(self.location_of_attribute+8, GV_GlobalVariables.SizeofPointer)
+            self.AttrType   = GetDataAt(self.location_of_attribute + 0, 2)
+            self.AttrDigits = GetDataAt(self.location_of_attribute + 2, 2)
+            self.AttrScale  = GetDataAt(self.location_of_attribute + 4, 2)
+            self.AttrFlags  = GetDataAt(self.location_of_attribute + 6, 2)
+            self.location_of_pic = GetDataAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
 
         if self.Section in('F', 'W', 'I'):
             pass
@@ -1191,26 +1224,26 @@ class CobolVariable():
                 # Look for a number after a colon
                 nfound = frame_string.find(':')
                 if nfound > -1:
-                    frame_string = frame_string[nfound+1:]
+                    frame_string = frame_string[nfound + 1:]
                     frame_string = frame_string.split()
                     try:
                         line_number = int(frame_string[0])
                     except:
                         line_number = -1
 
-                #print("Trapped at ",line_number)
+                # print("Trapped at ",line_number)
                 # We know we are trapped at line_number
 
                 # Look up the program-id of that line_number
                 program_id = line_list.Find(line_number)
-                #print("in :", program_id)
+                # print("in :", program_id)
 
                 #
                 # program-id is where the program-under-test is
                 # trapped.  Let's see if that program-id matches
                 # the final place of the desired variable:
                 #
-                #print( self.Name )
+                # print( self.Name )
                 split_name = self.Name.split('/')
                 if split_name[-1] != program_id:
                     self.not_in_context = True
@@ -1240,11 +1273,11 @@ class CobolVariable():
         self.display_body = ReplaceWithRepeatCount(self.display_body)
 
         if self.Length != len(self.data):
-            ## This probably should never happen.  But when it did, during debugging,
-            ## it actually corrupted memory during the process of creating a
-            ## cfields.cob_field.
-            ##
-            ## So, let's put up a fence:
+            # This probably should never happen.  But when it did, during debugging,
+            # it actually corrupted memory during the process of creating a
+            # cfields.cob_field.
+            #
+            # So, let's put up a fence:
             self.not_in_context = True
         return
 
@@ -1277,7 +1310,7 @@ class CobolVariable():
         print("Display:    ", self.display_body)
         print("Hex:        ", self.display_body_hex)
         print("Field:      ", self.Fname, '   (', hex(self.location_of_field), ')')
-        print("Base:       ", self.Bname, '  ', bname_text     )
+        print("Base:       ", self.Bname, '  ', bname_text)
         print("Attr:       ", self.Aname, '   (', hex(self.location_of_attribute), ')')
         print("Offset:     ", self.Offset)
         print("Field.loc:  ", field_loc)
@@ -1381,6 +1414,7 @@ class CobolVariable():
                 print('.', end="")
         print('"')
 
+
 class TabFileInformation():
     def __init__(self):
         self.var_trie = VarTrie()
@@ -1412,16 +1446,16 @@ class TabFileInformation():
                 the_data = GdbExecute(currentframe(), command)
                 index1 = the_data.find('"')
                 if index1 != -1:
-                    index2 = the_data.find('"', index1+1)
+                    index2 = the_data.find('"', index1 + 1)
                     if index2 != -1:
-                        total_length = int(the_data[index1+1:index1+1+9])
-                        chars_each_line = index2-(index1+1)
+                        total_length = int(the_data[index1 + 1:index1 + 1 + 9])
+                        chars_each_line = index2 - (index1 + 1)
 
                         # We know the total length, and we know the number of
                         # chars we will get in each block.  So, we can calculate
                         # the number of blocks we need to ask for, and build
                         # that command:
-                        blocks = (total_length + chars_each_line-1) // chars_each_line
+                        blocks = (total_length + chars_each_line - 1) // chars_each_line
                         command = "x/" + str(blocks) + "s " + str(the_address)
 
                         # And we can get that data
@@ -1432,16 +1466,16 @@ class TabFileInformation():
                         index2 = 0
                         lines = []
                         while True:
-                            index1 = the_data.find('"', index2+1)
+                            index1 = the_data.find('"', index2 + 1)
                             if index1 == -1:
                                 break
-                            index2 = the_data.find('"', index1+1)
+                            index2 = the_data.find('"', index1 + 1)
                             if index2 == -1:
                                 break
                             if is_first_line:
                                 index1 += 9
                                 is_first_line = False
-                            lines.append(the_data[index1+1:index2])
+                            lines.append(the_data[index1 + 1:index2])
 
                         # and now that we have all the chunks, we can assemble
                         # them into the VARIABLE_STRING_xxx
@@ -1454,63 +1488,63 @@ class TabFileInformation():
     def ProcessStack(self):
         """ Figures out which routine we are currently trapped in"""
 
-        ## That's seems innocent enough.  But we're dealing with a multitude of sins.
+        # That's seems innocent enough.  But we're dealing with a multitude of sins.
 
-        ## In the simplest incarnation, we have a simple program with a simple trap, in which
-        ## case the results of the "frame" and "info stack" commands look like this:
+        # In the simplest incarnation, we have a simple program with a simple trap, in which
+        # case the results of the "frame" and "info stack" commands look like this:
 
-        ##    (gdb) frame
-        ##    #0  MAIN_ (entry=0) at MAIN.cbl:11
+        #    (gdb) frame
+        #    #0  MAIN_ (entry=0) at MAIN.cbl:11
 
-        ##    (gdb) info stack
-        ##    #0  MAIN_ (entry=0) at MAIN.cbl:11
-        ##    #1  0x0000555555554cc9 in MAIN () at MAIN.cbl:8
-        ##    #2  0x0000555555554cb4 in main (argc=1, argv=0x7fffffffe368) at MAIN.cbl:8
+        #    (gdb) info stack
+        #    #0  MAIN_ (entry=0) at MAIN.cbl:11
+        #    #1  0x0000555555554cc9 in MAIN () at MAIN.cbl:8
+        #    #2  0x0000555555554cb4 in main (argc=1, argv=0x7fffffffe368) at MAIN.cbl:8
 
-        ## But we can trap through copybooks.  That can look like this:
+        # But we can trap through copybooks.  That can look like this:
 
-        ##    (gdb) frame
-        ##    #0  C_ (entry=0, b_11=0x7ffff35172f0 <b_8> "B   4") at INDENTER.cpy:2
+        #    (gdb) frame
+        #    #0  C_ (entry=0, b_11=0x7ffff35172f0 <b_8> "B   4") at INDENTER.cpy:2
 
-        ##    (gdb) info stack
-        ##    #0  C_ (entry=0, b_11=0x7ffff35172f0 <b_8> "B   4") at INDENTER.cpy:2
-        ##    #1  0x00007ffff3112ddf in C (b_11=0x7ffff35172f0 <b_8> "B   4") at C.cbl:10
-        ##    #2  0x00007ffff331622d in B_ (entry=0, b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:18
-        ##    #3  0x00007ffff3315e3f in B (b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:10
-        ##    #4  0x0000555555554fa3 in MAIN_ (entry=0) at MAIN.cbl:11
-        ##    #5  0x0000555555554cc9 in MAIN () at MAIN.cbl:8
-        ##    #6  0x0000555555554cb4 in main (argc=1, argv=0x7fffffffe368) at MAIN.cbl:8
+        #    (gdb) info stack
+        #    #0  C_ (entry=0, b_11=0x7ffff35172f0 <b_8> "B   4") at INDENTER.cpy:2
+        #    #1  0x00007ffff3112ddf in C (b_11=0x7ffff35172f0 <b_8> "B   4") at C.cbl:10
+        #    #2  0x00007ffff331622d in B_ (entry=0, b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:18
+        #    #3  0x00007ffff3315e3f in B (b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:10
+        #    #4  0x0000555555554fa3 in MAIN_ (entry=0) at MAIN.cbl:11
+        #    #5  0x0000555555554cc9 in MAIN () at MAIN.cbl:8
+        #    #6  0x0000555555554cb4 in main (argc=1, argv=0x7fffffffe368) at MAIN.cbl:8
 
-        ## Our problem with that is there is no VARIABLE_STRING_INDENTER_CPY; we have to look down
-        ## through the stack until we find VARIABLE_STRING_C_CBL in order to have a hope of being
-        ## able to show the right variables.
+        # Our problem with that is there is no VARIABLE_STRING_INDENTER_CPY; we have to look down
+        # through the stack until we find VARIABLE_STRING_C_CBL in order to have a hope of being
+        # able to show the right variables.
 
-        ## The third case is when the user wants to look at variables in a different frame.  As
-        ## an example, suppose the user trapped at INDENTER.cpy:2 issues a "frame 3" command.  Here's
-        ## what we see:
+        # The third case is when the user wants to look at variables in a different frame.  As
+        # an example, suppose the user trapped at INDENTER.cpy:2 issues a "frame 3" command.  Here's
+        # what we see:
 
-        ##    (gdb) frame
-        ##    #3  0x00007ffff3315e3f in B (b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:10
+        #    (gdb) frame
+        #    #3  0x00007ffff3315e3f in B (b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:10
 
-        ##    (gdb) info stack
-        ##    #0  C_ (entry=0, b_11=0x7ffff35172f0 <b_8> "B   4") at INDENTER.cpy:2
-        ##    #1  0x00007ffff3112ddf in C (b_11=0x7ffff35172f0 <b_8> "B   4") at C.cbl:10
-        ##    #2  0x00007ffff331622d in B_ (entry=0, b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:18
-        ##--> #3  0x00007ffff3315e3f in B (b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:10
-        ##    #4  0x0000555555554fa3 in MAIN_ (entry=0) at MAIN.cbl:11
-        ##    #5  0x0000555555554cc9 in MAIN () at MAIN.cbl:8
-        ##    #6  0x0000555555554cb4 in main (argc=1, argv=0x7fffffffe368) at MAIN.cbl:8
+        #    (gdb) info stack
+        #    #0  C_ (entry=0, b_11=0x7ffff35172f0 <b_8> "B   4") at INDENTER.cpy:2
+        #    #1  0x00007ffff3112ddf in C (b_11=0x7ffff35172f0 <b_8> "B   4") at C.cbl:10
+        #    #2  0x00007ffff331622d in B_ (entry=0, b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:18
+        # --> #3  0x00007ffff3315e3f in B (b_11=0x555555756130 <b_8> "MAIN2") at B.cbl:10
+        #    #4  0x0000555555554fa3 in MAIN_ (entry=0) at MAIN.cbl:11
+        #    #5  0x0000555555554cc9 in MAIN () at MAIN.cbl:8
+        #    #6  0x0000555555554cb4 in main (argc=1, argv=0x7fffffffe368) at MAIN.cbl:8
 
-        ## The algorithm that handles those cases seems to be this:
-        ##   * Pull the file.name from the "frame" results.
-        ##   * Walk through "info stack" results until the first instance of file.name is found;
-        ##     that becomes current_trapped_file and current_trapped_line
-        ##   * Starting at that "info stack" line, walk downward until a valid VARIABLE_STRING
-        ##     is found.
-        ## That might give a bogus result.  For example, if the frame is set to a module that
-        ## wasn't compiled with debugging, then the walk will take you to a module that does
-        ## have debugging.  That's not what you want, but I don't see how to avoid the problem
-        ## if you also want to be able to handle code in COPYBOOKs.
+        # The algorithm that handles those cases seems to be this:
+        #   * Pull the file.name from the "frame" results.
+        #   * Walk through "info stack" results until the first instance of file.name is found;
+        #     that becomes current_trapped_file and current_trapped_line
+        #   * Starting at that "info stack" line, walk downward until a valid VARIABLE_STRING
+        #     is found.
+        # That might give a bogus result.  For example, if the frame is set to a module that
+        # wasn't compiled with debugging, then the walk will take you to a module that does
+        # have debugging.  That's not what you want, but I don't see how to avoid the problem
+        # if you also want to be able to handle code in COPYBOOKs.
 
         retval = False
         try:
@@ -1521,18 +1555,18 @@ class TabFileInformation():
             if len(info_stack) > 0 and info_stack[0] == '#':
                 retval = True
 
-                ## Get the frame number from info_frame:
+                # Get the frame number from info_frame:
                 frame_from_frame = int(info_frame.split(' ')[0][1:])
 
-                ## Get the file name from the first line of the "frame" information:
+                # Get the file name from the first line of the "frame" information:
                 m = info_frame.find('\n')
                 if m > -1:
                     info_frame = info_frame[:m]
                 tokens = info_frame.rstrip().split(' ')
                 filename = tokens[-1].split(':')[0]
 
-                ## We now march through the info_stack lines, looking for the
-                ## first line whose filename matches filename:
+                # We now march through the info_stack lines, looking for the
+                # first line whose filename matches filename:
 
                 stack = info_stack.split('\n')
                 stack_line = 0
@@ -1557,15 +1591,15 @@ class TabFileInformation():
                     print("that \"frame\" and \"info stack\" don't match in ProcessStack()")
                     return False
 
-                ## Unexpected and confusing things happen when the frame is set
-                ## to a PROCEDURE DIVISION line. So, if an adjustment is necessary,
-                ## we make it here:
+                # Unexpected and confusing things happen when the frame is set
+                # to a PROCEDURE DIVISION line. So, if an adjustment is necessary,
+                # we make it here:
 
                 if frame_from_frame != frame_from_stack:
                     command = "select-frame " + str(frame_from_stack)
                     result = GdbExecute(currentframe(), command)
 
-                ## At this point, file_and_line[0] matches the file name from "frame"
+                # At this point, file_and_line[0] matches the file name from "frame"
                 self.current_trapped_line = int(file_and_line[1])
 
                 if file_and_line[0] != self.current_trapped_file or frame_from_frame != frame_from_stack:
@@ -1573,14 +1607,14 @@ class TabFileInformation():
                     self.current_trapped_file = file_and_line[0]
                     self.current_trapped_frame = frame_from_stack
 
-                    ## clear out the persistent 'p ?' memory; it has suddenly
-                    ## become obsolete
+                    # clear out the persistent 'p ?' memory; it has suddenly
+                    # become obsolete
                     self.old_dogs = set()
 
-                    ## Because it's possible that we are trapped in a copybook,
-                    ## we can't assume that VARIABLE_STRING has the name
-                    ## of the current_trapped_file.  We need to work our
-                    ## way through the stack:
+                    # Because it's possible that we are trapped in a copybook,
+                    # we can't assume that VARIABLE_STRING has the name
+                    # of the current_trapped_file.  We need to work our
+                    # way through the stack:
 
                     # Find the address of the VARIABLE_STRING for this trap point
 
@@ -1613,8 +1647,8 @@ class TabFileInformation():
                     self.line_list = LineList()
 
                     if stack_line >= len(stack):
-                        ## For whatever reasons, we couldn't find any information in
-                        ## the stack above the "frame" point
+                        # For whatever reasons, we couldn't find any information in
+                        # the stack above the "frame" point
                         return False
 
                     # Pull apart the variable_string
@@ -1645,19 +1679,20 @@ class TabFileInformation():
         return retval
 
     def ReadSymbolTableText(self):
-        ## Go read the frame and stack, and fetch the VariableStringData
+        # Go read the frame and stack, and fetch the VariableStringData
         if self.ProcessStack():
             # Figure out what routine we are trapped in, from
             # the line number
             for line in self.line_list.line_list:
-               if line[0] > self.current_trapped_line:
-                   # We've gotten past self.current_trapped_line, so the prior entry
-                   # was the one we wanted
-                   break
-               # Keep looking
-               self.current_trapped_routine = line[1]
+                if line[0] > self.current_trapped_line:
+                    # We've gotten past self.current_trapped_line, so the prior entry
+                    # was the one we wanted
+                    break
+                # Keep looking
+                self.current_trapped_routine = line[1]
         else:
             print("No stack.")
+
 
 def MachineInterfaceFlat(TabFile, possibilities):
     # This is the machine interface mode for returning the
@@ -1674,7 +1709,7 @@ def MachineInterfaceFlat(TabFile, possibilities):
             name += payload.display_name
             n = name.find(' ')
             if n > -1:
-                name = name[:n] + '-' + name[n+1:]
+                name = name[:n] + '-' + name[n + 1:]
             n = name.find(' ')
             if n > -1:
                 name = name[:n]
@@ -1700,19 +1735,22 @@ def MachineInterfaceFlat(TabFile, possibilities):
     s = NoNulls(s)
     return s
 
+
 class HNode():
     def __init__(self):
         self.storage_table_index = -1
         self.Level = 0
-        self.BaseName = "" # Just A of A/B/C
+        self.BaseName = ""  # Just A of A/B/C
         self.display_body = ""
         self.parent = None
         self.children = []
+
 
 def TrimComma(s):
     if s and s[-1] == ',':
         s = s[:-1]  # Strip off final comma
     return s
+
 
 def BuildHString(node):
     s = ""
@@ -1722,19 +1760,19 @@ def BuildHString(node):
             s += BuildHString(child)
     else:
         if node.Level in (1, 77, 78):
-            ## Top level variables are treated this way:
+            # Top level variables are treated this way:
             s += r'{name="'
-            s += node.BaseName #  + "/" + str(node.storage_table_index)
+            s += node.BaseName  #  + "/" + str(node.storage_table_index)
             s += r'",value="'
             if len(node.children) == 0:
-                ## There are no children, which means this is just
-                ## a simple variable:
+                # There are no children, which means this is just
+                # a simple variable:
                 s += r'\"'
                 s += MachineInterfaceBody(node.display_body)
                 s += r'\"'
                 s += r'"'
             else:
-                ## This is a top-level node with children:
+                # This is a top-level node with children:
                 s += r'{_groupvalue=\"'
                 s += MachineInterfaceBody(node.display_body)
                 s += r'\",'
@@ -1746,12 +1784,12 @@ def BuildHString(node):
         else:
             # This is a node whose level is 01-49, 66
             if len(node.children) == 0:
-                s += node.BaseName # + "/" + str(node.storage_table_index)
+                s += node.BaseName  # + "/" + str(node.storage_table_index)
                 s += r'=\"'
                 s += MachineInterfaceBody(node.display_body)
                 s += r'\",'
             else:
-                s += node.BaseName # + "/" + str(node.storage_table_index)
+                s += node.BaseName  # + "/" + str(node.storage_table_index)
                 s += r'={_groupvalue=\"'
                 s += MachineInterfaceBody(node.display_body)
                 s += r'\",'
@@ -1760,6 +1798,7 @@ def BuildHString(node):
                 s = TrimComma(s)
                 s += r'},'
     return s
+
 
 def MachineInterfaceHeirarchical(TabFile, possibilities):
     # This is the machine interface mode for returning the
@@ -1807,11 +1846,11 @@ def MachineInterfaceHeirarchical(TabFile, possibilities):
                 # The element on the stack is our brother, so
                 # so we are going to share parents:
                 new_node.parent = stack[-1].parent
-            else: # stack[-1].Level < payload.Level
+            else:  # stack[-1].Level < payload.Level
                 # The element on the stack is our parent
                 new_node.parent = stack[-1]
             # And now we become the final stack entry
-            if payload.Level != 66: # 66 is just a pain in the patootie.
+            if payload.Level != 66:  # 66 is just a pain in the patootie.
                 stack.append(new_node)
             # And let's let our parent know they have another child
             new_node.parent.children.append(new_node)
@@ -1828,7 +1867,7 @@ def MachineInterfaceHeirarchical(TabFile, possibilities):
 def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
     possibilities_1 = []
     if TabFile.current_trapped_line > 0:
-        ## We are validly trapped someplace, so we can actually look for variables.
+        # We are validly trapped someplace, so we can actually look for variables.
         from_digit = False
         if len(args) >= 1:
             if args[0].find('*') != -1:
@@ -1850,9 +1889,9 @@ def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
                     qmrange = TabFile.question_mark_range
                     if qmrange < 0:
                         qmrange = 1000000000
-                    return_string = subprocess.check_output(["cobcd-rw", \
-                                                              TabFile.current_full_path, \
-                                                              str(TabFile.current_trapped_line), \
+                    return_string = subprocess.check_output(["cobcd-rw",
+                                                              TabFile.current_full_path,
+                                                              str(TabFile.current_trapped_line),
                                                               str(qmrange)])
                     tokens = return_string.split()
                     new_dogs = set()
@@ -1867,7 +1906,7 @@ def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
                 # for a short-term memory entry.
 
                 # Pick up the 1-based value indexed by the argument:
-                index = int(args[0])-1
+                index = int(args[0]) - 1
                 if index >= 0 and index < len(GV_GlobalVariables.ShortTermMemory):
                     # If index is valid, pick up the short-term memory entry
                     possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
@@ -1916,14 +1955,14 @@ def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
                 tokens = TabFile.var_trie.storage_list[i].Name.split('/')
                 var = tokens[-2]
                 prog = tokens[-1]
-                u = i-1
+                u = i - 1
                 while u >= 0:
                     tokens = TabFile.var_trie.storage_list[u].Name.split('/')
                     if tokens[-2] != var or tokens[-1] != prog:
                         break
                     ppp.add(u)
                     u -= 1
-                d = i+1
+                d = i + 1
                 while d < len(TabFile.var_trie.storage_list):
                     tokens = TabFile.var_trie.storage_list[d].Name.split('/')
                     if tokens[-2] != var or tokens[-1] != prog:
@@ -1934,7 +1973,7 @@ def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
             possibilities = list(ppp)
             possibilities.sort()
 
-            #s = MachineInterfaceFlat(TabFile, possibilities)
+            # s = MachineInterfaceFlat(TabFile, possibilities)
             s = MachineInterfaceHeirarchical(TabFile, possibilities)
             print(s)
 
@@ -1967,6 +2006,17 @@ def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
 
     return possibilities
 
+# Note on the program structure:
+#
+# The Python extension to gdb is plenty powerful, but it is infuriating
+# in one regard: Debugging.  I've gotten used to source level debugging, and
+# the irony of having to do print-level debugging in an extension to a source-
+# level debugger is delicious, but mainly in the sense that some people like
+# the taste of beetles.  So, I have jumped through some hoops so that I could
+# do at least *some* debugging in Visual Studio even though the gdb object
+# isn't available.  Bob Dubner, 2019-07-23
+
+
 class CPrintWorker():
     """Does most of the non-gdb work of CPrint()"""
 
@@ -1976,10 +2026,7 @@ class CPrintWorker():
         self.current_source_file = ""
         self.sticky_display_mode = os.environ.get("CPRINT_V", '0')
         self.question_mark_range = int(os.environ.get("CPRINT_R", '6'))
-        self.use_cprint = os.environ.get("CPRINT", "@CPRINT@")
-        if self.use_cprint[0] == '@':
-            ## There's a reason for this; please see install: in the Makefile
-            self.use_cprint = "cprint"
+        self.use_cprint = os.environ.get("CPRINT", "cprint")
         self.machine_interface_mode = False
 
     def ProcessDisplayMode(self, args, TabFile):
@@ -2073,10 +2120,10 @@ class CPrintWorker():
             body = payload.display_body_hex
 
         if self.current_display_submode == 'b' and len(payload.data) <= 8:
-            ## kludge.  Convert the hex to binary:
+            # kludge.  Convert the hex to binary:
             body = ""
             index = 2
-            while index < len(payload.display_body_hex) and index < 8*2+2:
+            while index < len(payload.display_body_hex) and index < 8 * 2 + 2:
                 hexchar = int(payload.display_body_hex[index])
                 mask = 8
                 while mask > 0:
@@ -2131,7 +2178,7 @@ class CPrintWorker():
                 payload.PutDataAsString(rside)
 
                 if self.machine_interface_mode:
-                    #body = MachineInterfaceBody(payload.display_body)
+                    # body = MachineInterfaceBody(payload.display_body)
 
                     s = payload.display_name + " set to " + payload.display_body
                     print(s)
@@ -2174,7 +2221,7 @@ class CWatchWorker():
                     return
 
         spec = "*(char(*)"
-        spec += '[' + str(wp_length) +'])'
+        spec += '[' + str(wp_length) + '])'
         spec += '(' + hex(wp_startloc) + ')'
 
         if wp_type == 'WPW':
@@ -2186,7 +2233,7 @@ class CWatchWorker():
         else:
             print("Internal error: Watchpoint type not recognized")
 
-    def print_help(self):
+    def PrintHelp(self):
         print("COBOL cwatch command usage:")
         print("'cwatch/h' prints this message.")
         print("'cwatch VARIABLE [(start:length)]'    set a (write) watch on this variable")
@@ -2201,7 +2248,7 @@ class CWatchWorker():
         args = arguments.split()
         if not args:
             print("No variable given\n")
-            self.print_help()
+            self.PrintHelp()
             return
 
         if args[0] == '/r':
@@ -2214,11 +2261,11 @@ class CWatchWorker():
             wp_type = 'WPRW'
             del args[0]
         elif args[0] == '/h':
-            self.print_help()
+            self.PrintHelp()
             return
         elif args[0].startswith('/'):
             print("Option not recognized\n")
-            self.print_help()
+            self.PrintHelp()
             return
 
         if len(args) == 2:
@@ -2229,14 +2276,14 @@ class CWatchWorker():
                 print("Argument not recognized")
                 return
         elif len(args) == 1 and args[0].find('(') != -1 and args[0].find(')') != -1:
-            wp_lenspec = args[0][args[0].index('(')+1:-1]
+            wp_lenspec = args[0][args[0].index('(') + 1:-1]
             args[0] = args[0][:args[0].index('(')]
 
         possibilities = MetaPossibilities(args, TabFile, False, False, '')
 
         if len(possibilities) == 1:
             payload_number = possibilities[0]
-            #print("Watch Payload number is ", payload_number)
+            # print("Watch Payload number is ", payload_number)
 
             # Pick up the payload from the list
             payload = TabFile.var_trie.storage_list[payload_number]
@@ -2247,10 +2294,14 @@ class CWatchWorker():
         elif not possibilities:
             print("Variable not found")
 
+
 class CBreakWorker():
 
     def __init__(self):
-        self.init = 1
+        try:
+            self.strtype = basestring
+        except NameError:
+            self.strtype = str
 
     def SetBreakPoint(self, spec):
         break_point = gdb.Breakpoint(spec, gdb.BP_BREAKPOINT)
@@ -2259,110 +2310,174 @@ class CBreakWorker():
     def SetCondition(self, break_point, condition):
         break_point.condition = condition
 
+    def FindModule(self, module):
+        spec = "{0}_".format(module)
+        try:
+            spec_ref = gdb.parse_and_eval(spec)
+        except:
+            print("Module not found")
+            return 0
+
+        return 1
+
+    def PrintHelp(self):
+        print("COBOL cbreak command usage:")
+        print("'cbreak/h' prints this message.")
+        print("'cbreak'                                    set a breakpoint on the current line")
+        print("'cbreak MODULE'                             set a breakpoint on MODULE entry")
+        print("'cbreak section SECTON'                     set a breakpoint on SECTION entry")
+        print("'cbreak LINENR'                             set a breakpoint on line number (LINENR)")
+        print("'cbreak LINENR VARIABLE =[i] MSTRING'       set a breakpoint on line number (LINENR)")
+        print("                                            for string VARIABLE equals MSTRING")
+        print("'cbreak LINENR VARIABLE <>[i] MSTRING'      set a breakpoint on line number (LINENR)")
+        print("                                            for string VARIABLE not equal MSTRING")
+        print("'cbreak LINENR VARIABLE =~ REGEXP'          set a breakpoint on line number (LINENR)")
+        print("                                            for string VARIABLE when matching REGEXP")
+        print("'cbreak LINENR NUMVAR condition VALUE'      set a breakpoint on line number (LINENR)")
+        print("                                            for numeric VARIABLE condition and value")
+        print("                                            where condition is == < <= > >= <>")
+        print("'cbreak LINENR VARIABLE condition VARIABLE' set a breakpoint on line numer (LINENR)")
+        print("                                            for variable condition and second variable")
+        print("                                            where condidion is = <> >= <= > <")
+
+    def GetVarPayload(self, tab_file, search_var):
+        payload = None
+
+        tab_file.ReadSymbolTableText()
+        possibilities = MetaPossibilities(search_var, tab_file, False, False, '')
+
+        if len(possibilities) == 1:
+            payload_number = possibilities[0]
+
+            # Pick up the payload from the list
+            payload = tab_file.var_trie.storage_list[payload_number]
+            payload.FetchVariableData(tab_file.line_list, False)
+
+        return payload
+
+    def SetStringBreakpoint(self, args, payload):
+        if args[2] in ("=", "=i", "==", "==i", "<>", "<>i", "=~"):
+            break_point = self.SetBreakPoint(args[0])
+            if args[2][-1:] == "i":
+                cmp_func = "strncasecmp"
+            else:
+                cmp_func = "strncmp"
+
+            if args[2] in ("=", "=i", "==", "==i"):
+                cmp_len = len(args[3])
+                self.SetCondition(break_point, "(int){0}((char *)cob_get_field_str_buffered(&{1}), \"{2}\", {3}) == 0".format(cmp_func, payload.Fname, args[3], cmp_len))
+            elif args[2] in ("<>", "<>i"):
+                cmp_len = len(args[3])
+                self.SetCondition(break_point, "(int){0}((char *)cob_get_field_str_buffered(&{1}), \"{2}\", {3}) != 0".format(cmp_func, payload.Fname, args[3], cmp_len))
+            else:
+                self.SetCondition(break_point, "$_regex((char *)cob_get_field_str_buffered(&{0}), \"{1}\")".format(payload_.Fname, args[3]))
+        else:
+            print("Condition not implemented")
+            return
+
+    def SetNumericBreakpoint(self, args, payload):
+        if args[2] in ("==", "<", "<=", ">", ">=", "<>"):
+            break_point = self.SetBreakPoint(args[0])
+            self.SetCondition(break_point, "(double)atof((char *)cob_get_field_str_buffered(&{0})) {1} {2}".format(payload_f.Fname, args[2], args[3]))
+        else:
+            print("Condition not implemented")
+
+    def SetSectionBreakpoint(self, args):
+        mod_sec = args[1].split(":")
+        if len(mod_sec) == 1:
+            break_section = mod_sec[0].replace('-', '__')
+            break_module = ""
+        elif len(mod_sec) == 2:
+            break_section = mod_sec[1].replace('-', '__')
+            break_module = mod_sec[0]
+            if self.FindModule(break_module) == 0:
+                return
+
+        # spec = "SECTION_{0}".format(args[1].replace('-', '__'))
+        # print("=={0}==".format(spec))
+        # try:
+        #     spec_ref = gdb.parse_and_eval(spec)
+        # except:
+        #     print("Section not found")
+        #     return
+
+        if not break_module:
+            spec = "SECTION_{0}".format(break_section)
+        else:
+            spec = "{0}_:SECTION_{1}".format(break_module, break_section)
+        break_point = self.SetBreakPoint(spec)
+
+    def SetCobCompBreakpoint(self, args, payload_f, payload_s):
+        if args[2] in ("=", "=="):
+            condition_str = "=="
+        elif args[2] == "<>":
+            condition_str = "!="
+        elif args[2] in (">=", "<=", ">", "<"):
+            condition_str = args[2]
+        else:
+            print("Condition not implemented")
+            return
+
+        break_point = self.SetBreakPoint(args[0])
+        self.SetCondition(break_point, "(int)cob_cmp(&{0}, &{1}) {2} 0".format(payload_f.Fname, payload_s.Fname, condition_str))
+
     def ProcessBArgumentsB(self, tab_file, arguments):
         args = arguments.split()
         if arguments == "":
             break_point = self.SetBreakPoint("")
+        elif len(args) == 1 and args[0] == "/h":
+            self.PrintHelp()
+            return
         elif len(args) == 1 and args[0].isdigit():
             break_point = self.SetBreakPoint(args[0])
-        elif len(args) == 1 and isinstance(args[0], str):
-            spec = "{0}_".format(args[0])
-            try:
-                spec_ref = gdb.parse_and_eval(spec)
-            except:
-                print("Module not found")
-                return
-
-            break_point = self.SetBreakPoint("{0}_:ENTRY_{0}".format(args[0]))
-        elif len(args) == 2 and args[0] == "section" and isinstance(args[1], str):
-            mod_sec = args[1].split(":")
-            if len(mod_sec) == 1:
-                break_section = mod_sec[0].replace('-', '__')
-                break_module = ""
-            elif len(mod_sec) == 2:
-                break_section = mod_sec[1].replace('-', '__')
-                break_module = mod_sec[0]
-
-#            spec = "SECTION_{0}".format(args[1].replace('-', '__'))
-#            print("=={0}==".format(spec))
-#            try:
-#                spec_ref = gdb.parse_and_eval(spec)
-#            except:
-#                print("Section not found")
-#                return
-
-            if not break_module:
-                spec = "SECTION_{0}".format(break_section)
-            else:
-                spec = "{0}_:SECTION_{1}".format(break_module, break_section)
-            break_point = self.SetBreakPoint(spec)
+        elif len(args) == 1 and isinstance(args[0], self.strtype):
+            if self.FindModule(args[0]) == 1:
+                break_point = self.SetBreakPoint("{0}_:ENTRY_{0}".format(args[0]))
+        elif len(args) == 2 and args[0] == "section" and isinstance(args[1], self.strtype):
+            self.SetSectionBreakpoint(args)
         elif len(args) == 4:
             if not args[0].isdigit():
                 print('First argument is not a line number')
                 return
 
-            tab_file.ReadSymbolTableText()
-            possibilities = MetaPossibilities(args[1], tab_file, False, False, '')
-
-            if len(possibilities) == 1:
-                payload_number = possibilities[0]
-
-                # Pick up the payload from the list
-                payload = tab_file.var_trie.storage_list[payload_number]
-                payload.FetchVariableData(tab_file.line_list, False)
-            elif not possibilities:
+            payload_f = self.GetVarPayload(tab_file, args[1])
+            if payload_f is None:
                 print("Variable not found")
                 return
 
-            if payload.AttrType in (33, 34, 35):
-                if args[2] in ("=", "=i", "==", "==i", "<>", "<>i", "=~", ):
-                    break_point = self.SetBreakPoint(args[0])
-                    if args[2][-1:] == "i":
-                        cmp_func = "strncasecmp"
-                    else:
-                        cmp_func = "strncmp"
-
-                    if args[2] in ("=", "=i", "==", "==i"):
-                        cmp_len = len(args[3])
-                        self.SetCondition(break_point, "(int){0}((char *)cob_get_field_str_buffered(&{1}), \"{2}\", {3}) == 0".format(cmp_func, payload.Fname, args[3], cmp_len))
-                    elif args[2] in ("<>", "<>i"):
-                        cmp_len = len(args[3])
-                        self.SetCondition(break_point, "(int){0}((char *)cob_get_field_str_buffered(&{1}), \"{2}\", {3}) != 0".format(cmp_func, payload.Fname, args[3], cmp_len))
-                    else:
-                        self.SetCondition(break_point, "$_regex((char *)cob_get_field_str_buffered(&{0}), \"{1}\")".format(payload.Fname, args[3]))
-                else:
-                    print("Condition not implemented")
-                    return
-            elif payload.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27) and args[3].isdigit():
-                if args[2] in ("==", "<", "<=", ">", ">=", "<>"):
-                    break_point = self.SetBreakPoint(args[0])
-                    self.SetCondition(break_point, "(double)atof((char *)cob_get_field_str_buffered(&{0})) {1} {2}".format(payload.Fname, args[2], args[3]))
-                else:
-                    print("Condition not implemented")
+            payload_s = self.GetVarPayload(tab_file, args[3])
+            if payload_s is not None:
+                self.SetCobCompBreakpoint(args, payload_f, payload_s)
             else:
-                print("Not yet implemented")
-                return
+                if payload_f.AttrType in (33, 34, 35):
+                    self.SetStringBreakpoint(args, payload_f)
+                elif payload_f.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27) and args[3].isdigit():
+                    self.SetNumericBreakpoint(args, payload_f)
+                else:
+                    print("Not yet implemented")
+                    return
         else:
             print('Breakpoint parameters not recognized')
             return
 
-CBLDBG_WORKER = CPrintWorker()
+
 CBLDBG_TABFILE = TabFileInformation()
+
 
 class CPrint(gdb.Command):
     """Prints COBOL-NAMED variables when debugging cobst processed object files."""
 
     def __init__(self):
-        ##############################################################################
-        ## The version number in the next section is updated by a Linux bash script. #
-        ## The text "Version x.x" has to appear in square brackets.                  #
-        ## Don't mess with it!                                                       #
-        ##############################################################################
+        #############################################################################
+        # The version number in the next section is updated by a Linux bash script. #
+        # The text "Version x.x" has to appear in square brackets.                  #
+        # Don't mess with it!                                                       #
+        #############################################################################
         self.Worker = CPrintWorker()
         self.TabFile = CBLDBG_TABFILE
         self.TabFile.question_mark_range = self.Worker.question_mark_range
 
-        print('Registering CPrint (Usage is "' + self.Worker.use_cprint + ' <COBOL identifier>") [Version 4.16]')
+        print('Registering CPrint (Usage is "' + self.Worker.use_cprint + ' <COBOL identifier>") [Version 4.17]')
         super(CPrint, self).__init__(self.Worker.use_cprint, gdb.COMMAND_USER)
 
     def invoke(self, arguments, from_tty):
@@ -2381,6 +2496,7 @@ class CPrint(gdb.Command):
             self.Worker.ProcessArguments(self.TabFile, arguments)
         except:
             traceback.print_exc()
+
 
 class CWatch(gdb.Command):
     """Used for creating COBOL-NAMED watchpoints when debugging cobst processed object files.
@@ -2412,6 +2528,7 @@ A watchpoint stops execution of your program whenever the value of an expression
         except:
             traceback.print_exc()
 
+
 class CBreak(gdb.Command):
     """Used for creating COBOL-NAMED breakpoints when debugging cobst processed object files.
 
@@ -2419,19 +2536,22 @@ Set a breakpoint for an expression.
 Usage: cbreak
 A breakpoint stops execution of your program whenever the expression matches
 
-    cbreak                                  set a breakpoint on the current line
-    cbreak MODULE                           set a breakpoint on MODULE entry
-    cbreak section SECTON                   set a breakpoint on SECTION entry
-    cbreak LINENR                           set a breakpoint on line number (LINENR)
-    cbreak LINENR VARIABLE =[i] MSTRING     set a breakpoint on line number (LINENR)
-                                            for string VARIABLE equals MSTRING
-    cbreak LINENR VARIABLE <>[i] MSTRING    set a breakpoint on line number (LINENR)
-                                            for string VARIABLE not equal MSTRING
-    cbreak LINENR VARIABLE =~ REGEXP        set a breakpoint on line number (LINENR)
-                                            for string VARIABLE when matching REGEXP
-    cbreak LINENR NUMVAR condition VALUE    set a breakpoint on line number (LINENR)
-                                            for numeric VARIABLE condition and value
-                                            where condition is == < <= > >= <>
+    cbreak                                    set a breakpoint on the current line
+    cbreak MODULE                             set a breakpoint on MODULE entry
+    cbreak section SECTON                     set a breakpoint on SECTION entry
+    cbreak LINENR                             set a breakpoint on line number (LINENR)
+    cbreak LINENR VARIABLE =[i] MSTRING       set a breakpoint on line number (LINENR)
+                                              for string VARIABLE equals MSTRING
+    cbreak LINENR VARIABLE <>[i] MSTRING      set a breakpoint on line number (LINENR)
+                                              for string VARIABLE not equal MSTRING
+    cbreak LINENR VARIABLE =~ REGEXP          set a breakpoint on line number (LINENR)
+                                              for string VARIABLE when matching REGEXP
+    cbreak LINENR NUMVAR condition VALUE      set a breakpoint on line number (LINENR)
+                                              for numeric VARIABLE condition and value
+                                              where condition is == < <= > >= <>
+    cbreak LINENR VARIABLE condition VARIABLE set a breakpoint on line numer (LINENR)
+                                              for variable condition and second variable
+                                              where condidion is = <> >= <= > <
 
     break 28 VARIABLE = breakstring
     break 28 VARIABLE =i breakstring        option i for ignore case
