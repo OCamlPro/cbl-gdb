@@ -250,7 +250,7 @@ def Main() :
     ## The text "Version x.x" has to appear in square brackets.               #
     ## Don't mess with it!                                                    #
     ###########################################################################
-    SCRIPT_VERSION="[Version 4.18]"
+    SCRIPT_VERSION="[Version 4.19]"
 
     show_time = os.environ.get("SHOW_TIME","0")
     SHOW_TIME = False
@@ -524,11 +524,11 @@ def Main() :
             keepers.append(param)
         ## We know there is a dash...
         paramw = param[1:]
+        if paramw and paramw[0] == '-' :
+            ## There were two!  Get rid of the second one
+            paramw = paramw[1:]
         ## If there is an equals sign, then we remove everything past it
         paramw1 = paramw.split('=')[0]
-        if paramw and paramw[0] == '-' :
-            ## There were two!
-            paramw = paramw[1:]
         if paramw in ("h","he","hel","help") or param.find("-h") == 0 :
             ## Empirically, any option starting with "-h" is the same as "--help".
             ## The double-dash versions require h, he, hel, or help
@@ -977,23 +977,34 @@ def Main() :
         cleaning_up = False;
 
     if len(save_temps_split) >= 2 :
+        print("save_temps_split", save_temps_split)
         ## We are dealing with a -save-temps=<dest>
         dest = save_temps_split[-1]
+
+        ## if dest starts with ~/ we need to replace the squiggle with $HOME
+        if dest[0:2] == "~/" :
+            dest = os.getenv("HOME") + dest[1:]
+
+        if ECHO :
+            print("os.mkdir:",dest)
         try :
             os.mkdir(dest)
         except :
             pass
 
+        to_be_deleted = set(to_be_deleted)
         for file in to_be_deleted :
             extension = file.split('.')[-1]
             if extension in ("c","i","s","o","h") :
                 d = dest + '/' + file.split('/')[-1]
                 DeleteAFile(d)
+                if ECHO :
+                    print("shutil.move:", file, "->" ,dest)
                 try :
                     shutil.move(file,dest)
                 except:
                     ## This can happen when a file doesn't exist.
-                    ## to_be_deleted can have .i
+                    ## It shouldn't happen, but, hey....
                     pass
 
     if cleaning_up :
