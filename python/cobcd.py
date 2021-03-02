@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ################################################################################
-# pylint: disable=line-too-long,unused-argument,unused-wildcard-import
+# pylint: disable=line-too-long,unused-argument,unused-wildcard-import,import-error
 #
 # flake8 settings used
 # [flake8]
@@ -2144,7 +2144,7 @@ class CPrintWorker():
             print(payload.display_name)
             print(body)
             pass
-        else: # self.current_display_mode ==  'd':
+        else:  # self.current_display_mode ==  'd':
             payload.ShowFields()
             pass
 
@@ -2191,13 +2191,15 @@ class CPrintWorker():
                 # And display the variable according to the current list v-level
                 self.FormattedDisplay(payload)
 
+
 class CWatchWorker():
     """Does most of the non-gdb work of CWatch()"""
 
     def __init__(self):
         self.current_display_mode = "0"
 
-    def SetTheWatchpoint(self, TabFile, payload, wp_type, wp_lenspec):
+    @staticmethod
+    def set_watchpoint(payload, wp_type, wp_lenspec):
         wp_startloc = payload.location_of_data
         wp_length = payload.Length
 
@@ -2225,15 +2227,16 @@ class CWatchWorker():
         spec += '(' + hex(wp_startloc) + ')'
 
         if wp_type == 'WPW':
-            bp = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_WRITE)
+            break_point = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_WRITE)
         elif wp_type == 'WPR':
-            bp = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_READ)
+            break_point = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_READ)
         elif wp_type == 'WPRW':
-            bp = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_ACCESS)
+            break_point = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_ACCESS)
         else:
             print("Internal error: Watchpoint type not recognized")
 
-    def PrintHelp(self):
+    @staticmethod
+    def print_help():
         print("COBOL cwatch command usage:")
         print("'cwatch/h' prints this message.")
         print("'cwatch VARIABLE [(start:length)]'    set a (write) watch on this variable")
@@ -2241,14 +2244,14 @@ class CWatchWorker():
         print("'cwatch/r VARIABLE [(start:length)]'  set a read watch on this variable")
         print("'cwatch/rw VARIABLE [(start:length)]' set a read/write watch on this variable")
 
-    def ProcessWArgumentsW(self, TabFile, arguments):
+    def process_watch_arguments(self, tab_file, arguments):
         wp_type = 'WPW'
         wp_lenspec = ""
 
         args = arguments.split()
         if not args:
             print("No variable given\n")
-            self.PrintHelp()
+            self.print_help()
             return
 
         if args[0] == '/r':
@@ -2261,11 +2264,11 @@ class CWatchWorker():
             wp_type = 'WPRW'
             del args[0]
         elif args[0] == '/h':
-            self.PrintHelp()
+            self.print_help()
             return
         elif args[0].startswith('/'):
             print("Option not recognized\n")
-            self.PrintHelp()
+            self.print_help()
             return
 
         if len(args) == 2:
@@ -2279,18 +2282,18 @@ class CWatchWorker():
             wp_lenspec = args[0][args[0].index('(') + 1:-1]
             args[0] = args[0][:args[0].index('(')]
 
-        possibilities = MetaPossibilities(args, TabFile, False, False, '')
+        possibilities = MetaPossibilities(args, tab_file, False, False, '')
 
         if len(possibilities) == 1:
             payload_number = possibilities[0]
             # print("Watch Payload number is ", payload_number)
 
             # Pick up the payload from the list
-            payload = TabFile.var_trie.storage_list[payload_number]
-            payload.FetchVariableData(TabFile.line_list, False)
+            payload = tab_file.var_trie.storage_list[payload_number]
+            payload.FetchVariableData(tab_file.line_list, False)
 
             # And go set the Watchpoint
-            self.SetTheWatchpoint(TabFile, payload, wp_type, wp_lenspec)
+            self.set_watchpoint(payload, wp_type, wp_lenspec)
         elif not possibilities:
             print("Variable not found")
 
@@ -2303,14 +2306,17 @@ class CBreakWorker():
         except NameError:
             self.strtype = str
 
-    def SetBreakPoint(self, spec):
+    @staticmethod
+    def set_breakpoint(spec):
         break_point = gdb.Breakpoint(spec, gdb.BP_BREAKPOINT)
         return break_point
 
-    def SetCondition(self, break_point, condition):
+    @staticmethod
+    def set_condition(break_point, condition):
         break_point.condition = condition
 
-    def FindModule(self, module):
+    @staticmethod
+    def find_module(module):
         spec = "{0}_".format(module)
         try:
             spec_ref = gdb.parse_and_eval(spec)
@@ -2320,27 +2326,29 @@ class CBreakWorker():
 
         return 1
 
-    def PrintHelp(self):
+    @staticmethod
+    def print_help():
         print("COBOL cbreak command usage:")
         print("'cbreak/h' prints this message.")
-        print("'cbreak'                                    set a breakpoint on the current line")
-        print("'cbreak MODULE'                             set a breakpoint on MODULE entry")
-        print("'cbreak section SECTON'                     set a breakpoint on SECTION entry")
-        print("'cbreak LINENR'                             set a breakpoint on line number (LINENR)")
-        print("'cbreak LINENR VARIABLE =[i] MSTRING'       set a breakpoint on line number (LINENR)")
-        print("                                            for string VARIABLE equals MSTRING")
-        print("'cbreak LINENR VARIABLE <>[i] MSTRING'      set a breakpoint on line number (LINENR)")
-        print("                                            for string VARIABLE not equal MSTRING")
-        print("'cbreak LINENR VARIABLE =~ REGEXP'          set a breakpoint on line number (LINENR)")
-        print("                                            for string VARIABLE when matching REGEXP")
-        print("'cbreak LINENR NUMVAR condition VALUE'      set a breakpoint on line number (LINENR)")
-        print("                                            for numeric VARIABLE condition and value")
-        print("                                            where condition is == < <= > >= <>")
-        print("'cbreak LINENR VARIABLE condition VARIABLE' set a breakpoint on line numer (LINENR)")
-        print("                                            for variable condition and second variable")
-        print("                                            where condidion is = <> >= <= > <")
+        print("'cbreak'                                       set a breakpoint on the current line")
+        print("'cbreak MODULE'                                set a breakpoint on MODULE entry")
+        print("'cbreak section SECTON'                        set a breakpoint on SECTION entry")
+        print("'cbreak LINENR'                                set a breakpoint on line number (LINENR)")
+        print("'cbreak LINENR if VARIABLE =[i] MSTRING'       set a breakpoint on line number (LINENR)")
+        print("                                               for string VARIABLE equals MSTRING")
+        print("'cbreak LINENR if VARIABLE <>[i] MSTRING'      set a breakpoint on line number (LINENR)")
+        print("                                               for string VARIABLE not equal MSTRING")
+        print("'cbreak LINENR if VARIABLE =~ REGEXP'          set a breakpoint on line number (LINENR)")
+        print("                                               for string VARIABLE when matching REGEXP")
+        print("'cbreak LINENR if NUMVAR condition VALUE'      set a breakpoint on line number (LINENR)")
+        print("                                               for numeric VARIABLE condition and value")
+        print("                                               where condition is == < <= > >= <>")
+        print("'cbreak LINENR if VARIABLE condition VARIABLE' set a breakpoint on line numer (LINENR)")
+        print("                                               for variable condition and second variable")
+        print("                                               where condidion is = <> >= <= > <")
 
-    def GetVarPayload(self, tab_file, search_var):
+    @staticmethod
+    def get_var_payload(tab_file, search_var):
         payload = None
 
         tab_file.ReadSymbolTableText()
@@ -2352,12 +2360,14 @@ class CBreakWorker():
             # Pick up the payload from the list
             payload = tab_file.var_trie.storage_list[payload_number]
             payload.FetchVariableData(tab_file.line_list, False)
+            if search_var not in payload.Name:
+                payload = None
 
         return payload
 
-    def SetStringBreakpoint(self, args, payload):
+    def set_string_breakpoint(self, args, payload):
         if args[2] in ("=", "=i", "==", "==i", "<>", "<>i", "=~"):
-            break_point = self.SetBreakPoint(args[0])
+            break_point = self.set_breakpoint(args[0])
             if args[2][-1:] == "i":
                 cmp_func = "strncasecmp"
             else:
@@ -2365,24 +2375,24 @@ class CBreakWorker():
 
             if args[2] in ("=", "=i", "==", "==i"):
                 cmp_len = len(args[3])
-                self.SetCondition(break_point, "(int){0}((char *)cob_get_field_str_buffered(&{1}), \"{2}\", {3}) == 0".format(cmp_func, payload.Fname, args[3], cmp_len))
+                self.set_condition(break_point, "(int){0}((char *)cob_get_field_str_buffered(&{1}), \"{2}\", {3}) == 0".format(cmp_func, payload.Fname, args[3], cmp_len))
             elif args[2] in ("<>", "<>i"):
                 cmp_len = len(args[3])
-                self.SetCondition(break_point, "(int){0}((char *)cob_get_field_str_buffered(&{1}), \"{2}\", {3}) != 0".format(cmp_func, payload.Fname, args[3], cmp_len))
+                self.set_condition(break_point, "(int){0}((char *)cob_get_field_str_buffered(&{1}), \"{2}\", {3}) != 0".format(cmp_func, payload.Fname, args[3], cmp_len))
             else:
-                self.SetCondition(break_point, "$_regex((char *)cob_get_field_str_buffered(&{0}), \"{1}\")".format(payload_.Fname, args[3]))
+                self.set_condition(break_point, "$_regex((char *)cob_get_field_str_buffered(&{0}), \"{1}\")".format(payload.Fname, args[3]))
         else:
             print("Condition not implemented")
             return
 
-    def SetNumericBreakpoint(self, args, payload):
+    def set_numeric_breakpoint(self, args, payload):
         if args[2] in ("==", "<", "<=", ">", ">=", "<>"):
-            break_point = self.SetBreakPoint(args[0])
-            self.SetCondition(break_point, "(double)atof((char *)cob_get_field_str_buffered(&{0})) {1} {2}".format(payload_f.Fname, args[2], args[3]))
+            break_point = self.set_breakpoint(args[0])
+            self.set_condition(break_point, "(double)atof((char *)cob_get_field_str_buffered(&{0})) {1} {2}".format(payload.Fname, args[2], args[3]))
         else:
             print("Condition not implemented")
 
-    def SetSectionBreakpoint(self, args):
+    def set_section_breakpoint(self, args):
         mod_sec = args[1].split(":")
         if len(mod_sec) == 1:
             break_section = mod_sec[0].replace('-', '__')
@@ -2390,7 +2400,7 @@ class CBreakWorker():
         elif len(mod_sec) == 2:
             break_section = mod_sec[1].replace('-', '__')
             break_module = mod_sec[0]
-            if self.FindModule(break_module) == 0:
+            if self.find_module(break_module) == 0:
                 return
 
         # spec = "SECTION_{0}".format(args[1].replace('-', '__'))
@@ -2405,9 +2415,9 @@ class CBreakWorker():
             spec = "SECTION_{0}".format(break_section)
         else:
             spec = "{0}_:SECTION_{1}".format(break_module, break_section)
-        break_point = self.SetBreakPoint(spec)
+        break_point = self.set_breakpoint(spec)
 
-    def SetCobCompBreakpoint(self, args, payload_f, payload_s):
+    def set_cob_cmp_breakpoint(self, args, payload_f, payload_s):
         if args[2] in ("=", "=="):
             condition_str = "=="
         elif args[2] == "<>":
@@ -2418,41 +2428,47 @@ class CBreakWorker():
             print("Condition not implemented")
             return
 
-        break_point = self.SetBreakPoint(args[0])
-        self.SetCondition(break_point, "(int)cob_cmp(&{0}, &{1}) {2} 0".format(payload_f.Fname, payload_s.Fname, condition_str))
+        break_point = self.set_breakpoint(args[0])
+        self.set_condition(break_point, "(int)cob_cmp(&{0}, &{1}) {2} 0".format(payload_f.Fname, payload_s.Fname, condition_str))
 
-    def ProcessBArgumentsB(self, tab_file, arguments):
+    def process_break_arguments(self, tab_file, arguments):
         args = arguments.split()
         if arguments == "":
-            break_point = self.SetBreakPoint("")
+            break_point = self.set_breakpoint("")
         elif len(args) == 1 and args[0] == "/h":
-            self.PrintHelp()
+            self.print_help()
             return
         elif len(args) == 1 and args[0].isdigit():
-            break_point = self.SetBreakPoint(args[0])
+            break_point = self.set_breakpoint(args[0])
         elif len(args) == 1 and isinstance(args[0], self.strtype):
-            if self.FindModule(args[0]) == 1:
-                break_point = self.SetBreakPoint("{0}_:ENTRY_{0}".format(args[0]))
+            if self.find_module(args[0]) == 1:
+                break_point = self.set_breakpoint("{0}_:ENTRY_{0}".format(args[0]))
         elif len(args) == 2 and args[0] == "section" and isinstance(args[1], self.strtype):
-            self.SetSectionBreakpoint(args)
-        elif len(args) == 4:
+            self.set_section_breakpoint(args)
+        elif len(args) == 5:
             if not args[0].isdigit():
                 print('First argument is not a line number')
                 return
 
-            payload_f = self.GetVarPayload(tab_file, args[1])
+            if args[1] != "if":
+                print('Second argument should be "if"')
+                return
+            elif args[1] == "if":
+                del args[1]
+
+            payload_f = self.get_var_payload(tab_file, args[1])
             if payload_f is None:
                 print("Variable not found")
                 return
 
-            payload_s = self.GetVarPayload(tab_file, args[3])
+            payload_s = self.get_var_payload(tab_file, args[3])
             if payload_s is not None:
-                self.SetCobCompBreakpoint(args, payload_f, payload_s)
+                self.set_cob_cmp_breakpoint(args, payload_f, payload_s)
             else:
                 if payload_f.AttrType in (33, 34, 35):
-                    self.SetStringBreakpoint(args, payload_f)
+                    self.set_string_breakpoint(args, payload_f)
                 elif payload_f.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27) and args[3].isdigit():
-                    self.SetNumericBreakpoint(args, payload_f)
+                    self.set_numeric_breakpoint(args, payload_f)
                 else:
                     print("Not yet implemented")
                     return
@@ -2477,7 +2493,7 @@ class CPrint(gdb.Command):
         self.TabFile = CBLDBG_TABFILE
         self.TabFile.question_mark_range = self.Worker.question_mark_range
 
-        print('Registering CPrint (Usage is "' + self.Worker.use_cprint + ' <COBOL identifier>") [Version 4.17]')
+        print('Registering CPrint (Usage is "' + self.Worker.use_cprint + ' <COBOL identifier>") [Version 4.18]')
         super(CPrint, self).__init__(self.Worker.use_cprint, gdb.COMMAND_USER)
 
     def invoke(self, arguments, from_tty):
@@ -2512,19 +2528,19 @@ A watchpoint stops execution of your program whenever the value of an expression
     cwatch/rw VARIABLE   set a read/write watch on this variable
 
     if (start:length) is given the VARIABLE is watched with this startpoint and length
-
     """
 
     def __init__(self):
         super(CWatch, self).__init__("cwatch", gdb.COMMAND_USER)
         print('Registering CWatch (Usage is "cwatch <COBOL identifier>")')
-        self.Worker = CWatchWorker()
-        self.TabFile = CBLDBG_TABFILE
+        self.worker = CWatchWorker()
+        self.tab_file = CBLDBG_TABFILE
 
     def invoke(self, arguments, from_tty):
         try:
-            self.TabFile.ReadSymbolTableText()
-            self.Worker.ProcessWArgumentsW(self.TabFile, arguments)
+            self.tab_file.ReadSymbolTableText()
+            self.worker.process_watch_arguments(self.tab_file, arguments)
+            self.dont_repeat()
         except:
             traceback.print_exc()
 
@@ -2536,39 +2552,41 @@ Set a breakpoint for an expression.
 Usage: cbreak
 A breakpoint stops execution of your program whenever the expression matches
 
-    cbreak                                    set a breakpoint on the current line
-    cbreak MODULE                             set a breakpoint on MODULE entry
-    cbreak section SECTON                     set a breakpoint on SECTION entry
-    cbreak LINENR                             set a breakpoint on line number (LINENR)
-    cbreak LINENR VARIABLE =[i] MSTRING       set a breakpoint on line number (LINENR)
-                                              for string VARIABLE equals MSTRING
-    cbreak LINENR VARIABLE <>[i] MSTRING      set a breakpoint on line number (LINENR)
-                                              for string VARIABLE not equal MSTRING
-    cbreak LINENR VARIABLE =~ REGEXP          set a breakpoint on line number (LINENR)
-                                              for string VARIABLE when matching REGEXP
-    cbreak LINENR NUMVAR condition VALUE      set a breakpoint on line number (LINENR)
-                                              for numeric VARIABLE condition and value
-                                              where condition is == < <= > >= <>
-    cbreak LINENR VARIABLE condition VARIABLE set a breakpoint on line numer (LINENR)
-                                              for variable condition and second variable
-                                              where condidion is = <> >= <= > <
+    cbreak                                       set a breakpoint on the current line
+    cbreak MODULE                                set a breakpoint on MODULE entry
+    cbreak section SECTON                        set a breakpoint on SECTION entry
+    cbreak section MODULE:SECTON                 set a breakpoint on SECTION entry in MODULE
+    cbreak LINENR                                set a breakpoint on line number (LINENR)
+    cbreak LINENR if VARIABLE =[i] MSTRING       set a breakpoint on line number (LINENR)
+                                                 for string VARIABLE equals MSTRING
+    cbreak LINENR if VARIABLE <>[i] MSTRING      set a breakpoint on line number (LINENR)
+                                                 for string VARIABLE not equal MSTRING
+    cbreak LINENR if VARIABLE =~ REGEXP          set a breakpoint on line number (LINENR)
+                                                 for string VARIABLE when matching REGEXP
+    cbreak LINENR if NUMVAR condition VALUE      set a breakpoint on line number (LINENR)
+                                                 for numeric VARIABLE condition and value
+                                                 where condition is == < <= > >= <>
+    cbreak LINENR if VARIABLE condition VARIABLE set a breakpoint on line numer (LINENR)
+                                                 for variable condition and second variable
+                                                 where condidion is = <> >= <= > <
 
     break 28 VARIABLE = breakstring
-    break 28 VARIABLE =i breakstring        option i for ignore case
+    break 28 VARIABLE =i breakstring             option i for ignore case
     break 28 VARIABLE =~ ^break*
 
     break 29 VARIABLE > 12
     """
 
     def __init__(self):
-        self.Worker = CBreakWorker()
+        self.worker = CBreakWorker()
         self.tab_file = CBLDBG_TABFILE
 
         print('Registering CBreak (Usage is "cbreak <line number> <COBOL identifier> == <value>")')
         super(CBreak, self).__init__("cbreak", gdb.COMMAND_USER)
 
     def invoke(self, arguments, from_tty):
-        self.Worker.ProcessBArgumentsB(self.tab_file, arguments)
+        self.worker.process_break_arguments(self.tab_file, arguments)
+        self.dont_repeat()
 
 
 CPrint()
