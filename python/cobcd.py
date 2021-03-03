@@ -2493,7 +2493,7 @@ class CPrint(gdb.Command):
         self.TabFile = CBLDBG_TABFILE
         self.TabFile.question_mark_range = self.Worker.question_mark_range
 
-        print('Registering CPrint (Usage is "' + self.Worker.use_cprint + ' <COBOL identifier>") [Version 4.19]')
+        print('Registering CPrint (Usage is "' + self.Worker.use_cprint + ' <COBOL identifier>") [Version 4.20]')
         super(CPrint, self).__init__(self.Worker.use_cprint, gdb.COMMAND_USER)
 
     def invoke(self, arguments, from_tty):
@@ -2588,7 +2588,65 @@ A breakpoint stops execution of your program whenever the expression matches
         self.worker.process_break_arguments(self.tab_file, arguments)
         self.dont_repeat()
 
+class CStart(gdb.Command):
+    """ Intercept GDB's "start" command for sensible GnuCOBOL behavior
+
+        You can't just trap at main(), because the codegen-generated C
+        code at main first calls an initialization routine.  Then for a
+        program named "test-program", main calls a libcob routine which
+        itself calls         "test__program", which is a stub that calls
+        "test__program_".
+
+        So, this routine intercepts the GDB start command.
+
+        I put in a temporary break at main, read the symbols, find
+        the program name, build "test__program_" from that, establish
+        another temporary breakpoint there, and continue.
+
+        So far, it seems to work.
+    """
+
+    def __init__(self):
+        self.tab_file = CBLDBG_TABFILE
+
+        #print('Registering CStart (Usage is "start [args]")')
+        super(CStart, self).__init__("start", gdb.COMMAND_USER)
+
+    def invoke(self, arguments, from_tty):
+        #print("Intercepted the start command")
+
+        # set a temporary breakpoint at main()
+        command = "tbreak main"
+        gdb.execute(command, False, True)   #
+
+        # run to that temporary break, including any arguments we were provided
+        command = "run " + ' '.join(arguments)
+        gdb.execute(command, False, True)
+
+        # We are now trapped at main(), so we can read the symbol table:
+        self.tab_file.ReadSymbolTableText()
+
+        # the program name is on the first line;
+        nfound = self.tab_file.current_variable_string.find('~')
+
+        if nfound != -1:
+            # Extract the line with the program name
+            first_line = self.tab_file.current_variable_string[0:nfound]
+            tokens = first_line.split('|')
+            if len(tokens) > 2:
+                # Turn hyphens into doubled underscores:
+                entry_point = tokens[2].replace("-","__") + "_"
+
+                # set a temporary breakpoint there
+                command = "tbreak " + entry_point
+                gdb.execute(command, False, True)
+
+                # And proceed
+                command = "continue"
+                gdb.execute(command, True, False)   # as if from user, don't collect output
+        self.dont_repeat()
 
 CPrint()
 CWatch()
 CBreak()
+CStart()
