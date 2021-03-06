@@ -2693,7 +2693,6 @@ class CPrint(gdb.Command):
 
     The default v-level can be set with the environment variable CPRINT_V=n
     The default r-level can be set with the environment variable CPRINT_R=n
-    The 'print' command can be changed to 'cprint' with the environment variable CPRINT=1
     The 'print' command can be changed to 'anything' with the environment variable CPRINT=anything
     """
 
