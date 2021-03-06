@@ -54,19 +54,19 @@ KNOWN GOOD FINISH
 KNOWN GOOD LINES: 1
 No stack.
 KNOWN GOOD START
- 1 : 01 GEORGE/test [L-S] : 0
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : 0
- 3 : 01 WASHINGTON/test [L-S] : 0
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : 0
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
  5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
  6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 8 : 01 CARVER/test [L-S] : HOT       
- 9 : 02 NAME-FIRST/CARVER/test [L-S] : HOT       
-10 : 01 PEANUTS/test [L-S] : HOT       
-11 : 02 NAME-FIRST/PEANUTS/test [L-S] : HOT       
-12 : 01 LEGUMES/test [L-S] : HOT       
-13 : 02 NAME-FIRST/LEGUMES/test [L-S] : HOT       
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 8 : 01 CARVER/test [L-S] :                                            CARVER    
+ 9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
+10 : 01 PEANUTS/test [L-S] :                                                                123456789
+11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+12 : 01 LEGUMES/test [L-S] :                                                                123456789
+13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 14 : 01 WS-JIM/JIMBOB [W-S] : 
 15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : 
 16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
@@ -76,18 +76,18 @@ KNOWN GOOD START
 20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : 
 21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : 
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 0
- 1 : 01 GEORGE/test [L-S] : 0
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : 0
- 3 : 01 WASHINGTON/test [L-S] : 0
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : 0
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : 0
- 6 : 01 CARVER/test [L-S] : 0
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : 0
- 8 : 01 PEANUTS/test [L-S] : 0
- 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 0
-10 : 01 LEGUMES/test [L-S] : 0
-11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 0
-01 GEORGE/test [L-S]  :  0
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 6 : 01 CARVER/test [L-S] :                                            CARVER    
+ 7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
+ 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+10 : 01 LEGUMES/test [L-S] :                                                                123456789
+11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
+01 GEORGE/test [L-S]  :               GEORGE    
 67	PROCEDURE DIVISION.
 68	    MOVE    SPACES to WS-BOB.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
@@ -1472,19 +1472,19 @@ entering: JUST_ONE
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 28	    DISPLAY NAME-FIRST of GEORGE.
- 1 : 01 GEORGE/test [L-S] : 4.3210001
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : 4.3210001
- 3 : 01 WASHINGTON/test [L-S] : 4.3210001
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : 4.3210001
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
  5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
  6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 8 : 01 CARVER/test [L-S] : HOT       
- 9 : 02 NAME-FIRST/CARVER/test [L-S] : HOT       
-10 : 01 PEANUTS/test [L-S] : HOT       
-11 : 02 NAME-FIRST/PEANUTS/test [L-S] : HOT       
-12 : 01 LEGUMES/test [L-S] : HOT       
-13 : 02 NAME-FIRST/LEGUMES/test [L-S] : HOT       
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 8 : 01 CARVER/test [L-S] :                                            CARVER    
+ 9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
+10 : 01 PEANUTS/test [L-S] :                                                                123456789
+11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+12 : 01 LEGUMES/test [L-S] :                                                                123456789
+13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
 15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
 16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
@@ -1494,35 +1494,35 @@ entering: JUST_ONE
 20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
 21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] : James     " Lowden    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : James     " Lowden    
- 3 : 01 WASHINGTON/test [L-S] : James     " Lowden    
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : James     " Lowden    
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : James     " Lowden    
- 6 : 01 CARVER/test [L-S] : James     " Lowden    
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : James     " Lowden    
- 8 : 01 PEANUTS/test [L-S] : James     " Lowden    
- 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : James     " Lowden    
-10 : 01 LEGUMES/test [L-S] : James     " Lowden    
-11 : 02 NAME-FIRST/LEGUMES/test [L-S] : James     " Lowden    
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 6 : 01 CARVER/test [L-S] :                                            CARVER    
+ 7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
+ 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+10 : 01 LEGUMES/test [L-S] :                                                                123456789
+11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 12 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
 13 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-01 GEORGE/test [L-S]  :  4.3210001
+01 GEORGE/test [L-S]  :               GEORGE    
 GEORGE    
 29	    DISPLAY NAME-FIRST of WASHINGTON.
- 1 : 01 GEORGE/test [L-S] : 4.3210001
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] : GEORGE    
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
  5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
  6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 8 : 01 CARVER/test [L-S] : HOT       
- 9 : 02 NAME-FIRST/CARVER/test [L-S] : HOT       
-10 : 01 PEANUTS/test [L-S] : HOT       
-11 : 02 NAME-FIRST/PEANUTS/test [L-S] : HOT       
-12 : 01 LEGUMES/test [L-S] : HOT       
-13 : 02 NAME-FIRST/LEGUMES/test [L-S] : HOT       
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 8 : 01 CARVER/test [L-S] :                                            CARVER    
+ 9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
+10 : 01 PEANUTS/test [L-S] :                                                                123456789
+11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+12 : 01 LEGUMES/test [L-S] :                                                                123456789
+13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
 15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
 16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
@@ -1532,33 +1532,33 @@ GEORGE
 20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
 21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] : GEORGE    
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] : GEORGE    
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : GEORGE    
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : GEORGE    
- 6 : 01 CARVER/test [L-S] : GEORGE    
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : GEORGE    
- 8 : 01 PEANUTS/test [L-S] : GEORGE    
- 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : GEORGE    
-10 : 01 LEGUMES/test [L-S] : GEORGE    
-11 : 02 NAME-FIRST/LEGUMES/test [L-S] : GEORGE    
-01 GEORGE/test [L-S]  :  GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 6 : 01 CARVER/test [L-S] :                                            CARVER    
+ 7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
+ 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+10 : 01 LEGUMES/test [L-S] :                                                                123456789
+11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
+01 GEORGE/test [L-S]  :               GEORGE    
 WASHINGTON
 30	    DISPLAY NAME-FIRST of CARVER.
- 1 : 01 GEORGE/test [L-S] : 4.3210001
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
  5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
  6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 8 : 01 CARVER/test [L-S] : HOT       
- 9 : 02 NAME-FIRST/CARVER/test [L-S] : HOT       
-10 : 01 PEANUTS/test [L-S] : HOT       
-11 : 02 NAME-FIRST/PEANUTS/test [L-S] : HOT       
-12 : 01 LEGUMES/test [L-S] : HOT       
-13 : 02 NAME-FIRST/LEGUMES/test [L-S] : HOT       
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 8 : 01 CARVER/test [L-S] :                                            CARVER    
+ 9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
+10 : 01 PEANUTS/test [L-S] :                                                                123456789
+11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+12 : 01 LEGUMES/test [L-S] :                                                                123456789
+13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
 15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
 16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
@@ -1568,33 +1568,33 @@ WASHINGTON
 20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
 21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] : WASHINGTON
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : WASHINGTON
- 6 : 01 CARVER/test [L-S] : WASHINGTON
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : WASHINGTON
- 8 : 01 PEANUTS/test [L-S] : WASHINGTON
- 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : WASHINGTON
-10 : 01 LEGUMES/test [L-S] : WASHINGTON
-11 : 02 NAME-FIRST/LEGUMES/test [L-S] : WASHINGTON
-01 GEORGE/test [L-S]  :  WASHINGTON
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 6 : 01 CARVER/test [L-S] :                                            CARVER    
+ 7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
+ 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+10 : 01 LEGUMES/test [L-S] :                                                                123456789
+11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
+01 GEORGE/test [L-S]  :               GEORGE    
 CARVER    
 31	    DISPLAY NAME-FIRST of PEANUTS.
- 1 : 01 GEORGE/test [L-S] : 4.3210001
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
  5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
  6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 8 : 01 CARVER/test [L-S] : HOT       
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 8 : 01 CARVER/test [L-S] :                                            CARVER    
  9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
-10 : 01 PEANUTS/test [L-S] : CARVER    
-11 : 02 NAME-FIRST/PEANUTS/test [L-S] : CARVER    
-12 : 01 LEGUMES/test [L-S] : CARVER    
-13 : 02 NAME-FIRST/LEGUMES/test [L-S] : CARVER    
+10 : 01 PEANUTS/test [L-S] :                                                                123456789
+11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+12 : 01 LEGUMES/test [L-S] :                                                                123456789
+13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
 15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
 16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
@@ -1604,17 +1604,17 @@ CARVER
 20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
 21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] : 4.3210001
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : WASHINGTON
- 6 : 01 CARVER/test [L-S] : WASHINGTON
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 6 : 01 CARVER/test [L-S] :                                            CARVER    
  7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
- 8 : 01 PEANUTS/test [L-S] : CARVER    
- 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : CARVER    
-10 : 01 LEGUMES/test [L-S] : CARVER    
-11 : 02 NAME-FIRST/LEGUMES/test [L-S] : CARVER    
+ 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+10 : 01 LEGUMES/test [L-S] :                                                                123456789
+11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 12 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
 13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
 14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
@@ -1624,22 +1624,22 @@ CARVER
 18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
 19 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-01 GEORGE/test [L-S]  :  4.3210001
+01 GEORGE/test [L-S]  :               GEORGE    
 123.456789
 32	    DISPLAY NAME-FIRST of LEGUMES.
- 1 : 01 GEORGE/test [L-S] : 4.3210001
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
  5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
  6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 8 : 01 CARVER/test [L-S] : HOT       
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 8 : 01 CARVER/test [L-S] :                                            CARVER    
  9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
-10 : 01 PEANUTS/test [L-S] : CARVER    
+10 : 01 PEANUTS/test [L-S] :                                                                123456789
 11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-12 : 01 LEGUMES/test [L-S] : 123.456789
-13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123.456789
+12 : 01 LEGUMES/test [L-S] :                                                                123456789
+13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
 15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
 16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
@@ -1649,17 +1649,17 @@ CARVER
 20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
 21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] : 4.3210001
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : WASHINGTON
- 6 : 01 CARVER/test [L-S] : WASHINGTON
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 6 : 01 CARVER/test [L-S] :                                            CARVER    
  7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
- 8 : 01 PEANUTS/test [L-S] : CARVER    
+ 8 : 01 PEANUTS/test [L-S] :                                                                123456789
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] : 123.456789
-11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123.456789
+10 : 01 LEGUMES/test [L-S] :                                                                123456789
+11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 12 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
 13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
 14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
@@ -1669,21 +1669,21 @@ CARVER
 18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
 19 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-01 GEORGE/test [L-S]  :  4.3210001
+01 GEORGE/test [L-S]  :               GEORGE    
 123456.789
 33	    MOVE "Wabash" TO WABASH.
- 1 : 01 GEORGE/test [L-S] : 4.3210001
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
  5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
  6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 8 : 01 CARVER/test [L-S] : HOT       
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 8 : 01 CARVER/test [L-S] :                                            CARVER    
  9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
-10 : 01 PEANUTS/test [L-S] : CARVER    
+10 : 01 PEANUTS/test [L-S] :                                                                123456789
 11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-12 : 01 LEGUMES/test [L-S] : 123.456789
+12 : 01 LEGUMES/test [L-S] :                                                                123456789
 13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
 15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
@@ -1694,16 +1694,16 @@ CARVER
 20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
 21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] : 4.3210001
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : WASHINGTON
- 6 : 01 CARVER/test [L-S] : WASHINGTON
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 6 : 01 CARVER/test [L-S] :                                            CARVER    
  7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
- 8 : 01 PEANUTS/test [L-S] : CARVER    
+ 8 : 01 PEANUTS/test [L-S] :                                                                123456789
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] : 123.456789
+10 : 01 LEGUMES/test [L-S] :                                                                123456789
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 12 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
 13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
@@ -1714,20 +1714,20 @@ CARVER
 18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
 19 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-01 GEORGE/test [L-S]  :  4.3210001
+01 GEORGE/test [L-S]  :               GEORGE    
 34	    DISPLAY NAME-FIRST of WASHINGTON.
- 1 : 01 GEORGE/test [L-S] : 4.3210001
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        Wabash    DC        HOT       
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : Wabash    
  5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
  6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 8 : 01 CARVER/test [L-S] : HOT       
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 8 : 01 CARVER/test [L-S] :                                            CARVER    
  9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
-10 : 01 PEANUTS/test [L-S] : CARVER    
+10 : 01 PEANUTS/test [L-S] :                                                                123456789
 11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-12 : 01 LEGUMES/test [L-S] : 123.456789
+12 : 01 LEGUMES/test [L-S] :                                                                123456789
 13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
 15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
@@ -1738,16 +1738,16 @@ CARVER
 20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
 21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] : 4.3210001
+ 1 : 01 GEORGE/test [L-S] :              GEORGE    
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] : GEORGE    
+ 3 : 01 WASHINGTON/test [L-S] :                        Wabash    DC        HOT       
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : Wabash    
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : Wabash    
- 6 : 01 CARVER/test [L-S] : Wabash    
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
+ 6 : 01 CARVER/test [L-S] :                                            CARVER    
  7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
- 8 : 01 PEANUTS/test [L-S] : CARVER    
+ 8 : 01 PEANUTS/test [L-S] :                                                                123456789
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] : 123.456789
+10 : 01 LEGUMES/test [L-S] :                                                                123456789
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 12 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
 13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
@@ -1758,7 +1758,7 @@ CARVER
 18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
 19 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-01 GEORGE/test [L-S]  :  4.3210001
+01 GEORGE/test [L-S]  :               GEORGE    
 Wabash    
 [Inferior 1 (process 99999) exited normally]
 KNOWN GOOD FINISH

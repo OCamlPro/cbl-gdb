@@ -1078,8 +1078,16 @@ class CobolVariable():
         return tokens
 
     def get_verified_fieldname(self, other_field_name):
-        if self.Fname:
+        if self.Fname and self.Section != 'L' :
             return self.Fname
+
+        # It turns out that the GnuCOBOL compiler, when working with
+        # local variables, which have storage in the ephemeral cob_local_ptr
+        # buffer, doesn't establish the f_xx cob_field attributes (including the data
+        # pointer) until just before they are used.  We have found, generally, that
+        # the data have been set up, it's just the cob_field that gets adjusted late.
+        #
+        # So, we assume that the f_xx for L is not valid, and treat it as an f0:
 
         # The GnuCOBOL compiler does not create a f_xx field for variables
         # that are declared, but not referenced, in the source code.  I feel
@@ -1421,21 +1429,32 @@ class CobolVariable():
         if bname_location:
             bname_text = "( %s )" % hex(bname_location)
 
-        if self.Section == 'L':
-            field_loc = "cob_local_ptr (" + hex(self.location_of_data) + ")"
-        else:
-            field_loc = hex(self.location_of_data)
+        data_ptr = hex(self.location_of_data)
 
         print("Name:       ", self.display_name)
         print("Display:    ", self.display_body)
         print("Hex:        ", self.display_body_hex)
-        print("Field:      ", self.Fname, '   (', hex(self.location_of_field), ')')
-        print("Base:       ", self.Bname, '  ', bname_text)
-        print("Attr:       ", self.Aname, '   (', hex(self.location_of_attribute), ')')
+
+        if self.Section == 'L':
+            # This is local-storage
+            print("Field:      ", "__cobcd_debugging_f0" )
+        else:
+            if self.Fname:
+                print("Field:      ", self.Fname, '   (', hex(self.location_of_field), ')')
+            else:
+                print("Field:      ", "<none>")
+
+        if self.Section == 'L':
+            # This is local-storage
+            print("Base:       ", "cob_local_ptr")
+        else:
+            print("Base:       ", self.Bname, '  ', bname_text)
+
         print("Offset:     ", self.Offset)
-        print("Field.loc:  ", field_loc)
+        print("Data:       ", data_ptr)
         print("Length:     ", self.Length)
 
+        print("Attr:       ", self.Aname, '   (', hex(self.location_of_attribute), ')')
         print("AttrType:   ", self.AttrType, end="")
         print(" (", hex(self.AttrType), ") ", sep='', end="")
         if self.AttrType == 0:
