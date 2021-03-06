@@ -87,6 +87,7 @@ TackVariablesOntoCfile(PARAMETERS &params,
     // our very own:
     ssResult << "/* COBCD DEBUGGING BUFFER */" << endl << endl;
     ssResult << "char __cobcd_debugging_buffer[8192];" << endl << endl;
+    ssResult << "cob_field __cobcd_debugging_f0;" << endl << endl;
 
     ssResult << "/* COBCD DEBUGGING INFORMATION */" << endl << endl;
 

@@ -633,7 +633,7 @@ def get_lenspec_refmod(refmod, payload, lenspec_type):
     else:
         print("Not a valid lenspec type")
         return 0, 0, 0
-    
+
     lenspec = refmod.split(':')
     if len(lenspec) != 2:
         print("Offset and length specification not recognized")
@@ -1081,9 +1081,30 @@ class CobolVariable():
         if self.Fname:
             return self.Fname
 
-        # if we have no other fieldname than that one took f0 already
+        # The GnuCOBOL compiler does not create a f_xx field for variables
+        # that are declared, but not referenced, in the source code.  I feel
+        # it is necessary to be able to display them during debugging, even if
+        # the program doesn't reference them.
+        #
+        # In those cases, codegen creates pseudo-references to a local variable
+        # named "f0", which isn't available to us here.
+        #
+        # To get around this, cobcd-st creates "cob_field" __cobcd_debugging_f0" in the global
+        # address space, which we use when an actual f_xx isn't available.
+
+        # When I did something similar for __cobcd_debugging_buffer,
+        # I was told, without demonstration or proof, that I had to use cob_malloc()
+        # for that in Red Hat 7.  I frankly don't believe it; were that true, I wouldn't
+        # be able to get at VARIABLE_STRING_, either -- and I can, with no trouble.
+        #
+        # Given my lack of belief that this is an actual problem, I am simply referencing
+        # __cobcd_debugging_f0 instead of using cob_malloc().  And we shall see what
+        # we shall see.
+        #
+        # Bob Dubner, 2021-03-06, Version 4.21
+        #
         if other_field_name:
-            loc_fname = "f0"
+            loc_fname = "__cobcd_debugging_f0"
         else:
             loc_fname = "f1"
 
