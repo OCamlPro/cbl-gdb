@@ -2843,7 +2843,9 @@ A breakpoint stops execution of your program whenever the expression matches
 
 class CStart(gdb.Command):
     """(Re-)start the debugged program stopping at the beginning of the first COBOL statement.
-    """
+Any arguments after the cstart command are passed to the executable.  If present,
+they override any that might have been passed to GDB with --args
+"""
 
     def __init__(self):
         self.tab_file = CBLDBG_TABFILE
@@ -2853,20 +2855,46 @@ class CStart(gdb.Command):
 
     def invoke(self, arguments, from_tty):
         try:
-            # set a temporary breakpoint at the first COBOL entry...
-            command = "tbreak cob_trace_entry"
-            gdb.execute(command, False, True)   #
+            command = "info files"
+            info_files = gdb.execute(command, False, True).split('\n')
+            line1 = info_files[0]
+            line1 = line1.replace('\\','/') # In case of Windows
+            main_program = line1.split('/')[-1].split('"')[0]
+            if main_program == 'cobcrun':
+                command = "show args"
+                args = gdb.execute(command, False, True).split('"')[1].split()
+                cobol_program = args[0]
+                args = ' '.join(args)
+                # Arguments passed by CSTART override any that came from the command line:
+                arguments = arguments or args
+            else:
+                cobol_program = main_program
 
-            # run to that temporary break, including any arguments that were provided
-            # arg handling TODO: if a programm is currently running and is not possibly
-            # a main program then prefix the arguments with the name
-            command = "run " + ' '.join(arguments)
+            # If there is no cobol program, just run
+            if cobol_program:
+                # Turn hyphens into doubled underscores:
+                entry_point = cobol_program.replace("-","__") + "_"
+
+                # Learn the current breakpoint pending state
+                breakpoint_pending = gdb.execute("show breakpoint pending", False, True).split()[-1].replace('.','')
+
+                # Turn breakpoint pending on, because we might want to set a pending
+                # breakpoint if we are launching with cobcrun
+                command = "set breakpoint pending on"
+                gdb.execute(command, False, True)
+
+                # set a temporary breakpoint there
+                command = "tbreak " + entry_point
+                gdb.execute(command, False, True)
+
+                # Restore breakpoint pending to the original state:
+                command = "set breakpoint pending " + breakpoint_pending
+                gdb.execute(command, False, True)
+
+            # And proceed to run the program:
+            command = "run " + arguments
             gdb.execute(command, False, True)
 
-            # we reached the first program's COBOL entry point, leave the trace
-            # code and we're in the first section/paragraph/statement
-            command = "finish"
-            print(command);
         except gdb.error:
             print("cstart failed: " + command)
 
