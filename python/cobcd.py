@@ -2886,14 +2886,14 @@ they override any that might have been passed to GDB with --args
                 # set a temporary breakpoint there
                 command = "tbreak " + entry_point
                 gdb.execute(command, False, True)
-
+                
                 # Restore breakpoint pending to the original state:
                 command = "set breakpoint pending " + breakpoint_pending
                 gdb.execute(command, False, True)
 
             # And proceed to run the program:
             command = "run " + arguments
-            gdb.execute(command, False, True)
+            gdb.execute(command, True, False)
 
         except gdb.error:
             print("cstart failed: " + command)
