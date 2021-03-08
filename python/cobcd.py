@@ -184,9 +184,7 @@ class GlobalVariables():
         self.ShortTermMemory = []
         self.repeat_count = 11  # Default value for "'0' <repeats 11 times>" logic
 
-
 GV_GlobalVariables = GlobalVariables()
-
 
 def NoNulls(s):
     ss = ""
@@ -981,7 +979,6 @@ class LineList():
                 line_number = int(tokens[6])
                 self.Insert(line_number, program_id)
 
-
 class CobolVariable():
     """Manages the field, attributes, flags, and pointers of a GnuCOBOL COBOL variable"""
     def __init__(self):
@@ -1077,67 +1074,49 @@ class CobolVariable():
                 tokens.append(xtoken)
         return tokens
 
-    def get_verified_fieldname(self, other_field_name):
-        if self.Fname and self.Section != 'L' :
-            return self.Fname
-
+    def get_verified_field_location(self):
+        #
+        # Sometimes self.Fname is valid.  But sometimes it's not.
+        #
         # It turns out that the GnuCOBOL compiler, when working with
         # local variables, which have storage in the ephemeral cob_local_ptr
         # buffer, doesn't establish the f_xx cob_field attributes (including the data
         # pointer) until just before they are used.  We have found, generally, that
         # the data have been set up, it's just the cob_field that gets adjusted late.
         #
-        # So, we assume that the f_xx for L is not valid, and treat it as an f0:
+        # So, we assume that the f_xx is not valid.  We create our own, and
+        # we populate it as the libcob routines expect:
+        #
+        # It's up to the caller to do a cob_free() on the returned value
 
-        # The GnuCOBOL compiler does not create a f_xx field for variables
-        # that are declared, but not referenced, in the source code.  I feel
-        # it is necessary to be able to display them during debugging, even if
-        # the program doesn't reference them.
-        #
-        # In those cases, codegen creates pseudo-references to a local variable
-        # named "f0", which isn't available to us here.
-        #
-        # To get around this, cobcd-st creates "cob_field" __cobcd_debugging_f0" in the global
-        # address space, which we use when an actual f_xx isn't available.
+        command = "call (char*)cob_malloc(sizeof(cob_field))"
+        retval = int(gdb.execute(command, False, True).split()[2],16)
 
-        # When I did something similar for __cobcd_debugging_buffer,
-        # I was told, without demonstration or proof, that I had to use cob_malloc()
-        # for that in Red Hat 7.  I frankly don't believe it; were that true, I wouldn't
-        # be able to get at VARIABLE_STRING_, either -- and I can, with no trouble.
-        #
-        # Given my lack of belief that this is an actual problem, I am simply referencing
-        # __cobcd_debugging_f0 instead of using cob_malloc().  And we shall see what
-        # we shall see.
-        #
-        # Bob Dubner, 2021-03-06, Version 4.21
-        #
-        if other_field_name:
-            loc_fname = "__cobcd_debugging_f0"
-        else:
-            loc_fname = "f1"
-
-        command = "set var " + loc_fname + " = {"
-        command += "{0}, {1}, &{2}".format(self.Length, hex(self.location_of_data), self.Aname)
+        command = "set var *(cob_field *){0}".format(hex(retval)) + " = {"
+        command += "{0}, (char *){1}, &{2}".format(self.Length, hex(self.location_of_data), self.Aname)
         command += "}"
 
         try:
             gdb.execute(command, False, True)
         except gdb.error:
-            print("Command failed in get_verified_fieldname:", command)
-            loc_fname = ""
+            print("Command failed in get_verified_field_location:", command)
+            retval = 0
 
-        return loc_fname
+        return retval;
+
+    def free_field_location(self,field_location):
+        gdb.execute("call (void *)cob_free({0})".format(hex(field_location)), False, True)
 
     def GetDataAsString(self):
         retval = ""
-        loc_fname = self.get_verified_fieldname("fix")
-        if not loc_fname:
+        location_of_field = self.get_verified_field_location()
+        if not location_of_field:
             return retval
 
         if False:  # For development
             print("GetData AsString          Name:", self.Name)
             print("GetData AsString       Section:", self.Section)
-            print("GetData AsString         Fname:", loc_fname)
+            print("GetData AsString         Fname:", self.Fname or "f0")
             print("GetData AsString         Bname:", self.Bname)
             print("GetData AsString         Aname:", self.Aname)
             print("GetData AsString        Offset:", self.Offset)
@@ -1147,29 +1126,25 @@ class CobolVariable():
             print("GetData AsString    AttrDigits:", self.AttrDigits)
             print("GetData AsString     AttrScale:", self.AttrScale)
             print("GetData AsString     AttrFlags:", hex(self.AttrFlags))
+            print("GetData AsString  loc_of_field:", hex(location_of_field))
             print("GetData AsString   loc_of_data:", hex(self.location_of_data))
             print("GetData AsString   loc_of_attr:", hex(self.location_of_attribute))
             print("GetData AsString    loc_of_pic:", hex(self.location_of_pic))
 
-        # Use the target executable's libcob to convert this field to a character string suitable
-        # for output
-        free_mem = 0
-        if platform.python_version_tuple()[0] == "2":
-            buffer = gdb.execute("call (char*)cob_malloc(8192)", False, True).split()[2]
-            free_mem = 1
-        else:
-            buffer = "__cobcd_debugging_buffer"
-
-        command = "call (const char *)cob_get_field_str(&{0}, {1}, 8192)".format(loc_fname, buffer)
 
         try:
+            command = "call (char*)cob_malloc(8192)"
+            buffer = int(gdb.execute(command, False, True).split()[2],16)
+
+            command = "call (const char *)cob_get_field_str((cob_field *){0}, (char *){1}, 8192)".format(hex(location_of_field),
+                                                                                                         hex(buffer) )
             gdb.execute(command, False, True)
         except gdb.error:
             print("Command failed in GetDataAsString:", command)
             return "<Error in GetDataAsString>"
 
-        # The formatted variable string is in __cobcd_debugging_buffer of preallocated buffer
-        buf_ptr = GetAddressOf("{0}".format(buffer))
+        # The formatted variable string is in buffer
+        buf_ptr = buffer
         while True:
             char = GetDataAt(buf_ptr, 1)
             if char == 0:
@@ -1177,54 +1152,61 @@ class CobolVariable():
             retval += chr(char)
             buf_ptr += 1
 
-        if free_mem == 1:
-            gdb.execute("call cob_free({0})".format(buffer), False, True)
+        gdb.execute("call (void *)cob_free({0})".format(hex(buffer)), False, True)
+        self.free_field_location(location_of_field)
 
         return retval
 
     def PutDataAsString(self, rside):
         return_value = 1
 
-        loc_fname = self.get_verified_fieldname("fix")
-        if not loc_fname:
+        location_of_field = self.get_verified_field_location()
+        if not location_of_field:
             return 0
 
         try:
         # Let's leverage GDB to set our buffer to rside:
-            command = 'x  __cobcd_debugging_buffer="'
-            command += rside
-            command += '"'
+            command = "call (char*)cob_malloc(8192)"
+            buffer = int(gdb.execute(command, False, True).split()[2],16)
+
+            command = 'x (char *){0} = "{1}"'.format(hex(buffer),rside)
             gdb.execute(command, False, True)
 
             # Now use the target executable's libcob to convert the string to the field:
-            command = "call (const char *)cob_put_field_str(&"
-            command += loc_fname
-            command += ",__cobcd_debugging_buffer)"
+            command = "call (const char *)cob_put_field_str((cob_field *)"
+            command += hex(location_of_field)
+            command += ",(char *)" + hex(buffer)
             gdb.execute(command, False, True)
         except gdb.error:
             print("COMMAND failed in PutDataAsString: ", command)
             return_value = 0
+
+        gdb.execute("call (void *)cob_free({0})".format(hex(buffer)), False, True)
+        self.free_field_location(location_of_field)
 
         return return_value
 
     def PutDataAsVar(self, payload_s):
         return_value = 1
 
-        loc_fname = self.get_verified_fieldname("fix")
-        if not loc_fname:
+        destination = self.get_verified_field_location()
+        if not destination:
             return 0
 
-        other_fname = payload_s.get_verified_fieldname(self.Fname)
-        if not other_fname:
+        source = payload_s.get_verified_field_location()
+        if not source:
             return 0
 
         try:
-            command = "call (void)cob_move(&{0}, &{1})".format(other_fname, loc_fname)
+            command = "call (void)cob_move((cob_field *){0}, (cob_field *){1})".format(hex(source), hex(destination))
             gdb.execute(command, False, True)
             print("COMMAND succeeded in PutDataAsVar: ", command)
         except gdb.error:
             print("COMMAND failed in PutDataAsVar: ", command)
             return_value = 0
+
+        self.free_field_location(source)
+        self.free_field_location(destination)
 
         return return_value
 
@@ -1437,7 +1419,7 @@ class CobolVariable():
 
         if self.Section == 'L':
             # This is local-storage
-            print("Field:      ", "__cobcd_debugging_f0" )
+            print("Field:      ", "f0" )
         else:
             if self.Fname:
                 print("Field:      ", self.Fname, '   (', hex(self.location_of_field), ')')
@@ -2543,32 +2525,34 @@ class CBreakWorker():
                 bp_startloc = 1
 
 
-            loc_fname = payload.get_verified_fieldname("fix")
-            if not loc_fname:
+            location_of_field = payload.get_verified_field_location()
+            if not location_of_field:
                 return
 
             break_point = self.set_breakpoint(line_nr)
             if condition in ("=", "=i", "==", "==i"):
-                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered(&{1}) + {2} - 1), \"{3}\", {4}) == 0".format(cmp_func, loc_fname, bp_startloc, diff_str, cmp_len))
+                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2} - 1), \"{3}\", {4}) == 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
             elif condition in ("<>", "<>i"):
-                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered(&{1}) + {2} - 1), \"{3}\", {4}) != 0".format(cmp_func, loc_fname, bp_startloc, diff_str, cmp_len))
+                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2} - 1), \"{3}\", {4}) != 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
             else:
-                self.set_condition(break_point, "$_regex(((char *)cob_get_field_str_buffered(&{0} + {1} - 1), \"{2}\")".format(loc_fname, bp_startloc, diff_str))
+                self.set_condition(break_point, "$_regex(((char *)cob_get_field_str_buffered({0} + {1} - 1), \"{2}\")".format(hex(location_of_field), bp_startloc, diff_str))
+            self.free_field_location(location_of_field)
         else:
             print("Condition not implemented")
-            return
 
     def set_numeric_breakpoint(self, line_nr, condition, payload, diff_num):
         if condition in ("==", "<", "<=", ">", ">=", "<>"):
             break_point = self.set_breakpoint(line_nr)
 
-            loc_fname = payload.get_verified_fieldname("fix")
-            if not loc_fname:
+            location_of_field = payload.get_verified_field_location()
+            if not location_of_field:
                 return
 
-            self.set_condition(break_point, "(double)atof((char *)cob_get_field_str_buffered(&{0})) {1} {2}".format(loc_fname, condition, diff_num))
+            self.set_condition(break_point, "(double)atof((char *)cob_get_field_str_buffered({0})) {1} {2}".format(hex(location_of_field), condition, diff_num))
         else:
             print("Condition not implemented")
+
+        self.free_field_location(location_of_field)
 
     def set_section_breakpoint(self, args):
         mod_sec = args[1].split(":")
@@ -2605,16 +2589,20 @@ class CBreakWorker():
             print("Condition not implemented")
             return
 
-        loc_fname = payload_f.get_verified_fieldname("fix")
-        if not loc_fname:
+        location_of_field = payload_f.get_verified_field_location()
+        if not location_of_field:
             return
 
-        other_fname = payload_s.get_verified_fieldname(payload_f.Fname)
-        if not other_fname:
+        other_field = payload_s.get_verified_field_location(payload_f.Fname)
+        if not other_field:
+            self.free_field_location(location_of_field)
             return
 
         break_point = self.set_breakpoint(line_nr)
-        self.set_condition(break_point, "(int)cob_cmp(&{0}, &{1}) {2} 0".format(loc_fname, other_fname, condition_str))
+        self.set_condition(break_point, "(int)cob_cmp({0}, {1}) {2} 0".format(hex(location_of_field), hex(other_field), condition_str))
+
+        self.free_field_location(location_of_field)
+        self.free_field_location(other_field)
 
     @staticmethod
     def get_var_data(args):
@@ -2687,7 +2675,7 @@ class CBreakWorker():
 
             payload_f = self.get_var_payload(tab_file, var_f)
             if payload_f is None:
-                print("Variable not found")
+                print("Variable not found(4)")
                 return
 
             payload_s = self.get_var_payload(tab_file, var_s)
@@ -2748,6 +2736,7 @@ class CPrint(gdb.Command):
 
         print('Registering CPrint as ' + self.worker.use_cprint + ' [Version 4.21]')
         super(CPrint, self).__init__(self.worker.use_cprint, gdb.COMMAND_DATA)
+
 
     def invoke(self, arguments, from_tty):
         # pick up the name of the current source file
@@ -2856,7 +2845,6 @@ class CStart(gdb.Command):
         super(CStart, self).__init__("cstart", gdb.COMMAND_USER)
 
     def invoke(self, arguments, from_tty):
-
         try:
             # set a temporary breakpoint at the first COBOL entry...
             command = "tbreak cob_trace_entry"
@@ -2871,7 +2859,7 @@ class CStart(gdb.Command):
             # we reached the first program's COBOL entry point, leave the trace
             # code and we're in the first section/paragraph/statement
             command = "finish"
-            gdb.execute(command, False, True)
+            print(command);
         except gdb.error:
             print("cstart failed: " + command)
 
