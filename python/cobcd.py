@@ -1169,13 +1169,20 @@ class CobolVariable():
             command = "call (char*)cob_malloc(8192)"
             buffer = int(gdb.execute(command, False, True).split()[2],16)
 
-            command = 'x (char *){0} = "{1}"'.format(hex(buffer),rside)
+            buf_ptr = buffer
+            for index in range(len(rside)):
+                n = rside[index]
+                command = "set *(char *){0} = '{1}'".format(hex(buf_ptr),n)
+                gdb.execute(command, False, True)
+                buf_ptr += 1
+            command = "set *(char *){0} = '\\0'".format(hex(buf_ptr))
             gdb.execute(command, False, True)
 
             # Now use the target executable's libcob to convert the string to the field:
             command = "call (const char *)cob_put_field_str((cob_field *)"
             command += hex(location_of_field)
             command += ",(char *)" + hex(buffer)
+            command += ")"
             gdb.execute(command, False, True)
         except gdb.error:
             print("COMMAND failed in PutDataAsString: ", command)
@@ -1200,7 +1207,7 @@ class CobolVariable():
         try:
             command = "call (void)cob_move((cob_field *){0}, (cob_field *){1})".format(hex(source), hex(destination))
             gdb.execute(command, False, True)
-            print("COMMAND succeeded in PutDataAsVar: ", command)
+            #print("COMMAND succeeded in PutDataAsVar: ", command)
         except gdb.error:
             print("COMMAND failed in PutDataAsVar: ", command)
             return_value = 0
