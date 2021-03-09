@@ -254,6 +254,17 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
             //
             // When found, we want to make the name member of the
             // variable we just pushed to be "l_54"
+
+            if( strstr(ach,"for (") ) {
+                // If you see the for(, it means that this was a
+                // PERFORM N times.
+
+                // We ignore those
+                variables.pop_back();
+                looking_for_perform_return_location = false;
+                continue;
+            }
+
             char *p = strstr(ach,"&&");
             if( p ) {
                 p += 2;
