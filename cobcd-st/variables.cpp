@@ -188,6 +188,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
     full_path += fname;
     full_path += ".c";
 
+
     FILE *f = fopen(full_path.c_str(),"r");
     if( !f ) {
         cout << "Couldn't open the input file " << full_path << endl;
@@ -196,6 +197,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
 
     char ach[16384];
 
+    bool looking_for_perform_return_location = false;
     string current_record_type = "X" ;
     int line_number = 1;
     while( fgets(ach,sizeof(ach),f) ) {
@@ -222,6 +224,45 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                 Insert(variable);
                 variable.record_type = "E";
                 Insert(variable);
+            }
+            continue;
+        }
+
+        if( strstr(ach, ": PERFORM ") ) {
+            string input = ach;
+
+            VSTRING tokens = Split(input," \t");
+            if( tokens.size() EQ 8
+                    AND tokens[0] EQ "/*"
+                    AND tokens[1] EQ "Line:"
+                    AND tokens[3] EQ ":"
+                    AND tokens[4] EQ "PERFORM"
+                    AND tokens[5] EQ ":"
+                    AND tokens[7] EQ "*/\n" ) {
+                VARIABLE variable;
+                variable.record_type = "p";
+                variable.f_name = tokens[6] + ':' + tokens[2];
+                Insert(variable);
+                looking_for_perform_return_location = true;
+            }
+            continue;
+        }
+
+        if( looking_for_perform_return_location ) {
+            // We are looking for a line like this:
+            //     frame_ptr->return_address_ptr = &&l_54;
+            //
+            // When found, we want to make the name member of the
+            // variable we just pushed to be "l_54"
+            char *p = strstr(ach,"&&");
+            if( p ) {
+                p += 2;
+                char *p2 = strstr(ach,";");
+                if( p2 ) {
+                    *p2 = '\0';
+                }
+                variables.back().name = p;
+                looking_for_perform_return_location = false;
             }
             continue;
         }
