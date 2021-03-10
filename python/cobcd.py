@@ -2887,9 +2887,7 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
         self.current_breakpoint = None
 
     def Flush(self):
-        print("Flush")
         if self.current_breakpoint:
-            print("Flush-Flush")
             self.current_breakpoint.delete()
             self.current_breakpoint = None
 
@@ -2923,11 +2921,9 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
             print("No stack.")
 
 def exit_handler(event):
-    print("AAAA")
     cnext_object.Flush()
 
 def stop_handler(event):
-    print("BBBB")
     cnext_object.Flush()
 
 gdb.events.exited.connect(exit_handler)
