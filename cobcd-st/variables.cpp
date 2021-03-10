@@ -253,9 +253,9 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                     variable.f_name = tokens[6] + ':' + tokens[2];
                     Insert(variable);
                     perform_return = PR_FIRST_COMMENT;
+                    continue;
                 }
             }
-            continue;
         }
         break;
 
