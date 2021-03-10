@@ -2552,7 +2552,7 @@ class CBreakWorker():
                 self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2} - 1), \"{3}\", {4}) != 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
             else:
                 self.set_condition(break_point, "$_regex(((char *)cob_get_field_str_buffered({0} + {1} - 1), \"{2}\")".format(hex(location_of_field), bp_startloc, diff_str))
-            self.free_field_location(location_of_field)
+            payload.free_field_location(location_of_field)
         else:
             print("Condition not implemented")
 
@@ -2568,7 +2568,7 @@ class CBreakWorker():
         else:
             print("Condition not implemented")
 
-        self.free_field_location(location_of_field)
+        payload.free_field_location(location_of_field)
 
     def set_section_breakpoint(self, args):
         mod_sec = args[1].split(":")
@@ -2611,14 +2611,14 @@ class CBreakWorker():
 
         other_field = payload_s.get_verified_field_location(payload_f.Fname)
         if not other_field:
-            self.free_field_location(location_of_field)
+            payload_f.free_field_location(location_of_field)
             return
 
         break_point = self.set_breakpoint(line_nr)
         self.set_condition(break_point, "(int)cob_cmp({0}, {1}) {2} 0".format(hex(location_of_field), hex(other_field), condition_str))
 
-        self.free_field_location(location_of_field)
-        self.free_field_location(other_field)
+        payload_f.free_field_location(location_of_field)
+        payload_s.free_field_location(other_field)
 
     @staticmethod
     def get_var_data(args):
