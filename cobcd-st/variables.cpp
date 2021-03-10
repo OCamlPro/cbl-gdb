@@ -243,7 +243,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
             perform_return = PR_LOOKING;
             continue;
         }
-
+        check_for_another_perform:
         switch(perform_return) {
         case PR_LOOKING: {
             if( strstr(ach, ": PERFORM ") ) {
@@ -322,6 +322,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                     }
                 }
                 perform_return = PR_LOOKING;
+                goto check_for_another_perform;
             }
             break;
         }
