@@ -197,7 +197,13 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
 
     char ach[16384];
 
-    bool looking_for_perform_return_location = false;
+    enum {
+        PR_LOOKING,
+        PR_FIRST_COMMENT,
+        PR_RETURN_ADDRESS,
+        PR_SECOND_COMMENT,
+    } perform_return = PR_LOOKING;
+
     string current_record_type = "X" ;
     int line_number = 1;
     while( fgets(ach,sizeof(ach),f) ) {
@@ -228,42 +234,55 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
             continue;
         }
 
-        if( strstr(ach, ": PERFORM ") ) {
-            string input = ach;
+        if( perform_return != PR_LOOKING && strstr(ach,"for (") ) {
+            // If, after a perform, you see "for (", it means that this was a
+            // PERFORM N times.
 
-            VSTRING tokens = Split(input," \t");
-            if( tokens.size() EQ 8
-                    AND tokens[0] EQ "/*"
-                    AND tokens[1] EQ "Line:"
-                    AND tokens[3] EQ ":"
-                    AND tokens[4] EQ "PERFORM"
-                    AND tokens[5] EQ ":"
-                    AND tokens[7] EQ "*/\n" ) {
-                VARIABLE variable;
-                variable.record_type = "p";
-                variable.f_name = tokens[6] + ':' + tokens[2];
-                Insert(variable);
-                looking_for_perform_return_location = true;
-            }
+            // We ignore those
+            variables.pop_back();
+            perform_return = PR_LOOKING;
             continue;
         }
 
-        if( looking_for_perform_return_location ) {
-            // We are looking for a line like this:
-            //     frame_ptr->return_address_ptr = &&l_54;
-            //
-            // When found, we want to make the name member of the
-            // variable we just pushed to be "l_54"
+        switch(perform_return) {
+        case PR_LOOKING: {
+            if( strstr(ach, ": PERFORM ") ) {
+                string input = ach;
 
-            if( strstr(ach,"for (") ) {
-                // If you see the for(, it means that this was a
-                // PERFORM N times.
-
-                // We ignore those
-                variables.pop_back();
-                looking_for_perform_return_location = false;
-                continue;
+                VSTRING tokens = Split(input," \t");
+                if( tokens.size() EQ 8
+                        AND tokens[0] EQ "/*"
+                        AND tokens[1] EQ "Line:"
+                        AND tokens[3] EQ ":"
+                        AND tokens[4] EQ "PERFORM"
+                        AND tokens[5] EQ ":"
+                        AND tokens[7] EQ "*/\n" ) {
+                    VARIABLE variable;
+                    variable.record_type = "p";
+                    variable.f_name = tokens[6] + ':' + tokens[2];
+                    Insert(variable);
+                    perform_return = PR_FIRST_COMMENT;
+                }
             }
+            continue;
+        }
+        break;
+
+        case PR_FIRST_COMMENT:
+            if( strstr (ach,"/*") EQ 0 ) {
+                perform_return = PR_RETURN_ADDRESS;
+            }
+            continue;
+            break;
+
+        case PR_RETURN_ADDRESS: {
+            // When looking for a return location, the first thing we
+            // find is the default:
+            //     frame_ptr->return_address_ptr = &&l_50;
+            // This might be our only choice, when, for example, this
+            // PERFORM is itself followed by an implicit return, which can
+            // happen when the PERFORM statement is itself the last statement
+            // of a paragraph that ends a section or a program.
 
             char *p = strstr(ach,"&&");
             if( p ) {
@@ -273,9 +292,38 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                     *p2 = '\0';
                 }
                 variables.back().name = p;
-                looking_for_perform_return_location = false;
+                perform_return = PR_SECOND_COMMENT;
+                continue;
             }
-            continue;
+        }
+        break;
+
+        case PR_SECOND_COMMENT:
+            // But what we prefer to find is the /* Line: nn that follows
+            // the PERFORM.  If we can find that line number, it makes for
+            // a cleaner-looking sequence in GDB
+
+            // From something like
+            //      /* Line: 109       : Paragraph PARTEND-001             : rtest.cbl */
+            // we will build rtest.cbl:109 as the target:
+            char *p = strstr(ach,"/*");
+            if( p ) {
+                VSTRING tokens = Split(ach," \t");
+                if( tokens.size() > 2 AND tokens[1] == "Line:") {
+                    size_t i;
+                    for( i=5; i<tokens.size(); i++ ) {
+                        if( tokens[i] EQ ":" ) {
+                            break;
+                        }
+                    }
+                    i += 1;
+                    if( i < tokens.size() ) {
+                        variables.back().name = tokens[i] + ':' + tokens[2];
+                    }
+                }
+                perform_return = PR_LOOKING;
+            }
+            break;
         }
 
         static const char COB_DUMP_FILE[]   = "cob_dump_file";
