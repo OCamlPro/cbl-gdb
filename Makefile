@@ -3,6 +3,14 @@ export CPP
 CXXFLAGS:=-std=c++11 -Wall -O3
 export CXXFLAGS
 
+UNAME_O := $(shell uname -o)
+
+ifeq "$(UNAME_O)" "Solaris"
+	SED := gsed
+else
+	SED := sed
+endif
+
 prefix_default = /usr/local
 prefix ?= $(prefix_default)
 
@@ -51,12 +59,12 @@ install:
 	$(MAKE) -C cobcd-rw install
 	$(MAKE) -C python install
 # If requested adjust python interpreter line
-	@if [ X"$(PYTHON)" != X"" ] ; then sed -i "s#/usr/bin/python3#$(PYTHON)#" $(DESTDIR)$(prefix)/bin/cobcd ; fi
+	@if [ X"$(PYTHON)" != X"" ] ; then $(SED) -i "s#/usr/bin/python3#$(PYTHON)#" $(DESTDIR)$(prefix)/bin/cobcd ; fi
 # If requested adjust default COBCDFMODE
-	@if [ X"$(COBCDFMODE)" != X"" ] ; then sed -i "s#@COBCDFMODE@#$(COBCDFMODE)#" $(DESTDIR)$(prefix)/bin/cobcd ; fi
+	@if [ X"$(COBCDFMODE)" != X"" ] ; then $(SED) -i "s#@COBCDFMODE@#$(COBCDFMODE)#" $(DESTDIR)$(prefix)/bin/cobcd ; fi
 # If requested adjust default CPRINT command
 # Note: as of 4.17, the following option no longer exists
-#	@if [ X"$(CPRINT)" != X"" ] ; then sed -i "s#@CPRINT@#$(CPRINT)#" $(DESTDIR)$(prefix)/bin/cobcd.py ; fi
+#	@if [ X"$(CPRINT)" != X"" ] ; then $(SED) -i "s#@CPRINT@#$(CPRINT)#" $(DESTDIR)$(prefix)/bin/cobcd.py ; fi
 # Output .gdbinit instructions only if DESTDIR is empty.
 # When non-empty, this is almost certainly part of a package building exercise,
 # and the message is irrelevant and confusing.
