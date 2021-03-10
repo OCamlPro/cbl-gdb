@@ -2917,7 +2917,7 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
                     gdb.execute(command, True, False)
                 ncount -= 1
         except:
-            traceback.print_exc()
+            #traceback.print_exc()
             print("No stack.")
 
 def exit_handler(event):
