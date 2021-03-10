@@ -37,7 +37,6 @@
 # max-line-length = 160
 ################################################################################
 
-
 #   This module implements the gdb extension commands cprint and cwatch
 
 # Catalog of environment variables interpreted by this module:
@@ -139,7 +138,6 @@ COB_FLAG_REAL_SIGN      = (1 << 10)  # /* 0x0400 */
 COB_FLAG_BINARY_TRUNC   = (1 << 11)  # /* 0x0800 */
 COB_FLAG_CONSTANT       = (1 << 12)  # /* 0x1000 */
 
-
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
     limiting_debug_level = 1
@@ -153,7 +151,6 @@ def GdbExecute(curframe, command):
                 print("####       retval:", line)
     return retval
 
-
 def GdbExecute2(curframe, command, debug_level):
     # It is up to the caller to handle exceptions
     limiting_debug_level = 1
@@ -166,7 +163,6 @@ def GdbExecute2(curframe, command, debug_level):
             if len(line) > 0:
                 print("####       retval:", line)
     return retval
-
 
 class GlobalVariables():
     def __init__(self):
@@ -194,7 +190,6 @@ def NoNulls(s):
         ss += ch
     return ss
 
-
 def OurPrint(s):
     # Use this routine when GDB might halt with a
     #    --Type <RET> for more, q to quit, c to continue without paging--
@@ -209,7 +204,6 @@ def OurPrint(s):
     except:
         traceback.print_exc()
     return retval
-
 
 def LeftRight(s, splitchar):
     """Splits what is presumably a numeric string with a possible
@@ -268,7 +262,6 @@ def Picture(s):
 
     return r
 
-
 def MachineInterfaceBody(s):
 
 #  This sequence:
@@ -303,7 +296,6 @@ def MachineInterfaceBody(s):
 
     return retval
 
-
 def MachineInterfaceBodyAlt(s):
 
     # Replace double-quotes and backslashes
@@ -317,7 +309,6 @@ def MachineInterfaceBodyAlt(s):
             retval += ch
 
     return retval
-
 
 def ReplaceWithRepeatCountQuoted(s):
     # We know this guy has a leading quote, and presumably a trailing one
@@ -386,7 +377,6 @@ def ReplaceWithRepeatCountQuoted(s):
     # print("ReplaceWithRepeatCountQuoted(2)", retval)
     return retval
 
-
 def ReplaceWithRepeatCountBracketed(s):
     if (len(s) % 2) == 1:
         # We don't know what to do with an odd-length string.  We just don't
@@ -454,7 +444,6 @@ def ReplaceWithRepeatCountBracketed(s):
     # print("ReplaceWithRepeatCountBracketed(2)", retval)
     return retval
 
-
 def ReplaceWithRepeatCount(s):
     try:
         if s and (s[0] == '"' or s[0] == '<'):
@@ -465,7 +454,6 @@ def ReplaceWithRepeatCount(s):
     except:
         traceback.print_exc()
         sys.exit(1)
-
 
 class VarTrieNode():
     def __init__(self):
@@ -478,12 +466,10 @@ class VarTrieNode():
     def AddCanonicalName(self, name):
         pass
 
-
 def BlankIsZero(v):
     if len(v) == 0:
         v = "0"
     return int(v)
-
 
 def GetDataAt(address, bytes):
     # This routine takes an address and returns the
@@ -515,7 +501,6 @@ def GetDataAt(address, bytes):
         print("gdb .execute failed in GetDataAt:", command)
         return None
 
-
 def GetBytesAt(address, N):
     # Pick up N bytes from address, return them as a list of ints
     retval = []
@@ -531,7 +516,6 @@ def GetBytesAt(address, N):
                 retval.append(int(byte, 16))
     return retval
 
-
 def ExtractHexValueFrom(s):
     # Use this routine to extract an 0x123abc value from a string.
     # Needed because gdb returns such information in slightly different ways
@@ -540,7 +524,6 @@ def ExtractHexValueFrom(s):
     if match:
         retval = int(match.group(1), 16)
     return retval
-
 
 def GetPointerAt(variable):
     # Use this form when you know variable is the name of a pointer.
@@ -553,7 +536,6 @@ def GetPointerAt(variable):
         return ExtractHexValueFrom(result)
     except:
         return None
-
 
 def GetAddressOf(variable):
     # Use this routine when you know variable is the name of a block.
@@ -576,7 +558,6 @@ def GetAddressOf(variable):
                 retval = None
 
     return retval
-
 
 def AddEmUp(expression):
     # Originally written when I thought only integers would appear
@@ -603,7 +584,6 @@ def AddEmUp(expression):
                 # ignore that for now.
                 pass
     return retval
-
 
 def get_refmod(arg):
     refmod_spec = ""
@@ -928,7 +908,6 @@ class VarTrie():
 
         return paths
 
-
 class LineList():
     """List of starting lines of ProgramNames"""
 
@@ -1130,7 +1109,6 @@ class CobolVariable():
             print("GetData AsString   loc_of_data:", hex(self.location_of_data))
             print("GetData AsString   loc_of_attr:", hex(self.location_of_attribute))
             print("GetData AsString    loc_of_pic:", hex(self.location_of_pic))
-
 
         try:
             command = "call (char*)cob_malloc(8192)"
@@ -1542,7 +1520,6 @@ class CobolVariable():
                 print('.', end="")
         print('"')
 
-
 class TabFileInformation():
     def __init__(self):
         self.var_trie = VarTrie()
@@ -1830,7 +1807,6 @@ class TabFileInformation():
         else:
             print("No stack.")
 
-
 def MachineInterfaceFlat(TabFile, possibilities):
     # This is the machine interface mode for returning the
     # the variables in a flat manner.
@@ -1872,7 +1848,6 @@ def MachineInterfaceFlat(TabFile, possibilities):
     s = NoNulls(s)
     return s
 
-
 class HNode():
     def __init__(self):
         self.storage_table_index = -1
@@ -1882,12 +1857,10 @@ class HNode():
         self.parent = None
         self.children = []
 
-
 def TrimComma(s):
     if s and s[-1] == ',':
         s = s[:-1]  # Strip off final comma
     return s
-
 
 def BuildHString(node):
     s = ""
@@ -1935,7 +1908,6 @@ def BuildHString(node):
                 s = TrimComma(s)
                 s += r'},'
     return s
-
 
 def MachineInterfaceHeirarchical(TabFile, possibilities):
     # This is the machine interface mode for returning the
@@ -2153,7 +2125,6 @@ def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
 # do at least *some* debugging in Visual Studio even though the gdb object
 # isn't available.  Bob Dubner, 2019-07-23
 
-
 class CPrintWorker():
     """Does most of the non-gdb work of CPrint()"""
 
@@ -2338,7 +2309,6 @@ class CPrintWorker():
             if rside:
                 print("assignment needs exactly one possible variable")
 
-
 class CWatchWorker():
     """Does most of the non-gdb work of CWatch()"""
 
@@ -2420,7 +2390,6 @@ class CWatchWorker():
             self.set_watchpoint(payload, wp_type, wp_refmod)
         elif not possibilities:
             print("Variable not found")
-
 
 class CBreakWorker():
 
@@ -2539,7 +2508,6 @@ class CBreakWorker():
                     cmp_len = bp_length
             else:
                 bp_startloc = 1
-
 
             location_of_field = payload.get_verified_field_location()
             if not location_of_field:
@@ -2709,9 +2677,7 @@ class CBreakWorker():
             print('Breakpoint parameters not recognized')
             return
 
-
 CBLDBG_TABFILE = TabFileInformation()
-
 
 class CPrint(gdb.Command):
     """Prints COBOL-NAMED variables when debugging cobst processed object files.
@@ -2753,7 +2719,6 @@ class CPrint(gdb.Command):
         print('Registering CPrint as ' + self.worker.use_cprint + ' [Version 4.21]')
         super(CPrint, self).__init__(self.worker.use_cprint, gdb.COMMAND_DATA)
 
-
     def invoke(self, arguments, from_tty):
         # pick up the name of the current source file
         try:
@@ -2770,7 +2735,6 @@ class CPrint(gdb.Command):
             self.worker.ProcessArguments(self.tab_file, arguments)
         except:
             traceback.print_exc()
-
 
 class CWatch(gdb.Command):
     """Used for creating COBOL-NAMED watchpoints when debugging cobst processed object files.
@@ -2800,7 +2764,6 @@ A watchpoint stops execution of your program whenever the value of an expression
             self.dont_repeat()
         except:
             traceback.print_exc()
-
 
 class CBreak(gdb.Command):
     """Used for creating COBOL-NAMED breakpoints when debugging cobst processed object files.
@@ -2848,7 +2811,6 @@ A breakpoint stops execution of your program whenever the expression matches
     def invoke(self, arguments, from_tty):
         self.worker.process_break_arguments(self.tab_file, arguments)
         self.dont_repeat()
-
 
 class CStart(gdb.Command):
     """(Re-)start the debugged program stopping at the beginning of the first COBOL statement.
@@ -2922,9 +2884,18 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
         super(CNext, self).__init__("cnext", gdb.COMMAND_BREAKPOINTS)
         print('Registering CNext')
         self.tab_file = CBLDBG_TABFILE
+        self.current_breakpoint = None
+
+    def Flush(self):
+        print("Flush")
+        if self.current_breakpoint:
+            print("Flush-Flush")
+            self.current_breakpoint.delete()
+            self.current_breakpoint = None
 
     def invoke(self, arguments, from_tty):
         try:
+            self.Flush()
             self.tab_file.ReadSymbolTableText()
             if arguments:
                 ncount = int(arguments)
@@ -2934,11 +2905,9 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
                 command = "info stack"
                 key = gdb.execute(command, False, True).split('\n')[0].split()[-1]
                 if key in self.tab_file.perform_commands:
-
                     command = self.tab_file.perform_commands[key]
-                    breakpoint = gdb.Breakpoint(command,temporary=True)
-                    breakpoint.silent = True
-                    print("About to continue...")
+                    self.current_breakpoint = gdb.Breakpoint(command)
+                    self.current_breakpoint.silent = True
 
                     command = "continue"
                     gdb.execute(command, True, False)
@@ -2953,8 +2922,19 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
             traceback.print_exc()
             print("No stack.")
 
+def exit_handler(event):
+    print("AAAA")
+    cnext_object.Flush()
+
+def stop_handler(event):
+    print("BBBB")
+    cnext_object.Flush()
+
+gdb.events.exited.connect(exit_handler)
+gdb.events.stop.connect(stop_handler)
+
 CPrint()
 CWatch()
 CBreak()
-CNext()
+cnext_object = CNext()
 CStart()
