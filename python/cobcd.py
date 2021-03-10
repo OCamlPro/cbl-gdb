@@ -2657,13 +2657,27 @@ class CBreakWorker():
 
         return var_f, refmod_f, var_s, refmod_s, condition
 
+    @staticmethod
+    def split_arguments(arguments):
+        match_chars = ("=", "==", "=~", "~", "<", "<=", ">", ">=", "<>", "i")
+        arg_list = list(filter(lambda e: e not in ('', ' '), re.split('(\W)', arguments)))
+
+        i = 0
+        while i < len(arg_list) - 1:
+            if arg_list[i] in match_chars and arg_list[i + 1] in match_chars:
+                arg_list[i] += arg_list.pop(i + 1)
+            else:
+                i += 1
+
+        return arg_list
+
     def process_break_arguments(self, tab_file, arguments):
         var_f = ""
         refmod_f = ""
         var_s = ""
         refmod_s = ""
 
-        args = arguments.split()
+        args = self.split_arguments(arguments)
         if arguments == "":
             break_point = self.set_breakpoint("")
         elif len(args) == 1 and args[0].isdigit():
