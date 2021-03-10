@@ -2903,21 +2903,27 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
                 command = "info stack"
                 key = gdb.execute(command, False, True).split('\n')[0].split()[-1]
                 if key in self.tab_file.perform_commands:
-                    command = self.tab_file.perform_commands[key]
-                    self.current_breakpoint = gdb.Breakpoint(command)
-                    self.current_breakpoint.silent = True
+                    # command = self.tab_file.perform_commands[key]
+                    # self.current_breakpoint = gdb.Breakpoint(command)
+                    # self.current_breakpoint.silent = True
 
-                    command = "continue"
-                    gdb.execute(command, True, False)
+                    # command = "continue"
+                    # gdb.execute(command, True, False)
 
-                    command = "next"
+                    # command = "next"
+                    # gdb.execute(command, True, False)
+                    command = "until " + self.tab_file.perform_commands[key]
                     gdb.execute(command, True, False)
+                    
+                    command = "step"
+                    gdb.execute(command, True, False)
+                    
                 else:
                     command = "next"
                     gdb.execute(command, True, False)
                 ncount -= 1
         except:
-            traceback.print_exc()
+            #traceback.print_exc()
             print("No stack.")
 
 def exit_handler(event):
