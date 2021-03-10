@@ -234,15 +234,6 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
             continue;
         }
 
-        if( perform_return != PR_LOOKING && strstr(ach,"for (") ) {
-            // If, after a perform, you see "for (", it means that this was a
-            // PERFORM N times.
-
-            // We ignore those
-            variables.pop_back();
-            perform_return = PR_LOOKING;
-            continue;
-        }
         check_for_another_perform:
         switch(perform_return) {
         case PR_LOOKING: {
@@ -269,8 +260,22 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
         break;
 
         case PR_FIRST_COMMENT:
-            if( strstr (ach,"/*") EQ 0 ) {
-                perform_return = PR_RETURN_ADDRESS;
+            if( strstr (ach,"/*") ) {
+                // This is the first comment after the PERFORM.
+                if( strstr(ach,"PERFORM") )
+                    {
+                    // This is a PERFORM A or PERFORM A UNTIL
+                    perform_return = PR_RETURN_ADDRESS;
+                    }
+                else
+                    {
+                    // If there is no "PERFORM" in the comment, then this
+                    // is a PERFORM N TIMES.
+
+                    // We ignore those
+                    variables.pop_back();
+                    perform_return = PR_LOOKING;
+                    }
             }
             continue;
             break;
