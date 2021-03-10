@@ -1555,6 +1555,7 @@ class TabFileInformation():
         self.current_trapped_line = 0
         self.question_mark_range = 6
         self.current_full_path = ""
+        self.perform_commands = {}
 
     def ReadVariableString(self, string_name):
         retval = False
@@ -1612,6 +1613,12 @@ class TabFileInformation():
             except:
                 pass
         return retval
+
+    def LoadPerformFromLine(self,variable_line):
+        if len(variable_line) > 0 and variable_line[0] == 'p':
+            tokens = variable_line.split("|")
+            if len(tokens) > 3:
+                self.perform_commands[tokens[3]] = tokens[2]
 
     def ProcessStack(self):
         """ Figures out which routine we are currently trapped in"""
@@ -1773,6 +1780,7 @@ class TabFileInformation():
                     # Load the new tables
                     self.var_trie = VarTrie()
                     self.line_list = LineList()
+                    self.perform_commands = {}
 
                     if stack_line >= len(stack):
                         # For whatever reasons, we couldn't find any information in
@@ -1784,6 +1792,7 @@ class TabFileInformation():
                     for variable_line in variable_lines:
                         self.line_list.LoadFromLine(variable_line)
                         self.var_trie.LoadFromLine(variable_line)
+                        self.LoadPerformFromLine(variable_line)
 
                     # Put a fencepost at the end of the line_list
                     self.line_list.Insert(self.line_list.EndOfTheWorld, "Ragnarok")
@@ -2886,7 +2895,7 @@ they override any that might have been passed to GDB with --args
                 # set a temporary breakpoint there
                 command = "tbreak " + entry_point
                 gdb.execute(command, False, True)
-                
+
                 # Restore breakpoint pending to the original state:
                 command = "set breakpoint pending " + breakpoint_pending
                 gdb.execute(command, False, True)
@@ -2900,7 +2909,52 @@ they override any that might have been passed to GDB with --args
 
         self.dont_repeat()
 
+class CNext(gdb.Command):
+    """The cnext command behaves like GDB 'next', but it is smart enough to
+attempt to pass over PERFORMs.  It optionally takes a count parameter.
+
+It does the best it can, but occasionally it behaves a little strangely when a
+compiler optimization removes the JUMP TO PARAGRAPH and JUMP BACK FROM PARAGRAPH
+logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
+    """
+
+    def __init__(self):
+        super(CNext, self).__init__("cnext", gdb.COMMAND_BREAKPOINTS)
+        print('Registering CNext')
+        self.tab_file = CBLDBG_TABFILE
+
+    def invoke(self, arguments, from_tty):
+        try:
+            self.tab_file.ReadSymbolTableText()
+            if arguments:
+                ncount = int(arguments)
+            else:
+                ncount = 1
+            while ncount > 0:
+                command = "info stack"
+                key = gdb.execute(command, False, True).split('\n')[0].split()[-1]
+                if key in self.tab_file.perform_commands:
+
+                    command = self.tab_file.perform_commands[key]
+                    breakpoint = gdb.Breakpoint(command,temporary=True)
+                    breakpoint.silent = True
+                    print("About to continue...")
+
+                    command = "continue"
+                    gdb.execute(command, True, False)
+
+                    command = "next"
+                    gdb.execute(command, True, False)
+                else:
+                    command = "next"
+                    gdb.execute(command, True, False)
+                ncount -= 1
+        except:
+            traceback.print_exc()
+            print("No stack.")
+
 CPrint()
 CWatch()
 CBreak()
+CNext()
 CStart()
