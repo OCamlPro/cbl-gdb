@@ -2914,10 +2914,17 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
                     # gdb.execute(command, True, False)
                     command = "until " + self.tab_file.perform_commands[key]
                     gdb.execute(command, True, False)
-                    
-                    command = "step"
-                    gdb.execute(command, True, False)
-                    
+
+                    # If we went to a specific line location, then the UNTIL leaves
+                    # us in a nice place.  If we target a local address, then
+                    # we have stopped at l_xx: target in the C code that shows
+                    # up as being before where the user expects to be.  So,
+                    # in that case, we issue an extra step.
+
+                    if self.tab_file.perform_commands[key].find(':') == -1:
+                        command = "step"
+                        gdb.execute(command, True, False)
+
                 else:
                     command = "next"
                     gdb.execute(command, True, False)
