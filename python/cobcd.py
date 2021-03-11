@@ -138,6 +138,10 @@ COB_FLAG_REAL_SIGN      = (1 << 10)  # /* 0x0400 */
 COB_FLAG_BINARY_TRUNC   = (1 << 11)  # /* 0x0800 */
 COB_FLAG_CONSTANT       = (1 << 12)  # /* 0x1000 */
 
+# These constants are used when calling get_verified_field_location
+ALLOCATE = True
+DONT_ALLOCATE = False
+
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
     limiting_debug_level = 1
@@ -1053,34 +1057,59 @@ class CobolVariable():
                 tokens.append(xtoken)
         return tokens
 
-    def get_verified_field_location(self):
+    def get_verified_field_location(self,allocate):
+        # When calling this routine with ALLOCATE, the caller must do
+        # free_field_location(returned_value)
         #
         # Sometimes self.Fname is valid.  But sometimes it's not.
         #
-        # It turns out that the GnuCOBOL compiler, when working with
-        # local variables, which have storage in the ephemeral cob_local_ptr
-        # buffer, doesn't establish the f_xx cob_field attributes (including the data
-        # pointer) until just before they are used.  We have found, generally, that
-        # the data have been set up, it's just the cob_field that gets adjusted late.
+        # working-storage is the easiest; if there is a self.Fname, then
+        # everything is okay and you can just return self.location_of_field.
         #
-        # So, we assume that the f_xx is not valid.  We create our own, and
-        # we populate it as the libcob routines expect:
+        # Local storage can have self.Fname, but sometimes the data in the
+        # cob_field.data pointer isn't loaded up with the data that's actually
+        # available in the cob_local_ptr area.  We can fix that.
         #
-        # It's up to the caller to do a cob_free() on the returned value
-
-        command = "call (char*)cob_malloc(sizeof(cob_field))"
-        retval = int(gdb.execute(command, False, True).split()[2],16)
-
-        command = "set var *(cob_field *){0}".format(hex(retval)) + " = {"
-        command += "{0}, (char *){1}, &{2}".format(self.Length, hex(self.location_of_data), self.Aname)
-        command += "}"
-
+        # If a variable isn't referenced in the COBOL source code, then it doesn't
+        # have self.Fname.  But the data is actually at self.location_of_data.  In
+        # that case, if the caller has allocate turned on, we can synthesize a temporary
+        # cob_field.
+        #
+        # If allocate is turned off in that last case, we return None
+        #
         try:
+            if not allocate:
+                if self.Fname and self.Section not in ('L'):
+                    # working storage or linkage, so we are safe to go simple:
+                    return self.location_of_field
+                if self.Fname and self.Section in ('L'):
+                    # This is the case where we update the cob_field data area
+                    # from self.location_of_data:
+                    command = "set var &{0}".format(self.Fname) + " = {"
+                    command += "{0}, (char *){1}, &{2}".format(self.Length, hex(self.location_of_data), self.Aname)
+                    command += "}"
+                    gdb.execute(command, False, True)
+                    return self.location_of_field
+                # There is no self.Fname, and we aren't allowed to allocate:
+                return None
+
+            # We *must* allocate, because our caller is expected us to, so they
+            # will be calling free_field_location
+
+            command = "call (char*)cob_malloc(sizeof(cob_field))"
+            retval = int(gdb.execute(command, False, True).split()[2],16)
+
+            # Having allocated a synthetic cob_field, initialize it with the data
+            # we have
+            command = "set var *(cob_field *){0}".format(hex(retval)) + " = {"
+            command += "{0}, (char *){1}, &{2}".format(self.Length, hex(self.location_of_data), self.Aname)
+            command += "}"
             gdb.execute(command, False, True)
+            return retval
+
         except gdb.error:
             print("Command failed in get_verified_field_location:", command)
-            retval = 0
-
+            retval = None
         return retval;
 
     def free_field_location(self,field_location):
@@ -1088,7 +1117,7 @@ class CobolVariable():
 
     def GetDataAsString(self):
         retval = ""
-        location_of_field = self.get_verified_field_location()
+        location_of_field = self.get_verified_field_location(ALLOCATE)
         if not location_of_field:
             return retval
 
@@ -1138,7 +1167,7 @@ class CobolVariable():
     def PutDataAsString(self, rside):
         return_value = 1
 
-        location_of_field = self.get_verified_field_location()
+        location_of_field = self.get_verified_field_location(ALLOCATE)
         if not location_of_field:
             return 0
 
@@ -1174,11 +1203,11 @@ class CobolVariable():
     def PutDataAsVar(self, payload_s):
         return_value = 1
 
-        destination = self.get_verified_field_location()
+        destination = self.get_verified_field_location(ALLOCATE)
         if not destination:
             return 0
 
-        source = payload_s.get_verified_field_location()
+        source = payload_s.get_verified_field_location(ALLOCATE)
         if not source:
             return 0
 
@@ -2509,7 +2538,7 @@ class CBreakWorker():
             else:
                 bp_startloc = 1
 
-            location_of_field = payload.get_verified_field_location()
+            location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
             if not location_of_field:
                 return
 
@@ -2528,7 +2557,7 @@ class CBreakWorker():
         if condition in ("==", "<", "<=", ">", ">=", "<>"):
             break_point = self.set_breakpoint(line_nr)
 
-            location_of_field = payload.get_verified_field_location()
+            location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
             if not location_of_field:
                 return
 
@@ -2573,20 +2602,17 @@ class CBreakWorker():
             print("Condition not implemented")
             return
 
-        location_of_field = payload_f.get_verified_field_location()
+        location_of_field = payload_f.get_verified_field_location(DONT_ALLOCATE)
         if not location_of_field:
             return
 
-        other_field = payload_s.get_verified_field_location(payload_f.Fname)
+        other_field = payload_s.get_verified_field_location(DONT_ALLOCATE)
         if not other_field:
-            self.free_field_location(location_of_field)
             return
 
         break_point = self.set_breakpoint(line_nr)
         self.set_condition(break_point, "(int)cob_cmp({0}, {1}) {2} 0".format(hex(location_of_field), hex(other_field), condition_str))
 
-        self.free_field_location(location_of_field)
-        self.free_field_location(other_field)
 
     @staticmethod
     def get_var_data(args):
