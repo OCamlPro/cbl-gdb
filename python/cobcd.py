@@ -2827,10 +2827,10 @@ A watchpoint stops execution of your program whenever the value of an expression
         self.tab_file = CBLDBG_TABFILE
 
     def invoke(self, arguments, from_tty):
+        self.dont_repeat()
         try:
             self.tab_file.ReadSymbolTableText()
             self.worker.process_watch_arguments(self.tab_file, arguments)
-            self.dont_repeat()
         except:
             traceback.print_exc()
 
@@ -2878,8 +2878,8 @@ A breakpoint stops execution of your program whenever the expression matches
         super(CBreak, self).__init__("cbreak", gdb.COMMAND_BREAKPOINTS)
 
     def invoke(self, arguments, from_tty):
-        self.worker.process_break_arguments(self.tab_file, arguments)
         self.dont_repeat()
+        self.worker.process_break_arguments(self.tab_file, arguments)
 
 class CStart(gdb.Command):
     """(Re-)start the debugged program stopping at the beginning of the first COBOL statement.
@@ -2894,6 +2894,7 @@ they override any that might have been passed to GDB with --args
         super(CStart, self).__init__("cstart", gdb.COMMAND_USER)
 
     def invoke(self, arguments, from_tty):
+        self.dont_repeat()
         try:
             command = "info files"
             info_files = gdb.execute(command, False, True).split('\n')
@@ -2937,8 +2938,6 @@ they override any that might have been passed to GDB with --args
 
         except gdb.error:
             print("cstart failed: " + command)
-
-        self.dont_repeat()
 
 class CNext(gdb.Command):
     """The cnext command behaves like GDB 'next', but it is smart enough to
