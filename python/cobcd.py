@@ -184,6 +184,30 @@ class GlobalVariables():
         self.ShortTermMemory = []
         self.repeat_count = 11  # Default value for "'0' <repeats 11 times>" logic
 
+        self.cprint_buffer = None
+        self.cprint_f0 = None
+
+    def AllocateBuffers(self):
+        if not self.cprint_buffer:
+            try:
+                command = "call (char*)cob_malloc(65536)"
+                self.cprint_buffer = int(gdb.execute(command, False, True).split()[2],16)
+
+                command = "call (char*)cob_malloc(sizeof(cob_field))"
+                self.cprint_f0 = int(gdb.execute(command, False, True).split()[2],16)
+            except:
+                traceback.print_exc()
+                self.cprint_buffer = None
+                self.cprint_f0 = None
+                pass
+            if not self.cprint_buffer or not self.cprint_buffer:
+                print("Something is very wrong in GlobalVariables.AllocateBuffers()")
+                os.exit(1)
+
+    def DestroyBuffers(self):
+        self.cprint_buffer = None
+        self.cprint_f0 = None
+
 GV_GlobalVariables = GlobalVariables()
 
 def NoNulls(s):
@@ -1077,21 +1101,29 @@ class CobolVariable():
         #
         # If allocate is turned off in that last case, we return None
         #
+        GV_GlobalVariables.AllocateBuffers();
         try:
             if not allocate:
                 if self.Fname and self.Section not in ('L'):
                     # working storage or linkage, so we are safe to go simple:
                     return self.location_of_field
+
                 if self.Fname and self.Section in ('L'):
                     # This is the case where we update the cob_field data area
                     # from self.location_of_data:
-                    command = "set var &{0}".format(self.Fname) + " = {"
+                    command = "set var {0}".format(self.Fname) + " = {"
                     command += "{0}, (char *){1}, &{2}".format(self.Length, hex(self.location_of_data), self.Aname)
                     command += "}"
                     gdb.execute(command, False, True)
                     return self.location_of_field
-                # There is no self.Fname, and we aren't allowed to allocate:
-                return None
+
+                # There is no self.Fname.  So, use the one in GlobalVariables:
+                retval = GV_GlobalVariables.cprint_f0
+                command = "set var *(cob_field *){0}".format(hex(retval)) + " = {"
+                command += "{0}, (char *){1}, &{2}".format(self.Length, hex(self.location_of_data), self.Aname)
+                command += "}"
+                gdb.execute(command, False, True)
+                return retval
 
             # We *must* allocate, because our caller is expected us to, so they
             # will be calling free_field_location
@@ -1108,6 +1140,7 @@ class CobolVariable():
             return retval
 
         except gdb.error:
+            traceback.print_exc()
             print("Command failed in get_verified_field_location:", command)
             retval = None
         return retval;
@@ -1117,7 +1150,7 @@ class CobolVariable():
 
     def GetDataAsString(self):
         retval = ""
-        location_of_field = self.get_verified_field_location(ALLOCATE)
+        location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
         if not location_of_field:
             return retval
 
@@ -1140,10 +1173,8 @@ class CobolVariable():
             print("GetData AsString    loc_of_pic:", hex(self.location_of_pic))
 
         try:
-            command = "call (char*)cob_malloc(8192)"
-            buffer = int(gdb.execute(command, False, True).split()[2],16)
-
-            command = "call (const char *)cob_get_field_str((cob_field *){0}, (char *){1}, 8192)".format(hex(location_of_field),
+            buffer = GV_GlobalVariables.cprint_buffer
+            command = "call (const char *)cob_get_field_str((cob_field *){0}, (char *){1}, 65536)".format(hex(location_of_field),
                                                                                                          hex(buffer) )
             gdb.execute(command, False, True)
         except gdb.error:
@@ -1159,22 +1190,18 @@ class CobolVariable():
             retval += chr(char)
             buf_ptr += 1
 
-        gdb.execute("call (void *)cob_free({0})".format(hex(buffer)), False, True)
-        self.free_field_location(location_of_field)
-
         return retval
 
     def PutDataAsString(self, rside):
         return_value = 1
 
-        location_of_field = self.get_verified_field_location(ALLOCATE)
+        location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
         if not location_of_field:
             return 0
 
         try:
         # Let's leverage GDB to set our buffer to rside:
-            command = "call (char*)cob_malloc(8192)"
-            buffer = int(gdb.execute(command, False, True).split()[2],16)
+            buffer = GV_GlobalVariables.cprint_buffer
 
             buf_ptr = buffer
             for index in range(len(rside)):
@@ -1195,13 +1222,15 @@ class CobolVariable():
             print("COMMAND failed in PutDataAsString: ", command)
             return_value = 0
 
-        gdb.execute("call (void *)cob_free({0})".format(hex(buffer)), False, True)
-        self.free_field_location(location_of_field)
-
         return return_value
 
     def PutDataAsVar(self, payload_s):
         return_value = 1
+
+        # We use the ALLOCATE option because of the possibility that one
+        # or both of the source and destination might be, weirdly, COBOL
+        # variables that don't have valid f_xx cob_fields, but for some
+        # reason the developer wants use them as source or destination
 
         destination = self.get_verified_field_location(ALLOCATE)
         if not destination:
@@ -1209,6 +1238,7 @@ class CobolVariable():
 
         source = payload_s.get_verified_field_location(ALLOCATE)
         if not source:
+            self.free_field_location(destination)
             return 0
 
         try:
@@ -2955,6 +2985,7 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
             print("No stack.")
 
 def exit_handler(event):
+    GV_GlobalVariables.DestroyBuffers()
     pass
 
 def stop_handler(event):
