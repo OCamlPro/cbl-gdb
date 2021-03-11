@@ -2549,7 +2549,6 @@ class CBreakWorker():
                 self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2} - 1), \"{3}\", {4}) != 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
             else:
                 self.set_condition(break_point, "$_regex(((char *)cob_get_field_str_buffered({0} + {1} - 1), \"{2}\")".format(hex(location_of_field), bp_startloc, diff_str))
-            self.free_field_location(location_of_field)
         else:
             print("Condition not implemented")
 
@@ -2564,8 +2563,6 @@ class CBreakWorker():
             self.set_condition(break_point, "(double)atof((char *)cob_get_field_str_buffered({0})) {1} {2}".format(hex(location_of_field), condition, diff_num))
         else:
             print("Condition not implemented")
-
-        self.free_field_location(location_of_field)
 
     def set_section_breakpoint(self, args):
         mod_sec = args[1].split(":")
@@ -2910,16 +2907,9 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
         super(CNext, self).__init__("cnext", gdb.COMMAND_BREAKPOINTS)
         print('Registering CNext')
         self.tab_file = CBLDBG_TABFILE
-        self.current_breakpoint = None
-
-    def Flush(self):
-        if self.current_breakpoint:
-            self.current_breakpoint.delete()
-            self.current_breakpoint = None
 
     def invoke(self, arguments, from_tty):
         try:
-            self.Flush()
             self.tab_file.ReadSymbolTableText()
             if arguments:
                 ncount = int(arguments)
@@ -2929,23 +2919,15 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
                 command = "info stack"
                 key = gdb.execute(command, False, True).split('\n')[0].split()[-1]
                 if key in self.tab_file.perform_commands:
-                    # command = self.tab_file.perform_commands[key]
-                    # self.current_breakpoint = gdb.Breakpoint(command)
-                    # self.current_breakpoint.silent = True
-
-                    # command = "continue"
-                    # gdb.execute(command, True, False)
-
-                    # command = "next"
-                    # gdb.execute(command, True, False)
                     command = "until " + self.tab_file.perform_commands[key]
                     gdb.execute(command, True, False)
 
                     # If we went to a specific line location, then the UNTIL leaves
                     # us in a nice place.  If we target a local address, then
-                    # we have stopped at l_xx: target in the C code that shows
+                    # we have stopped at a l_xx: target in the C code that shows
                     # up as being before where the user expects to be.  So,
-                    # in that case, we issue an extra step.
+                    # in that case, we issue an extra step to get GDB and the
+                    # COBOL source code line in sync.
 
                     if self.tab_file.perform_commands[key].find(':') == -1:
                         command = "step"
@@ -2960,10 +2942,10 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
             print("No stack.")
 
 def exit_handler(event):
-    cnext_object.Flush()
+    pass
 
 def stop_handler(event):
-    cnext_object.Flush()
+    pass
 
 gdb.events.exited.connect(exit_handler)
 gdb.events.stop.connect(stop_handler)
@@ -2971,5 +2953,5 @@ gdb.events.stop.connect(stop_handler)
 CPrint()
 CWatch()
 CBreak()
-cnext_object = CNext()
+CNext()
 CStart()
