@@ -4,12 +4,20 @@ set width 0
 define stutter_step
     set variable $_exitcode=1031
     while $_exitcode==1031
-        echo 
+        echo
         cprint *
         cprint ?
         cprint/x 1
         step
         end
+    end
+
+define stutter
+    echo
+    cprint *
+    cprint ?
+    cprint/x 1
+    step
     end
 
 file test
@@ -34,11 +42,25 @@ echo KNOWN GOOD LINES: 1\n
 cprint *
 
 ### Run the whole program after a known good starting breakpoint
-b 27
-run
+cstart
 echo KNOWN GOOD START\n
 stutter_step
 echo KNOWN GOOD FINISH\n
+
+### Let's try some assignments
+cstart
+echo KNOWN GOOD START\n
+stutter
+stutter
+stutter
+stutter
+cp ws-firstname of ws-bob = "bobby"
+cp WS-FIRSTNAME in WS-JIM=WS-LASTNAME of WS-JIM
+stutter
+stutter
+stutter
+echo KNOWN GOOD FINISH\n
+continue
 
 ## And having stepped through the program line-by-line, we are done
 q

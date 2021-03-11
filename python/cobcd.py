@@ -2297,7 +2297,7 @@ class CPrintWorker():
 
         rside = None
         if len(preargs) > 1:
-            rside = preargs[1]
+            rside = preargs[1].strip()
 
         # The variable name side is to the left of any '=' character
         args = []
@@ -2682,7 +2682,7 @@ class CBreakWorker():
 
             payload_f = self.get_var_payload(tab_file, var_f)
             if payload_f is None:
-                print("Variable not found(4)")
+                print("Variable not found")
                 return
 
             payload_s = self.get_var_payload(tab_file, var_s)
