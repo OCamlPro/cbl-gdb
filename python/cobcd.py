@@ -138,6 +138,9 @@ COB_FLAG_REAL_SIGN      = (1 << 10)  # /* 0x0400 */
 COB_FLAG_BINARY_TRUNC   = (1 << 11)  # /* 0x0800 */
 COB_FLAG_CONSTANT       = (1 << 12)  # /* 0x1000 */
 
+# Buffer size for printing 
+PRINT_BUFFER_SIZE = 65536
+
 # These constants are used when calling get_verified_field_location
 ALLOCATE = True
 DONT_ALLOCATE = False
@@ -190,7 +193,7 @@ class GlobalVariables():
     def AllocateBuffers(self):
         if not self.cprint_buffer:
             try:
-                command = "call (char*)cob_malloc(65536)"
+                command = "call (char*)cob_malloc({0})".format(PRINT_BUFFER_SIZE)
                 self.cprint_buffer = int(gdb.execute(command, False, True).split()[2],16)
 
                 command = "call (char*)cob_malloc(sizeof(cob_field))"
@@ -1174,8 +1177,8 @@ class CobolVariable():
 
         try:
             buffer = GV_GlobalVariables.cprint_buffer
-            command = "call (const char *)cob_get_field_str((cob_field *){0}, (char *){1}, 65536)".format(hex(location_of_field),
-                                                                                                         hex(buffer) )
+            command = "call (const char *)cob_get_field_str((cob_field *){0}, (char *){1}, {2})".format(hex(location_of_field),
+                                                                                                         hex(buffer), PRINT_BUFFER_SIZE )
             gdb.execute(command, False, True)
         except gdb.error:
             print("Command failed in GetDataAsString:", command)
