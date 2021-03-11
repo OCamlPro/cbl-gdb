@@ -2057,10 +2057,14 @@ def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
                     qmrange = TabFile.question_mark_range
                     if qmrange < 0:
                         qmrange = 1000000000
-                    return_string = subprocess.check_output(["cobcd-rw",
-                                                              TabFile.current_full_path,
-                                                              str(TabFile.current_trapped_line),
-                                                              str(qmrange)])
+                    if qmrange == 999:
+                        # This is an expedient for simply killing any cprint ? response
+                        return_string = ""
+                    else:
+                        return_string = subprocess.check_output(["cobcd-rw",
+                                                                  TabFile.current_full_path,
+                                                                  str(TabFile.current_trapped_line),
+                                                                  str(qmrange)])
                     tokens = return_string.split()
                     new_dogs = set()
                     for token in tokens:
@@ -2235,7 +2239,7 @@ class CPrintWorker():
             elif len(args) == 2 and args[0] == '/r' and args[1].lstrip('-').isnumeric():
                 # This is a request to change the question_mark_range
                 self.question_mark_range = int(args[1])
-                print("The 'p ?' range has been set to +/-", self.question_mark_range, "lines")
+                print("The 'cprint ?' range has been set to +/-", self.question_mark_range, "lines")
                 TabFile.old_dogs = set()
                 args = ['?']
             elif len(args[0]) > 2 and args[0][0:2] == '/r':
@@ -2244,15 +2248,16 @@ class CPrintWorker():
                 if range.lstrip('-').isnumeric():
                     self.question_mark_range = int(range)
                 if int(self.question_mark_range) < 0:
-                    print("The 'p ?' range has been set to the same as 'p *'")
+                    print("The 'cprint ?' range has been set to the same as 'cprint *'")
                 else:
-                    print("The 'p ?' range has been set to", self.question_mark_range)
+                    print("The 'cprint ?' range has been set to", self.question_mark_range)
+                TabFile.old_dogs = set()
                 args = ['?']
             elif len(args) == 1 and args[0] == '/r':
                 if int(self.question_mark_range) < 0:
-                    print("The 'p ?' range is currently the same as 'p *'")
+                    print("The 'cprint ?' range is currently the same as 'cprint *'")
                 else:
-                    print("The 'p ?' range is currently +/-", self.question_mark_range, "lines")
+                    print("The 'cprint ?' range is currently +/-", self.question_mark_range, "lines")
                 args = []
 
         return args
