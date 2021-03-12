@@ -2106,9 +2106,9 @@ def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
     possibilities.sort()
 
     if len(possibilities) == 1 and machine_interface_mode and not rside and args[0] != '*' and args[0] != '?':
-        # Very special case.  This was a `p/m something`, which is what happens when
+        # Very special case.  This was a `cprint/m something`, which is what happens when
         # the -data-evaluate-expression command is issued by Visual Studio Code.  I considered creating
-        # a unique 'print/e ' command, but then I realized that VSC never issues a 'p/m something' unless there
+        # a unique 'print/e ' command, but then I realized that VSC never issues a 'cprint/m something' unless there
         # is also an 'rside'.  So, this code is in response to a `-data-evalute-expression` equivalent command
         payload_index = possibilities[0]
         payload = TabFile.var_trie.storage_list[payload_index]
@@ -2371,6 +2371,10 @@ class CPrintWorker():
                 # And display the variable according to the current list v-level
                 self.FormattedDisplay(payload)
         elif not possibilities:
+            if self.machine_interface_mode:
+                # just return quietly.  The variable not found message
+                # confuses Visual Studio Code
+                return
             print("Variable not found")
         else:
             if rside:
