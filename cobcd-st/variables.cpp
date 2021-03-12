@@ -188,6 +188,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
     full_path += fname;
     full_path += ".c";
 
+
     FILE *f = fopen(full_path.c_str(),"r");
     if( !f ) {
         cout << "Couldn't open the input file " << full_path << endl;
@@ -195,6 +196,13 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
     }
 
     char ach[16384];
+
+    enum {
+        PR_LOOKING,
+        PR_FIRST_COMMENT,
+        PR_RETURN_ADDRESS,
+        PR_SECOND_COMMENT,
+    } perform_return = PR_LOOKING;
 
     string current_record_type = "X" ;
     int line_number = 1;
@@ -224,6 +232,104 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                 Insert(variable);
             }
             continue;
+        }
+
+        check_for_another_perform:
+        switch(perform_return) {
+        case PR_LOOKING: {
+            if( strstr(ach, ": PERFORM ") ) {
+                string input = ach;
+
+                VSTRING tokens = Split(input," \t");
+                if( tokens.size() EQ 8
+                        AND tokens[0] EQ "/*"
+                        AND tokens[1] EQ "Line:"
+                        AND tokens[3] EQ ":"
+                        AND tokens[4] EQ "PERFORM"
+                        AND tokens[5] EQ ":"
+                        AND tokens[7] EQ "*/\n" ) {
+                    VARIABLE variable;
+                    variable.record_type = "p";
+                    variable.f_name = tokens[6] + ':' + tokens[2];
+                    Insert(variable);
+                    perform_return = PR_FIRST_COMMENT;
+                    continue;
+                }
+            }
+        }
+        break;
+
+        case PR_FIRST_COMMENT:
+            if( strstr (ach,"/*") ) {
+                // This is the first comment after the PERFORM.
+                if( strstr(ach,"PERFORM") )
+                    {
+                    // This is a PERFORM A or PERFORM A UNTIL
+                    perform_return = PR_RETURN_ADDRESS;
+                    }
+                else
+                    {
+                    // If there is no "PERFORM" in the comment, then this
+                    // is a PERFORM N TIMES.
+
+                    // We ignore those
+                    variables.pop_back();
+                    perform_return = PR_LOOKING;
+                    }
+            }
+            continue;
+            break;
+
+        case PR_RETURN_ADDRESS: {
+            // When looking for a return location, the first thing we
+            // find is the default:
+            //     frame_ptr->return_address_ptr = &&l_50;
+            // This might be our only choice, when, for example, this
+            // PERFORM is itself followed by an implicit return, which can
+            // happen when the PERFORM statement is itself the last statement
+            // of a paragraph that ends a section or a program.
+
+            char *p = strstr(ach,"&&");
+            if( p ) {
+                p += 2;
+                char *p2 = strstr(ach,";");
+                if( p2 ) {
+                    *p2 = '\0';
+                }
+                variables.back().name = p;
+                perform_return = PR_SECOND_COMMENT;
+                continue;
+            }
+        }
+        break;
+
+        case PR_SECOND_COMMENT:
+            // But what we prefer to find is the /* Line: nn that follows
+            // the PERFORM.  If we can find that line number, it makes for
+            // a cleaner-looking sequence in GDB
+
+            // From something like
+            //      /* Line: 109       : Paragraph PARTEND-001             : rtest.cbl */
+            // we will build rtest.cbl:109 as the target:
+            char *p = strstr(ach,"/*");
+            if( p ) {
+                VSTRING tokens = Split(ach," \t");
+                if( tokens.size() > 2 AND tokens[1] == "Line:") {
+                    size_t i;
+                    for( i=5; i<tokens.size(); i++ ) {
+                        if( tokens[i] EQ ":" ) {
+                            break;
+                        }
+                    }
+                    i += 1;
+                    if( i < tokens.size() ) {
+                        variables.back().name = tokens[i] + ':' + tokens[2];
+                    }
+                }
+                perform_return = PR_LOOKING;
+                goto check_for_another_perform;
+            }
+            break;
         }
 
         static const char COB_DUMP_FILE[]   = "cob_dump_file";

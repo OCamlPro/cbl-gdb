@@ -83,11 +83,6 @@ TackVariablesOntoCfile(PARAMETERS &params,
     // Build the C-code for the global variable string
     stringstream ssResult;
 
-    // In order to use libcob in cobcd.gdb, we need a buffer area to call
-    // our very own:
-    ssResult << "/* COBCD DEBUGGING BUFFER */" << endl << endl;
-    ssResult << "char __cobcd_debugging_buffer[8192];" << endl << endl;
-
     ssResult << "/* COBCD DEBUGGING INFORMATION */" << endl << endl;
 
     // Start with the name
