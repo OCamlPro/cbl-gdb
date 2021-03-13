@@ -234,7 +234,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
             continue;
         }
 
-        check_for_another_perform:
+check_for_another_perform:
         switch(perform_return) {
         case PR_LOOKING: {
             if( strstr(ach, ": PERFORM ") ) {
@@ -262,22 +262,25 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
         case PR_FIRST_COMMENT:
             if( strstr (ach,"/*") ) {
                 // This is the first comment after the PERFORM.
-                if( strstr(ach,"PERFORM") )
-                    {
-                    // This is a PERFORM A or PERFORM A UNTIL
+                string input = ach;
+                VSTRING tokens = Split(input," \t");
+                if( tokens.size() > 1
+                        AND tokens[0] == "/*"
+                        AND tokens[1] == "PERFORM")
+                    // This is a PERFORM A
+                {
                     perform_return = PR_RETURN_ADDRESS;
-                    }
-                else
-                    {
-                    // If there is no "PERFORM" in the comment, then this
-                    // is a PERFORM N TIMES.
+                    continue;
+                } else {
+                    //
+                    // This is a PERFORM N TIMES or PERFORM UNTIL
 
                     // We ignore those
                     variables.pop_back();
                     perform_return = PR_LOOKING;
-                    }
+                    goto check_for_another_perform;
+                }
             }
-            continue;
             break;
 
         case PR_RETURN_ADDRESS: {
@@ -298,8 +301,8 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                 }
                 variables.back().name = p;
                 perform_return = PR_SECOND_COMMENT;
-                continue;
             }
+            continue;
         }
         break;
 
