@@ -138,7 +138,7 @@ COB_FLAG_REAL_SIGN      = (1 << 10)  # /* 0x0400 */
 COB_FLAG_BINARY_TRUNC   = (1 << 11)  # /* 0x0800 */
 COB_FLAG_CONSTANT       = (1 << 12)  # /* 0x1000 */
 
-# Buffer size for printing 
+# Buffer size for printing
 PRINT_BUFFER_SIZE = 65536
 
 # These constants are used when calling get_verified_field_location
@@ -1175,6 +1175,20 @@ class CobolVariable():
             print("GetData AsString   loc_of_attr:", hex(self.location_of_attribute))
             print("GetData AsString    loc_of_pic:", hex(self.location_of_pic))
 
+        ## Something we need to know:
+        is_alphanumeric = False
+        if self.AttrType in ( COB_TYPE_UNKNOWN,
+                              COB_TYPE_GROUP,
+                              COB_TYPE_BOOLEAN,
+                              COB_TYPE_ALNUM,
+                              COB_TYPE_ALPHANUMERIC,
+                              COB_TYPE_ALPHANUMERIC_ALL,
+                              COB_TYPE_ALPHANUMERIC_EDITED,
+                              COB_TYPE_NUMERIC_EDITED,
+                              COB_TYPE_NATIONAL,
+                              COB_TYPE_NATIONAL_EDITED ) :
+            is_alphanumeric = True
+
         try:
             buffer = GV_GlobalVariables.cprint_buffer
             command = "call (const char *)cob_get_field_str((cob_field *){0}, (char *){1}, {2})".format(hex(location_of_field),
@@ -1185,6 +1199,9 @@ class CobolVariable():
             return "<Error in GetDataAsString>"
 
         # The formatted variable string is in buffer
+        if is_alphanumeric :
+            retval = '"'
+
         buf_ptr = buffer
         while True:
             char = GetDataAt(buf_ptr, 1)
@@ -1192,6 +1209,8 @@ class CobolVariable():
                 break
             retval += chr(char)
             buf_ptr += 1
+        if is_alphanumeric :
+            retval += '"'
 
         return retval
 
