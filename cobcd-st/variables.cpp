@@ -197,6 +197,9 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
 
     char ach[16384];
 
+    string current_perform_file;
+    int current_perform_line;
+
     enum {
         PR_LOOKING,
         PR_FIRST_COMMENT,
@@ -251,6 +254,8 @@ check_for_another_perform:
                     VARIABLE variable;
                     variable.record_type = "p";
                     variable.f_name = tokens[6] + ':' + tokens[2];
+                    current_perform_file = tokens[6];
+                    current_perform_line = stoi(tokens[2]);
                     Insert(variable);
                     perform_return = PR_FIRST_COMMENT;
                     continue;
@@ -314,6 +319,24 @@ check_for_another_perform:
             // From something like
             //      /* Line: 109       : Paragraph PARTEND-001             : rtest.cbl */
             // we will build rtest.cbl:109 as the target:
+
+            // Discovered a problem, though.
+            //
+            //64        PERFORM until end-of-file
+            //65            PERFORM 02-process 
+            //66            PERFORM 01-read
+            //67            END-PERFORM.
+            //68        DISPLAY my-counters.
+
+            // It turns out that the END-PERFORM line doesn't generate any code
+            // at all in the generated C file.  So, the next line after 66 PERFORM
+            // was getting picked up as line 68 -- which isn't what we had in mind.
+
+            // So, I only issue the "nice" line number if it is the one right after
+            // the perform; otherwise we go through the until/step sequenct that
+            // doesn't look as good in GDB when it happens, but is more accurate
+            // in this case.
+
             char *p = strstr(ach,"/*");
             if( p ) {
                 VSTRING tokens = Split(ach," \t");
@@ -326,7 +349,10 @@ check_for_another_perform:
                     }
                     i += 1;
                     if( i < tokens.size() ) {
-                        variables.back().name = tokens[i] + ':' + tokens[2];
+                        if( tokens[i] EQ current_perform_file 
+                           AND (current_perform_line+1) EQ stoi(tokens[2]) ) {
+                            variables.back().name = tokens[i] + ':' + tokens[2];
+                        }
                     }
                 }
                 perform_return = PR_LOOKING;
