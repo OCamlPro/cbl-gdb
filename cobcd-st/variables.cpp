@@ -198,7 +198,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
     char ach[16384];
 
     string current_perform_file;
-    int current_perform_line;
+    int current_perform_line=-1;
 
     enum {
         PR_LOOKING,
