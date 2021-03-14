@@ -54,18 +54,18 @@ KNOWN GOOD FINISH
 KNOWN GOOD LINES: 1
 No stack.
 KNOWN GOOD START
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
- 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 8 : 01 CARVER/test [L-S] :                                            CARVER    
- 9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
-10 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 02 LOCATION/WASHINGTON/test [L-S] : "DC        "
+ 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : "HOT       "
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 8 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 9 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+10 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-12 : 01 LEGUMES/test [L-S] :                                                                123456789
+12 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 14 : 01 WS-JIM/JIMBOB [W-S] : 
 15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : 
@@ -76,18 +76,18 @@ KNOWN GOOD START
 20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : 
 21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : 
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 0
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 6 : 01 CARVER/test [L-S] :                                            CARVER    
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
- 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 6 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 7 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+ 8 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] :                                                                123456789
+10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-01 GEORGE/test [L-S]  :               GEORGE    
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 67	PROCEDURE DIVISION.
 68	    MOVE    SPACES to WS-BOB.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
@@ -95,35 +95,35 @@ KNOWN GOOD START
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] :                       
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] :           
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] :  
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : ' ' <repeats 22 times>
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "          "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : " "
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 4 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 5 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 6 : 01 WS-BOB/JIMBOB [W-S] :                       
- 7 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] :           
- 8 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] :  
- 9 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-10 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-11 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-12 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-13 : 01 UNUSED/JIMBOB [W-S] :                         
-14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 3 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 4 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 5 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 6 : 01 WS-BOB/JIMBOB [W-S] : ' ' <repeats 22 times>
+ 7 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "          "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : " "
+ 9 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+10 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+11 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+12 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+13 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 69	    MOVE    "Robert" to WS-FIRSTNAME IN WS-BOB.
@@ -132,35 +132,35 @@ KNOWN GOOD START
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] :                       
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] :           
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] :  
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : ' ' <repeats 22 times>
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "          "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : " "
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 4 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 5 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 6 : 01 WS-BOB/JIMBOB [W-S] :                       
- 7 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] :           
- 8 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] :  
- 9 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-10 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-11 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-12 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-13 : 01 UNUSED/JIMBOB [W-S] :                         
-14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 3 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 4 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 5 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 6 : 01 WS-BOB/JIMBOB [W-S] : ' ' <repeats 22 times>
+ 7 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "          "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : " "
+ 9 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+10 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+11 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+12 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+13 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 70	    MOVE    "J" to WS-MIDDLE-INITIAL IN WS-BOB.
@@ -169,35 +169,35 @@ KNOWN GOOD START
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : Robert                
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] :  
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "Robert", ' ' <repeats 16 times>
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : " "
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 4 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 5 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 6 : 01 WS-BOB/JIMBOB [W-S] : Robert                
- 7 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 8 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] :  
- 9 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-10 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-11 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-12 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-13 : 01 UNUSED/JIMBOB [W-S] :                         
-14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 3 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 4 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 5 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 6 : 01 WS-BOB/JIMBOB [W-S] : "Robert", ' ' <repeats 16 times>
+ 7 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : " "
+ 9 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+10 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+11 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+12 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+13 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 71	    MOVE    "Dubner" to WS-LASTNAME IN WS-BOB.
@@ -206,37 +206,37 @@ KNOWN GOOD START
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : Robert    J           
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J", ' ' <repeats 11 times>
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 7 : 01 WS-BOB/JIMBOB [W-S] : Robert    J           
- 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-11 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-15 : 01 UNUSED/JIMBOB [W-S] :                         
-16 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 3 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 7 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J", ' ' <repeats 11 times>
+ 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+11 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+15 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+16 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 17 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 72	    DISPLAY "entering: jimbob"
@@ -245,36 +245,36 @@ KNOWN GOOD START
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 7 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-11 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-15 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 3 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 7 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+11 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+15 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 16 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 entering: jimbob
@@ -284,35 +284,35 @@ entering: jimbob
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 7 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-11 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
+ 3 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 7 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+11 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 1234567.8
@@ -322,35 +322,35 @@ entering: jimbob
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 7 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-11 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
+ 3 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 7 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+11 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 123456.78
@@ -360,949 +360,949 @@ entering: jimbob
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 7 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-11 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
+ 3 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 7 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+11 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 84	PROCEDURE DIVISION.
 85	    DISPLAY "entering: jim"
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 entering: jim
 86	    DISPLAY WS-JIM.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 James     " Lowden    
 87	    DISPLAY "by pargraphs:"
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 by pargraphs:
 88	    PERFORM ParaFirstName.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 97	    ParaFirstName.      DISPLAY WS-FIRSTNAME OF WS-JIM.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 James     
 89	    PERFORM ParaMiddleInitial.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 98	    ParaMiddleInitial.  DISPLAY WS-MIDDLE-INITIAL OF WS-JIM.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 "
 90	    PERFORM ParaLastName.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 99	    ParaLastName.       DISPLAY WS-LASTNAME OF WS-JIM.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Lowden    
 91	    DISPLAY "by threw"
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 by threw
 92	    PERFORM ParaFirstName THRU ParaLastName.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 5 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 5 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 97	    ParaFirstName.      DISPLAY WS-FIRSTNAME OF WS-JIM.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 James     
 98	    ParaMiddleInitial.  DISPLAY WS-MIDDLE-INITIAL OF WS-JIM.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 "
 99	    ParaLastName.       DISPLAY WS-LASTNAME OF WS-JIM.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Lowden    
 93	    DISPLAY "by sekshun:"
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 by sekshun:
 94	    PERFORM FirstMiddleLast.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 97	    ParaFirstName.      DISPLAY WS-FIRSTNAME OF WS-JIM.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 James     
 98	    ParaMiddleInitial.  DISPLAY WS-MIDDLE-INITIAL OF WS-JIM.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 "
 99	    ParaLastName.       DISPLAY WS-LASTNAME OF WS-JIM.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Lowden    
 95	    GOBACK.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 76	    CALL 'BOB'.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 7 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-11 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
+ 3 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 7 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+11 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 140	PROCEDURE DIVISION.
 141	    DISPLAY "entering: bob"
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-BOB/JIMBOB [W-S]  :  Robert    J Dubner    
-01 WS-BOB/JIMBOB [W-S]  :  Robert    J Dubner    
+01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
+01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
 entering: bob
 142	    DISPLAY WS-BOB.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-BOB/JIMBOB [W-S]  :  Robert    J Dubner    
-01 WS-BOB/JIMBOB [W-S]  :  Robert    J Dubner    
+01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
+01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
 Robert    J Dubner    
 143	    DISPLAY "by pargraphs:"
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-BOB/JIMBOB [W-S]  :  Robert    J Dubner    
-01 WS-BOB/JIMBOB [W-S]  :  Robert    J Dubner    
+01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
+01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
 by pargraphs:
 144	    PERFORM ParaFirstName.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-BOB/JIMBOB [W-S]  :  Robert    J Dubner    
-01 WS-BOB/JIMBOB [W-S]  :  Robert    J Dubner    
+01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
+01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
 154	    ParaFirstName.      DISPLAY WS-FIRSTNAME OF WS-BOB.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Robert    
 145	    PERFORM ParaMiddleInitial.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 155	    ParaMiddleInitial.  DISPLAY WS-MIDDLE-INITIAL OF WS-BOB.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 J
 146	    PERFORM ParaLastName.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 156	    ParaLastName.       DISPLAY WS-LASTNAME OF WS-BOB.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Dubner    
 147	    DISPLAY "by threw"
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 by threw
 148	    PERFORM ParaFirstName THROUGH ParaLastName.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 2 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 3 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
+ 1 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 2 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 3 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
  4 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S]  :  0x4a616d65732020202020
 154	    ParaFirstName.      DISPLAY WS-FIRSTNAME OF WS-BOB.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Robert    
 155	    ParaMiddleInitial.  DISPLAY WS-MIDDLE-INITIAL OF WS-BOB.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 J
 156	    ParaLastName.       DISPLAY WS-LASTNAME OF WS-BOB.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Dubner    
 149	    DISPLAY "by sekshun:"
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 by sekshun:
 150	    PERFORM FirstMiddleLast.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 2 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 3 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 4 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 2 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 3 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 4 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  8 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S]  :  0x4a616d65732020202020
 154	    ParaFirstName.      DISPLAY WS-FIRSTNAME OF WS-BOB.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Robert    
 155	    ParaMiddleInitial.  DISPLAY WS-MIDDLE-INITIAL OF WS-BOB.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 J
 156	    ParaLastName.       DISPLAY WS-LASTNAME OF WS-BOB.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Dubner    
 151	    MOVE 4.321 TO WS-FLOATTEST
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 152	    GOBACK.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-01 WS-JIM/JIMBOB [W-S]  :  James     " Lowden    
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 77	    CALL 'DISPLAY-JIM-OR-BOB' USING WS-JUDY,WS-JIM
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 77 TEST-NUMBER-A/JIMBOB [W-S]  :  0x313233343536373839
 116	PROCEDURE DIVISION USING LS-JORB, LS-JORB-2.
 117	    DISPLAY "entering: jorb"
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-10 : 01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Judy      L Ruderman  
-11 : 02 LS-FIRSTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Judy      
-12 : 02 LS-MIDDLE-INITIAL/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : L
-13 : 02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Ruderman  
-14 : 01 LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : James     " Lowden    
-15 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : James     
-16 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : 
-17 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : Lowden    
- 1 : 01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Judy      L Ruderman  
- 2 : 02 LS-FIRSTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Judy      
- 3 : 02 LS-MIDDLE-INITIAL/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : L
- 4 : 02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Ruderman  
- 5 : 01 LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : James     " Lowden    
- 6 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : James     
- 7 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : 
- 8 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : Lowden    
-01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK]  :  Judy      L Ruderman  
+10 : 01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Judy      L Ruderman  "
+11 : 02 LS-FIRSTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Judy      "
+12 : 02 LS-MIDDLE-INITIAL/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "L"
+13 : 02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Ruderman  "
+14 : 01 LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     " Lowden    "
+15 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     "
+16 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : """
+17 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "Lowden    "
+ 1 : 01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Judy      L Ruderman  "
+ 2 : 02 LS-FIRSTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Judy      "
+ 3 : 02 LS-MIDDLE-INITIAL/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "L"
+ 4 : 02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Ruderman  "
+ 5 : 01 LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     " Lowden    "
+ 6 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     "
+ 7 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : """
+ 8 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "Lowden    "
+01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK]  :  "Judy      L Ruderman  "
 entering: jorb
 119	    DISPLAY LS-MIDDLE-INITIAL OF LS-JORB.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-10 : 01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Judy      L Ruderman  
-11 : 02 LS-FIRSTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Judy      
-12 : 02 LS-MIDDLE-INITIAL/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : L
-13 : 02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Ruderman  
-14 : 01 LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : James     " Lowden    
-15 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : James     
-16 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : 
-17 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : Lowden    
- 1 : 01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Judy      L Ruderman  
- 2 : 02 LS-FIRSTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Judy      
- 3 : 02 LS-MIDDLE-INITIAL/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : L
- 4 : 02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Ruderman  
- 5 : 01 LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : James     " Lowden    
- 6 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : James     
- 7 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : 
- 8 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : Lowden    
-01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK]  :  Judy      L Ruderman  
+10 : 01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Judy      L Ruderman  "
+11 : 02 LS-FIRSTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Judy      "
+12 : 02 LS-MIDDLE-INITIAL/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "L"
+13 : 02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Ruderman  "
+14 : 01 LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     " Lowden    "
+15 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     "
+16 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : """
+17 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "Lowden    "
+ 1 : 01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Judy      L Ruderman  "
+ 2 : 02 LS-FIRSTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Judy      "
+ 3 : 02 LS-MIDDLE-INITIAL/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "L"
+ 4 : 02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Ruderman  "
+ 5 : 01 LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     " Lowden    "
+ 6 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     "
+ 7 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : """
+ 8 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "Lowden    "
+01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK]  :  "Judy      L Ruderman  "
 L
 121	    DISPLAY LS-MIDDLE-INITIAL OF LS-JORB-2.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-10 : 01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Judy      L Ruderman  
-11 : 02 LS-FIRSTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Judy      
-12 : 02 LS-MIDDLE-INITIAL/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : L
-13 : 02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Ruderman  
-14 : 01 LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : James     " Lowden    
-15 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : James     
-16 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : 
-17 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : Lowden    
- 1 : 01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Judy      L Ruderman  
- 2 : 02 LS-FIRSTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Judy      
- 3 : 02 LS-MIDDLE-INITIAL/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : L
- 4 : 02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : Ruderman  
- 5 : 01 LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : James     " Lowden    
- 6 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : James     
- 7 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : 
- 8 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : Lowden    
-01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK]  :  Judy      L Ruderman  
+10 : 01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Judy      L Ruderman  "
+11 : 02 LS-FIRSTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Judy      "
+12 : 02 LS-MIDDLE-INITIAL/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "L"
+13 : 02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Ruderman  "
+14 : 01 LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     " Lowden    "
+15 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     "
+16 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : """
+17 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "Lowden    "
+ 1 : 01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Judy      L Ruderman  "
+ 2 : 02 LS-FIRSTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Judy      "
+ 3 : 02 LS-MIDDLE-INITIAL/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "L"
+ 4 : 02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK] : "Ruderman  "
+ 5 : 01 LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     " Lowden    "
+ 6 : 02 LS-FIRSTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "James     "
+ 7 : 02 LS-MIDDLE-INITIAL/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : """
+ 8 : 02 LS-LASTNAME/LS-JORB-2/DISPLAY-JIM-OR-BOB [LNK] : "Lowden    "
+01 LS-JORB/DISPLAY-JIM-OR-BOB [LNK]  :  "Judy      L Ruderman  "
 "
 78	    CALL 'JUST_ONE' USING 1031.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
@@ -1310,110 +1310,110 @@ L
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 4 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
+ 3 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 4 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 129	PROCEDURE DIVISION USING A_BINARY_NUMBER.
 130	    DISPLAY "entering: JUST_ONE"
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 10 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001031
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001031
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x00000407
 entering: JUST_ONE
 131	    DISPLAY A_BINARY_NUMBER.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 10 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001031
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001031
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x00000407
 +0000001031
 132	    ADD 1 to A_BINARY_NUMBER.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 10 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001031
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001031
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x00000407
 133	    DISPLAY A_BINARY_NUMBER.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 10 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001032
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001032
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x00000408
 +0000001032
 134	    ADD 1 to A_BINARY_NUMBER.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 10 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001032
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001032
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x00000408
 135	    DISPLAY A_BINARY_NUMBER.
- 1 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
- 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
- 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+ 1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 4 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 10 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001033
- 1 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
+ 1 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
  2 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001033
-01 WS-BOB/JIMBOB [W-S]  :  Robert    J Dubner    
+01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
 +0000001033
 79	    DISPLAY WS-FLOATTEST.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
@@ -1421,26 +1421,26 @@ entering: JUST_ONE
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 4 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
- 5 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
+ 3 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 4 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+ 5 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
  6 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 4.3210001
@@ -1450,331 +1450,331 @@ entering: JUST_ONE
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 4 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
+ 3 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 4 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
  5 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 28	    DISPLAY NAME-FIRST of GEORGE.
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
- 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 8 : 01 CARVER/test [L-S] :                                            CARVER    
- 9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
-10 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 02 LOCATION/WASHINGTON/test [L-S] : "DC        "
+ 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : "HOT       "
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 8 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 9 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+10 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-12 : 01 LEGUMES/test [L-S] :                                                                123456789
+12 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
-15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
-16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
-17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-18 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+14 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+18 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 6 : 01 CARVER/test [L-S] :                                            CARVER    
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
- 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 6 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 7 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+ 8 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] :                                                                123456789
+10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-12 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
+12 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
 13 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-01 GEORGE/test [L-S]  :               GEORGE    
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 GEORGE    
 29	    DISPLAY NAME-FIRST of WASHINGTON.
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
- 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 8 : 01 CARVER/test [L-S] :                                            CARVER    
- 9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
-10 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 02 LOCATION/WASHINGTON/test [L-S] : "DC        "
+ 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : "HOT       "
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 8 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 9 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+10 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-12 : 01 LEGUMES/test [L-S] :                                                                123456789
+12 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
-15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
-16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
-17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-18 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+14 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+18 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 6 : 01 CARVER/test [L-S] :                                            CARVER    
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
- 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 6 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 7 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+ 8 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] :                                                                123456789
+10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-01 GEORGE/test [L-S]  :               GEORGE    
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 WASHINGTON
 30	    DISPLAY NAME-FIRST of CARVER.
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
- 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 8 : 01 CARVER/test [L-S] :                                            CARVER    
- 9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
-10 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 02 LOCATION/WASHINGTON/test [L-S] : "DC        "
+ 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : "HOT       "
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 8 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 9 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+10 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-12 : 01 LEGUMES/test [L-S] :                                                                123456789
+12 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
-15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
-16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
-17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-18 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+14 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+18 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 6 : 01 CARVER/test [L-S] :                                            CARVER    
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
- 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 6 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 7 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+ 8 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] :                                                                123456789
+10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-01 GEORGE/test [L-S]  :               GEORGE    
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 CARVER    
 31	    DISPLAY NAME-FIRST of PEANUTS.
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
- 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 8 : 01 CARVER/test [L-S] :                                            CARVER    
- 9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
-10 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 02 LOCATION/WASHINGTON/test [L-S] : "DC        "
+ 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : "HOT       "
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 8 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 9 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+10 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-12 : 01 LEGUMES/test [L-S] :                                                                123456789
+12 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
-15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
-16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
-17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-18 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+14 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+18 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 6 : 01 CARVER/test [L-S] :                                            CARVER    
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
- 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 6 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 7 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+ 8 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] :                                                                123456789
+10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-12 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
-13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
-14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
-15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-16 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-17 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-19 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+12 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+16 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+17 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+19 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-01 GEORGE/test [L-S]  :               GEORGE    
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 123.456789
 32	    DISPLAY NAME-FIRST of LEGUMES.
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
- 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 8 : 01 CARVER/test [L-S] :                                            CARVER    
- 9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
-10 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 02 LOCATION/WASHINGTON/test [L-S] : "DC        "
+ 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : "HOT       "
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 8 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 9 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+10 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-12 : 01 LEGUMES/test [L-S] :                                                                123456789
+12 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
-15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
-16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
-17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-18 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+14 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+18 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 6 : 01 CARVER/test [L-S] :                                            CARVER    
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
- 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 6 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 7 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+ 8 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] :                                                                123456789
+10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-12 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
-13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
-14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
-15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-16 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-17 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-19 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+12 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+16 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+17 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+19 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-01 GEORGE/test [L-S]  :               GEORGE    
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 123456.789
 33	    MOVE "Wabash" TO WABASH.
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
- 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 8 : 01 CARVER/test [L-S] :                                            CARVER    
- 9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
-10 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 02 LOCATION/WASHINGTON/test [L-S] : "DC        "
+ 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : "HOT       "
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 8 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 9 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+10 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-12 : 01 LEGUMES/test [L-S] :                                                                123456789
+12 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
-15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
-16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
-17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-18 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+14 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+18 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 6 : 01 CARVER/test [L-S] :                                            CARVER    
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
- 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 6 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 7 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+ 8 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] :                                                                123456789
+10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-12 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
-13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
-14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
-15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-16 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-17 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-19 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+12 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+16 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+17 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+19 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-01 GEORGE/test [L-S]  :               GEORGE    
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 34	    DISPLAY NAME-FIRST of WASHINGTON.
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        Wabash    DC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : Wabash    
- 5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
- 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 8 : 01 CARVER/test [L-S] :                                            CARVER    
- 9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
-10 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "Wabash    DC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "Wabash    "
+ 5 : 02 LOCATION/WASHINGTON/test [L-S] : "DC        "
+ 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : "HOT       "
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 8 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 9 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+10 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-12 : 01 LEGUMES/test [L-S] :                                                                123456789
+12 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-14 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
-15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
-16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
-17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-18 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+14 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+16 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+17 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+18 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+19 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        Wabash    DC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : Wabash    
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 6 : 01 CARVER/test [L-S] :                                            CARVER    
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
- 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "Wabash    DC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "Wabash    "
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 6 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 7 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+ 8 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] :                                                                123456789
+10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-12 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
-13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
-14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
-15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-16 : 01 WS-BOB/JIMBOB [W-S] : Robert    J Dubner    
-17 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : Robert    
-18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-19 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
+12 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+16 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+17 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+19 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
-01 GEORGE/test [L-S]  :               GEORGE    
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 Wabash    
 [Inferior 1 (process 99999) exited normally]
 KNOWN GOOD FINISH
 KNOWN GOOD START
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 02 LOCATION/WASHINGTON/test [L-S] : DC        
- 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : HOT       
- 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 8 : 01 CARVER/test [L-S] :                                            CARVER    
- 9 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
-10 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 02 LOCATION/WASHINGTON/test [L-S] : "DC        "
+ 6 : 02 TEMPERATURE/WASHINGTON/test [L-S] : "HOT       "
+ 7 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 8 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 9 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+10 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-12 : 01 LEGUMES/test [L-S] :                                                                123456789
+12 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 13 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 14 : 01 WS-JIM/JIMBOB [W-S] : 
 15 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : 
@@ -1785,16 +1785,16 @@ KNOWN GOOD START
 20 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : 
 21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : 
 22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 0
- 1 : 01 GEORGE/test [L-S] :              GEORGE    
- 2 : 02 NAME-FIRST/GEORGE/test [L-S] : GEORGE    
- 3 : 01 WASHINGTON/test [L-S] :                        WASHINGTONDC        HOT       
- 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : WASHINGTON
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] :           
- 6 : 01 CARVER/test [L-S] :                                            CARVER    
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : CARVER    
- 8 : 01 PEANUTS/test [L-S] :                                                                123456789
+ 1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
+ 3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
+ 6 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 7 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+ 8 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
  9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] :                                                                123456789
+10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
 11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 12 : 01 WS-JIM/JIMBOB [W-S] : 
 13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : 
@@ -1805,7 +1805,7 @@ KNOWN GOOD START
 18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : 
 19 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : 
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 0
-01 GEORGE/test [L-S]  :               GEORGE    
+01 GEORGE/test [L-S]  :  ' ' <repeats 13 times>, "GEORGE    "
 67	PROCEDURE DIVISION.
 68	    MOVE    SPACES to WS-BOB.
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
@@ -1813,35 +1813,35 @@ KNOWN GOOD START
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] :                       
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] :           
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] :  
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : ' ' <repeats 22 times>
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "          "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : " "
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 4 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 5 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 6 : 01 WS-BOB/JIMBOB [W-S] :                       
- 7 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] :           
- 8 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] :  
- 9 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-10 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-11 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-12 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-13 : 01 UNUSED/JIMBOB [W-S] :                         
-14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 3 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 4 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 5 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 6 : 01 WS-BOB/JIMBOB [W-S] : ' ' <repeats 22 times>
+ 7 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "          "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : " "
+ 9 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+10 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+11 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+12 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+13 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 69	    MOVE    "Robert" to WS-FIRSTNAME IN WS-BOB.
@@ -1850,74 +1850,74 @@ KNOWN GOOD START
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : James     " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] :                       
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] :           
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] :  
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : ' ' <repeats 22 times>
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "          "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : " "
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : James     
- 4 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 5 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 6 : 01 WS-BOB/JIMBOB [W-S] :                       
- 7 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] :           
- 8 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] :  
- 9 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-10 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-11 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-12 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-13 : 01 UNUSED/JIMBOB [W-S] :                         
-14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 3 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+ 4 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 5 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 6 : 01 WS-BOB/JIMBOB [W-S] : ' ' <repeats 22 times>
+ 7 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "          "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : " "
+ 9 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+10 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+11 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+12 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+13 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 70	    MOVE    "J" to WS-MIDDLE-INITIAL IN WS-BOB.
-02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S]  :  bobby     
-02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S]  :  Lowden    
+02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S]  :  "bobby     "
+02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S]  :  "Lowden    "
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : Lowden    " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : bobby                 
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : bobby     
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] :  
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "Lowden    " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "bobby", ' ' <repeats 17 times>
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "bobby     "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : " "
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 4 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 5 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 6 : 01 WS-BOB/JIMBOB [W-S] : bobby                 
- 7 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : bobby     
- 8 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] :  
- 9 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-10 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-11 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-12 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-13 : 01 UNUSED/JIMBOB [W-S] :                         
-14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 3 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 4 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 5 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 6 : 01 WS-BOB/JIMBOB [W-S] : "bobby", ' ' <repeats 17 times>
+ 7 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "bobby     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : " "
+ 9 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+10 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+11 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+12 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+13 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+14 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 15 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 71	    MOVE    "Dubner" to WS-LASTNAME IN WS-BOB.
@@ -1926,37 +1926,37 @@ KNOWN GOOD START
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : Lowden    " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : bobby     J           
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : bobby     
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "Lowden    " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "bobby     J", ' ' <repeats 11 times>
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "bobby     "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 01 WS-JIM/JIMBOB [W-S] : Lowden    " Lowden    
- 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 7 : 01 WS-BOB/JIMBOB [W-S] : bobby     J           
- 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : bobby     
- 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] :           
-11 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-15 : 01 UNUSED/JIMBOB [W-S] :                         
-16 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 3 : 01 WS-JIM/JIMBOB [W-S] : "Lowden    " Lowden    "
+ 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 7 : 01 WS-BOB/JIMBOB [W-S] : "bobby     J", ' ' <repeats 11 times>
+ 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "bobby     "
+ 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "          "
+11 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+15 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+16 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 17 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 72	    DISPLAY "entering: jimbob"
@@ -1965,36 +1965,36 @@ KNOWN GOOD START
  3 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
  4 : 77 TEST-NUMBER-C/JIMBOB [W-S] : 123456789
  5 : 77 errno/JIMBOB [W-S] : +0000000000
- 6 : 01 WS-JIM/JIMBOB [W-S] : Lowden    " Lowden    
- 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
-10 : 01 WS-BOB/JIMBOB [W-S] : bobby     J Dubner    
-11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : bobby     
-12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-14 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-18 : 01 UNUSED/JIMBOB [W-S] :                         
-19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 6 : 01 WS-JIM/JIMBOB [W-S] : "Lowden    " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 9 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+10 : 01 WS-BOB/JIMBOB [W-S] : "bobby     J Dubner    "
+11 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "bobby     "
+12 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+13 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+14 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+15 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+16 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+17 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+18 : 01 UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
+19 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 20 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
  1 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
  2 : 77 TEST-NUMBER-B2/JIMBOB [W-S] : 123456.78
- 3 : 01 WS-JIM/JIMBOB [W-S] : Lowden    " Lowden    
- 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : 
- 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : Lowden    
- 7 : 01 WS-BOB/JIMBOB [W-S] : bobby     J Dubner    
- 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : bobby     
- 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : J
-10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : Dubner    
-11 : 01 WS-JUDY/JIMBOB [W-S] : Judy      L Ruderman  
-12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : Judy      
-13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : L
-14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : Ruderman  
-15 : 02 NOT-USED/UNUSED/JIMBOB [W-S] :                         
+ 3 : 01 WS-JIM/JIMBOB [W-S] : "Lowden    " Lowden    "
+ 4 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 5 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+ 6 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+ 7 : 01 WS-BOB/JIMBOB [W-S] : "bobby     J Dubner    "
+ 8 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "bobby     "
+ 9 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+10 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+11 : 01 WS-JUDY/JIMBOB [W-S] : "Judy      L Ruderman  "
+12 : 02 WS-FIRSTNAME/WS-JUDY/JIMBOB [W-S] : "Judy      "
+13 : 02 WS-MIDDLE-INITIAL/WS-JUDY/JIMBOB [W-S] : "L"
+14 : 02 WS-LASTNAME/WS-JUDY/JIMBOB [W-S] : "Ruderman  "
+15 : 02 NOT-USED/UNUSED/JIMBOB [W-S] : ' ' <repeats 24 times>
 16 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 77 TEST-NUMBER-B1/JIMBOB [W-S]  :  0x3132333435363738
 entering: jimbob
