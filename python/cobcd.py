@@ -2578,7 +2578,7 @@ class CBreakWorker():
 
         return payload
 
-    def set_string_breakpoint(self, line_nr, condition, payload, refmod, diff_str):
+    def set_string_breakpoint(self, line_nr, condition, payload, refmod, diff_str, break_point):
         if condition in ("=", "=i", "==", "==i", "<>", "<>i", "=~"):
             if condition[-1:] == "i":
                 cmp_func = "strncasecmp"
@@ -2603,7 +2603,9 @@ class CBreakWorker():
             if not location_of_field:
                 return
 
-            break_point = self.set_breakpoint(line_nr)
+            if break_point is None:
+                break_point = self.set_breakpoint(line_nr)
+
             if condition in ("=", "=i", "==", "==i"):
                 self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2} - 1), \"{3}\", {4}) == 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
             elif condition in ("<>", "<>i"):
@@ -2613,9 +2615,10 @@ class CBreakWorker():
         else:
             print("Condition not implemented")
 
-    def set_numeric_breakpoint(self, line_nr, condition, payload, diff_num):
+    def set_numeric_breakpoint(self, line_nr, condition, payload, diff_num, break_point):
         if condition in ("==", "<", "<=", ">", ">=", "<>"):
-            break_point = self.set_breakpoint(line_nr)
+            if break_point is None:
+                break_point = self.set_breakpoint(line_nr)
 
             location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
             if not location_of_field:
@@ -2649,7 +2652,7 @@ class CBreakWorker():
             spec = "{0}_:SECTION_{1}".format(module_name, section_name)
         break_point = self.set_breakpoint(spec)
 
-    def set_cob_cmp_breakpoint(self, line_nr, condition, payload_f, payload_s):
+    def set_cob_cmp_breakpoint(self, line_nr, condition, payload_f, payload_s, break_point):
         if condition in ("=", "=="):
             condition_str = "=="
         elif condition == "<>":
@@ -2668,7 +2671,8 @@ class CBreakWorker():
         if not other_field:
             return
 
-        break_point = self.set_breakpoint(line_nr)
+        if break_point is None:
+            break_point = self.set_breakpoint(line_nr)
         self.set_condition(break_point, "(int)cob_cmp({0}, {1}) {2} 0".format(hex(location_of_field), hex(other_field), condition_str))
 
     @staticmethod
@@ -2711,23 +2715,50 @@ class CBreakWorker():
     @staticmethod
     def split_arguments(arguments):
         match_chars = ("=", "==", "=~", "~", "<", "<=", ">", ">=", "<>", "i")
+        concat_chars = (":", "-")
         arg_list = list(filter(lambda e: e not in ('', ' '), re.split('(\W)', arguments)))
 
         i = 0
         while i < len(arg_list) - 1:
             if arg_list[i] in match_chars and arg_list[i + 1] in match_chars:
                 arg_list[i] += arg_list.pop(i + 1)
+            elif arg_list[i][-1] in concat_chars or arg_list[i + 1][-1] in concat_chars:
+                arg_list[i] += arg_list.pop(i + 1)
+            elif arg_list[i] == "(":
+                arg_list[i] += arg_list.pop(i + 1)
+            elif arg_list[i + 1] == ")":
+                arg_list[i] += arg_list.pop(i + 1)
             else:
                 i += 1
 
         return arg_list
 
-    def process_break_arguments(self, tab_file, arguments):
+    def set_cond_break(self, tab_file, args):
         var_f = ""
         refmod_f = ""
         var_s = ""
         refmod_s = ""
 
+        var_f, refmod_f, var_s, refmod_s, condition = self.get_var_data(args)
+
+        payload_f = self.get_var_payload(tab_file, var_f)
+        if payload_f is None:
+            print("Variable not found")
+            return
+
+        payload_s = self.get_var_payload(tab_file, var_s)
+        if payload_s is not None:
+            self.set_cob_cmp_breakpoint(args[0], condition, payload_f, payload_s, None)
+        else:
+            if payload_f.AttrType in (33, 34, 35):
+                self.set_string_breakpoint(args[0], condition, payload_f, refmod_f, var_s, None)
+            elif payload_f.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27) and var_s.isdigit():
+                self.set_numeric_breakpoint(args[0], condition, payload_f, var_s, None)
+            else:
+                print("Not yet implemented")
+                return
+
+    def process_break_arguments(self, tab_file, arguments):
         args = self.split_arguments(arguments)
         if arguments == "":
             break_point = self.set_breakpoint("")
@@ -2752,29 +2783,43 @@ class CBreakWorker():
             elif args[1] == "if":
                 del args[1]
 
-            var_f, refmod_f, var_s, refmod_s, condition = self.get_var_data(args)
-
-            payload_f = self.get_var_payload(tab_file, var_f)
-            if payload_f is None:
-                print("Variable not found")
-                return
-
-            payload_s = self.get_var_payload(tab_file, var_s)
-            if payload_s is not None:
-                self.set_cob_cmp_breakpoint(args[0], condition, payload_f, payload_s)
-            else:
-                if payload_f.AttrType in (33, 34, 35):
-                    self.set_string_breakpoint(args[0], condition, payload_f, refmod_f, var_s)
-                elif payload_f.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27) and var_s.isdigit():
-                    self.set_numeric_breakpoint(args[0], condition, payload_f, var_s)
-                else:
-                    print("Not yet implemented")
-                    return
+            self.set_cond_break(tab_file, args)
         else:
             print('Breakpoint parameters not recognized')
             return
 
+    @staticmethod
+    def find_breakpoint(bp_nr):
+        return_breakpoint = None
+
+        for gdb_breakpoint in gdb.breakpoints():
+            if gdb_breakpoint.number == int(bp_nr):
+                return_breakpoint = gdb_breakpoint
+
+        if return_breakpoint is None:
+            print("No breakpoint number {0}.format(bp_nr)")
+
+        return return_breakpoint
+
+    def process_condition_arguments(self, tab_file, arguments):
+        args = self.split_arguments(arguments)
+        if not args[0].isdigit():
+            print('First argument is not a breakpoint number')
+            return
+
+        break_point = self.find_breakpoint(args[0])
+        if break_point is None:
+            return
+
+        if len(args) >= 3 and len(args) <= 5:
+            self.set_cond_break(tab_file, args)
+        else:
+            print('Breakpoint parameters not recognized')
+            return
+
+
 CBLDBG_TABFILE = TabFileInformation()
+CBLDBG_CBREAK_WORKER = CBreakWorker()
 
 class CPrint(gdb.Command):
     """Prints COBOL-NAMED variables when debugging cobst processed object files.
@@ -2899,7 +2944,7 @@ A breakpoint stops execution of your program whenever the expression matches
     """
 
     def __init__(self):
-        self.worker = CBreakWorker()
+        self.worker = CBLDBG_CBREAK_WORKER
         self.tab_file = CBLDBG_TABFILE
 
         print('Registering CBreak')
@@ -2908,6 +2953,48 @@ A breakpoint stops execution of your program whenever the expression matches
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
         self.worker.process_break_arguments(self.tab_file, arguments)
+
+class CCondition(gdb.Command):
+    """Used for setting conditions on COBOL-NAMED breakpoints when debugging cobst processed object files.
+
+Set a condition  for an expression.
+Usage: ccondition
+
+    ccondition BP_NR VARIABLE =[i] MSTRING       set a condition on breakpoint number
+                                                 for string VARIABLE equals MSTRING
+    ccondition BP_NR VARIABLE <>[i] MSTRING      set a condition on breakpoint number
+                                                 for string VARIABLE not equal MSTRING
+    ccondition BP_NR VARIABLE =~ REGEXP          set a condition on breakpoint number
+                                                 for string VARIABLE when matching REGEXP
+    ccondition BP_NR NUMVAR condition VALUE      set acondition on breakpoint number
+                                                 for numeric VARIABLE condition and value
+                                                 where condition is == < <= > >= <>
+    ccondition BP_NR VARIABLE condition VARIABLE set acondition on breakpoint number
+                                                 for variable condition and second variable
+                                                 where condition is = <> >= <= > <
+
+    if (start:length) is given the VARIABLE is checked with this startpoint and length
+
+    Examples:
+    ccondition 2 VARIABLE = breakstring
+    ccondition 2 VARIABLE (2:3) = breakstring
+    ccondition 2 VARIABLE =i breakstring        option i for ignore case
+    ccondition 2 VARIABLE =~ ^break*
+
+    ccondition 2 VARIABLE > 12
+    """
+
+    def __init__(self):
+        self.worker = CBLDBG_CBREAK_WORKER
+        self.tab_file = CBLDBG_TABFILE
+
+        print('Registering CCondition')
+        super(CCondition, self).__init__("ccondition", gdb.COMMAND_BREAKPOINTS)
+
+    def invoke(self, arguments, from_tty):
+        self.dont_repeat()
+        self.worker.process_condition_arguments(self.tab_file, arguments)
+
 
 class CStart(gdb.Command):
     """(Re-)start the debugged program stopping at the beginning of the first COBOL statement.
@@ -3027,5 +3114,6 @@ gdb.events.stop.connect(stop_handler)
 CPrint()
 CWatch()
 CBreak()
+CCondition()
 CNext()
 CStart()
