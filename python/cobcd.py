@@ -866,7 +866,7 @@ class VarTrie():
                 return
 
     def GetAllPossibilities(self):
-        # Typically in response to a 'print *'
+        # Typically in response to a 'cprint *'
         paths = []
         for index in range(len(self.storage_list)):
             paths.append(index)
@@ -875,7 +875,7 @@ class VarTrie():
     def GetListOfExactPossibilities(self, token):
         # We are going to return variables that contain the given token
         # in its exact, case-insensitive, form.  This is typically used
-        # by the 'print ?' form
+        # by the 'cprint ?' form
 
         # Wander through the forest, looking for possible paths:
         paths = []
