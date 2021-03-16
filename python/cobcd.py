@@ -2521,7 +2521,7 @@ class CBreakWorker():
         try:
             if self.module_buffer is None:
                 self.module_buffer = gdb.execute("call (char*)cob_cache_malloc(100)", False, True).split()[2]
-        except gdb.error as error:
+        except gdb.error:
             self.module_buffer = None
             try:
                 spec = "{0}_".format(module)
@@ -2715,25 +2715,26 @@ class CBreakWorker():
     @staticmethod
     def split_arguments(arguments):
         match_chars = ("=", "==", "=~", "~", "<", "<=", ">", ">=", "<>", "i")
-        concat_chars = (":", "-")
-        arg_list = list(filter(lambda e: e not in ('', ' '), re.split('(\W)', arguments)))
+        arg_list = list(filter(lambda e: e not in ('', ' ', '"', '\''), re.split('([^a-zA-Z0-9_:-])', arguments)))
 
         i = 0
+        combine = 0
         while i < len(arg_list) - 1:
             if arg_list[i] in match_chars and arg_list[i + 1] in match_chars:
                 arg_list[i] += arg_list.pop(i + 1)
-            elif arg_list[i][-1] in concat_chars or arg_list[i + 1][-1] in concat_chars:
-                arg_list[i] += arg_list.pop(i + 1)
             elif arg_list[i] == "(":
                 arg_list[i] += arg_list.pop(i + 1)
-            elif arg_list[i + 1] == ")":
+                combine = 1
+            elif arg_list[i + 1] == ")" or combine == 1:
+                if arg_list[i + 1] == ")":
+                    combine = 0
                 arg_list[i] += arg_list.pop(i + 1)
             else:
                 i += 1
 
         return arg_list
 
-    def set_cond_break(self, tab_file, args):
+    def set_cond_break(self, tab_file, args, break_point):
         var_f = ""
         refmod_f = ""
         var_s = ""
@@ -2748,12 +2749,12 @@ class CBreakWorker():
 
         payload_s = self.get_var_payload(tab_file, var_s)
         if payload_s is not None:
-            self.set_cob_cmp_breakpoint(args[0], condition, payload_f, payload_s, None)
+            self.set_cob_cmp_breakpoint(args[0], condition, payload_f, payload_s, break_point)
         else:
             if payload_f.AttrType in (33, 34, 35):
-                self.set_string_breakpoint(args[0], condition, payload_f, refmod_f, var_s, None)
+                self.set_string_breakpoint(args[0], condition, payload_f, refmod_f, var_s, break_point)
             elif payload_f.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27) and var_s.isdigit():
-                self.set_numeric_breakpoint(args[0], condition, payload_f, var_s, None)
+                self.set_numeric_breakpoint(args[0], condition, payload_f, var_s, break_point)
             else:
                 print("Not yet implemented")
                 return
@@ -2783,7 +2784,7 @@ class CBreakWorker():
             elif args[1] == "if":
                 del args[1]
 
-            self.set_cond_break(tab_file, args)
+            self.set_cond_break(tab_file, args, None)
         else:
             print('Breakpoint parameters not recognized')
             return
@@ -2795,6 +2796,7 @@ class CBreakWorker():
         for gdb_breakpoint in gdb.breakpoints():
             if gdb_breakpoint.number == int(bp_nr):
                 return_breakpoint = gdb_breakpoint
+                break
 
         if return_breakpoint is None:
             print("No breakpoint number {0}.format(bp_nr)")
@@ -2812,7 +2814,7 @@ class CBreakWorker():
             return
 
         if len(args) >= 3 and len(args) <= 5:
-            self.set_cond_break(tab_file, args)
+            self.set_cond_break(tab_file, args, break_point)
         else:
             print('Breakpoint parameters not recognized')
             return
