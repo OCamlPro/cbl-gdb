@@ -657,7 +657,7 @@ def get_lenspec_refmod(refmod, payload, lenspec_type):
 
         if lenspec[1] != '' and int(lenspec[1]) <= length:
             length = int(lenspec[1])
-        else:
+        elif lenspec[1] != '' and int(lenspec[1]) > length:
             print("Length specifier to large, max: {0}".format(length))
             return 0, 0, 0
 
@@ -2054,75 +2054,83 @@ def MachineInterfaceHeirarchical(TabFile, possibilities):
     #retval = r'variables=[{name="L01",value="{_groupvalue=\"Snap!\",fullname=\"RobertDubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"Dubner\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]'
     return retval
 
-def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
+def get_sorted_possibilities(args, tab_file):
     possibilities_1 = []
-    if TabFile.current_trapped_line > 0:
-        # We are validly trapped someplace, so we can actually look for variables.
-        from_digit = False
-        if len(args) >= 1:
-            if args[0].find('*') != -1:
-                # If the first, presumably single, argument contains an asterisk, then
-                # he is asking for a list of variables and values:
-                possibilities_1 = TabFile.var_trie.GetAllPossibilities()
-            elif args[0].find('?') != -1:
-                # If the first, presumably single, argument contains a question mark,
-                # then we need to round up the usual suspects.
+    possibilities = []
+    from_digit = False
 
-                # But first, we are going to keep a rogue's gallery of the current list
-                # suspects.  The idea here is that sometimes MOVE A TO B is the last line
-                # of a PARAGRAPH, so as soon as it is executed control jumps elsewhere and
-                # B falls out of context.  Or perhaps the next GDB command is a CONTINUE,
-                # rather than NEXT.  By keeping one stage of stickiness, the display of variables
-                # will be a bit more like what the user probably expects.
+    if len(args) >= 1:
+        if args[0].find('*') != -1:
+            # If the first, presumably single, argument contains an asterisk, then
+            # he is asking for a list of variables and values:
+            possibilities_1 = tab_file.var_trie.GetAllPossibilities()
+        elif args[0].find('?') != -1:
+            # If the first, presumably single, argument contains a question mark,
+            # then we need to round up the usual suspects.
 
-                if len(TabFile.current_full_path) > 0:
-                    qmrange = TabFile.question_mark_range
-                    if qmrange < 0:
-                        qmrange = 1000000000
-                    if qmrange == 999:
-                        # This is an expedient for simply killing any cprint ? response
-                        return_string = ""
-                    else:
-                        return_string = subprocess.check_output(["cobcd-rw",
-                                                                  TabFile.current_full_path,
-                                                                  str(TabFile.current_trapped_line),
-                                                                  str(qmrange)])
-                    tokens = return_string.split()
-                    new_dogs = set()
-                    for token in tokens:
-                        token = token.decode("utf-8")
-                        new_dogs = new_dogs.union(set(TabFile.var_trie.GetListOfExactPossibilities(token)))
-                    possibilities_1 = list(TabFile.old_dogs.union(new_dogs))
-                    TabFile.old_dogs = new_dogs
-            elif args[0].isdigit():
-                from_digit = True
-                # if the first, presumably single, argument is a number, then he is looking
-                # for a short-term memory entry.
+            # But first, we are going to keep a rogue's gallery of the current list
+            # suspects.  The idea here is that sometimes MOVE A TO B is the last line
+            # of a PARAGRAPH, so as soon as it is executed control jumps elsewhere and
+            # B falls out of context.  Or perhaps the next GDB command is a CONTINUE,
+            # rather than NEXT.  By keeping one stage of stickiness, the display of variables
+            # will be a bit more like what the user probably expects.
 
-                # Pick up the 1-based value indexed by the argument:
-                index = int(args[0]) - 1
-                if index >= 0 and index < len(GV_GlobalVariables.ShortTermMemory):
-                    # If index is valid, pick up the short-term memory entry
-                    possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
-            else:
-                # There are one or more arguments.  Use our clever routine
-                # to come up with the possibilities_1:
-                possibilities_1 = TabFile.var_trie.GetListOfPossibilities(args)
+            if len(tab_file.current_full_path) > 0:
+                qmrange = tab_file.question_mark_range
+                if qmrange < 0:
+                    qmrange = 1000000000
+                if qmrange == 999:
+                    # This is an expedient for simply killing any cprint ? response
+                    return_string = ""
+                else:
+                    return_string = subprocess.check_output(["cobcd-rw",
+                                                              tab_file.current_full_path,
+                                                              str(tab_file.current_trapped_line),
+                                                              str(qmrange)])
+                tokens = return_string.split()
+                new_dogs = set()
+                for token in tokens:
+                    token = token.decode("utf-8")
+                    new_dogs = new_dogs.union(set(tab_file.var_trie.GetListOfExactPossibilities(token)))
+                possibilities_1 = list(tab_file.old_dogs.union(new_dogs))
+                tab_file.old_dogs = new_dogs
+        elif args[0].isdigit():
+            from_digit = True
+            # if the first, presumably single, argument is a number, then he is looking
+            # for a short-term memory entry.
+
+            # Pick up the 1-based value indexed by the argument:
+            index = int(args[0]) - 1
+            if index >= 0 and index < len(GV_GlobalVariables.ShortTermMemory):
+                # If index is valid, pick up the short-term memory entry
+                possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
+        else:
+            # There are one or more arguments.  Use our clever routine
+            # to come up with the possibilities_1:
+            possibilities_1 = tab_file.var_trie.GetListOfPossibilities(args)
 
     # We now have a list of possibilities_1 based on the names of the variables
     # typically, some of them will not be in context.  We wish, at this point
     # to eliminate such variables.  The bad news is that this means we
     # have to fetch all the variables data twice.  But, heck.
 
-    possibilities = []
     for payload_index in possibilities_1:
-        payload = TabFile.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(TabFile.line_list, False)
+        payload = tab_file.var_trie.storage_list[payload_index]
+        payload.FetchVariableData(tab_file.line_list, False)
         if not payload.not_in_context:
             possibilities.append(payload_index)
 
     # What we do now depends on how many possibilities there are
     possibilities.sort()
+
+    return possibilities, from_digit
+
+
+def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
+    possibilities = []
+    from_digit = False
+    if TabFile.current_trapped_line > 0:
+        possibilities, from_digit = get_sorted_possibilities(args, TabFile)
 
     if len(possibilities) == 1 and machine_interface_mode and not rside and args[0] != '*' and args[0] != '?':
         # Very special case.  This was a `cprint/m something`, which is what happens when
@@ -2563,9 +2571,11 @@ class CBreakWorker():
     @staticmethod
     def get_var_payload(tab_file, search_var):
         payload = None
+        possibilities = []
 
         tab_file.ReadSymbolTableText()
-        possibilities = MetaPossibilities(search_var, tab_file, False, False, '')
+        if tab_file.current_trapped_line > 0:
+            possibilities, from_digit = get_sorted_possibilities(search_var, tab_file)
 
         if len(possibilities) == 1:
             payload_number = possibilities[0]
@@ -2957,34 +2967,11 @@ A breakpoint stops execution of your program whenever the expression matches
         self.worker.process_break_arguments(self.tab_file, arguments)
 
 class CCondition(gdb.Command):
-    """Used for setting conditions on COBOL-NAMED breakpoints when debugging cobst processed object files.
+    """Specify breakpoint number N to break only if COND is true.
 
-Set a condition  for an expression.
-Usage: ccondition
-
-    ccondition BP_NR VARIABLE =[i] MSTRING       set a condition on breakpoint number
-                                                 for string VARIABLE equals MSTRING
-    ccondition BP_NR VARIABLE <>[i] MSTRING      set a condition on breakpoint number
-                                                 for string VARIABLE not equal MSTRING
-    ccondition BP_NR VARIABLE =~ REGEXP          set a condition on breakpoint number
-                                                 for string VARIABLE when matching REGEXP
-    ccondition BP_NR NUMVAR condition VALUE      set acondition on breakpoint number
-                                                 for numeric VARIABLE condition and value
-                                                 where condition is == < <= > >= <>
-    ccondition BP_NR VARIABLE condition VARIABLE set acondition on breakpoint number
-                                                 for variable condition and second variable
-                                                 where condition is = <> >= <= > <
-
-    if (start:length) is given the VARIABLE is checked with this startpoint and length
-
-    Examples:
-    ccondition 2 VARIABLE = breakstring
-    ccondition 2 VARIABLE (2:3) = breakstring
-    ccondition 2 VARIABLE =i breakstring        option i for ignore case
-    ccondition 2 VARIABLE =~ ^break*
-
-    ccondition 2 VARIABLE > 12
-    """
+Usage is `ccondition N COND', where N is an integer and COND is a COBOL
+expression to be evaluated whenever breakpoint N is reached.
+Do "help cbreak" for info on COBOL expressions"""
 
     def __init__(self):
         self.worker = CBLDBG_CBREAK_WORKER
