@@ -2604,8 +2604,8 @@ class CBreakWorker():
                 if bp_length > cmp_len:
                     print("Length specifier > compare string ({0} > {1})".format(str(bp_length), str(cmp_len)))
                     return
-                else:
-                    cmp_len = bp_length
+
+                cmp_len = bp_length
             else:
                 bp_startloc = 1
 
@@ -2662,7 +2662,7 @@ class CBreakWorker():
             spec = "{0}_:SECTION_{1}".format(module_name, section_name)
         break_point = self.set_breakpoint(spec)
 
-    def set_cob_cmp_breakpoint(self, line_nr, condition, payload_f, payload_s, break_point):
+    def set_cob_cmp_breakpoint(self, line_nr, condition, payload_f, refmod_f, payload_s, break_point):
         if condition in ("=", "=="):
             condition_str = "=="
         elif condition == "<>":
@@ -2673,7 +2673,32 @@ class CBreakWorker():
             print("Condition not implemented")
             return
 
-        location_of_field = payload_f.get_verified_field_location(DONT_ALLOCATE)
+        cmp_len = payload_s.Length
+        if refmod_f:
+            valid, bp_startloc, bp_length = get_lenspec_refmod(refmod_f, payload_f, "n")
+            if valid == 0:
+                return
+
+            if bp_length > cmp_len:
+                print("Length specifier > compare string ({0} > {1})".format(str(bp_length), str(cmp_len)))
+                return
+
+            cmp_len = bp_length
+        else:
+            bp_startloc = 1
+
+        try:
+            command = "call (char*)cob_malloc(sizeof(cob_field))"
+            location_of_field = int(gdb.execute(command, False, True).split()[2], 16)
+
+            command = "set var *(cob_field *){0}".format(location_of_field) + " = {"
+            command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload_f.location_of_data + bp_startloc - 1), payload_f.Aname)
+            command += "}"
+            gdb.execute(command, False, True)
+        except gdb.error:
+            print("set_cob_cmp_breakpoint: Something got wrong")
+            return
+
         if not location_of_field:
             return
 
@@ -2759,7 +2784,7 @@ class CBreakWorker():
 
         payload_s = self.get_var_payload(tab_file, var_s)
         if payload_s is not None:
-            self.set_cob_cmp_breakpoint(args[0], condition, payload_f, payload_s, break_point)
+            self.set_cob_cmp_breakpoint(args[0], condition, payload_f, refmod_f, payload_s, break_point)
         else:
             if payload_f.AttrType in (33, 34, 35):
                 self.set_string_breakpoint(args[0], condition, payload_f, refmod_f, var_s, break_point)
@@ -2791,8 +2816,8 @@ class CBreakWorker():
             if args[1] != "if":
                 print('Second argument should be "if"')
                 return
-            elif args[1] == "if":
-                del args[1]
+
+            del args[1]
 
             self.set_cond_break(tab_file, args, None)
         else:
@@ -2870,7 +2895,7 @@ class CPrint(gdb.Command):
         self.tab_file = CBLDBG_TABFILE
         self.tab_file.question_mark_range = self.worker.question_mark_range
 
-        print('Registering CPrint as ' + self.worker.use_cprint + ' [Version 4.21]')
+        print('Registering CPrint as ' + self.worker.use_cprint + ' [Version 4.22]')
         super(CPrint, self).__init__(self.worker.use_cprint, gdb.COMMAND_DATA)
 
     def invoke(self, arguments, from_tty):
@@ -2965,6 +2990,7 @@ A breakpoint stops execution of your program whenever the expression matches
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
         self.worker.process_break_arguments(self.tab_file, arguments)
+
 
 class CCondition(gdb.Command):
     """Specify breakpoint number N to break only if COND is true.
