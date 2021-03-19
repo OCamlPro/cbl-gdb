@@ -58,10 +58,15 @@ from inspect import currentframe, getframeinfo
 from struct import calcsize
 import gdb
 
-#   This module implements the gdb extension commands cprint and cwatch
+# Version to be printed upon request - Don't mess with it!
+# It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
+COBCD_VERSION = '[Version 4.22+]'
+
+#   This module implements the gdb extension commands like cprint and cwatch
+#   It is executed by GDB.
 #
-#   This script is read by the COBST program and incorporated into a
-#   C module that gets compiled and linked into the final executable
+#   Optionally it is read by the COBST program and incorporated into a
+#   C module that gets compiled and linked into the final executable.
 #
 #   Decoding a COBOL variable will require the following information,
 #   taken from ...\gnucobol-3.0-rc1\libcob\common.h
@@ -255,7 +260,7 @@ def LeftRight(s, splitchar):
     return left, right
 
 def Picture(s):
-    """ Expands a 9(3)V9(2) to 999V999 """
+    """ Expands a 9(3)V9(2) to 999V999"""
     r = ""
     lch = ''
     ch = ''
@@ -861,7 +866,7 @@ class VarTrie():
                 return
 
     def GetAllPossibilities(self):
-        # Typically in response to a 'print *'
+        # Typically in response to a 'cprint *'
         paths = []
         for index in range(len(self.storage_list)):
             paths.append(index)
@@ -870,7 +875,7 @@ class VarTrie():
     def GetListOfExactPossibilities(self, token):
         # We are going to return variables that contain the given token
         # in its exact, case-insensitive, form.  This is typically used
-        # by the 'print ?' form
+        # by the 'cprint ?' form
 
         # Wander through the forest, looking for possible paths:
         paths = []
@@ -1585,15 +1590,15 @@ class CobolVariable():
             print(" CONSTANT ", end='')
         print()
 
-        print("data: (HEX)   [", end=" ")
-
+        print("Data: (HEX)   [", end=" ")
         for byte in self.data:
             hexout = hex(byte)[-2:]
             if hexout[0:1] == 'x':
                 hexout = '0' + hexout[-1:]
             print(hexout, end=" ")
         print("]")
-        print("data: (ASCII) \"", end="")
+
+        print("Data: (ASCII) \"", end="")
         for byte in self.data:
             if 32 <= byte < 128:   # valid ASCII characters
                 print(chr(byte), end="")
@@ -2355,7 +2360,7 @@ class CPrintWorker():
         return return_value
 
     def ProcessArguments(self, TabFile, arguments):
-        # The command is typically "print A B C" or "print/d A B C"
+        # The command is typically "cprint A B C" or "cprint/d A B C"
         # There is also the possibility of an '=' character, whereby the
         # value after the '=' is assigned to the variable described to the left
         preargs = arguments.split('=', 1)
@@ -2907,20 +2912,14 @@ class CPrint(gdb.Command):
 
     The default v-level can be set with the environment variable CPRINT_V=n
     The default r-level can be set with the environment variable CPRINT_R=n
-    The 'print' command can be changed to 'anything' with the environment variable CPRINT=anything
-    """
+    The 'cprint' command can be changed to 'anything' with the environment variable CPRINT=anything"""
 
     def __init__(self):
-        #############################################################################
-        # The version number in the next section is updated by a Linux bash script. #
-        # The text "Version x.x" has to appear in square brackets.                  #
-        # Don't mess with it!                                                       #
-        #############################################################################
         self.worker = CPrintWorker()
         self.tab_file = CBLDBG_TABFILE
         self.tab_file.question_mark_range = self.worker.question_mark_range
 
-        print('Registering CPrint as ' + self.worker.use_cprint + ' [Version 4.22]')
+        print('Registering CPrint as ' + self.worker.use_cprint + ' ' + COBCD_VERSION)
         super(CPrint, self).__init__(self.worker.use_cprint, gdb.COMMAND_DATA)
 
     def invoke(self, arguments, from_tty):
@@ -2952,8 +2951,7 @@ A watchpoint stops execution of your program whenever the value of an expression
     cwatch/r VARIABLE    set a read watch on this variable
     cwatch/rw VARIABLE   set a read/write watch on this variable
 
-    if (start:length) is given the VARIABLE is watched with this startpoint and length
-    """
+    if (start:length) is given the VARIABLE is watched with this startpoint and length"""
 
     def __init__(self):
         super(CWatch, self).__init__("cwatch", gdb.COMMAND_BREAKPOINTS)
@@ -3002,8 +3000,7 @@ A breakpoint stops execution of your program whenever the expression matches
     cbreak 28 VARIABLE =i "breakstring"          option i for ignore case
     cbreak 28 VARIABLE =~ ^break*
 
-    cbreak 29 VARIABLE > 12
-    """
+    cbreak 29 VARIABLE > 12"""
 
     def __init__(self):
         self.worker = CBLDBG_CBREAK_WORKER
@@ -3039,8 +3036,7 @@ Do "help cbreak" for info on COBOL expressions"""
 class CStart(gdb.Command):
     """(Re-)start the debugged program stopping at the beginning of the first COBOL statement.
 Any arguments after the cstart command are passed to the executable.  If present,
-they override any that might have been passed to GDB with --args
-"""
+they override any that might have been passed to GDB with --args."""
 
     def __init__(self):
         self.tab_file = CBLDBG_TABFILE
@@ -3100,8 +3096,7 @@ attempt to pass over PERFORMs.  It optionally takes a count parameter.
 
 It does the best it can, but occasionally it behaves a little strangely when a
 compiler optimization removes the JUMP TO PARAGRAPH and JUMP BACK FROM PARAGRAPH
-logic and simply puts the paragraph in-line, which CNEXT doesn't detect.
-    """
+logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
 
     def __init__(self):
         super(CNext, self).__init__("cnext", gdb.COMMAND_BREAKPOINTS)
