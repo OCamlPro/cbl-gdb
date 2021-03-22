@@ -2081,7 +2081,11 @@ def get_sorted_possibilities(args, tab_file):
             # will be a bit more like what the user probably expects.
 
             if len(tab_file.current_full_path) > 0:
-                qmrange = tab_file.question_mark_range
+                # explicit requested range ... or current value
+                if  len(args) >= 2 and args[1].isnumeric():
+                    qmrange = int(args[1])
+                else:
+                    qmrange = tab_file.question_mark_range
                 if qmrange < 0:
                     qmrange = 1000000000
                 if qmrange == 999:
@@ -2375,9 +2379,14 @@ class CPrintWorker():
         for arg in argsargs:
             args.append(arg)
 
+        # CHECKME: Do we need setting that here at all and in both directions?
         self.question_mark_range = TabFile.question_mark_range
         args = self.ProcessDisplayMode(args, TabFile)
         TabFile.question_mark_range = self.question_mark_range
+
+        # TODO early exit if we just set the range  -> cp /r 4
+        #if len(preargs) >= 1 and preargs[0][0:2] == '/r':
+        #    return
 
         possibilities = MetaPossibilities(args, TabFile, self.machine_interface_mode, rside, self.current_display_submode)
         if len(possibilities) == 1:
@@ -2407,6 +2416,11 @@ class CPrintWorker():
                 # just return quietly.  The variable not found message
                 # confuses Visual Studio Code
                 return
+            # Happens for example with R = 0 and cprint on PERFORM line
+            if len(args) >= 1 and args[0] == '?':
+                print("No variable found in range")
+                return
+            # TODO print("Variable not found: " + str(value))
             print("Variable not found")
         else:
             if rside:
@@ -2903,8 +2917,9 @@ class CPrint(gdb.Command):
     cprint/v<n>         with no arguments sets the session formattin
     cprint/m            generate output compatible with '-stack-list-variables --simple-values
     cprint *            print all variables that are currently in context
-    cprint ?            print all variables that are currently in context and within R lines of the breakpoint
-    cprint/r N          set the range for 'print ?' to plus/minus R (the default is 6; -1 means 'all'
+    cprint ? [R]        print all variables that are currently in context within R lines of current line,
+                        if R is not specified use the range currently setup
+    cprint/r N          set the range for 'cprint ?' to plus/minus R (the default is 6; -1 means 'all'
     cprint VARIABLE="STRING"    set variable to string
     cprint VARIABLE='STRING'    set variable to string
     cprint VARIABLE=NUMERIC     set variable to numeric
