@@ -2709,6 +2709,7 @@ class CBreakWorker():
         if refmod_f:
             location_of_field, cmp_len = self.get_cob_cmp_refloc(refmod_f, payload_f, payload_s.Length)
         else:
+            cmp_len = payload_f.Length
             location_of_field = payload_f.get_verified_field_location(DONT_ALLOCATE)
 
         if not location_of_field:
@@ -2818,13 +2819,16 @@ class CBreakWorker():
 
     def process_break_arguments(self, tab_file, arguments):
         is_lit = 0
-        if arguments[-1] in ('"', '\''):
+        if arguments and arguments[-1] in ('"', '\''):
             is_lit = 1
 
-        args = self.split_arguments(arguments)
-        if arguments == "":
+        if arguments:
+            args = self.split_arguments(arguments)
+        else:
             break_point = self.set_breakpoint("")
-        elif len(args) == 1 and args[0].isdigit():
+            return
+
+        if len(args) == 1 and args[0].isdigit():
             break_point = self.set_breakpoint(args[0])
         elif len(args) == 1 and isinstance(args[0], self.strtype):
             module_name = self.get_module_name(args[0])
