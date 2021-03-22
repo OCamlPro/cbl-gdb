@@ -2630,7 +2630,10 @@ class CBreakWorker():
                 return
 
             if break_point is None:
-                break_point = self.set_breakpoint(line_nr)
+                if line_nr == "-1":
+                    break_point = self.set_breakpoint("")
+                else:
+                    break_point = self.set_breakpoint(line_nr)
 
             if condition in ("=", "=i", "==", "==i"):
                 self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2} - 1), \"{3}\", {4}) == 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
@@ -2644,7 +2647,10 @@ class CBreakWorker():
     def set_numeric_breakpoint(self, line_nr, condition, payload, diff_num, break_point):
         if condition in ("==", "<", "<=", ">", ">=", "<>"):
             if break_point is None:
-                break_point = self.set_breakpoint(line_nr)
+                if line_nr == "-1":
+                    break_point = self.set_breakpoint("")
+                else:
+                    break_point = self.set_breakpoint(line_nr)
 
             location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
             if not location_of_field:
@@ -2679,17 +2685,20 @@ class CBreakWorker():
         break_point = self.set_breakpoint(spec)
 
     @staticmethod
-    def get_cob_cmp_refloc(refmod, payload, cmp_len):
+    def get_cob_cmp_refloc(refmod, payload, cmp_len, second):
         bp_startloc = 1
         location_of_field = None
 
         valid, bp_startloc, bp_length = get_lenspec_refmod(refmod, payload, "n")
         if valid == 0:
-            return location_of_field
+            return location_of_field, cmp_len
 
         if bp_length > cmp_len:
             print("Length specifier > compare string ({0} > {1})".format(str(bp_length), str(cmp_len)))
-            return location_of_field
+            return location_of_field, cmp_len
+        elif bp_length < cmp_len and second == 1:
+            print("Different length specifiers {0} <> {1}".format(bp_length, cmp_len))
+            return location_of_field, cmp_len
 
         cmp_len = bp_length
 
@@ -2719,15 +2728,16 @@ class CBreakWorker():
             return
 
         if refmod_f:
-            location_of_field, cmp_len = self.get_cob_cmp_refloc(refmod_f, payload_f, payload_s.Length)
+            location_of_field, cmp_len = self.get_cob_cmp_refloc(refmod_f, payload_f, payload_s.Length, 0)
         else:
+            cmp_len = payload_f.Length
             location_of_field = payload_f.get_verified_field_location(DONT_ALLOCATE)
 
         if not location_of_field:
             return
 
         if refmod_s:
-            other_field, cmp_len = self.get_cob_cmp_refloc(refmod_s, payload_s, cmp_len)
+            other_field, cmp_len = self.get_cob_cmp_refloc(refmod_s, payload_s, cmp_len, 1)
         else:
             other_field = payload_s.get_verified_field_location(DONT_ALLOCATE)
 
@@ -2735,7 +2745,10 @@ class CBreakWorker():
             return
 
         if break_point is None:
-            break_point = self.set_breakpoint(line_nr)
+            if line_nr == "-1":
+                break_point = self.set_breakpoint("")
+            else:
+                break_point = self.set_breakpoint(line_nr)
         self.set_condition(break_point, "(int)cob_cmp({0}, {1}) {2} 0".format(hex(location_of_field), hex(other_field), condition_str))
 
     @staticmethod
@@ -2830,13 +2843,16 @@ class CBreakWorker():
 
     def process_break_arguments(self, tab_file, arguments):
         is_lit = 0
-        if arguments[-1] in ('"', '\''):
+        if arguments and arguments[-1] in ('"', '\''):
             is_lit = 1
 
-        args = self.split_arguments(arguments)
-        if arguments == "":
+        if arguments:
+            args = self.split_arguments(arguments)
+        else:
             break_point = self.set_breakpoint("")
-        elif len(args) == 1 and args[0].isdigit():
+            return
+
+        if len(args) == 1 and args[0].isdigit():
             break_point = self.set_breakpoint(args[0])
         elif len(args) == 1 and isinstance(args[0], self.strtype):
             module_name = self.get_module_name(args[0])
@@ -2846,9 +2862,11 @@ class CBreakWorker():
                 break_point = self.set_breakpoint("{0}_:ENTRY_{0}".format(module_name))
         elif len(args) == 2 and args[0] == "section" and isinstance(args[1], self.strtype):
             self.set_section_breakpoint(args)
-        elif len(args) >= 5 and len(args) <= 7:
-            if not args[0].isdigit():
-                print('First argument is not a line number')
+        elif len(args) >= 4 and len(args) <= 7:
+            if len(args) >= 4 and not args[0].isdigit():
+                args.insert(0, '-1')
+            elif len(args) == 4:
+                print('Breakpoint parameters not recognized')
                 return
 
             if args[1] != "if":
