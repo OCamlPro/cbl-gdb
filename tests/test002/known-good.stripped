@@ -750,7 +750,7 @@ BINARY-C-LONG UNSIGNED  8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 BINARY-DOUBLE           8
 138	DISPLAY "BINARY-DOUBLE SIGNED    " len-BINARY-DOUBLE-SIGNED   
@@ -808,7 +808,7 @@ BINARY-DOUBLE           8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 BINARY-DOUBLE SIGNED    8
 139	DISPLAY "BINARY-DOUBLE UNSIGNED  " len-BINARY-DOUBLE-UNSIGNED 
@@ -866,7 +866,7 @@ BINARY-DOUBLE SIGNED    8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 BINARY-DOUBLE UNSIGNED  8
 140	DISPLAY "BINARY-INT              " len-BINARY-INT             
@@ -924,7 +924,7 @@ BINARY-DOUBLE UNSIGNED  8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 BINARY-INT              4
 141	DISPLAY "BINARY-LONG             " len-BINARY-LONG            
@@ -982,7 +982,7 @@ BINARY-INT              4
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 BINARY-LONG             4
 142	DISPLAY "BINARY-LONG SIGNED      " len-BINARY-LONG-SIGNED     
@@ -1040,7 +1040,7 @@ BINARY-LONG             4
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 BINARY-LONG SIGNED      4
 143	DISPLAY "BINARY-LONG UNSIGNED    " len-BINARY-LONG-UNSIGNED   
@@ -1098,7 +1098,7 @@ BINARY-LONG SIGNED      4
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 BINARY-LONG UNSIGNED    4
 144	DISPLAY "BINARY-LONG-LONG        " len-BINARY-LONG-LONG       
@@ -1156,7 +1156,7 @@ BINARY-LONG UNSIGNED    4
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 BINARY-LONG-LONG        8
 145	DISPLAY "BINARY-SHORT            " len-BINARY-SHORT           
@@ -1214,7 +1214,7 @@ BINARY-LONG-LONG        8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 BINARY-SHORT            2
 146	DISPLAY "BINARY-SHORT SIGNED     " len-BINARY-SHORT-SIGNED    
@@ -1272,7 +1272,7 @@ BINARY-SHORT            2
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 BINARY-SHORT SIGNED     2
 147	DISPLAY "BINARY-SHORT UNSIGNED   " len-BINARY-SHORT-UNSIGNED  
@@ -1330,7 +1330,7 @@ BINARY-SHORT SIGNED     2
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 BINARY-SHORT UNSIGNED   2
 148	DISPLAY "COMPUTATIONAL           " len-COMPUTATIONAL        
@@ -1388,7 +1388,7 @@ BINARY-SHORT UNSIGNED   2
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 COMPUTATIONAL           8
 149	DISPLAY "COMP-1                  " len-COMP-1                 
@@ -1446,7 +1446,7 @@ COMPUTATIONAL           8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 COMP-1                  4
 150	DISPLAY "COMP-2                  " len-COMP-2                 
@@ -1504,7 +1504,7 @@ COMP-1                  4
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 COMP-2                  8
 151	DISPLAY "COMPUTATIONAL-1         " len-COMPUTATIONAL-1        
@@ -1562,7 +1562,7 @@ COMP-2                  8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 COMPUTATIONAL-1         4
 152	DISPLAY "COMPUTATIONAL-2         " len-COMPUTATIONAL-2        
@@ -1620,7 +1620,7 @@ COMPUTATIONAL-1         4
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 COMPUTATIONAL-2         8
 153	DISPLAY "FLOAT-DECIMAL-16        " len-FLOAT-DECIMAL-16       
@@ -1678,7 +1678,7 @@ COMPUTATIONAL-2         8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 FLOAT-DECIMAL-16        8
 154	DISPLAY "FLOAT-DECIMAL-34        " len-FLOAT-DECIMAL-34       
@@ -1736,7 +1736,7 @@ FLOAT-DECIMAL-16        8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 FLOAT-DECIMAL-34        16
 155	DISPLAY "FLOAT-LONG              " len-FLOAT-LONG             
@@ -1794,7 +1794,7 @@ FLOAT-DECIMAL-34        16
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 FLOAT-LONG              8
 156	DISPLAY "FLOAT-SHORT             " len-FLOAT-SHORT            
@@ -1852,7 +1852,7 @@ FLOAT-LONG              8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 FLOAT-SHORT             4
 157	DISPLAY "INDEX                   " len-INDEX                  
@@ -1910,7 +1910,7 @@ FLOAT-SHORT             4
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 INDEX                   4
 158	DISPLAY "POINTER                 " len-POINTER                
@@ -1968,7 +1968,7 @@ INDEX                   4
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 POINTER                 8
 159	DISPLAY "PROCEDURE-POINTER       " len-PROCEDURE-POINTER      
@@ -2026,7 +2026,7 @@ POINTER                 8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 PROCEDURE-POINTER       8
 160	DISPLAY "PROGRAM-POINTER         " len-PROGRAM-POINTER        
@@ -2084,7 +2084,7 @@ PROCEDURE-POINTER       8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 PROGRAM-POINTER         8
 161	DISPLAY "SIGNED-INT              " len-SIGNED-INT             
@@ -2142,7 +2142,7 @@ PROGRAM-POINTER         8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 SIGNED-INT              4
 162	DISPLAY "SIGNED-LONG             " len-SIGNED-LONG            
@@ -2200,7 +2200,7 @@ SIGNED-INT              4
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 SIGNED-LONG             8
 163	DISPLAY "SIGNED-SHORT            " len-SIGNED-SHORT           
@@ -2258,7 +2258,7 @@ SIGNED-LONG             8
 52 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
 53 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
-Variable not found
+No variables found within 'question-mark' range
 01 header/test [W-S]  :  "An extravaganza of variables!", ' ' <repeats 11 times>
 SIGNED-SHORT            2
 164	DISPLAY "UNSIGNED-INT            " len-UNSIGNED-INT           

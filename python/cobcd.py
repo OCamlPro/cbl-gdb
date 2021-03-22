@@ -1616,7 +1616,7 @@ class TabFileInformation():
         self.current_trapped_file = ""
         self.current_trapped_frame = -1
         self.current_trapped_line = 0
-        self.question_mark_range = 6
+        self.question_mark_range = int(os.environ.get("CPRINT_R", '6'))
         self.current_full_path = ""
         self.perform_commands = {}
 
@@ -2081,10 +2081,11 @@ def get_sorted_possibilities(args, tab_file):
             # will be a bit more like what the user probably expects.
 
             if len(tab_file.current_full_path) > 0:
-                # explicit requested range ... or current value
                 if  len(args) >= 2 and args[1].isnumeric():
+                    # an explicit, one-time range has been requested
                     qmrange = int(args[1])
                 else:
+                    # without that request, use the established +/- range
                     qmrange = tab_file.question_mark_range
                 if qmrange < 0:
                     qmrange = 1000000000
@@ -2235,7 +2236,6 @@ class CPrintWorker():
     def __init__(self):
         self.current_source_file = ""
         self.sticky_display_mode = os.environ.get("CPRINT_V", '0')
-        self.question_mark_range = int(os.environ.get("CPRINT_R", '6'))
         self.use_cprint = os.environ.get("CPRINT", "cprint")
         self.machine_interface_mode = False
 
@@ -2277,26 +2277,27 @@ class CPrintWorker():
                         self.sticky_display_mode = self.current_display_mode
             elif len(args) == 2 and args[0] == '/r' and args[1].lstrip('-').isnumeric():
                 # This is a request to change the question_mark_range
-                self.question_mark_range = int(args[1])
-                print("The 'cprint ?' range has been set to +/-", self.question_mark_range, "lines")
+                TabFile.question_mark_range = int(args[1])
+                print("The 'cprint ?' range has been set to +/-", TabFile.question_mark_range, "lines")
                 TabFile.old_dogs = set()
                 args = ['?']
             elif len(args[0]) > 2 and args[0][0:2] == '/r':
                 # This is a request to change the question_mark_range
                 range = args[0][2:]
                 if range.lstrip('-').isnumeric():
-                    self.question_mark_range = int(range)
-                if int(self.question_mark_range) < 0:
+                    TabFile.question_mark_range = int(range)
+                if int(TabFile.question_mark_range) < 0:
                     print("The 'cprint ?' range has been set to the same as 'cprint *'")
                 else:
-                    print("The 'cprint ?' range has been set to", self.question_mark_range)
+                    print("The 'cprint ?' range has been set to", TabFile.question_mark_range)
                 TabFile.old_dogs = set()
                 args = ['?']
             elif len(args) == 1 and args[0] == '/r':
-                if int(self.question_mark_range) < 0:
+                # There is but the one '/r' argument, so it is a request to display the range:
+                if int(TabFile.question_mark_range) < 0:
                     print("The 'cprint ?' range is currently the same as 'cprint *'")
                 else:
-                    print("The 'cprint ?' range is currently +/-", self.question_mark_range, "lines")
+                    print("The 'cprint ?' range is currently +/-", TabFile.question_mark_range, "lines")
                 args = []
 
         return args
@@ -2379,10 +2380,7 @@ class CPrintWorker():
         for arg in argsargs:
             args.append(arg)
 
-        # CHECKME: Do we need setting that here at all and in both directions?
-        self.question_mark_range = TabFile.question_mark_range
         args = self.ProcessDisplayMode(args, TabFile)
-        TabFile.question_mark_range = self.question_mark_range
 
         # TODO early exit if we just set the range  -> cp /r 4
         #if len(preargs) >= 1 and preargs[0][0:2] == '/r':
@@ -2418,7 +2416,7 @@ class CPrintWorker():
                 return
             # Happens for example with R = 0 and cprint on PERFORM line
             if len(args) >= 1 and args[0] == '?':
-                print("No variable found in range")
+                print("No variables found within 'question-mark' range")
                 return
             # TODO print("Variable not found: " + str(value))
             print("Variable not found")
@@ -2905,25 +2903,26 @@ CBLDBG_CBREAK_WORKER = CBreakWorker()
 class CPrint(gdb.Command):
     """Prints COBOL-NAMED variables when debugging cobst processed object files.
 
-    COBOL print command usage:
+    COBOL cprint command usage:
     cprint <arg>        shows <arg> using session-default formatting
     cprint/v<n> <arg>   displays <arg> with a one-time formatting override
     cprint/v0           name and variable on one line (this is the default)
     cprint/v1           just the variable
     cprint/v2           two-line display with name, then variable
-    cprint/x            show numeric value in hexadecima
-    cprint/b            show numeric value in binar
-    cprint/d            show expanded informatio
-    cprint/v<n>         with no arguments sets the session formattin
+    cprint/x            show numeric value in hexadecimal
+    cprint/b            show numeric value in binary
+    cprint/d            show expanded information
+    cprint/v<n>         with no arguments sets the session formatting
     cprint/m            generate output compatible with '-stack-list-variables --simple-values
-    cprint *            print all variables that are currently in context
-    cprint ? [R]        print all variables that are currently in context within R lines of current line,
-                        if R is not specified use the range currently setup
-    cprint/r N          set the range for 'cprint ?' to plus/minus R (the default is 6; -1 means 'all'
+    cprint *            display all variables that are currently in context
+    cprint/r N          set the range for 'cprint ?' to plus/minus N (default is 6; -1 means 'all'
+    cprint/r            show the current value of N
+    cprint ?            display in-context variables within +/- N lines of current line
+    cprint ? R          display in-context variables within +/- R lines of current line
     cprint VARIABLE="STRING"    set variable to string
     cprint VARIABLE='STRING'    set variable to string
     cprint VARIABLE=NUMERIC     set variable to numeric
-    cprint VARIABLE=VARIBALE    set variable to variable
+    cprint VARIABLE=VARIABLE2   set variable to variable2
 
     The default v-level can be set with the environment variable CPRINT_V=n
     The default r-level can be set with the environment variable CPRINT_R=n
@@ -2932,7 +2931,6 @@ class CPrint(gdb.Command):
     def __init__(self):
         self.worker = CPrintWorker()
         self.tab_file = CBLDBG_TABFILE
-        self.tab_file.question_mark_range = self.worker.question_mark_range
 
         print('Registering CPrint as ' + self.worker.use_cprint + ' ' + COBCD_VERSION)
         super(CPrint, self).__init__(self.worker.use_cprint, gdb.COMMAND_DATA)
