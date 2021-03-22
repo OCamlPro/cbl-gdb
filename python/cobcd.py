@@ -2687,17 +2687,20 @@ class CBreakWorker():
         break_point = self.set_breakpoint(spec)
 
     @staticmethod
-    def get_cob_cmp_refloc(refmod, payload, cmp_len):
+    def get_cob_cmp_refloc(refmod, payload, cmp_len, second):
         bp_startloc = 1
         location_of_field = None
 
         valid, bp_startloc, bp_length = get_lenspec_refmod(refmod, payload, "n")
         if valid == 0:
-            return location_of_field
+            return location_of_field, cmp_len
 
         if bp_length > cmp_len:
             print("Length specifier > compare string ({0} > {1})".format(str(bp_length), str(cmp_len)))
-            return location_of_field
+            return location_of_field, cmp_len
+        elif bp_length < cmp_len and second == 1:
+            print("Different length specifiers {0} <> {1}".format(bp_length, cmp_len))
+            return location_of_field, cmp_len
 
         cmp_len = bp_length
 
@@ -2727,7 +2730,7 @@ class CBreakWorker():
             return
 
         if refmod_f:
-            location_of_field, cmp_len = self.get_cob_cmp_refloc(refmod_f, payload_f, payload_s.Length)
+            location_of_field, cmp_len = self.get_cob_cmp_refloc(refmod_f, payload_f, payload_s.Length, 0)
         else:
             cmp_len = payload_f.Length
             location_of_field = payload_f.get_verified_field_location(DONT_ALLOCATE)
@@ -2736,7 +2739,7 @@ class CBreakWorker():
             return
 
         if refmod_s:
-            other_field, cmp_len = self.get_cob_cmp_refloc(refmod_s, payload_s, cmp_len)
+            other_field, cmp_len = self.get_cob_cmp_refloc(refmod_s, payload_s, cmp_len, 1)
         else:
             other_field = payload_s.get_verified_field_location(DONT_ALLOCATE)
 
