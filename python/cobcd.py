@@ -2632,7 +2632,10 @@ class CBreakWorker():
                 return
 
             if break_point is None:
-                break_point = self.set_breakpoint(line_nr)
+                if line_nr == "-1":
+                    break_point = self.set_breakpoint("")
+                else:
+                    break_point = self.set_breakpoint(line_nr)
 
             if condition in ("=", "=i", "==", "==i"):
                 self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2} - 1), \"{3}\", {4}) == 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
@@ -2646,7 +2649,10 @@ class CBreakWorker():
     def set_numeric_breakpoint(self, line_nr, condition, payload, diff_num, break_point):
         if condition in ("==", "<", "<=", ">", ">=", "<>"):
             if break_point is None:
-                break_point = self.set_breakpoint(line_nr)
+                if line_nr == "-1":
+                    break_point = self.set_breakpoint("")
+                else:
+                    break_point = self.set_breakpoint(line_nr)
 
             location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
             if not location_of_field:
@@ -2738,7 +2744,10 @@ class CBreakWorker():
             return
 
         if break_point is None:
-            break_point = self.set_breakpoint(line_nr)
+            if line_nr == "-1":
+                break_point = self.set_breakpoint("")
+            else:
+                break_point = self.set_breakpoint(line_nr)
         self.set_condition(break_point, "(int)cob_cmp({0}, {1}) {2} 0".format(hex(location_of_field), hex(other_field), condition_str))
 
     @staticmethod
@@ -2852,9 +2861,11 @@ class CBreakWorker():
                 break_point = self.set_breakpoint("{0}_:ENTRY_{0}".format(module_name))
         elif len(args) == 2 and args[0] == "section" and isinstance(args[1], self.strtype):
             self.set_section_breakpoint(args)
-        elif len(args) >= 5 and len(args) <= 7:
-            if not args[0].isdigit():
-                print('First argument is not a line number')
+        elif len(args) >= 4 and len(args) <= 7:
+            if len(args) >= 4 and not args[0].isdigit():
+                args.insert(0, '-1')
+            elif len(args) == 4:
+                print('Breakpoint parameters not recognized')
                 return
 
             if args[1] != "if":
