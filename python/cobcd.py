@@ -2059,7 +2059,7 @@ def MachineInterfaceHeirarchical(TabFile, possibilities):
     #retval = r'variables=[{name="L01",value="{_groupvalue=\"Snap!\",fullname=\"RobertDubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"Dubner\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]'
     return retval
 
-def get_sorted_possibilities(args, tab_file):
+def get_sorted_possibilities(args, tab_file, limit):
     possibilities_1 = []
     possibilities = []
     from_digit = False
@@ -2081,7 +2081,7 @@ def get_sorted_possibilities(args, tab_file):
             # will be a bit more like what the user probably expects.
 
             if len(tab_file.current_full_path) > 0:
-                if  len(args) >= 2 and args[1].isnumeric():
+                if len(args) >= 2 and args[1].isnumeric():
                     # an explicit, one-time range has been requested
                     qmrange = int(args[1])
                 else:
@@ -2094,9 +2094,9 @@ def get_sorted_possibilities(args, tab_file):
                     return_string = ""
                 else:
                     return_string = subprocess.check_output(["cobcd-rw",
-                                                              tab_file.current_full_path,
-                                                              str(tab_file.current_trapped_line),
-                                                              str(qmrange)])
+                                                             tab_file.current_full_path,
+                                                             str(tab_file.current_trapped_line),
+                                                             str(qmrange)])
                 tokens = return_string.split()
                 new_dogs = set()
                 for token in tokens:
@@ -2124,6 +2124,9 @@ def get_sorted_possibilities(args, tab_file):
     # to eliminate such variables.  The bad news is that this means we
     # have to fetch all the variables data twice.  But, heck.
 
+    if limit > 0 and len(possibilities_1) > limit:
+        return possibilities, from_digit
+
     for payload_index in possibilities_1:
         payload = tab_file.var_trie.storage_list[payload_index]
         payload.FetchVariableData(tab_file.line_list, False)
@@ -2140,7 +2143,7 @@ def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
     possibilities = []
     from_digit = False
     if TabFile.current_trapped_line > 0:
-        possibilities, from_digit = get_sorted_possibilities(args, TabFile)
+        possibilities, from_digit = get_sorted_possibilities(args, TabFile, 0)
 
     if len(possibilities) == 1 and machine_interface_mode and not rside and args[0] != '*' and args[0] != '?':
         # Very special case.  This was a `cprint/m something`, which is what happens when
@@ -2348,9 +2351,8 @@ class CPrintWorker():
         elif re.match(number_regexp, value):
             if payload.PutDataAsString(value) == 0:
                 return_value = 0
-        #elif isinstance(value, str):   // doesn't apply to t01-some-var
         else:
-            possibilities = MetaPossibilities(value, tab_file, False, False, '')
+            possibilities, from_digit = get_sorted_possibilities(value, tab_file, 1)
             if len(possibilities) == 1:
                 payload_s = tab_file.var_trie.storage_list[possibilities[0]]
                 if payload.PutDataAsVar(payload_s) == 0:
@@ -2358,9 +2360,6 @@ class CPrintWorker():
             else:
                 print("Variable not found: " + str(value))
                 return_value = 0
-        #else:
-        #    print("No valid method found for " + str (value))
-        #    return_value = 0
 
         return return_value
 
@@ -2491,8 +2490,7 @@ class CWatchWorker():
         else:
             wp_arg, wp_refmod = get_refmod(args[0])
 
-        possibilities = MetaPossibilities(wp_arg, tab_file, False, False, '')
-
+        possibilities, from_digit = get_sorted_possibilities(wp_arg, tab_file, 1)
         if len(possibilities) == 1:
             payload_number = possibilities[0]
             # print("Watch Payload number is ", payload_number)
@@ -2592,7 +2590,7 @@ class CBreakWorker():
 
         tab_file.ReadSymbolTableText()
         if tab_file.current_trapped_line > 0:
-            possibilities, from_digit = get_sorted_possibilities(search_var, tab_file)
+            possibilities, from_digit = get_sorted_possibilities(search_var, tab_file, 1)
 
         if len(possibilities) == 1:
             payload_number = possibilities[0]
