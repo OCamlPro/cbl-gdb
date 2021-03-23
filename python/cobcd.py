@@ -758,6 +758,33 @@ class VarTrie():
                     payload.OccursMin  = int(tokens[self.IndexOccursMin] or "0")
                     payload.OccursMax  = int(tokens[self.IndexOccursMax] or "0")
 
+                    # We need to find our parent.  We will ignore the accursed
+                    # level 66; anything else, including level 01, might have a parent
+                    # (for level 01, the parent might be a FD file descriptor)
+                    
+                    if payload.Level <= 49:
+                        i = len(self.storage_list)-1
+                        if i >= 0:
+                            parent_might_be = self.storage_list[i].Level
+                            if parent_might_be == payload.Level:
+                                # He's not heavy.  He's my brother.  So, we share a parent:
+                                payload.index_of_parent = self.storage_list[i].index_of_parent
+                            if parent_might_be < payload.Level:
+                                # Because it is smaller than we are, this
+                                # is a candidate for parenthood.
+                                # But we need to make sure that this is not the
+                                # younger sibling of the actual parent:
+                                while i >= 0:
+                                    if parent_might_be != self.storage_list[i].Level:
+                                        # We break when we've gone through all the possible
+                                        # siblings of the parent -- including the parent itself,
+                                        # who is the oldest sibling
+                                        break;
+                                    # We know that this next statement will be executed
+                                    # at least once
+                                    payload.index_of_parent = i;
+                                    i -= 1
+                    print("Loading",payload.Level, payload.Name, payload.index_of_parent)
                     payload.payload_index = len(self.storage_list)
                     self.storage_list.append(payload)
                     self.AddToTrie(self.storage_trie,
@@ -889,6 +916,18 @@ class VarTrie():
             # glue them back together into a single space-separated string:
             desired = " ".join(desired).upper()
 
+        # See if this is a subscripted reference:
+        subscripts = None
+        nfound = desired.find('(')
+        if nfound > -1:
+            # There is a subscript. Strip it off, for now.  After we
+            # we find the base information, we'll put it back on:
+            subscripts = desired[nfound:]
+
+            # and continue looking for what we will eventually regard as
+            # the desired value in the OCCURS sequence
+            desired   = desired[:nfound]
+
         # Go handle our various "A of B" possibilities:
         name_tokens = self.TokenizeCanonicalName(desired)
 
@@ -937,10 +976,19 @@ class VarTrie():
                     prior_index = current_index
                 if prior_index != -1:
                     # We have found a contender!
+                    # Make sure that there is no subscript for this variable:
+                    self.storage_list[index].Subscripts = "None"
+                    # And add it to the set
                     set1.add(index)
 
             # Turn the set back into a list:
             paths = list(set1)
+        
+        # Special case.  If, and only if, the length of paths is 1, then
+        # we append any array subscripts back onto the variable:
+        
+        if len(paths) == 1:
+            self.storage_list[paths[0]].Subscripts = subscripts
 
         return paths
 
@@ -997,7 +1045,9 @@ class LineList():
 class CobolVariable():
     """Manages the field, attributes, flags, and pointers of a GnuCOBOL COBOL variable"""
     def __init__(self):
-        self.index      = None
+        # index_of_parent can be used to find information about the variable's 
+        # heirarchical parent.  That is, a level 02 variable will have a level 01 parent
+        self.index_of_parent = None 
         self.Program    = ""
         self.Section    = ""
         self.Level      = -1
@@ -1009,6 +1059,7 @@ class CobolVariable():
         self.Length     = 0
         self.OccursMin  = 0
         self.OccursMax  = 0
+        self.Subscripts = None
 
         self.AttrType   = 0
         self.AttrDigits = 0
@@ -1300,9 +1351,44 @@ class CobolVariable():
                     hexout = '0' + hexout[-1:]
                 retval += hexout
         return retval
+        
+    def AdjustForSubscripts(self):
+        retval = self.Offset
+        if self.Subscripts:
+            # Strip off the leading parenthesis (we know it is there
+            # from GetListOfPossibilities
+            subscripts = self.Subscripts[1:]
+            # If there is a trailing parenthesis, get rid of it:
+            nfound = subscripts.find(')')
+            if nfound != -1:
+                subscripts = subscripts[:nfound]
+            list_of_subscripts = subscripts.split(',')
+            
+            if self.OccursMax == 0:
+                print("The variable {0} is not an OCCURS table".format(self.Name))
+                return self.Offset
+            
+            variable = self
+            retval = variable.Offset
+            while len(list_of_subscripts):
+                print("InLoop",self.Level,self.Name,self.index_of_parent)
+                if variable.OccursMax != 0:
+                    subscript = int(list_of_subscripts[-1])
+                    list_of_subscripts = list_of_subscripts[0:-1]
+                    print("(1)retval et.al.",retval, subscript, variable.OccursMin, variable.Length)
+                    retval += (subscript - variable.OccursMin) * variable.Length
+                    print("(2)retval et.al.",retval, subscript, variable.OccursMin, variable.Length)
+                variable = CBLDBG_TABFILE.var_trie.storage_list[variable.index_of_parent]
+                if not variable:
+                    print("Too many subscripts")
+                    return self.Offset
+
+        return retval
 
     def FetchVariableData(self, line_list, show_failure):
         # print("FetchVariableData:", self.Name, self.Section)
+        use_this_offset = self.AdjustForSubscripts()
+        print("use_this_offset",use_this_offset)
         self.location_of_field = 0
         self.location_of_data = 0
         self.location_of_attribute = 0
@@ -1321,7 +1407,7 @@ class CobolVariable():
 
         if self.Fname:
             # We have a field name
-            # print("FetchVariableData Fname", self.Fname)
+            print("FetchVariableData Fname", self.Fname)
             self.location_of_field = GetAddressOf(self.Fname)
             if self.location_of_field is None:
                 self.not_in_context = True
@@ -1357,7 +1443,7 @@ class CobolVariable():
                 if self.location_of_data is None:
                     self.not_in_context = True
                     return
-                self.location_of_data += self.Offset
+                self.location_of_data += use_this_offset
             else:
                 # print("There is no self.Bname")
                 pass
@@ -1433,7 +1519,7 @@ class CobolVariable():
                 # To recap:  We are trapped in the routine of the desired
                 # LOCAL-STORAGE variable, so we can look for it in cob_local_ptr
                 # we need GDB's help finding out where cob_local_ptr + offset is:
-                command = "x " + "cob_local_ptr + " + str(self.Offset)
+                command = "x " + "cob_local_ptr + " + str(use_this_offset)
                 address_string = GdbExecute(currentframe(), command)
                 nfound = address_string.find(':')
                 if nfound != -1:
@@ -1446,8 +1532,9 @@ class CobolVariable():
             self.not_in_context = True
             return
 
+        print("loc/offset", self.location_of_data, use_this_offset)
         if self.location_of_data != 0:
-            self.data = GetBytesAt(self.location_of_data, self.Length)
+            self.data = GetBytesAt(self.location_of_data+use_this_offset, self.Length)
 
         self.display_body_hex = self.GetDataAsHex()
         self.display_body = self.GetDataAsString()
