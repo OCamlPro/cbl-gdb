@@ -1388,6 +1388,7 @@ class CobolVariable():
     def FetchVariableData(self, line_list, show_failure):
         # print("FetchVariableData:", self.Name, self.Section)
         use_this_offset = self.AdjustForSubscripts()
+        use_this_offset = 0
         #print("use_this_offset",use_this_offset)
         self.location_of_field = 0
         self.location_of_data = 0
