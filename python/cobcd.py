@@ -784,7 +784,7 @@ class VarTrie():
                                     # at least once
                                     payload.index_of_parent = i;
                                     i -= 1
-                    print("Loading",payload.Level, payload.Name, payload.index_of_parent)
+                    #print("Loading",payload.Level, payload.Name, payload.index_of_parent)
                     payload.payload_index = len(self.storage_list)
                     self.storage_list.append(payload)
                     self.AddToTrie(self.storage_trie,
@@ -1388,7 +1388,7 @@ class CobolVariable():
     def FetchVariableData(self, line_list, show_failure):
         # print("FetchVariableData:", self.Name, self.Section)
         use_this_offset = self.AdjustForSubscripts()
-        print("use_this_offset",use_this_offset)
+        #print("use_this_offset",use_this_offset)
         self.location_of_field = 0
         self.location_of_data = 0
         self.location_of_attribute = 0
@@ -1407,7 +1407,7 @@ class CobolVariable():
 
         if self.Fname:
             # We have a field name
-            print("FetchVariableData Fname", self.Fname)
+            #print("FetchVariableData Fname", self.Fname)
             self.location_of_field = GetAddressOf(self.Fname)
             if self.location_of_field is None:
                 self.not_in_context = True
@@ -1532,7 +1532,7 @@ class CobolVariable():
             self.not_in_context = True
             return
 
-        print("loc/offset", self.location_of_data, use_this_offset)
+        #print("loc/offset", self.location_of_data, use_this_offset)
         if self.location_of_data != 0:
             self.data = GetBytesAt(self.location_of_data+use_this_offset, self.Length)
 
