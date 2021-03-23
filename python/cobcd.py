@@ -1993,6 +1993,8 @@ class ModuleInformation():
         else:
             print("No stack.")
 
+GV_ModuleInformation = ModuleInformation()
+
 def MachineInterfaceFlat(possibilities):
     # This is the machine interface mode for returning the
     # the variables in a flat manner.
@@ -2492,7 +2494,7 @@ class CPrintWorker():
             payload = GV_ModuleInformation.var_trie.storage_list[possibilities[0]]
 
             if rside:
-                if self.set_var_value(GV_ModuleInformation, payload, rside) == 0:
+                if self.set_var_value(payload, rside) == 0:
                     return
 
                 if self.machine_interface_mode:
@@ -3012,7 +3014,6 @@ class CBreakWorker():
             print('Breakpoint parameters not recognized')
             return
 
-GV_ModuleInformation = ModuleInformation()
 CBLDBG_CBREAK_WORKER = CBreakWorker()
 
 class CPrint(gdb.Command):
