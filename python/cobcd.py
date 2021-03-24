@@ -758,6 +758,33 @@ class VarTrie():
                     payload.OccursMin  = int(tokens[self.IndexOccursMin] or "0")
                     payload.OccursMax  = int(tokens[self.IndexOccursMax] or "0")
 
+                    # We need to find our parent.  We will ignore the accursed
+                    # level 66; anything else, including level 01, might have a parent
+                    # (for level 01, the parent might be a FD file descriptor)
+
+                    if payload.Level <= 49:
+                        i = len(self.storage_list)-1
+                        if i >= 0:
+                            parent_might_be = self.storage_list[i].Level
+                            if parent_might_be == payload.Level:
+                                # He's not heavy.  He's my brother.  So, we share a parent:
+                                payload.index_of_parent = self.storage_list[i].index_of_parent
+                            if parent_might_be < payload.Level:
+                                # Because it is smaller than we are, this
+                                # is a candidate for parenthood.
+                                # But we need to make sure that this is not the
+                                # younger sibling of the actual parent:
+                                while i >= 0:
+                                    if parent_might_be != self.storage_list[i].Level:
+                                        # We break when we've gone through all the possible
+                                        # siblings of the parent -- including the parent itself,
+                                        # who is the oldest sibling
+                                        break;
+                                    # We know that this next statement will be executed
+                                    # at least once
+                                    payload.index_of_parent = i;
+                                    i -= 1
+                    #print("Loading",payload.Level, payload.Name, payload.index_of_parent)
                     payload.payload_index = len(self.storage_list)
                     self.storage_list.append(payload)
                     self.AddToTrie(self.storage_trie,
@@ -889,6 +916,18 @@ class VarTrie():
             # glue them back together into a single space-separated string:
             desired = " ".join(desired).upper()
 
+        # See if this is a subscripted reference:
+        subscripts = None
+        nfound = desired.find('(')
+        if nfound > -1:
+            # There is a subscript. Strip it off, for now.  After we
+            # we find the base information, we'll put it back on:
+            subscripts = desired[nfound:]
+
+            # and continue looking for what we will eventually regard as
+            # the desired value in the OCCURS sequence
+            desired   = desired[:nfound]
+
         # Go handle our various "A of B" possibilities:
         name_tokens = self.TokenizeCanonicalName(desired)
 
@@ -937,10 +976,19 @@ class VarTrie():
                     prior_index = current_index
                 if prior_index != -1:
                     # We have found a contender!
+                    # Make sure that there is no subscript for this variable:
+                    self.storage_list[index].Subscripts = "None"
+                    # And add it to the set
                     set1.add(index)
 
             # Turn the set back into a list:
             paths = list(set1)
+
+        # Special case.  If, and only if, the length of paths is 1, then
+        # we append any array subscripts back onto the variable:
+
+        if len(paths) == 1:
+            self.storage_list[paths[0]].Subscripts = subscripts
 
         return paths
 
@@ -997,7 +1045,9 @@ class LineList():
 class CobolVariable():
     """Manages the field, attributes, flags, and pointers of a GnuCOBOL COBOL variable"""
     def __init__(self):
-        self.index      = None
+        # index_of_parent can be used to find information about the variable's
+        # heirarchical parent.  That is, a level 02 variable will have a level 01 parent
+        self.index_of_parent = None
         self.Program    = ""
         self.Section    = ""
         self.Level      = -1
@@ -1009,6 +1059,7 @@ class CobolVariable():
         self.Length     = 0
         self.OccursMin  = 0
         self.OccursMax  = 0
+        self.Subscripts = None
 
         self.AttrType   = 0
         self.AttrDigits = 0
@@ -1301,8 +1352,44 @@ class CobolVariable():
                 retval += hexout
         return retval
 
+    def AdjustForSubscripts(self):
+        retval = self.Offset
+        if self.Subscripts:
+            # Strip off the leading parenthesis (we know it is there
+            # from GetListOfPossibilities
+            subscripts = self.Subscripts[1:]
+            # If there is a trailing parenthesis, get rid of it:
+            nfound = subscripts.find(')')
+            if nfound != -1:
+                subscripts = subscripts[:nfound]
+            list_of_subscripts = subscripts.split(',')
+
+            if self.OccursMax == 0:
+                print("The variable {0} is not an OCCURS table".format(self.Name))
+                return self.Offset
+
+            variable = self
+            retval = variable.Offset
+            while len(list_of_subscripts):
+                print("InLoop",self.Level,self.Name,self.index_of_parent)
+                if variable.OccursMax != 0:
+                    subscript = int(list_of_subscripts[-1])
+                    list_of_subscripts = list_of_subscripts[0:-1]
+                    print("(1)retval et.al.",retval, subscript, variable.OccursMin, variable.Length)
+                    retval += (subscript - variable.OccursMin) * variable.Length
+                    print("(2)retval et.al.",retval, subscript, variable.OccursMin, variable.Length)
+                variable = GV_ModuleInformation.var_trie.storage_list[variable.index_of_parent]
+                if not variable:
+                    print("Too many subscripts")
+                    return self.Offset
+
+        return retval
+
     def FetchVariableData(self, line_list, show_failure):
         # print("FetchVariableData:", self.Name, self.Section)
+        # use_this_offset = self.AdjustForSubscripts()
+        # use_this_offset = 0
+        # print("use_this_offset",use_this_offset)
         self.location_of_field = 0
         self.location_of_data = 0
         self.location_of_attribute = 0
@@ -1321,7 +1408,7 @@ class CobolVariable():
 
         if self.Fname:
             # We have a field name
-            # print("FetchVariableData Fname", self.Fname)
+            #print("FetchVariableData Fname", self.Fname)
             self.location_of_field = GetAddressOf(self.Fname)
             if self.location_of_field is None:
                 self.not_in_context = True
@@ -1446,6 +1533,7 @@ class CobolVariable():
             self.not_in_context = True
             return
 
+        #print("loc/offset", self.location_of_data, use_this_offset)
         if self.location_of_data != 0:
             self.data = GetBytesAt(self.location_of_data, self.Length)
 
@@ -1606,18 +1694,17 @@ class CobolVariable():
                 print('.', end="")
         print('"')
 
-class TabFileInformation():
+class ModuleInformation():
+    """Information about the source code module being debugged.
+
+    Much of the information here is extracted from the VARIABLE_STRING global
+    variable that was compiled into the .c module generated by GnuCOBOL.
+    """
     def __init__(self):
-        self.var_trie = VarTrie()
-        self.old_dogs = set()
-        self.line_list = LineList()
+        # These variables contain information extracted from the VARIABLE_STRING_xxx
         self.current_variable_string = ""
-        self.current_trapped_routine = ""
-        self.current_trapped_file = ""
-        self.current_trapped_frame = -1
-        self.current_trapped_line = 0
-        self.question_mark_range = int(os.environ.get("CPRINT_R", '6'))
-        self.current_full_path = ""
+        self.var_trie = VarTrie()
+        self.line_list = LineList()
         self.perform_commands = {}
 
     def ReadVariableString(self, string_name):
@@ -1672,6 +1759,23 @@ class TabFileInformation():
                         # and now that we have all the chunks, we can assemble
                         # them into the VARIABLE_STRING_xxx
                         self.current_variable_string = "".join(lines)
+
+                        # We have a new variable string
+                        # Clear out the tables:
+                        self.var_trie = VarTrie()
+                        self.line_list = LineList()
+                        self.perform_commands = {}
+
+                        # Load the new tables
+                        # Pull apart the variable_string
+                        variable_lines = self.current_variable_string.split("~")
+                        for variable_line in variable_lines:
+                            self.line_list.LoadFromLine(variable_line)
+                            self.var_trie.LoadFromLine(variable_line)
+                            self.LoadPerformFromLine(variable_line)
+
+                        # Put a fencepost at the end of the line_list
+                        self.line_list.Insert(self.line_list.EndOfTheWorld, "Ragnarok")
                         retval = True
             except:
                 pass
@@ -1682,6 +1786,21 @@ class TabFileInformation():
             tokens = variable_line.split("|")
             if len(tokens) > 3:
                 self.perform_commands[tokens[3]] = tokens[2]
+
+GV_ModuleInformation = ModuleInformation()
+
+class ModuleState():
+    """State of the inferior as it is debugged"""
+    def __init__(self):
+        # These variables contain state information that changes as the inferior
+        # is debugged.
+        self.old_dogs = set() # One level of retained former variables when doing 'cprint ?'
+        self.current_trapped_routine = ""
+        self.current_trapped_file = ""
+        self.current_trapped_frame = -1
+        self.current_trapped_line = 0
+        self.question_mark_range = int(os.environ.get("CPRINT_R", '6'))
+        self.current_full_path = ""
 
     def ProcessStack(self):
         """ Figures out which routine we are currently trapped in"""
@@ -1834,31 +1953,14 @@ class TabFileInformation():
 
                         string_name = "VARIABLE_STRING_" + name_root2
 
-                        if self.ReadVariableString(string_name):
+                        if GV_ModuleInformation.ReadVariableString(string_name):
                             break
                         stack_line += 1
-
-                    # We have us a new variable string
-                    # Clear out the tables:
-                    # Load the new tables
-                    self.var_trie = VarTrie()
-                    self.line_list = LineList()
-                    self.perform_commands = {}
 
                     if stack_line >= len(stack):
                         # For whatever reasons, we couldn't find any information in
                         # the stack above the "frame" point
                         return False
-
-                    # Pull apart the variable_string
-                    variable_lines = self.current_variable_string.split("~")
-                    for variable_line in variable_lines:
-                        self.line_list.LoadFromLine(variable_line)
-                        self.var_trie.LoadFromLine(variable_line)
-                        self.LoadPerformFromLine(variable_line)
-
-                    # Put a fencepost at the end of the line_list
-                    self.line_list.Insert(self.line_list.EndOfTheWorld, "Ragnarok")
 
                     # Get the full path for the source file
                     command = "info source"
@@ -1878,12 +1980,12 @@ class TabFileInformation():
 
         return retval
 
-    def ReadSymbolTableText(self):
-        # Go read the frame and stack, and fetch the VariableStringData
+    def EstablishModuleState(self):
+        # Go read the frame and stack, and, if necessary, fetch the VariableStringData
         if self.ProcessStack():
             # Figure out what routine we are trapped in, from
             # the line number
-            for line in self.line_list.line_list:
+            for line in GV_ModuleInformation.line_list.line_list:
                 if line[0] > self.current_trapped_line:
                     # We've gotten past self.current_trapped_line, so the prior entry
                     # was the one we wanted
@@ -1893,7 +1995,9 @@ class TabFileInformation():
         else:
             print("No stack.")
 
-def MachineInterfaceFlat(TabFile, possibilities):
+GV_ModuleState = ModuleState()
+
+def MachineInterfaceFlat(possibilities):
     # This is the machine interface mode for returning the
     # the variables in a flat manner.
     # Our mission is to emulate
@@ -1901,8 +2005,8 @@ def MachineInterfaceFlat(TabFile, possibilities):
     # e.g.,    variables=[{name="b_70",arg="1",type="unsigned char *",value="0x555555759df0 <b_39> \"James     K Lowden    \""}]
     s = "variables=["
     for payload_index in possibilities:
-        payload = TabFile.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(TabFile.line_list, False)
+        payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+        payload.FetchVariableData(GV_ModuleInformation.line_list, False)
         if not payload.not_in_context:
             name = ""
             name += payload.display_name
@@ -1995,7 +2099,7 @@ def BuildHString(node):
                 s += r'},'
     return s
 
-def MachineInterfaceHeirarchical(TabFile, possibilities):
+def MachineInterfaceHeirarchical(possibilities):
     # This is the machine interface mode for returning the
     # the variables in a flat manner.
     # Our mission is to emulate
@@ -2009,8 +2113,8 @@ def MachineInterfaceHeirarchical(TabFile, possibilities):
 
     retval = "variables=["
     for payload_index in possibilities:
-        payload = TabFile.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(TabFile.line_list, False)
+        payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+        payload.FetchVariableData(GV_ModuleInformation.line_list, False)
         if not payload.not_in_context:
             # print("MIH", payload.Level, payload.Name, payload.display_body)
             # First, if the stack has nephews of ours,
@@ -2059,16 +2163,16 @@ def MachineInterfaceHeirarchical(TabFile, possibilities):
     #retval = r'variables=[{name="L01",value="{_groupvalue=\"Snap!\",fullname=\"RobertDubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"Dubner\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]'
     return retval
 
-def get_sorted_possibilities(args, tab_file, limit):
+def get_sorted_possibilities(args, limit):
     possibilities_1 = []
     possibilities = []
     from_digit = False
 
-    if len(args) >= 1:
+    if len(args) >= 1 and GV_ModuleState.current_trapped_line>0:
         if args[0].find('*') != -1:
             # If the first, presumably single, argument contains an asterisk, then
             # he is asking for a list of variables and values:
-            possibilities_1 = tab_file.var_trie.GetAllPossibilities()
+            possibilities_1 = GV_ModuleInformation.var_trie.GetAllPossibilities()
         elif args[0].find('?') != -1:
             # If the first, presumably single, argument contains a question mark,
             # then we need to round up the usual suspects.
@@ -2077,16 +2181,16 @@ def get_sorted_possibilities(args, tab_file, limit):
             # suspects.  The idea here is that sometimes MOVE A TO B is the last line
             # of a PARAGRAPH, so as soon as it is executed control jumps elsewhere and
             # B falls out of context.  Or perhaps the next GDB command is a CONTINUE,
-            # rather than NEXT.  By keeping one stage of stickiness, the display of variables
+            # rather than NEXT.  By keeping one level of stickiness, the display of '?' variables
             # will be a bit more like what the user probably expects.
 
-            if len(tab_file.current_full_path) > 0:
+            if len(GV_ModuleState.current_full_path) > 0:
                 if len(args) >= 2 and args[1].isnumeric():
                     # an explicit, one-time range has been requested
                     qmrange = int(args[1])
                 else:
                     # without that request, use the established +/- range
-                    qmrange = tab_file.question_mark_range
+                    qmrange = GV_ModuleState.question_mark_range
                 if qmrange < 0:
                     qmrange = 1000000000
                 if qmrange == 999:
@@ -2094,16 +2198,16 @@ def get_sorted_possibilities(args, tab_file, limit):
                     return_string = ""
                 else:
                     return_string = subprocess.check_output(["cobcd-rw",
-                                                             tab_file.current_full_path,
-                                                             str(tab_file.current_trapped_line),
+                                                             GV_ModuleState.current_full_path,
+                                                             str(GV_ModuleState.current_trapped_line),
                                                              str(qmrange)])
                 tokens = return_string.split()
                 new_dogs = set()
                 for token in tokens:
                     token = token.decode("utf-8")
-                    new_dogs = new_dogs.union(set(tab_file.var_trie.GetListOfExactPossibilities(token)))
-                possibilities_1 = list(tab_file.old_dogs.union(new_dogs))
-                tab_file.old_dogs = new_dogs
+                    new_dogs = new_dogs.union(set(GV_ModuleInformation.var_trie.GetListOfExactPossibilities(token)))
+                possibilities_1 = list(GV_ModuleState.old_dogs.union(new_dogs))
+                GV_ModuleState.old_dogs = new_dogs
         elif args[0].isdigit():
             from_digit = True
             # if the first, presumably single, argument is a number, then he is looking
@@ -2117,119 +2221,31 @@ def get_sorted_possibilities(args, tab_file, limit):
         else:
             # There are one or more arguments.  Use our clever routine
             # to come up with the possibilities_1:
-            possibilities_1 = tab_file.var_trie.GetListOfPossibilities(args)
+            possibilities_1 = GV_ModuleInformation.var_trie.GetListOfPossibilities(args)
 
-    # We now have a list of possibilities_1 based on the names of the variables
-    # typically, some of them will not be in context.  We wish, at this point
-    # to eliminate such variables.  The bad news is that this means we
-    # have to fetch all the variables data twice.  But, heck.
+    # If there are too many possibilities_1, then return nothing.  limit will usually
+    # be zero or one.  Zero means return everything; one means return only the possibilities
+    # when there is just one, which is useful in situations like "cprint A = B", which can only
+    # work if A and B are unambiguous
 
     if limit > 0 and len(possibilities_1) > limit:
         return possibilities, from_digit
 
+    # We now have a list of possibilities_1 based on the names of the variables
+    # typically, some of them will not be in context.  The only way of
+    # knowing which variables are in context is to try to read them.  If we
+    # can't read them, then we don't add them to our list:
+
     for payload_index in possibilities_1:
-        payload = tab_file.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(tab_file.line_list, False)
+        payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+        payload.FetchVariableData(GV_ModuleInformation.line_list, False)
         if not payload.not_in_context:
             possibilities.append(payload_index)
 
-    # What we do now depends on how many possibilities there are
+    # Sorting them makes the display much more sensible:
     possibilities.sort()
 
     return possibilities, from_digit
-
-
-def MetaPossibilities(args, TabFile, machine_interface_mode, rside, submode):
-    possibilities = []
-    from_digit = False
-    if TabFile.current_trapped_line > 0:
-        possibilities, from_digit = get_sorted_possibilities(args, TabFile, 0)
-
-    if len(possibilities) == 1 and machine_interface_mode and not rside and args[0] != '*' and args[0] != '?':
-        # Very special case.  This was a `cprint/m something`, which is what happens when
-        # the -data-evaluate-expression command is issued by Visual Studio Code.  I considered creating
-        # a unique 'print/e ' command, but then I realized that VSC never issues a 'cprint/m something' unless there
-        # is also an 'rside'.  So, this code is in response to a `-data-evalute-expression` equivalent command
-        payload_index = possibilities[0]
-        payload = TabFile.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(TabFile.line_list, False)
-        s = 'value="' + MachineInterfaceBodyAlt(payload.display_body) + '"'
-        print(s)
-        possibilities = []
-        return possibilities
-
-    if len(possibilities) > 1 or machine_interface_mode:
-        # In machine_interface mode, we just return the possibility(ies).  In human
-        # mode, if there is more than one, we create a numbered list; the user can later
-        # specify a variable by the number
-        if machine_interface_mode:
-            # Because we are going to be showing the data in a heirarchical way,
-            # we want to be sure every sub-level of a 01 Level variable is visible:
-            ppp = set(possibilities)
-            for i in possibilities:
-                tokens = TabFile.var_trie.storage_list[i].Name.split('/')
-                var = tokens[-2]
-                prog = tokens[-1]
-                u = i - 1
-                while u >= 0:
-                    tokens = TabFile.var_trie.storage_list[u].Name.split('/')
-                    if tokens[-2] != var or tokens[-1] != prog:
-                        break
-                    ppp.add(u)
-                    u -= 1
-                d = i + 1
-                while d < len(TabFile.var_trie.storage_list):
-                    tokens = TabFile.var_trie.storage_list[d].Name.split('/')
-                    if tokens[-2] != var or tokens[-1] != prog:
-                        break
-                    ppp.add(d)
-                    d += 1
-
-            possibilities = list(ppp)
-            possibilities.sort()
-
-            # s = MachineInterfaceFlat(TabFile, possibilities)
-            s = MachineInterfaceHeirarchical(TabFile, possibilities)
-            print(s)
-
-        else:
-            GV_GlobalVariables.ShortTermMemory = []
-
-            # This is human-interactive mode
-            # and show them to our user
-            line_counter = 1
-            for payload_index in possibilities:
-                payload = TabFile.var_trie.storage_list[payload_index]
-                payload.FetchVariableData(TabFile.line_list, False)
-                if not payload.not_in_context:
-                    GV_GlobalVariables.ShortTermMemory.append(payload_index)
-                    s = "{0:2} : ".format(line_counter)
-                    line_counter += 1
-                    s += payload.display_name
-                    s += " : "
-
-                    body = payload.display_body
-                    if submode == 'x' and len(payload.data) <= 16:
-                        body = payload.display_body_hex
-
-                    s += body
-                    retval = OurPrint(NoNulls(s))
-                    if retval == "Quit":
-                        break
-    if len(possibilities) == 1 and not from_digit:
-        GV_GlobalVariables.ShortTermMemory = [possibilities[0]]
-
-    return possibilities
-
-# Note on the program structure:
-#
-# The Python extension to gdb is plenty powerful, but it is infuriating
-# in one regard: Debugging.  I've gotten used to source level debugging, and
-# the irony of having to do print-level debugging in an extension to a source-
-# level debugger is delicious, but mainly in the sense that some people like
-# the taste of beetles.  So, I have jumped through some hoops so that I could
-# do at least *some* debugging in Visual Studio even though the gdb object
-# isn't available.  Bob Dubner, 2019-07-23
 
 class CPrintWorker():
     """Does most of the non-gdb work of CPrint()"""
@@ -2242,7 +2258,58 @@ class CPrintWorker():
         self.use_cprint = os.environ.get("CPRINT", "cprint")
         self.machine_interface_mode = False
 
-    def ProcessDisplayMode(self, args, TabFile):
+    def ProcessSlashV(self,args):
+        # We know the first two characters of args[0] are "/v"
+        v_code = None
+        if len(args[0]) == 3:
+            # This is a single-digit display v-code:
+            v_code = args[0][2]
+            args.pop(0)
+        if v_code in "012d":
+            # It's a valid display_mode.  Make it the one-time mode:
+            self.current_display_mode = v_code
+            if len(args) == 0:
+                # There are no additional arguments, so make it the session mode
+                self.sticky_display_mode = self.current_display_mode
+        else:
+            print("The /v code is invalid")
+            args = []
+        pass
+
+    def ProcessSlashR(self,args):
+        # We know the first two characters of args[0] are "/r"
+        r_code = ""
+        if len(args[0]) == 2 and len(args) == 1:
+            # There is but the one '/r' argument, so it is a request to display the range:
+            if int(GV_ModuleState.question_mark_range) < 0:
+                print("The 'cprint ?' range is currently the same as 'cprint *'")
+            else:
+                print("The 'cprint ?' range is currently +/-", GV_ModuleState.question_mark_range, "lines")
+            args = []
+            return args
+
+        if len(args[0]) >= 3:
+            r_code = args[0][2:]
+            args.pop(0)
+        elif len(args) >= 2:
+            r_code = args[1]
+            args.pop(0)
+            args.pop(0)
+
+        if r_code.lstrip('-').isnumeric():
+            # This is a request to change the question_mark_range.  We will make
+            # the change and reset the display by deleting the old_dogs, even
+            # if the value hasn't actually changed:
+            GV_ModuleState.question_mark_range = int(r_code)
+            GV_ModuleState.old_dogs = set()
+        else:
+            print("The /r command is malformed")
+            args = []
+
+        return args
+
+    def ProcessDisplayMode(self, args):
+        args = args.split(' ')
         self.machine_interface_mode = False
         # Make sure the current display mode is the same as the session mode
         self.current_display_mode = self.sticky_display_mode
@@ -2252,56 +2319,24 @@ class CPrintWorker():
         # Now see if he wants to change it
         if len(args) >= 1:
             # if the first argument is /d, turn on our debug flag:
-            if args[0] == '/d':
+            if args[0] == "/d":
                 self.current_display_mode = 'd'
                 args.pop(0)
-            if args[0] == '/x':
+            if args[0] == "/x":
                 self.current_display_submode = 'x'
                 args.pop(0)
-            if args[0] == '/b':
+            if args[0] == "/b":
                 self.current_display_submode = 'b'
                 args.pop(0)
-            elif args[0] == '/m':
+            elif args[0] == "/m":
                 self.machine_interface_mode = True
                 args.pop(0)
-            elif args[0] == '/v':
-                self.current_display_mode = '0'
-                args.pop(0)
-            elif len(args[0]) >= 3 and args[0][0:2] == '/v':
-                # This is a display v-code:
-                v_code = args[0][2]
-                args.pop(0)
-                if v_code in "012d":
-                    # It's a valid display_mode
-                    self.current_display_mode = v_code
-                    # if len(args) is down to zero, then any /v code established here
-                    # becomes the new session default.  Otherwise, it'll apply only once
-                    if len(args) == 0:
-                        self.sticky_display_mode = self.current_display_mode
-            elif len(args) == 2 and args[0] == '/r' and args[1].lstrip('-').isnumeric():
-                # This is a request to change the question_mark_range
-                TabFile.question_mark_range = int(args[1])
-                print("The 'cprint ?' range has been set to +/-", TabFile.question_mark_range, "lines")
-                TabFile.old_dogs = set()
-                args = ['?']
-            elif len(args[0]) > 2 and args[0][0:2] == '/r':
-                # This is a request to change the question_mark_range
-                range = args[0][2:]
-                if range.lstrip('-').isnumeric():
-                    TabFile.question_mark_range = int(range)
-                if int(TabFile.question_mark_range) < 0:
-                    print("The 'cprint ?' range has been set to the same as 'cprint *'")
-                else:
-                    print("The 'cprint ?' range has been set to", TabFile.question_mark_range)
-                TabFile.old_dogs = set()
-                args = ['?']
-            elif len(args) == 1 and args[0] == '/r':
-                # There is but the one '/r' argument, so it is a request to display the range:
-                if int(TabFile.question_mark_range) < 0:
-                    print("The 'cprint ?' range is currently the same as 'cprint *'")
-                else:
-                    print("The 'cprint ?' range is currently +/-", TabFile.question_mark_range, "lines")
-                args = []
+            elif args[0][0:2] == "/v":
+                args = self.ProcessSlashV(args)
+            elif args[0][0:2] == "/r":
+                args = self.ProcessSlashR(args)
+
+        args = ' '.join(args)
 
         return args
 
@@ -2341,7 +2376,7 @@ class CPrintWorker():
             pass
 
     @staticmethod
-    def set_var_value(tab_file, payload, value):
+    def set_var_value(payload, value):
         number_regexp = re.compile(r'[0-9]+|[0-9]+[\.,][0-9]+')
         return_value = 1
 
@@ -2352,76 +2387,158 @@ class CPrintWorker():
             if payload.PutDataAsString(value) == 0:
                 return_value = 0
         else:
-            possibilities, from_digit = get_sorted_possibilities(value, tab_file, 1)
+            possibilities, from_digit = get_sorted_possibilities(value, 1)
             if len(possibilities) == 1:
-                payload_s = tab_file.var_trie.storage_list[possibilities[0]]
+                payload_s = GV_ModuleInformation.var_trie.storage_list[possibilities[0]]
                 if payload.PutDataAsVar(payload_s) == 0:
                     return_value = 0
             else:
                 print("Variable not found: " + str(value))
                 return_value = 0
 
+        if return_value == 1:
+            # Fetch the data we just assigned, so that subsequent display is valid
+            payload.FetchVariableData(GV_ModuleInformation.line_list, False)
+
         return return_value
 
-    def ProcessArguments(self, TabFile, arguments):
-        # The command is typically "cprint A B C" or "cprint/d A B C"
-        # There is also the possibility of an '=' character, whereby the
-        # value after the '=' is assigned to the variable described to the left
-        preargs = arguments.split('=', 1)
+    def ProcessArgumentsMachineMode(self,leftside,rightside,leftside_possibilities,rightside_possibilities):
+        """We arrive here when processing a cprint/m"""
+        if len(leftside_possibilities) == 0:
+            # just return quietly.  The variable not found message
+            # confuses Visual Studio Code
+            return
 
-        rside = None
-        if len(preargs) > 1:
-            rside = preargs[1].strip()
+        if len(leftside_possibilities) == 1 and not rightside and leftside[0] != '*' and leftside[0] != '?':
+            # Very special case.  This was a `cprint/m something`, which is what happens when
+            # the -data-evaluate-expression command is issued by Visual Studio Code.  I considered creating
+            # a unique 'print/e ' command, but then I realized that VSC never issues a 'cprint/m something' unless there
+            # is also an 'rside'.  So, this code is in response to a `-data-evalute-expression` equivalent command
+            payload_index = leftside_possibilities[0]
+            payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+            s = 'value="' + MachineInterfaceBodyAlt(payload.display_body) + '"'
+            print(s)
+            return
 
-        # The variable name side is to the left of any '=' character
-        args = []
-        argsargs = preargs[0].split()
-        for arg in argsargs:
-            args.append(arg)
+        if len(leftside_possibilities) == 1 and rightside and leftside[0] != '*' and leftside[0] != '?':
+            if self.set_var_value(payload, rightside) == 0:
+                # The assignment failed
+                return
 
-        args = self.ProcessDisplayMode(args, TabFile)
+            disp_str = payload.display_name + " set to " + payload.display_body
+            print(disp_str)
+            return
 
-        # TODO early exit if we just set the range  -> cp /r 4
-        #if len(preargs) >= 1 and preargs[0][0:2] == '/r':
-        #    return
+        # In machine_interface mode, we just return the possibility(ies).
+        # Because we are going to be showing the data in a heirarchical way,
+        # we want to be sure every sub-level of a 01 Level variable is visible:
+        ppp = set(leftside_possibilities)
+        for i in leftside_possibilities:
+            tokens = GV_ModuleInformation.var_trie.storage_list[i].Name.split('/')
+            var = tokens[-2]
+            prog = tokens[-1]
+            u = i - 1
+            while u >= 0:
+                tokens = GV_ModuleInformation.var_trie.storage_list[u].Name.split('/')
+                if tokens[-2] != var or tokens[-1] != prog:
+                    break
+                ppp.add(u)
+                u -= 1
+            d = i + 1
+            while d < len(GV_ModuleInformation.var_trie.storage_list):
+                tokens = GV_ModuleInformation.var_trie.storage_list[d].Name.split('/')
+                if tokens[-2] != var or tokens[-1] != prog:
+                    break
+                ppp.add(d)
+                d += 1
 
-        possibilities = MetaPossibilities(args, TabFile, self.machine_interface_mode, rside, self.current_display_submode)
-        if len(possibilities) == 1:
+            leftside_possibilities = list(ppp)
+            leftside_possibilities.sort()
+
+            s = MachineInterfaceHeirarchical(GV_ModuleInformation, leftside_possibilities)
+            print(s)
+
+    def ProcessArgumentsHumanMode(self,from_digit,leftside,rightside,leftside_possibilities,rightside_possibilities):
+        if len(leftside_possibilities) > 1:
+            GV_GlobalVariables.ShortTermMemory = []
+
+            line_counter = 1
+            for payload_index in leftside_possibilities:
+                payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+                # We don't need to fetch; get_sorted_possibilities() just did that
+                #payload.FetchVariableData(GV_ModuleInformation.line_list, False)
+                if not payload.not_in_context:
+                    GV_GlobalVariables.ShortTermMemory.append(payload_index)
+                    s = "{0:2} : ".format(line_counter)
+                    line_counter += 1
+                    s += payload.display_name
+                    s += " : "
+
+                    body = payload.display_body
+                    if self.current_display_submode == 'x' and len(payload.data) <= 16:
+                        body = payload.display_body_hex
+
+                    s += body
+                    retval = OurPrint(NoNulls(s))
+                    if retval == "Quit":
+                        break
+
+        if len(leftside_possibilities) == 1 and not from_digit:
+            GV_GlobalVariables.ShortTermMemory = [leftside_possibilities[0]]
+
+        if len(leftside_possibilities) == 1:
             # There is but one possibility
             # Pick up the payload from the list
-            payload = TabFile.var_trie.storage_list[possibilities[0]]
+            payload = GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]]
 
-            if rside:
-                if self.set_var_value(TabFile, payload, rside) == 0:
+            if rightside:
+                if self.set_var_value(payload, rightside) == 0:
+                    # The assignment failed
                     return
 
-                if self.machine_interface_mode:
-                    # body = MachineInterfaceBody(payload.display_body)
+            # Human-interface:
+            # Fetch the data again, just in case he executed some instructions
+            # since short-term-memory was established
+            if from_digit:
+                payload.FetchVariableData(GV_ModuleInformation.line_list, True)
+            # And display the variable according to the current list v-level
+            self.FormattedDisplay(payload)
 
-                    disp_str = payload.display_name + " set to " + payload.display_body
-                    print(disp_str)
+    def ProcessArguments(self, arguments):
+        # First, look for /[dxvmvr] switches:
+        args = self.ProcessDisplayMode(arguments)
 
-            if not self.machine_interface_mode:
-                # Human-interface:
-                # Fetch the data again, just in case he executed some instructions
-                # since short-term-memory was established
-                payload.FetchVariableData(TabFile.line_list, True)
-                # And display the variable according to the current list v-level
-                self.FormattedDisplay(payload)
-        elif not possibilities:
-            if self.machine_interface_mode:
-                # just return quietly.  The variable not found message
-                # confuses Visual Studio Code
-                return
-            # Happens for example with R = 0 and cprint on PERFORM line
-            if len(args) >= 1 and args[0] == '?':
-                print("No variables found within 'question-mark' range")
-                return
-            # TODO print("Variable not found: " + str(value))
-            print("Variable not found")
+        # At this point, we have args[], which should be
+        #    <var>
+        # or
+        #    <var> = literal
+        # or
+        #    <var1> = <var2>
+        #
+        # <var> is a COBOL variable, which can be
+        #   A
+        #   A of B
+        #   A in B
+        #   A/B
+        #   A.B
+        left_side  = ""
+        right_side = ""
+        leftright = args.split('=', 1)
+
+        # Pick up the left and right sides:
+        if len(leftright) > 0:
+            left_side = leftright[0].strip().split()
+
+        if len(leftright) > 1:
+            right_side = leftright[1].strip()
+
+        leftside_possibilities, from_digit  = get_sorted_possibilities(left_side, 0)
+        rightside_possibilities, from_digit = get_sorted_possibilities(right_side, 1)
+
+        if self.machine_interface_mode:
+            self.ProcessArgumentsMachineMode(left_side,right_side,leftside_possibilities,rightside_possibilities)
         else:
-            if rside:
-                print("assignment needs exactly one possible variable")
+            self.ProcessArgumentsHumanMode(from_digit,left_side,right_side,leftside_possibilities,rightside_possibilities)
 
 class CWatchWorker():
     """Does most of the non-gdb work of CWatch()"""
@@ -2452,7 +2569,7 @@ class CWatchWorker():
         else:
             print("Internal error: Watchpoint type not recognized")
 
-    def process_watch_arguments(self, tab_file, arguments):
+    def process_watch_arguments(self, arguments):
         wp_type = 'WPW'
         wp_refmod = ""
         wp_arg = ""
@@ -2490,14 +2607,14 @@ class CWatchWorker():
         else:
             wp_arg, wp_refmod = get_refmod(args[0])
 
-        possibilities, from_digit = get_sorted_possibilities(wp_arg, tab_file, 1)
+        possibilities, from_digit = get_sorted_possibilities(wp_arg, 1)
         if len(possibilities) == 1:
             payload_number = possibilities[0]
             # print("Watch Payload number is ", payload_number)
 
             # Pick up the payload from the list
-            payload = tab_file.var_trie.storage_list[payload_number]
-            payload.FetchVariableData(tab_file.line_list, False)
+            payload = GV_ModuleInformation.var_trie.storage_list[payload_number]
+            payload.FetchVariableData(GV_ModuleInformation.line_list, False)
 
             # And go set the Watchpoint
             self.set_watchpoint(payload, wp_type, wp_refmod)
@@ -2584,20 +2701,19 @@ class CBreakWorker():
         return return_value
 
     @staticmethod
-    def get_var_payload(tab_file, search_var):
+    def get_var_payload(search_var):
         payload = None
         possibilities = []
 
-        tab_file.ReadSymbolTableText()
-        if tab_file.current_trapped_line > 0:
-            possibilities, from_digit = get_sorted_possibilities(search_var, tab_file, 1)
+        GV_ModuleState.EstablishModuleState()
+        possibilities, from_digit = get_sorted_possibilities(search_var, 1)
 
         if len(possibilities) == 1:
             payload_number = possibilities[0]
 
             # Pick up the payload from the list
-            payload = tab_file.var_trie.storage_list[payload_number]
-            payload.FetchVariableData(tab_file.line_list, False)
+            payload = GV_ModuleInformation.var_trie.storage_list[payload_number]
+            payload.FetchVariableData(GV_ModuleInformation.line_list, False)
             if search_var.upper() not in payload.Name.upper():
                 payload = None
 
@@ -2808,7 +2924,7 @@ class CBreakWorker():
 
         return arg_list
 
-    def set_cond_break(self, tab_file, args, break_point, is_lit):
+    def set_cond_break(self, args, break_point, is_lit):
         var_f = ""
         refmod_f = ""
         var_s = ""
@@ -2817,13 +2933,13 @@ class CBreakWorker():
 
         var_f, refmod_f, var_s, refmod_s, condition = self.get_var_data(args)
 
-        payload_f = self.get_var_payload(tab_file, var_f)
+        payload_f = self.get_var_payload(var_f)
         if payload_f is None:
             print("Variable {0} not found".format(var_f))
             return
 
         if is_lit == 0 and not var_s.isdigit():
-            payload_s = self.get_var_payload(tab_file, var_s)
+            payload_s = self.get_var_payload(var_s)
             if payload_s is None:
                 print("Variable {0} not found".format(var_s))
                 return
@@ -2839,7 +2955,7 @@ class CBreakWorker():
                 print("Not yet implemented")
                 return
 
-    def process_break_arguments(self, tab_file, arguments):
+    def process_break_arguments(self, arguments):
         is_lit = 0
         if arguments and arguments[-1] in ('"', '\''):
             is_lit = 1
@@ -2873,7 +2989,7 @@ class CBreakWorker():
 
             del args[1]
 
-            self.set_cond_break(tab_file, args, None, is_lit)
+            self.set_cond_break(args, None, is_lit)
         else:
             print('Breakpoint parameters not recognized')
             return
@@ -2892,7 +3008,7 @@ class CBreakWorker():
 
         return return_breakpoint
 
-    def process_condition_arguments(self, tab_file, arguments):
+    def process_condition_arguments(self, arguments):
         is_lit = 0
         if arguments[-1] in ('"', '\''):
             is_lit = 1
@@ -2907,13 +3023,11 @@ class CBreakWorker():
             return
 
         if len(args) >= 3 and len(args) <= 5:
-            self.set_cond_break(tab_file, args, break_point, is_lit)
+            self.set_cond_break(args, break_point, is_lit)
         else:
             print('Breakpoint parameters not recognized')
             return
 
-
-CBLDBG_TABFILE = TabFileInformation()
 CBLDBG_CBREAK_WORKER = CBreakWorker()
 
 class CPrint(gdb.Command):
@@ -2922,9 +3036,9 @@ class CPrint(gdb.Command):
     COBOL cprint command usage:
     cprint <arg>        shows <arg> using session-default formatting
     cprint/v<n> <arg>   displays <arg> with a one-time formatting override
-    cprint/v0           name and variable on one line (this is the default)
-    cprint/v1           just the variable
-    cprint/v2           two-line display with name, then variable
+    cprint/v0           set session formatting to name and variable on one line (this is the default)
+    cprint/v1           set session formatting to just the variable
+    cprint/v2           set session formatting to two-line display with name, then variable
     cprint/x            show numeric value in hexadecimal
     cprint/b            show numeric value in binary
     cprint/d            show expanded information
@@ -2946,7 +3060,6 @@ class CPrint(gdb.Command):
 
     def __init__(self):
         self.worker = CPrintWorker()
-        self.tab_file = CBLDBG_TABFILE
 
         print('Registering CPrint as ' + self.worker.use_cprint + ' ' + COBCD_VERSION)
         super(CPrint, self).__init__(self.worker.use_cprint, gdb.COMMAND_DATA)
@@ -2963,8 +3076,8 @@ class CPrint(gdb.Command):
                     GV_GlobalVariables.repeat_count = 1000000
                 return
 
-            self.tab_file.ReadSymbolTableText()
-            self.worker.ProcessArguments(self.tab_file, arguments)
+            GV_ModuleState.EstablishModuleState()
+            self.worker.ProcessArguments(arguments)
         except:
             traceback.print_exc()
 
@@ -2986,13 +3099,12 @@ A watchpoint stops execution of your program whenever the value of an expression
         super(CWatch, self).__init__("cwatch", gdb.COMMAND_BREAKPOINTS)
         print('Registering CWatch')
         self.worker = CWatchWorker()
-        self.tab_file = CBLDBG_TABFILE
 
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
         try:
-            self.tab_file.ReadSymbolTableText()
-            self.worker.process_watch_arguments(self.tab_file, arguments)
+            GV_ModuleState.EstablishModuleState()
+            self.worker.process_watch_arguments(arguments)
         except:
             traceback.print_exc()
 
@@ -3033,14 +3145,13 @@ A breakpoint stops execution of your program whenever the expression matches
 
     def __init__(self):
         self.worker = CBLDBG_CBREAK_WORKER
-        self.tab_file = CBLDBG_TABFILE
 
         print('Registering CBreak')
         super(CBreak, self).__init__("cbreak", gdb.COMMAND_BREAKPOINTS)
 
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
-        self.worker.process_break_arguments(self.tab_file, arguments)
+        self.worker.process_break_arguments(arguments)
 
 
 class CCondition(gdb.Command):
@@ -3052,14 +3163,13 @@ Do "help cbreak" for info on COBOL expressions"""
 
     def __init__(self):
         self.worker = CBLDBG_CBREAK_WORKER
-        self.tab_file = CBLDBG_TABFILE
 
         print('Registering CCondition')
         super(CCondition, self).__init__("ccondition", gdb.COMMAND_BREAKPOINTS)
 
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
-        self.worker.process_condition_arguments(self.tab_file, arguments)
+        self.worker.process_condition_arguments(arguments)
 
 
 class CStart(gdb.Command):
@@ -3068,8 +3178,6 @@ Any arguments after the cstart command are passed to the executable.  If present
 they override any that might have been passed to GDB with --args."""
 
     def __init__(self):
-        self.tab_file = CBLDBG_TABFILE
-
         print('Registering CStart')
         super(CStart, self).__init__("cstart", gdb.COMMAND_USER)
 
@@ -3130,11 +3238,10 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
     def __init__(self):
         super(CNext, self).__init__("cnext", gdb.COMMAND_BREAKPOINTS)
         print('Registering CNext')
-        self.tab_file = CBLDBG_TABFILE
 
     def invoke(self, arguments, from_tty):
         try:
-            self.tab_file.ReadSymbolTableText()
+            GV_ModuleState.EstablishModuleState()
             if arguments:
                 ncount = int(arguments)
             else:
@@ -3142,8 +3249,8 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
             while ncount > 0:
                 command = "info stack"
                 key = gdb.execute(command, False, True).split('\n')[0].split()[-1]
-                if key in self.tab_file.perform_commands:
-                    command = "until " + self.tab_file.perform_commands[key]
+                if key in GV_ModuleInformation.perform_commands:
+                    command = "until " + GV_ModuleInformation.perform_commands[key]
                     gdb.execute(command, True, False)
 
                     # If we went to a specific line location, then the UNTIL leaves
@@ -3153,7 +3260,7 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
                     # in that case, we issue an extra step to get GDB and the
                     # COBOL source code line in sync.
 
-                    if self.tab_file.perform_commands[key].find(':') == -1:
+                    if GV_ModuleInformation.perform_commands[key].find(':') == -1:
                         command = "step"
                         gdb.execute(command, True, False)
 
