@@ -276,9 +276,11 @@ build(PARAMETERS &params,
     // I hope it works.  I did the renumbering for a reason, although I did it over
     // a year ago and I don't remember why.
 
-#if 0
-    // And then, let's put the modified list of filenames right at the beginning:
+    // And then, let's put the modified list of filenames right at the beginning,
+    // because otherwise we might end up with forward references to .cob because of
+    // the way we interject .cob references near function calls.
 
+#if 0
     for(map<string,int>::const_iterator it=input_file_mappings.begin();
             it != input_file_mappings.end();
             it++
@@ -287,10 +289,18 @@ build(PARAMETERS &params,
         int newnum = replacements[oldnum];
         if( newnum ) {
             fprintf(f,"\t.file %d \"%s\"\n",newnum,it->first.c_str());
-            //ss << "\t.file " << newnum << " \"" << it->first << "\"" << endl;
         }
     }
 #endif
+
+    for(map<string,int>::const_iterator it=input_file_mappings.begin();
+            it != input_file_mappings.end();
+            it++) {
+        if( it->second != -1 ){
+            fprintf(f,"\t.file %d \"%s\"\n",it->second,it->first.c_str());
+        }
+    }
+
 
     int next_function_reference_index = 0;
 
@@ -377,8 +387,7 @@ build(PARAMETERS &params,
             fd.current_index = remember;
         }
 
-#if 0
-        // Refer to the Version4.23 comments up above
+#if 1
         if( strstr(ach,".file") ) {
             // We've already taken care of all .file lines
             continue;
