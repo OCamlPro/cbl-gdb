@@ -1759,7 +1759,7 @@ class ModuleInformation():
                         # and now that we have all the chunks, we can assemble
                         # them into the VARIABLE_STRING_xxx
                         self.current_variable_string = "".join(lines)
-                        
+
                         # We have a new variable string
                         # Clear out the tables:
                         self.var_trie = VarTrie()
@@ -2168,7 +2168,7 @@ def get_sorted_possibilities(args, limit):
     possibilities = []
     from_digit = False
 
-    if len(args) >= 1:
+    if len(args) >= 1 and GV_ModuleState.current_trapped_line>0:
         if args[0].find('*') != -1:
             # If the first, presumably single, argument contains an asterisk, then
             # he is asking for a list of variables and values:
@@ -2181,7 +2181,7 @@ def get_sorted_possibilities(args, limit):
             # suspects.  The idea here is that sometimes MOVE A TO B is the last line
             # of a PARAGRAPH, so as soon as it is executed control jumps elsewhere and
             # B falls out of context.  Or perhaps the next GDB command is a CONTINUE,
-            # rather than NEXT.  By keeping one stage of stickiness, the display of variables
+            # rather than NEXT.  By keeping one level of stickiness, the display of '?' variables
             # will be a bit more like what the user probably expects.
 
             if len(GV_ModuleState.current_full_path) > 0:
@@ -2223,13 +2223,18 @@ def get_sorted_possibilities(args, limit):
             # to come up with the possibilities_1:
             possibilities_1 = GV_ModuleInformation.var_trie.GetListOfPossibilities(args)
 
-    # We now have a list of possibilities_1 based on the names of the variables
-    # typically, some of them will not be in context.  We wish, at this point
-    # to eliminate such variables.  The bad news is that this means we
-    # have to fetch all the variables data twice.  But, heck.
+    # If there are too many possibilities_1, then return nothing.  limit will usually
+    # be zero or one.  Zero means return everything; one means return only the possibilities
+    # when there is just one, which is useful in situations like "cprint A = B", which can only
+    # work if A and B are unambiguous
 
     if limit > 0 and len(possibilities_1) > limit:
         return possibilities, from_digit
+
+    # We now have a list of possibilities_1 based on the names of the variables
+    # typically, some of them will not be in context.  The only way of
+    # knowing which variables are in context is to try to read them.  If we
+    # can't read them, then we don't add them to our list:
 
     for payload_index in possibilities_1:
         payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
@@ -2237,103 +2242,10 @@ def get_sorted_possibilities(args, limit):
         if not payload.not_in_context:
             possibilities.append(payload_index)
 
-    # What we do now depends on how many possibilities there are
+    # Sorting them makes the display much more sensible:
     possibilities.sort()
 
     return possibilities, from_digit
-
-
-def MetaPossibilities(args, machine_interface_mode, rside, submode):
-    possibilities = []
-    from_digit = False
-    if GV_ModuleState.current_trapped_line > 0:
-        possibilities, from_digit = get_sorted_possibilities(args, 0)
-
-    if len(possibilities) == 1 and machine_interface_mode and not rside and args[0] != '*' and args[0] != '?':
-        # Very special case.  This was a `cprint/m something`, which is what happens when
-        # the -data-evaluate-expression command is issued by Visual Studio Code.  I considered creating
-        # a unique 'print/e ' command, but then I realized that VSC never issues a 'cprint/m something' unless there
-        # is also an 'rside'.  So, this code is in response to a `-data-evalute-expression` equivalent command
-        payload_index = possibilities[0]
-        payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(GV_ModuleInformation.line_list, False)
-        s = 'value="' + MachineInterfaceBodyAlt(payload.display_body) + '"'
-        print(s)
-        possibilities = []
-        return possibilities
-
-    if len(possibilities) > 1 or machine_interface_mode:
-        # In machine_interface mode, we just return the possibility(ies).  In human
-        # mode, if there is more than one, we create a numbered list; the user can later
-        # specify a variable by the number
-        if machine_interface_mode:
-            # Because we are going to be showing the data in a heirarchical way,
-            # we want to be sure every sub-level of a 01 Level variable is visible:
-            ppp = set(possibilities)
-            for i in possibilities:
-                tokens = GV_ModuleInformation.var_trie.storage_list[i].Name.split('/')
-                var = tokens[-2]
-                prog = tokens[-1]
-                u = i - 1
-                while u >= 0:
-                    tokens = GV_ModuleInformation.var_trie.storage_list[u].Name.split('/')
-                    if tokens[-2] != var or tokens[-1] != prog:
-                        break
-                    ppp.add(u)
-                    u -= 1
-                d = i + 1
-                while d < len(GV_ModuleInformation.var_trie.storage_list):
-                    tokens = GV_ModuleInformation.var_trie.storage_list[d].Name.split('/')
-                    if tokens[-2] != var or tokens[-1] != prog:
-                        break
-                    ppp.add(d)
-                    d += 1
-
-            possibilities = list(ppp)
-            possibilities.sort()
-
-            # s = MachineInterfaceFlat(GV_ModuleInformation, possibilities)
-            s = MachineInterfaceHeirarchical(GV_ModuleInformation, possibilities)
-            print(s)
-
-        else:
-            GV_GlobalVariables.ShortTermMemory = []
-
-            # This is human-interactive mode
-            # and show them to our user
-            line_counter = 1
-            for payload_index in possibilities:
-                payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
-                payload.FetchVariableData(GV_ModuleInformation.line_list, False)
-                if not payload.not_in_context:
-                    GV_GlobalVariables.ShortTermMemory.append(payload_index)
-                    s = "{0:2} : ".format(line_counter)
-                    line_counter += 1
-                    s += payload.display_name
-                    s += " : "
-
-                    body = payload.display_body
-                    if submode == 'x' and len(payload.data) <= 16:
-                        body = payload.display_body_hex
-
-                    s += body
-                    retval = OurPrint(NoNulls(s))
-                    if retval == "Quit":
-                        break
-    if len(possibilities) == 1 and not from_digit:
-        GV_GlobalVariables.ShortTermMemory = [possibilities[0]]
-
-    return possibilities
-
-# Note on the program structure:
-#
-# The Python extension to gdb is plenty powerful, but it is infuriating
-# in one regard: Debugging.  I've gotten used to source level debugging, and
-# the irony of having to do print-level debugging in an extension to a source-
-# level debugger is delicious, but mainly in the sense that some people like
-# the taste of beetles.  So, I have jumped through some hoops so that I could
-# do at least *some* debugging in Visual Studio even though the gdb object
-# isn't available.  Bob Dubner, 2019-07-23
 
 class CPrintWorker():
     """Does most of the non-gdb work of CPrint()"""
@@ -2346,7 +2258,58 @@ class CPrintWorker():
         self.use_cprint = os.environ.get("CPRINT", "cprint")
         self.machine_interface_mode = False
 
+    def ProcessSlashV(self,args):
+        # We know the first two characters of args[0] are "/v"
+        v_code = None
+        if len(args[0]) == 3:
+            # This is a single-digit display v-code:
+            v_code = args[0][2]
+            args.pop(0)
+        if v_code in "012d":
+            # It's a valid display_mode.  Make it the one-time mode:
+            self.current_display_mode = v_code
+            if len(args) == 0:
+                # There are no additional arguments, so make it the session mode
+                self.sticky_display_mode = self.current_display_mode
+        else:
+            print("The /v code is invalid")
+            args = []
+        pass
+
+    def ProcessSlashR(self,args):
+        # We know the first two characters of args[0] are "/r"
+        r_code = ""
+        if len(args[0]) == 2 and len(args) == 1:
+            # There is but the one '/r' argument, so it is a request to display the range:
+            if int(GV_ModuleState.question_mark_range) < 0:
+                print("The 'cprint ?' range is currently the same as 'cprint *'")
+            else:
+                print("The 'cprint ?' range is currently +/-", GV_ModuleState.question_mark_range, "lines")
+            args = []
+            return args
+
+        if len(args[0]) >= 3:
+            r_code = args[0][2:]
+            args.pop(0)
+        elif len(args) >= 2:
+            r_code = args[1]
+            args.pop(0)
+            args.pop(0)
+
+        if r_code.lstrip('-').isnumeric():
+            # This is a request to change the question_mark_range.  We will make
+            # the change and reset the display by deleting the old_dogs, even
+            # if the value hasn't actually changed:
+            GV_ModuleState.question_mark_range = int(r_code)
+            GV_ModuleState.old_dogs = set()
+        else:
+            print("The /r command is malformed")
+            args = []
+
+        return args
+
     def ProcessDisplayMode(self, args):
+        args = args.split(' ')
         self.machine_interface_mode = False
         # Make sure the current display mode is the same as the session mode
         self.current_display_mode = self.sticky_display_mode
@@ -2356,56 +2319,24 @@ class CPrintWorker():
         # Now see if he wants to change it
         if len(args) >= 1:
             # if the first argument is /d, turn on our debug flag:
-            if args[0] == '/d':
+            if args[0] == "/d":
                 self.current_display_mode = 'd'
                 args.pop(0)
-            if args[0] == '/x':
+            if args[0] == "/x":
                 self.current_display_submode = 'x'
                 args.pop(0)
-            if args[0] == '/b':
+            if args[0] == "/b":
                 self.current_display_submode = 'b'
                 args.pop(0)
-            elif args[0] == '/m':
+            elif args[0] == "/m":
                 self.machine_interface_mode = True
                 args.pop(0)
-            elif args[0] == '/v':
-                self.current_display_mode = '0'
-                args.pop(0)
-            elif len(args[0]) >= 3 and args[0][0:2] == '/v':
-                # This is a display v-code:
-                v_code = args[0][2]
-                args.pop(0)
-                if v_code in "012d":
-                    # It's a valid display_mode
-                    self.current_display_mode = v_code
-                    # if len(args) is down to zero, then any /v code established here
-                    # becomes the new session default.  Otherwise, it'll apply only once
-                    if len(args) == 0:
-                        self.sticky_display_mode = self.current_display_mode
-            elif len(args) == 2 and args[0] == '/r' and args[1].lstrip('-').isnumeric():
-                # This is a request to change the question_mark_range
-                GV_ModuleState.question_mark_range = int(args[1])
-                print("The 'cprint ?' range has been set to +/-", GV_ModuleState.question_mark_range, "lines")
-                GV_ModuleState.old_dogs = set()
-                args = ['?']
-            elif len(args[0]) > 2 and args[0][0:2] == '/r':
-                # This is a request to change the question_mark_range
-                range = args[0][2:]
-                if range.lstrip('-').isnumeric():
-                    GV_ModuleState.question_mark_range = int(range)
-                if int(GV_ModuleState.question_mark_range) < 0:
-                    print("The 'cprint ?' range has been set to the same as 'cprint *'")
-                else:
-                    print("The 'cprint ?' range has been set to", GV_ModuleState.question_mark_range)
-                GV_ModuleState.old_dogs = set()
-                args = ['?']
-            elif len(args) == 1 and args[0] == '/r':
-                # There is but the one '/r' argument, so it is a request to display the range:
-                if int(GV_ModuleState.question_mark_range) < 0:
-                    print("The 'cprint ?' range is currently the same as 'cprint *'")
-                else:
-                    print("The 'cprint ?' range is currently +/-", GV_ModuleState.question_mark_range, "lines")
-                args = []
+            elif args[0][0:2] == "/v":
+                args = self.ProcessSlashV(args)
+            elif args[0][0:2] == "/r":
+                args = self.ProcessSlashR(args)
+
+        args = ' '.join(args)
 
         return args
 
@@ -2465,67 +2396,149 @@ class CPrintWorker():
                 print("Variable not found: " + str(value))
                 return_value = 0
 
+        if return_value == 1:
+            # Fetch the data we just assigned, so that subsequent display is valid
+            payload.FetchVariableData(GV_ModuleInformation.line_list, False)
+
         return return_value
 
-    def ProcessArguments(self, arguments):
-        # The command is typically "cprint A B C" or "cprint/d A B C"
-        # There is also the possibility of an '=' character, whereby the
-        # value after the '=' is assigned to the variable described to the left
-        preargs = arguments.split('=', 1)
+    def ProcessArgumentsMachineMode(self,leftside,rightside,leftside_possibilities,rightside_possibilities):
+        """We arrive here when processing a cprint/m"""
+        if len(leftside_possibilities) == 0:
+            # just return quietly.  The variable not found message
+            # confuses Visual Studio Code
+            return
 
-        rside = None
-        if len(preargs) > 1:
-            rside = preargs[1].strip()
+        if len(leftside_possibilities) == 1 and not rightside and leftside[0] != '*' and leftside[0] != '?':
+            # Very special case.  This was a `cprint/m something`, which is what happens when
+            # the -data-evaluate-expression command is issued by Visual Studio Code.  I considered creating
+            # a unique 'print/e ' command, but then I realized that VSC never issues a 'cprint/m something' unless there
+            # is also an 'rside'.  So, this code is in response to a `-data-evalute-expression` equivalent command
+            payload_index = leftside_possibilities[0]
+            payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+            s = 'value="' + MachineInterfaceBodyAlt(payload.display_body) + '"'
+            print(s)
+            return
 
-        # The variable name side is to the left of any '=' character
-        args = []
-        argsargs = preargs[0].split()
-        for arg in argsargs:
-            args.append(arg)
+        if len(leftside_possibilities) == 1 and rightside and leftside[0] != '*' and leftside[0] != '?':
+            if self.set_var_value(payload, rightside) == 0:
+                # The assignment failed
+                return
 
-        args = self.ProcessDisplayMode(args)
+            disp_str = payload.display_name + " set to " + payload.display_body
+            print(disp_str)
+            return
 
-        # TODO early exit if we just set the range  -> cp /r 4
-        #if len(preargs) >= 1 and preargs[0][0:2] == '/r':
-        #    return
+        # In machine_interface mode, we just return the possibility(ies).
+        # Because we are going to be showing the data in a heirarchical way,
+        # we want to be sure every sub-level of a 01 Level variable is visible:
+        ppp = set(leftside_possibilities)
+        for i in leftside_possibilities:
+            tokens = GV_ModuleInformation.var_trie.storage_list[i].Name.split('/')
+            var = tokens[-2]
+            prog = tokens[-1]
+            u = i - 1
+            while u >= 0:
+                tokens = GV_ModuleInformation.var_trie.storage_list[u].Name.split('/')
+                if tokens[-2] != var or tokens[-1] != prog:
+                    break
+                ppp.add(u)
+                u -= 1
+            d = i + 1
+            while d < len(GV_ModuleInformation.var_trie.storage_list):
+                tokens = GV_ModuleInformation.var_trie.storage_list[d].Name.split('/')
+                if tokens[-2] != var or tokens[-1] != prog:
+                    break
+                ppp.add(d)
+                d += 1
 
-        possibilities = MetaPossibilities(args, self.machine_interface_mode, rside, self.current_display_submode)
-        if len(possibilities) == 1:
+            leftside_possibilities = list(ppp)
+            leftside_possibilities.sort()
+
+            s = MachineInterfaceHeirarchical(GV_ModuleInformation, leftside_possibilities)
+            print(s)
+
+    def ProcessArgumentsHumanMode(self,from_digit,leftside,rightside,leftside_possibilities,rightside_possibilities):
+        if len(leftside_possibilities) > 1:
+            GV_GlobalVariables.ShortTermMemory = []
+
+            line_counter = 1
+            for payload_index in leftside_possibilities:
+                payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+                # We don't need to fetch; get_sorted_possibilities() just did that
+                #payload.FetchVariableData(GV_ModuleInformation.line_list, False)
+                if not payload.not_in_context:
+                    GV_GlobalVariables.ShortTermMemory.append(payload_index)
+                    s = "{0:2} : ".format(line_counter)
+                    line_counter += 1
+                    s += payload.display_name
+                    s += " : "
+
+                    body = payload.display_body
+                    if self.current_display_submode == 'x' and len(payload.data) <= 16:
+                        body = payload.display_body_hex
+
+                    s += body
+                    retval = OurPrint(NoNulls(s))
+                    if retval == "Quit":
+                        break
+
+        if len(leftside_possibilities) == 1 and not from_digit:
+            GV_GlobalVariables.ShortTermMemory = [leftside_possibilities[0]]
+
+        if len(leftside_possibilities) == 1:
             # There is but one possibility
             # Pick up the payload from the list
-            payload = GV_ModuleInformation.var_trie.storage_list[possibilities[0]]
+            payload = GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]]
 
-            if rside:
-                if self.set_var_value(payload, rside) == 0:
+            if rightside:
+                if self.set_var_value(payload, rightside) == 0:
+                    # The assignment failed
                     return
 
-                if self.machine_interface_mode:
-                    # body = MachineInterfaceBody(payload.display_body)
-
-                    disp_str = payload.display_name + " set to " + payload.display_body
-                    print(disp_str)
-
-            if not self.machine_interface_mode:
-                # Human-interface:
-                # Fetch the data again, just in case he executed some instructions
-                # since short-term-memory was established
+            # Human-interface:
+            # Fetch the data again, just in case he executed some instructions
+            # since short-term-memory was established
+            if from_digit:
                 payload.FetchVariableData(GV_ModuleInformation.line_list, True)
-                # And display the variable according to the current list v-level
-                self.FormattedDisplay(payload)
-        elif not possibilities:
-            if self.machine_interface_mode:
-                # just return quietly.  The variable not found message
-                # confuses Visual Studio Code
-                return
-            # Happens for example with R = 0 and cprint on PERFORM line
-            if len(args) >= 1 and args[0] == '?':
-                print("No variables found within 'question-mark' range")
-                return
-            # TODO print("Variable not found: " + str(value))
-            print("Variable not found")
+            # And display the variable according to the current list v-level
+            self.FormattedDisplay(payload)
+
+    def ProcessArguments(self, arguments):
+        # First, look for /[dxvmvr] switches:
+        args = self.ProcessDisplayMode(arguments)
+
+        # At this point, we have args[], which should be
+        #    <var>
+        # or
+        #    <var> = literal
+        # or
+        #    <var1> = <var2>
+        #
+        # <var> is a COBOL variable, which can be
+        #   A
+        #   A of B
+        #   A in B
+        #   A/B
+        #   A.B
+        left_side  = ""
+        right_side = ""
+        leftright = args.split('=', 1)
+
+        # Pick up the left and right sides:
+        if len(leftright) > 0:
+            left_side = leftright[0].strip().split()
+
+        if len(leftright) > 1:
+            right_side = leftright[1].strip()
+
+        leftside_possibilities, from_digit  = get_sorted_possibilities(left_side, 0)
+        rightside_possibilities, from_digit = get_sorted_possibilities(right_side, 1)
+
+        if self.machine_interface_mode:
+            self.ProcessArgumentsMachineMode(left_side,right_side,leftside_possibilities,rightside_possibilities)
         else:
-            if rside:
-                print("assignment needs exactly one possible variable")
+            self.ProcessArgumentsHumanMode(from_digit,left_side,right_side,leftside_possibilities,rightside_possibilities)
 
 class CWatchWorker():
     """Does most of the non-gdb work of CWatch()"""
@@ -2693,8 +2706,7 @@ class CBreakWorker():
         possibilities = []
 
         GV_ModuleState.EstablishModuleState()
-        if GV_ModuleState.current_trapped_line > 0:
-            possibilities, from_digit = get_sorted_possibilities(search_var, 1)
+        possibilities, from_digit = get_sorted_possibilities(search_var, 1)
 
         if len(possibilities) == 1:
             payload_number = possibilities[0]
@@ -3024,9 +3036,9 @@ class CPrint(gdb.Command):
     COBOL cprint command usage:
     cprint <arg>        shows <arg> using session-default formatting
     cprint/v<n> <arg>   displays <arg> with a one-time formatting override
-    cprint/v0           name and variable on one line (this is the default)
-    cprint/v1           just the variable
-    cprint/v2           two-line display with name, then variable
+    cprint/v0           set session formatting to name and variable on one line (this is the default)
+    cprint/v1           set session formatting to just the variable
+    cprint/v2           set session formatting to two-line display with name, then variable
     cprint/x            show numeric value in hexadecimal
     cprint/b            show numeric value in binary
     cprint/d            show expanded information
