@@ -199,7 +199,8 @@ ReadEntireFile(const string &filename,WHOLEFILE &fd)
     }
     // Get the length of the file
     fseek(f,0,SEEK_END);
-    long physical_size = fd.size = ftell(f);
+    fd.size = ftell(f);
+    long physical_size = (long)fd.size;
     fseek(f,0,SEEK_SET);
 
     // Leave room for a possible final '\n'
@@ -262,6 +263,20 @@ build(PARAMETERS &params,
     // Start the file off with our filename:
     fprintf(f,"\t.file\t\"%s\"\n",params.cbl_filename.c_str());
 
+    // Somewhere around Version4.23, I learned Simon was doing things like
+    // "break <SECTION_ENTRY>".  That information is built into literal data
+    // strings that find their way into the .debug_info section.  My technique
+    // of simplifying the .file structure of the .S file was renumbering the files,
+    // but the .debug_info numbering was using the original numbering.
+
+    // I am, as a test, at this point, not doing the renumbering.  Instead, all
+    // .loc <file> <line_number> entries to .c and .h files will simply be eliminated
+    // from the .S file.
+
+    // I hope it works.  I did the renumbering for a reason, although I did it over
+    // a year ago and I don't remember why.
+
+#if 0
     // And then, let's put the modified list of filenames right at the beginning:
 
     for(map<string,int>::const_iterator it=input_file_mappings.begin();
@@ -275,6 +290,7 @@ build(PARAMETERS &params,
             //ss << "\t.file " << newnum << " \"" << it->first << "\"" << endl;
         }
     }
+#endif
 
     int next_function_reference_index = 0;
 
@@ -330,7 +346,7 @@ build(PARAMETERS &params,
             // that same loc in right here.  The duplications don't seem to
             // cause GDB any problem.
 
-            int remember = fd.current_index;
+            int remember = (int)fd.current_index;
 
             char ach2[OVERSIZED];
             for(int i=0; i<4; i++) {
@@ -343,15 +359,17 @@ build(PARAMETERS &params,
                     int old_num;
                     char *premainder;
                     ExtractLOCData(ach2,old_num,&premainder);
-                    int new_num = replacements[old_num];
+                    int new_num = (int)replacements[old_num];
                     if( new_num != 0 ) {
                         // Build the replacement line:
                         int new_line = atoi(premainder) - 1 ;
-                        if( strstr(premainder,"discriminator") )
-                        {
+                        if( strstr(premainder,"discriminator") ) {
                             fprintf(f,"\tnop\n");
                         }
-                        fprintf(f,"\t.loc %d %d\n",new_num,new_line);
+                        // See comment above about Version4.23, and don't
+                        // change the file number
+                        //fprintf(f,"\t.loc %d %d\n",new_num,new_line);
+                        fprintf(f,"\t.loc %d %d\n",old_num,new_line);
                         break;
                     }
                 }
@@ -359,10 +377,13 @@ build(PARAMETERS &params,
             fd.current_index = remember;
         }
 
+#if 0
+        // Refer to the Version4.23 comments up above
         if( strstr(ach,".file") ) {
             // We've already taken care of all .file lines
             continue;
         }
+#endif
 
         if( strstr(ach,".loc") AND (strstr(ach,".loc ") OR strstr(ach,".loc\t")) ) {
             int oldnum;
@@ -371,12 +392,15 @@ build(PARAMETERS &params,
             int newnum = replacements[oldnum];
             if( newnum != 0 ) {
                 // Rebuild the .loc line
-                if( strstr(premainder,"discriminator") )
-                {
+                if( strstr(premainder,"discriminator") ) {
                     fprintf(f,"\tnop\n");
                 }
-                fprintf(f,"\t.loc %d%s\n",newnum,premainder);
+                // See comment above about Version4.23, and don't
+                // change the file number
+                //fprintf(f,"\t.loc %d%s\n",newnum,premainder);
+                fprintf(f,"\t.loc %d%s\n",oldnum,premainder);
             }
+            // See comment above about Version4.23, and don't skip the printing
             continue;
         }
 
