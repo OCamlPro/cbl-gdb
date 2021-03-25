@@ -57,6 +57,7 @@ import subprocess
 from inspect import currentframe, getframeinfo
 from struct import calcsize
 import gdb
+import copy
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
@@ -194,6 +195,10 @@ class GlobalVariables():
 
         self.cprint_buffer = None
         self.cprint_f0 = None
+
+        ## These are used in PutDataAsVar
+        self.VarLeft = None
+        self.VarRight = None
 
     def AllocateBuffers(self):
         if not self.cprint_buffer:
@@ -759,8 +764,8 @@ class VarTrie():
                     payload.OccursMax  = int(tokens[self.IndexOccursMax] or "0")
 
                     # We need to find our parent.  We will ignore the accursed
-                    # level 66; anything else, including level 01, might have a parent
-                    # (for level 01, the parent might be a FD file descriptor)
+                    # level 66, and anything above.  Anything else, including level 01,
+                    # might have a parent (for level 01, the parent might be a FD file descriptor)
 
                     if payload.Level <= 49:
                         i = len(self.storage_list)-1
@@ -1046,28 +1051,29 @@ class CobolVariable():
     """Manages the field, attributes, flags, and pointers of a GnuCOBOL COBOL variable"""
     def __init__(self):
         # index_of_parent can be used to find information about the variable's
-        # heirarchical parent.  That is, a level 02 variable will have a level 01 parent
+        # heirarchical parent.  That is: a level 02 variable will have a level 01 parent
         self.index_of_parent = None
-        self.Program    = ""
-        self.Section    = ""
-        self.Level      = -1
-        self.Name       = ""
-        self.Fname      = ""
-        self.Bname      = ""
-        self.Aname      = ""
-        self.Offset     = 0
-        self.Length     = 0
-        self.OccursMin  = 0
-        self.OccursMax  = 0
-        self.Subscripts = None
+        self.Program     = ""
+        self.Section     = ""
+        self.Level       = -1
+        self.Name        = ""
+        self.Subscripts  = ""
+        self.Fname       = ""
+        self.Bname       = ""
+        self.Aname       = ""
+        self.Offset      = 0
+        self.TableOffset = 0    # These are additional bytes based on the table Subscripts
+        self.Length      = 0
+        self.OccursMin   = 0
+        self.OccursMax   = 0
 
-        self.AttrType   = 0
-        self.AttrDigits = 0
-        self.AttrScale  = 0
-        self.AttrFlags  = 0
+        self.AttrType    = 0
+        self.AttrDigits  = 0
+        self.AttrScale   = 0
+        self.AttrFlags   = 0
 
-        self.location_of_field     = 0  # value of Fname
-        self.location_of_data      = 0  # value of Fname->data
+        self.location_of_field     = 0  # location of Fname, when available
+        self.location_of_data      = 0  # value of Fname->data, when available
         self.location_of_attribute = 0  # value of Fname->attr
         self.data       = []            # list of Length bytes
 
@@ -1091,6 +1097,8 @@ class CobolVariable():
         self.ldigits = -1           # this integer is AttrDigits - AttrScale
         self.rdigits = -1           # this integer is AttrScale...
         #                           # ...but see self.CleanAndScale
+
+        self.SubscriptFailure = False # Set to True when subscripts don't match the number of tables
 
     def CleanTokens(self, execute_result):
         # (This was created during initial development.  During refactoring
@@ -1191,9 +1199,13 @@ class CobolVariable():
             retval = int(gdb.execute(command, False, True).split()[2],16)
 
             # Having allocated a synthetic cob_field, initialize it with the data
-            # we have
+            # Unlike the DONT_ALLOCATE situation, where we aren't allowed to mess with the
+            # cob_field->data pointer, we are synthesizing this cob_field.  So, we can
+            # add in any table offset:
             command = "set var *(cob_field *){0}".format(hex(retval)) + " = {"
-            command += "{0}, (char *){1}, &{2}".format(self.Length, hex(self.location_of_data), self.Aname)
+            command += "{0}, (char *){1}, &{2}".format(self.Length,
+                                                       hex(self.location_of_data+self.TableOffset),
+                                                       self.Aname)
             command += "}"
             gdb.execute(command, False, True)
             return retval
@@ -1214,22 +1226,26 @@ class CobolVariable():
             return retval
 
         if False:  # For development
-            print("GetData AsString          Name:", self.Name)
-            print("GetData AsString       Section:", self.Section)
-            print("GetData AsString         Fname:", self.Fname or "f0")
-            print("GetData AsString         Bname:", self.Bname)
-            print("GetData AsString         Aname:", self.Aname)
-            print("GetData AsString        Offset:", self.Offset)
-            print("GetData AsString        Length:", self.Length)
-            print("GetData AsString len(self.data)", len(self.data))
-            print("GetData AsString      AttrType:", hex(self.AttrType))
-            print("GetData AsString    AttrDigits:", self.AttrDigits)
-            print("GetData AsString     AttrScale:", self.AttrScale)
-            print("GetData AsString     AttrFlags:", hex(self.AttrFlags))
-            print("GetData AsString  loc_of_field:", hex(location_of_field))
-            print("GetData AsString   loc_of_data:", hex(self.location_of_data))
-            print("GetData AsString   loc_of_attr:", hex(self.location_of_attribute))
-            print("GetData AsString    loc_of_pic:", hex(self.location_of_pic))
+            print(    "GetData AsString           Name:", self.Name)
+            if self.Subscripts:
+                print("GetData AsString     Subscripts:", self.Subscripts)
+            print(    "GetData AsString        Section:", self.Section)
+            print(    "GetData AsString          Fname:", self.Fname or "f0")
+            print(    "GetData AsString          Bname:", self.Bname)
+            print(    "GetData AsString          Aname:", self.Aname)
+            print(    "GetData AsString         Offset:", self.Offset)
+            if self.TableOffset:
+                print("GetData AsString    TableOffset:", self.TableOffset)
+            print(    "GetData AsString         Length:", self.Length)
+            print(    "GetData AsString len(self.data):", len(self.data))
+            print(    "GetData AsString       AttrType:", hex(self.AttrType))
+            print(    "GetData AsString     AttrDigits:", self.AttrDigits)
+            print(    "GetData AsString      AttrScale:", self.AttrScale)
+            print(    "GetData AsString      AttrFlags:", hex(self.AttrFlags))
+            print(    "GetData AsString   loc_of_field:", hex(location_of_field))
+            print(    "GetData AsString    loc_of_data:", hex(self.location_of_data))
+            print(    "GetData AsString    loc_of_attr:", hex(self.location_of_attribute))
+            print(    "GetData AsString     loc_of_pic:", hex(self.location_of_pic))
 
         ## Something we need to know:
         is_alphanumeric = False
@@ -1246,9 +1262,27 @@ class CobolVariable():
             is_alphanumeric = True
 
         try:
+            # We sometimes need to accommodate the self.TableOffset variable,
+            # which means, basically, we always need to.  I thought about
+            # modifying location_of_field->data before and after the call,
+            # but I decided making a copy of the field made more sense.
+
+            # We will make our own cob_field in cprint_f0
+            field_loc = GV_GlobalVariables.cprint_f0
+            command = "set var *(cob_field *){0}".format(hex(field_loc)) + " = {"
+            command += "{0}, (char *){1}, &{2}".format(self.Length,
+                                                       hex(self.location_of_data+self.TableOffset),
+                                                       self.Aname)
+            command += "}"
+            gdb.execute(command, False, True)
+
             buffer = GV_GlobalVariables.cprint_buffer
-            command = "call (const char *)cob_get_field_str((cob_field *){0}, (char *){1}, {2})".format(hex(location_of_field),
-                                                                                                         hex(buffer), PRINT_BUFFER_SIZE )
+            command = "call (const char *)" \
+                      "cob_get_field_str((cob_field *){0}, " \
+                      "(char *){1}, {2})".format(hex(field_loc),
+                                                 hex(buffer),
+                                                 PRINT_BUFFER_SIZE )
+
             gdb.execute(command, False, True)
         except gdb.error:
             print("Command failed in GetDataAsString:", command)
@@ -1290,9 +1324,18 @@ class CobolVariable():
             command = "set *(char *){0} = '\\0'".format(hex(buf_ptr))
             gdb.execute(command, False, True)
 
+            # We will make our own cob_field in cprint_f0
+            field_loc = GV_GlobalVariables.cprint_f0
+            command = "set var *(cob_field *){0}".format(hex(field_loc)) + " = {"
+            command += "{0}, (char *){1}, &{2}".format(self.Length,
+                                                       hex(self.location_of_data+self.TableOffset),
+                                                       self.Aname)
+            command += "}"
+            gdb.execute(command, False, True)
+
             # Now use the target executable's libcob to convert the string to the field:
             command = "call (const char *)cob_put_field_str((cob_field *)"
-            command += hex(location_of_field)
+            command += hex(field_loc)
             command += ",(char *)" + hex(buffer)
             command += ")"
             gdb.execute(command, False, True)
@@ -1310,13 +1353,19 @@ class CobolVariable():
         # variables that don't have valid f_xx cob_fields, but for some
         # reason the developer wants use them as source or destination
 
-        destination = self.get_verified_field_location(ALLOCATE)
+        var_left = GV_GlobalVariables.VarLeft
+        var_right = GV_GlobalVariables.VarRight
+
+        if var_left.SubscriptFailure or var_right.SubscriptFailure:
+            return 0
+
+        destination = var_left.get_verified_field_location(ALLOCATE)
         if not destination:
             return 0
 
-        source = payload_s.get_verified_field_location(ALLOCATE)
+        source = var_right.get_verified_field_location(ALLOCATE)
         if not source:
-            self.free_field_location(destination)
+            var_left.free_field_location(destination)
             return 0
 
         try:
@@ -1327,8 +1376,8 @@ class CobolVariable():
             print("COMMAND failed in PutDataAsVar: ", command)
             return_value = 0
 
-        self.free_field_location(source)
-        self.free_field_location(destination)
+        var_left.free_field_location(source)
+        var_right.free_field_location(destination)
 
         return return_value
 
@@ -1352,44 +1401,62 @@ class CobolVariable():
                 retval += hexout
         return retval
 
-    def AdjustForSubscripts(self):
-        retval = self.Offset
+    def CalculateTableOffset(self):
+        self.TableOffset = 0
+        self.SubscriptFailure = False
         if self.Subscripts:
             # Strip off the leading parenthesis (we know it is there
             # from GetListOfPossibilities
             subscripts = self.Subscripts[1:]
-            # If there is a trailing parenthesis, get rid of it:
+            # If there is a trailing parenthesis, get rid of it.  It ought
+            # to be there, but if somebody typed "(1,2,3" we are going to be
+            # magnamimous about it.
             nfound = subscripts.find(')')
             if nfound != -1:
                 subscripts = subscripts[:nfound]
             list_of_subscripts = subscripts.split(',')
 
+            # This variable has a subscript, so it ought to be a table:
             if self.OccursMax == 0:
                 print("The variable {0} is not an OCCURS table".format(self.Name))
                 return self.Offset
 
             variable = self
-            retval = variable.Offset
-            while len(list_of_subscripts):
-                print("InLoop",self.Level,self.Name,self.index_of_parent)
+
+            # We will walk all the way to the root of the variable, just to make
+            # sure the number of subscripts matches the number of table variables:
+            while variable:
                 if variable.OccursMax != 0:
+                    # This is a table variable:
+                    if len(list_of_subscripts) == 0:
+                        print("Not enough subscripts")
+                        self.TableOffset = 0
+                        self.SubscriptFailure = True
+                        return
                     subscript = int(list_of_subscripts[-1])
                     list_of_subscripts = list_of_subscripts[0:-1]
-                    print("(1)retval et.al.",retval, subscript, variable.OccursMin, variable.Length)
-                    retval += (subscript - variable.OccursMin) * variable.Length
-                    print("(2)retval et.al.",retval, subscript, variable.OccursMin, variable.Length)
+                    if subscript < variable.OccursMin:
+                        print("subscript for '{0}' is too small".format(variable.Name))
+                        self.Offset = 0
+                        self.SubscriptFailure = True
+                        return
+                    if subscript > variable.OccursMax:
+                        print("subscript for '{0}' is too large".format(variable.Name))
+                        self.Offset = 0
+                        self.SubscriptFailure = True
+                        return
+                    self.TableOffset += (subscript - variable.OccursMin) * variable.Length
+                if not variable.index_of_parent:
+                    break;
                 variable = GV_ModuleInformation.var_trie.storage_list[variable.index_of_parent]
-                if not variable:
-                    print("Too many subscripts")
-                    return self.Offset
-
-        return retval
+            if len(list_of_subscripts) > 0:
+                print("Too many subscripts")
+                self.Offset = 0
+                self.SubscriptFailure = True
+                return
 
     def FetchVariableData(self, line_list, show_failure):
         # print("FetchVariableData:", self.Name, self.Section)
-        # use_this_offset = self.AdjustForSubscripts()
-        # use_this_offset = 0
-        # print("use_this_offset",use_this_offset)
         self.location_of_field = 0
         self.location_of_data = 0
         self.location_of_attribute = 0
@@ -1401,6 +1468,8 @@ class CobolVariable():
         self.not_in_context = False
 
         # Let's update everything we might need:
+        # Calculate the additional table offsets
+        self.CalculateTableOffset()
 
         # First, check to see if the compiler provided us with the
         # the name of the field.  If so, use the run-time values in that named
@@ -1533,9 +1602,8 @@ class CobolVariable():
             self.not_in_context = True
             return
 
-        #print("loc/offset", self.location_of_data, use_this_offset)
         if self.location_of_data != 0:
-            self.data = GetBytesAt(self.location_of_data, self.Length)
+            self.data = GetBytesAt(self.location_of_data + self.TableOffset, self.Length)
 
         self.display_body_hex = self.GetDataAsHex()
         self.display_body = self.GetDataAsString()
@@ -1561,7 +1629,11 @@ class CobolVariable():
         elif self.Section == "I":
             storage_type = "LNK"
 
-        s = "{1:02} {2} [{0}]".format(storage_type, self.Level, self.Name)
+        name = self.Name
+        if self.OccursMin != self.OccursMax:
+            name += "({0}:{1})".format(self.OccursMin,self.OccursMax)
+
+        s = "{1:02} {2} [{0}]".format(storage_type, self.Level, name)
         return s
 
     def ShowFields(self):
@@ -1570,9 +1642,14 @@ class CobolVariable():
         if bname_location:
             bname_text = "( %s )" % hex(bname_location)
 
-        data_ptr = hex(self.location_of_data)
+        data_ptr = hex(self.location_of_data+self.TableOffset)
 
         print("Name:       ", self.display_name)
+        if self.Subscripts:
+            print("Subscripts: ", self.Subscripts, end='')
+            if self.SubscriptFailure:
+                print(" (poorly formed)", end='')
+            print("")
         print("Display:    ", self.display_body)
         print("Hex:        ", self.display_body_hex)
 
@@ -1592,6 +1669,8 @@ class CobolVariable():
             print("Base:       ", self.Bname, '  ', bname_text)
 
         print("Offset:     ", self.Offset)
+        if self.Subscripts:
+            print("TableOffset:", self.TableOffset)
         print("Data:       ", data_ptr)
         print("Length:     ", self.Length)
 
@@ -2502,7 +2581,8 @@ class CPrintWorker():
             if from_digit:
                 payload.FetchVariableData(GV_ModuleInformation.line_list, True)
             # And display the variable according to the current list v-level
-            self.FormattedDisplay(payload)
+            if not payload.SubscriptFailure:
+                self.FormattedDisplay(payload)
 
     def ProcessArguments(self, arguments):
         # First, look for /[dxvmvr] switches:
@@ -2532,8 +2612,24 @@ class CPrintWorker():
         if len(leftright) > 1:
             right_side = leftright[1].strip()
 
+        # We want to handle a very rare situation, but one that can happen.
+        # We handle array/table entries by creating a CobolVariable using its base address,
+        # but also carrying along the Subscripts and the TableOffset created by those subscripts.
+        # The rare case is when the operator specifies an assignment: "cp table(2) = table(4)
+        # The second evaluation stomps on the first one. So, we are going to save copies both of them
+        # one at a time, here, so we can use them later, if needed, in PutDataAsVar()
+
+        GV_GlobalVariables.VarLeft = None
+        GV_GlobalVariables.VarRight = None
+
         leftside_possibilities, from_digit  = get_sorted_possibilities(left_side, 0)
+        if len(leftside_possibilities) == 1:
+            GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]])
+
         rightside_possibilities, from_digit = get_sorted_possibilities(right_side, 1)
+        if len(rightside_possibilities) == 1:
+            # We need this to be a copy, not an object reference, hence the slicing:
+            GV_GlobalVariables.VarRight = copy.copy(GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]])
 
         if self.machine_interface_mode:
             self.ProcessArgumentsMachineMode(left_side,right_side,leftside_possibilities,rightside_possibilities)
