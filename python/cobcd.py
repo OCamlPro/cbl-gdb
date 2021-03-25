@@ -1345,7 +1345,23 @@ class CobolVariable():
 
         return return_value
 
-    def PutDataAsVar(self, payload_s):
+    @staticmethod
+    def PutDataAsVar():
+        """Sets one variable's contents to another
+
+        The use of global variables is a solution to the problem of wanting
+        to assign "table(2) = table(3)"
+
+        The lists of possibilities have only one entry for a table.  When naively
+        setting table(2) = table(3), the .Subscripts for the first value get overwritten
+        by the second one, and you end up doing "table(3) = table(3).
+
+        In this solution, I create copies of the CobolVariables when ProcessArguments
+        encounters the "cp var1=var2.  Those copies go into GV_GlobalVariables.
+
+        For now, this handles the basic user-interface case.  If more complex cases
+        crop up, this will obviously need to be changed.
+"""
         return_value = 1
 
         # We use the ALLOCATE option because of the possibility that one
@@ -2469,7 +2485,7 @@ class CPrintWorker():
             possibilities, from_digit = get_sorted_possibilities(value, 1)
             if len(possibilities) == 1:
                 payload_s = GV_ModuleInformation.var_trie.storage_list[possibilities[0]]
-                if payload.PutDataAsVar(payload_s) == 0:
+                if CobolVariable.PutDataAsVar() == 0:
                     return_value = 0
             else:
                 print("Variable not found: " + str(value))
