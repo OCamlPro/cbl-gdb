@@ -2584,11 +2584,11 @@ class CPrintWorker():
                 ppp.add(d)
                 d += 1
 
-            leftside_possibilities = list(ppp)
-            leftside_possibilities.sort()
+        leftside_possibilities = list(ppp)
+        leftside_possibilities.sort()
 
-            s = MachineInterfaceHeirarchical(leftside_possibilities)
-            print(s)
+        s = MachineInterfaceHeirarchical(leftside_possibilities)
+        print(s)
 
     def ProcessArgumentsHumanMode(self,from_digit,leftside,rightside,leftside_possibilities,rightside_possibilities, refmod_l):
         if len(leftside_possibilities) > 1:
