@@ -1002,7 +1002,7 @@ class VarTrie():
                 if prior_index != -1:
                     # We have found a contender!
                     # Make sure that there is no subscript for this variable:
-                    self.storage_list[index].Subscripts = "None"
+                    self.storage_list[index].Subscripts = None
                     # And add it to the set
                     set1.add(index)
 
@@ -1077,7 +1077,7 @@ class CobolVariable():
         self.Section     = ""
         self.Level       = -1
         self.Name        = ""
-        self.Subscripts  = ""
+        self.Subscripts  = None
         self.Fname       = ""
         self.Bname       = ""
         self.Aname       = ""
@@ -1441,6 +1441,7 @@ class CobolVariable():
         self.TableOffset = 0
         self.SubscriptFailure = False
         if self.Subscripts:
+            print("self.Subscripts",self.Subscripts)
             # Strip off the leading parenthesis (we know it is there
             # from GetListOfPossibilities
             subscripts = self.Subscripts[1:]
@@ -1453,7 +1454,7 @@ class CobolVariable():
             list_of_subscripts = subscripts.split(',')
 
             # This variable has a subscript, so it ought to be a table:
-            if self.OccursMax == 0:
+            if self.OccursMax == self.OccursMin:
                 print("The variable {0} is not an OCCURS table".format(self.Name))
                 return self.Offset
 
@@ -2300,15 +2301,18 @@ def get_sorted_possibilities(args, limit):
             # will be a bit more like what the user probably expects.
 
             if len(GV_ModuleState.current_full_path) > 0:
-                if len(args) >= 2 and args[1].isnumeric():
+                if len(args) > 1 and args[1].lstrip('-').isnumeric():
                     # an explicit, one-time range has been requested
                     qmrange = int(args[1])
+                    # Clear out the old_dogs, because the parameter was
+                    # specific:
+                    GV_ModuleState.old_dogs = set()
                 else:
                     # without that request, use the established +/- range
                     qmrange = GV_ModuleState.question_mark_range
-                if qmrange < 0:
+                if qmrange == -1:
                     qmrange = 1000000000
-                if qmrange == 999:
+                if qmrange <= -2:
                     # This is an expedient for simply killing any cprint ? response
                     return_string = ""
                 else:
@@ -2393,22 +2397,28 @@ class CPrintWorker():
 
     def ProcessSlashR(self,args):
         # We know the first two characters of args[0] are "/r"
+        #
+        # We want "/rxxx" to be the same as "/r xxx":
+        first_arg = args[0][2:] # Might be empty
+
+        args.pop(0)
+        if first_arg:
+            args = [first_arg] + args
+
         r_code = ""
-        if len(args[0]) == 2 and len(args) == 1:
-            # There is but the one '/r' argument, so it is a request to display the range:
-            if int(GV_ModuleState.question_mark_range) < 0:
-                print("The 'cprint ?' range is currently the same as 'cprint *'")
+        if len(args) == 0:
+            # '/r' was the only argument, so it is a request to display the range:
+            if int(GV_ModuleState.question_mark_range) <= -2:
+                print("The 'cprint ?' range is currently suppressed (-2)")
+            elif int(GV_ModuleState.question_mark_range) == -1:
+                print("The 'cprint ?' range is currently the same as 'cprint *' (-1)")
             else:
                 print("The 'cprint ?' range is currently +/-", GV_ModuleState.question_mark_range, "lines")
             args = []
             return args
 
-        if len(args[0]) >= 3:
-            r_code = args[0][2:]
-            args.pop(0)
-        elif len(args) >= 2:
-            r_code = args[1]
-            args.pop(0)
+        if len(args) > 0:
+            r_code = args[0]
             args.pop(0)
 
         if r_code.lstrip('-').isnumeric():
@@ -2696,7 +2706,6 @@ class CPrintWorker():
             refmod_r = self.search_refmod(right_side)
             rightside_possibilities, from_digit = get_sorted_possibilities(right_side, 1)
             if len(rightside_possibilities) == 1:
-                # We need this to be a copy, not an object reference, hence the slicing:
                 GV_GlobalVariables.VarRight = copy.copy(GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]])
 
         if self.machine_interface_mode:
@@ -3209,7 +3218,7 @@ class CPrint(gdb.Command):
     cprint/v<n>         with no arguments sets the session formatting
     cprint/m            generate output compatible with '-stack-list-variables --simple-values
     cprint *            display all variables that are currently in context
-    cprint/r N          set the range for 'cprint ?' to plus/minus N (default is 6; -1 means 'all'
+    cprint/r N          set the range for 'cprint ?' to plus/minus N (default 6; -1 means 'all'; -2 'none')
     cprint/r            show the current value of N
     cprint ?            display in-context variables within +/- N lines of current line
     cprint ? R          display in-context variables within +/- R lines of current line
