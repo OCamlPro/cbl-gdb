@@ -627,14 +627,34 @@ def AddEmUp(expression):
     return retval
 
 def get_refmod(arg):
+    start_index = 0
+    end_index = 0
+    ready = 0
     refmod_spec = ""
     clean_arg = ""
 
-    if arg.startswith('(') and arg.endswith(')'):
-        refmod_spec = arg[1:-1]
-    elif arg.find('(') != -1 and arg.find(')') != -1:
-        refmod_spec = arg[arg.index('(') + 1:-1]
-        clean_arg = arg[:arg.index('(')]
+    if arg.find(':') != -1:
+        while ready == 0:
+            start_index = arg.find('(', start_index)
+            end_index = arg.find(')', end_index)
+            if start_index == -1 and end_index == -1:
+                clean_arg = arg
+                break
+            elif start_index > -1 and end_index == -1:
+                ref = arg[start_index + 1:len(arg)]
+            else:
+                ref = arg[start_index + 1:end_index]
+
+            if ref.find(':') != -1 and ref.find('(') != -1:
+                clean_arg = arg[:start_index]
+                ready = 1
+            elif ref.find(':') != -1 and ref.find('(') == -1:
+                refmod_spec = ref
+                clean_arg = arg[:start_index]
+                ready = 1
+            else:
+                start_index += 1
+                end_index += 1
     else:
         clean_arg = arg
 
@@ -2435,7 +2455,7 @@ class CPrintWorker():
 
         return args
 
-    def FormattedDisplay(self, payload):
+    def FormattedDisplay(self, payload, refmod):
         # see the comments in ProcessDisplayMode()
         body = payload.display_body
         if self.current_display_submode == 'x' and len(payload.data) <= 16:
@@ -2456,19 +2476,26 @@ class CPrintWorker():
                     mask >>= 1
                 index += 1
 
+        if refmod != "" and self.current_display_submode not in ('x', 'b'):
+            valid, d_startloc, d_length = get_lenspec_refmod(refmod, payload, "n")
+            if valid == 0:
+                return
+
+            if body.startswith('"'):
+                body = '"' + body.replace('"', '')[d_startloc - 1:d_startloc - 1 + d_length] + '"'
+            else:
+                body = body[d_startloc - 1:d_startloc - 1 + d_length]
+            print(body)
+
         if self.current_display_mode == '0':
             print(payload.display_name, " : ", body)
-            pass
         elif self.current_display_mode == '1':
             print(body)
-            pass
         elif self.current_display_mode == '2':
             print(payload.display_name)
             print(body)
-            pass
         else:  # self.current_display_mode ==  'd':
             payload.ShowFields()
-            pass
 
     @staticmethod
     def set_var_value(payload, value):
@@ -2553,7 +2580,7 @@ class CPrintWorker():
             s = MachineInterfaceHeirarchical(GV_ModuleInformation, leftside_possibilities)
             print(s)
 
-    def ProcessArgumentsHumanMode(self,from_digit,leftside,rightside,leftside_possibilities,rightside_possibilities):
+    def ProcessArgumentsHumanMode(self,from_digit,leftside,rightside,leftside_possibilities,rightside_possibilities, refmod_l):
         if len(leftside_possibilities) > 1:
             GV_GlobalVariables.ShortTermMemory = []
 
@@ -2598,7 +2625,25 @@ class CPrintWorker():
                 payload.FetchVariableData(GV_ModuleInformation.line_list, True)
             # And display the variable according to the current list v-level
             if not payload.SubscriptFailure:
-                self.FormattedDisplay(payload)
+                self.FormattedDisplay(payload, refmod_l)
+
+    @staticmethod
+    def search_refmod(args):
+        refmod = ""
+        index = 0
+
+        while index < len(args):
+            if args[index].find('(') > -1 and args[index].find(':') > -1:
+                clean_arg, refmod = get_refmod(args[index])
+                if clean_arg == "":
+                    del args[index]
+                else:
+                    args[index] = clean_arg
+                    index += 1
+            else:
+                index += 1
+
+        return refmod
 
     def ProcessArguments(self, arguments):
         # First, look for /[dxvmvr] switches:
@@ -2617,8 +2662,12 @@ class CPrintWorker():
         #   A in B
         #   A/B
         #   A.B
-        left_side  = ""
+        leftside_possibilities = []
+        rightside_possibilities = []
+        left_side = ""
         right_side = ""
+        refmod_l = ""
+        refmod_r = ""
         leftright = args.split('=', 1)
 
         # Pick up the left and right sides:
@@ -2638,19 +2687,22 @@ class CPrintWorker():
         GV_GlobalVariables.VarLeft = None
         GV_GlobalVariables.VarRight = None
 
-        leftside_possibilities, from_digit  = get_sorted_possibilities(left_side, 0)
+        refmod_l = self.search_refmod(left_side)
+        leftside_possibilities, from_digit = get_sorted_possibilities(left_side, 0)
         if len(leftside_possibilities) == 1:
             GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]])
 
-        rightside_possibilities, from_digit = get_sorted_possibilities(right_side, 1)
-        if len(rightside_possibilities) == 1:
-            # We need this to be a copy, not an object reference, hence the slicing:
-            GV_GlobalVariables.VarRight = copy.copy(GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]])
+        if right_side:
+            refmod_r = self.search_refmod(right_side)
+            rightside_possibilities, from_digit = get_sorted_possibilities(right_side, 1)
+            if len(rightside_possibilities) == 1:
+                # We need this to be a copy, not an object reference, hence the slicing:
+                GV_GlobalVariables.VarRight = copy.copy(GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]])
 
         if self.machine_interface_mode:
-            self.ProcessArgumentsMachineMode(left_side,right_side,leftside_possibilities,rightside_possibilities)
+            self.ProcessArgumentsMachineMode(left_side, right_side, leftside_possibilities, rightside_possibilities)
         else:
-            self.ProcessArgumentsHumanMode(from_digit,left_side,right_side,leftside_possibilities,rightside_possibilities)
+            self.ProcessArgumentsHumanMode(from_digit, left_side, right_side, leftside_possibilities, rightside_possibilities, refmod_l)
 
 class CWatchWorker():
     """Does most of the non-gdb work of CWatch()"""
