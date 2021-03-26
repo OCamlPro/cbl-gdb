@@ -693,6 +693,26 @@ def get_lenspec_refmod(refmod, payload, lenspec_type):
 
     return valid, startloc, length
 
+def TokenizeCanonicalName(desired):
+    if type(desired) == type([]):
+        desired = ' '.join(desired)
+    # We allow "A of B in C", where [of|in] is not case sensitive
+    # We also allow A.B.C, A/B/C, and "A B C"
+
+    # turn IN and OF into spaces
+    pattern = re.compile(r"^(.*) (in|In|iN|IN|of|oF|Of|OF) (.*)$")
+    while True:
+        match = re.search(pattern, desired)
+        if not match:
+            break
+        else:
+            desired = match.group(1) + " " + match.group(3)
+
+    desired = desired.replace(".", " ")
+    desired = desired.replace("/", " ")
+    retval = desired.split()
+    return retval
+
 class VarTrie():
     def __init__(self):
         self.storage_list = []
@@ -820,24 +840,6 @@ class VarTrie():
             traceback.print_exc()
             sys.exit(1)
 
-    def TokenizeCanonicalName(self, desired):
-        # We allow "A of B in C", where [of|in] is not case sensitive
-        # We also allow A.B.C, A/B/C, and "A B C"
-
-        # turn IN and OF into spaces
-        pattern = re.compile(r"^(.*) (in|In|iN|IN|of|oF|Of|OF) (.*)$")
-        while True:
-            match = re.search(pattern, desired)
-            if not match:
-                break
-            else:
-                desired = match.group(1) + " " + match.group(3)
-
-        desired = desired.replace(".", " ")
-        desired = desired.replace("/", " ")
-        retval = desired.split()
-        return retval
-
     def NameMatcher(self,
                     boys,
                     boy_index,
@@ -954,7 +956,7 @@ class VarTrie():
             desired   = desired[:nfound]
 
         # Go handle our various "A of B" possibilities:
-        name_tokens = self.TokenizeCanonicalName(desired)
+        name_tokens = TokenizeCanonicalName(desired)
 
         # Wander through the forest, looking for possible paths:
         paths = []
@@ -1324,7 +1326,7 @@ class CobolVariable():
 
         return retval
 
-    def PutDataAsString(self, rside):
+    def PutDataAsString(self, rside, p_startloc, p_length):
         return_value = 1
 
         location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
@@ -1347,8 +1349,10 @@ class CobolVariable():
             # We will make our own cob_field in cprint_f0
             field_loc = GV_GlobalVariables.cprint_f0
             command = "set var *(cob_field *){0}".format(hex(field_loc)) + " = {"
-            command += "{0}, (char *){1}, &{2}".format(self.Length,
-                                                       hex(self.location_of_data+self.TableOffset),
+            # command += "{0}, (char *){1}, &{2}".format(self.Length,
+            #                                           hex(self.location_of_data+self.TableOffset),
+            command += "{0}, (char *){1}, &{2}".format(p_length,
+                                                       hex(self.location_of_data+self.TableOffset+p_startloc-1),
                                                        self.Aname)
             command += "}"
             gdb.execute(command, False, True)
@@ -2299,9 +2303,8 @@ def get_sorted_possibilities(args, limit):
             # B falls out of context.  Or perhaps the next GDB command is a CONTINUE,
             # rather than NEXT.  By keeping one level of stickiness, the display of '?' variables
             # will be a bit more like what the user probably expects.
-
             if len(GV_ModuleState.current_full_path) > 0:
-                if len(args) > 1 and args[1].lstrip('-').isnumeric():
+                if len(args) > 1 and args[1].lstrip('-').isdigit():
                     # an explicit, one-time range has been requested
                     qmrange = int(args[1])
                     # Clear out the old_dogs, because the parameter was
@@ -2495,7 +2498,6 @@ class CPrintWorker():
                 body = '"' + body.replace('"', '')[d_startloc - 1:d_startloc - 1 + d_length] + '"'
             else:
                 body = body[d_startloc - 1:d_startloc - 1 + d_length]
-            print(body)
 
         if self.current_display_mode == '0':
             print(payload.display_name, " : ", body)
@@ -2508,15 +2510,27 @@ class CPrintWorker():
             payload.ShowFields()
 
     @staticmethod
-    def set_var_value(payload, value):
+    def set_var_value(payload, value, refmod_l):
         number_regexp = re.compile(r'[0-9]+|[0-9]+[\.,][0-9]+')
         return_value = 1
 
         if value.startswith(('"', "'")) and value.endswith(('"', "'")):
-            if payload.PutDataAsString(value[1:-1]) == 0:
+            if refmod_l:
+                valid, p_startloc, p_length = get_lenspec_refmod(refmod_l, payload, "n")
+                if valid == 0:
+                    return 0
+
+                if p_length != len(value[1:-1]):
+                    print("Value length != refmod length: {0} != {1}".format(len(value[1:-1]), p_length))
+                    return 0
+            else:
+                p_startloc = 1
+                p_length = payload.Length
+
+            if payload.PutDataAsString(value[1:-1], p_startloc, p_length) == 0:
                 return_value = 0
         elif re.match(number_regexp, value):
-            if payload.PutDataAsString(value) == 0:
+            if payload.PutDataAsString(value, 1, payload.Length) == 0:
                 return_value = 0
         else:
             possibilities, from_digit = get_sorted_possibilities(value, 1)
@@ -2537,7 +2551,7 @@ class CPrintWorker():
     def ProcessArgumentsMachineMode(self,leftside,rightside,leftside_possibilities,rightside_possibilities):
         """We arrive here when processing a cprint/m"""
         if len(leftside_possibilities) == 0:
-            # just return quietly.  The variable not found message
+            # just return quietly.  A "variable not found" message
             # confuses Visual Studio Code
             return
 
@@ -2553,7 +2567,7 @@ class CPrintWorker():
             return
 
         if len(leftside_possibilities) == 1 and rightside and leftside[0] != '*' and leftside[0] != '?':
-            if self.set_var_value(payload, rightside) == 0:
+            if self.set_var_value(payload, rightside, "") == 0:
                 # The assignment failed
                 return
 
@@ -2590,7 +2604,7 @@ class CPrintWorker():
         s = MachineInterfaceHeirarchical(leftside_possibilities)
         print(s)
 
-    def ProcessArgumentsHumanMode(self,from_digit,leftside,rightside,leftside_possibilities,rightside_possibilities, refmod_l):
+    def ProcessArgumentsHumanMode(self, from_digit, leftside, rightside, leftside_possibilities, rightside_possibilities, refmod_l):
         if len(leftside_possibilities) > 1:
             GV_GlobalVariables.ShortTermMemory = []
 
@@ -2598,7 +2612,7 @@ class CPrintWorker():
             for payload_index in leftside_possibilities:
                 payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
                 # We don't need to fetch; get_sorted_possibilities() just did that
-                #payload.FetchVariableData(GV_ModuleInformation.line_list, False)
+                # payload.FetchVariableData(GV_ModuleInformation.line_list, False)
                 if not payload.not_in_context:
                     GV_GlobalVariables.ShortTermMemory.append(payload_index)
                     s = "{0:2} : ".format(line_counter)
@@ -2614,19 +2628,19 @@ class CPrintWorker():
                     retval = OurPrint(NoNulls(s))
                     if retval == "Quit":
                         break
+        elif len(leftside_possibilities) == 1:
+            if not from_digit:
+                GV_GlobalVariables.ShortTermMemory = [leftside_possibilities[0]]
 
-        if len(leftside_possibilities) == 1 and not from_digit:
-            GV_GlobalVariables.ShortTermMemory = [leftside_possibilities[0]]
-
-        if len(leftside_possibilities) == 1:
             # There is but one possibility
             # Pick up the payload from the list
             payload = GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]]
 
             if rightside:
-                if self.set_var_value(payload, rightside) == 0:
+                if self.set_var_value(payload, rightside, refmod_l) == 0:
                     # The assignment failed
                     return
+                refmod_l = ""
 
             # Human-interface:
             # Fetch the data again, just in case he executed some instructions
@@ -2672,6 +2686,13 @@ class CPrintWorker():
         #   A in B
         #   A/B
         #   A.B
+
+        # It is possible for args[] to be empty, in which case we treat
+        # our caller with lofty disdain:
+
+        if not args or not args[0]:
+            return
+
         leftside_possibilities = []
         rightside_possibilities = []
         left_side = ""
@@ -2699,12 +2720,24 @@ class CPrintWorker():
 
         refmod_l = self.search_refmod(left_side)
         leftside_possibilities, from_digit = get_sorted_possibilities(left_side, 0)
+        if not leftside_possibilities:
+            # There are no leftside possibilities.  Let him know why, and then bug out
+            if left_side[0] in ('*','?'):
+                # When '*' or '?' match nothing, then just return nothing
+                return
+            print('No symbol "{0}" in current context'.format( '/'.join(TokenizeCanonicalName(left_side))))
+            return
+
         if len(leftside_possibilities) == 1:
             GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]])
 
-        if right_side:
+        if right_side and right_side.find('"') == -1:
             refmod_r = self.search_refmod(right_side)
             rightside_possibilities, from_digit = get_sorted_possibilities(right_side, 1)
+            if not rightside_possibilities:
+                print('No symbol "{0}" in current context'.format( '/'.join(TokenizeCanonicalName(right_side))))
+                return
+
             if len(rightside_possibilities) == 1:
                 GV_GlobalVariables.VarRight = copy.copy(GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]])
 
@@ -3146,7 +3179,8 @@ class CBreakWorker():
             if module_name is None:
                 print("Module not found")
             else:
-                break_point = self.set_breakpoint("{0}_:ENTRY_{0}".format(module_name))
+                #break_point = self.set_breakpoint("{0}_:ENTRY_{0}".format(module_name))
+                break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{0}".format(module_name))
         elif len(args) == 2 and args[0] == "section" and isinstance(args[1], self.strtype):
             self.set_section_breakpoint(args)
         elif len(args) >= 4 and len(args) <= 7:
