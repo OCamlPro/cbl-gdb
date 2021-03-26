@@ -694,8 +694,8 @@ def get_lenspec_refmod(refmod, payload, lenspec_type):
     return valid, startloc, length
 
 def TokenizeCanonicalName(desired):
-    if type(desired) == type([]):
-        desired = ' '.join(desired)
+    # We expect a string, and we return a list of strings:
+
     # We allow "A of B in C", where [of|in] is not case sensitive
     # We also allow A.B.C, A/B/C, and "A B C"
 
@@ -937,26 +937,25 @@ class VarTrie():
 
         return paths
 
-    def GetListOfPossibilities(self, desired):
-        if isinstance(desired, list):
-            # We were handed a bunch of pieces.  Let's
-            # glue them back together into a single space-separated string:
-            desired = " ".join(desired).upper()
+    def GetListOfPossibilities(self, cobol_variable_name):
+        # We know that cobol_variable_name is a list of tokens that has already
+        # been through TokenizeCanonicalName
+        # We were handed a bunch of pieces.  Let's
+        # glue them back together into a single space-separated string:
+        recombined = " ".join(cobol_variable_name).upper()
 
         # See if this is a subscripted reference:
         subscripts = None
-        nfound = desired.find('(')
+        nfound = recombined.find('(')
         if nfound > -1:
             # There is a subscript. Strip it off, for now.  After we
             # we find the base information, we'll put it back on:
-            subscripts = desired[nfound:]
+            subscripts = recombined[nfound:]
 
-            # and continue looking for what we will eventually regard as
-            # the desired value in the OCCURS sequence
-            desired   = desired[:nfound]
+            # Truncate desired to the point where the parenthesis occurred
+            recombined   = recombined[:nfound]
 
-        # Go handle our various "A of B" possibilities:
-        name_tokens = TokenizeCanonicalName(desired)
+        name_tokens = recombined.split()
 
         # Wander through the forest, looking for possible paths:
         paths = []
@@ -1121,54 +1120,6 @@ class CobolVariable():
         #                           # ...but see self.CleanAndScale
 
         self.SubscriptFailure = False # Set to True when subscripts don't match the number of tables
-
-    def CleanTokens(self, execute_result):
-        # (This was created during initial development.  During refactoring
-        #  to use cobst data rather than collecting field and attribute
-        #  information via gdb.execute, it became superfluous.  I am leaving
-        #  it here in case it becomes needed again.  RJD 2019-07-24 v0.1)
-
-        # cgdb returns wildly different results from dbg.execute("print ...")
-        # than the same function call in straight gdb .  This routine normalizes
-        # the two, returning a list that always has the data we care about
-        # right after the keyword
-
-        # Because, as per Finagle, the perversity of the universe *does*
-        # tend towards a maximum, and because users are agents of chaos,
-        # I am going to strip out anything between two double-quotes,
-        # because otherwise some user *will* create a string that will
-        # confuse the living crap out of this routine!
-
-        left = execute_result.find('"')
-        right = execute_result.rfind('"')
-        if left != -1 and right != -1:
-            execute_result = execute_result[:left] + execute_result[right + 1:]
-
-        # Turn extraneous characters into spaces, to mollify split()
-        execute_result = execute_result.replace("'", ' ')
-        execute_result = execute_result.replace("{", ' ')
-        execute_result = execute_result.replace("}", ' ')
-        execute_result = execute_result.replace(",", ' ')
-        execute_result = execute_result.replace("<", ' ')
-        execute_result = execute_result.replace(">", ' ')
-
-        ex_tokens = execute_result.split()
-
-        # Get rid of superfluous tokens. cgdb has a bunch whose initial
-        # characters are \x1a characters; we don't want them.  Nor do we
-        # want 0x55555555, although we will pass through 0x0 (because that's
-        # what we see for a picture pointer when there is no picture)
-        tokens = []
-        for xtoken in ex_tokens:
-            if ((ord(xtoken[0]) > 32
-                and xtoken != '='
-                and xtoken != '*'
-                and xtoken != '-'
-                and xtoken[0] != '0')
-                or xtoken == "0"
-                or xtoken == "0x0"):
-                tokens.append(xtoken)
-        return tokens
 
     def get_verified_field_location(self,allocate):
         # When calling this routine with ALLOCATE, the caller must do
@@ -1457,15 +1408,17 @@ class CobolVariable():
                 subscripts = subscripts[:nfound]
             list_of_subscripts = subscripts.split(',')
 
-            # This variable has a subscript, so it ought to be a table:
-            if self.OccursMax == self.OccursMin:
-                print("The variable {0} is not an OCCURS table".format(self.Name))
-                return self.Offset
+            # The list of subscripts is just that: a list of subscripts.
+
+            # With that list in hand, we are going to walk the heirarchical tree
+            # of this variable back to the root.  Everywhere we hit an OCCURS, we
+            # will apply the current list_of_subscripts[-1] to that portion of the
+            # heirarchy.
+
+            # We'll keep track along the way, to make sure the number of subscripts
+            # is the same as the number of subscripted variables:
 
             variable = self
-
-            # We will walk all the way to the root of the variable, just to make
-            # sure the number of subscripts matches the number of table variables:
             while variable:
                 if variable.OccursMax != 0:
                     # This is a table variable:
@@ -2284,6 +2237,7 @@ def MachineInterfaceHeirarchical(possibilities):
     return retval
 
 def get_sorted_possibilities(args, limit):
+    # We take a list of strings as args
     possibilities_1 = []
     possibilities = []
     from_digit = False
@@ -2510,11 +2464,21 @@ class CPrintWorker():
             payload.ShowFields()
 
     @staticmethod
-    def set_var_value(payload, value, refmod_l):
-        number_regexp = re.compile(r'[0-9]+|[0-9]+[\.,][0-9]+')
+    def set_var_value(payload, value_, refmod_l):
+        # value_ is a list.  It happens that we care only about
+        # the first element:
+        value = value_[0]
+
+        # This routine handles "cprint var=literal".  The case of
+        # "cprint var1=var2" is passed along to PutDataAsVar, which
+        # uses the specialized GlobalVariables.VarLeft and .VarRight
+        # to handle that special case:
+
+        number_regexp = re.compile(r'[-]?[0-9]+|[0-9]+[\.,][0-9]+')
         return_value = 1
 
         if value.startswith(('"', "'")) and value.endswith(('"', "'")):
+            # Handle a quoted string literal:
             if refmod_l:
                 valid, p_startloc, p_length = get_lenspec_refmod(refmod_l, payload, "n")
                 if valid == 0:
@@ -2530,20 +2494,19 @@ class CPrintWorker():
             if payload.PutDataAsString(value[1:-1], p_startloc, p_length) == 0:
                 return_value = 0
         elif re.match(number_regexp, value):
+            # Handle a numeric literal:
             if payload.PutDataAsString(value, 1, payload.Length) == 0:
                 return_value = 0
         else:
-            possibilities, from_digit = get_sorted_possibilities(value, 1)
-            if len(possibilities) == 1:
-                payload_s = GV_ModuleInformation.var_trie.storage_list[possibilities[0]]
-                if CobolVariable.PutDataAsVar() == 0:
-                    return_value = 0
-            else:
-                print("Variable not found: " + str(value))
+            # Arriving here means that we are working on "cprint var1=var2"
+            # So, pass it along.
+            if CobolVariable.PutDataAsVar() == 0:
                 return_value = 0
 
         if return_value == 1:
-            # Fetch the data we just assigned, so that subsequent display is valid
+            # Fetch the data we just assigned, so that subsequent display is valid.  This isn't an
+            # "extra" fetch -- the data was changed, so we need to update the variable data
+            # in the element in the storage list.  This will do that.
             payload.FetchVariableData(GV_ModuleInformation.line_list, False)
 
         return return_value
@@ -2687,31 +2650,52 @@ class CPrintWorker():
         #   A/B
         #   A.B
 
-        # It is possible for args[] to be empty, in which case we treat
-        # our caller with lofty disdain:
+        # It is possible for args[] to be empty. The user might have supplied
+        # no arguments, or ProcessDisplayMode could have, properly, eaten all
+        # of them.  In any case, no arguments means do nothing:
 
         if not args or not args[0]:
             return
 
+        # Initialize for subsequent processing:
         leftside_possibilities = []
         rightside_possibilities = []
         left_side = ""
         right_side = ""
         refmod_l = ""
         refmod_r = ""
+
+        # This can be an assignment, so check for it.
         leftright = args.split('=', 1)
 
-        # Pick up the left and right sides:
+        # Pick up the left and right sides, and turn them into
+        # "normalized" COBOL variable names.
+
         if len(leftright) > 0:
-            left_side = leftright[0].strip().split()
+            left_side = TokenizeCanonicalName(leftright[0])
 
         if len(leftright) > 1:
+            # There is a rightside.
             right_side = leftright[1].strip()
+            if right_side[0] in ('"',"'"): #I do love that construction
+                if len(right_side) < 2 or right_side[-1] != right_side[0]:
+                    print("Syntax error in >>{0}<<.".format(right_side))
+                    return
+                right_side = [right_side]
+            else:
+                # This is not a quoted string, so canonicalize it.
+                right_side = TokenizeCanonicalName(leftright[1])
 
-        # We want to handle a very rare situation, but one that can happen.
-        # We handle array/table entries by creating a CobolVariable using its base address,
+        # From this point on, the left_side, and right_side (if there
+        # is one), are handled as lists of strings
+
+        # But before going general, We need to handle an obscure situation,
+        # but one that can happen.
+        #
+        # We handle array/table entries by creating a CobolVariable using its base symbol,
         # but also carrying along the Subscripts and the TableOffset created by those subscripts.
-        # The rare case is when the operator specifies an assignment: "cp table(2) = table(4)
+        #
+        # The rare case is when the operator specifies an assignment: "cp table(2) = table(4)", because
         # The second evaluation stomps on the first one. So, we are going to save copies both of them
         # one at a time, here, so we can use them later, if needed, in PutDataAsVar()
 
@@ -2725,13 +2709,14 @@ class CPrintWorker():
             if left_side[0] in ('*','?'):
                 # When '*' or '?' match nothing, then just return nothing
                 return
-            print('No symbol "{0}" in current context'.format( '/'.join(TokenizeCanonicalName(left_side))))
+            print('No symbol "{0}" in current context'.format( '/'.join(left_side)))
             return
 
         if len(leftside_possibilities) == 1:
+            # because there is but a single possibility, we might be in a "cprint var1=var2" situation
             GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]])
 
-        if right_side and right_side.find('"') == -1:
+        if right_side and right_side[0].find('"') == -1:
             refmod_r = self.search_refmod(right_side)
             rightside_possibilities, from_digit = get_sorted_possibilities(right_side, 1)
             if not rightside_possibilities:
@@ -2742,9 +2727,17 @@ class CPrintWorker():
                 GV_GlobalVariables.VarRight = copy.copy(GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]])
 
         if self.machine_interface_mode:
-            self.ProcessArgumentsMachineMode(left_side, right_side, leftside_possibilities, rightside_possibilities)
+            self.ProcessArgumentsMachineMode(left_side,
+                                             right_side,
+                                             leftside_possibilities,
+                                             rightside_possibilities)
         else:
-            self.ProcessArgumentsHumanMode(from_digit, left_side, right_side, leftside_possibilities, rightside_possibilities, refmod_l)
+            self.ProcessArgumentsHumanMode( from_digit,
+                                            left_side,
+                                            right_side,
+                                            leftside_possibilities,
+                                            rightside_possibilities,
+                                            refmod_l)
 
 class CWatchWorker():
     """Does most of the non-gdb work of CWatch()"""
