@@ -199,7 +199,7 @@ class GlobalVariables():
         # These are used in PutDataAsVar
         self.VarLeft = None
         self.VarRight = None
-        
+
         # Set on event.stop as a flag that ever variable's data
         # needs to be read again
         self.IsDirty = True
@@ -812,8 +812,8 @@ class VarTrie():
                     # might have a parent (for level 01, the parent might be a FD file descriptor)
 
                     if payload.Level <= 49:
-                        # We start looking at the variable in the list right where we 
-                        # will go.  
+                        # We start looking at the variable in the list right where we
+                        # will go.
                         i = len(self.storage_list)-1
                         while i >= 0:
                             candidate_level = self.storage_list[i].Level
@@ -952,7 +952,7 @@ class VarTrie():
         # There is the possibility array subscripts (contained in parentheses,
         # and not having any colons, and/or refmods (two values, in parentheses,
         # separated by a colon.)
-        
+
         subscripts = None
         refmod     = None
 
@@ -966,13 +966,13 @@ class VarTrie():
                 # The parentheses are either mismatched, or in the wrong order
                 print("A syntax error in >>{0}<<".format('/'.join(cobol_variable_name)))
                 return paths
-            
+
             # We have a pair of parenthesis.  Extract them and their contents:
             parenthesized = recombined[n1:n2+1]
-            
+
             # and remove them from the recombined string:
             recombined = recombined[0:n1] + ' ' + recombined[n2+1:]
-            
+
             if parenthesized.find(':'):
                 # This must be a refmod.
                 if refmod:
@@ -1046,7 +1046,7 @@ class VarTrie():
 
         # If, and only if, the length of paths is 1, then
         # we append any modifiers back onto the variable:
-        
+
         # if we are change something, flag the list variable as Dirty
         if len(paths) == 1:
             if self.storage_list[paths[0]].Subscripts != subscripts:
@@ -1142,7 +1142,7 @@ class CobolVariable():
         self.comma_separator = ','
         self.currency_symbol = '$'
 
-        # These elements are based on parenthesized subscripts after the 
+        # These elements are based on parenthesized subscripts after the
         # name:  name(array_index1 , array_index2 , ...)(refmod start : refmod run)
         # Note the commas and colons, which determine which is which
         self.Subscripts  = None
@@ -1165,7 +1165,7 @@ class CobolVariable():
 
         # When a variable is accessed for the first time, or when the Subscript changes,
         # or when the refmod changes, or when a previously-read variable is displayed through
-        # through a "cprint <short_term_index>, or when the value is changed through a 
+        # through a "cprint <short_term_index>, or when the value is changed through a
         # "cprint var=<something>, we flag it as IsDirty so that FetchVariableValue is executed
         # when the variable is next accessed.
         self.IsDirty = True;
@@ -1648,7 +1648,7 @@ class CobolVariable():
 
             if self.location_of_data != 0:
                 # Unlikely as it seems, arriving here means having successfully
-                # run the gauntlet of all the reason up above as to why you 
+                # run the gauntlet of all the reason up above as to why you
                 # can't read this data.  So, get the data:
                 self.data = GetBytesAt(self.location_of_data + self.TableOffset, self.Length)
                 self.display_body_hex = self.GetDataAsHex()
@@ -1904,7 +1904,7 @@ class ModuleInformation():
             tokens = variable_line.split("|")
             if len(tokens) > 3:
                 self.perform_commands[tokens[3]] = tokens[2]
-    
+
     def FlagAllAsDirty(self):
         self.var_trie.FlagAllAsDirty()
 
@@ -2107,7 +2107,7 @@ class ModuleState():
             # There was a events.stop.
             GV_ModuleInformation.FlagAllAsDirty()
             GV_GlobalVariables.IsDirty = False
-    
+
         # Go read the frame and stack, and, if necessary, fetch the VariableStringData
         if self.ProcessStack():
             # Figure out what routine we are trapped in, from
@@ -2294,7 +2294,6 @@ def get_sorted_possibilities(args, limit):
     # We take a list of strings as args
     possibilities_1 = []
     possibilities = []
-    from_digit = False
 
     if len(args) >= 1 and GV_ModuleState.current_trapped_line>0:
         if args[0].find('*') != -1:
@@ -2339,7 +2338,6 @@ def get_sorted_possibilities(args, limit):
                 possibilities_1 = list(GV_ModuleState.old_dogs.union(new_dogs))
                 GV_ModuleState.old_dogs = new_dogs
         elif args[0].isdigit():
-            from_digit = True
             # if the first, presumably single, argument is a number, then he is looking
             # for a short-term memory entry.
 
@@ -2348,6 +2346,9 @@ def get_sorted_possibilities(args, limit):
             if index >= 0 and index < len(GV_GlobalVariables.ShortTermMemory):
                 # If index is valid, pick up the short-term memory entry
                 possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
+            else:
+                print("The specified index ({0}) is out of range (1 to {1})".format(index+1,len(GV_GlobalVariables.ShortTermMemory)))
+                return possibilities
         else:
             # There are one or more arguments.  Use our clever routine
             # to come up with the possibilities_1:
@@ -2359,7 +2360,7 @@ def get_sorted_possibilities(args, limit):
     # work if A and B are unambiguous
 
     if limit > 0 and len(possibilities_1) > limit:
-        return possibilities, from_digit
+        return possibilities
 
     # We now have a list of possibilities_1 based on the names of the variables
     # typically, some of them will not be in context.  The only way of
@@ -2375,7 +2376,7 @@ def get_sorted_possibilities(args, limit):
     # Sorting them makes the display much more sensible:
     possibilities.sort()
 
-    return possibilities, from_digit
+    return possibilities
 
 class CPrintWorker():
     """Does most of the non-gdb work of CPrint()"""
@@ -2623,7 +2624,7 @@ class CPrintWorker():
         s = MachineInterfaceHeirarchical(leftside_possibilities)
         print(s)
 
-    def ProcessArgumentsHumanMode(self, from_digit, leftside, rightside, leftside_possibilities, rightside_possibilities, refmod_l):
+    def ProcessArgumentsHumanMode(self, leftside, rightside, leftside_possibilities, rightside_possibilities, refmod_l):
         if len(leftside_possibilities) > 1:
             GV_GlobalVariables.ShortTermMemory = []
 
@@ -2648,9 +2649,6 @@ class CPrintWorker():
                     if retval == "Quit":
                         break
         elif len(leftside_possibilities) == 1:
-            if not from_digit:
-                GV_GlobalVariables.ShortTermMemory = [leftside_possibilities[0]]
-
             # There is but one possibility
             # Pick up the payload from the list
             payload = GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]]
@@ -2753,10 +2751,10 @@ class CPrintWorker():
         GV_GlobalVariables.VarRight = None
 
         refmod_l = self.search_refmod(left_side)
-        leftside_possibilities, from_digit = get_sorted_possibilities(left_side, 0)
+        leftside_possibilities = get_sorted_possibilities(left_side, 0)
         if not leftside_possibilities:
             # There are no leftside possibilities.  Let him know why, and then bug out
-            if left_side[0] in ('*','?'):
+            if left_side[0] in ('*','?') or left_side[0].isdigit:
                 # When '*' or '?' match nothing, then just return nothing
                 return
             print('No symbol "{0}" in current context'.format('/'.join(left_side)))
@@ -2768,7 +2766,7 @@ class CPrintWorker():
 
         if right_side and right_side[0].find('"') == -1:
             refmod_r = self.search_refmod(right_side)
-            rightside_possibilities, from_digit = get_sorted_possibilities(right_side, 1)
+            rightside_possibilities = get_sorted_possibilities(right_side, 1)
             if not rightside_possibilities:
                 print('No symbol "{0}" in current context'.format('/'.join(right_side)))
                 return
@@ -2782,8 +2780,7 @@ class CPrintWorker():
                                              leftside_possibilities,
                                              rightside_possibilities)
         else:
-            self.ProcessArgumentsHumanMode( from_digit,
-                                            left_side,
+            self.ProcessArgumentsHumanMode( left_side,
                                             right_side,
                                             leftside_possibilities,
                                             rightside_possibilities,
@@ -2856,7 +2853,7 @@ class CWatchWorker():
         else:
             wp_arg, wp_refmod = get_refmod(args[0])
 
-        possibilities, from_digit = get_sorted_possibilities(wp_arg, 1)
+        possibilities = get_sorted_possibilities(wp_arg, 1)
         if len(possibilities) == 1:
             payload_number = possibilities[0]
             # print("Watch Payload number is ", payload_number)
@@ -2955,7 +2952,7 @@ class CBreakWorker():
         possibilities = []
 
         GV_ModuleState.EstablishModuleState()
-        possibilities, from_digit = get_sorted_possibilities(search_var, 1)
+        possibilities = get_sorted_possibilities(search_var, 1)
 
         if len(possibilities) == 1:
             payload_number = possibilities[0]
