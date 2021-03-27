@@ -2661,14 +2661,8 @@ class CPrintWorker():
                     return
                 refmod_l = ""
 
-            # Human-interface:
-            # Fetch the data again, just in case he executed some instructions
-            # since short-term-memory was established
-            if from_digit:
-                payload.IsDirty = True
-                payload.FetchVariableData(True)
-            # And display the variable according to the current list v-level
-                self.FormattedDisplay(payload, refmod_l)
+            payload.FetchVariableData(True)
+            self.FormattedDisplay(payload, refmod_l)
 
     @staticmethod
     def search_refmod(args):
