@@ -1048,7 +1048,7 @@ class VarTrie():
         # If, and only if, the length of paths is 1, then
         # we append any modifiers back onto the variable:
 
-        # if we are change something, flag the list variable as Dirty
+        # if we change something, flag the list variable as Dirty
         if len(paths) == 1:
             if self.storage_list[paths[0]].Subscripts != subscripts:
                 self.storage_list[paths[0]].Subscripts = subscripts
@@ -1536,8 +1536,19 @@ class CobolVariable():
                 print("The refmod {0} elements have to be integers".format(self.Refmod))
                 self.SubscriptFailure = True
                 return
-            self.RefmodOffset = int(offset)
-            self.RefmodLength = int(length)
+            offset = int(offset)
+            length = int(length)
+            if offset >= self.Length:
+                print("The refmod {0} offset has to be less than {1}".format(self.Refmod, self.Length))
+                self.SubscriptFailure = True
+                return
+            if offset + length > self.Length:
+                # The requested refmod would overrun the end of the variable.
+                # Silently trim it for the user:
+                length = Self.Length = offset
+
+            self.RefmodOffset = offset
+            self.RefmodLength = length
 
     def FetchVariableData(self, show_failure):
         # print("FetchVariableData:", self.Name, self.Section)
@@ -2494,9 +2505,9 @@ class CPrintWorker():
     def ProcessDisplayMode(self, args):
         args = args.split(' ')
         self.machine_interface_mode = False
-        # Make sure the current display mode is the same as the session mode
-        self.current_display_mode = self.sticky_display_mode
 
+        # Start off with the current display mode the same as the session mode
+        self.current_display_mode = self.sticky_display_mode
         self.current_display_submode = ''
 
         # Now see if he wants to change it
@@ -2518,12 +2529,10 @@ class CPrintWorker():
                 args = self.ProcessSlashV(args)
             elif args[0][0:2] == "/r":
                 args = self.ProcessSlashR(args)
-
         args = ' '.join(args)
-
         return args
 
-    def FormattedDisplay(self, payload, refmod):
+    def FormattedDisplay(self, payload):
         if payload.SubscriptFailure:
             return
         # see the comments in ProcessDisplayMode()
@@ -2532,7 +2541,7 @@ class CPrintWorker():
             body = payload.display_body_hex
 
         if self.current_display_submode == 'b' and len(payload.data) <= 8:
-            # kludge.  Convert the hex to binary:
+            # This is a kludge.  Convert the hex to binary:
             body = ""
             index = 2
             while index < len(payload.display_body_hex) and index < 8 * 2 + 2:
@@ -2546,10 +2555,11 @@ class CPrintWorker():
                     mask >>= 1
                 index += 1
 
-        if refmod != "" and self.current_display_submode not in ('x', 'b'):
-            valid, d_startloc, d_length = get_lenspec_refmod(refmod, payload, "n")
-            if valid == 0:
-                return
+        d_startloc = payload.RefmodOffset
+        d_length   = payload.RefmodLength
+
+        if payload.Refmod and self.current_display_submode not in ('x', 'b'):
+            print("d_startloc:d_length is {0}:{1}".format(d_startloc,d_length))
 
             if body.startswith('"'):
                 body = '"' + body.replace('"', '')[d_startloc - 1:d_startloc - 1 + d_length] + '"'
@@ -2706,7 +2716,7 @@ class CPrintWorker():
                 refmod_l = ""
 
             payload.FetchVariableData(True)
-            self.FormattedDisplay(payload, refmod_l)
+            self.FormattedDisplay(payload)
 
     @staticmethod
     def search_refmod(args):
