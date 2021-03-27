@@ -198,10 +198,11 @@ class GlobalVariables():
 
         # These are used in PutDataAsVar
         self.VarLeft = None
+        self.VarLeftIndex = None
         self.VarRight = None
 
-        # Set on event.stop as a flag that ever variable's data
-        # needs to be read again
+        # This flag means that every variable will need to be read again.
+        # It gets set on GDB.events.stop
         self.IsDirty = True
 
     def AllocateBuffers(self):
@@ -973,7 +974,7 @@ class VarTrie():
             # and remove them from the recombined string:
             recombined = recombined[0:n1] + ' ' + recombined[n2+1:]
 
-            if parenthesized.find(':'):
+            if parenthesized.find(':') != -1:
                 # This must be a refmod.
                 if refmod:
                     # There can be only one refmod
@@ -1146,8 +1147,10 @@ class CobolVariable():
         # name:  name(array_index1 , array_index2 , ...)(refmod start : refmod run)
         # Note the commas and colons, which determine which is which
         self.Subscripts  = None
-        self.Refmod      = None
         self.TableOffset = 0    # These are additional bytes based on the table Subscripts
+        self.Refmod      = None
+        self.RefmodOffset = 0   # This is the Offset in (Offset:Length)
+        self.RefmodLength = 0   # This is the Length in (Offset:Length)
 
         # These values are calculated at runtime from the information up above
         self.location_of_field     = 0  # location of Fname, when available
@@ -1251,6 +1254,8 @@ class CobolVariable():
             print(    "GetData AsString           Name:", self.Name)
             if self.Subscripts:
                 print("GetData AsString     Subscripts:", self.Subscripts)
+            if self.Refmod:
+                print("GetData AsString         refmod:", self.Refmod)
             print(    "GetData AsString        Section:", self.Section)
             print(    "GetData AsString          Fname:", self.Fname or "f0")
             print(    "GetData AsString          Bname:", self.Bname)
@@ -1363,6 +1368,7 @@ class CobolVariable():
             command += ",(char *)" + hex(buffer)
             command += ")"
             gdb.execute(command, False, True)
+            self.IsDirty = True
         except gdb.error:
             print("COMMAND failed in PutDataAsString: ", command)
             return_value = 0
@@ -1411,6 +1417,13 @@ class CobolVariable():
         try:
             command = "call (void)cob_move((cob_field *){0}, (cob_field *){1})".format(hex(source), hex(destination))
             gdb.execute(command, False, True)
+            var_left.IsDirty = True
+
+            # Recall that var_left is a copy of the GlobalVariable in var_trie.storage_list.  It has the same
+            # data location as the original.  We just changed that data, so we need to flag the entry in the
+            # list as dirty.  This is why we've been maintaining .VarLeftIndex
+            GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex].IsDirty = True
+
             #print("COMMAND succeeded in PutDataAsVar: ", command)
         except gdb.error:
             print("COMMAND failed in PutDataAsVar: ", command)
@@ -1445,7 +1458,6 @@ class CobolVariable():
         self.TableOffset = 0
         self.SubscriptFailure = False
         if self.Subscripts:
-            print("self.Subscripts",self.Subscripts)
             # Strip off the leading parenthesis (we know it is there
             # from GetListOfPossibilities
             subscripts = self.Subscripts[1:]
@@ -1476,7 +1488,13 @@ class CobolVariable():
                         self.TableOffset = 0
                         self.SubscriptFailure = True
                         return
-                    subscript = int(list_of_subscripts[-1])
+                    subscript = list_of_subscripts[-1].strip()
+                    if not subscript.isdigit():
+                        print("Subscripts in {0} must be integers".format(variable.Name))
+                        self.TableOffset = 0
+                        self.SubscriptFailure = True
+                        return
+                    subscript = int(subscript)
                     list_of_subscripts = list_of_subscripts[0:-1]
                     if subscript < variable.OccursMin:
                         print("subscript for '{0}' is too small".format(variable.Name))
@@ -1498,8 +1516,32 @@ class CobolVariable():
                 self.SubscriptFailure = True
                 return
 
+    def CalculateRefmodValues(self):
+        self.RefmodOffset = 0
+        self.RefmodLength = 0
+        if self.Refmod:
+            # There is a refmod
+            # we know it starts and ends with parentheses, so strip them off
+            refmod = self.Refmod[1:-1]
+            refmod = refmod.split(':')
+            if len(refmod) != 2:
+                # There have to be two, and only two elements:
+                print("The refmod {0} has to have two elements".format(self.Refmod))
+                self.SubscriptFailure = True
+                return
+            offset = refmod[0].strip()
+            length = refmod[1].strip()
+            if not offset.isdigit() or not offset.isdigit():
+                # for now they both have to be integers
+                print("The refmod {0} elements have to be integers".format(self.Refmod))
+                self.SubscriptFailure = True
+                return
+            self.RefmodOffset = int(offset)
+            self.RefmodLength = int(length)
+
     def FetchVariableData(self, show_failure):
         # print("FetchVariableData:", self.Name, self.Section)
+        # print("FetchVariableData",self.Name,self.IsDirty)
         if self.IsDirty:
             # We do this work only if the IsDirty flag indicates that we have to do the work.
             self.location_of_field = 0
@@ -1514,6 +1556,10 @@ class CobolVariable():
             # Let's update everything we might need:
             # Calculate the additional table offsets
             self.CalculateTableOffset()
+
+            # Calculate refmode offset:length
+            self.CalculateRefmodValues()
+
 
             # First, check to see if the compiler provided us with the
             # the name of the field.  If so, use the run-time values in that named
@@ -1654,7 +1700,7 @@ class CobolVariable():
                 self.display_body_hex = self.GetDataAsHex()
                 self.display_body = self.GetDataAsString()
                 self.display_body = ReplaceWithRepeatCount(self.display_body)
-                self.IsDirty = True
+                self.IsDirty = False
         return
 
     def NameToString(self):
@@ -1670,7 +1716,7 @@ class CobolVariable():
 
         name = self.Name
         if self.OccursMin != self.OccursMax:
-            name += "({0}:{1})".format(self.OccursMin,self.OccursMax)
+            name += "({0} to {1})".format(self.OccursMin,self.OccursMax)
 
         s = "{1:02} {2} [{0}]".format(storage_type, self.Level, name)
         return s
@@ -2557,7 +2603,7 @@ class CPrintWorker():
         else:
             # Arriving here means that we are working on "cprint var1=var2"
             # So, pass it along.
-            if CobolVariable.PutDataAsVar() == 0:
+            if payload.PutDataAsVar() == 0:
                 return_value = 0
 
         if return_value == 1:
@@ -2748,10 +2794,11 @@ class CPrintWorker():
         # one at a time, here, so we can use them later, if needed, in PutDataAsVar()
 
         GV_GlobalVariables.VarLeft = None
+        GV_GlobalVariables.VarLeftIndex = None
         GV_GlobalVariables.VarRight = None
 
-        refmod_l = self.search_refmod(left_side)
         leftside_possibilities = get_sorted_possibilities(left_side, 0)
+        refmod_l = self.search_refmod(left_side)
         if not leftside_possibilities:
             # There are no leftside possibilities.  Let him know why, and then bug out
             if left_side[0] in ('*','?') or left_side[0].isdigit:
@@ -2763,6 +2810,7 @@ class CPrintWorker():
         if len(leftside_possibilities) == 1:
             # because there is but a single possibility, we might be in a "cprint var1=var2" situation
             GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]])
+            GV_GlobalVariables.VarLeftIndex = leftside_possibilities[0]
 
         if right_side and right_side[0].find('"') == -1:
             refmod_r = self.search_refmod(right_side)
@@ -2839,7 +2887,7 @@ class CWatchWorker():
             return
 
         if len(args) > 2:
-            print("Too much arguments")
+            print("Too many arguments")
             return
 
         if len(args) == 2:
