@@ -791,7 +791,7 @@ Lowden
  8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
-01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 entering: bob
 142	    DISPLAY WS-BOB.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -804,7 +804,7 @@ entering: bob
  8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
-01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 Robert    J Dubner    
 143	    DISPLAY "by pargraphs:"
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -817,7 +817,7 @@ Robert    J Dubner
  8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
-01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 by pargraphs:
 144	    PERFORM ParaFirstName.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -830,7 +830,7 @@ by pargraphs:
  8 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 1.234
 01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
-01 WS-BOB/JIMBOB [W-S]  :  "Robert    J Dubner    "
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 154	    ParaFirstName.      DISPLAY WS-FIRSTNAME OF WS-BOB.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -1343,7 +1343,7 @@ L
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 10 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001031
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001031
-01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x00000407
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 entering: JUST_ONE
 131	    DISPLAY A_BINARY_NUMBER.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -1357,7 +1357,7 @@ entering: JUST_ONE
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 10 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001031
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001031
-01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x00000407
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 +0000001031
 132	    ADD 1 to A_BINARY_NUMBER.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -1371,7 +1371,7 @@ entering: JUST_ONE
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 10 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001031
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001031
-01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x00000407
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 133	    DISPLAY A_BINARY_NUMBER.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -1384,7 +1384,7 @@ entering: JUST_ONE
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 10 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001032
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001032
-01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x00000408
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 +0000001032
 134	    ADD 1 to A_BINARY_NUMBER.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
@@ -1398,7 +1398,7 @@ entering: JUST_ONE
  9 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 10 : 01 A_BINARY_NUMBER/JUST_ONE [LNK] : +0000001032
 01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  +0000001032
-01 A_BINARY_NUMBER/JUST_ONE [LNK]  :  0x00000408
+01 WS-JIM/JIMBOB [W-S]  :  "James     " Lowden    "
 135	    DISPLAY A_BINARY_NUMBER.
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
