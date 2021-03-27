@@ -1424,7 +1424,6 @@ class CobolVariable():
             # list as dirty.  This is why we've been maintaining .VarLeftIndex
             GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex].IsDirty = True
 
-            #print("COMMAND succeeded in PutDataAsVar: ", command)
         except gdb.error:
             print("COMMAND failed in PutDataAsVar: ", command)
             return_value = 0
@@ -1538,14 +1537,14 @@ class CobolVariable():
                 return
             offset = int(offset)
             length = int(length)
-            if offset >= self.Length:
+            if offset-1 >= self.Length:
                 print("The refmod {0} offset has to be less than {1}".format(self.Refmod, self.Length))
                 self.SubscriptFailure = True
                 return
-            if offset + length > self.Length:
+            if offset-1 + length > self.Length:
                 # The requested refmod would overrun the end of the variable.
                 # Silently trim it for the user:
-                length = Self.Length = offset
+                length = self.Length - (offset-1)
 
             self.RefmodOffset = offset
             self.RefmodLength = length
@@ -1979,6 +1978,7 @@ class ModuleState():
         self.current_trapped_line = 0
         self.question_mark_range = int(os.environ.get("CPRINT_R", '6'))
         self.current_full_path = ""
+        self.Stack = False
 
     def ProcessStack(self):
         """ Figures out which routine we are currently trapped in"""
@@ -2158,7 +2158,7 @@ class ModuleState():
 
         return retval
 
-    def EstablishModuleState(self):
+    def EstablishModuleState(self, announce):
         #
         if GV_GlobalVariables.IsDirty:
             # There was a events.stop.
@@ -2167,6 +2167,7 @@ class ModuleState():
 
         # Go read the frame and stack, and, if necessary, fetch the VariableStringData
         if self.ProcessStack():
+            self.Stack = True
             # Figure out what routine we are trapped in, from
             # the line number
             for line in GV_ModuleInformation.line_list.line_list:
@@ -2177,7 +2178,10 @@ class ModuleState():
                 # Keep looking
                 self.current_trapped_routine = line[1]
         else:
-            print("No stack.")
+            self.Stack = False
+            if announce:
+                print("No stack.")
+
 
 GV_ModuleState = ModuleState()
 
@@ -2516,10 +2520,10 @@ class CPrintWorker():
             if args[0] == "/d":
                 self.current_display_mode = 'd'
                 args.pop(0)
-            if args[0] == "/x":
+            elif args[0] == "/x":
                 self.current_display_submode = 'x'
                 args.pop(0)
-            if args[0] == "/b":
+            elif args[0] == "/b":
                 self.current_display_submode = 'b'
                 args.pop(0)
             elif args[0] == "/m":
@@ -2532,9 +2536,7 @@ class CPrintWorker():
         args = ' '.join(args)
         return args
 
-    def FormattedDisplay(self, payload):
-        if payload.SubscriptFailure:
-            return
+    def GetDisplayBody(self,payload):
         # see the comments in ProcessDisplayMode()
         body = payload.display_body
         if self.current_display_submode == 'x' and len(payload.data) <= 16:
@@ -2563,6 +2565,12 @@ class CPrintWorker():
                 body = '"' + body.replace('"', '')[d_startloc - 1:d_startloc - 1 + d_length] + '"'
             else:
                 body = body[d_startloc - 1:d_startloc - 1 + d_length]
+        return body
+
+    def FormattedDisplay(self, payload):
+        if payload.SubscriptFailure:
+            return
+        body = self.GetDisplayBody(payload)
 
         if self.current_display_mode == '0':
             print(payload.display_name, " : ", body)
@@ -2575,45 +2583,78 @@ class CPrintWorker():
             payload.ShowFields()
 
     @staticmethod
-    def set_var_value(payload, value_):
-        # value_ is a list.  It happens that we care only about
-        # the first element:
+    def set_var_value(value_):
+        # The left-hand-side of the assignment is found in GV_GlobalVariables.VarLeft
+        # Its index in storage_list is .VarLeftIndex.  See ProcessArguments
+
+        # value_ is a list.  It should have only one element.  It will be a literal constant
+        # We might not use it; when GV_GlobalVariables.VarRight is established, we get the
+        # value from that variable.
+
         value = value_[0]
 
-        # This routine handles "cprint var=literal".  The case of
-        # "cprint var1=var2" is passed along to PutDataAsVar, which
-        # uses the specialized GlobalVariables.VarLeft and .VarRight
-        # to handle that special case:
+        # This routine deals with the various cases of "cprint <this>=<that>"
+        # The ability to cope with refmods complicates things considerably.  Try to keep up.
 
         number_regexp = re.compile(r'[-]?[0-9]+|[0-9]+[\.,][0-9]+')
         return_value = 1
 
-        if value.startswith(('"', "'")) and value.endswith(('"', "'")):
-            # Handle a quoted string literal:
-            the_literal = value[1:-1]
-            if payload.Refmod:
-                p_startloc = payload.RefmodOffset
-                p_length   = payload.RefmodLength
-            else:
-                p_startloc = 1
-                p_length = payload.Length
-            # Make sure the literal is long enough:
-            while len(the_literal) < p_length:
-                the_literal += ' '
-            # Make sure the literal is not too long:
-            the_literal = the_literal[0:p_length]
-            if payload.PutDataAsString(the_literal, p_startloc, p_length) == 0:
-                return_value = 0
-        elif re.match(number_regexp, value):
-            # Handle a numeric literal:
-            print(type(value))
-            if payload.PutDataAsString(value, 1, payload.Length) == 0:
+        var_left  = GV_GlobalVariables.VarLeft;
+        payload   = GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex]
+        var_right = GV_GlobalVariables.VarRight;
+
+        if not var_left.Refmod and var_right and not var_right.Refmod:
+            # cprint var1=var2; neither have refmods.  Call the routine that
+            # does a straight assignment using libcob on .VarLeft and .VarRight
+            if CobolVariable.PutDataAsVar() == 0:
                 return_value = 0
         else:
-            # Arriving here means that we are working on "cprint var1=var2"
-            # So, pass it along.
-            if payload.PutDataAsVar() == 0:
-                return_value = 0
+            if var_right and var_right.Refmod:
+                # We will be working with the truncated value from var_right:
+                # We need a string that we know has no <repeated> character contractions,
+                # so we will re-read the data.  Too bad.
+                value = var_right.GetDataAsString()
+                # And now we need the relevant data
+                o = var_right.RefmodOffset
+                l = var_right.RefmodLength
+                value = '"' + value[o:o+l] + '"'
+            elif var_left.Refmod and var_right:
+                # Because the left side has a refmod, we will fetch the
+                # var_right data as a string for 'value'
+                value = var_right.GetDataAsString()
+            # At this point var_left might or might not have a refmod, but
+            # either way we work with value, which might be what we were
+            # called with, or might be the replacement from var_right:
+
+            if var_left.Refmod:
+                p_startloc = var_left.RefmodOffset
+                p_length   = var_left.RefmodLength
+            else:
+                p_startloc = 1
+                p_length = var_left.Length
+
+            if value.startswith(('"', "'")) and value.endswith(('"', "'")):
+                # Handle a quoted string literal.  String literals are handled
+                # from left to right.  If too short, they are space-filled to the
+                # right.  If too long, the left side is lopped off.
+                the_literal = value[1:-1]
+                # Make sure the literal is long enough:
+                while len(the_literal) < p_length:
+                    the_literal += ' '
+                # Make sure the literal is not too long:
+                the_literal = the_literal[0:p_length]
+                if payload.PutDataAsString(the_literal, p_startloc, p_length) == 0:
+                    return_value = 0
+            elif re.match(number_regexp, value):
+                # Handle a numeric literal.  Numeric literals are zero-filled to
+                # the left if they are too short,  If too long, the leftmost
+                # digits are removed, which is consistent with how GnuCOBOL works.
+                while len(value) < p_length:
+                    value = '0' + value
+                # Make sure the literal is not too long:
+                value = value[-p_length:]
+                if payload.PutDataAsString(value, p_startloc, p_length) == 0:
+                    return_value = 0
 
         if return_value == 1:
             # Fetch the data we just assigned, so that subsequent display is valid.  This isn't an
@@ -2642,7 +2683,9 @@ class CPrintWorker():
             return
 
         if len(leftside_possibilities) == 1 and rightside and leftside[0] != '*' and leftside[0] != '?':
-            if self.set_var_value(payload, rightside) == 0:
+            payload_index = leftside_possibilities[0]
+            payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+            if self.set_var_value(rightside) == 0:
                 # The assignment failed
                 return
 
@@ -2679,7 +2722,7 @@ class CPrintWorker():
         s = MachineInterfaceHeirarchical(leftside_possibilities)
         print(s)
 
-    def ProcessArgumentsHumanMode(self, leftside, rightside, leftside_possibilities, rightside_possibilities):
+    def ProcessArgumentsHumanMode(self, leftside_possibilities, rightside):
         if len(leftside_possibilities) > 1:
             GV_GlobalVariables.ShortTermMemory = []
 
@@ -2709,7 +2752,7 @@ class CPrintWorker():
             payload = GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]]
 
             if rightside:
-                if self.set_var_value(payload, rightside) == 0:
+                if self.set_var_value(rightside) == 0:
                     # The assignment failed
                     return
 
@@ -2737,6 +2780,10 @@ class CPrintWorker():
         # It is possible for args[] to be empty. The user might have supplied
         # no arguments, or ProcessDisplayMode could have, properly, eaten all
         # of them.  In any case, no arguments means do nothing:
+
+        if not GV_ModuleState.Stack:
+            print("No stack.")
+            return
 
         if not args or not args[0]:
             return
@@ -2786,9 +2833,10 @@ class CPrintWorker():
         GV_GlobalVariables.VarRight = None
 
         leftside_possibilities = get_sorted_possibilities(left_side, 0)
+        #print("left_side",left_side,leftside_possibilities)
         if not leftside_possibilities:
             # There are no leftside possibilities.  Let him know why, and then bug out
-            if left_side[0] in ('*','?') or left_side[0].isdigit:
+            if left_side[0][0] in ('*','?') or left_side[0].isdigit():
                 # When '*' or '?' match nothing, then just return nothing
                 return
             print('No symbol "{0}" in current context'.format('/'.join(left_side)))
@@ -2799,14 +2847,23 @@ class CPrintWorker():
             GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]])
             GV_GlobalVariables.VarLeftIndex = leftside_possibilities[0]
 
-        if right_side and right_side[0].find('"') == -1:
-            rightside_possibilities = get_sorted_possibilities(right_side, 1)
-            if not rightside_possibilities:
-                print('No symbol "{0}" in current context'.format('/'.join(right_side)))
-                return
-
-            if len(rightside_possibilities) == 1:
+        #print("right_side",right_side)
+        if right_side and right_side[0].find('"') == -1 and right_side[0].find("'") == -1:
+            # We have to deal with the possibility that the right_side is a numeric constant,
+            # as in "cprint var=1234".  We can't let get_sorted_possibilities mess with it,
+            # because that routine will get confused thinking that we are looking for an
+            # short_term_index into storage_list
+            if len(right_side) != 1 or not right_side[0].isdigit():
+                #print("checking for possibilities",right_side)
+                rightside_possibilities = get_sorted_possibilities(right_side, 1)
+                #print("rightside_possibilities",rightside_possibilities)
+                if not rightside_possibilities:
+                    print('No symbol "{0}" in current context'.format('/'.join(right_side)))
+                    return
                 GV_GlobalVariables.VarRight = copy.copy(GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]])
+            else:
+                # This is a numeric constant; just pass it along
+                pass
 
         if self.machine_interface_mode:
             self.ProcessArgumentsMachineMode(left_side,
@@ -2814,10 +2871,8 @@ class CPrintWorker():
                                              leftside_possibilities,
                                              rightside_possibilities)
         else:
-            self.ProcessArgumentsHumanMode( left_side,
-                                            right_side,
-                                            leftside_possibilities,
-                                            rightside_possibilities)
+            self.ProcessArgumentsHumanMode( leftside_possibilities,
+                                            right_side)
 
 class CWatchWorker():
     """Does most of the non-gdb work of CWatch()"""
@@ -2984,7 +3039,7 @@ class CBreakWorker():
         payload = None
         possibilities = []
 
-        GV_ModuleState.EstablishModuleState()
+        GV_ModuleState.EstablishModuleState(True)
         possibilities = get_sorted_possibilities(search_var, 1)
 
         if len(possibilities) == 1:
@@ -3333,9 +3388,11 @@ class CPrint(gdb.Command):
     cprint VARIABLE='STRING'    set variable to string
     cprint VARIABLE=NUMERIC     set variable to numeric
     cprint VARIABLE=VARIABLE2   set variable to variable2
+    cprint set repeat N sets the display <repeats> threshold to N characters
 
     The default v-level can be set with the environment variable CPRINT_V=n
     The default r-level can be set with the environment variable CPRINT_R=n
+    The string display character repeat count threshold is set with
     The 'cprint' command can be changed to 'anything' with the environment variable CPRINT=anything"""
 
     def __init__(self):
@@ -3350,13 +3407,14 @@ class CPrint(gdb.Command):
             # Check if this is a special case.  (Enough of these will
             # mean putting this in a separate function.)
             tokens = arguments.split()
-            if len(tokens) == 3 and tokens[0] == "set" and tokens[1] == "repeat" and tokens[2].isdigit():
+            if len(tokens) == 3 and tokens[0] == "set" and tokens[1] == "repeat" and tokens[2].strip('-').isdigit():
                 GV_GlobalVariables.repeat_count = int(tokens[2])
                 if GV_GlobalVariables.repeat_count < 1:
                     GV_GlobalVariables.repeat_count = 1000000
+                GV_GlobalVariables.IsDirty=True # To force reformatting
                 return
 
-            GV_ModuleState.EstablishModuleState()
+            GV_ModuleState.EstablishModuleState(False)
             self.worker.ProcessArguments(arguments)
         except:
             traceback.print_exc()
@@ -3383,7 +3441,7 @@ A watchpoint stops execution of your program whenever the value of an expression
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
         try:
-            GV_ModuleState.EstablishModuleState()
+            GV_ModuleState.EstablishModuleState(True)
             self.worker.process_watch_arguments(arguments)
         except:
             traceback.print_exc()
@@ -3521,7 +3579,7 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
 
     def invoke(self, arguments, from_tty):
         try:
-            GV_ModuleState.EstablishModuleState()
+            GV_ModuleState.EstablishModuleState(True)
             if arguments:
                 ncount = int(arguments)
             else:
