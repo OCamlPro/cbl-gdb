@@ -808,27 +808,25 @@ class VarTrie():
                     # might have a parent (for level 01, the parent might be a FD file descriptor)
 
                     if payload.Level <= 49:
+                        # We start looking at the variable in the list right where we 
+                        # will go.  
                         i = len(self.storage_list)-1
-                        if i >= 0:
-                            parent_might_be = self.storage_list[i].Level
-                            if parent_might_be == payload.Level:
-                                # He's not heavy.  He's my brother.  So, we share a parent:
+                        while i >= 0:
+                            candidate_level = self.storage_list[i].Level
+                            if candidate_level == payload.Level:
+                            # Our older relative has the same level we do.  That means we
+                            # share a parent.  That value might be None, but that's okay.
                                 payload.index_of_parent = self.storage_list[i].index_of_parent
-                            if parent_might_be < payload.Level:
-                                # Because it is smaller than we are, this
-                                # is a candidate for parenthood.
-                                # But we need to make sure that this is not the
-                                # younger sibling of the actual parent:
-                                while i >= 0:
-                                    if parent_might_be != self.storage_list[i].Level:
-                                        # We break when we've gone through all the possible
-                                        # siblings of the parent -- including the parent itself,
-                                        # who is the oldest sibling
-                                        break;
-                                    # We know that this next statement will be executed
-                                    # at least once
-                                    payload.index_of_parent = i;
-                                    i -= 1
+                                break;
+                            elif candidate_level < payload.Level:
+                                # Because it is smaller than we are, this has to be our parent:
+                                payload.index_of_parent = i;
+                                break;
+                            else: # candidate_level > payload.Level:
+                                # This has to be a child of an older sibling.  They can't be
+                                # our parent, but we keep looking until we find that older sibling.
+                                pass
+                            i -= 1
                     #print("Loading",payload.Level, payload.Name, payload.index_of_parent)
                     payload.payload_index = len(self.storage_list)
                     self.storage_list.append(payload)
