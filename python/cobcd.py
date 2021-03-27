@@ -2559,8 +2559,6 @@ class CPrintWorker():
         d_length   = payload.RefmodLength
 
         if payload.Refmod and self.current_display_submode not in ('x', 'b'):
-            print("d_startloc:d_length is {0}:{1}".format(d_startloc,d_length))
-
             if body.startswith('"'):
                 body = '"' + body.replace('"', '')[d_startloc - 1:d_startloc - 1 + d_length] + '"'
             else:
@@ -2577,7 +2575,7 @@ class CPrintWorker():
             payload.ShowFields()
 
     @staticmethod
-    def set_var_value(payload, value_, refmod_l):
+    def set_var_value(payload, value_):
         # value_ is a list.  It happens that we care only about
         # the first element:
         value = value_[0]
@@ -2592,22 +2590,23 @@ class CPrintWorker():
 
         if value.startswith(('"', "'")) and value.endswith(('"', "'")):
             # Handle a quoted string literal:
-            if refmod_l:
-                valid, p_startloc, p_length = get_lenspec_refmod(refmod_l, payload, "n")
-                if valid == 0:
-                    return 0
-
-                if p_length != len(value[1:-1]):
-                    print("Value length != refmod length: {0} != {1}".format(len(value[1:-1]), p_length))
-                    return 0
+            the_literal = value[1:-1]
+            if payload.Refmod:
+                p_startloc = payload.RefmodOffset
+                p_length   = payload.RefmodLength
             else:
                 p_startloc = 1
                 p_length = payload.Length
-
-            if payload.PutDataAsString(value[1:-1], p_startloc, p_length) == 0:
+            # Make sure the literal is long enough:
+            while len(the_literal) < p_length:
+                the_literal += ' '
+            # Make sure the literal is not too long:
+            the_literal = the_literal[0:p_length]
+            if payload.PutDataAsString(the_literal, p_startloc, p_length) == 0:
                 return_value = 0
         elif re.match(number_regexp, value):
             # Handle a numeric literal:
+            print(type(value))
             if payload.PutDataAsString(value, 1, payload.Length) == 0:
                 return_value = 0
         else:
@@ -2643,7 +2642,7 @@ class CPrintWorker():
             return
 
         if len(leftside_possibilities) == 1 and rightside and leftside[0] != '*' and leftside[0] != '?':
-            if self.set_var_value(payload, rightside, "") == 0:
+            if self.set_var_value(payload, rightside) == 0:
                 # The assignment failed
                 return
 
@@ -2680,7 +2679,7 @@ class CPrintWorker():
         s = MachineInterfaceHeirarchical(leftside_possibilities)
         print(s)
 
-    def ProcessArgumentsHumanMode(self, leftside, rightside, leftside_possibilities, rightside_possibilities, refmod_l):
+    def ProcessArgumentsHumanMode(self, leftside, rightside, leftside_possibilities, rightside_possibilities):
         if len(leftside_possibilities) > 1:
             GV_GlobalVariables.ShortTermMemory = []
 
@@ -2710,31 +2709,12 @@ class CPrintWorker():
             payload = GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]]
 
             if rightside:
-                if self.set_var_value(payload, rightside, refmod_l) == 0:
+                if self.set_var_value(payload, rightside) == 0:
                     # The assignment failed
                     return
-                refmod_l = ""
 
             payload.FetchVariableData(True)
             self.FormattedDisplay(payload)
-
-    @staticmethod
-    def search_refmod(args):
-        refmod = ""
-        index = 0
-
-        while index < len(args):
-            if args[index].find('(') > -1 and args[index].find(':') > -1:
-                clean_arg, refmod = get_refmod(args[index])
-                if clean_arg == "":
-                    del args[index]
-                else:
-                    args[index] = clean_arg
-                    index += 1
-            else:
-                index += 1
-
-        return refmod
 
     def ProcessArguments(self, arguments):
         # First, look for /[dxvmvr] switches:
@@ -2766,8 +2746,6 @@ class CPrintWorker():
         rightside_possibilities = []
         left_side = ""
         right_side = ""
-        refmod_l = ""
-        refmod_r = ""
 
         # This can be an assignment, so check for it.
         leftright = args.split('=', 1)
@@ -2808,7 +2786,6 @@ class CPrintWorker():
         GV_GlobalVariables.VarRight = None
 
         leftside_possibilities = get_sorted_possibilities(left_side, 0)
-        refmod_l = self.search_refmod(left_side)
         if not leftside_possibilities:
             # There are no leftside possibilities.  Let him know why, and then bug out
             if left_side[0] in ('*','?') or left_side[0].isdigit:
@@ -2823,7 +2800,6 @@ class CPrintWorker():
             GV_GlobalVariables.VarLeftIndex = leftside_possibilities[0]
 
         if right_side and right_side[0].find('"') == -1:
-            refmod_r = self.search_refmod(right_side)
             rightside_possibilities = get_sorted_possibilities(right_side, 1)
             if not rightside_possibilities:
                 print('No symbol "{0}" in current context'.format('/'.join(right_side)))
@@ -2841,8 +2817,7 @@ class CPrintWorker():
             self.ProcessArgumentsHumanMode( left_side,
                                             right_side,
                                             leftside_possibilities,
-                                            rightside_possibilities,
-                                            refmod_l)
+                                            rightside_possibilities)
 
 class CWatchWorker():
     """Does most of the non-gdb work of CWatch()"""
