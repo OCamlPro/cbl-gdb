@@ -196,9 +196,13 @@ class GlobalVariables():
         self.cprint_buffer = None
         self.cprint_f0 = None
 
-        ## These are used in PutDataAsVar
+        # These are used in PutDataAsVar
         self.VarLeft = None
         self.VarRight = None
+        
+        # Set on event.stop as a flag that ever variable's data
+        # needs to be read again
+        self.IsDirty = True
 
     def AllocateBuffers(self):
         if not self.cprint_buffer:
@@ -942,21 +946,53 @@ class VarTrie():
         # glue them back together into a single space-separated string:
         recombined = " ".join(cobol_variable_name).upper()
 
-        # See if this is a subscripted reference:
-        subscripts = None
-        nfound = recombined.find('(')
-        if nfound > -1:
-            # There is a subscript. Strip it off, for now.  After we
-            # we find the base information, we'll put it back on:
-            subscripts = recombined[nfound:]
+        # This is the return value:
+        paths = []
 
-            # Truncate desired to the point where the parenthesis occurred
-            recombined   = recombined[:nfound]
+        # There is the possibility array subscripts (contained in parentheses,
+        # and not having any colons, and/or refmods (two values, in parentheses,
+        # separated by a colon.)
+        
+        subscripts = None
+        refmod     = None
+
+        while True:
+            n1 = recombined.find('(')
+            n2 = recombined.find(')')
+            if n1 == -1 and n2 == -1:
+                # No more paired parentheses
+                break;
+            if n1 != -1 and n2 < n1 or n1 == -1 and n1 != -1:
+                # The parentheses are either mismatched, or in the wrong order
+                print("A syntax error in >>{0}<<".format('/'.join(cobol_variable_name)))
+                return paths
+            
+            # We have a pair of parenthesis.  Extract them and their contents:
+            parenthesized = recombined[n1:n2+1]
+            
+            # and remove them from the recombined string:
+            recombined = recombined[0:n1] + ' ' + recombined[n2+1:]
+            
+            if parenthesized.find(':'):
+                # This must be a refmod.
+                if refmod:
+                    # There can be only one refmod
+                    print("Too many 'refmods' in >>{0}<<".format('/'.join(cobol_variable_name)))
+                    return paths
+                refmod = parenthesized
+            else:
+                # This must be a subscripts.
+                if subscripts:
+                    # There can be only one subscripts
+                    print("Too many table references in >>{0}<<".format('/'.join(cobol_variable_name)))
+                    return paths
+                subscripts = parenthesized
+
+        # At this point, we have set aside any table subscripts or refmods from the cobol_variable_name list
 
         name_tokens = recombined.split()
 
         # Wander through the forest, looking for possible paths:
-        paths = []
 
         if len(name_tokens) == 0:
             # if there's nothing, there is nothing
@@ -1008,13 +1044,25 @@ class VarTrie():
             # Turn the set back into a list:
             paths = list(set1)
 
-        # Special case.  If, and only if, the length of paths is 1, then
-        # we append any array subscripts back onto the variable:
-
+        # If, and only if, the length of paths is 1, then
+        # we append any modifiers back onto the variable:
+        
+        # if we are change something, flag the list variable as Dirty
         if len(paths) == 1:
-            self.storage_list[paths[0]].Subscripts = subscripts
+            if self.storage_list[paths[0]].Subscripts != subscripts:
+                self.storage_list[paths[0]].Subscripts = subscripts
+                self.storage_list[paths[0]].IsDirty = True
 
+            if self.storage_list[paths[0]].Refmod != refmod:
+                self.storage_list[paths[0]].Refmod = refmod
+                self.storage_list[paths[0]].IsDirty = True
         return paths
+
+    def FlagAllAsDirty(self):
+        i = 0
+        while i < len(self.storage_list):
+            self.storage_list[i].IsDirty = True
+            i += 1;
 
 class LineList():
     """List of starting lines of ProgramNames"""
@@ -1069,55 +1117,58 @@ class LineList():
 class CobolVariable():
     """Manages the field, attributes, flags, and pointers of a GnuCOBOL COBOL variable"""
     def __init__(self):
-        # index_of_parent can be used to find information about the variable's
-        # heirarchical parent.  That is: a level 02 variable will have a level 01 parent
+        # This block of data comes from the VariableString
         self.index_of_parent = None
         self.Program     = ""
         self.Section     = ""
         self.Level       = -1
         self.Name        = ""
-        self.Subscripts  = None
         self.Fname       = ""
         self.Bname       = ""
         self.Aname       = ""
         self.Offset      = 0
-        self.TableOffset = 0    # These are additional bytes based on the table Subscripts
         self.Length      = 0
         self.OccursMin   = 0
         self.OccursMax   = 0
-
         self.AttrType    = 0
         self.AttrDigits  = 0
         self.AttrScale   = 0
         self.AttrFlags   = 0
 
+        # These are established at the run-time executable instance level.
+        # Eventually we'll have to pay attention to what the run-time libcob
+        # says about them, and change them accordingly.
+        self.decimal_point = '.'
+        self.comma_separator = ','
+        self.currency_symbol = '$'
+
+        # These elements are based on parenthesized subscripts after the 
+        # name:  name(array_index1 , array_index2 , ...)(refmod start : refmod run)
+        # Note the commas and colons, which determine which is which
+        self.Subscripts  = None
+        self.Refmod      = None
+        self.TableOffset = 0    # These are additional bytes based on the table Subscripts
+
+        # These values are calculated at runtime from the information up above
         self.location_of_field     = 0  # location of Fname, when available
         self.location_of_data      = 0  # value of Fname->data, when available
         self.location_of_attribute = 0  # value of Fname->attr
         self.data       = []            # list of Length bytes
-
-        self.decimal_point = '.'        # Eventually we are going to have to
-        self.comma_separator = ','      # handle DECIMAL-POINT IS COMMA
-        self.currency_symbol = '$'
 
         # Here is the string information decoded from the attributes and
         # the data we get from gdb:
         self.not_in_context = False
         self.display_name = ""
         self.display_body = ""
-        self.display_pic = ""
-
-        # This section is used for "StringToxxx processing
-        self.rvalue = ""            # Original user string, before cleaning
-        self.cleaned_rvalue = ""    # This will have exactly AttrDigits, zero-filled
-        #                           # as necessary to the left and right
-        self.is_negative = False    # True if there was a minus sign
-        self.expanded_picture = ""  # "9(4)" becomes "9999" here
-        self.ldigits = -1           # this integer is AttrDigits - AttrScale
-        self.rdigits = -1           # this integer is AttrScale...
-        #                           # ...but see self.CleanAndScale
 
         self.SubscriptFailure = False # Set to True when subscripts don't match the number of tables
+
+        # When a variable is accessed for the first time, or when the Subscript changes,
+        # or when the refmod changes, or when a previously-read variable is displayed through
+        # through a "cprint <short_term_index>, or when the value is changed through a 
+        # "cprint var=<something>, we flag it as IsDirty so that FetchVariableValue is executed
+        # when the variable is next accessed.
+        self.IsDirty = True;
 
     def get_verified_field_location(self,allocate):
         # When calling this routine with ALLOCATE, the caller must do
@@ -1447,167 +1498,163 @@ class CobolVariable():
                 self.SubscriptFailure = True
                 return
 
-    def FetchVariableData(self, line_list, show_failure):
+    def FetchVariableData(self, show_failure):
         # print("FetchVariableData:", self.Name, self.Section)
-        self.location_of_field = 0
-        self.location_of_data = 0
-        self.location_of_attribute = 0
-        self.data = []
-        self.display_body = ""
-        self.display_body_hex = ""
-        self.display_pic = ""
-        self.display_name = self.NameToString()
-        self.not_in_context = False
+        if self.IsDirty:
+            # We do this work only if the IsDirty flag indicates that we have to do the work.
+            self.location_of_field = 0
+            self.location_of_data = 0
+            self.location_of_attribute = 0
+            self.data = []
+            self.display_body = ""
+            self.display_body_hex = ""
+            self.display_name = self.NameToString()
+            self.not_in_context = False
 
-        # Let's update everything we might need:
-        # Calculate the additional table offsets
-        self.CalculateTableOffset()
+            # Let's update everything we might need:
+            # Calculate the additional table offsets
+            self.CalculateTableOffset()
 
-        # First, check to see if the compiler provided us with the
-        # the name of the field.  If so, use the run-time values in that named
-        # field to override anything we might have gotten from compile-time
+            # First, check to see if the compiler provided us with the
+            # the name of the field.  If so, use the run-time values in that named
+            # field to override anything we might have gotten from compile-time
 
-        if self.Fname:
-            # We have a field name
-            #print("FetchVariableData Fname", self.Fname)
-            self.location_of_field = GetAddressOf(self.Fname)
-            if self.location_of_field is None:
-                self.not_in_context = True
-                return
-            # The cob_field structure looks like this:
-            #   typedef struct __cob_field
-            #       {
-            #       size_t                size;
-            #       unsigned char        *data;
-            #       const cob_field_attr *attr;
-            #       } cob_field;
-            self.Length = GetDataAt(self.location_of_field, GV_GlobalVariables.SizeofPointer)
-            if self.Length is None:
-                self.not_in_context = True
-                return
-            possible_location_of_data = GetDataAt(self.location_of_field + GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
-            if possible_location_of_data:
-                self.location_of_data = possible_location_of_data
-            self.location_of_attribute = GetDataAt(self.location_of_field + 2 * GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
-        else:
-            # print("There is no self.Fname")
-            pass
-
-        if self.location_of_data == 0:
-            # When the COBOL code doesn't reference a variable, there is no f_ cob_field.  But
-            # sometimes we are able to divine a b_ + offset reference.  Likewise, sometimes
-            # there is an f_value, but at this point in the code the cob_field->data value hasn't yet
-            # been set up.  But, again, sometimes we have advance knowledge of what is going to be
-            # there because we got information from the compiler.
-            if self.Bname:
-                # print("FetchVariableData Fname", self.Bname)
-                self.location_of_data = GetAddressOf(self.Bname)
-                if self.location_of_data is None:
+            if self.Fname:
+                # We have a field name
+                #print("FetchVariableData Fname", self.Fname)
+                self.location_of_field = GetAddressOf(self.Fname)
+                if self.location_of_field is None:
                     self.not_in_context = True
                     return
-                self.location_of_data += self.Offset
+                # The cob_field structure looks like this:
+                #   typedef struct __cob_field
+                #       {
+                #       size_t                size;
+                #       unsigned char        *data;
+                #       const cob_field_attr *attr;
+                #       } cob_field;
+                self.Length = GetDataAt(self.location_of_field, GV_GlobalVariables.SizeofPointer)
+                if self.Length is None:
+                    self.not_in_context = True
+                    return
+                possible_location_of_data = GetDataAt(self.location_of_field + GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
+                if possible_location_of_data:
+                    self.location_of_data = possible_location_of_data
+                self.location_of_attribute = GetDataAt(self.location_of_field + 2 * GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
             else:
-                # print("There is no self.Bname")
+                # print("There is no self.Fname")
                 pass
 
-        if self.location_of_attribute == 0:
-            if self.Aname:
-                self.location_of_attribute = GetAddressOf(self.Aname)
-                if self.location_of_attribute is None:
-                    self.not_in_context = True
-                    return
-            else:
-                # print(" There is no self.Aname")
+            if self.location_of_data == 0:
+                # When the COBOL code doesn't reference a variable, there is no f_ cob_field.  But
+                # sometimes we are able to divine a b_ + offset reference.  Likewise, sometimes
+                # there is an f_value, but at this point in the code the cob_field->data value hasn't yet
+                # been set up.  But, again, sometimes we have advance knowledge of what is going to be
+                # there because we got information from the compiler.
+                if self.Bname:
+                    # print("FetchVariableData Fname", self.Bname)
+                    self.location_of_data = GetAddressOf(self.Bname)
+                    if self.location_of_data is None:
+                        self.not_in_context = True
+                        return
+                    self.location_of_data += self.Offset
+                else:
+                    # print("There is no self.Bname")
+                    pass
+
+            if self.location_of_attribute == 0:
+                if self.Aname:
+                    self.location_of_attribute = GetAddressOf(self.Aname)
+                    if self.location_of_attribute is None:
+                        self.not_in_context = True
+                        return
+                else:
+                    # print(" There is no self.Aname")
+                    pass
+
+            if self.location_of_attribute != 0:
+                #   typedef struct __cob_field_attr
+                #       {
+                #       unsigned short      type;       /* Field type */
+                #       unsigned short      digits;     /* Digit count */
+                #       signed short        scale;      /* Field scale */
+                #       unsigned short      flags;      /* Field flags */
+                #       const cob_pic_symbol    *pic;       /* Pointer to picture string */
+                #       } cob_field_attr;
+                self.AttrType   = GetDataAt(self.location_of_attribute + 0, 2)
+                self.AttrDigits = GetDataAt(self.location_of_attribute + 2, 2)
+                self.AttrScale  = GetDataAt(self.location_of_attribute + 4, 2)
+                self.AttrFlags  = GetDataAt(self.location_of_attribute + 6, 2)
+                self.location_of_pic = GetDataAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
+
+            if self.Section in('F', 'W', 'I'):
                 pass
+            elif self.Section == 'L':
+                try:
+                    # We are looking for something in LOCAL-STORAGE.  Local
+                    # storage is kept in a calloc-ed memory location named
+                    # cob_local_ptr.  The complication is that if we have
+                    # several program-ids that each have their own cob_local_ptr
+                    # we have to make sure we know which one we are dealing
+                    # with.
 
-        if self.location_of_attribute != 0:
-            #   typedef struct __cob_field_attr
-            #       {
-            #       unsigned short      type;       /* Field type */
-            #       unsigned short      digits;     /* Digit count */
-            #       signed short        scale;      /* Field scale */
-            #       unsigned short      flags;      /* Field flags */
-            #       const cob_pic_symbol    *pic;       /* Pointer to picture string */
-            #       } cob_field_attr;
-            self.AttrType   = GetDataAt(self.location_of_attribute + 0, 2)
-            self.AttrDigits = GetDataAt(self.location_of_attribute + 2, 2)
-            self.AttrScale  = GetDataAt(self.location_of_attribute + 4, 2)
-            self.AttrFlags  = GetDataAt(self.location_of_attribute + 6, 2)
-            self.location_of_pic = GetDataAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
+                    # Pick up the decimal line number where we are trapped
+                    line_number = -1
+                    command = "frame"
+                    frame_string = GdbExecute(currentframe(), command)
+                    # Look for a number after a colon
+                    nfound = frame_string.find(':')
+                    if nfound > -1:
+                        frame_string = frame_string[nfound + 1:]
+                        frame_string = frame_string.split()
+                        try:
+                            line_number = int(frame_string[0])
+                        except:
+                            line_number = -1
 
-        if self.Section in('F', 'W', 'I'):
-            pass
-        elif self.Section == 'L':
-            try:
-                # We are looking for something in LOCAL-STORAGE.  Local
-                # storage is kept in a calloc-ed memory location named
-                # cob_local_ptr.  The complication is that if we have
-                # several program-ids that each have their own cob_local_ptr
-                # we have to make sure we know which one we are dealing
-                # with.
+                    # print("Trapped at ",line_number)
+                    # We know we are trapped at line_number
 
-                # Pick up the decimal line number where we are trapped
-                line_number = -1
-                command = "frame"
-                frame_string = GdbExecute(currentframe(), command)
-                # Look for a number after a colon
-                nfound = frame_string.find(':')
-                if nfound > -1:
-                    frame_string = frame_string[nfound + 1:]
-                    frame_string = frame_string.split()
-                    try:
-                        line_number = int(frame_string[0])
-                    except:
-                        line_number = -1
+                    # Look up the program-id of that line_number
+                    program_id = GV_ModuleInformation.line_list.Find(line_number)
+                    # print("in :", program_id)
 
-                # print("Trapped at ",line_number)
-                # We know we are trapped at line_number
+                    #
+                    # program-id is where the program-under-test is
+                    # trapped.  Let's see if that program-id matches
+                    # the final place of the desired variable:
+                    #
+                    # print( self.Name )
+                    split_name = self.Name.split('/')
+                    if split_name[-1] != program_id:
+                        self.not_in_context = True
+                        return
 
-                # Look up the program-id of that line_number
-                program_id = line_list.Find(line_number)
-                # print("in :", program_id)
+                    # To recap:  We are trapped in the routine of the desired
+                    # LOCAL-STORAGE variable, so we can look for it in cob_local_ptr
+                    # we need GDB's help finding out where cob_local_ptr + offset is:
+                    command = "x " + "cob_local_ptr + " + str(self.Offset)
+                    address_string = GdbExecute(currentframe(), command)
+                    nfound = address_string.find(':')
+                    if nfound != -1:
+                        self.location_of_data = int(address_string[:nfound], 16)
 
-                #
-                # program-id is where the program-under-test is
-                # trapped.  Let's see if that program-id matches
-                # the final place of the desired variable:
-                #
-                # print( self.Name )
-                split_name = self.Name.split('/')
-                if split_name[-1] != program_id:
+                except gdb.error:
                     self.not_in_context = True
-                    return
-
-                # To recap:  We are trapped in the routine of the desired
-                # LOCAL-STORAGE variable, so we can look for it in cob_local_ptr
-                # we need GDB's help finding out where cob_local_ptr + offset is:
-                command = "x " + "cob_local_ptr + " + str(self.Offset)
-                address_string = GdbExecute(currentframe(), command)
-                nfound = address_string.find(':')
-                if nfound != -1:
-                    self.location_of_data = int(address_string[:nfound], 16)
-
-            except gdb.error:
+            else:
+                print("We don't know how to handle", self.Section, self.Name)
                 self.not_in_context = True
-        else:
-            print("We don't know how to handle", self.Section, self.Name)
-            self.not_in_context = True
-            return
+                return
 
-        if self.location_of_data != 0:
-            self.data = GetBytesAt(self.location_of_data + self.TableOffset, self.Length)
-
-        self.display_body_hex = self.GetDataAsHex()
-        self.display_body = self.GetDataAsString()
-        self.display_body = ReplaceWithRepeatCount(self.display_body)
-
-        if self.Length != len(self.data):
-            # This probably should never happen.  But when it did, during debugging,
-            # it actually corrupted memory during the process of creating a
-            # cfields.cob_field.
-            #
-            # So, let's put up a fence:
-            self.not_in_context = True
+            if self.location_of_data != 0:
+                # Unlikely as it seems, arriving here means having successfully
+                # run the gauntlet of all the reason up above as to why you 
+                # can't read this data.  So, get the data:
+                self.data = GetBytesAt(self.location_of_data + self.TableOffset, self.Length)
+                self.display_body_hex = self.GetDataAsHex()
+                self.display_body = self.GetDataAsString()
+                self.display_body = ReplaceWithRepeatCount(self.display_body)
+                self.IsDirty = True
         return
 
     def NameToString(self):
@@ -1857,6 +1904,9 @@ class ModuleInformation():
             tokens = variable_line.split("|")
             if len(tokens) > 3:
                 self.perform_commands[tokens[3]] = tokens[2]
+    
+    def FlagAllAsDirty(self):
+        self.var_trie.FlagAllAsDirty()
 
 GV_ModuleInformation = ModuleInformation()
 
@@ -2052,6 +2102,12 @@ class ModuleState():
         return retval
 
     def EstablishModuleState(self):
+        #
+        if GV_GlobalVariables.IsDirty:
+            # There was a events.stop.
+            GV_ModuleInformation.FlagAllAsDirty()
+            GV_GlobalVariables.IsDirty = False
+    
         # Go read the frame and stack, and, if necessary, fetch the VariableStringData
         if self.ProcessStack():
             # Figure out what routine we are trapped in, from
@@ -2077,7 +2133,7 @@ def MachineInterfaceFlat(possibilities):
     s = "variables=["
     for payload_index in possibilities:
         payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(GV_ModuleInformation.line_list, False)
+        payload.FetchVariableData(False)
         if not payload.not_in_context:
             name = ""
             name += payload.display_name
@@ -2185,7 +2241,7 @@ def MachineInterfaceHeirarchical(possibilities):
     retval = "variables=["
     for payload_index in possibilities:
         payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(GV_ModuleInformation.line_list, False)
+        payload.FetchVariableData(False)
         if not payload.not_in_context:
             # print("MIH", payload.Level, payload.Name, payload.display_body)
             # First, if the stack has nephews of ours,
@@ -2312,7 +2368,7 @@ def get_sorted_possibilities(args, limit):
 
     for payload_index in possibilities_1:
         payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(GV_ModuleInformation.line_list, False)
+        payload.FetchVariableData(False)
         if not payload.not_in_context:
             possibilities.append(payload_index)
 
@@ -2421,6 +2477,8 @@ class CPrintWorker():
         return args
 
     def FormattedDisplay(self, payload, refmod):
+        if payload.SubscriptFailure:
+            return
         # see the comments in ProcessDisplayMode()
         body = payload.display_body
         if self.current_display_submode == 'x' and len(payload.data) <= 16:
@@ -2505,7 +2563,7 @@ class CPrintWorker():
             # Fetch the data we just assigned, so that subsequent display is valid.  This isn't an
             # "extra" fetch -- the data was changed, so we need to update the variable data
             # in the element in the storage list.  This will do that.
-            payload.FetchVariableData(GV_ModuleInformation.line_list, False)
+            payload.FetchVariableData(False)
 
         return return_value
 
@@ -2607,9 +2665,9 @@ class CPrintWorker():
             # Fetch the data again, just in case he executed some instructions
             # since short-term-memory was established
             if from_digit:
-                payload.FetchVariableData(GV_ModuleInformation.line_list, True)
+                payload.IsDirty = True
+                payload.FetchVariableData(True)
             # And display the variable according to the current list v-level
-            if not payload.SubscriptFailure:
                 self.FormattedDisplay(payload, refmod_l)
 
     @staticmethod
@@ -2677,7 +2735,7 @@ class CPrintWorker():
             right_side = leftright[1].strip()
             if right_side[0] in ('"',"'"): #I do love that construction
                 if len(right_side) < 2 or right_side[-1] != right_side[0]:
-                    print("Syntax error in >>{0}<<.".format(right_side))
+                    print("A syntax error in >>{0}<<.".format(right_side))
                     return
                 right_side = [right_side]
             else:
@@ -2707,7 +2765,7 @@ class CPrintWorker():
             if left_side[0] in ('*','?'):
                 # When '*' or '?' match nothing, then just return nothing
                 return
-            print('No symbol "{0}" in current context'.format( '/'.join(left_side)))
+            print('No symbol "{0}" in current context'.format('/'.join(left_side)))
             return
 
         if len(leftside_possibilities) == 1:
@@ -2718,7 +2776,7 @@ class CPrintWorker():
             refmod_r = self.search_refmod(right_side)
             rightside_possibilities, from_digit = get_sorted_possibilities(right_side, 1)
             if not rightside_possibilities:
-                print('No symbol "{0}" in current context'.format( '/'.join(TokenizeCanonicalName(right_side))))
+                print('No symbol "{0}" in current context'.format('/'.join(right_side)))
                 return
 
             if len(rightside_possibilities) == 1:
@@ -2811,7 +2869,7 @@ class CWatchWorker():
 
             # Pick up the payload from the list
             payload = GV_ModuleInformation.var_trie.storage_list[payload_number]
-            payload.FetchVariableData(GV_ModuleInformation.line_list, False)
+            payload.FetchVariableData(False)
 
             # And go set the Watchpoint
             self.set_watchpoint(payload, wp_type, wp_refmod)
@@ -2910,7 +2968,7 @@ class CBreakWorker():
 
             # Pick up the payload from the list
             payload = GV_ModuleInformation.var_trie.storage_list[payload_number]
-            payload.FetchVariableData(GV_ModuleInformation.line_list, False)
+            payload.FetchVariableData(False)
             if search_var.upper() not in payload.Name.upper():
                 payload = None
 
@@ -3471,10 +3529,15 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
             print("No stack.")
 
 def exit_handler(event):
+    # With the disappearance of the inferior, we are going
+    # to need new malloc-created buffers
     GV_GlobalVariables.DestroyBuffers()
     pass
 
 def stop_handler(event):
+    # When the inferior has been running, and is now stopped, we
+    # need to flag all cobol variables as IsDirty
+    GV_GlobalVariables.IsDirty = True
     pass
 
 gdb.events.exited.connect(exit_handler)
