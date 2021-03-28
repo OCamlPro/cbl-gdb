@@ -490,7 +490,7 @@ def ReplaceWithRepeatCountBracketed(s):
     # print("ReplaceWithRepeatCountBracketed(2)", retval)
     return retval
 
-def ReplaceWithRepeatCount(s):
+def WithRepeatCount(s):
     try:
         if s and (s[0] == '"' or s[0] == '<'):
             return ReplaceWithRepeatCountQuoted(s)
@@ -1708,12 +1708,12 @@ class CobolVariable():
 
             if self.location_of_data != 0:
                 # Unlikely as it seems, arriving here means having successfully
-                # run the gauntlet of all the reason up above as to why you
+                # run the gauntlet of all the reasons up above as to why you
                 # can't read this data.  So, get the data:
                 self.data = GetBytesAt(self.location_of_data + self.TableOffset, self.Length)
                 self.display_body_hex = self.GetDataAsHex()
                 self.display_body = self.GetDataAsString()
-                self.display_body = ReplaceWithRepeatCount(self.display_body)
+                #self.display_body = WithRepeatCount(self.display_body)
                 self.IsDirty = False
         return
 
@@ -1749,7 +1749,7 @@ class CobolVariable():
             if self.SubscriptFailure:
                 print(" (poorly formed)", end='')
             print("")
-        print("Display:    ", self.display_body)
+        print("Display:    ", WithRepeatCount(self.display_body))
         print("Hex:        ", self.display_body_hex)
 
         if self.Section == 'L':
@@ -2189,47 +2189,6 @@ class ModuleState():
 
 GV_ModuleState = ModuleState()
 
-def MachineInterfaceFlat(possibilities):
-    # This is the machine interface mode for returning the
-    # the variables in a flat manner.
-    # Our mission is to emulate
-    # '-stack-list-variables --simple-values'
-    # e.g.,    variables=[{name="b_70",arg="1",type="unsigned char *",value="0x555555759df0 <b_39> \"James     K Lowden    \""}]
-    s = "variables=["
-    for payload_index in possibilities:
-        payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(False)
-        if not payload.not_in_context:
-            name = ""
-            name += payload.display_name
-            n = name.find(' ')
-            if n > -1:
-                name = name[:n] + '-' + name[n + 1:]
-            n = name.find(' ')
-            if n > -1:
-                name = name[:n]
-
-            # Everything after the final slash is the program
-            # name, which is redundant and takes up valuable
-            # screen real estate.  Clear it out.
-
-            n = name.rfind('/')
-            if n > -1:
-                name = name[:n]
-
-            body = MachineInterfaceBody(payload.display_body)
-
-            s += '{name="'
-            s += name
-            s += '",type="char *",value="'
-            s += body
-            s += '"},'
-    if s[-1] == ',':
-        s = s[:-1]  # Strip off final comma
-    s += ']'
-    s = NoNulls(s)
-    return s
-
 class HNode():
     def __init__(self):
         self.storage_table_index = -1
@@ -2329,7 +2288,7 @@ def MachineInterfaceHeirarchical(possibilities):
                 # be able to walk up through the containers to get the full name
                 new_node.BaseName = split_name[0]
 
-            new_node.display_body = payload.display_body
+            new_node.display_body = WithRepeatCount(payload.display_body)
 
             if payload.Level in (77, 78):
                 stack = [root]
@@ -2541,34 +2500,39 @@ class CPrintWorker():
         return args
 
     def GetDisplayBody(self,payload):
-        # see the comments in ProcessDisplayMode()
-        body = payload.display_body
-        if self.current_display_submode == 'x' and len(payload.data) <= 16:
-            body = payload.display_body_hex
+        body = ""
+        if payload.Refmod:
+            # Because there is a refmod involved, we simply ignore any
+            # conditional formatting and just return what he asked for:
+            d_startloc = payload.RefmodOffset
+            d_length   = payload.RefmodLength
 
-        if self.current_display_submode == 'b' and len(payload.data) <= 8:
-            # This is a kludge.  Convert the hex to binary:
-            body = ""
-            index = 2
-            while index < len(payload.display_body_hex) and index < 8 * 2 + 2:
-                hexchar = int(payload.display_body_hex[index])
-                mask = 8
-                while mask > 0:
-                    if hexchar & mask:
-                        body += '1'
-                    else:
-                        body += '0'
-                    mask >>= 1
-                index += 1
-
-        d_startloc = payload.RefmodOffset
-        d_length   = payload.RefmodLength
-
-        if payload.Refmod and self.current_display_submode not in ('x', 'b'):
-            if body.startswith('"'):
-                body = '"' + body.replace('"', '')[d_startloc - 1:d_startloc - 1 + d_length] + '"'
+            if payload.display_body.startswith('"'):
+                body = '"' + payload.display_body.replace('"', '')[d_startloc - 1:d_startloc - 1 + d_length] + '"'
             else:
-                body = body[d_startloc - 1:d_startloc - 1 + d_length]
+                body = payload.display_body[d_startloc - 1:d_startloc - 1 + d_length]
+            body = WithRepeatCount(body)
+        else:
+            # There is no refmod involved:
+            if self.current_display_submode == 'x' and len(payload.data) <= 16:
+                body = payload.display_body_hex
+            elif self.current_display_submode == 'b' and len(payload.data) <= 8:
+                # This is a kludge.  Convert the hex to binary:
+                body = ""
+                index = 2
+                while index < len(payload.display_body_hex) and index < 8 * 2 + 2:
+                    hexchar = int(payload.display_body_hex[index])
+                    mask = 8
+                    while mask > 0:
+                        if hexchar & mask:
+                            body += '1'
+                        else:
+                            body += '0'
+                        mask >>= 1
+                    index += 1
+            else:
+                body = WithRepeatCount(payload.display_body)
+
         return body
 
     def FormattedDisplay(self, payload):
@@ -2620,22 +2584,24 @@ class CPrintWorker():
             if CobolVariable.PutDataAsVar() == 0:
                 return_value = 0
         else:
+            # If you get here, there are several possibililities:
             if var_right and var_right.Refmod:
-                # We will be working with the truncated value from var_right:
-                # We need a string that we know has no <repeated> character contractions,
-                # so we will re-read the data.  Too bad.
-                value = var_right.GetDataAsString()
-                # And now we need the relevant data
-                o = var_right.RefmodOffset
-                l = var_right.RefmodLength
-                value = '"' + value[o:o+l] + '"'
-            elif var_left.Refmod and var_right:
-                # Because the left side has a refmod, we will fetch the
-                # var_right data as a string for 'value'
-                value = var_right.GetDataAsString()
-            # At this point var_left might or might not have a refmod, but
-            # either way we work with value, which might be what we were
-            # called with, or might be the replacement from var_right:
+                # var_right involves a refmod, so we need to extract
+                # just the data we need:
+                offset = var_right.RefmodOffset # Assume double quotes
+                run = var_right.RefmodLength
+                if not var_right.display_body.startswith('"'):
+                    # This doesn't start with a double quote; adjust the offset
+                    offset -= 1
+                # And now we need the relevant data from var_right
+                value = '"' + var_right.display_body[offset:offset+run] + '"'
+            elif var_right:
+                # The logic requires that, at this point, var_left has a refmod
+                # and var_right does not.  Just replace whatever value the routine
+                # was passed with the unchanged var_right display_body:
+                value = var_right.display_body
+            # At this point, 'value' is a string, either with or without
+            # double quotes, depending on the type of variable.
 
             if var_left.Refmod:
                 p_startloc = var_left.RefmodOffset
@@ -2691,7 +2657,7 @@ class CPrintWorker():
             # is also an 'rside'.  So, this code is in response to a `-data-evalute-expression` equivalent command
             payload_index = leftside_possibilities[0]
             payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
-            s = 'value="' + MachineInterfaceBodyAlt(payload.display_body) + '"'
+            s = 'value="' + MachineInterfaceBodyAlt(WithRepeatCount(payload.display_body)) + '"'
             print(s)
             return
 
@@ -2702,7 +2668,7 @@ class CPrintWorker():
                 # The assignment failed
                 return
 
-            disp_str = payload.display_name + " set to " + payload.display_body
+            disp_str = payload.display_name + " set to " + WithRepeatCount(payload.display_body)
             print(disp_str)
             return
 
@@ -2751,7 +2717,7 @@ class CPrintWorker():
                     s += payload.display_name
                     s += " : "
 
-                    body = payload.display_body
+                    body = WithRepeatCount(payload.display_body)
                     if self.current_display_submode == 'x' and len(payload.data) <= 16:
                         body = payload.display_body_hex
 
