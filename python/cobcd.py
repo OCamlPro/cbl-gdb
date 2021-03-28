@@ -3348,7 +3348,9 @@ class CPrint(gdb.Command):
     """Prints COBOL-NAMED variables when debugging cobst processed object files.
 
     COBOL cprint command usage:
-    cprint <arg>        shows <arg> using session-default formatting
+    cprint <arg>        displays <arg> using session-default formatting
+    cprint <arg>(N)     displays the Nth element of table <arg>. Multiple subscripts are allowed
+    cprint <arg>(S:R)   reference modification: displays R characters starting at S in <arg>
     cprint/v<n> <arg>   displays <arg> with a one-time formatting override
     cprint/v0           set session formatting to name and variable on one line (this is the default)
     cprint/v1           set session formatting to just the variable
