@@ -1244,6 +1244,31 @@ class CobolVariable():
     def free_field_location(self,field_location):
         gdb.execute("call (void *)cob_free({0})".format(hex(field_location)), False, True)
 
+    def DumpJustAboutEverything(self):
+        location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
+        print(    "GetData AsString           Name:", self.Name)
+        if self.Subscripts:
+            print("GetData AsString     Subscripts:", self.Subscripts)
+        if self.Refmod:
+            print("GetData AsString         refmod:", self.Refmod)
+        print(    "GetData AsString        Section:", self.Section)
+        print(    "GetData AsString          Fname:", self.Fname or "f0")
+        print(    "GetData AsString          Bname:", self.Bname)
+        print(    "GetData AsString          Aname:", self.Aname)
+        print(    "GetData AsString         Offset:", self.Offset)
+        if self.TableOffset:
+            print("GetData AsString    TableOffset:", self.TableOffset)
+        print(    "GetData AsString         Length:", self.Length)
+        print(    "GetData AsString len(self.data):", len(self.data))
+        print(    "GetData AsString       AttrType:", hex(self.AttrType))
+        print(    "GetData AsString     AttrDigits:", self.AttrDigits)
+        print(    "GetData AsString      AttrScale:", self.AttrScale)
+        print(    "GetData AsString      AttrFlags:", hex(self.AttrFlags))
+        print(    "GetData AsString   loc_of_field:", hex(location_of_field))
+        print(    "GetData AsString    loc_of_data:", hex(self.location_of_data))
+        print(    "GetData AsString    loc_of_attr:", hex(self.location_of_attribute))
+        print(    "GetData AsString     loc_of_pic:", hex(self.location_of_pic))
+
     def GetDataAsString(self):
         retval = ""
         location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
@@ -1251,28 +1276,7 @@ class CobolVariable():
             return retval
 
         if False:  # For development
-            print(    "GetData AsString           Name:", self.Name)
-            if self.Subscripts:
-                print("GetData AsString     Subscripts:", self.Subscripts)
-            if self.Refmod:
-                print("GetData AsString         refmod:", self.Refmod)
-            print(    "GetData AsString        Section:", self.Section)
-            print(    "GetData AsString          Fname:", self.Fname or "f0")
-            print(    "GetData AsString          Bname:", self.Bname)
-            print(    "GetData AsString          Aname:", self.Aname)
-            print(    "GetData AsString         Offset:", self.Offset)
-            if self.TableOffset:
-                print("GetData AsString    TableOffset:", self.TableOffset)
-            print(    "GetData AsString         Length:", self.Length)
-            print(    "GetData AsString len(self.data):", len(self.data))
-            print(    "GetData AsString       AttrType:", hex(self.AttrType))
-            print(    "GetData AsString     AttrDigits:", self.AttrDigits)
-            print(    "GetData AsString      AttrScale:", self.AttrScale)
-            print(    "GetData AsString      AttrFlags:", hex(self.AttrFlags))
-            print(    "GetData AsString   loc_of_field:", hex(location_of_field))
-            print(    "GetData AsString    loc_of_data:", hex(self.location_of_data))
-            print(    "GetData AsString    loc_of_attr:", hex(self.location_of_attribute))
-            print(    "GetData AsString     loc_of_pic:", hex(self.location_of_pic))
+            self.DumpJustAboutEverything()
 
         ## Something we need to know:
         is_alphanumeric = False
@@ -2588,8 +2592,16 @@ class CPrintWorker():
         # Its index in storage_list is .VarLeftIndex.  See ProcessArguments
 
         # value_ is a list.  It should have only one element.  It will be a literal constant
-        # We might not use it; when GV_GlobalVariables.VarRight is established, we get the
-        # value from that variable.
+        # or numerical constant.  If it is a variable name, we don't use it; we use
+        # GV_GlobalVariables.VarRight instead.
+
+        # Just a reminder:  We use .VarLeft and .VarRight to handle the situation
+        # where the same table name is on the left and right: "cprint A(2)=A(3).  Because
+        # storage_list has only one entry for A, the processing for A(3) overwrites the
+        # Subscripts (and Refmod) for A(2).  We get around this by processing the left
+        # side first, and making a copy of the object in .VarLeft.  Then we process the
+        # right side, and make a copy of that in .VarRight.  When we get here, we operate
+        # on those.
 
         value = value_[0]
 
@@ -2600,7 +2612,6 @@ class CPrintWorker():
         return_value = 1
 
         var_left  = GV_GlobalVariables.VarLeft;
-        payload   = GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex]
         var_right = GV_GlobalVariables.VarRight;
 
         if not var_left.Refmod and var_right and not var_right.Refmod:
@@ -2643,7 +2654,8 @@ class CPrintWorker():
                     the_literal += ' '
                 # Make sure the literal is not too long:
                 the_literal = the_literal[0:p_length]
-                if payload.PutDataAsString(the_literal, p_startloc, p_length) == 0:
+
+                if var_left.PutDataAsString(the_literal, p_startloc, p_length) == 0:
                     return_value = 0
             elif re.match(number_regexp, value):
                 # Handle a numeric literal.  Numeric literals are zero-filled to
@@ -2653,13 +2665,14 @@ class CPrintWorker():
                     value = '0' + value
                 # Make sure the literal is not too long:
                 value = value[-p_length:]
-                if payload.PutDataAsString(value, p_startloc, p_length) == 0:
+                if var_left.PutDataAsString(value, p_startloc, p_length) == 0:
                     return_value = 0
 
         if return_value == 1:
-            # Fetch the data we just assigned, so that subsequent display is valid.  This isn't an
-            # "extra" fetch -- the data was changed, so we need to update the variable data
-            # in the element in the storage list.  This will do that.
+            # Fetch the data we just assigned, so that subsequent display is valid.
+            # To do that fetch, we need to flag the element in storage_list as IsDirty
+            payload   = GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex]
+            payload.IsDirty = True
             payload.FetchVariableData(False)
 
         return return_value
