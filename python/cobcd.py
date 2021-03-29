@@ -1459,12 +1459,13 @@ class CobolVariable():
             command = "set var *(cob_field_attr *){0} = {1}".format(hex(GV_GlobalVariables.cprint_a0),self.Aname)
             gdb.execute(command, False, True)
 
-            # Modify the attribute type.  If it was already COB_TYPE_GROUP, this is obviously harmless.
-            # But for other types, this modification makes the debugger behave in the same perverse way
-            # that GnuCOBOL does: it just crams whatever ASCII sequence you've specified into
-            # whatever the target happens to be.
-            command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(GV_GlobalVariables.cprint_a0),COB_TYPE_GROUP)
-            gdb.execute(command, False, True)
+            if self.Refmod:
+                # Modify the attribute type.  If it was already COB_TYPE_GROUP, this is obviously harmless.
+                # But for other types, this modification makes the debugger behave in the same perverse way
+                # that GnuCOBOL does: it just crams whatever ASCII sequence you've specified into
+                # whatever the target happens to be.
+                command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(GV_GlobalVariables.cprint_a0),COB_TYPE_GROUP)
+                gdb.execute(command, False, True)
 
             # We will make our own cob_field in cprint_f0, using our own cprint_a0
             field_loc = GV_GlobalVariables.cprint_f0
@@ -1602,10 +1603,12 @@ class CobolVariable():
                         self.SubscriptFailure = True
                         return
                     subscript = IntegerOrVariable(list_of_subscripts[-1].strip())
+                    if subscript == None:
+                        subscript = 1
                     self.ResolvedSubscripts = [subscript] + self.ResolvedSubscripts
                     list_of_subscripts = list_of_subscripts[0:-1]
-                    if subscript > variable.OccursMax:
-                        print("The subscript '{0}({1})' is out of range (maximum is {2})".format(variable.Name,
+                    if subscript < 1 or subscript > variable.OccursMax:
+                        print("The subscript '{0}({1})' is out of range (1 through {2})".format(variable.Name,
                                                                                              subscript,
                                                                                              variable.OccursMax))
                         self.Offset = 0
@@ -1641,8 +1644,13 @@ class CobolVariable():
             else:
                 offset = 1
 
-            if not offset or offset < 1:
+            if offset == None:
                 offset = 1
+
+            if offset < 1:
+                print("The refmod {0} offset has to be greater than zero")
+                self.RefmodFailure = True
+                return
 
             if refmod[1]:
                 length = IntegerOrVariable(refmod[1].strip())
@@ -2317,7 +2325,6 @@ class ModuleState():
             if announce:
                 print("No stack.")
 
-
 GV_ModuleState = ModuleState()
 
 class HNode():
@@ -2560,7 +2567,7 @@ class CPrintWorker():
         else:
             print("The /v code is invalid")
             args = []
-        pass
+        return args
 
     def ProcessSlashR(self,args):
         # We know the first two characters of args[0] are "/r"
@@ -2627,7 +2634,8 @@ class CPrintWorker():
                 args = self.ProcessSlashV(args)
             elif args[0][0:2] == "/r":
                 args = self.ProcessSlashR(args)
-        args = ' '.join(args)
+        if args:
+            args = ' '.join(args)
         return args
 
     def GetDisplayBody(self,payload):
@@ -2729,6 +2737,13 @@ class CPrintWorker():
             # cprint var1=var2; neither have refmods.  Call the routine that
             # does a straight assignment using libcob on .VarLeft and .VarRight
             if CobolVariable.PutDataAsVar() == 0:
+                return_value = 0
+        elif not var_left.Refmod and not var_right:
+            # We have var_left has no refmod, and there is no var_right, so
+            # this is just a straight assignment to var_left = value
+            if value.startswith(('"', "'")) and value.endswith(('"', "'")):
+                value = value[1:-1]
+            if var_left.PutDataAsString(value, 1, var_left.Length) == 0:
                 return_value = 0
         else:
             # If you get here, there are several possibililities:
