@@ -1455,12 +1455,23 @@ class CobolVariable():
             command = "set *(char *){0} = '\\0'".format(hex(buf_ptr))
             gdb.execute(command, False, True)
 
-            # We will make our own cob_field in cprint_f0
+            # Fetch a copy of the cob_field_attr
+            command = "set var *(cob_field_attr *){0} = {1}".format(hex(GV_GlobalVariables.cprint_a0),self.Aname)
+            gdb.execute(command, False, True)
+
+            # Modify the attribute type.  If it was already COB_TYPE_GROUP, this is obviously harmless.
+            # But for other types, this modification makes the debugger behave in the same perverse way
+            # that GnuCOBOL does: it just crams whatever ASCII sequence you've specified into
+            # whatever the target happens to be.
+            command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(GV_GlobalVariables.cprint_a0),COB_TYPE_GROUP)
+            gdb.execute(command, False, True)
+
+            # We will make our own cob_field in cprint_f0, using our own cprint_a0
             field_loc = GV_GlobalVariables.cprint_f0
             command = "set var *(cob_field *){0}".format(hex(field_loc)) + " = {"
-            command += "{0}, (char *){1}, &{2}".format(p_length,
+            command += "{0}, (char *){1}, (cob_field_attr *){2}".format(p_length,
                                                        hex(self.location_of_data+self.TableOffset+p_startloc-1),
-                                                       self.Aname)
+                                                       hex(GV_GlobalVariables.cprint_a0))
             command += "}"
             gdb.execute(command, False, True)
 
