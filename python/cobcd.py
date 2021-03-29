@@ -755,8 +755,6 @@ def atoi(s):
     return retval * sign
 
 def IsInteger(s):
-    retval = None
-
     # This routine is designed to provide an indication of whether the
     # input string is nothing but digits, and return either None or the
     # relevant number.  It's intended for use where the input might be
@@ -769,17 +767,24 @@ def IsInteger(s):
     # return 10 for "10-DOWNING-STREET", which is a perfectly valid
     # COBOL identifier.
 
-    re_integer = re.compile(r'^([-]?[0-9]+)$')
+    re_integer = re.compile(r'^[-]?[0-9]+$')
     found = re_integer.match(s)
     if found:
-        retval = atoi(found.group(0))
-    return retval
+        return True
+    return False
+
+def IsNumber(s):
+    # positive or negative number, with or without decimal point
+    re_integer = re.compile(r'^[-]?[0-9]+$|^([-]?[0-9]+)[.][0-9]*$|^([-]?[0-9]*)[.][0-9]+$')
+    found = re_integer.match(s)
+    if found:
+        return True
+    return False
 
 def IntegerOrVariable(s):
     # Let's see if the string s is a simple integer
-    retval = IsInteger(s)
-    if retval:
-        return retval
+    if IsInteger(s):
+        return atoi(s)
 
     # It is not.  Let's see if it represents a unique in-context COBOL variable
 
@@ -1123,15 +1128,20 @@ class VarTrie():
         # If, and only if, the length of paths is 1, then
         # we append any modifiers back onto the variable:
 
-        # if we change something, flag the list variable as Dirty
-        if len(paths) == 1:
-            if self.storage_list[paths[0]].Subscripts != subscripts:
-                self.storage_list[paths[0]].Subscripts = subscripts
-                self.storage_list[paths[0]].IsDirty = True
+        # Although this might be wasteful in doing unnecessary fetches,
+        # we have to flag the variable as IsDirty if there is a subscript
+        # or a refmod.  That's because it's possible for the
+        # the subscript or refmod to include variables, and if any of
+        # those elements have changed, we need to re-fetch:
 
-            if self.storage_list[paths[0]].Refmod != refmod:
-                self.storage_list[paths[0]].Refmod = refmod
+        if len(paths) == 1:
+            if subscripts or self.storage_list[paths[0]].Subscripts:
                 self.storage_list[paths[0]].IsDirty = True
+            self.storage_list[paths[0]].Subscripts = subscripts
+
+            if refmod or self.storage_list[paths[0]].Refmod:
+                self.storage_list[paths[0]].IsDirty = True
+            self.storage_list[paths[0]].Refmod = refmod
         return paths
 
     def FlagAllAsDirty(self):
@@ -1221,10 +1231,11 @@ class CobolVariable():
         # These elements are based on parenthesized subscripts after the
         # name:  name(array_index1 , array_index2 , ...)(refmod start : refmod run)
         # Note the commas and colons, which determine which is which
-        self.Subscripts  = None
+        self.Subscripts          = None # This is the user's requested subscripts, integers or variables
+        self.ResolvedSubscripts  = None # These are the resolved values (offset is one-based)
         self.TableOffset = 0    # These are additional bytes based on the table Subscripts
         self.Refmod      = None
-        self.RefmodOffset = 0   # This is the Offset in (Offset:Length)
+        self.RefmodOffset = 0   # This is the zero-based Offset in (Offset:Length)
         self.RefmodLength = 0   # This is the Length in (Offset:Length)
 
         # These values are calculated at runtime from the information up above
@@ -1240,6 +1251,7 @@ class CobolVariable():
         self.display_body = ""
 
         self.SubscriptFailure = False # Set to True when subscripts don't match the number of tables
+        self.RefmodFailure    = False # Set to True when something is wrong with the refmod length:run
 
         # When a variable is accessed for the first time, or when the Subscript changes,
         # or when the refmod changes, or when a previously-read variable is displayed through
@@ -1322,8 +1334,11 @@ class CobolVariable():
     def DumpJustAboutEverything(self):
         location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
         print(    "GetData AsString           Name:", self.Name)
+        if self.OccursMax:
+            print(    "GetData AsString OCCURS min/max: {0}/{1}".format(self.OccursMin,self.OccursMax))
         if self.Subscripts:
             print("GetData AsString     Subscripts:", self.Subscripts)
+            print("GetData AsString     (resolved):", "(" + ",".join(self.ResolvedSubscripts) + ")")
         if self.Refmod:
             print("GetData AsString         refmod:", self.Refmod)
         print(    "GetData AsString        Section:", self.Section)
@@ -1333,6 +1348,9 @@ class CobolVariable():
         print(    "GetData AsString         Offset:", self.Offset)
         if self.TableOffset:
             print("GetData AsString    TableOffset:", self.TableOffset)
+        if self.Refmod:
+            print("GetData AsString   RefmodOffset:", self.RefmodOffset)
+            print("GetData AsString   RefmodLength:", self.RefmodLength)
         print(    "GetData AsString         Length:", self.Length)
         print(    "GetData AsString len(self.data):", len(self.data))
         print(    "GetData AsString       AttrType:", hex(self.AttrType))
@@ -1481,7 +1499,7 @@ class CobolVariable():
         var_left = GV_GlobalVariables.VarLeft
         var_right = GV_GlobalVariables.VarRight
 
-        if var_left.SubscriptFailure or var_right.SubscriptFailure:
+        if var_left.SubscriptFailure or var_right.SubscriptFailure or var_left.RefmodFailure or var_left.RefmodFailure:
             return 0
 
         destination = var_left.get_verified_field_location(ALLOCATE)
@@ -1533,6 +1551,7 @@ class CobolVariable():
         return retval
 
     def CalculateTableOffset(self):
+        self.ResolvedSubscripts = []
         self.TableOffset = 0
         self.SubscriptFailure = False
         if self.Subscripts:
@@ -1559,7 +1578,7 @@ class CobolVariable():
 
             variable = self
             while variable:
-                if variable.OccursMax != 0:
+                if variable.OccursMax:
                     # This is a table variable:
                     if len(list_of_subscripts) == 0:
                         print("Not enough subscripts")
@@ -1567,14 +1586,13 @@ class CobolVariable():
                         self.SubscriptFailure = True
                         return
                     subscript = IntegerOrVariable(list_of_subscripts[-1].strip())
+                    self.ResolvedSubscripts = [subscript] + self.ResolvedSubscripts
                     list_of_subscripts = list_of_subscripts[0:-1]
-                    if subscript < variable.OccursMin:
-                        print("subscript for '{0}' is too small".format(variable.Name))
-                        self.Offset = 0
-                        self.SubscriptFailure = True
-                        return
-                    if subscript > variable.OccursMax:
-                        print("subscript for '{0}' is too large".format(variable.Name))
+                    if subscript < variable.OccursMin or subscript > variable.OccursMax:
+                        print("The subscript '{0}({1})' is out of range ({2} to {3})".format(variable.Name,
+                                                                                             subscript,
+                                                                                             variable.OccursMin,
+                                                                                             variable.OccursMax))
                         self.Offset = 0
                         self.SubscriptFailure = True
                         return
@@ -1591,6 +1609,7 @@ class CobolVariable():
     def CalculateRefmodValues(self):
         self.RefmodOffset = 0
         self.RefmodLength = 0
+        self.RefmodFailure = False
         if self.Refmod:
             # There is a refmod
             # we know it starts and ends with parentheses, so strip them off
@@ -1599,22 +1618,35 @@ class CobolVariable():
             if len(refmod) != 2:
                 # There have to be two, and only two elements:
                 print("The refmod {0} has to have two elements".format(self.Refmod))
-                self.SubscriptFailure = True
+                self.RefmodFailure = True
                 return
 
-            offset = IntegerOrVariable(refmod[0].strip())
-            length = IntegerOrVariable(refmod[1].strip())
+            if refmod[0]:
+                offset = IntegerOrVariable(refmod[0].strip())
+            else:
+                offset = 1
+
+            if not offset:
+                offset = 1
+
+            if refmod[1]:
+                length = IntegerOrVariable(refmod[1].strip())
+            else:
+                length = self.Length - offset + 1
+
+            if not length:
+                length = self.Length - offset + 1
 
             if offset-1 >= self.Length:
                 print("The refmod {0} offset has to be less than {1}".format(self.Refmod, self.Length))
-                self.SubscriptFailure = True
+                self.RefmodFailure = True
                 return
             if offset-1 + length > self.Length:
                 # The requested refmod would overrun the end of the variable.
                 # Silently trim it for the user:
                 length = self.Length - (offset-1)
 
-            self.RefmodOffset = offset
+            self.RefmodOffset = offset-1
             self.RefmodLength = length
 
     def FetchVariableData(self, show_failure):
@@ -1628,7 +1660,6 @@ class CobolVariable():
             self.data = []
             self.display_body = ""
             self.display_body_hex = ""
-            self.display_name = self.NameToString()
             self.not_in_context = False
 
             # Let's update everything we might need:
@@ -1638,6 +1669,9 @@ class CobolVariable():
             # Calculate refmode offset:length
             self.CalculateRefmodValues()
 
+            # Call NameToString after calculating subscripts and refmods,
+            # because those results get appended to display_name
+            self.display_name = self.NameToString()
 
             # First, check to see if the compiler provided us with the
             # the name of the field.  If so, use the run-time values in that named
@@ -1793,8 +1827,10 @@ class CobolVariable():
             storage_type = "LNK"
 
         name = self.Name
-        if self.OccursMin != self.OccursMax:
-            name += "({0} to {1})".format(self.OccursMin,self.OccursMax)
+        if self.Subscripts:
+            name += "(" + ",".join(map(str,self.ResolvedSubscripts)) + ")"
+        if self.Refmod:
+            name += "({0}:{1})".format(self.RefmodOffset+1,self.RefmodLength)
 
         s = "{1:02} {2} [{0}]".format(storage_type, self.Level, name)
         return s
@@ -1808,11 +1844,21 @@ class CobolVariable():
         data_ptr = hex(self.location_of_data+self.TableOffset)
 
         print("Name:       ", self.display_name)
+        if self.OccursMax:
+            print("OCCURS:      min: {0} max: {1}".format(self.OccursMin,self.OccursMax))
         if self.Subscripts:
             print("Subscripts: ", self.Subscripts, end='')
             if self.SubscriptFailure:
                 print(" (poorly formed)", end='')
             print("")
+            print("(resolved): ", "(" + ",".join(map(str,self.ResolvedSubscripts)) + ")")
+        if self.Refmod:
+            print("Refmod:     ", self.Refmod, end='')
+            if self.RefmodFailure:
+                print(" (poorly formed)", end='')
+            print("")
+            print("(resolved):  ({0}:{1})".format(self.RefmodOffset+1,self.RefmodLength))
+
         print("Display:    ", WithRepeatCount(self.display_body))
         print("Hex:        ", self.display_body_hex)
 
@@ -1834,6 +1880,9 @@ class CobolVariable():
         print("Offset:     ", self.Offset)
         if self.Subscripts:
             print("TableOffset:", self.TableOffset)
+        if self.Refmod:
+            print("RefmodOff:  ", self.RefmodOffset)
+            print("RefmodRun:  ", self.RefmodLength)
         print("Data:       ", data_ptr)
         print("Length:     ", self.Length)
 
@@ -2402,7 +2451,7 @@ def get_sorted_possibilities(args, limit):
             # rather than NEXT.  By keeping one level of stickiness, the display of '?' variables
             # will be a bit more like what the user probably expects.
             if len(GV_ModuleState.current_full_path) > 0:
-                if len(args) > 1 and args[1].lstrip('-').isdigit():
+                if len(args) > 1 and IsNumber(args[1]):
                     # an explicit, one-time range has been requested
                     qmrange = int(args[1])
                     # Clear out the old_dogs, because the parameter was
@@ -2524,7 +2573,7 @@ class CPrintWorker():
             r_code = args[0]
             args.pop(0)
 
-        if r_code.lstrip('-').isdigit():
+        if IsNumber(r_code):
             # This is a request to change the question_mark_range.  We will make
             # the change and reset the display by deleting the old_dogs, even
             # if the value hasn't actually changed:
@@ -2571,7 +2620,7 @@ class CPrintWorker():
         if payload.Refmod:
             # Because there is a refmod involved, we simply ignore any
             # conditional formatting and just return what he asked for:
-            d_startloc = payload.RefmodOffset
+            d_startloc = payload.RefmodOffset+1
             d_length   = payload.RefmodLength
 
             if payload.display_body.startswith('"'):
@@ -2603,7 +2652,7 @@ class CPrintWorker():
         return body
 
     def FormattedDisplay(self, payload):
-        if payload.SubscriptFailure:
+        if payload.SubscriptFailure or payload.RefmodFailure:
             return
         body = self.GetDisplayBody(payload)
 
@@ -2655,7 +2704,7 @@ class CPrintWorker():
             if var_right and var_right.Refmod:
                 # var_right involves a refmod, so we need to extract
                 # just the data we need:
-                offset = var_right.RefmodOffset # Assume double quotes
+                offset = var_right.RefmodOffset+1 # Assume double quotes
                 run = var_right.RefmodLength
                 if not var_right.display_body.startswith('"'):
                     # This doesn't start with a double quote; adjust the offset
@@ -2671,7 +2720,7 @@ class CPrintWorker():
             # double quotes, depending on the type of variable.
 
             if var_left.Refmod:
-                p_startloc = var_left.RefmodOffset
+                p_startloc = var_left.RefmodOffset+1
                 p_length   = var_left.RefmodLength
             else:
                 p_startloc = 1
@@ -2770,6 +2819,7 @@ class CPrintWorker():
 
     def ProcessArgumentsHumanMode(self, leftside_possibilities, rightside):
         if len(leftside_possibilities) > 1:
+
             GV_GlobalVariables.ShortTermMemory = []
 
             line_counter = 1
@@ -2893,13 +2943,12 @@ class CPrintWorker():
             GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]])
             GV_GlobalVariables.VarLeftIndex = leftside_possibilities[0]
 
-        #print("right_side",right_side)
         if right_side and right_side[0].find('"') == -1 and right_side[0].find("'") == -1:
             # We have to deal with the possibility that the right_side is a numeric constant,
             # as in "cprint var=1234".  We can't let get_sorted_possibilities mess with it,
             # because that routine will get confused thinking that we are looking for an
             # short_term_index into storage_list
-            if len(right_side) != 1 or not right_side[0].isdigit():
+            if len(right_side) != 1 or not IsNumber(right_side[0]):
                 #print("checking for possibilities",right_side)
                 rightside_possibilities = get_sorted_possibilities(right_side, 1)
                 #print("rightside_possibilities",rightside_possibilities)
@@ -2910,6 +2959,12 @@ class CPrintWorker():
             else:
                 # This is a numeric constant; just pass it along
                 pass
+
+        if len(leftside_possibilities) > 1 and right_side:
+            # Our user wants to do an assignment: "cprint leftside=rightside"
+            # Alas, we cannot accommodate that request:
+            print('Too many possibilities for "{0}"'.format('/'.join(left_side)))
+            return
 
         if self.machine_interface_mode:
             self.ProcessArgumentsMachineMode(left_side,
@@ -3455,7 +3510,7 @@ class CPrint(gdb.Command):
             # Check if this is a special case.  (Enough of these will
             # mean putting this in a separate function.)
             tokens = arguments.split()
-            if len(tokens) == 3 and tokens[0] == "set" and tokens[1] == "repeat" and tokens[2].strip('-').isdigit():
+            if len(tokens) == 3 and tokens[0] == "set" and tokens[1] == "repeat" and IsNumber(tokens[2]):
                 GV_GlobalVariables.repeat_count = int(tokens[2])
                 if GV_GlobalVariables.repeat_count < 1:
                     GV_GlobalVariables.repeat_count = 1000000
@@ -3565,7 +3620,7 @@ they override any that might have been passed to GDB with --args."""
 
     def __init__(self):
         print('Registering CStart')
-        super(CStart, self).__init__("cstart", gdb.COMMAND_USER)
+        super(CStart, self).__init__("cstart", gdb.COMMAND_RUNNING)
 
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
