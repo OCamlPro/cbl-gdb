@@ -1648,7 +1648,7 @@ class CobolVariable():
                 offset = 1
 
             if offset < 1:
-                print("The refmod {0} offset has to be greater than zero")
+                print("The refmod {0} offset has to be greater than zero".format(self.Refmod))
                 self.RefmodFailure = True
                 return
 
