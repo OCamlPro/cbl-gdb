@@ -718,6 +718,81 @@ def TokenizeCanonicalName(desired):
     retval = desired.split()
     return retval
 
+def atoi(s):
+    # This isn't very bright.  But in Dubner's opinion, it doesn't need to be.
+    # It ignores a leading double quote; it accepts a leading '-' as a minus sign,
+    # and it converts ASCII digits to a decimal number until it hits
+    # something that isn't a digit
+    #
+    retval = 0
+    sign = 1
+    i = 0
+    while i<len(s):
+        ch = s[i]
+        i += 1
+        if ch == '"':
+            if i > 1:
+                # An embedded quote ends the conversion
+                break
+            # The first character is a double-quote.  Ignore it
+            continue
+        if ch == '-':
+            if retval or sign == -1:
+                # An embedded hyphen ends the conversion
+                break
+            # A minus sign while retval is zero is legitimate.
+            # Yes, this means "000-0003" will be interpreted as minus 3.
+            # I don't care.
+            sign = -1
+            continue
+        n = ord(ch) - ord('0')
+        if n<0 or n>9:
+            # A non-digit ends the conversion
+            break;
+        # This is a digit 0 through 9, so accumulate it into the result
+        retval *= 10
+        retval += n
+    return retval * sign
+
+def IsInteger(s):
+    retval = None
+
+    # This routine is designed to provide an indication of whether the
+    # input string is nothing but digits, and return either None or the
+    # relevant number.  It's intended for use where the input might be
+    # an integer literal, or might be a cobol variable.
+
+    # I don't want to use the Python isdigit(), which goes False on
+    # negative numbers.
+
+    # And I have to be careful with my atoi routine, because it will
+    # return 10 for "10-DOWNING-STREET", which is a perfectly valid
+    # COBOL identifier.
+
+    re_integer = re.compile(r'^([-]?[0-9]+)$')
+    found = re_integer.match(s)
+    if found:
+        retval = atoi(found.group(0))
+    return retval
+
+def IntegerOrVariable(s):
+    # Let's see if the string s is a simple integer
+    retval = IsInteger(s)
+    if retval:
+        return retval
+
+    # It is not.  Let's see if it represents a unique in-context COBOL variable
+
+    possible_name = TokenizeCanonicalName(s)
+    possibilities = get_sorted_possibilities(possible_name, 1)
+    if not possibilities:
+        # Sadly, our caller has run out of luck.
+        return None
+
+    # We know that there is but one possibility:
+    payload = GV_ModuleInformation.var_trie.storage_list[possibilities[0]]
+    return payload.NumericValue()
+
 class VarTrie():
     def __init__(self):
         self.storage_list = []
@@ -1491,13 +1566,7 @@ class CobolVariable():
                         self.TableOffset = 0
                         self.SubscriptFailure = True
                         return
-                    subscript = list_of_subscripts[-1].strip()
-                    if not subscript.isdigit():
-                        print("Subscripts in {0} must be integers".format(variable.Name))
-                        self.TableOffset = 0
-                        self.SubscriptFailure = True
-                        return
-                    subscript = int(subscript)
+                    subscript = IntegerOrVariable(list_of_subscripts[-1].strip())
                     list_of_subscripts = list_of_subscripts[0:-1]
                     if subscript < variable.OccursMin:
                         print("subscript for '{0}' is too small".format(variable.Name))
@@ -1532,15 +1601,10 @@ class CobolVariable():
                 print("The refmod {0} has to have two elements".format(self.Refmod))
                 self.SubscriptFailure = True
                 return
-            offset = refmod[0].strip()
-            length = refmod[1].strip()
-            if not offset.isdigit() or not offset.isdigit():
-                # for now they both have to be integers
-                print("The refmod {0} elements have to be integers".format(self.Refmod))
-                self.SubscriptFailure = True
-                return
-            offset = int(offset)
-            length = int(length)
+
+            offset = IntegerOrVariable(refmod[0].strip())
+            length = IntegerOrVariable(refmod[1].strip())
+
             if offset-1 >= self.Length:
                 print("The refmod {0} offset has to be less than {1}".format(self.Refmod, self.Length))
                 self.SubscriptFailure = True
@@ -1871,6 +1935,9 @@ class CobolVariable():
             else:
                 print('.', end="")
         print('"')
+
+    def NumericValue(self):
+        return atoi(self.display_body)
 
 class ModuleInformation():
     """Information about the source code module being debugged.
@@ -2457,7 +2524,7 @@ class CPrintWorker():
             r_code = args[0]
             args.pop(0)
 
-        if r_code.lstrip('-').isnumeric():
+        if r_code.lstrip('-').isdigit():
             # This is a request to change the question_mark_range.  We will make
             # the change and reset the display by deleting the old_dogs, even
             # if the value hasn't actually changed:
