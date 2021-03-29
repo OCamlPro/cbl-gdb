@@ -195,6 +195,7 @@ class GlobalVariables():
 
         self.cprint_buffer = None
         self.cprint_f0 = None
+        self.cprint_a0 = None
 
         # These are used in PutDataAsVar
         self.VarLeft = None
@@ -213,6 +214,9 @@ class GlobalVariables():
 
                 command = "call (char*)cob_malloc(sizeof(cob_field))"
                 self.cprint_f0 = int(gdb.execute(command, False, True).split()[2],16)
+
+                command = "call (char*)cob_malloc(sizeof(cob_field_attr))"
+                self.cprint_a0 = int(gdb.execute(command, False, True).split()[2],16)
             except:
                 traceback.print_exc()
                 self.cprint_buffer = None
@@ -225,6 +229,7 @@ class GlobalVariables():
     def DestroyBuffers(self):
         self.cprint_buffer = None
         self.cprint_f0 = None
+        self.cprint_a0 = None
 
 GV_GlobalVariables = GlobalVariables()
 
@@ -861,7 +866,7 @@ class VarTrie():
                     if tokens[self.IndexLevel] == "":
                         tokens[self.IndexLevel] = '0'
                     our_level = int(tokens[self.IndexLevel])
-                    if our_level in (77, 78):
+                    if our_level in (0, 77, 78):    # Zero is an table index
                         our_level = 1
                     while self.StackOfLevels[-1] >= our_level:
                         self.StackOfNames.pop(-1)
@@ -889,10 +894,12 @@ class VarTrie():
                     payload.OccursMax  = int(tokens[self.IndexOccursMax] or "0")
 
                     # We need to find our parent.  We will ignore the accursed
-                    # level 66, and anything above.  Anything else, including level 01,
-                    # might have a parent (for level 01, the parent might be a FD file descriptor)
+                    # level 66, and anything above.
 
-                    if payload.Level <= 49:
+                    # For now we are ignoring the possibility that a level 01
+                    # variable might have an FD parent.
+
+                    if payload.Level > 1 and payload.Level <= 49:
                         # We start looking at the variable in the list right where we
                         # will go.
                         i = len(self.storage_list)-1
@@ -1233,8 +1240,8 @@ class CobolVariable():
         # Note the commas and colons, which determine which is which
         self.Subscripts          = None # This is the user's requested subscripts, integers or variables
         self.ResolvedSubscripts  = None # These are the resolved values (offset is one-based)
-        self.TableOffset = 0    # These are additional bytes based on the table Subscripts
-        self.Refmod      = None
+        self.TableOffset  = 0    # These are additional offset bytes based on the table Subscripts
+        self.Refmod       = None
         self.RefmodOffset = 0   # This is the zero-based Offset in (Offset:Length)
         self.RefmodLength = 0   # This is the Length in (Offset:Length)
 
@@ -1451,8 +1458,6 @@ class CobolVariable():
             # We will make our own cob_field in cprint_f0
             field_loc = GV_GlobalVariables.cprint_f0
             command = "set var *(cob_field *){0}".format(hex(field_loc)) + " = {"
-            # command += "{0}, (char *){1}, &{2}".format(self.Length,
-            #                                           hex(self.location_of_data+self.TableOffset),
             command += "{0}, (char *){1}, &{2}".format(p_length,
                                                        hex(self.location_of_data+self.TableOffset+p_startloc-1),
                                                        self.Aname)
@@ -1588,15 +1593,14 @@ class CobolVariable():
                     subscript = IntegerOrVariable(list_of_subscripts[-1].strip())
                     self.ResolvedSubscripts = [subscript] + self.ResolvedSubscripts
                     list_of_subscripts = list_of_subscripts[0:-1]
-                    if subscript < variable.OccursMin or subscript > variable.OccursMax:
-                        print("The subscript '{0}({1})' is out of range ({2} to {3})".format(variable.Name,
+                    if subscript > variable.OccursMax:
+                        print("The subscript '{0}({1})' is out of range (maximum is {2})".format(variable.Name,
                                                                                              subscript,
-                                                                                             variable.OccursMin,
                                                                                              variable.OccursMax))
                         self.Offset = 0
                         self.SubscriptFailure = True
                         return
-                    self.TableOffset += (subscript - variable.OccursMin) * variable.Length
+                    self.TableOffset += (subscript - 1) * variable.Length
                 if not variable.index_of_parent:
                     break;
                 variable = GV_ModuleInformation.var_trie.storage_list[variable.index_of_parent]
@@ -1626,7 +1630,7 @@ class CobolVariable():
             else:
                 offset = 1
 
-            if not offset:
+            if not offset or offset < 1:
                 offset = 1
 
             if refmod[1]:
@@ -1634,7 +1638,7 @@ class CobolVariable():
             else:
                 length = self.Length - offset + 1
 
-            if not length:
+            if not length or length < 1:
                 length = self.Length - offset + 1
 
             if offset-1 >= self.Length:
@@ -2620,13 +2624,29 @@ class CPrintWorker():
         if payload.Refmod:
             # Because there is a refmod involved, we simply ignore any
             # conditional formatting and just return what he asked for:
-            d_startloc = payload.RefmodOffset+1
-            d_length   = payload.RefmodLength
+            startloc = payload.RefmodOffset
+            endloc   = startloc + payload.RefmodLength
 
-            if payload.display_body.startswith('"'):
-                body = '"' + payload.display_body.replace('"', '')[d_startloc - 1:d_startloc - 1 + d_length] + '"'
+            if not payload.display_body.startswith('"') or self.current_display_submode == 'x':
+                # We are dealing with something that libcob thinks is not alphabetic.
+                body = '['
+                for i in range(startloc,endloc):
+                    # This is a trick. By adding 256 to the byte, we ensure that
+                    # 0, for example, becomes 0x100 instead of 0x0.  Thus we can
+                    # strip off the final two characters for our string
+                    body += hex(256+payload.data[i])[-2:]
+                body += ']'
             else:
-                body = payload.display_body[d_startloc - 1:d_startloc - 1 + d_length]
+                # We are dealing with something that libcob thinks is alphabetic:
+                # Pull out those characters as ASCII.  Unlike GnuCOBOL, we are
+                # going to replace characters we don't recognize with dots
+                body = '"'
+                for i in range(startloc,endloc):
+                    nch = payload.data[i]
+                    if nch < 32 or nch >= 128:
+                        nch = ord('.')
+                    body += chr(nch)
+                body += '"'
             body = WithRepeatCount(body)
         else:
             # There is no refmod involved:
