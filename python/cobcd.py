@@ -2550,6 +2550,43 @@ def get_sorted_possibilities(args, limit):
 
     return possibilities, False # False means there was no 'limit' overflow
 
+def FromHexAlphaString(s):
+    """Converts a COBOL hexadecimal alphanumeric string to an ordinary string"""
+    retval = s
+    if s[0:2] in ("x'","X'") and s[-1] == "'" and (len(s)%2) == 1:
+        # This is correctly formed
+        # Trim off the front and back:
+        s = s[2:-1]
+        i = 0
+        retval = '"'
+        while i < len(s):
+            try:
+                ch = int(s[i:i+2], 16)
+            except:
+                break;
+            retval += chr(ch)
+            i += 2
+        retval += '"'
+    return retval
+
+def FromHexLiteralNumber(s):
+    """Converts a COBOL hexadecimal numeric literal string to an ordinary string"""
+    retval = 0
+    if s[0:2] in ("h'","H'") and s[-1] == "'":
+        # This is correctly formed
+        # Trim off the front and back:
+        s = s[2:-1]
+        i = 0
+        while i < len(s):
+            try:
+                nch = int(s[i], 16)
+            except:
+                break;
+            retval *= 16
+            retval += nch
+            i += 1
+    return str(retval)
+
 class CPrintWorker():
     """Does most of the non-gdb work of CPrint()"""
 
@@ -2984,6 +3021,12 @@ class CPrintWorker():
                     print("A syntax error in >>{0}<<.".format(right_side))
                     return
                 right_side = [right_side]
+            elif right_side[0:2] in ("x'","X'"):
+                    right_side = FromHexAlphaString(right_side)
+                    right_side = [right_side]
+            elif right_side[0:2] in ("h'","H'"):
+                    right_side = FromHexLiteralNumber(right_side)
+                    right_side = [right_side]
             else:
                 # This is not a quoted string, so canonicalize it.
                 right_side = TokenizeCanonicalName(leftright[1])
@@ -3833,6 +3876,12 @@ def stop_handler(event):
 
 gdb.events.exited.connect(exit_handler)
 gdb.events.stop.connect(stop_handler)
+
+#a = "x'313233'"
+#print(a,FromHexAlphaString(a))
+#a = "x'c5b6fc'"
+#print(a,FromHexAlphaString(a))
+
 
 CPrint()
 CWatch()
