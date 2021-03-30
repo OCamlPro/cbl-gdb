@@ -2553,7 +2553,7 @@ def get_sorted_possibilities(args, limit):
 def FromHexAlphaString(s):
     """Converts a COBOL hexadecimal alphanumeric string to an ordinary string"""
     retval = s
-    if s[0:2] in ("x'","X'") and s[-1] == "'" and (len(s)%2) == 1:
+    if s[0:2] in ("x'","X'",'x"','X"') and s[-1] in ("'",'"') and (len(s)%2) == 1:
         # This is correctly formed
         # Trim off the front and back:
         s = s[2:-1]
@@ -2572,7 +2572,7 @@ def FromHexAlphaString(s):
 def FromHexLiteralNumber(s):
     """Converts a COBOL hexadecimal numeric literal string to an ordinary string"""
     retval = 0
-    if s[0:2] in ("h'","H'") and s[-1] == "'":
+    if s[0:2] in ("h'","H'",'h"','H"') and s[-1] in ("'",'"'):
         # This is correctly formed
         # Trim off the front and back:
         s = s[2:-1]
@@ -3021,10 +3021,10 @@ class CPrintWorker():
                     print("A syntax error in >>{0}<<.".format(right_side))
                     return
                 right_side = [right_side]
-            elif right_side[0:2] in ("x'","X'"):
+            elif right_side[0:2] in ("x'","X'",'x"','X"'):
                     right_side = FromHexAlphaString(right_side)
                     right_side = [right_side]
-            elif right_side[0:2] in ("h'","H'"):
+            elif right_side[0:2] in ("h'","H'",'h"','H"'):
                     right_side = FromHexLiteralNumber(right_side)
                     right_side = [right_side]
             else:
