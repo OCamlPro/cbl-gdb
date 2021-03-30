@@ -3091,13 +3091,17 @@ class CWatchWorker():
         else:
             wp_arg, wp_refmod = get_refmod(args[0])
 
-        possibilities = get_sorted_possibilities(wp_arg, 1)
+        # HACK to let cwatch work until it is refactored
+        search_args = []
+        search_args.append(wp_arg)
+        possibilities = get_sorted_possibilities(search_args, 1)
         if not possibilities:
-            #print("Variable not found")
-            print('No symbol matching "{0}" in current context'.format('/'.join(wp_arg)))
+            #print('No symbol matching "{0}" in current context'.format('/'.join(wp_arg)))
+            print('No symbol matching "{0}" in current context'.format(wp_arg))
             return
         elif len(possibilities) != 1:
-            print('More than one symbol matching "{0}" in current context.'.format('/'.join(wp_arg)))
+            #print('More than one symbol matching "{0}" in current context.'.format('/'.join(wp_arg)))
+            print('More than one symbol matching "{0}" in current context.'.format(wp_arg))
             return
         payload_number = possibilities[0]
         # print("Watch Payload number is ", payload_number)
@@ -3194,10 +3198,16 @@ class CBreakWorker():
         possibilities = []
 
         GV_ModuleState.EstablishModuleState(True)
-        possibilities = get_sorted_possibilities(search_var, 1)
+        # HACK to let cbreak work until it is refactored
+        search_args = []
+        search_args.append(search_var)
+        possibilities = get_sorted_possibilities(search_args, 1)
 
-        # CHECKME: Do we need error handling here?
-        if possibilities and len(possibilities) == 1:
+        if not possibilities:
+            print('No symbol matching "{0}" in current context'.format(search_var))
+        elif len(possibilities) != 1:
+            print('More than one symbol matching "{0}" in current context.'.format(search_var))
+        else:
             payload_number = possibilities[0]
 
             # Pick up the payload from the list
@@ -3360,6 +3370,7 @@ class CBreakWorker():
         refmod_f = ""
         var_s = ""
         refmod_s = ""
+        condition = ""
 
         if len(args) == 4:
             var_f, refmod_f = get_refmod(args[1])
@@ -3424,24 +3435,24 @@ class CBreakWorker():
 
         payload_f = self.get_var_payload(var_f)
         if payload_f is None:
-            print("Variable {0} not found".format(var_f))
+            # note: error handling already in get_var_payload
             return
 
         if is_lit == 0 and not var_s.isdigit():
             payload_s = self.get_var_payload(var_s)
             if payload_s is None:
-                print("Variable {0} not found".format(var_s))
+                # note: error handling already in get_var_payload
                 return
 
         if payload_s is not None:
             self.set_cob_cmp_breakpoint(args[0], condition, payload_f, refmod_f, payload_s, refmod_s, break_point)
         else:
-            if payload_f.AttrType in (33, 34, 35):
+            if payload_f.AttrType in (1, 33, 34, 35):
                 self.set_string_breakpoint(args[0], condition, payload_f, refmod_f, var_s, break_point)
             elif payload_f.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27) and var_s.isdigit():
                 self.set_numeric_breakpoint(args[0], condition, payload_f, var_s, break_point)
             else:
-                print("Not yet implemented")
+                print("Not yet implemented (Attribute type", payload_f.AttrType, ")")
                 return
 
     def process_break_arguments(self, arguments):
