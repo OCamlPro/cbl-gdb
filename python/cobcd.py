@@ -236,7 +236,7 @@ GV_GlobalVariables = GlobalVariables()
 def NoNulls(s):
     ss = ""
     for ch in s:
-        if ord(ch) < 32 or ord(ch) >= 128:
+        if ord(ch) < 32:
             ch = '.'
         ss += ch
     return ss
@@ -794,10 +794,9 @@ def IntegerOrVariable(s):
     # It is not.  Let's see if it represents a unique in-context COBOL variable
 
     possible_name = TokenizeCanonicalName(s)
-    possibilities = get_sorted_possibilities(possible_name, 1)
+    possibilities, limit_reached = get_sorted_possibilities(possible_name, 1)
     if not possibilities or possibilities.len != 0:
         # Sadly, our caller has run out of luck.
-        # CHECKME: error handling?
         return None
 
     # We know that there is but one possibility:
@@ -1417,6 +1416,7 @@ class CobolVariable():
 
             gdb.execute(command, False, True)
         except gdb.error:
+            traceback.print_exc()
             print("Command failed in GetDataAsString:", command)
             return "<Error in GetDataAsString>"
 
@@ -1450,7 +1450,7 @@ class CobolVariable():
             buf_ptr = buffer
             for index in range(len(rside)):
                 n = rside[index]
-                command = "set *(char *){0} = '{1}'".format(hex(buf_ptr),n)
+                command = "set *(char *){0} = {1}".format(hex(buf_ptr),hex(ord(n)))
                 gdb.execute(command, False, True)
                 buf_ptr += 1
             command = "set *(char *){0} = '\\0'".format(hex(buf_ptr))
@@ -1485,6 +1485,7 @@ class CobolVariable():
             gdb.execute(command, False, True)
             self.IsDirty = True
         except gdb.error:
+            traceback.print_exc()
             print("COMMAND failed in PutDataAsString: ", command)
             return_value = 0
 
@@ -1853,6 +1854,9 @@ class CobolVariable():
         name = self.Name
         if self.Subscripts:
             name += "(" + ",".join(map(str,self.ResolvedSubscripts)) + ")"
+        elif self.OccursMax:
+            # This is a table, but no subscript was supplied.  Assume 1:
+            name += "(1)"
         if self.Refmod:
             name += "({0}:{1})".format(self.RefmodOffset+1,self.RefmodLength)
 
@@ -2003,7 +2007,7 @@ class CobolVariable():
 
         print("Data: (ASCII) \"", end="")
         for byte in self.data:
-            if 32 <= byte < 128:   # valid ASCII characters
+            if 32 <= byte:   # valid ASCII characters
                 print(chr(byte), end="")
             else:
                 print('.', end="")
@@ -2484,9 +2488,9 @@ def get_sorted_possibilities(args, limit):
                     # without that request, use the established +/- range
                     qmrange = GV_ModuleState.question_mark_range
                 if qmrange == -1:
-                    qmrange = 1000000000
+                    qmrange = 1000000000 # equivalent to "all"
                 if qmrange <= -2:
-                    # This is an expedient for simply killing any cprint ? response
+                    # -2 means there should be no "cprint ?" response
                     return_string = ""
                 else:
                     return_string = subprocess.check_output(["cobcd-rw",
@@ -2511,7 +2515,7 @@ def get_sorted_possibilities(args, limit):
                 possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
             else:
                 print("The specified index ({0}) is out of range (1 to {1})".format(index+1,len(GV_GlobalVariables.ShortTermMemory)))
-                return possibilities
+                return possibilities, False # False means there was no 'limit' overflow
         else:
             # There are one or more arguments.  Use our clever routine
             # to come up with the possibilities_1:
@@ -2533,16 +2537,17 @@ def get_sorted_possibilities(args, limit):
             # be zero or one.  Zero means return everything; one means return only the possibilities
             # when there is just one, which is useful in situations like "cprint A = B", which can only
             # work if A and B are unambiguous (we actually return 2 if there are too much to distinguish
-            # between "not found" and "too much"
+            # between "not found" and "too much")
 
             if limit > 0 and target_limit > limit:
                 possibilities = []
+                return possibilities, True  # True means there was a 'limit' overflow
                 break
 
     # Sorting them makes the display much more sensible:
     possibilities.sort()
 
-    return possibilities
+    return possibilities, False # False means there was no 'limit' overflow
 
 class CPrintWorker():
     """Does most of the non-gdb work of CPrint()"""
@@ -2666,7 +2671,7 @@ class CPrintWorker():
                 body = '"'
                 for i in range(startloc,endloc):
                     nch = payload.data[i]
-                    if nch < 32 or nch >= 128:
+                    if nch < 32:
                         nch = ord('.')
                     body += chr(nch)
                 body += '"'
@@ -2804,6 +2809,11 @@ class CPrintWorker():
             # Fetch the data we just assigned, so that subsequent display is valid.
             # To do that fetch, we need to flag the element in storage_list as IsDirty
             payload   = GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex]
+
+            # We want the left-side to look correct on a subsequent fetch, which means making sure
+            # that payload .Subscripts and .Refmod match the stored var_left values:
+            payload.Subscripts = var_left.Subscripts
+            payload.Refmod     = var_left.Refmod
             payload.IsDirty = True
             payload.FetchVariableData(False)
 
@@ -2949,6 +2959,11 @@ class CPrintWorker():
         if len(leftright) > 1:
             # There is a rightside.
             right_side = leftright[1].strip()
+            if not right_side:
+                # ... but it is empty
+                print("A syntax error in \"{0}\"".format(args))
+                return
+
             if right_side[0] in ('"',"'"): #I do love that construction
                 if len(right_side) < 2 or right_side[-1] != right_side[0]:
                     print("A syntax error in >>{0}<<.".format(right_side))
@@ -2975,13 +2990,13 @@ class CPrintWorker():
         GV_GlobalVariables.VarLeftIndex = None
         GV_GlobalVariables.VarRight = None
 
-        leftside_possibilities = get_sorted_possibilities(left_side, 0)
+        leftside_possibilities, limit_reached = get_sorted_possibilities(left_side, 0)
         if not leftside_possibilities:
             # There are no leftside possibilities.  Let him know why, and then bug out
             if left_side[0][0] in ('*','?') or left_side[0].isdigit():
                 # When '*' or '?' match nothing, then just return nothing
                 return
-            print('No symbol matching "{0}" in current context'.format('/'.join(left_side)))
+            print('No symbols match "{0}" in current context'.format('/'.join(left_side)))
             return
 
         if len(leftside_possibilities) == 1:
@@ -2991,7 +3006,7 @@ class CPrintWorker():
         elif right_side:
             # Our user wants to do an assignment: "cprint leftside=rightside"
             # Alas, we cannot accommodate that request:
-            print('More than one symbol matching "{0}" in current context.'.format('/'.join(left_side)))
+            print('Multiple symbols match the left-hand-side "{0}" in current context.'.format('/'.join(left_side)))
             return
 
         if right_side and right_side[0].find('"') == -1 and right_side[0].find("'") == -1:
@@ -3000,9 +3015,12 @@ class CPrintWorker():
             # because that routine will get confused thinking that we are looking for an
             # short_term_index into storage_list
             if len(right_side) != 1 or not IsNumber(right_side[0]):
-                rightside_possibilities = get_sorted_possibilities(right_side, 1)
-                if not rightside_possibilities:
-                    print('No unique symbol matching "{0}" in current context'.format('/'.join(right_side)))
+                rightside_possibilities, limit_reached = get_sorted_possibilities(right_side, 1)
+                if not rightside_possibilities and not limit_reached:
+                    print('No symbol matches "{0}" in current context'.format('/'.join(right_side)))
+                    return
+                if not rightside_possibilities and limit_reached:
+                    print('Multiple symbols match the right-hand-side "{0}" in current context'.format('/'.join(right_side)))
                     return
                 GV_GlobalVariables.VarRight = copy.copy(GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]])
             else:
@@ -3088,7 +3106,7 @@ class CWatchWorker():
         # HACK to let cwatch work until it is refactored
         search_args = []
         search_args.append(wp_arg)
-        possibilities = get_sorted_possibilities(search_args, 1)
+        possibilities, limit_reached = get_sorted_possibilities(search_args, 1)
         if not possibilities:
             #print('No symbol matching "{0}" in current context'.format('/'.join(wp_arg)))
             print('No symbol matching "{0}" in current context'.format(wp_arg))
@@ -3195,7 +3213,7 @@ class CBreakWorker():
         # HACK to let cbreak work until it is refactored
         search_args = []
         search_args.append(search_var)
-        possibilities = get_sorted_possibilities(search_args, 1)
+        possibilities, limit_reached = get_sorted_possibilities(search_args, 1)
 
         if not possibilities:
             print('No symbol matching "{0}" in current context'.format(search_var))
