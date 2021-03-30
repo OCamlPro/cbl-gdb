@@ -3617,7 +3617,7 @@ class CPrint(gdb.Command):
             GV_ModuleState.EstablishModuleState(False)
             lookup = TokenizeCanonicalName(word)
             #print ("DBG: lookup: <",  lookup,  ">")
-            possibilities_1 = get_sorted_possibilities(lookup, 0)
+            possibilities_1, limit_reached = get_sorted_possibilities(lookup, 0)
             # we now have the requested list, create the completion from its names
             possibilities = []
             for index in possibilities_1:
