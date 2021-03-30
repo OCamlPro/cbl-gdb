@@ -3598,6 +3598,36 @@ class CPrint(gdb.Command):
         except:
             traceback.print_exc()
 
+    def complete(self, text, word):
+        # We expect COBOL variables which GDB doesn't have, so the fallback
+        # gdb.COMPLETE_SYMBOL can't be used.
+
+        try:
+            # HACK: because of missing support for hypens: in identifiers
+            # we have to look at the text for that
+            # but the hack doesn't work because GDB won't complete at - either...
+            #if text and text.find('-'):
+            #    word = text # split, last part
+
+            # note: modifier / slash is no word, so in this case word is None
+            if word is None or word == "" or word[0] in ('*','?', '(', ')', ',', ':', '"', '\'') or word[0].isdigit():
+                # if it doesn't look like a word then just return nothing
+                return gdb.COMPLETE_NONE
+
+            GV_ModuleState.EstablishModuleState(False)
+            lookup = TokenizeCanonicalName(word)
+            #print ("DBG: lookup: <",  lookup,  ">")
+            possibilities_1 = get_sorted_possibilities(lookup, 0)
+            # we now have the requested list, create the completion from its names
+            possibilities = []
+            for index in possibilities_1:
+                whole_name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
+                possibilities.append(whole_name)
+
+            return possibilities
+        except:
+            traceback.print_exc()
+
 class CWatch(gdb.Command):
     """Used for creating COBOL-NAMED watchpoints when debugging cobst processed object files.
 
