@@ -1069,9 +1069,9 @@ class VarTrie():
                     return paths
                 refmod = parenthesized
             else:
-                # This must be a subscripts.
+                # This must be a subscripts specification.
                 if subscripts:
-                    # There can be only one subscripts
+                    # There can be only one subscripts specification
                     print("Too many table references in >>{0}<<".format('/'.join(cobol_variable_name)))
                     return paths
                 subscripts = parenthesized
@@ -1124,8 +1124,9 @@ class VarTrie():
                     prior_index = current_index
                 if prior_index != -1:
                     # We have found a contender!
-                    # Make sure that there is no subscript for this variable:
+                    # Make sure that there is no subscripts or refmod for this variable:
                     self.storage_list[index].Subscripts = None
+                    self.storage_list[index].Refmod = None
                     # And add it to the set
                     set1.add(index)
 
@@ -2806,16 +2807,15 @@ class CPrintWorker():
                     return_value = 0
 
         if return_value == 1:
-            # Fetch the data we just assigned, so that subsequent display is valid.
-            # To do that fetch, we need to flag the element in storage_list as IsDirty
             payload   = GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex]
 
-            # We want the left-side to look correct on a subsequent fetch, which means making sure
-            # that payload .Subscripts and .Refmod match the stored var_left values:
+            # Adjust the modifiers in the storage_list to match var_left, so that subsequent
+            # fetch/display shows what we just changed:
             payload.Subscripts = var_left.Subscripts
             payload.Refmod     = var_left.Refmod
+
+            # Flag the element in storage_list as IsDirty so that the next fetch reflects the change
             payload.IsDirty = True
-            payload.FetchVariableData(False)
 
         return return_value
 
@@ -2846,6 +2846,13 @@ class CPrintWorker():
 
             disp_str = payload.display_name + " set to " + WithRepeatCount(payload.display_body)
             print(disp_str)
+
+            # Eliminate stale modifiers, if necessary
+            if payload.Subscripts or payload.Refmod:
+                payload.Subscripts = None
+                payload.Refmod = None
+                payload.IsDirty = True
+
             return
 
         # In machine_interface mode, we just return the possibility(ies).
@@ -2909,8 +2916,16 @@ class CPrintWorker():
                     # The assignment failed
                     return
 
+            # Having done the assignment, display the left-side data that was changed:
             payload.FetchVariableData(True)
             self.FormattedDisplay(payload)
+
+            # And having displayed it, let's reset subscripts and refmods (if necessary) so that
+            # subsequent displays don't carry around the stale modifiers
+            if payload.Subscripts or payload.Refmod:
+                payload.Subscripts = None
+                payload.Refmod = None
+                payload.IsDirty = True
 
     def ProcessArguments(self, arguments):
         # First, look for /[dxvmvr] switches:
