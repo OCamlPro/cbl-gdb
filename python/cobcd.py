@@ -2517,7 +2517,6 @@ def get_sorted_possibilities(args, limit):
             # to come up with the possibilities_1:
             possibilities_1 = GV_ModuleInformation.var_trie.GetListOfPossibilities(args)
 
-
     # We now have a list of possibilities_1 based on the names of the variables
     # typically, some of them will not be in context.  The only way of
     # knowing which variables are in context is to try to read them.  If we
@@ -2529,13 +2528,15 @@ def get_sorted_possibilities(args, limit):
         if not payload.not_in_context:
             possibilities.append(payload_index)
             target_limit = target_limit + 1
-    # If there are too many possibilities_1, then return nothing.  limit will usually
-    # be zero or one.  Zero means return everything; one means return only the possibilities
-    # when there is just one, which is useful in situations like "cprint A = B", which can only
-    # work if A and B are unambiguous (we actually return 2 if there are too much to distinguish
-    # between "not found" and "too much"
+
+            # If there are too many possibilities_1, then return nothing.  limit will usually
+            # be zero or one.  Zero means return everything; one means return only the possibilities
+            # when there is just one, which is useful in situations like "cprint A = B", which can only
+            # work if A and B are unambiguous (we actually return 2 if there are too much to distinguish
+            # between "not found" and "too much"
 
             if limit > 0 and target_limit > limit:
+                possibilities = []
                 break
 
     # Sorting them makes the display much more sensible:
@@ -2873,8 +2874,6 @@ class CPrintWorker():
             line_counter = 1
             for payload_index in leftside_possibilities:
                 payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
-                # We don't need to fetch; get_sorted_possibilities() just did that
-                # payload.FetchVariableData(GV_ModuleInformation.line_list, False)
                 if not payload.not_in_context:
                     GV_GlobalVariables.ShortTermMemory.append(payload_index)
                     s = "{0:2} : ".format(line_counter)
@@ -2976,8 +2975,7 @@ class CPrintWorker():
         GV_GlobalVariables.VarLeftIndex = None
         GV_GlobalVariables.VarRight = None
 
-        leftside_possibilities = get_sorted_possibilities(left_side, 1)
-        #print("left_side",left_side,leftside_possibilities)
+        leftside_possibilities = get_sorted_possibilities(left_side, 0)
         if not leftside_possibilities:
             # There are no leftside possibilities.  Let him know why, and then bug out
             if left_side[0][0] in ('*','?') or left_side[0].isdigit():
@@ -2993,7 +2991,6 @@ class CPrintWorker():
         elif right_side:
             # Our user wants to do an assignment: "cprint leftside=rightside"
             # Alas, we cannot accommodate that request:
-            #print('Too many possibilities for "{0}"'.format('/'.join(left_side)))
             print('More than one symbol matching "{0}" in current context.'.format('/'.join(left_side)))
             return
 
@@ -3005,10 +3002,7 @@ class CPrintWorker():
             if len(right_side) != 1 or not IsNumber(right_side[0]):
                 rightside_possibilities = get_sorted_possibilities(right_side, 1)
                 if not rightside_possibilities:
-                    print('No symbol matching "{0}" in current context'.format('/'.join(right_side)))
-                    return
-                elif right_side:
-                    print('More than one symbol matching "{0}" in current context.'.format('/'.join(right_side)))
+                    print('No unique symbol matching "{0}" in current context'.format('/'.join(right_side)))
                     return
                 GV_GlobalVariables.VarRight = copy.copy(GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]])
             else:
