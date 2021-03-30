@@ -795,8 +795,9 @@ def IntegerOrVariable(s):
 
     possible_name = TokenizeCanonicalName(s)
     possibilities = get_sorted_possibilities(possible_name, 1)
-    if not possibilities:
+    if not possibilities or possibilities.len != 0:
         # Sadly, our caller has run out of luck.
+        # CHECKME: error handling?
         return None
 
     # We know that there is but one possibility:
@@ -1258,7 +1259,7 @@ class CobolVariable():
         self.display_body = ""
 
         self.SubscriptFailure = False # Set to True when subscripts don't match the number of tables
-        self.RefmodFailure    = False # Set to True when something is wrong with the refmod length:run
+        self.RefmodFailure    = False # Set to True when something is wrong with the refmod length
 
         # When a variable is accessed for the first time, or when the Subscript changes,
         # or when the refmod changes, or when a previously-read variable is displayed through
@@ -2516,24 +2517,26 @@ def get_sorted_possibilities(args, limit):
             # to come up with the possibilities_1:
             possibilities_1 = GV_ModuleInformation.var_trie.GetListOfPossibilities(args)
 
-    # If there are too many possibilities_1, then return nothing.  limit will usually
-    # be zero or one.  Zero means return everything; one means return only the possibilities
-    # when there is just one, which is useful in situations like "cprint A = B", which can only
-    # work if A and B are unambiguous
-
-    if limit > 0 and len(possibilities_1) > limit:
-        return possibilities
 
     # We now have a list of possibilities_1 based on the names of the variables
     # typically, some of them will not be in context.  The only way of
     # knowing which variables are in context is to try to read them.  If we
     # can't read them, then we don't add them to our list:
-
+    target_limit = 0
     for payload_index in possibilities_1:
         payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
         payload.FetchVariableData(False)
         if not payload.not_in_context:
             possibilities.append(payload_index)
+            target_limit = target_limit + 1
+    # If there are too many possibilities_1, then return nothing.  limit will usually
+    # be zero or one.  Zero means return everything; one means return only the possibilities
+    # when there is just one, which is useful in situations like "cprint A = B", which can only
+    # work if A and B are unambiguous (we actually return 2 if there are too much to distinguish
+    # between "not found" and "too much"
+
+            if limit > 0 and target_limit > limit:
+                break
 
     # Sorting them makes the display much more sensible:
     possibilities.sort()
@@ -2865,7 +2868,6 @@ class CPrintWorker():
 
     def ProcessArgumentsHumanMode(self, leftside_possibilities, rightside):
         if len(leftside_possibilities) > 1:
-
             GV_GlobalVariables.ShortTermMemory = []
 
             line_counter = 1
@@ -2974,20 +2976,26 @@ class CPrintWorker():
         GV_GlobalVariables.VarLeftIndex = None
         GV_GlobalVariables.VarRight = None
 
-        leftside_possibilities = get_sorted_possibilities(left_side, 0)
+        leftside_possibilities = get_sorted_possibilities(left_side, 1)
         #print("left_side",left_side,leftside_possibilities)
         if not leftside_possibilities:
             # There are no leftside possibilities.  Let him know why, and then bug out
             if left_side[0][0] in ('*','?') or left_side[0].isdigit():
                 # When '*' or '?' match nothing, then just return nothing
                 return
-            print('No symbol "{0}" in current context'.format('/'.join(left_side)))
+            print('No symbol matching "{0}" in current context'.format('/'.join(left_side)))
             return
 
         if len(leftside_possibilities) == 1:
             # because there is but a single possibility, we might be in a "cprint var1=var2" situation
             GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]])
             GV_GlobalVariables.VarLeftIndex = leftside_possibilities[0]
+        elif right_side:
+            # Our user wants to do an assignment: "cprint leftside=rightside"
+            # Alas, we cannot accommodate that request:
+            #print('Too many possibilities for "{0}"'.format('/'.join(left_side)))
+            print('More than one symbol matching "{0}" in current context.'.format('/'.join(left_side)))
+            return
 
         if right_side and right_side[0].find('"') == -1 and right_side[0].find("'") == -1:
             # We have to deal with the possibility that the right_side is a numeric constant,
@@ -2995,22 +3003,17 @@ class CPrintWorker():
             # because that routine will get confused thinking that we are looking for an
             # short_term_index into storage_list
             if len(right_side) != 1 or not IsNumber(right_side[0]):
-                #print("checking for possibilities",right_side)
                 rightside_possibilities = get_sorted_possibilities(right_side, 1)
-                #print("rightside_possibilities",rightside_possibilities)
                 if not rightside_possibilities:
-                    print('No symbol "{0}" in current context'.format('/'.join(right_side)))
+                    print('No symbol matching "{0}" in current context'.format('/'.join(right_side)))
+                    return
+                elif right_side:
+                    print('More than one symbol matching "{0}" in current context.'.format('/'.join(right_side)))
                     return
                 GV_GlobalVariables.VarRight = copy.copy(GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]])
             else:
                 # This is a numeric constant; just pass it along
                 pass
-
-        if len(leftside_possibilities) > 1 and right_side:
-            # Our user wants to do an assignment: "cprint leftside=rightside"
-            # Alas, we cannot accommodate that request:
-            print('Too many possibilities for "{0}"'.format('/'.join(left_side)))
-            return
 
         if self.machine_interface_mode:
             self.ProcessArgumentsMachineMode(left_side,
@@ -3089,18 +3092,22 @@ class CWatchWorker():
             wp_arg, wp_refmod = get_refmod(args[0])
 
         possibilities = get_sorted_possibilities(wp_arg, 1)
-        if len(possibilities) == 1:
-            payload_number = possibilities[0]
-            # print("Watch Payload number is ", payload_number)
+        if not possibilities:
+            #print("Variable not found")
+            print('No symbol matching "{0}" in current context'.format('/'.join(wp_arg)))
+            return
+        elif len(possibilities) != 1:
+            print('More than one symbol matching "{0}" in current context.'.format('/'.join(wp_arg)))
+            return
+        payload_number = possibilities[0]
+        # print("Watch Payload number is ", payload_number)
 
-            # Pick up the payload from the list
-            payload = GV_ModuleInformation.var_trie.storage_list[payload_number]
-            payload.FetchVariableData(False)
+        # Pick up the payload from the list
+        payload = GV_ModuleInformation.var_trie.storage_list[payload_number]
+        payload.FetchVariableData(False)
 
-            # And go set the Watchpoint
-            self.set_watchpoint(payload, wp_type, wp_refmod)
-        elif not possibilities:
-            print("Variable not found")
+        # And go set the Watchpoint
+        self.set_watchpoint(payload, wp_type, wp_refmod)
 
 class CBreakWorker():
 
@@ -3189,7 +3196,8 @@ class CBreakWorker():
         GV_ModuleState.EstablishModuleState(True)
         possibilities = get_sorted_possibilities(search_var, 1)
 
-        if len(possibilities) == 1:
+        # CHECKME: Do we need error handling here?
+        if possibilities and len(possibilities) == 1:
             payload_number = possibilities[0]
 
             # Pick up the payload from the list
@@ -3537,11 +3545,11 @@ class CPrint(gdb.Command):
     cprint VARIABLE='STRING'    set variable to string
     cprint VARIABLE=NUMERIC     set variable to numeric
     cprint VARIABLE=VARIABLE2   set variable to variable2
+
     cprint set repeat N sets the display <repeats> threshold to N characters
 
     The default v-level can be set with the environment variable CPRINT_V=n
     The default r-level can be set with the environment variable CPRINT_R=n
-    The string display character repeat count threshold is set with
     The 'cprint' command can be changed to 'anything' with the environment variable CPRINT=anything"""
 
     def __init__(self):
