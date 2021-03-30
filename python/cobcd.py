@@ -3025,11 +3025,10 @@ class CWatchWorker():
         self.current_display_mode = "0"
 
     @staticmethod
-    def set_watchpoint(payload, wp_type, wp_refmod):
-        if wp_refmod:
-            valid, wp_startloc, wp_length = get_lenspec_refmod(wp_refmod, payload, "p")
-            if valid == 0:
-                return
+    def set_watchpoint(payload, wp_type):
+        if payload.Refmod:
+            wp_startloc = payload.location_of_data + payload.RefmodOffset
+            wp_length = payload.RefmodLength
         else:
             wp_startloc = payload.location_of_data
             wp_length = payload.Length
@@ -3049,8 +3048,6 @@ class CWatchWorker():
 
     def process_watch_arguments(self, arguments):
         wp_type = 'WPW'
-        wp_refmod = ""
-        wp_arg = ""
 
         args = arguments.split()
         if not args:
@@ -3074,38 +3071,25 @@ class CWatchWorker():
             print("Too many arguments")
             return
 
-        if len(args) == 2:
-            wp_arg, wp_refmod = get_refmod(args[1])
-            if wp_refmod != "":
-                del args[1]
-            else:
-                print("Argument not recognized")
-                return
-            wp_arg = args[0]
-        else:
-            wp_arg, wp_refmod = get_refmod(args[0])
+        if len(args) == 2 and args[1].find(':') == -1:
+            print("Refmod argument not recognized")
+            return
 
-        # HACK to let cwatch work until it is refactored
-        search_args = []
-        search_args.append(wp_arg)
-        possibilities = get_sorted_possibilities(search_args, 1)
+        possibilities = get_sorted_possibilities(args, 1)
         if not possibilities:
-            #print('No symbol matching "{0}" in current context'.format('/'.join(wp_arg)))
-            print('No symbol matching "{0}" in current context'.format(wp_arg))
+            print('No symbol matching "{0}" in current context'.format(''.join(args)))
             return
-        elif len(possibilities) != 1:
-            #print('More than one symbol matching "{0}" in current context.'.format('/'.join(wp_arg)))
-            print('More than one symbol matching "{0}" in current context.'.format(wp_arg))
+
+        if len(possibilities) != 1:
+            print('More than one symbol matching "{0}" in current context.'.format(''.join(args)))
             return
-        payload_number = possibilities[0]
-        # print("Watch Payload number is ", payload_number)
 
         # Pick up the payload from the list
-        payload = GV_ModuleInformation.var_trie.storage_list[payload_number]
+        payload = GV_ModuleInformation.var_trie.storage_list[possibilities[0]]
         payload.FetchVariableData(False)
 
         # And go set the Watchpoint
-        self.set_watchpoint(payload, wp_type, wp_refmod)
+        self.set_watchpoint(payload, wp_type)
 
 class CBreakWorker():
 
