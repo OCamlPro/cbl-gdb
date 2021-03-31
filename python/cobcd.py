@@ -762,19 +762,21 @@ def IsNumber(s):
 def IntegerOrVariable(s):
     # Let's see if the string s is a simple integer
     if IsInteger(s):
-        return atoi(s)
+        return atoi(s), False  # False means no limit overrun
 
     # It is not.  Let's see if it represents a unique in-context COBOL variable
 
     possible_name = TokenizeCanonicalName(s)
     possibilities, limit_reached = get_sorted_possibilities(possible_name, 1)
     if not possibilities:
-        # Sadly, our caller has run out of luck.
-        return None
+        # It's not an integer.  But there are no candidates in the variable
+        # list that uniquely match.  We return None, and it is up to the caller
+        # to take appropriate action.
+        return None, limit_reached
 
     # We know that there is but one possibility:
     payload = GV_ModuleInformation.var_trie.storage_list[possibilities[0]]
-    return payload.NumericValue()
+    return payload.NumericValue(), False  # False means no limit overrun
 
 class VarTrie():
     def __init__(self):
@@ -1584,9 +1586,15 @@ class CobolVariable():
                         self.TableOffset = 0
                         self.SubscriptFailure = True
                         return
-                    subscript = IntegerOrVariable(list_of_subscripts[-1].strip())
+                    subscript, limit_reached = IntegerOrVariable(list_of_subscripts[-1].strip())
+                    if subscript == None and limit_reached:
+                        print("Multiple symbols match \"{0}\"".format(list_of_subscripts[-1].strip()))
+                        self.SubscriptFailure = True
+                        return
                     if subscript == None:
-                        subscript = 1
+                        print("No symbol matches \"{0}\"".format(list_of_subscripts[-1].strip()))
+                        self.SubscriptFailure = True
+                        return
                     self.ResolvedSubscripts = [subscript] + self.ResolvedSubscripts
                     list_of_subscripts = list_of_subscripts[0:-1]
                     if subscript < 1 or subscript > variable.OccursMax:
@@ -1622,7 +1630,15 @@ class CobolVariable():
                 return
 
             if refmod[0]:
-                offset = IntegerOrVariable(refmod[0].strip())
+                offset, limit_reached = IntegerOrVariable(refmod[0].strip())
+                if offset == None and limit_reached:
+                    print("Multiple symbols match \"{0}\"".format(refmod[0].strip()))
+                    self.RefmodFailure = True
+                    return
+                if offset == None:
+                    print("No symbol matches \"{0}\"".format(refmod[0].strip()))
+                    self.RefmodFailure = True
+                    return
             else:
                 offset = 1
 
@@ -1635,7 +1651,15 @@ class CobolVariable():
                 return
 
             if refmod[1]:
-                length = IntegerOrVariable(refmod[1].strip())
+                length, limit_reached = IntegerOrVariable(refmod[1].strip())
+                if length == None and limit_reached:
+                    print("Multiple symbols match \"{0}\"".format(refmod[1].strip()))
+                    self.RefmodFailure = True
+                    return
+                if length == None:
+                    print("No symbol matches \"{0}\"".format(refmod[1].strip()))
+                    self.RefmodFailure = True
+                    return
             else:
                 length = self.Length - offset + 1
 
