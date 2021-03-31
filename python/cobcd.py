@@ -164,6 +164,19 @@ def GdbExecute(curframe, command):
                 print("####       retval:", line)
     return retval
 
+def GdbExecute2(curframe, command, debug_level):
+    # It is up to the caller to handle exceptions
+    limiting_debug_level = 1
+    if debug_level >= limiting_debug_level:
+        print("#### ", getframeinfo(curframe).lineno, ": gdb.execute: '", command, "'", sep='')
+    retval = gdb.execute(command, False, True)
+    if debug_level >= limiting_debug_level:
+        lines = retval.split('\n')
+        for line in lines:
+            if len(line) > 0:
+                print("####       retval:", line)
+    return retval
+
 class GlobalVariables():
     def __init__(self):
         # Establish the debugging verbosity level:
@@ -720,14 +733,15 @@ def atoi(s):
     return retval * sign
 
 def IsInteger(s):
-    # This routine is designed to return True when the input string is
-    # nothing but digits with an optional leading minus sign.  It is intended
-    # for use when an input might be an integer literal, or might be a cobol variable.
+    # This routine is designed to provide an indication of whether the
+    # input string is nothing but digits, and return either None or the
+    # relevant number.  It's intended for use where the input might be
+    # an integer literal, or might be a cobol variable.
 
-    # I can't use the Python isdigit(), which goes False on
+    # I don't want to use the Python isdigit(), which goes False on
     # negative numbers.
 
-    # It will be used before calling atoi() routine, because atoi will
+    # And I have to be careful with my atoi routine, because it will
     # return 10 for "10-DOWNING-STREET", which is a perfectly valid
     # COBOL identifier.
 
@@ -748,19 +762,21 @@ def IsNumber(s):
 def IntegerOrVariable(s):
     # Let's see if the string s is a simple integer
     if IsInteger(s):
-        return atoi(s)
+        return atoi(s), False  # False means no limit overrun
 
     # It is not.  Let's see if it represents a unique in-context COBOL variable
 
     possible_name = TokenizeCanonicalName(s)
     possibilities, limit_reached = get_sorted_possibilities(possible_name, 1)
-    if not possibilities or possibilities.len != 0:
-        # Sadly, our caller has run out of luck.
-        return None
+    if not possibilities:
+        # It's not an integer.  But there are no candidates in the variable
+        # list that uniquely match.  We return None, and it is up to the caller
+        # to take appropriate action.
+        return None, limit_reached
 
     # We know that there is but one possibility:
     payload = GV_ModuleInformation.var_trie.storage_list[possibilities[0]]
-    return payload.NumericValue()
+    return payload.NumericValue(), False  # False means no limit overrun
 
 class VarTrie():
     def __init__(self):
@@ -819,7 +835,7 @@ class VarTrie():
                     print("self.StackOfNames is empty, and it shouldn't be")
                     sys.exit(1)
 
-                if tokens[self.IndexType] in ('F', 'W', 'L', 'I'):
+                if tokens[self.IndexType] in ('F', 'X', 'W', 'L', 'I'):
                     # We are working with a variable.  We need to erode the
                     # stack of names down to the variable who is our parent:
                     if tokens[self.IndexLevel] == "":
@@ -1300,40 +1316,41 @@ class CobolVariable():
 
     def DumpJustAboutEverything(self):
         location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
-        print(    "GetData AsString           Name:", self.Name)
+        print(    "           Name:", self.Name)
         if self.OccursMax:
-            print(    "GetData AsString OCCURS min/max: {0}/{1}".format(self.OccursMin,self.OccursMax))
+            print(    " OCCURS min/max: {0}/{1}".format(self.OccursMin,self.OccursMax))
         if self.Subscripts:
-            print("GetData AsString     Subscripts:", self.Subscripts)
-            print("GetData AsString     (resolved):", "(" + ",".join(self.ResolvedSubscripts) + ")")
+            print("     Subscripts:", self.Subscripts)
+            print("     (resolved):", "(" + ",".join(self.ResolvedSubscripts) + ")")
         if self.Refmod:
-            print("GetData AsString         refmod:", self.Refmod)
-        print(    "GetData AsString        Section:", self.Section)
-        print(    "GetData AsString          Fname:", self.Fname or "f0")
-        print(    "GetData AsString          Bname:", self.Bname)
-        print(    "GetData AsString          Aname:", self.Aname)
-        print(    "GetData AsString         Offset:", self.Offset)
+            print("         refmod:", self.Refmod)
+        print(    "        Section:", self.Section)
+        print(    "          Fname:", self.Fname or "f0")
+        print(    "          Bname:", self.Bname)
+        print(    "          Aname:", self.Aname)
+        print(    "         Offset:", self.Offset)
         if self.TableOffset:
-            print("GetData AsString    TableOffset:", self.TableOffset)
+            print("    TableOffset:", self.TableOffset)
         if self.Refmod:
-            print("GetData AsString   RefmodOffset:", self.RefmodOffset)
-            print("GetData AsString   RefmodLength:", self.RefmodLength)
-        print(    "GetData AsString         Length:", self.Length)
-        print(    "GetData AsString len(self.data):", len(self.data))
-        print(    "GetData AsString       AttrType:", hex(self.AttrType))
-        print(    "GetData AsString     AttrDigits:", self.AttrDigits)
-        print(    "GetData AsString      AttrScale:", self.AttrScale)
-        print(    "GetData AsString      AttrFlags:", hex(self.AttrFlags))
-        print(    "GetData AsString   loc_of_field:", hex(location_of_field))
-        print(    "GetData AsString    loc_of_data:", hex(self.location_of_data))
-        print(    "GetData AsString    loc_of_attr:", hex(self.location_of_attribute))
-        print(    "GetData AsString     loc_of_pic:", hex(self.location_of_pic))
+            print("   RefmodOffset:", self.RefmodOffset)
+            print("   RefmodLength:", self.RefmodLength)
+        print(    "         Length:", self.Length)
+        print(    " len(self.data):", len(self.data))
+        print(    "       AttrType:", hex(self.AttrType))
+        print(    "     AttrDigits:", self.AttrDigits)
+        print(    "      AttrScale:", self.AttrScale)
+        print(    "      AttrFlags:", hex(self.AttrFlags))
+        print(    "   loc_of_field:", hex(location_of_field))
+        print(    "    loc_of_data:", hex(self.location_of_data))
+        print(    "    loc_of_attr:", hex(self.location_of_attribute))
+        print(    "     loc_of_pic:", hex(self.location_of_pic))
 
     def GetDataAsString(self):
         retval = ""
-        location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
-        if not location_of_field:
-            return retval
+        GV_GlobalVariables.AllocateBuffers();
+        #location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
+        #if not location_of_field:
+        #    return retval
 
         if False:  # For development
             self.DumpJustAboutEverything()
@@ -1353,12 +1370,8 @@ class CobolVariable():
             is_alphanumeric = True
 
         try:
-            # We sometimes need to accommodate the self.TableOffset variable,
-            # which means, basically, we always need to.  I thought about
-            # modifying location_of_field->data before and after the call,
-            # but I decided making a copy of the field made more sense.
-
-            # We will make our own cob_field in cprint_f0
+            # We will make our own cob_field in cprint_f0, with location of
+            # data modified by .TableOffset
             field_loc = GV_GlobalVariables.cprint_f0
             command = "set var *(cob_field *){0}".format(hex(field_loc)) + " = {"
             command += "{0}, (char *){1}, &{2}".format(self.Length,
@@ -1368,6 +1381,15 @@ class CobolVariable():
             gdb.execute(command, False, True)
 
             buffer = GV_GlobalVariables.cprint_buffer
+
+            # If the data to be displayed aren't valid, the cob routine
+            # will sometimes return without have changed the buffer at all.
+            # To prevent stale data from the prior call polluting the results,
+            # stick in a NULL:
+
+            command = "set *(char *){0}=0".format(hex(buffer))
+            gdb.execute(command, False, True)
+
             command = "call (const char *)" \
                       "cob_get_field_str((cob_field *){0}, " \
                       "(char *){1}, {2})".format(hex(field_loc),
@@ -1564,9 +1586,15 @@ class CobolVariable():
                         self.TableOffset = 0
                         self.SubscriptFailure = True
                         return
-                    subscript = IntegerOrVariable(list_of_subscripts[-1].strip())
+                    subscript, limit_reached = IntegerOrVariable(list_of_subscripts[-1].strip())
+                    if subscript == None and limit_reached:
+                        print("Multiple symbols match \"{0}\"".format(list_of_subscripts[-1].strip()))
+                        self.SubscriptFailure = True
+                        return
                     if subscript == None:
-                        subscript = 1
+                        print("No symbol matches \"{0}\"".format(list_of_subscripts[-1].strip()))
+                        self.SubscriptFailure = True
+                        return
                     self.ResolvedSubscripts = [subscript] + self.ResolvedSubscripts
                     list_of_subscripts = list_of_subscripts[0:-1]
                     if subscript < 1 or subscript > variable.OccursMax:
@@ -1602,7 +1630,15 @@ class CobolVariable():
                 return
 
             if refmod[0]:
-                offset = IntegerOrVariable(refmod[0].strip())
+                offset, limit_reached = IntegerOrVariable(refmod[0].strip())
+                if offset == None and limit_reached:
+                    print("Multiple symbols match \"{0}\"".format(refmod[0].strip()))
+                    self.RefmodFailure = True
+                    return
+                if offset == None:
+                    print("No symbol matches \"{0}\"".format(refmod[0].strip()))
+                    self.RefmodFailure = True
+                    return
             else:
                 offset = 1
 
@@ -1615,7 +1651,15 @@ class CobolVariable():
                 return
 
             if refmod[1]:
-                length = IntegerOrVariable(refmod[1].strip())
+                length, limit_reached = IntegerOrVariable(refmod[1].strip())
+                if length == None and limit_reached:
+                    print("Multiple symbols match \"{0}\"".format(refmod[1].strip()))
+                    self.RefmodFailure = True
+                    return
+                if length == None:
+                    print("No symbol matches \"{0}\"".format(refmod[1].strip()))
+                    self.RefmodFailure = True
+                    return
             else:
                 length = self.Length - offset + 1
 
@@ -1636,7 +1680,7 @@ class CobolVariable():
 
     def FetchVariableData(self, show_failure):
         # print("FetchVariableData:", self.Name, self.Section)
-        # print("FetchVariableData",self.Name,self.IsDirty)
+        # print("\nFetchVariableData",self.Name,self.IsDirty, self.Offset, self.Length)
         if self.IsDirty:
             # We do this work only if the IsDirty flag indicates that we have to do the work.
             self.location_of_field = 0
@@ -1696,11 +1740,26 @@ class CobolVariable():
                 # there because we got information from the compiler.
                 if self.Bname:
                     # print("FetchVariableData Fname", self.Bname)
-                    self.location_of_data = GetAddressOf(self.Bname)
-                    if self.location_of_data is None:
-                        self.not_in_context = True
-                        return
+                    if self.Section == 'X':
+                        # Special case of EXTERNAL.  These are declared in the generated C
+                        # not as "static unsigned char b_13[24]", but as a "static int *b_13" pointer
+                        #
+                        # Thus, we need the contents of self.Bname
+                        print("  External",self.Bname)
+                        print("  self.Bname",self.Bname)
+                        address_of_pointer = GetAddressOf(self.Bname)
+                        print("  address_of_pointer",hex(address_of_pointer))
+                        self.location_of_data = GetDataAt(address_of_pointer, GV_GlobalVariables.SizeofPointer)
+                        print("  self.location_of_data",hex(self.location_of_data))
+                    else:
+                        # self.Bname is the name of something like "static unsigned char b_13[24]"
+                        # So, we need to pick up the address of self.Bname
+                        self.location_of_data = GetAddressOf(self.Bname)
+                        if self.location_of_data is None:
+                            self.not_in_context = True
+                            return
                     self.location_of_data += self.Offset
+                    #print("  self.location_of_data + offset",hex(self.location_of_data),self.Offset)
                 else:
                     # print("There is no self.Bname")
                     pass
@@ -1718,11 +1777,11 @@ class CobolVariable():
             if self.location_of_attribute != 0:
                 #   typedef struct __cob_field_attr
                 #       {
-                #       unsigned short      type;       /* Field type */
-                #       unsigned short      digits;     /* Digit count */
-                #       signed short        scale;      /* Field scale */
-                #       unsigned short      flags;      /* Field flags */
-                #       const cob_pic_symbol    *pic;       /* Pointer to picture string */
+                #       unsigned short       type;       /* Field type */
+                #       unsigned short       digits;     /* Digit count */
+                #       signed short         scale;      /* Field scale */
+                #       unsigned short       flags;      /* Field flags */
+                #       const cob_pic_symbol *pic;       /* Pointer to picture string */
                 #       } cob_field_attr;
                 self.AttrType   = GetDataAt(self.location_of_attribute + 0, 2)
                 self.AttrDigits = GetDataAt(self.location_of_attribute + 2, 2)
@@ -1730,7 +1789,7 @@ class CobolVariable():
                 self.AttrFlags  = GetDataAt(self.location_of_attribute + 6, 2)
                 self.location_of_pic = GetDataAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
 
-            if self.Section in('F', 'W', 'I'):
+            if self.Section in('F', 'X', 'W', 'I'):
                 pass
             elif self.Section == 'L':
                 try:
@@ -1796,19 +1855,20 @@ class CobolVariable():
                 self.data = GetBytesAt(self.location_of_data + self.TableOffset, self.Length)
                 self.display_body_hex = self.GetDataAsHex()
                 self.display_body = self.GetDataAsString()
-                #self.display_body = WithRepeatCount(self.display_body)
                 self.IsDirty = False
         return
 
     def NameToString(self):
         storage_type = ""
-        if self.Section == "F":
+        if self.Section == 'F':
             storage_type = "I/O"
-        elif self.Section == "W":
+        elif self.Section == 'X':
+            storage_type = "EXT"
+        elif self.Section == 'W':
             storage_type = "W-S"
-        elif self.Section == "L":
+        elif self.Section == 'L':
             storage_type = "L-S"
-        elif self.Section == "I":
+        elif self.Section == 'I':
             storage_type = "LNK"
 
         name = self.Name
@@ -3034,10 +3094,10 @@ class CWatchWorker():
     @staticmethod
     def set_watchpoint(payload, wp_type):
         if payload.Refmod:
-            wp_startloc = payload.location_of_data + payload.RefmodOffset
+            wp_startloc = payload.location_of_data + payload.TableOffset + payload.RefmodOffset
             wp_length = payload.RefmodLength
         else:
-            wp_startloc = payload.location_of_data
+            wp_startloc = payload.location_of_data + payload.TableOffset
             wp_length = payload.Length
 
         spec = "*(char(*)"
@@ -3086,13 +3146,17 @@ class CWatchWorker():
         if not left_side:
             return
 
-        possibilities, limit_reached = get_sorted_possibilities(args, 1)
+        if right_side:
+            print('No rightside arguments implemented')
+            return
+
+        possibilities, limit_reached = get_sorted_possibilities(left_side, 1)
         if not possibilities and not limit_reached:
-            print('No symbol matching "{0}" in current context'.format(''.join(args)))
+            print('No symbol matching "{0}" in current context'.format(''.join(left_side)))
             return
 
         if limit_reached:
-            print('More than one symbol matching "{0}" in current context.'.format(''.join(args)))
+            print('More than one symbol matching "{0}" in current context.'.format(''.join(left_side)))
             return
 
         # Pick up the payload from the list
@@ -3232,6 +3296,7 @@ class CBreakWorker():
             if not location_of_field:
                 return
 
+            bp_startloc += payload.TableOffset
             if break_point is None:
                 if line_nr == "-1":
                     break_point = self.set_breakpoint("")
@@ -3249,15 +3314,16 @@ class CBreakWorker():
 
     def set_numeric_breakpoint(self, line_nr, condition, payload, diff_num, break_point):
         if condition in ("==", "<", "<=", ">", ">=", "<>", "!="):
+            location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
+            if not location_of_field:
+                return
+
+            bp_startloc += payload.TableOffset
             if break_point is None:
                 if line_nr == "-1":
                     break_point = self.set_breakpoint("")
                 else:
                     break_point = self.set_breakpoint(line_nr)
-
-            location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
-            if not location_of_field:
-                return
 
             self.set_condition(break_point, "(double)atof((char *)cob_get_field_str_buffered({0})) {1} {2}".format(hex(location_of_field), condition, diff_num))
         else:
@@ -3310,7 +3376,7 @@ class CBreakWorker():
             location_of_field = int(gdb.execute(command, False, True).split()[2], 16)
 
             command = "set var *(cob_field *){0}".format(location_of_field) + " = {"
-            command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + bp_startloc), payload.Aname)
+            command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + payload.TableOffset + bp_startloc), payload.Aname)
             command += "}"
             gdb.execute(command, False, True)
         except gdb.error:
@@ -3334,7 +3400,7 @@ class CBreakWorker():
             location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_f, payload_s.Length, 0)
         else:
             cmp_len = payload_f.Length
-            location_of_field = payload_f.get_verified_field_location(DONT_ALLOCATE)
+            location_of_field = payload_f.get_verified_field_location(DONT_ALLOCATE) + payload_f.TableOffset
 
         if not location_of_field:
             return
@@ -3342,7 +3408,7 @@ class CBreakWorker():
         if payload_s.Refmod:
             other_field, cmp_len = self.get_cob_cmp_refloc(payload_s, cmp_len, 1)
         else:
-            other_field = payload_s.get_verified_field_location(DONT_ALLOCATE)
+            other_field = payload_s.get_verified_field_location(DONT_ALLOCATE) + payload_s.TableOffset
 
         if not other_field:
             return
@@ -3466,7 +3532,10 @@ class CBreakWorker():
         if break_point is None:
             return
 
-        if len(left_side) >= 2 and len(left_side) <= 4:
+        if len(left_side) == 1:
+            print("Removing condition from breakpoint {0}".format(left_side[0]))
+            self.set_condition(break_point, None)
+        elif len(left_side) >= 2 and len(left_side) <= 4:
             self.set_cond_break(left_side, right_side, condition, break_point, is_lit)
         else:
             print('Breakpoint parameters not recognized')
