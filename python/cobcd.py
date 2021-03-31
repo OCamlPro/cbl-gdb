@@ -3486,7 +3486,10 @@ class CBreakWorker():
         if break_point is None:
             return
 
-        if len(left_side) >= 2 and len(left_side) <= 4:
+        if len(left_side) == 1:
+            print("Removing condition from breakpoint {0}".format(left_side[0]))
+            self.set_condition(break_point, None)
+        elif len(left_side) >= 2 and len(left_side) <= 4:
             self.set_cond_break(left_side, right_side, condition, break_point, is_lit)
         else:
             print('Breakpoint parameters not recognized')
