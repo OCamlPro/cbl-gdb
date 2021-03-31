@@ -3068,6 +3068,10 @@ class CWatchWorker():
             print("Internal error: Watchpoint type not recognized")
 
     def process_watch_arguments(self, arguments):
+        left_side = []
+        right_side = []
+        condition = ""
+
         wp_type = 'WPW'
 
         args = arguments.split()
@@ -3088,12 +3092,12 @@ class CWatchWorker():
             print("Option not recognized\n")
             return
 
-        if len(args) > 2:
+        if len(args) > 3:
             print("Too many arguments")
             return
 
-        if len(args) == 2 and args[1].find(':') == -1:
-            print("Refmod argument not recognized")
+        left_side, right_side, condition = get_left_right_args(''.join(args))
+        if not left_side:
             return
 
         possibilities, limit_reached = get_sorted_possibilities(args, 1)
@@ -3219,7 +3223,7 @@ class CBreakWorker():
         return payload
 
     def set_string_breakpoint(self, line_nr, condition, payload, diff_str, break_point):
-        if condition in ("=", "=i", "==", "==i", "<>", "<>i", "=~"):
+        if condition in ("=", "=i", "!=", "!=i", "==", "==i", "<>", "<>i", "=~"):
             if condition[-1:] == "i":
                 cmp_func = "strncasecmp"
             else:
@@ -3250,7 +3254,7 @@ class CBreakWorker():
 
             if condition in ("=", "=i", "==", "==i"):
                 self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2}), \"{3}\", {4}) == 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
-            elif condition in ("<>", "<>i"):
+            elif condition in ("<>", "<>i", "!=", "!=i"):
                 self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2}), \"{3}\", {4}) != 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
             else:
                 self.set_condition(break_point, "$_regex(((char *)cob_get_field_str_buffered({0} + {1}), \"{2}\")".format(hex(location_of_field), bp_startloc, diff_str))
@@ -3258,7 +3262,7 @@ class CBreakWorker():
             print("Condition not implemented")
 
     def set_numeric_breakpoint(self, line_nr, condition, payload, diff_num, break_point):
-        if condition in ("==", "<", "<=", ">", ">=", "<>"):
+        if condition in ("==", "<", "<=", ">", ">=", "<>", "!="):
             if break_point is None:
                 if line_nr == "-1":
                     break_point = self.set_breakpoint("")
@@ -3332,7 +3336,7 @@ class CBreakWorker():
     def set_cob_cmp_breakpoint(self, line_nr, condition, payload_f, payload_s, break_point):
         if condition in ("=", "=="):
             condition_str = "=="
-        elif condition == "<>":
+        elif condition in ("<>", "!="):
             condition_str = "!="
         elif condition in (">=", "<=", ">", "<"):
             condition_str = condition
@@ -3455,7 +3459,11 @@ class CBreakWorker():
         return return_breakpoint
 
     def process_condition_arguments(self, arguments):
+        left_side = []
+        right_side = []
+        condition = ""
         is_lit = 0
+
         if arguments[-1] in ('"', '\''):
             is_lit = 1
 
