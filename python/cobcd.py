@@ -3250,6 +3250,7 @@ class CBreakWorker():
             if not location_of_field:
                 return
 
+            location_of_field += payload.TableOffset
             if break_point is None:
                 if line_nr == "-1":
                     break_point = self.set_breakpoint("")
@@ -3267,15 +3268,16 @@ class CBreakWorker():
 
     def set_numeric_breakpoint(self, line_nr, condition, payload, diff_num, break_point):
         if condition in ("==", "<", "<=", ">", ">=", "<>", "!="):
+            location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
+            if not location_of_field:
+                return
+
+            location_of_field += payload.TableOffset
             if break_point is None:
                 if line_nr == "-1":
                     break_point = self.set_breakpoint("")
                 else:
                     break_point = self.set_breakpoint(line_nr)
-
-            location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
-            if not location_of_field:
-                return
 
             self.set_condition(break_point, "(double)atof((char *)cob_get_field_str_buffered({0})) {1} {2}".format(hex(location_of_field), condition, diff_num))
         else:
@@ -3328,7 +3330,7 @@ class CBreakWorker():
             location_of_field = int(gdb.execute(command, False, True).split()[2], 16)
 
             command = "set var *(cob_field *){0}".format(location_of_field) + " = {"
-            command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + bp_startloc), payload.Aname)
+            command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + payload.TableOffset + bp_startloc), payload.Aname)
             command += "}"
             gdb.execute(command, False, True)
         except gdb.error:
@@ -3352,7 +3354,7 @@ class CBreakWorker():
             location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_f, payload_s.Length, 0)
         else:
             cmp_len = payload_f.Length
-            location_of_field = payload_f.get_verified_field_location(DONT_ALLOCATE)
+            location_of_field = payload_f.get_verified_field_location(DONT_ALLOCATE) + payload_f.TableOffset
 
         if not location_of_field:
             return
@@ -3360,7 +3362,7 @@ class CBreakWorker():
         if payload_s.Refmod:
             other_field, cmp_len = self.get_cob_cmp_refloc(payload_s, cmp_len, 1)
         else:
-            other_field = payload_s.get_verified_field_location(DONT_ALLOCATE)
+            other_field = payload_s.get_verified_field_location(DONT_ALLOCATE) + payload_s.TableOffset
 
         if not other_field:
             return
