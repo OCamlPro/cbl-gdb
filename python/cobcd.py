@@ -819,7 +819,7 @@ class VarTrie():
                     print("self.StackOfNames is empty, and it shouldn't be")
                     sys.exit(1)
 
-                if tokens[self.IndexType] in ('F', 'W', 'L', 'I'):
+                if tokens[self.IndexType] in ('F', 'X', 'W', 'L', 'I'):
                     # We are working with a variable.  We need to erode the
                     # stack of names down to the variable who is our parent:
                     if tokens[self.IndexLevel] == "":
@@ -1300,40 +1300,41 @@ class CobolVariable():
 
     def DumpJustAboutEverything(self):
         location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
-        print(    "GetData AsString           Name:", self.Name)
+        print(    "           Name:", self.Name)
         if self.OccursMax:
-            print(    "GetData AsString OCCURS min/max: {0}/{1}".format(self.OccursMin,self.OccursMax))
+            print(    " OCCURS min/max: {0}/{1}".format(self.OccursMin,self.OccursMax))
         if self.Subscripts:
-            print("GetData AsString     Subscripts:", self.Subscripts)
-            print("GetData AsString     (resolved):", "(" + ",".join(self.ResolvedSubscripts) + ")")
+            print("     Subscripts:", self.Subscripts)
+            print("     (resolved):", "(" + ",".join(self.ResolvedSubscripts) + ")")
         if self.Refmod:
-            print("GetData AsString         refmod:", self.Refmod)
-        print(    "GetData AsString        Section:", self.Section)
-        print(    "GetData AsString          Fname:", self.Fname or "f0")
-        print(    "GetData AsString          Bname:", self.Bname)
-        print(    "GetData AsString          Aname:", self.Aname)
-        print(    "GetData AsString         Offset:", self.Offset)
+            print("         refmod:", self.Refmod)
+        print(    "        Section:", self.Section)
+        print(    "          Fname:", self.Fname or "f0")
+        print(    "          Bname:", self.Bname)
+        print(    "          Aname:", self.Aname)
+        print(    "         Offset:", self.Offset)
         if self.TableOffset:
-            print("GetData AsString    TableOffset:", self.TableOffset)
+            print("    TableOffset:", self.TableOffset)
         if self.Refmod:
-            print("GetData AsString   RefmodOffset:", self.RefmodOffset)
-            print("GetData AsString   RefmodLength:", self.RefmodLength)
-        print(    "GetData AsString         Length:", self.Length)
-        print(    "GetData AsString len(self.data):", len(self.data))
-        print(    "GetData AsString       AttrType:", hex(self.AttrType))
-        print(    "GetData AsString     AttrDigits:", self.AttrDigits)
-        print(    "GetData AsString      AttrScale:", self.AttrScale)
-        print(    "GetData AsString      AttrFlags:", hex(self.AttrFlags))
-        print(    "GetData AsString   loc_of_field:", hex(location_of_field))
-        print(    "GetData AsString    loc_of_data:", hex(self.location_of_data))
-        print(    "GetData AsString    loc_of_attr:", hex(self.location_of_attribute))
-        print(    "GetData AsString     loc_of_pic:", hex(self.location_of_pic))
+            print("   RefmodOffset:", self.RefmodOffset)
+            print("   RefmodLength:", self.RefmodLength)
+        print(    "         Length:", self.Length)
+        print(    " len(self.data):", len(self.data))
+        print(    "       AttrType:", hex(self.AttrType))
+        print(    "     AttrDigits:", self.AttrDigits)
+        print(    "      AttrScale:", self.AttrScale)
+        print(    "      AttrFlags:", hex(self.AttrFlags))
+        print(    "   loc_of_field:", hex(location_of_field))
+        print(    "    loc_of_data:", hex(self.location_of_data))
+        print(    "    loc_of_attr:", hex(self.location_of_attribute))
+        print(    "     loc_of_pic:", hex(self.location_of_pic))
 
     def GetDataAsString(self):
         retval = ""
-        location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
-        if not location_of_field:
-            return retval
+        GV_GlobalVariables.AllocateBuffers();
+        #location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
+        #if not location_of_field:
+        #    return retval
 
         if False:  # For development
             self.DumpJustAboutEverything()
@@ -1353,12 +1354,8 @@ class CobolVariable():
             is_alphanumeric = True
 
         try:
-            # We sometimes need to accommodate the self.TableOffset variable,
-            # which means, basically, we always need to.  I thought about
-            # modifying location_of_field->data before and after the call,
-            # but I decided making a copy of the field made more sense.
-
-            # We will make our own cob_field in cprint_f0
+            # We will make our own cob_field in cprint_f0, with location of
+            # data modified by .TableOffset
             field_loc = GV_GlobalVariables.cprint_f0
             command = "set var *(cob_field *){0}".format(hex(field_loc)) + " = {"
             command += "{0}, (char *){1}, &{2}".format(self.Length,
@@ -1368,6 +1365,15 @@ class CobolVariable():
             gdb.execute(command, False, True)
 
             buffer = GV_GlobalVariables.cprint_buffer
+
+            # If the data to be displayed aren't valid, the cob routine
+            # will sometimes return without have changed the buffer at all.
+            # To prevent stale data from the prior call polluting the results,
+            # stick in a NULL:
+
+            command = "set *(char *){0}=0".format(hex(buffer))
+            gdb.execute(command, False, True)
+
             command = "call (const char *)" \
                       "cob_get_field_str((cob_field *){0}, " \
                       "(char *){1}, {2})".format(hex(field_loc),
@@ -1636,7 +1642,7 @@ class CobolVariable():
 
     def FetchVariableData(self, show_failure):
         # print("FetchVariableData:", self.Name, self.Section)
-        # print("FetchVariableData",self.Name,self.IsDirty)
+        # print("\nFetchVariableData",self.Name,self.IsDirty, self.Offset, self.Length)
         if self.IsDirty:
             # We do this work only if the IsDirty flag indicates that we have to do the work.
             self.location_of_field = 0
@@ -1696,11 +1702,26 @@ class CobolVariable():
                 # there because we got information from the compiler.
                 if self.Bname:
                     # print("FetchVariableData Fname", self.Bname)
-                    self.location_of_data = GetAddressOf(self.Bname)
-                    if self.location_of_data is None:
-                        self.not_in_context = True
-                        return
+                    if self.Section == 'X':
+                        # Special case of EXTERNAL.  These are declared in the generated C
+                        # not as "static unsigned char b_13[24]", but as a "static int *b_13" pointer
+                        #
+                        # Thus, we need the contents of self.Bname
+                        print("  External",self.Bname)
+                        print("  self.Bname",self.Bname)
+                        address_of_pointer = GetAddressOf(self.Bname)
+                        print("  address_of_pointer",hex(address_of_pointer))
+                        self.location_of_data = GetDataAt(address_of_pointer, GV_GlobalVariables.SizeofPointer)
+                        print("  self.location_of_data",hex(self.location_of_data))
+                    else:
+                        # self.Bname is the name of something like "static unsigned char b_13[24]"
+                        # So, we need to pick up the address of self.Bname
+                        self.location_of_data = GetAddressOf(self.Bname)
+                        if self.location_of_data is None:
+                            self.not_in_context = True
+                            return
                     self.location_of_data += self.Offset
+                    #print("  self.location_of_data + offset",hex(self.location_of_data),self.Offset)
                 else:
                     # print("There is no self.Bname")
                     pass
@@ -1718,11 +1739,11 @@ class CobolVariable():
             if self.location_of_attribute != 0:
                 #   typedef struct __cob_field_attr
                 #       {
-                #       unsigned short      type;       /* Field type */
-                #       unsigned short      digits;     /* Digit count */
-                #       signed short        scale;      /* Field scale */
-                #       unsigned short      flags;      /* Field flags */
-                #       const cob_pic_symbol    *pic;       /* Pointer to picture string */
+                #       unsigned short       type;       /* Field type */
+                #       unsigned short       digits;     /* Digit count */
+                #       signed short         scale;      /* Field scale */
+                #       unsigned short       flags;      /* Field flags */
+                #       const cob_pic_symbol *pic;       /* Pointer to picture string */
                 #       } cob_field_attr;
                 self.AttrType   = GetDataAt(self.location_of_attribute + 0, 2)
                 self.AttrDigits = GetDataAt(self.location_of_attribute + 2, 2)
@@ -1730,7 +1751,7 @@ class CobolVariable():
                 self.AttrFlags  = GetDataAt(self.location_of_attribute + 6, 2)
                 self.location_of_pic = GetDataAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
 
-            if self.Section in('F', 'W', 'I'):
+            if self.Section in('F', 'X', 'W', 'I'):
                 pass
             elif self.Section == 'L':
                 try:
@@ -1796,19 +1817,20 @@ class CobolVariable():
                 self.data = GetBytesAt(self.location_of_data + self.TableOffset, self.Length)
                 self.display_body_hex = self.GetDataAsHex()
                 self.display_body = self.GetDataAsString()
-                #self.display_body = WithRepeatCount(self.display_body)
                 self.IsDirty = False
         return
 
     def NameToString(self):
         storage_type = ""
-        if self.Section == "F":
+        if self.Section == 'F':
             storage_type = "I/O"
-        elif self.Section == "W":
+        elif self.Section == 'X':
+            storage_type = "EXT"
+        elif self.Section == 'W':
             storage_type = "W-S"
-        elif self.Section == "L":
+        elif self.Section == 'L':
             storage_type = "L-S"
-        elif self.Section == "I":
+        elif self.Section == 'I':
             storage_type = "LNK"
 
         name = self.Name
