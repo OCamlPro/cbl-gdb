@@ -164,19 +164,6 @@ def GdbExecute(curframe, command):
                 print("####       retval:", line)
     return retval
 
-def GdbExecute2(curframe, command, debug_level):
-    # It is up to the caller to handle exceptions
-    limiting_debug_level = 1
-    if debug_level >= limiting_debug_level:
-        print("#### ", getframeinfo(curframe).lineno, ": gdb.execute: '", command, "'", sep='')
-    retval = gdb.execute(command, False, True)
-    if debug_level >= limiting_debug_level:
-        lines = retval.split('\n')
-        for line in lines:
-            if len(line) > 0:
-                print("####       retval:", line)
-    return retval
-
 class GlobalVariables():
     def __init__(self):
         # Establish the debugging verbosity level:
@@ -636,72 +623,45 @@ def AddEmUp(expression):
                 pass
     return retval
 
-def get_refmod(arg):
-    start_index = 0
-    end_index = 0
-    ready = 0
-    refmod_spec = ""
-    clean_arg = ""
 
-    if arg.find(':') != -1:
-        while ready == 0:
-            start_index = arg.find('(', start_index)
-            end_index = arg.find(')', end_index)
-            if start_index == -1 and end_index == -1:
-                clean_arg = arg
-                break
-            elif start_index > -1 and end_index == -1:
-                ref = arg[start_index + 1:len(arg)]
-            else:
-                ref = arg[start_index + 1:end_index]
+def get_left_right_args(args):
+    left_side = []
+    right_side = []
+    condition = ""
 
-            if ref.find(':') != -1 and ref.find('(') != -1:
-                clean_arg = arg[:start_index]
-                ready = 1
-            elif ref.find(':') != -1 and ref.find('(') == -1:
-                refmod_spec = ref
-                clean_arg = arg[:start_index]
-                ready = 1
-            else:
-                start_index += 1
-                end_index += 1
-    else:
-        clean_arg = arg
+    # This can be an assignment, so check for it.
+    leftright = re.split('(![=]*|=[=~<>]*[i]*|~|<[=>]*[i]*|>[=]*)', args)
 
-    return clean_arg, refmod_spec
+    # Pick up the left and right sides, and turn them into
+    # "normalized" COBOL variable names.
+    if len(leftright) > 0:
+        left_side = TokenizeCanonicalName(leftright[0])
 
-def get_lenspec_refmod(refmod, payload, lenspec_type):
-    valid = 1
+    if len(leftright) > 2 and leftright[2] != '':
+        # There is a rightside.
+        right_side = leftright[2].strip()
+        if right_side[0] in ('"', "'"):  # I do love that construction
+            if len(right_side) < 2 or right_side[-1] != right_side[0]:
+                print("A syntax error in >>{0}<<.".format(right_side))
+                return
+            right_side = [right_side]
+        elif right_side[0:2].lower().replace('"', "'") == "x'":
+            right_side = FromHexAlphaString(right_side)
+            right_side = [right_side]
+        elif right_side[0:2].lower().replace('"', "'") == "h'":
+            right_side = FromHexLiteralNumber(right_side)
+            right_side = [right_side]
+        else:
+            # This is not a quoted string, so canonicalize it.
+            right_side = TokenizeCanonicalName(leftright[2])
 
-    if lenspec_type == "p":
-        startloc = payload.location_of_data
-        length = payload.Length
-    elif lenspec_type == "n":
-        startloc = 1
-        length = payload.Length
-    else:
-        print("Not a valid lenspec type")
-        return 0, 0, 0
+        condition = leftright[1]
+    elif len(leftright) > 2 and leftright[2] == '':
+        print("No rightside specified.")
+        return [], [], ""
 
-    lenspec = refmod.split(':')
-    if len(lenspec) != 2:
-        print("Offset and length specification not recognized")
-        return 0, 0, 0
-    else:
-        if lenspec[0] != '' and int(lenspec[0]) <= length:
-            startloc += int(lenspec[0]) - 1
-            length -= int(lenspec[0]) - 1
-        elif lenspec[0] != '' and int(lenspec[0]) > length:
-            print("Startposition > variable length: {0}".format(length))
-            return 0, startloc, length
+    return left_side, right_side, condition
 
-        if lenspec[1] != '' and int(lenspec[1]) <= length:
-            length = int(lenspec[1])
-        elif lenspec[1] != '' and int(lenspec[1]) > length:
-            print("Length specifier to large, max: {0}".format(length))
-            return 0, 0, 0
-
-    return valid, startloc, length
 
 def TokenizeCanonicalName(desired):
     # We expect a string, and we return a list of strings:
@@ -760,15 +720,14 @@ def atoi(s):
     return retval * sign
 
 def IsInteger(s):
-    # This routine is designed to provide an indication of whether the
-    # input string is nothing but digits, and return either None or the
-    # relevant number.  It's intended for use where the input might be
-    # an integer literal, or might be a cobol variable.
+    # This routine is designed to return True when the input string is
+    # nothing but digits with an optional leading minus sign.  It is intended
+    # for use when an input might be an integer literal, or might be a cobol variable.
 
-    # I don't want to use the Python isdigit(), which goes False on
+    # I can't use the Python isdigit(), which goes False on
     # negative numbers.
 
-    # And I have to be careful with my atoi routine, because it will
+    # It will be used before calling atoi() routine, because atoi will
     # return 10 for "10-DOWNING-STREET", which is a perfectly valid
     # COBOL identifier.
 
@@ -2999,37 +2958,9 @@ class CPrintWorker():
         left_side = ""
         right_side = ""
 
-        # This can be an assignment, so check for it.
-        leftright = args.split('=', 1)
-
-        # Pick up the left and right sides, and turn them into
-        # "normalized" COBOL variable names.
-
-        if len(leftright) > 0:
-            left_side = TokenizeCanonicalName(leftright[0])
-
-        if len(leftright) > 1:
-            # There is a rightside.
-            right_side = leftright[1].strip()
-            if not right_side:
-                # ... but it is empty
-                print("A syntax error in \"{0}\"".format(args))
-                return
-
-            if right_side[0] in ('"',"'"): #I do love that construction
-                if len(right_side) < 2 or right_side[-1] != right_side[0]:
-                    print("A syntax error in >>{0}<<.".format(right_side))
-                    return
-                right_side = [right_side]
-            elif right_side[0:2].lower().replace('"',"'") == "x'":
-                    right_side = FromHexAlphaString(right_side)
-                    right_side = [right_side]
-            elif right_side[0:2].lower().replace('"',"'") == "h'":
-                    right_side = FromHexLiteralNumber(right_side)
-                    right_side = [right_side]
-            else:
-                # This is not a quoted string, so canonicalize it.
-                right_side = TokenizeCanonicalName(leftright[1])
+        left_side, right_side, condition = get_left_right_args(args)
+        if not left_side:
+            return
 
         # From this point on, the left_side, and right_side (if there
         # is one), are handled as lists of strings
@@ -3041,7 +2972,7 @@ class CPrintWorker():
         # but also carrying along the Subscripts and the TableOffset created by those subscripts.
         #
         # The rare case is when the operator specifies an assignment: "cp table(2) = table(4)", because
-        # The second evaluation stomps on the first one. So, we are going to save copies both of them
+        # The second evaluation stomps on the first one. So, we are going to save copies of both of them
         # one at a time, here, so we can use them later, if needed, in PutDataAsVar()
 
         GV_GlobalVariables.VarLeft = None
@@ -3123,6 +3054,10 @@ class CWatchWorker():
             print("Internal error: Watchpoint type not recognized")
 
     def process_watch_arguments(self, arguments):
+        left_side = []
+        right_side = []
+        condition = ""
+
         wp_type = 'WPW'
 
         args = arguments.split()
@@ -3143,12 +3078,12 @@ class CWatchWorker():
             print("Option not recognized\n")
             return
 
-        if len(args) > 2:
+        if len(args) > 3:
             print("Too many arguments")
             return
 
-        if len(args) == 2 and args[1].find(':') == -1:
-            print("Refmod argument not recognized")
+        left_side, right_side, condition = get_left_right_args(''.join(args))
+        if not left_side:
             return
 
         possibilities, limit_reached = get_sorted_possibilities(args, 1)
@@ -3247,50 +3182,51 @@ class CBreakWorker():
         return return_value
 
     @staticmethod
-    def get_var_payload(search_var):
+    def get_var_payload(search_args):
         payload = None
         possibilities = []
 
         GV_ModuleState.EstablishModuleState(True)
         # HACK to let cbreak work until it is refactored
-        search_args = []
-        search_args.append(search_var)
         possibilities, limit_reached = get_sorted_possibilities(search_args, 1)
 
-        if not possibilities:
-            print('No symbol matching "{0}" in current context'.format(search_var))
-        elif len(possibilities) != 1:
-            print('More than one symbol matching "{0}" in current context.'.format(search_var))
-        else:
-            payload_number = possibilities[0]
+        if limit_reached:
+            print('More than one symbol matching "{0}" in current context.'.format(''.join(search_args)))
+            return payload
 
-            # Pick up the payload from the list
-            payload = GV_ModuleInformation.var_trie.storage_list[payload_number]
-            payload.FetchVariableData(False)
-            if search_var.upper() not in payload.Name.upper():
-                payload = None
+        if not possibilities and not limit_reached:
+            print('No symbol matching "{0}" in current context'.format(" ".join(search_args)))
+            return payload
+
+        payload_number = possibilities[0]
+
+        # Pick up the payload from the list
+        payload = GV_ModuleInformation.var_trie.storage_list[payload_number]
+        payload.FetchVariableData(False)
+        # if search_var.upper() not in payload.Name.upper():
+        #    payload = None
 
         return payload
 
-    def set_string_breakpoint(self, line_nr, condition, payload, refmod, diff_str, break_point):
-        if condition in ("=", "=i", "==", "==i", "<>", "<>i", "=~"):
+    def set_string_breakpoint(self, line_nr, condition, payload, diff_str, break_point):
+        if condition in ("=", "=i", "!=", "!=i", "==", "==i", "<>", "<>i", "=~"):
             if condition[-1:] == "i":
                 cmp_func = "strncasecmp"
             else:
                 cmp_func = "strncmp"
 
             cmp_len = len(diff_str)
-            bp_startloc = 1
-            if refmod:
-                valid, bp_startloc, bp_length = get_lenspec_refmod(refmod, payload, "n")
-                if valid == 0:
-                    return
-
+            if payload.Refmod:
+                bp_startloc = payload.RefmodOffset
+                bp_length = payload.RefmodLength
                 if bp_length > cmp_len:
                     print("Length specifier > compare string ({0} > {1})".format(str(bp_length), str(cmp_len)))
                     return
 
                 cmp_len = bp_length
+            else:
+                bp_startloc = 0
+                bp_length = payload.Length
 
             location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
             if not location_of_field:
@@ -3303,16 +3239,16 @@ class CBreakWorker():
                     break_point = self.set_breakpoint(line_nr)
 
             if condition in ("=", "=i", "==", "==i"):
-                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2} - 1), \"{3}\", {4}) == 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
-            elif condition in ("<>", "<>i"):
-                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2} - 1), \"{3}\", {4}) != 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
+                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2}), \"{3}\", {4}) == 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
+            elif condition in ("<>", "<>i", "!=", "!=i"):
+                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2}), \"{3}\", {4}) != 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
             else:
-                self.set_condition(break_point, "$_regex(((char *)cob_get_field_str_buffered({0} + {1} - 1), \"{2}\")".format(hex(location_of_field), bp_startloc, diff_str))
+                self.set_condition(break_point, "$_regex(((char *)cob_get_field_str_buffered({0} + {1}), \"{2}\")".format(hex(location_of_field), bp_startloc, diff_str))
         else:
             print("Condition not implemented")
 
     def set_numeric_breakpoint(self, line_nr, condition, payload, diff_num, break_point):
-        if condition in ("==", "<", "<=", ">", ">=", "<>"):
+        if condition in ("==", "<", "<=", ">", ">=", "<>", "!="):
             if break_point is None:
                 if line_nr == "-1":
                     break_point = self.set_breakpoint("")
@@ -3352,18 +3288,18 @@ class CBreakWorker():
         break_point = self.set_breakpoint(spec)
 
     @staticmethod
-    def get_cob_cmp_refloc(refmod, payload, cmp_len, second):
+    def get_cob_cmp_refloc(payload, cmp_len, second):
         bp_startloc = 1
         location_of_field = None
 
-        valid, bp_startloc, bp_length = get_lenspec_refmod(refmod, payload, "n")
-        if valid == 0:
-            return location_of_field, cmp_len
+        bp_startloc = payload.RefmodOffset
+        bp_length = payload.RefmodLength
 
         if bp_length > cmp_len:
             print("Length specifier > compare string ({0} > {1})".format(str(bp_length), str(cmp_len)))
             return location_of_field, cmp_len
-        elif bp_length < cmp_len and second == 1:
+
+        if bp_length < cmp_len and second == 1:
             print("Different length specifiers {0} <> {1}".format(bp_length, cmp_len))
             return location_of_field, cmp_len
 
@@ -3374,7 +3310,7 @@ class CBreakWorker():
             location_of_field = int(gdb.execute(command, False, True).split()[2], 16)
 
             command = "set var *(cob_field *){0}".format(location_of_field) + " = {"
-            command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + bp_startloc - 1), payload.Aname)
+            command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + bp_startloc), payload.Aname)
             command += "}"
             gdb.execute(command, False, True)
         except gdb.error:
@@ -3383,10 +3319,10 @@ class CBreakWorker():
 
         return location_of_field, cmp_len
 
-    def set_cob_cmp_breakpoint(self, line_nr, condition, payload_f, refmod_f, payload_s, refmod_s, break_point):
+    def set_cob_cmp_breakpoint(self, line_nr, condition, payload_f, payload_s, break_point):
         if condition in ("=", "=="):
             condition_str = "=="
-        elif condition == "<>":
+        elif condition in ("<>", "!="):
             condition_str = "!="
         elif condition in (">=", "<=", ">", "<"):
             condition_str = condition
@@ -3394,8 +3330,8 @@ class CBreakWorker():
             print("Condition not implemented")
             return
 
-        if refmod_f:
-            location_of_field, cmp_len = self.get_cob_cmp_refloc(refmod_f, payload_f, payload_s.Length, 0)
+        if payload_f.Refmod:
+            location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_f, payload_s.Length, 0)
         else:
             cmp_len = payload_f.Length
             location_of_field = payload_f.get_verified_field_location(DONT_ALLOCATE)
@@ -3403,8 +3339,8 @@ class CBreakWorker():
         if not location_of_field:
             return
 
-        if refmod_s:
-            other_field, cmp_len = self.get_cob_cmp_refloc(refmod_s, payload_s, cmp_len, 1)
+        if payload_s.Refmod:
+            other_field, cmp_len = self.get_cob_cmp_refloc(payload_s, cmp_len, 1)
         else:
             other_field = payload_s.get_verified_field_location(DONT_ALLOCATE)
 
@@ -3418,136 +3354,81 @@ class CBreakWorker():
                 break_point = self.set_breakpoint(line_nr)
         self.set_condition(break_point, "(int)cob_cmp({0}, {1}) {2} 0".format(hex(location_of_field), hex(other_field), condition_str))
 
-    @staticmethod
-    def get_var_data(args):
-        var_f = ""
-        refmod_f = ""
-        var_s = ""
-        refmod_s = ""
-        condition = ""
-
-        if len(args) == 4:
-            var_f, refmod_f = get_refmod(args[1])
-            condition = args[2]
-            var_s, refmod_s = get_refmod(args[3])
-        elif len(args) == 5:
-            #  0  1     2    3     4
-            # 52 var1 (1:2)  =    var2
-            # 52 var1   =   var2 (1:2)
-            if args[2].find('(') != -1:
-                var_f, refmod_f = get_refmod(args[2])
-                var_f = args[1]
-                condition = args[3]
-                var_s, refmod_s = get_refmod(args[4])
-            elif args[4].find('(') != -1:
-                var_f, refmod_f = get_refmod(args[1])
-                condition = args[2]
-                var_s, refmod_s = get_refmod(args[4])
-                var_s = args[3]
-            else:
-                print("Statement not recognized")
-                return var_f, refmod_f, var_s, refmod_s, condition
-        elif len(args) == 6:
-            var_f, refmod_f = get_refmod(args[2])
-            var_f = args[1]
-            var_s, refmod_s = get_refmod(args[5])
-            var_s = args[4]
-            condition = args[3]
-
-        return var_f, refmod_f, var_s, refmod_s, condition
-
-    @staticmethod
-    def split_arguments(arguments):
-        match_chars = ("=", "==", "=~", "~", "<", "<=", ">", ">=", "<>", "i")
-        arg_list = list(filter(lambda e: e not in ('', ' ', '"', '\''), re.split('([^a-zA-Z0-9_:-])', arguments)))
-
-        i = 0
-        combine = 0
-        while i < len(arg_list) - 1:
-            if arg_list[i] in match_chars and arg_list[i + 1] in match_chars:
-                arg_list[i] += arg_list.pop(i + 1)
-            elif arg_list[i] == "(":
-                arg_list[i] += arg_list.pop(i + 1)
-                combine = 1
-            elif arg_list[i + 1] == ")" or combine == 1:
-                if arg_list[i + 1] == ")":
-                    combine = 0
-                arg_list[i] += arg_list.pop(i + 1)
-            else:
-                i += 1
-
-        return arg_list
-
-    def set_cond_break(self, args, break_point, is_lit):
-        var_f = ""
-        refmod_f = ""
-        var_s = ""
-        refmod_s = ""
+    def set_cond_break(self, left_side, right_side, condition, break_point, is_lit):
         payload_s = None
+        line_nr = left_side[0]
+        del left_side[0]
 
-        var_f, refmod_f, var_s, refmod_s, condition = self.get_var_data(args)
-
-        payload_f = self.get_var_payload(var_f)
+        payload_f = self.get_var_payload(left_side)
         if payload_f is None:
             # note: error handling already in get_var_payload
             return
 
-        if is_lit == 0 and not var_s.isdigit():
-            payload_s = self.get_var_payload(var_s)
+        if is_lit == 0 and not right_side[0].isdigit():
+            payload_s = self.get_var_payload(right_side)
             if payload_s is None:
                 # note: error handling already in get_var_payload
                 return
 
         if payload_s is not None:
-            self.set_cob_cmp_breakpoint(args[0], condition, payload_f, refmod_f, payload_s, refmod_s, break_point)
+            self.set_cob_cmp_breakpoint(line_nr, condition, payload_f, payload_s, break_point)
         else:
             if payload_f.AttrType in (1, 33, 34, 35):
-                self.set_string_breakpoint(args[0], condition, payload_f, refmod_f, var_s, break_point)
-            elif payload_f.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27) and var_s.isdigit():
-                self.set_numeric_breakpoint(args[0], condition, payload_f, var_s, break_point)
+                self.set_string_breakpoint(line_nr, condition, payload_f, right_side[0][1:-1], break_point)
+            elif payload_f.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27) and right_side[0].isdigit():
+                self.set_numeric_breakpoint(line_nr, condition, payload_f, right_side[0], break_point)
             else:
                 print("Not yet implemented (Attribute type", payload_f.AttrType, ")")
                 return
 
     def process_break_arguments(self, arguments):
         is_lit = 0
+        left_side = []
+        right_side = []
+        condition = ""
+
         if arguments and arguments[-1] in ('"', '\''):
             is_lit = 1
 
         if arguments:
-            args = self.split_arguments(arguments)
+            left_side, right_side, condition = get_left_right_args(arguments)
+            if not left_side:
+                return
         else:
             break_point = self.set_breakpoint("")
             return
 
-        if len(args) == 1 and args[0].isdigit():
-            break_point = self.set_breakpoint(args[0])
-        elif len(args) == 1 and isinstance(args[0], self.strtype):
-            module_name = self.get_module_name(args[0])
-            if module_name is None:
-                print("Module not found")
-            else:
-                #break_point = self.set_breakpoint("{0}_:ENTRY_{0}".format(module_name))
-                break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{0}".format(module_name))
-        elif len(args) == 2 and args[0] == "section" and isinstance(args[1], self.strtype):
-            self.set_section_breakpoint(args)
-        elif len(args) >= 4 and len(args) <= 7:
-            if len(args) >= 4 and not args[0].isdigit():
-                args.insert(0, '-1')
-            elif len(args) == 4:
+        if not right_side:
+            if len(left_side) == 1 and left_side[0].isdigit():
+                break_point = self.set_breakpoint(left_side[0])
+            elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and left_side[0] != "section":
+                module_name = self.get_module_name(left_side[0])
+                if module_name is None:
+                    print("Module not found")
+                else:
+                    break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{0}".format(module_name))
+            elif len(left_side) == 2 and left_side[0] == "section" and isinstance(left_side[1], self.strtype):
+                self.set_section_breakpoint(left_side)
+        elif right_side and condition != "":
+            if len(left_side) < 2:
                 print('Breakpoint parameters not recognized')
                 return
 
-            if args[1] != "if":
+            if len(left_side) >= 2 and not left_side[0].isdigit():
+                print("No line specifier, using current location")
+                left_side.insert(0, '-1')
+
+            if left_side[1] != "if":
                 print('Second argument should be "if"')
                 return
 
-            del args[1]
+            del left_side[1]
 
-            self.set_cond_break(args, None, is_lit)
+            self.set_cond_break(left_side, right_side, condition, None, is_lit)
         else:
             print('Breakpoint parameters not recognized')
             return
+
 
     @staticmethod
     def find_breakpoint(bp_nr):
@@ -3564,21 +3445,29 @@ class CBreakWorker():
         return return_breakpoint
 
     def process_condition_arguments(self, arguments):
+        left_side = []
+        right_side = []
+        condition = ""
         is_lit = 0
+
         if arguments[-1] in ('"', '\''):
             is_lit = 1
 
-        args = self.split_arguments(arguments)
-        if not args[0].isdigit():
+        if arguments:
+            left_side, right_side, condition = get_left_right_args(arguments)
+            if not left_side:
+                return
+
+        if not left_side[0].isdigit():
             print('First argument is not a breakpoint number')
             return
 
-        break_point = self.find_breakpoint(args[0])
+        break_point = self.find_breakpoint(left_side[0])
         if break_point is None:
             return
 
-        if len(args) >= 3 and len(args) <= 5:
-            self.set_cond_break(args, break_point, is_lit)
+        if len(left_side) >= 2 and len(left_side) <= 4:
+            self.set_cond_break(left_side, right_side, condition, break_point, is_lit)
         else:
             print('Breakpoint parameters not recognized')
             return
