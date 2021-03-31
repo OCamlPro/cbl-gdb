@@ -87,6 +87,14 @@ COB_FIELDS::ScanDotHFile(ifstream &ifs, const string &source)
         if( nfound != string::npos ) {
             nfound += strlen(SZ_COB_FIELD_F);
 
+            // It's sometimes the case -- for example, in OCCURS INDEXED BY variables --
+            // that GnuCOBOL does a cast.  We need to get rid of it.
+            static char achCast[] = "(cob_u8_t *)&";
+            size_t nf2 = input.find(achCast);
+            if( nf2 != string::npos ) {
+                input = input.replace(nf2,strlen(achCast),"");
+             }
+
             // Pick up the c_symbol
             string f_name = "f_" ;
             while( nfound < input.length() ) {

@@ -730,7 +730,7 @@ VARIABLES::Insert(VARIABLE &v)
     // the cast avoids compiler warnings or errors when the statement is compiled.
     //
     // We, however, don't want the cast:
-    char achCast[] = "(cob_u8_t *)&";
+    static char achCast[] = "(cob_u8_t *)&";
     size_t nfound = v.b_name.find(achCast);
     if( nfound != string::npos )  {
         v.b_name = v.b_name.replace(nfound,strlen(achCast),"");
