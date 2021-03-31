@@ -3296,7 +3296,7 @@ class CBreakWorker():
             if not location_of_field:
                 return
 
-            location_of_field += payload.TableOffset
+            bp_startloc += payload.TableOffset
             if break_point is None:
                 if line_nr == "-1":
                     break_point = self.set_breakpoint("")
@@ -3318,7 +3318,7 @@ class CBreakWorker():
             if not location_of_field:
                 return
 
-            location_of_field += payload.TableOffset
+            bp_startloc += payload.TableOffset
             if break_point is None:
                 if line_nr == "-1":
                     break_point = self.set_breakpoint("")
