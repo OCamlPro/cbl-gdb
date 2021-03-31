@@ -797,6 +797,12 @@ class VarTrie():
 
         self.StackOfNames = []
         self.StackOfLevels = []
+        
+        # When processing a line like "05 T-ENTRIES OCCURS 90 INDEXED BY TAB-ADR-IND."
+        # it turns out that TAB-ADR-IND shows up the line *before* the 05 T-ENTRIES line
+        # in the generated C code.  In order to make the name heirachy work properly,
+        # I am stashing that line here until the OCCURS line (presumably the next line)
+        self.stashed_line = None
 
     def AddToTrie(self, trie, name_tokens, payload_index):
         our_node = trie
@@ -837,15 +843,28 @@ class VarTrie():
 
                 if tokens[self.IndexType] in ('F', 'X', 'W', 'L', 'I'):
                     # We are working with a variable.  We need to erode the
-                    # stack of names down to the variable who is our parent:
+                    # stack of names down to the variable who is our parent.
+                    
+                    # There is a caveat:  
+                    # In
+                    #      05 T-ENTRIES OCCURS 90 INDEXED BY TAB-ADR-IND.
+                    #
+                    # the TAB-ADR-IND variable comes through as Level 00.   That
+                    # needs special handling:
+
                     if tokens[self.IndexLevel] == "":
                         tokens[self.IndexLevel] = '0'
                     our_level = int(tokens[self.IndexLevel])
-                    if our_level in (0, 77, 78):    # Zero is an table index
+                    if our_level in (77, 78):    
                         our_level = 1
-                    while self.StackOfLevels[-1] >= our_level:
-                        self.StackOfNames.pop(-1)
-                        self.StackOfLevels.pop(-1)
+                    if our_level > 0: # When our_level is zero, it means we are a table index,
+                                      # so we don't touch the stacks.
+                                      # We want the element above us to be our parent.
+                        while self.StackOfLevels[-1] >= our_level or self.StackOfLevels[-1] == 0:
+                            # The guy above us is either our brother(==), or a nephew(>),
+                            # or he's our crazy INDEXED inlaw (zero) that nobody wants as a parent:
+                            self.StackOfNames.pop(-1)
+                            self.StackOfLevels.pop(-1)
 
                     # and now we put ourselves into the position of
                     # most favored child
@@ -1378,6 +1397,7 @@ class CobolVariable():
                                                        hex(self.location_of_data+self.TableOffset),
                                                        self.Aname)
             command += "}"
+            #print("command",command)
             gdb.execute(command, False, True)
 
             buffer = GV_GlobalVariables.cprint_buffer
@@ -1395,7 +1415,8 @@ class CobolVariable():
                       "(char *){1}, {2})".format(hex(field_loc),
                                                  hex(buffer),
                                                  PRINT_BUFFER_SIZE )
-
+            #print("self.Name",self.Name)
+            #print("command",command)
             gdb.execute(command, False, True)
         except gdb.error:
             traceback.print_exc()
@@ -1411,6 +1432,7 @@ class CobolVariable():
             char = GetDataAt(buf_ptr, 1)
             if char == 0:
                 break
+            #print("char",char)
             retval += chr(char)
             buf_ptr += 1
         if is_alphanumeric :
@@ -1746,14 +1768,17 @@ class CobolVariable():
                         #
                         # Thus, we need the contents of self.Bname
                         address_of_pointer = GetAddressOf(self.Bname)
+                        if not address_of_pointer:
+                            self.not_in_context = True
+                            return
                         self.location_of_data = GetDataAt(address_of_pointer, GV_GlobalVariables.SizeofPointer)
                     else:
                         # self.Bname is the name of something like "static unsigned char b_13[24]"
                         # So, we need to pick up the address of self.Bname
                         self.location_of_data = GetAddressOf(self.Bname)
-                        if self.location_of_data is None:
-                            self.not_in_context = True
-                            return
+                    if self.location_of_data is None:
+                        self.not_in_context = True
+                        return
                     self.location_of_data += self.Offset
                     #print("  self.location_of_data + offset",hex(self.location_of_data),self.Offset)
                 else:
