@@ -768,7 +768,7 @@ def IntegerOrVariable(s):
 
     possible_name = TokenizeCanonicalName(s)
     possibilities, limit_reached = get_sorted_possibilities(possible_name, 1)
-    if not possibilities or possibilities.len != 0:
+    if not possibilities:
         # Sadly, our caller has run out of luck.
         return None
 
