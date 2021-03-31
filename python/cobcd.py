@@ -164,6 +164,19 @@ def GdbExecute(curframe, command):
                 print("####       retval:", line)
     return retval
 
+def GdbExecute2(curframe, command, debug_level):
+    # It is up to the caller to handle exceptions
+    limiting_debug_level = 1
+    if debug_level >= limiting_debug_level:
+        print("#### ", getframeinfo(curframe).lineno, ": gdb.execute: '", command, "'", sep='')
+    retval = gdb.execute(command, False, True)
+    if debug_level >= limiting_debug_level:
+        lines = retval.split('\n')
+        for line in lines:
+            if len(line) > 0:
+                print("####       retval:", line)
+    return retval
+
 class GlobalVariables():
     def __init__(self):
         # Establish the debugging verbosity level:
@@ -720,14 +733,15 @@ def atoi(s):
     return retval * sign
 
 def IsInteger(s):
-    # This routine is designed to return True when the input string is
-    # nothing but digits with an optional leading minus sign.  It is intended
-    # for use when an input might be an integer literal, or might be a cobol variable.
+    # This routine is designed to provide an indication of whether the
+    # input string is nothing but digits, and return either None or the
+    # relevant number.  It's intended for use where the input might be
+    # an integer literal, or might be a cobol variable.
 
-    # I can't use the Python isdigit(), which goes False on
+    # I don't want to use the Python isdigit(), which goes False on
     # negative numbers.
 
-    # It will be used before calling atoi() routine, because atoi will
+    # And I have to be careful with my atoi routine, because it will
     # return 10 for "10-DOWNING-STREET", which is a perfectly valid
     # COBOL identifier.
 
@@ -3056,10 +3070,10 @@ class CWatchWorker():
     @staticmethod
     def set_watchpoint(payload, wp_type):
         if payload.Refmod:
-            wp_startloc = payload.location_of_data + payload.RefmodOffset
+            wp_startloc = payload.location_of_data + payload.TableOffset + payload.RefmodOffset
             wp_length = payload.RefmodLength
         else:
-            wp_startloc = payload.location_of_data
+            wp_startloc = payload.location_of_data + payload.TableOffset
             wp_length = payload.Length
 
         spec = "*(char(*)"
@@ -3108,13 +3122,17 @@ class CWatchWorker():
         if not left_side:
             return
 
-        possibilities, limit_reached = get_sorted_possibilities(args, 1)
+        if right_side:
+            print('No rightside arguments implemented')
+            return
+
+        possibilities, limit_reached = get_sorted_possibilities(left_side, 1)
         if not possibilities and not limit_reached:
-            print('No symbol matching "{0}" in current context'.format(''.join(args)))
+            print('No symbol matching "{0}" in current context'.format(''.join(left_side)))
             return
 
         if limit_reached:
-            print('More than one symbol matching "{0}" in current context.'.format(''.join(args)))
+            print('More than one symbol matching "{0}" in current context.'.format(''.join(left_side)))
             return
 
         # Pick up the payload from the list
@@ -3254,6 +3272,7 @@ class CBreakWorker():
             if not location_of_field:
                 return
 
+            location_of_field += payload.TableOffset
             if break_point is None:
                 if line_nr == "-1":
                     break_point = self.set_breakpoint("")
@@ -3271,15 +3290,16 @@ class CBreakWorker():
 
     def set_numeric_breakpoint(self, line_nr, condition, payload, diff_num, break_point):
         if condition in ("==", "<", "<=", ">", ">=", "<>", "!="):
+            location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
+            if not location_of_field:
+                return
+
+            location_of_field += payload.TableOffset
             if break_point is None:
                 if line_nr == "-1":
                     break_point = self.set_breakpoint("")
                 else:
                     break_point = self.set_breakpoint(line_nr)
-
-            location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
-            if not location_of_field:
-                return
 
             self.set_condition(break_point, "(double)atof((char *)cob_get_field_str_buffered({0})) {1} {2}".format(hex(location_of_field), condition, diff_num))
         else:
@@ -3332,7 +3352,7 @@ class CBreakWorker():
             location_of_field = int(gdb.execute(command, False, True).split()[2], 16)
 
             command = "set var *(cob_field *){0}".format(location_of_field) + " = {"
-            command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + bp_startloc), payload.Aname)
+            command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + payload.TableOffset + bp_startloc), payload.Aname)
             command += "}"
             gdb.execute(command, False, True)
         except gdb.error:
@@ -3356,7 +3376,7 @@ class CBreakWorker():
             location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_f, payload_s.Length, 0)
         else:
             cmp_len = payload_f.Length
-            location_of_field = payload_f.get_verified_field_location(DONT_ALLOCATE)
+            location_of_field = payload_f.get_verified_field_location(DONT_ALLOCATE) + payload_f.TableOffset
 
         if not location_of_field:
             return
@@ -3364,7 +3384,7 @@ class CBreakWorker():
         if payload_s.Refmod:
             other_field, cmp_len = self.get_cob_cmp_refloc(payload_s, cmp_len, 1)
         else:
-            other_field = payload_s.get_verified_field_location(DONT_ALLOCATE)
+            other_field = payload_s.get_verified_field_location(DONT_ALLOCATE) + payload_s.TableOffset
 
         if not other_field:
             return
@@ -3488,7 +3508,10 @@ class CBreakWorker():
         if break_point is None:
             return
 
-        if len(left_side) >= 2 and len(left_side) <= 4:
+        if len(left_side) == 1:
+            print("Removing condition from breakpoint {0}".format(left_side[0]))
+            self.set_condition(break_point, None)
+        elif len(left_side) >= 2 and len(left_side) <= 4:
             self.set_cond_break(left_side, right_side, condition, break_point, is_lit)
         else:
             print('Breakpoint parameters not recognized')
