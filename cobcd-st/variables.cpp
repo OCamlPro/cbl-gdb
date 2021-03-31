@@ -31,6 +31,7 @@
 #include <iostream>
 #include <iomanip>
 #include <map>
+#include <set>
 #include <sstream>
 #include <assert.h>
 #include "variables.h"
@@ -188,12 +189,13 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
     full_path += fname;
     full_path += ".c";
 
-
     FILE *f = fopen(full_path.c_str(),"r");
     if( !f ) {
         cout << "Couldn't open the input file " << full_path << endl;
         exit(1);
     }
+
+    set<string>externals;
 
     char ach[16384];
 
@@ -207,7 +209,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
         PR_SECOND_COMMENT,
     } perform_return = PR_LOOKING;
 
-    string current_record_type = "X" ;
+    string current_record_type = "-" ;
     int line_number = 1;
     while( fgets(ach,sizeof(ach),f) ) {
         extern bool GV_echo_line;
@@ -323,7 +325,7 @@ check_for_another_perform:
             // Discovered a problem, though.
             //
             //64        PERFORM until end-of-file
-            //65            PERFORM 02-process 
+            //65            PERFORM 02-process
             //66            PERFORM 01-read
             //67            END-PERFORM.
             //68        DISPLAY my-counters.
@@ -349,7 +351,7 @@ check_for_another_perform:
                     }
                     i += 1;
                     if( i < tokens.size() ) {
-                        if( tokens[i] EQ current_perform_file 
+                        if( tokens[i] EQ current_perform_file
                            AND (current_perform_line+1) EQ stoi(tokens[2]) ) {
                             variables.back().name = tokens[i] + ':' + tokens[2];
                         }
@@ -361,11 +363,12 @@ check_for_another_perform:
             break;
         }
 
-        static const char COB_DUMP_FILE[]   = "cob_dump_file";
-        static const char COB_DUMP_FIELD[]  = "cob_dump_field";
-        static const char COB_DUMP_OUTPUT[] = "cob_dump_output";
-        static const char COB_SET_DATA[] = "COB_SET_DATA";
-        static const char COB_SET_FLD[] = "COB_SET_FLD";
+        static const char COB_EXTERNAL_ADDR[]   = "cob_external_addr";
+        static const char COB_DUMP_FILE[]       = "cob_dump_file";
+        static const char COB_DUMP_FIELD[]      = "cob_dump_field";
+        static const char COB_DUMP_OUTPUT[]     = "cob_dump_output";
+        static const char COB_SET_DATA[]        = "COB_SET_DATA";
+        static const char COB_SET_FLD[]         = "COB_SET_FLD";
         char *p = ach;
 
         // Skip over leading spaces
@@ -383,6 +386,18 @@ check_for_another_perform:
         while( *p EQ ' ' OR *p EQ '\t' ) {
             p += 1;
         }
+
+        if( strstr(p,COB_EXTERNAL_ADDR) )
+            {
+            // We are looking for
+            //  b_13 = cob_external_addr ("Z_TABLE", 3160);
+            VSTRING t = Split(p, " \t");
+            if( t[1] EQ "=" AND t[2] EQ COB_EXTERNAL_ADDR )
+                {
+                // That's good enough for me
+                externals.insert(t[0]);
+                }
+            }
 
         if( strncmp(p, COB_DUMP_OUTPUT, strlen(COB_DUMP_OUTPUT)) EQ 0 ) {
             /* cob_dump_output("WORKING-STORAGE"); */
@@ -461,7 +476,6 @@ check_for_another_perform:
                         variable.occurs_max = stoi(t[2]);
                     }
                 }
-
 
                 // Hack away at cob_get_numdisp() entries:
                 cdf = HackAwayCobGetNumdisp(cdf);
@@ -561,6 +575,17 @@ check_for_another_perform:
         }
     }
 
+    // We have a set of externals.  Let's scan through the variables.  Any
+    // variable whose b_name is in externals[] gets reflagged as 'X'
+
+    for( V_VARIABLES::iterator it=variables.begin(); it!=variables.end(); it++ )
+        {
+        if( externals.find(it->b_name) != externals.end() )
+            {
+            it->record_type = "X"; // Reflag as EXTERNAL
+            }
+        }
+
     ::fclose(f);
 }
 
@@ -621,7 +646,6 @@ VARIABLES::FillInTheBlanks(COB_FIELDS &cob_fields)
             }
             it2--;
         }
-
     }
 }
 
@@ -693,8 +717,24 @@ VARIABLES::FormatVariablesInfo(stringstream &ss) const
 }
 
 void
-VARIABLES::Insert(const VARIABLE &v)
+VARIABLES::Insert(VARIABLE &v)
 {
+    // From the "Department of Dirty Tricks at GnuCOBOL, we need to be able to handle
+    // this weirdness:
+    //
+    //        /* cob_dump_field_ext ( 0, "TAB-ADR-IND", COB_SET_FLD(f0, 4, (cob_u8_t *)&b_25, &a_12), 0, 0); */
+    //
+    // That's a LEVEL 00 INDEXED variable.  I first encountered it in an OCCURS clause
+    // with an "INDEXED BY" subclause.  The pointer cast is because indexed variables, in
+    // this case b_25, are declared as "static int" rather than "static cob_u8_t[]", and
+    // the cast avoids compiler warnings or errors when the statement is compiled.
+    //
+    // We, however, don't want the cast:
+    char achCast[] = "(cob_u8_t *)&";
+    size_t nfound = v.b_name.find(achCast);
+    if( nfound != string::npos )  {
+        v.b_name = v.b_name.replace(nfound,strlen(achCast),"");
+        }
     variables.push_back(v);
 }
 
