@@ -1403,7 +1403,7 @@ class CobolVariable():
             buffer = GV_GlobalVariables.cprint_buffer
 
             # If the data to be displayed aren't valid, the cob routine
-            # will sometimes return without have changed the buffer at all.
+            # will sometimes return without having changed the buffer at all.
             # To prevent stale data from the prior call polluting the results,
             # stick in a NULL:
 
