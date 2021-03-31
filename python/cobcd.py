@@ -164,19 +164,6 @@ def GdbExecute(curframe, command):
                 print("####       retval:", line)
     return retval
 
-def GdbExecute2(curframe, command, debug_level):
-    # It is up to the caller to handle exceptions
-    limiting_debug_level = 1
-    if debug_level >= limiting_debug_level:
-        print("#### ", getframeinfo(curframe).lineno, ": gdb.execute: '", command, "'", sep='')
-    retval = gdb.execute(command, False, True)
-    if debug_level >= limiting_debug_level:
-        lines = retval.split('\n')
-        for line in lines:
-            if len(line) > 0:
-                print("####       retval:", line)
-    return retval
-
 class GlobalVariables():
     def __init__(self):
         # Establish the debugging verbosity level:
@@ -733,15 +720,14 @@ def atoi(s):
     return retval * sign
 
 def IsInteger(s):
-    # This routine is designed to provide an indication of whether the
-    # input string is nothing but digits, and return either None or the
-    # relevant number.  It's intended for use where the input might be
-    # an integer literal, or might be a cobol variable.
+    # This routine is designed to return True when the input string is
+    # nothing but digits with an optional leading minus sign.  It is intended
+    # for use when an input might be an integer literal, or might be a cobol variable.
 
-    # I don't want to use the Python isdigit(), which goes False on
+    # I can't use the Python isdigit(), which goes False on
     # negative numbers.
 
-    # And I have to be careful with my atoi routine, because it will
+    # It will be used before calling atoi() routine, because atoi will
     # return 10 for "10-DOWNING-STREET", which is a perfectly valid
     # COBOL identifier.
 
@@ -2986,7 +2972,7 @@ class CPrintWorker():
         # but also carrying along the Subscripts and the TableOffset created by those subscripts.
         #
         # The rare case is when the operator specifies an assignment: "cp table(2) = table(4)", because
-        # The second evaluation stomps on the first one. So, we are going to save copies both of them
+        # The second evaluation stomps on the first one. So, we are going to save copies of both of them
         # one at a time, here, so we can use them later, if needed, in PutDataAsVar()
 
         GV_GlobalVariables.VarLeft = None

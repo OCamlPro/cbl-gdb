@@ -61,7 +61,7 @@ public:
     void FixLocalStorageOffsets();
     void Dump() const;
     void
-    Insert(const VARIABLE &v);
+    Insert(VARIABLE &v);
     void FormatVariablesInfo(std::stringstream &ss) const;
 };
 
