@@ -1745,12 +1745,8 @@ class CobolVariable():
                         # not as "static unsigned char b_13[24]", but as a "static int *b_13" pointer
                         #
                         # Thus, we need the contents of self.Bname
-                        print("  External",self.Bname)
-                        print("  self.Bname",self.Bname)
                         address_of_pointer = GetAddressOf(self.Bname)
-                        print("  address_of_pointer",hex(address_of_pointer))
                         self.location_of_data = GetDataAt(address_of_pointer, GV_GlobalVariables.SizeofPointer)
-                        print("  self.location_of_data",hex(self.location_of_data))
                     else:
                         # self.Bname is the name of something like "static unsigned char b_13[24]"
                         # So, we need to pick up the address of self.Bname
