@@ -3310,6 +3310,24 @@ class CBreakWorker():
 
         return payload
 
+    @staticmethod
+    def get_payload_field_location(payload, pl_startloc, cmp_len):
+        location_of_field = None
+
+        try:
+            command = "call (char*)cob_malloc(sizeof(cob_field))"
+            location_of_field = int(gdb.execute(command, False, True).split()[2], 16)
+
+            command = "set var *(cob_field *){0}".format(location_of_field) + " = {"
+            command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + payload.TableOffset + pl_startloc), payload.Aname)
+            command += "}"
+            gdb.execute(command, False, True)
+        except gdb.error:
+            print("get_payload_field_location: Error location_of_field {0}".format(payload.Aname))
+            location_of_field = None
+
+        return location_of_field
+
     def set_string_breakpoint(self, line_nr, condition, payload, diff_str, break_point):
         if condition in ("=", "=i", "!=", "!=i", "==", "==i", "<>", "<>i", "=~"):
             if condition[-1:] == "i":
@@ -3330,7 +3348,7 @@ class CBreakWorker():
                 bp_startloc = 0
                 bp_length = payload.Length
 
-            location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
+            location_of_field = self.get_payload_field_location(payload, bp_startloc, cmp_len)
             if not location_of_field:
                 return
 
@@ -3342,21 +3360,21 @@ class CBreakWorker():
                     break_point = self.set_breakpoint(line_nr)
 
             if condition in ("=", "=i", "==", "==i"):
-                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2}), \"{3}\", {4}) == 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
+                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1})), \"{2}\", {3}) == 0".format(cmp_func, hex(location_of_field), diff_str, cmp_len))
             elif condition in ("<>", "<>i", "!=", "!=i"):
-                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1}) + {2}), \"{3}\", {4}) != 0".format(cmp_func, hex(location_of_field), bp_startloc, diff_str, cmp_len))
+                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1})), \"{2}\", {3}) != 0".format(cmp_func, hex(location_of_field), diff_str, cmp_len))
             else:
-                self.set_condition(break_point, "$_regex(((char *)cob_get_field_str_buffered({0} + {1}), \"{2}\")".format(hex(location_of_field), bp_startloc, diff_str))
+                self.set_condition(break_point, "$_regex(((char *)cob_get_field_str_buffered({0}), \"{1}\")".format(hex(location_of_field), diff_str))
         else:
             print("Condition not implemented")
 
     def set_numeric_breakpoint(self, line_nr, condition, payload, diff_num, break_point):
+
         if condition in ("==", "<", "<=", ">", ">=", "<>", "!="):
-            location_of_field = payload.get_verified_field_location(DONT_ALLOCATE)
+            location_of_field = self.get_payload_field_location(payload, 0, payload.Length)
             if not location_of_field:
                 return
 
-            bp_startloc += payload.TableOffset
             if break_point is None:
                 if line_nr == "-1":
                     break_point = self.set_breakpoint("")
@@ -3391,8 +3409,7 @@ class CBreakWorker():
             spec = "{0}_:SECTION_{1}".format(module_name, section_name)
         break_point = self.set_breakpoint(spec)
 
-    @staticmethod
-    def get_cob_cmp_refloc(payload, cmp_len, second):
+    def get_cob_cmp_refloc(self, payload, cmp_len, second):
         bp_startloc = 1
         location_of_field = None
 
@@ -3409,17 +3426,7 @@ class CBreakWorker():
 
         cmp_len = bp_length
 
-        try:
-            command = "call (char*)cob_malloc(sizeof(cob_field))"
-            location_of_field = int(gdb.execute(command, False, True).split()[2], 16)
-
-            command = "set var *(cob_field *){0}".format(location_of_field) + " = {"
-            command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + payload.TableOffset + bp_startloc), payload.Aname)
-            command += "}"
-            gdb.execute(command, False, True)
-        except gdb.error:
-            print("set_cob_cmp_breakpoint: Error getting refmod for {0}".format(payload.Aname))
-            location_of_field = None
+        location_of_field = self.get_payload_field_location(payload, bp_startloc, cmp_len)
 
         return location_of_field, cmp_len
 
@@ -3438,7 +3445,7 @@ class CBreakWorker():
             location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_f, payload_s.Length, 0)
         else:
             cmp_len = payload_f.Length
-            location_of_field = payload_f.get_verified_field_location(DONT_ALLOCATE) + payload_f.TableOffset
+            location_of_field = self.get_payload_field_location(payload_f, 0, cmp_len)
 
         if not location_of_field:
             return
@@ -3446,7 +3453,8 @@ class CBreakWorker():
         if payload_s.Refmod:
             other_field, cmp_len = self.get_cob_cmp_refloc(payload_s, cmp_len, 1)
         else:
-            other_field = payload_s.get_verified_field_location(DONT_ALLOCATE) + payload_s.TableOffset
+            cmp_len = payload_s.Length
+            other_field = self.get_payload_field_location(payload_s, 0, cmp_len)
 
         if not other_field:
             return
@@ -3479,7 +3487,7 @@ class CBreakWorker():
         else:
             if payload_f.AttrType in (1, 33, 34, 35):
                 self.set_string_breakpoint(line_nr, condition, payload_f, right_side[0][1:-1], break_point)
-            elif payload_f.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27) and right_side[0].isdigit():
+            elif payload_f.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 36) and right_side[0].isdigit():
                 self.set_numeric_breakpoint(line_nr, condition, payload_f, right_side[0], break_point)
             else:
                 print("Not yet implemented (Attribute type", payload_f.AttrType, ")")
