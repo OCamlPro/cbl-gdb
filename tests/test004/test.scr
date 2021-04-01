@@ -200,6 +200,8 @@ echo cp TAB-ADR-IND\n
 cp TAB-ADR-IND
 echo cp TAB-ADR-IND of z-table = 1234\n
 cp TAB-ADR-IND of z-table = 1234
+echo cp TAB-ADR-IND of T_ENTRY = 5432\n
+cp TAB-ADR-IND of T_ENTRY = 5432
 echo cp TAB-ADR-IND of T_ADDRESSES = 5432\n
 cp TAB-ADR-IND of T_ADDRESSES = 5432
 

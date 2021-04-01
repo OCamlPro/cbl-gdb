@@ -801,11 +801,12 @@ class VarTrie():
 
         self.StackOfNames = []
         self.StackOfLevels = []
-        
+
         # When processing a line like "05 T-ENTRIES OCCURS 90 INDEXED BY TAB-ADR-IND."
         # it turns out that TAB-ADR-IND shows up the line *before* the 05 T-ENTRIES line
         # in the generated C code.  In order to make the name heirachy work properly,
         # I am stashing that line here until the OCCURS line (presumably the next line)
+        # is seen.
         self.stashed_line = None
 
     def AddToTrie(self, trie, name_tokens, payload_index):
@@ -848,18 +849,11 @@ class VarTrie():
                 if tokens[self.IndexType] in ('F', 'X', 'W', 'L', 'I'):
                     # We are working with a variable.  We need to erode the
                     # stack of names down to the variable who is our parent.
-                    
-                    # There is a caveat:  
-                    # In
-                    #      05 T-ENTRIES OCCURS 90 INDEXED BY TAB-ADR-IND.
-                    #
-                    # the TAB-ADR-IND variable comes through as Level 00.   That
-                    # needs special handling:
 
                     if tokens[self.IndexLevel] == "":
                         tokens[self.IndexLevel] = '0'
                     our_level = int(tokens[self.IndexLevel])
-                    if our_level in (77, 78):    
+                    if our_level in (77, 78):
                         our_level = 1
                     if our_level > 0: # When our_level is zero, it means we are a table index,
                                       # so we don't touch the stacks.
@@ -869,6 +863,30 @@ class VarTrie():
                             # or he's our crazy INDEXED inlaw (zero) that nobody wants as a parent:
                             self.StackOfNames.pop(-1)
                             self.StackOfLevels.pop(-1)
+
+                    # There is a caveat:
+                    # When the GnuCOBOL compiler encounters:
+                    #
+                    #      05 T-ENTRIES OCCURS 90 INDEXED BY TAB-ADR-IND.
+                    #
+                    # The variables generated look like this:
+
+#  /* cob_dump_field_ext ( 0, "TAB-ADR-IND", COB_SET_FLD(f0, 4, (cob_u8_t *)&b_40, &a_2), 0, 0); */
+#  {
+#    /* int max_1 = 90; */
+#    {
+#      /* cob_dump_field_ext ( 5, "T-ENTRIES", COB_SET_FLD(f0, 1037, b_36 + 10, &a_4), 0, 1, i_1, 1037UL); OCCURS 1 90 */
+                    #
+                    # We need to somehow associate  TAB-ADR-IND with T-ENTRIES
+                    #
+                    # I am going to do this by stashing the LEVEL 00 line and not processing
+                    # it until right after the OCCURS line
+                    #
+
+                    if our_level == 0 and self.stashed_line == None:
+                        # This is a LEVEL 00 indexed variable, and we aren't processing it yet.
+                        self.stashed_line = variable_line
+                        return
 
                     # and now we put ourselves into the position of
                     # most favored child
@@ -924,6 +942,16 @@ class VarTrie():
                                    reversed,
                                    payload.payload_index)
                     self.program_ids.add(payload.Program)
+
+                    # We just added a line.  Was it an OCCURS line?
+                    if payload.OccursMax:
+                        # It was an OCCURS line.
+                        # Do we have a stashed LEVEL 00 INDEXED BY line?
+                        if self.stashed_line:
+                            # We do.  It's time to process it:
+                            # (Recursion is a beautiful thing)
+                            self.LoadFromLine(self.stashed_line)
+                            self.stashed_line = None
         except:
             traceback.print_exc()
             sys.exit(1)

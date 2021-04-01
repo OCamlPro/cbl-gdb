@@ -62,8 +62,8 @@ svalue : -092416
  6 : 01 Z-TABLE/test [EXT] : "87654321"
  7 : 05 Z-PID/Z-TABLE/test [EXT] : 87654321
  8 : 05 Z-ADR/Z-TABLE/test [EXT] : 
- 9 : 00 TAB-ADR-IND/Z-ADR/Z-TABLE/test [W-S] : +000000001
-10 : 05 T-ENTRIES/Z-TABLE/test(1) [EXT] : "Hi, bob!        "
+ 9 : 05 T-ENTRIES/Z-TABLE/test(1) [EXT] : "Hi, bob!        "
+10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S] : +000000001
 11 : 08 T-ADR/T-ENTRIES/Z-TABLE/test [EXT] : "Hi, bob!        "
 12 : 08 T-STAT/T-ENTRIES/Z-TABLE/test [EXT] : 
 13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE/test(1) [EXT] : 
@@ -73,8 +73,8 @@ svalue : -092416
 17 : 08 T-ID/T-ENTRIES/Z-TABLE/test [EXT] : 
 18 : 08 T-ADR-SAVE/T-ENTRIES/Z-TABLE/test [EXT] : +00000000000000000000
 19 : 01 T_ENTRY/test [W-S] : 0013
-20 : 00 TAB-ADR-IND/T_ENTRY/test [W-S] : +000000003
-21 : 01 T_ADDRESSES/test(1) [W-S] : "First   11W."
+20 : 01 T_ADDRESSES/test(1) [W-S] : "First   11W."
+21 : 00 TAB-ADR-IND/T_ADDRESSES/test [W-S] : +000000003
 22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First   11W."
 23 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First   11"
 24 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First   "
@@ -268,12 +268,14 @@ The refmod (9:1) offset has to be less than 8
 cp ws-a(2)
 05 WS-A/WS-TABLE/test(2) [W-S]  :  "        "
 cp TAB-ADR-IND
- 1 : 00 TAB-ADR-IND/Z-ADR/Z-TABLE/test [W-S] : +000000001
- 2 : 00 TAB-ADR-IND/T_ENTRY/test [W-S] : +000000003
+ 1 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S] : +000000001
+ 2 : 00 TAB-ADR-IND/T_ADDRESSES/test [W-S] : +000000003
 cp TAB-ADR-IND of z-table = 1234
-00 TAB-ADR-IND/Z-ADR/Z-TABLE/test [W-S]  :  +000001234
+00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S]  :  +000001234
+cp TAB-ADR-IND of T_ENTRY = 5432
+No symbols match "TAB-ADR-IND/T_ENTRY" in current context
 cp TAB-ADR-IND of T_ADDRESSES = 5432
-No symbols match "TAB-ADR-IND/T_ADDRESSES" in current context
+00 TAB-ADR-IND/T_ADDRESSES/test [W-S]  :  +000005432
  1 : 01 WS-TABLE/test(1:0) [W-S] : "12ABCDEF34GHIJKL56MNOPQR"
  2 : 05 WS-A/WS-TABLE/test(1) [W-S] : "12ABCDEF"
  3 : 10 WS-B/WS-A/WS-TABLE/test [W-S] : "12"
@@ -282,8 +284,8 @@ No symbols match "TAB-ADR-IND/T_ADDRESSES" in current context
  6 : 01 Z-TABLE/test [EXT] : "87654321"
  7 : 05 Z-PID/Z-TABLE/test [EXT] : 87654321
  8 : 05 Z-ADR/Z-TABLE/test [EXT] : 
- 9 : 00 TAB-ADR-IND/Z-ADR/Z-TABLE/test [W-S] : +000001234
-10 : 05 T-ENTRIES/Z-TABLE/test(1) [EXT] : "Hi, bob!        "
+ 9 : 05 T-ENTRIES/Z-TABLE/test(1) [EXT] : "Hi, bob!        "
+10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S] : +000001234
 11 : 08 T-ADR/T-ENTRIES/Z-TABLE/test [EXT] : "Hi, bob!        "
 12 : 08 T-STAT/T-ENTRIES/Z-TABLE/test [EXT] : 
 13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE/test(1) [EXT] : 
@@ -293,8 +295,8 @@ No symbols match "TAB-ADR-IND/T_ADDRESSES" in current context
 17 : 08 T-ID/T-ENTRIES/Z-TABLE/test [EXT] : 
 18 : 08 T-ADR-SAVE/T-ENTRIES/Z-TABLE/test [EXT] : +00000000000000000000
 19 : 01 T_ENTRY/test [W-S] : 0013
-20 : 00 TAB-ADR-IND/T_ENTRY/test [W-S] : +000000003
-21 : 01 T_ADDRESSES/test(1) [W-S] : "First   11W."
+20 : 01 T_ADDRESSES/test(1) [W-S] : "First   11W."
+21 : 00 TAB-ADR-IND/T_ADDRESSES/test [W-S] : +000005432
 22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First   11W."
 23 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First   11"
 24 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First   "
