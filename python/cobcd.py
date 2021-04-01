@@ -1278,6 +1278,10 @@ class CobolVariable():
         self.location_of_attribute = 0  # value of Fname->attr
         self.data       = []            # list of Length bytes
 
+        self.ActualLocation = 0         # This is the location_of_data qualified by table
+                                        # subscripts and refmod offset
+        self.ActualLength = 0           # This is the length after applying refmod
+
         # Here is the string information decoded from the attributes and
         # the data we get from gdb:
         self.not_in_context = False
@@ -1372,7 +1376,9 @@ class CobolVariable():
             print(    " OCCURS min/max: {0}/{1}".format(self.OccursMin,self.OccursMax))
         if self.Subscripts:
             print("     Subscripts:", self.Subscripts)
-            print("     (resolved):", "(" + ",".join(self.ResolvedSubscripts) + ")")
+        resolved = "(" + ",".join(self.ResolvedSubscripts) + ")"
+        if resolved != self.Subscripts:
+            print("     (resolved):", resolved)
         if self.Refmod:
             print("         refmod:", self.Refmod)
         print(    "        Section:", self.Section)
@@ -1425,8 +1431,8 @@ class CobolVariable():
             # data modified by .TableOffset
             field_loc = GV_GlobalVariables.cprint_f0
             command = "set var *(cob_field *){0}".format(hex(field_loc)) + " = {"
-            command += "{0}, (char *){1}, &{2}".format(self.Length,
-                                                       hex(self.location_of_data+self.TableOffset),
+            command += "{0}, (char *){1}, &{2}".format(self.ActualLength,
+                                                       hex(self.ActualLocation),
                                                        self.Aname)
             command += "}"
             #print("command",command)
@@ -1723,7 +1729,7 @@ class CobolVariable():
                 length = self.Length - offset + 1
 
             if length<1 or length>self.Length:
-                print("The refmod {0} length has to be betweeen 1 and {1}".format(self.Refmod, self.Length))
+                print("The refmod {0} length has to be between 1 and {1}".format(self.Refmod, self.Length))
                 self.RefmodFailure = True
                 return
 
@@ -1736,9 +1742,7 @@ class CobolVariable():
                 # Silently trim it for the user:
                 length = self.Length - (offset-1)
 
-
-
-            self.RefmodOffset = offset-1
+            self.RefmodOffset = offset-1    # Note that RefmodOffset is zero-based
             self.RefmodLength = length
 
     def FetchVariableData(self, show_failure):
@@ -1911,13 +1915,19 @@ class CobolVariable():
                 return
 
             if self.location_of_data != 0:
+                # With those calculations in hand, we can calculate the actuals:
+                self.ActualLocation = self.location_of_data + self.TableOffset + self.RefmodOffset
+                self.ActualLength = self.RefmodLength or self.Length
+
                 # Unlikely as it seems, arriving here means having successfully
                 # run the gauntlet of all the reasons up above as to why you
                 # can't read this data.  So, get the data:
-                self.data = GetBytesAt(self.location_of_data + self.TableOffset, self.Length)
+
+                self.data = GetBytesAt(self.ActualLocation, self.ActualLength)
                 self.display_body_hex = self.GetDataAsHex()
                 self.display_body = self.GetDataAsString()
                 self.IsDirty = False
+
         return
 
     def NameToString(self):
@@ -1951,23 +1961,23 @@ class CobolVariable():
         if bname_location:
             bname_text = "( %s )" % hex(bname_location)
 
-        data_ptr = hex(self.location_of_data+self.TableOffset)
-
         print("Name:       ", self.display_name)
         if self.OccursMax:
             print("OCCURS:      min: {0} max: {1}".format(self.OccursMin,self.OccursMax))
+
         if self.Subscripts:
             print("Subscripts: ", self.Subscripts, end='')
-            if self.SubscriptFailure:
-                print(" (poorly formed)", end='')
+            resolved = "(" + ",".join(map(str,self.ResolvedSubscripts)) + ")"
+            if resolved != self.Subscripts:
+                print("; resolves to {0}".format(resolved), end='')
             print("")
-            print("(resolved): ", "(" + ",".join(map(str,self.ResolvedSubscripts)) + ")")
+
         if self.Refmod:
             print("Refmod:     ", self.Refmod, end='')
-            if self.RefmodFailure:
-                print(" (poorly formed)", end='')
+            resolved = "({0}:{1})".format(self.RefmodOffset+1,self.RefmodLength)
+            if resolved != self.Refmod:
+                print("; resolves to {0}".format(resolved), end='')
             print("")
-            print("(resolved):  ({0}:{1})".format(self.RefmodOffset+1,self.RefmodLength))
 
         print("Display:    ", WithRepeatCount(self.display_body))
         print("Hex:        ", self.display_body_hex)
@@ -1993,8 +2003,8 @@ class CobolVariable():
         if self.Refmod:
             print("RefmodOff:  ", self.RefmodOffset)
             print("RefmodRun:  ", self.RefmodLength)
-        print("Data:       ", data_ptr)
-        print("Length:     ", self.Length)
+        print("DataLoc:    ", hex(self.ActualLocation))
+        print("Length:     ", self.ActualLength)
 
         print("Attr:       ", self.Aname, '   (', hex(self.location_of_attribute), ')')
         print("AttrType:   ", self.AttrType, end="")
@@ -2768,7 +2778,7 @@ class CPrintWorker():
 
     def GetDisplayBody(self,payload):
         body = ""
-        if payload.Refmod:
+        if False and payload.Refmod:
             # Because there is a refmod involved, we simply ignore any
             # conditional formatting and just return what he asked for:
             startloc = payload.RefmodOffset
@@ -3503,7 +3513,7 @@ class CBreakWorker():
         if payload_f is None:
             # note: error handling already in get_var_payload
             return
-            
+
         payload_l = copy.copy(payload_f)
         if is_lit == 0 and not right_side[0].isdigit():
             payload_s = self.get_var_payload(right_side)
