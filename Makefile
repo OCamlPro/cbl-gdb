@@ -20,6 +20,16 @@ COBCDEXISTS:=$(wildcard /usr/local/bin/cobcd)
 COBCD:=/usr/local/bin/cobcd
 CWD:=$(shell basename `pwd`)
 
+ifneq "$(DESTDIR)" ""
+	SKIP_NOTE := 1
+else
+	ifeq "$(COBCDFMODE)" "0"
+		SKIP_NOTE := 1
+	else
+		SKIP_NOTE := 
+	endif
+endif
+
 .PHONY : all
 all: cobcd cobcd.bat
 ## Make sure the VERSION text in cobcd.py is up-to-date
@@ -68,23 +78,23 @@ install:
 # Output .gdbinit instructions only if DESTDIR is empty.
 # When non-empty, this is almost certainly part of a package building exercise,
 # and the message is irrelevant and confusing.
-	@if [ X"$(DESTDIR)" = X"" ] ; then /bin/echo -e "\033[0;33m" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then echo "In order for gdb to be able to load the Python script that displays COBOL variables," ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then echo "you will have to create a ~/.gdbinit file that has the following lines in it:" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then echo "" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then echo "      add-auto-load-safe-path $(prefix)/bin" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then echo "      set directories $(prefix)/bin" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then echo "      set auto-load python-scripts on" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then echo "" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then echo "You may use" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then echo "" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] && [ X"$(prefix)"  = X"$(prefix_default)" ] ; then echo "      $(MAKE) .gdbinit" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] && [ X"$(prefix)" != X"$(prefix_default)" ] ; then echo "      $(MAKE) .gdbinit prefix=$(prefix)" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then echo "" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then 	echo "to create a sample file (in this folder) with that content." ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then 	echo "" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then 	echo "See https://sourceware.org/gdb/onlinedocs/gdb/Auto_002dloading-safe-path.html for more information" ; fi
-	@if [ X"$(DESTDIR)" = X"" ] ; then 	/bin/echo -e "\033[0m" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then /bin/echo -e "\033[0;33m" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then echo "In order for gdb to be able to load the Python script that displays COBOL variables," ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then echo "you will have to create a ~/.gdbinit file that has the following lines in it:" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then echo "" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then echo "      add-auto-load-safe-path $(prefix)/bin" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then echo "      set directories $(prefix)/bin" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then echo "      set auto-load python-scripts on" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then echo "" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then echo "You may use" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then echo "" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] && [ X"$(prefix)"  = X"$(prefix_default)" ] ; then echo "      $(MAKE) .gdbinit" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] && [ X"$(prefix)" != X"$(prefix_default)" ] ; then echo "      $(MAKE) .gdbinit prefix=$(prefix)" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then echo "" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then 	echo "to create a sample file (in this folder) with that content." ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then 	echo "" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then 	echo "See https://sourceware.org/gdb/onlinedocs/gdb/Auto_002dloading-safe-path.html for more information" ; fi
+	@if [ X"$(SKIP_NOTE)" = X"" ] ; then 	/bin/echo -e "\033[0m" ; fi
 
 .PHONY : uninstall
 uninstall:
