@@ -656,7 +656,9 @@ def get_left_right_args(args):
         if right_side[0] in ('"', "'"):  # I do love that construction
             if len(right_side) < 2 or right_side[-1] != right_side[0]:
                 print("A syntax error in >>{0}<<.".format(right_side))
-                return
+                left_side = []
+                right_side = []
+                return left_side, left_side, ""
             right_side = [right_side]
         elif right_side[0:2].lower().replace('"', "'") == "x'":
             right_side = FromHexAlphaString(right_side)
@@ -671,7 +673,9 @@ def get_left_right_args(args):
         condition = leftright[1]
     elif len(leftright) > 2 and leftright[2] == '':
         print("No rightside specified.")
-        return [], [], ""
+        left_side = []
+        right_side = []
+        return left_side, left_side, ""
 
     return left_side, right_side, condition
 
@@ -1608,15 +1612,19 @@ class CobolVariable():
                         self.TableOffset = 0
                         self.SubscriptFailure = True
                         return
-                    subscript, limit_reached = IntegerOrVariable(list_of_subscripts[-1].strip())
-                    if subscript == None and limit_reached:
-                        print("Multiple symbols match \"{0}\"".format(list_of_subscripts[-1].strip()))
-                        self.SubscriptFailure = True
-                        return
-                    if subscript == None:
-                        print("No symbol matches \"{0}\"".format(list_of_subscripts[-1].strip()))
-                        self.SubscriptFailure = True
-                        return
+                    if not list_of_subscripts[-1]:
+                        # Empty becomes 1.  It's convenient for debugging
+                        subscript = 1;
+                    else:
+                        subscript, limit_reached = IntegerOrVariable(list_of_subscripts[-1].strip())
+                        if subscript == None and limit_reached:
+                            print("Multiple symbols match \"{0}\"".format(list_of_subscripts[-1].strip()))
+                            self.SubscriptFailure = True
+                            return
+                        if subscript == None:
+                            print("No symbol matches \"{0}\"".format(list_of_subscripts[-1].strip()))
+                            self.SubscriptFailure = True
+                            return
                     self.ResolvedSubscripts = [subscript] + self.ResolvedSubscripts
                     list_of_subscripts = list_of_subscripts[0:-1]
                     if subscript < 1 or subscript > variable.OccursMax:
@@ -1683,10 +1691,13 @@ class CobolVariable():
                     self.RefmodFailure = True
                     return
             else:
+                # No value was specified, so make it the maximum
                 length = self.Length - offset + 1
 
-            if not length or length < 1:
-                length = self.Length - offset + 1
+            if length<1 or length>self.Length:
+                print("The refmod {0} length has to be betweeen 1 and {1}".format(self.Refmod, self.Length))
+                self.RefmodFailure = True
+                return
 
             if offset-1 >= self.Length:
                 print("The refmod {0} offset has to be less than {1}".format(self.Refmod, self.Length))
@@ -1696,6 +1707,8 @@ class CobolVariable():
                 # The requested refmod would overrun the end of the variable.
                 # Silently trim it for the user:
                 length = self.Length - (offset-1)
+
+
 
             self.RefmodOffset = offset-1
             self.RefmodLength = length
@@ -3073,6 +3086,8 @@ class CPrintWorker():
             # because there is but a single possibility, we might be in a "cprint var1=var2" situation
             GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]])
             GV_GlobalVariables.VarLeftIndex = leftside_possibilities[0]
+            if GV_GlobalVariables.VarLeft.SubscriptFailure or GV_GlobalVariables.VarLeft.RefmodFailure:
+                return
         elif right_side:
             # Our user wants to do an assignment: "cprint leftside=rightside"
             # Alas, we cannot accommodate that request:
@@ -3093,6 +3108,8 @@ class CPrintWorker():
                     print('Multiple symbols match the right-hand-side "{0}" in current context'.format('/'.join(right_side)))
                     return
                 GV_GlobalVariables.VarRight = copy.copy(GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]])
+                if GV_GlobalVariables.VarRight.SubscriptFailure or GV_GlobalVariables.VarRight.RefmodFailure:
+                    return
             else:
                 # This is a numeric constant; just pass it along
                 pass

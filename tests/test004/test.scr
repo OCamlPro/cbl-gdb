@@ -1,0 +1,211 @@
+set height 0
+set width 0
+
+file test
+
+echo KNOWN GOOD START\n
+r
+echo KNOWN GOOD FINISH\n
+
+### Make sure 'cprint *' is clean at the end
+echo KNOWN GOOD LINES: 1\n
+cprint *
+
+b 98
+echo KNOWN GOOD START\n
+r
+cp *
+echo cp ws-table\n
+cp ws-table
+echo cp ws-a\n
+cp ws-a
+echo cp ws-a()\n
+cp ws-a()
+echo cp ws-a(0)\n
+cp ws-a(0)
+echo cp ws-a(1)\n
+cp ws-a(1)
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(3)\n
+cp ws-a(3)
+echo cp ws-a(4)\n
+cp ws-a(4)
+echo cp ws-a(zed)\n
+cp ws-a(zed)
+echo cp ws-a(one)\n
+cp ws-a(one)
+echo cp ws-a(two)\n
+cp ws-a(two)
+echo cp ws-a(three)\n
+cp ws-a(three)
+echo cp ws-a(four)\n
+cp ws-a(four)
+echo cp ws-a(banana)\n
+cp ws-a(banana)
+echo cp ws-a(1\n
+cp ws-a(1
+echo cp ws-table\n
+cp ws-table
+echo cp ws-table(:)\n
+cp ws-table(:)
+echo cp ws-table(0:)\n
+cp ws-table(0:)
+echo cp ws-table(25:)\n
+cp ws-table(25:)
+echo cp ws-table(:24)\n
+cp ws-table(:24)
+echo cp ws-table(:12)\n
+cp ws-table(:12)
+echo cp ws-table(:100)\n
+cp ws-table(:100)
+echo cp ws-table(23:100)\n
+cp ws-table(23:100)
+echo cp ws-table(24:100)\n
+cp ws-table(24:100)
+echo cp ws-table(25:100)\n
+cp ws-table(25:100)
+echo cp ws-table(3:4)\n
+cp ws-table(3:4)
+echo cp ws-table(three:4)\n
+cp ws-table(three:4)
+echo cp ws-table(3:four)\n
+cp ws-table(3:four)
+echo cp ws-table(three:four)\n
+cp ws-table(three:four)
+echo cp ws-table(three:four:two)\n
+cp ws-table(three:four:two)
+echo cp ws-table(three:banana)\n
+cp ws-table(three:banana)
+echo cp ws-table(banana:4)\n
+cp ws-table(banana:4)
+echo cp ws-table(banana:banana)\n
+cp ws-table(banana:banana)
+echo cp ws-table(banana:banana\n
+cp ws-table(banana:banana
+cp ws-c
+echo cp ws-c()\n
+cp ws-c()
+echo cp ws-c(1)\n
+cp ws-c(1)
+echo cp ws-c(,)\n
+cp ws-c(,)
+echo cp ws-c(0,)\n
+cp ws-c(0,)
+echo cp ws-c(,0)\n
+cp ws-c(,0)
+echo cp ws-c(4,)\n
+cp ws-c(4,)
+echo cp ws-c(,4)\n
+cp ws-c(,4)
+echo cp ws-c(1,1,1)\n
+cp ws-c(1,1,1)
+echo cp ws-c(zed,)\n
+cp ws-c(zed,)
+echo cp ws-c(,zed)\n
+cp ws-c(,zed)
+echo cp ws-c(four,)\n
+cp ws-c(four,)
+echo cp ws-c(,four)\n
+cp ws-c(,four)
+echo cp ws-c(2,1)\n
+cp ws-c(2,1)
+echo cp ws-c(two,1)\n
+cp ws-c(two,1)
+echo cp ws-c(2,one)\n
+cp ws-c(2,one)
+echo cp ws-c(two,one)\n
+cp ws-c(two,one)
+
+cp ws-a(2) = "1"\n
+
+echo cp ws-a(2) = "1"\n
+cp ws-a(2) = "1"
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(2:) = '1'\n
+cp ws-a(2)(2:) = '1'
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(3:) = '1'\n
+cp ws-a(2)(3:) = '1'
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(4:) = '1'\n
+cp ws-a(2)(4:) = '1'
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(5:) = '1'\n
+cp ws-a(2)(5:) = '1'
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(6:) = '1'\n
+cp ws-a(2)(6:) = '1'
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(7:)= '1'\n
+cp ws-a(2)(7:)= '1'
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(8:)= '1'\n
+cp ws-a(2)(8:)= '1'
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(9:)= '1'\n
+cp ws-a(2)(9:)= '1'
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(zed:1)   = ' '\n
+cp ws-a(2)(zed:1)   = ' '
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(one:1)   = ' '\n
+cp ws-a(2)(one:1)   = ' '
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(two:1)   = ' '\n
+cp ws-a(2)(two:1)   = ' '
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(three:1) = ' '\n
+cp ws-a(2)(three:1) = ' '
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(four:1)  = ' '\n
+cp ws-a(2)(four:1)  = ' '
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(5:one)   = ' '\n
+cp ws-a(2)(5:one)   = ' '
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(6:one)   = ' '\n
+cp ws-a(2)(6:one)   = ' '
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(two)(7:1)   = ' '\n
+cp ws-a(two)(7:1)   = ' '
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(two)(8:1)   = ' '\n
+cp ws-a(two)(8:1)   = ' '
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(two)(9:1)   = ' '\n
+cp ws-a(two)(9:1)   = ' '
+echo cp ws-a(2)\n
+cp ws-a(2)
+
+echo cp TAB-ADR-IND\n
+cp TAB-ADR-IND
+echo cp TAB-ADR-IND of z-table = 1234\n
+cp TAB-ADR-IND of z-table = 1234
+echo cp TAB-ADR-IND of T_ADDRESSES = 5432\n
+cp TAB-ADR-IND of T_ADDRESSES = 5432
+
+cp *
+
+echo KNOWN GOOD FINISH\n
+
+## And having stepped through the program line-by-line, we are done
+q
