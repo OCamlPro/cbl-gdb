@@ -3430,7 +3430,7 @@ class CBreakWorker():
 
         return location_of_field, cmp_len
 
-    def set_cob_cmp_breakpoint(self, line_nr, condition, payload_f, payload_f_parm,  payload_s, payload_s_parm,  break_point):
+    def set_cob_cmp_breakpoint(self, line_nr, condition, payload_l, payload_r, break_point):
         if condition in ("=", "=="):
             condition_str = "=="
         elif condition in ("<>", "!="):
@@ -3441,26 +3441,20 @@ class CBreakWorker():
             print("Condition not implemented")
             return
 
-        if payload_f_parm['Refmod']:
-            payload_f.RefmodOffset = payload_f_parm['RefmodOffset']
-            payload_f.RefmodLength = payload_f_parm['RefmodLength']
-            payload_f.TableOffset = payload_f_parm['TableOffset']
-            location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_f, payload_s.Length, 0)
+        if payload_l.Refmod:
+            location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, payload_r.Length, 0)
         else:
-            cmp_len = payload_f.Length
-            location_of_field = self.get_payload_field_location(payload_f, 0, cmp_len)
+            cmp_len = payload_l.Length
+            location_of_field = self.get_payload_field_location(payload_l, 0, cmp_len)
 
         if not location_of_field:
             return
 
-        if payload_s_parm['Refmod']:
-            payload_s.RefmodOffset = payload_s_parm['RefmodOffset']
-            payload_s.RefmodLength = payload_s_parm['RefmodLength']
-            payload_s.TableOffset = payload_s_parm['TableOffset']
-            other_field, cmp_len = self.get_cob_cmp_refloc(payload_s, cmp_len, 1)
+        if payload_r.Refmod:
+            other_field, cmp_len = self.get_cob_cmp_refloc(payload_r, cmp_len, 1)
         else:
-            cmp_len = payload_s.Length
-            other_field = self.get_payload_field_location(payload_s, 0, cmp_len)
+            cmp_len = payload_r.Length
+            other_field = self.get_payload_field_location(payload_r, 0, cmp_len)
 
         if not other_field:
             return
@@ -3482,33 +3476,24 @@ class CBreakWorker():
             # note: error handling already in get_var_payload
             return
             
-        payload_f_parm = {}
-        payload_f_parm['Refmod'] = payload_f.Refmod
-        payload_f_parm['RefmodOffset'] = payload_f.RefmodOffset
-        payload_f_parm['RefmodLength'] = payload_f.RefmodLength
-        payload_f_parm['TableOffset'] = payload_f.TableOffset
-
+        payload_l = copy.copy(payload_f)
         if is_lit == 0 and not right_side[0].isdigit():
             payload_s = self.get_var_payload(right_side)
             if payload_s is None:
                 # note: error handling already in get_var_payload
                 return
 
-            payload_s_parm = {}
-            payload_s_parm['Refmod'] = payload_s.Refmod
-            payload_s_parm['RefmodOffset'] = payload_s.RefmodOffset
-            payload_s_parm['RefmodLength'] = payload_s.RefmodLength
-            payload_s_parm['TableOffset'] = payload_s.TableOffset
+            payload_r = copy.copy(payload_s)
 
         if payload_s is not None:
-            self.set_cob_cmp_breakpoint(line_nr, condition, payload_f, payload_f_parm, payload_s, payload_s_parm, break_point)
+            self.set_cob_cmp_breakpoint(line_nr, condition, payload_l, payload_r, break_point)
         else:
-            if payload_f.AttrType in (1, 33, 34, 35):
-                self.set_string_breakpoint(line_nr, condition, payload_f, right_side[0][1:-1], break_point)
-            elif payload_f.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 36) and right_side[0].isdigit():
-                self.set_numeric_breakpoint(line_nr, condition, payload_f, right_side[0], break_point)
+            if payload_l.AttrType in (1, 33, 34, 35):
+                self.set_string_breakpoint(line_nr, condition, payload_l, right_side[0][1:-1], break_point)
+            elif payload_l.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 36) and right_side[0].isdigit():
+                self.set_numeric_breakpoint(line_nr, condition, payload_l, right_side[0], break_point)
             else:
-                print("Not yet implemented (Attribute type", payload_f.AttrType, ")")
+                print("Not yet implemented (Attribute type", payload_l.AttrType, ")")
                 return
 
     def process_break_arguments(self, arguments):
