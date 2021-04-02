@@ -1801,22 +1801,16 @@ class CobolVariable():
 
             if self.location_of_data == 0:
                 # When the COBOL code doesn't reference a variable, there is no f_ cob_field.  But
-                # sometimes we are able to divine a b_ + offset reference.  Likewise, sometimes
+                # often the cobcd-st routine was able to determine the b_ + offset reference.  Likewise, sometimes
                 # there is an f_value, but at this point in the code the cob_field->data value hasn't yet
                 # been set up.  But, again, sometimes we have advance knowledge of what is going to be
                 # there because we got information from the compiler.
                 if self.Bname:
                     # print("FetchVariableData Fname", self.Bname)
                     if self.Section == 'X':
-                        # Special case of EXTERNAL.  These are declared in the generated C
-                        # not as "static unsigned char b_13[24]", but as a "static int *b_13" pointer
-                        #
-                        # Thus, we need the contents of self.Bname
-                        address_of_pointer = GetAddressOf(self.Bname)
-                        if not address_of_pointer:
-                            self.not_in_context = True
-                            return
-                        self.location_of_data = GetDataAt(address_of_pointer, GV_GlobalVariables.SizeofPointer)
+                        # EXTERNAL variable:  These are declared in the generated C
+                        # as a "static int *b_13" pointer
+                        self.location_of_data = GetPointerAt(self.Bname)
                     else:
                         # self.Bname is the name of something like "static unsigned char b_13[24]"
                         # So, we need to pick up the address of self.Bname
