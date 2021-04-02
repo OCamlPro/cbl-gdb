@@ -2778,16 +2778,11 @@ class CPrintWorker():
 
     def GetDisplayBody(self,payload):
         body = ""
-        if False and payload.Refmod:
-            # Because there is a refmod involved, we simply ignore any
-            # conditional formatting and just return what he asked for:
-            startloc = payload.RefmodOffset
-            endloc   = startloc + payload.RefmodLength
-
+        if payload.Refmod:
             if not payload.display_body.startswith('"') or self.current_display_submode == 'x':
                 # We are dealing with something that libcob thinks is not alphabetic.
                 body = '['
-                for i in range(startloc,endloc):
+                for i in range(len(payload.data)):
                     # This is a trick. By adding 256 to the byte, we ensure that
                     # 0, for example, becomes 0x100 instead of 0x0.  Thus we can
                     # strip off the final two characters for our string
@@ -2798,7 +2793,7 @@ class CPrintWorker():
                 # Pull out those characters as ASCII.  Unlike GnuCOBOL, we are
                 # going to replace characters we don't recognize with dots
                 body = '"'
-                for i in range(startloc,endloc):
+                for i in range(len(payload.data)):
                     nch = payload.data[i]
                     if nch < 32:
                         nch = ord('.')
