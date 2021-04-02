@@ -7,7 +7,7 @@ SETLOCAL ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 ::## Don't mess with it!                                                    #
 ::###########################################################################
 ::
-set VERSION=[Version 4.24]
+set VERSION=[Version 4.25-dev]
 ::
 ::
 :: Stupendously useful:
