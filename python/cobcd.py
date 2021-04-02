@@ -2934,6 +2934,41 @@ class CPrintWorker():
             # Flag the element in storage_list as IsDirty so that the next fetch reflects the change
             payload.IsDirty = True
 
+            #######################################################
+            #
+            # POOR DESIGN ALERT!
+            #
+            # What I am about to describe badly needs fixing.
+            #
+            # As of this writing, FetchVariableData separately reads data for each element
+            # of a COBOL variable.  So, if you have this:
+            #
+            #     01 PERSON
+            #       02 LastName  PIC X(10)
+            #       02 FirstName PIC X(10)
+            #
+            # there are CobolVariables for LastName and FirstName.  But
+            # There is also one for PERSON.  So, when PERSON.FetchVariableData
+            # is called, a 20-byte copy of PERSON's data is stored in that variable.
+            # When LastName.FetchVariableData and FirstName.FetchVariableData are
+            # called, second copies are made of those 20 bytes of data.
+            #
+            # This is not just wasteful -- it's screwed up.  When set_var_value
+            # is called to change LastName, that IsDirty bit gets set.  But the
+            # IsDirty for PERSON is still False -- and so, even though LastName was
+            # changed, displaying PERSON will show the stale data from the fetch
+            # before the set_var_value.
+            #
+            # As a purely temporary expedient, I am setting the global dirty
+            # flag, which will prevent the display of stale data, but at the
+            # cost of a bunch of unnecessary data reads.  So be it, until I
+            # get a chance to fix the fundamental design flaw by not reading
+            # multiple copies of the data.  Dubner, 2021-04-02
+            #
+            #######################################################
+            GV_GlobalVariables.IsDirty = True
+            #######################################################
+
         return return_value
 
     def ProcessArgumentsMachineMode(self,leftside,rightside,leftside_possibilities,rightside_possibilities):
