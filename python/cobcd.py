@@ -61,7 +61,7 @@ import copy
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
-COBCD_VERSION = '[Version 4.24-dev]'
+COBCD_VERSION = '[Version 4.24]'
 
 #   This module implements the gdb extension commands like cprint and cwatch
 #   It is executed by GDB.
