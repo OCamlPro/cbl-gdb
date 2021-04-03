@@ -11,7 +11,7 @@ echo KNOWN GOOD FINISH\n
 echo KNOWN GOOD LINES: 1\n
 cprint *
 
-b 98
+b 107
 echo KNOWN GOOD START\n
 r
 cp *
@@ -210,9 +210,18 @@ cp TAB-ADR-IND of T_ENTRY = 5432
 echo cp TAB-ADR-IND of T_ADDRESSES = 5432\n
 cp TAB-ADR-IND of T_ADDRESSES = 5432
 
+echo cp WS-BASED\n
+cp WS-BASED
+echo cp WS-BASED(8:5)\n
+cp WS-BASED(8:5)
+
+echo cp ws-a(1)\n
 cp ws-a(1)
+echo cp ws-a(2)\n
 cp ws-a(2)
+echo cp ws-a(3)\n
 cp ws-a(3)
+echo cp *\n
 cp *
 
 echo KNOWN GOOD FINISH\n

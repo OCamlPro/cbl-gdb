@@ -23,6 +23,7 @@ T-ADR(90): Hi, marty!
 svalue : -123456
 MOVE 89 to svalue(2:2)
 svalue : -092416
+I am a BASED variable                                           
 [Inferior 1 (process 99999) exited normally]
 KNOWN GOOD FINISH
 KNOWN GOOD LINES: 1
@@ -52,8 +53,9 @@ T-ADR(90): Hi, marty!
 svalue : -123456
 MOVE 89 to svalue(2:2)
 svalue : -092416
+I am a BASED variable                                           
 
-98	           MOVE -123456 to svalue.
+107	           STOP RUN.
  1 : 01 WS-TABLE/test [W-S] : "12ABCDEF34GHIJKL56MNOPQR"
  2 : 05 WS-A/WS-TABLE/test(1) [W-S] : "12ABCDEF"
  3 : 10 WS-B/WS-A/WS-TABLE/test [W-S] : "12"
@@ -86,7 +88,8 @@ svalue : -092416
 30 : 01 two/test [W-S] : 0002
 31 : 01 three/test [W-S] : 0003
 32 : 01 four/test [W-S] : 0004
-33 : 01 svalue/test [W-S] : -092416
+33 : 01 svalue/test [W-S] : -123456
+34 : 01 WS-BASED/test [W-B] : "I am a BASED variable", ' ' <repeats 43 times>
 cp ws-table
 01 WS-TABLE/test [W-S]  :  "12ABCDEF34GHIJKL56MNOPQR"
 cp ws-a
@@ -280,9 +283,17 @@ cp TAB-ADR-IND of T_ENTRY = 5432
 No symbols match "TAB-ADR-IND/T_ENTRY" in current context
 cp TAB-ADR-IND of T_ADDRESSES = 5432
 00 TAB-ADR-IND/T_ADDRESSES/test [W-S]  :  +000005432
+cp WS-BASED
+01 WS-BASED/test [W-B]  :  "I am a BASED variable", ' ' <repeats 43 times>
+cp WS-BASED(8:5)
+01 WS-BASED/test(8:5) [W-B]  :  "BASED"
+cp ws-a(1)
 05 WS-A/WS-TABLE/test(1) [W-S]  :  "12ABCDEF"
+cp ws-a(2)
 05 WS-A/WS-TABLE/test(2) [W-S]  :  "        "
+cp ws-a(3)
 05 WS-A/WS-TABLE/test(3) [W-S]  :  "56MNOPQR"
+cp *
  1 : 01 WS-TABLE/test [W-S] : "12ABCDEF        56MNOPQR"
  2 : 05 WS-A/WS-TABLE/test(1) [W-S] : "12ABCDEF"
  3 : 10 WS-B/WS-A/WS-TABLE/test [W-S] : "12"
@@ -315,5 +326,6 @@ cp TAB-ADR-IND of T_ADDRESSES = 5432
 30 : 01 two/test [W-S] : 0002
 31 : 01 three/test [W-S] : 0003
 32 : 01 four/test [W-S] : 0004
-33 : 01 svalue/test [W-S] : -092416
+33 : 01 svalue/test [W-S] : -123456
+34 : 01 WS-BASED/test [W-B] : "I am a BASED variable", ' ' <repeats 43 times>
 KNOWN GOOD FINISH

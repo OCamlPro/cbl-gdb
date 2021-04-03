@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+#!/usr/bin/python3
 
 ################################################################################
 # Copyright (c) 2019-2021 COBOLworx and contributors
@@ -846,7 +847,7 @@ class VarTrie():
                     print("self.StackOfNames is empty, and it shouldn't be")
                     sys.exit(1)
 
-                if tokens[self.IndexType] in ('F', 'X', 'W', 'L', 'I'):
+                if tokens[self.IndexType] in ('F', 'X', 'W', "WB", 'L', 'I'):
                     # We are working with a variable.  We need to erode the
                     # stack of names down to the variable who is our parent.
 
@@ -1807,8 +1808,10 @@ class CobolVariable():
                 # there because we got information from the compiler.
                 if self.Bname:
                     # print("FetchVariableData Fname", self.Bname)
-                    if self.Section == 'X':
-                        # EXTERNAL variable:  These are declared in the generated C
+                    if self.Section == 'X' or self.Section == 'WB':
+                        # EXTERNAL variable
+                        # WORKING-STORAGE BASED variable
+                        # These are declared in the generated C
                         # as a "static int *b_13" pointer
                         self.location_of_data = GetPointerAt(self.Bname)
                     else:
@@ -1849,7 +1852,7 @@ class CobolVariable():
                 self.AttrFlags  = GetDataAt(self.location_of_attribute + 6, 2)
                 self.location_of_pic = GetDataAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
 
-            if self.Section in('F', 'X', 'W', 'I'):
+            if self.Section in('F', 'X', 'W', "WB", 'I'):
                 pass
             elif self.Section == 'L':
                 try:
@@ -1932,6 +1935,8 @@ class CobolVariable():
             storage_type = "EXT"
         elif self.Section == 'W':
             storage_type = "W-S"
+        elif self.Section == "WB":
+            storage_type = "W-B"
         elif self.Section == 'L':
             storage_type = "L-S"
         elif self.Section == 'I':

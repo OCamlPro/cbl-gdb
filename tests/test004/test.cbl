@@ -41,6 +41,9 @@
         01 four  PIC 9999 VALUE 4.
         
         01 svalue PIC S999999 BINARY VALUE -123456.
+        
+        01 WS-BASED PIC X(64) BASED.
+        
 
         PROCEDURE DIVISION.
            MOVE 87654321 to Z-PID.
@@ -96,6 +99,10 @@
            MOVE 89 to svalue(2:2)
            DISPLAY 'svalue : ' svalue
            MOVE -123456 to svalue.
+
+           ALLOCATE WS-BASED.
+           MOVE "I am a BASED variable" to WS-BASED.
+           DISPLAY WS-BASED.
 
            STOP RUN.
 
