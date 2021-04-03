@@ -352,7 +352,7 @@ check_for_another_perform:
                     i += 1;
                     if( i < tokens.size() ) {
                         if( tokens[i] EQ current_perform_file
-                           AND (current_perform_line+1) EQ stoi(tokens[2]) ) {
+                                AND (current_perform_line+1) EQ stoi(tokens[2]) ) {
                             variables.back().name = tokens[i] + ':' + tokens[2];
                         }
                     }
@@ -387,17 +387,15 @@ check_for_another_perform:
             p += 1;
         }
 
-        if( strstr(p,COB_EXTERNAL_ADDR) )
-            {
+        if( strstr(p,COB_EXTERNAL_ADDR) ) {
             // We are looking for
             //  b_13 = cob_external_addr ("Z_TABLE", 3160);
             VSTRING t = Split(p, " \t");
-            if( t[1] EQ "=" AND t[2] EQ COB_EXTERNAL_ADDR )
-                {
+            if( t[1] EQ "=" AND t[2] EQ COB_EXTERNAL_ADDR ) {
                 // That's good enough for me
                 externals.insert(t[0]);
-                }
             }
+        }
 
         if( strncmp(p, COB_DUMP_OUTPUT, strlen(COB_DUMP_OUTPUT)) EQ 0 ) {
             /* cob_dump_output("WORKING-STORAGE"); */
@@ -453,6 +451,7 @@ check_for_another_perform:
             //  /* cob_dump_field ( 3, "G-5", COB_SET_FLD(f2, cob_get_numdisp (b_8, 1), b_9 + 0 + cob_get_numdisp (b_8, 1) + 0 + cob_get_numdisp (b_8, 1), &a_1), 0, 0); */
             //  /* cob_dump_field ( 4, "X", COB_SET_FLD(f0, 1, b_9 + 0 + cob_get_numdisp (b_8, 1) + 0 + cob_get_numdisp (b_8, 1), &a_4), 0, 1, i_1, 1); OCCURS 1 3 */
             //  /* cob_dump_field ( 2, "WS-LASTNAME", COB_SET_DATA (f_88, b_84 + 12), 0, 0); EXTERNAL */
+            //  /* cob_dump_field_ext ( 1, "WS-BASED", COB_SET_DATA (f_55, b_55), 0, 0); BASED */
             //
             // Arriving here means that the first thing on the line after removing "/*" is "cob_dump_field"
 
@@ -476,6 +475,9 @@ check_for_another_perform:
                         variable.occurs_max = stoi(t[2]);
                     }
                 }
+
+                // This is yet another hack:
+                bool is_based = !!strstr(ach,"; BASED */"); // Becomes true if non-NULL, false if NULL
 
                 // Hack away at cob_get_numdisp() entries:
                 cdf = HackAwayCobGetNumdisp(cdf);
@@ -569,6 +571,9 @@ check_for_another_perform:
                             continue;
                         }
                     }
+                    if( is_based ) {
+                        variable.record_type += "B"; // Reflag as BASED
+                    }
                     Insert(variable);
                 }
             }
@@ -578,13 +583,11 @@ check_for_another_perform:
     // We have a set of externals.  Let's scan through the variables.  Any
     // variable whose b_name is in externals[] gets reflagged as 'X'
 
-    for( V_VARIABLES::iterator it=variables.begin(); it!=variables.end(); it++ )
-        {
-        if( externals.find(it->b_name) != externals.end() )
-            {
+    for( V_VARIABLES::iterator it=variables.begin(); it!=variables.end(); it++ ) {
+        if( externals.find(it->b_name) != externals.end() ) {
             it->record_type = "X"; // Reflag as EXTERNAL
-            }
         }
+    }
 
     ::fclose(f);
 }
@@ -732,9 +735,9 @@ VARIABLES::Insert(VARIABLE &v)
     // We, however, don't want the cast:
     static char achCast[] = "(cob_u8_t *)&";
     size_t nfound = v.b_name.find(achCast);
-    if( nfound != string::npos )  {
+    if( nfound != string::npos ) {
         v.b_name = v.b_name.replace(nfound,strlen(achCast),"");
-        }
+    }
     variables.push_back(v);
 }
 
