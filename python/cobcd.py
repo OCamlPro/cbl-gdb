@@ -927,8 +927,10 @@ class VarTrie():
                             # share a parent.  That value might be None, but that's okay.
                                 payload.index_of_parent = self.storage_list[i].index_of_parent
                                 break;
-                            elif candidate_level < payload.Level:
+                            elif candidate_level>0 and candidate_level < payload.Level:
                                 # Because it is smaller than we are, this has to be our parent:
+                                # Unless, of course, it is a level 00 INDEXED BY variable, in which
+                                # case it can't be anybody's parent.
                                 payload.index_of_parent = i;
                                 break;
                             else: # candidate_level > payload.Level:
@@ -1638,16 +1640,14 @@ class CobolVariable():
             # We'll keep track along the way, to make sure the number of subscripts
             # is the same as the number of subscripted variables:
 
+            needed = 0
+            available = len(list_of_subscripts)
             variable = self
             while variable:
                 if variable.OccursMax:
                     # This is a table variable:
-                    if len(list_of_subscripts) == 0:
-                        print("Not enough subscripts")
-                        self.TableOffset = 0
-                        self.SubscriptFailure = True
-                        return
-                    if not list_of_subscripts[-1]:
+                    needed += 1
+                    if len(list_of_subscripts) == 0 or not list_of_subscripts[-1]:
                         # Empty becomes 1.  It's convenient for debugging
                         subscript = 1;
                     else:
@@ -1655,29 +1655,37 @@ class CobolVariable():
                         if subscript == None and limit_reached:
                             print("Multiple symbols match \"{0}\"".format(list_of_subscripts[-1].strip()))
                             self.SubscriptFailure = True
-                            return
+                            break;
                         if subscript == None:
                             print("No symbol matches \"{0}\"".format(list_of_subscripts[-1].strip()))
                             self.SubscriptFailure = True
-                            return
+                            break;
                     self.ResolvedSubscripts = [subscript] + self.ResolvedSubscripts
                     list_of_subscripts = list_of_subscripts[0:-1]
                     if subscript < 1 or subscript > variable.OccursMax:
                         print("The subscript '{0}({1})' is out of range (1 through {2})".format(variable.Name,
                                                                                              subscript,
                                                                                              variable.OccursMax))
-                        self.Offset = 0
+                        available = 0 # This will prevent an additional superfluous "too many subscripts" message
+                        needed = 0
                         self.SubscriptFailure = True
-                        return
+                        break;
                     self.TableOffset += (subscript - 1) * variable.Length
                 if not variable.index_of_parent:
                     break;
                 variable = GV_ModuleInformation.var_trie.storage_list[variable.index_of_parent]
-            if len(list_of_subscripts) > 0:
-                print("Too many subscripts")
-                self.Offset = 0
+
+            available -= needed
+            if available:
+                if needed == 1:
+                    print("{0} needs {1} subscript".format(self.Name,needed))
+                else:
+                    print("{0} needs {1} subscripts".format(self.Name,needed))
                 self.SubscriptFailure = True
-                return
+        if self.SubscriptFailure :
+            self.ResolvedSubscripts = []
+            self.TableOffset = 0
+        return
 
     def CalculateRefmodValues(self):
         self.RefmodOffset = 0
@@ -1745,6 +1753,7 @@ class CobolVariable():
 
             self.RefmodOffset = offset-1    # Note that RefmodOffset is zero-based
             self.RefmodLength = length
+        return
 
     def FetchVariableData(self, show_failure):
         # print("FetchVariableData:", self.Name, self.Section)
@@ -1763,8 +1772,15 @@ class CobolVariable():
             # Calculate the additional table offsets
             self.CalculateTableOffset()
 
-            # Calculate refmode offset:length
+            # Calculate refmod offset:length
             self.CalculateRefmodValues()
+
+            if self.SubscriptFailure or self.RefmodFailure:
+                # One of the Calculate... routines ran into trouble.  They
+                # displayed an error message.  It's at this point we bail out.
+                self.Subscripts = None
+                self.Refmod = None
+                return False
 
             # Call NameToString after calculating subscripts and refmods,
             # because those results get appended to display_name
@@ -1780,7 +1796,7 @@ class CobolVariable():
                 self.location_of_field = GetAddressOf(self.Fname)
                 if self.location_of_field is None:
                     self.not_in_context = True
-                    return
+                    return False
                 # The cob_field structure looks like this:
                 #   typedef struct __cob_field
                 #       {
@@ -1791,7 +1807,7 @@ class CobolVariable():
                 self.Length = GetDataAt(self.location_of_field, GV_GlobalVariables.SizeofPointer)
                 if self.Length is None:
                     self.not_in_context = True
-                    return
+                    return False
                 possible_location_of_data = GetDataAt(self.location_of_field + GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
                 if possible_location_of_data:
                     self.location_of_data = possible_location_of_data
@@ -1820,7 +1836,7 @@ class CobolVariable():
                         self.location_of_data = GetAddressOf(self.Bname)
                     if self.location_of_data is None:
                         self.not_in_context = True
-                        return
+                        return False
                     self.location_of_data += self.Offset
                     #print("  self.location_of_data + offset",hex(self.location_of_data),self.Offset)
                 else:
@@ -1832,7 +1848,7 @@ class CobolVariable():
                     self.location_of_attribute = GetAddressOf(self.Aname)
                     if self.location_of_attribute is None:
                         self.not_in_context = True
-                        return
+                        return False
                 else:
                     # print(" There is no self.Aname")
                     pass
@@ -1893,7 +1909,7 @@ class CobolVariable():
                     split_name = self.Name.split('/')
                     if split_name[-1] != program_id:
                         self.not_in_context = True
-                        return
+                        return False
 
                     # To recap:  We are trapped in the routine of the desired
                     # LOCAL-STORAGE variable, so we can look for it in cob_local_ptr
@@ -1906,10 +1922,11 @@ class CobolVariable():
 
                 except gdb.error:
                     self.not_in_context = True
+                    return False
             else:
                 print("We don't know how to handle", self.Section, self.Name)
                 self.not_in_context = True
-                return
+                return False
 
             if self.location_of_data != 0:
                 # With those calculations in hand, we can calculate the actuals:
@@ -1924,8 +1941,7 @@ class CobolVariable():
                 self.display_body_hex = self.GetDataAsHex()
                 self.display_body = self.GetDataAsString()
                 self.IsDirty = False
-
-        return
+        return True
 
     def NameToString(self):
         storage_type = ""
@@ -2823,8 +2839,6 @@ class CPrintWorker():
         return body
 
     def FormattedDisplay(self, payload):
-        if payload.SubscriptFailure or payload.RefmodFailure:
-            return
         body = self.GetDisplayBody(payload)
 
         if self.current_display_mode == '0':
@@ -2865,68 +2879,37 @@ class CPrintWorker():
         var_left  = GV_GlobalVariables.VarLeft;
         var_right = GV_GlobalVariables.VarRight;
 
-        if not var_left.Refmod and var_right and not var_right.Refmod:
-            # cprint var1=var2; neither have refmods.  Call the routine that
-            # does a straight assignment using libcob on .VarLeft and .VarRight
-            if CobolVariable.PutDataAsVar() == 0:
-                return_value = 0
-        elif not var_left.Refmod and not var_right:
-            # We have var_left has no refmod, and there is no var_right, so
-            # this is just a straight assignment to var_left = value
+        if not var_left.Refmod:
+            # Because we are not dealing with a refmod situation, we are
+            # pretty much going to let the libcob routines handle thing
+            # for us
+            if var_right and not var_right.Refmod:
+                # this is a straight "cprint var1 = var2
+                return_value = CobolVariable.PutDataAsVar()
+            else:
+                if var_right: # The logic requires that var_right.Refmod exists:
+                    # Because var_right has a refmod, we will use the var_right display
+                    # body, which at this point is already trimmed to the data we need
+                    value = var_right.display_body
+                if value.startswith(('"', "'")) and value.endswith(('"', "'")):
+                    # Get rid of the quotes around a string:
+                    value = value[1:-1]
+                return_value = var_left.PutDataAsString(value, 1, var_left.Length)
+        else:
+            # var_left has a refmod:
+            if var_right:
+                # Because there is a right-side variable, we will replace 'value' with
+                # the human display of that variable
+                value = var_right.display_body
+
+            # There is a refmod on the left side, so arrange to replace the
+            # data on the left
+            p_startloc = var_left.RefmodOffset+1
+            p_length   = var_left.RefmodLength
+
             if value.startswith(('"', "'")) and value.endswith(('"', "'")):
                 value = value[1:-1]
-            if var_left.PutDataAsString(value, 1, var_left.Length) == 0:
-                return_value = 0
-        else:
-            # If you get here, there are several possibililities:
-            if var_right and var_right.Refmod:
-                # var_right involves a refmod, so we need to extract
-                # just the data we need:
-                offset = var_right.RefmodOffset+1 # Assume double quotes
-                run = var_right.RefmodLength
-                if not var_right.display_body.startswith('"'):
-                    # This doesn't start with a double quote; adjust the offset
-                    offset -= 1
-                # And now we need the relevant data from var_right
-                value = '"' + var_right.display_body[offset:offset+run] + '"'
-            elif var_right:
-                # The logic requires that, at this point, var_left has a refmod
-                # and var_right does not.  Just replace whatever value the routine
-                # was passed with the unchanged var_right display_body:
-                value = var_right.display_body
-            # At this point, 'value' is a string, either with or without
-            # double quotes, depending on the type of variable.
-
-            if var_left.Refmod:
-                p_startloc = var_left.RefmodOffset+1
-                p_length   = var_left.RefmodLength
-            else:
-                p_startloc = 1
-                p_length = var_left.Length
-
-            if value.startswith(('"', "'")) and value.endswith(('"', "'")):
-                # Handle a quoted string literal.  String literals are handled
-                # from left to right.  If too short, they are space-filled to the
-                # right.  If too long, the left side is lopped off.
-                the_literal = value[1:-1]
-                # Make sure the literal is long enough:
-                while len(the_literal) < p_length:
-                    the_literal += ' '
-                # Make sure the literal is not too long:
-                the_literal = the_literal[0:p_length]
-
-                if var_left.PutDataAsString(the_literal, p_startloc, p_length) == 0:
-                    return_value = 0
-            elif re.match(number_regexp, value):
-                # Handle a numeric literal.  Numeric literals are zero-filled to
-                # the left if they are too short,  If too long, the leftmost
-                # digits are removed, which is consistent with how GnuCOBOL works.
-                while len(value) < p_length:
-                    value = '0' + value
-                # Make sure the literal is not too long:
-                value = value[-p_length:]
-                if var_left.PutDataAsString(value, p_startloc, p_length) == 0:
-                    return_value = 0
+            return_value = var_left.PutDataAsString(value, p_startloc, p_length)
 
         if return_value == 1:
             payload   = GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex]
@@ -3074,8 +3057,8 @@ class CPrintWorker():
                     return
 
             # Having done the assignment, display the left-side data that was changed:
-            payload.FetchVariableData(True)
-            self.FormattedDisplay(payload)
+            if payload.FetchVariableData(True):
+                self.FormattedDisplay(payload)
 
             # And having displayed it, let's reset subscripts and refmods (if necessary) so that
             # subsequent displays don't carry around the stale modifiers

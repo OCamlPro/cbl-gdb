@@ -84,12 +84,12 @@
            MOVE 1111    TO TAB-ADR-ADR-64(1)
            MOVE 111111  TO TAB-ADR-LAST-ADR-64(1)
            
-           MOVE "First" TO TAB-ADR-PRGM(1)
+           MOVE "First---" TO TAB-ADR-PRGM(1)
            MOVE "11"    TO TAB-ADR-ID(1)
            MOVE 1111    TO TAB-ADR-ADR-64(1)
            MOVE 111111  TO TAB-ADR-LAST-ADR-64(1)
            
-           MOVE "Second" TO TAB-ADR-PRGM(2)
+           MOVE "Second--" TO TAB-ADR-PRGM(2)
            MOVE "22"     TO TAB-ADR-ID(2)
            MOVE 2222     TO TAB-ADR-ADR-64(2)
            MOVE 222222   TO TAB-ADR-LAST-ADR-64(2)
@@ -97,6 +97,8 @@
            DISPLAY 'svalue : ' svalue
            DISPLAY 'MOVE 89 to svalue(2:2)'
            MOVE 89 to svalue(2:2)
+           DISPLAY 'svalue : ' svalue
+           MOVE "89" to svalue(2:2)
            DISPLAY 'svalue : ' svalue
            MOVE -123456 to svalue.
 

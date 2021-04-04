@@ -11,7 +11,7 @@ echo KNOWN GOOD FINISH\n
 echo KNOWN GOOD LINES: 1\n
 cprint *
 
-b 107
+b 109
 echo KNOWN GOOD START\n
 r
 cp *
@@ -83,6 +83,7 @@ echo cp ws-table(banana:banana)\n
 cp ws-table(banana:banana)
 echo cp ws-table(banana:banana\n
 cp ws-table(banana:banana
+echo cp ws-c\n
 cp ws-c
 echo cp ws-c()\n
 cp ws-c()
@@ -196,33 +197,85 @@ cp ws-a(two)(9:1)   = ' '
 echo cp ws-a(2)\n
 cp ws-a(2)
 
-echo cp/x ws-table(:)\n
-cp/x ws-table(:)
-echo cp/x ws-table(three:four)\n
-cp/x ws-table(three:four)
-
-echo cp TAB-ADR-IND\n
-cp TAB-ADR-IND
-echo cp TAB-ADR-IND of z-table = 1234\n
-cp TAB-ADR-IND of z-table = 1234
-echo cp TAB-ADR-IND of T_ENTRY = 5432\n
-cp TAB-ADR-IND of T_ENTRY = 5432
-echo cp TAB-ADR-IND of T_ADDRESSES = 5432\n
-cp TAB-ADR-IND of T_ADDRESSES = 5432
-
-echo cp WS-BASED\n
-cp WS-BASED
-echo cp WS-BASED(8:5)\n
-cp WS-BASED(8:5)
-
 echo cp ws-a(1)\n
 cp ws-a(1)
 echo cp ws-a(2)\n
 cp ws-a(2)
 echo cp ws-a(3)\n
 cp ws-a(3)
+
 echo cp *\n
 cp *
+
+echo cp/x ws-table(:)\n
+cp/x ws-table(:)
+echo cp/x ws-table(three:four)\n
+cp/x ws-table(three:four)
+
+echo cprint tab-adr-prgm\n
+cprint tab-adr-prgm
+echo cprint tab-adr-prgm()\n
+cprint tab-adr-prgm()
+echo cprint tab-adr-prgm(2)\n
+cprint tab-adr-prgm(2)
+
+echo cprint tab-adr-prgm(2)(3:4)\n
+cprint tab-adr-prgm(2)(3:4)
+echo cprint tab-adr-prgm(2)(3:4) = "zz"\n
+cprint tab-adr-prgm(2)(3:4) = "zz"
+echo cprint tab-adr-prgm(2)\n
+cprint tab-adr-prgm(2)
+echo cprint tab-adr-prgm(2)(3:4) = ws-a(one)(two:three)\n
+cprint tab-adr-prgm(2)(3:4) = ws-a(one)(two:three)
+echo cprint tab-adr-prgm(2)\n
+cprint tab-adr-prgm(2)
+
+echo cp TAB-ADR-IND\n
+cp TAB-ADR-IND
+echo cp TAB-ADR-IND of z-table = 1234\n
+cp TAB-ADR-IND of z-table = 1234
+echo cp TAB-ADR-IND of T_ADDRESSES = 5432\n
+cp TAB-ADR-IND of T_ADDRESSES = 5432
+echo cp TAB-ADR-IND\n
+cp TAB-ADR-IND
+
+echo cp TAB-ADR-IND of T_ENTRY = 9999\n
+cp TAB-ADR-IND of T_ENTRY = 9999
+
+echo cp svalue\n
+cp svalue
+echo cp svalue = 1234\n
+cp svalue = 1234
+echo cp svalue\n
+cp svalue
+echo cp svalue(2:2) = 89\n
+cp svalue(2:2) = 89
+echo cp svalue\n
+cp svalue
+echo cp svalue(2:2) = x'89'\n
+cp svalue(2:2) = x'89'
+echo cp svalue\n
+cp svalue
+echo cp svalue(2:2) = x'1234'\n
+cp svalue(2:2) = x'1234'
+echo cp svalue\n
+cp svalue
+echo cp svalue = -12345\n
+cp svalue = -12345
+echo cp svalue\n
+cp svalue
+
+# Sadly, these instruction don't work, in my test script.  The diff(1)
+# routine seems to ignore the extended ASCII character
+#echo cp ws-table(3:1) = x'fc' (u with umlaut)\n
+#cp ws-table(3:1) = x'fc'
+#echo cp ws-table\n
+#cp ws-table
+
+echo cp WS-BASED\n
+cp WS-BASED
+echo cp WS-BASED(8:5)\n
+cp WS-BASED(8:5)
 
 echo KNOWN GOOD FINISH\n
 
