@@ -62,7 +62,7 @@ import copy
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
-COBCD_VERSION = '[Version 4.25-dev]'
+COBCD_VERSION = '[Version 4.25]'
 
 #   This module implements the gdb extension commands like cprint and cwatch
 #   It is executed by GDB.
@@ -731,7 +731,7 @@ def atoi(s):
         n = ord(ch) - ord('0')
         if n<0 or n>9:
             # A non-digit ends the conversion
-            break;
+            break
         # This is a digit 0 through 9, so accumulate it into the result
         retval *= 10
         retval += n
@@ -926,13 +926,13 @@ class VarTrie():
                             # Our older relative has the same level we do.  That means we
                             # share a parent.  That value might be None, but that's okay.
                                 payload.index_of_parent = self.storage_list[i].index_of_parent
-                                break;
+                                break
                             elif candidate_level>0 and candidate_level < payload.Level:
                                 # Because it is smaller than we are, this has to be our parent:
                                 # Unless, of course, it is a level 00 INDEXED BY variable, in which
                                 # case it can't be anybody's parent.
-                                payload.index_of_parent = i;
-                                break;
+                                payload.index_of_parent = i
+                                break
                             else: # candidate_level > payload.Level:
                                 # This has to be a child of an older sibling.  They can't be
                                 # our parent, but we keep looking until we find that older sibling.
@@ -1078,7 +1078,7 @@ class VarTrie():
             n2 = recombined.find(')')
             if n1 == -1 and n2 == -1:
                 # No more paired parentheses
-                break;
+                break
             if n1 != -1 and n2 < n1 or n1 == -1 and n1 != -1:
                 # The parentheses are either mismatched, or in the wrong order
                 print("A syntax error in >>{0}<<".format('/'.join(cobol_variable_name)))
@@ -1185,7 +1185,7 @@ class VarTrie():
         i = 0
         while i < len(self.storage_list):
             self.storage_list[i].IsDirty = True
-            i += 1;
+            i += 1
 
 class LineList():
     """List of starting lines of ProgramNames"""
@@ -1299,7 +1299,7 @@ class CobolVariable():
         # through a "cprint <short_term_index>, or when the value is changed through a
         # "cprint var=<something>, we flag it as IsDirty so that FetchVariableValue is executed
         # when the variable is next accessed.
-        self.IsDirty = True;
+        self.IsDirty = True
 
     def get_verified_field_location(self,allocate):
         # When calling this routine with ALLOCATE, the caller must do
@@ -1321,7 +1321,7 @@ class CobolVariable():
         #
         # If allocate is turned off in that last case, we return None
         #
-        GV_GlobalVariables.AllocateBuffers();
+        GV_GlobalVariables.AllocateBuffers()
         try:
             if not allocate:
                 if self.Fname and self.Section not in ('L'):
@@ -1367,7 +1367,7 @@ class CobolVariable():
             traceback.print_exc()
             print("Command failed in get_verified_field_location:", command)
             retval = None
-        return retval;
+        return retval
 
     def free_field_location(self,field_location):
         gdb.execute("call (void *)cob_free({0})".format(hex(field_location)), False, True)
@@ -1407,7 +1407,7 @@ class CobolVariable():
 
     def GetDataAsString(self):
         retval = ""
-        GV_GlobalVariables.AllocateBuffers();
+        GV_GlobalVariables.AllocateBuffers()
         #location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
         #if not location_of_field:
         #    return retval
@@ -1649,17 +1649,17 @@ class CobolVariable():
                     needed += 1
                     if len(list_of_subscripts) == 0 or not list_of_subscripts[-1]:
                         # Empty becomes 1.  It's convenient for debugging
-                        subscript = 1;
+                        subscript = 1
                     else:
                         subscript, limit_reached = IntegerOrVariable(list_of_subscripts[-1].strip())
                         if subscript == None and limit_reached:
                             print("Multiple symbols match \"{0}\"".format(list_of_subscripts[-1].strip()))
                             self.SubscriptFailure = True
-                            break;
+                            break
                         if subscript == None:
                             print("No symbol matches \"{0}\"".format(list_of_subscripts[-1].strip()))
                             self.SubscriptFailure = True
-                            break;
+                            break
                     self.ResolvedSubscripts = [subscript] + self.ResolvedSubscripts
                     list_of_subscripts = list_of_subscripts[0:-1]
                     if subscript < 1 or subscript > variable.OccursMax:
@@ -1669,10 +1669,10 @@ class CobolVariable():
                         available = 0 # This will prevent an additional superfluous "too many subscripts" message
                         needed = 0
                         self.SubscriptFailure = True
-                        break;
+                        break
                     self.TableOffset += (subscript - 1) * variable.Length
                 if not variable.index_of_parent:
-                    break;
+                    break
                 variable = GV_ModuleInformation.var_trie.storage_list[variable.index_of_parent]
 
             available -= needed
@@ -2669,7 +2669,7 @@ def FromHexAlphaString(s):
             try:
                 ch = int(s[i:i+2], 16)
             except:
-                break;
+                break
             retval += chr(ch)
             i += 2
         retval += '"'
@@ -2687,7 +2687,7 @@ def FromHexLiteralNumber(s):
             try:
                 nch = int(s[i], 16)
             except:
-                break;
+                break
             retval *= 16
             retval += nch
             i += 1
@@ -2876,8 +2876,8 @@ class CPrintWorker():
         number_regexp = re.compile(r'[-]?[0-9]+|[0-9]+[\.,][0-9]+')
         return_value = 1
 
-        var_left  = GV_GlobalVariables.VarLeft;
-        var_right = GV_GlobalVariables.VarRight;
+        var_left  = GV_GlobalVariables.VarLeft
+        var_right = GV_GlobalVariables.VarRight
 
         if not var_left.Refmod:
             # Because we are not dealing with a refmod situation, we are
