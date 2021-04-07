@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-#!/usr/bin/python3
 
 ################################################################################
 # Copyright (c) 2019-2021 COBOLworx and contributors
@@ -62,7 +61,7 @@ import copy
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
-COBCD_VERSION = '[Version 4.25]'
+COBCD_VERSION = '[Version 4.26-dev]'
 
 #   This module implements the gdb extension commands like cprint and cwatch
 #   It is executed by GDB.
@@ -3464,11 +3463,15 @@ class CBreakWorker():
         elif condition in (">=", "<=", ">", "<"):
             condition_str = condition
         else:
-            print("Condition not implemented")
+            print("Condition {0} not implemented".format(condition))
             return
 
         if payload_l.Refmod:
-            location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, payload_r.Length, 0)
+            if is_location == 1:
+                r_length = GetDataAt(payload_r, GV_GlobalVariables.SizeofPointer)
+                location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, r_length , 0)
+            else:
+                location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, payload_r.Length, 0)
         else:
             cmp_len = payload_l.Length
             location_of_field = self.get_payload_field_location(payload_l, 0, cmp_len)
@@ -3513,15 +3516,16 @@ class CBreakWorker():
             command = "call (char*)cob_malloc(sizeof(cob_field_attr))"
             location_of_attribute = int(gdb.execute(command, False, True).split()[2], 16)
 
-            if value in ("ALL SPACES", "ALL SPACE"):
+            value_upper = value.upper()
+            if value_upper in ("ALL SPACES", "ALL SPACE"):
                 attr_type = COB_TYPE_ALPHANUMERIC_ALL
                 value = " "
                 set_constant = 1
-            elif value in ("SPACES", "SPACE"):
+            elif value_upper in ("SPACES", "SPACE"):
                 attr_type = COB_TYPE_ALPHANUMERIC
                 value = " "
                 set_constant = 1
-            elif value in ("ZERO", "ZEROS", "ZEROES"):
+            elif value_upper in ("ZERO", "ZEROS", "ZEROES"):
                 attr_type = COB_TYPE_NUMERIC_DISPLAY
                 value = "0"
                 set_constant = 1
@@ -3539,7 +3543,7 @@ class CBreakWorker():
             buffer = int(gdb.execute(command, False, True).split()[2], 16)
 
             if case_ins == 1:
-                value = value.upper()
+                value = value_upper
 
             buf_ptr = buffer
             for index in range(len(value)):
@@ -3694,7 +3698,7 @@ class CBreakWorker():
             return
 
         if len(left_side) == 1:
-            print("Removing condition from breakpoint {0}".format(left_side[0]))
+            print("Breakpoint {0} now unconditional.".format(left_side[0]))
             self.set_condition(break_point, None)
         elif len(left_side) >= 2 and len(left_side) <= 4:
             self.set_cond_break(left_side, right_side, condition, break_point, is_lit)
@@ -3838,13 +3842,13 @@ A breakpoint stops execution of your program whenever the expression matches
     cbreak LINENR if NUMVAR condition VALUE      set a breakpoint on line number (LINENR)
                                                  for numeric VARIABLE condition and value
                                                  where condition is == < <= > >= <>
-    cbreak LINENR if VARIABLE condition VARIABLE set a breakpoint on line numer (LINENR)
+    cbreak LINENR if VARIABLE condition VARIABLE set a breakpoint on line number (LINENR)
                                                  for variable condition and second variable
                                                  where condition is = <> >= <= > <
 
     if (start:length) is given the VARIABLE is checked with this startpoint and length
 
-    MSTRING may also: (ALL)SPACE/SPACES, ZERO/ZEROS/ZEROES
+    MSTRING may also be: (ALL)SPACE/SPACES, ZERO/ZEROS/ZEROES
 
     Examples:
     cbreak 28 VARIABLE = "breakstring"
