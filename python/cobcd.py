@@ -1482,26 +1482,46 @@ class CobolVariable():
 
     def PutDataAsString(self, rside, p_startloc, p_length):
         return_value = 1
+        cb_move = 0
 
         location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
         if not location_of_field:
             return 0
 
+        rside_upper = rside.upper()
+        if rside_upper in ("ALL SPACES", "ALL SPACE"):
+            attr_type = COB_TYPE_ALPHANUMERIC_ALL
+            rside = " "
+            cb_move = 1
+        elif rside_upper in ("SPACES", "SPACE"):
+            attr_type = COB_TYPE_ALPHANUMERIC
+            rside = " "
+            cb_move = 1
+        elif rside_upper in ("ZERO", "ZEROS", "ZEROES"):
+            attr_type = COB_TYPE_NUMERIC_DISPLAY
+            rside = "0"
+            cb_move = 1
+
         try:
-        # Let's leverage GDB to set our buffer to rside:
+            # Let's leverage GDB to set our buffer to rside:
             buffer = GV_GlobalVariables.cprint_buffer
 
             buf_ptr = buffer
             for index in range(len(rside)):
                 n = rside[index]
-                command = "set *(char *){0} = {1}".format(hex(buf_ptr),hex(ord(n)))
+                command = "set *(char *){0} = {1}".format(hex(buf_ptr), hex(ord(n)))
                 gdb.execute(command, False, True)
                 buf_ptr += 1
             command = "set *(char *){0} = '\\0'".format(hex(buf_ptr))
             gdb.execute(command, False, True)
 
             # Fetch a copy of the cob_field_attr
-            command = "set var *(cob_field_attr *){0} = {1}".format(hex(GV_GlobalVariables.cprint_a0),self.Aname)
+            if cb_move == 1:
+                command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(GV_GlobalVariables.cprint_a0), attr_type)
+                data_value = hex(buffer)
+            else:
+                command = "set var *(cob_field_attr *){0} = {1}".format(hex(GV_GlobalVariables.cprint_a0), self.Aname)
+                data_value = hex(self.location_of_data+self.TableOffset + p_startloc - 1)
             gdb.execute(command, False, True)
 
             if self.Refmod:
@@ -1509,23 +1529,26 @@ class CobolVariable():
                 # But for other types, this modification makes the debugger behave in the same perverse way
                 # that GnuCOBOL does: it just crams whatever ASCII sequence you've specified into
                 # whatever the target happens to be.
-                command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(GV_GlobalVariables.cprint_a0),COB_TYPE_GROUP)
+                command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(GV_GlobalVariables.cprint_a0), COB_TYPE_GROUP)
                 gdb.execute(command, False, True)
 
             # We will make our own cob_field in cprint_f0, using our own cprint_a0
             field_loc = GV_GlobalVariables.cprint_f0
             command = "set var *(cob_field *){0}".format(hex(field_loc)) + " = {"
             command += "{0}, (char *){1}, (cob_field_attr *){2}".format(p_length,
-                                                       hex(self.location_of_data+self.TableOffset+p_startloc-1),
-                                                       hex(GV_GlobalVariables.cprint_a0))
+                                                                        data_value,
+                                                                        hex(GV_GlobalVariables.cprint_a0))
             command += "}"
             gdb.execute(command, False, True)
 
-            # Now use the target executable's libcob to convert the string to the field:
-            command = "call (const char *)cob_put_field_str((cob_field *)"
-            command += hex(field_loc)
-            command += ",(char *)" + hex(buffer)
-            command += ")"
+            if cb_move == 1:
+                command = "call (void)cob_move((cob_field *){0}, (cob_field *){1})".format(hex(field_loc), hex(location_of_field))
+            else:
+                # Now use the target executable's libcob to convert the string to the field:
+                command = "call (const char *)cob_put_field_str((cob_field *)"
+                command += hex(field_loc)
+                command += ",(char *)" + hex(buffer)
+                command += ")"
             gdb.execute(command, False, True)
             self.IsDirty = True
         except gdb.error:
@@ -2868,6 +2891,11 @@ class CPrintWorker():
         # on those.
 
         value = value_[0]
+        if value_[0].upper() in ("ALL", "SPACE", "SPACES", "ZERO", "ZEROS", "ZEROES"):
+            if len(value_) == 2 and value_[1] in ("SPACE", "SPACES"):
+                value = "{0} {1}".format(value_[0], value_[1])
+            else:
+                value = value_[0]
 
         # This routine deals with the various cases of "cprint <this>=<that>"
         # The ability to cope with refmods complicates things considerably.  Try to keep up.
@@ -3143,7 +3171,7 @@ class CPrintWorker():
             print('Multiple symbols match the left-hand-side "{0}" in current context.'.format('/'.join(left_side)))
             return
 
-        if right_side and right_side[0].find('"') == -1 and right_side[0].find("'") == -1:
+        if right_side and right_side[0].find('"') == -1 and right_side[0].find("'") == -1 and right_side[0].upper() not in ("ALL", "SPACE", "SPACES", "ZERO", "ZEROS", "ZEROES"):
             # We have to deal with the possibility that the right_side is a numeric constant,
             # as in "cprint var=1234".  We can't let get_sorted_possibilities mess with it,
             # because that routine will get confused thinking that we are looking for an
@@ -3520,24 +3548,22 @@ class CBreakWorker():
             if value_upper in ("ALL SPACES", "ALL SPACE"):
                 attr_type = COB_TYPE_ALPHANUMERIC_ALL
                 value = " "
-                set_constant = 1
             elif value_upper in ("SPACES", "SPACE"):
                 attr_type = COB_TYPE_ALPHANUMERIC
                 value = " "
-                set_constant = 1
             elif value_upper in ("ZERO", "ZEROS", "ZEROES"):
                 attr_type = COB_TYPE_NUMERIC_DISPLAY
                 value = "0"
-                set_constant = 1
+            elif value.isdigit():
+                attr_type = COB_TYPE_NUMERIC_DISPLAY
             else:
                 attr_type = hex(payload_l.AttrType)
 
             command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(location_of_attribute), attr_type)
             gdb.execute(command, False, True)
-            
-            if set_constant == 1:
-                command = "set var ((cob_field_attr *){0})->flags = {1}".format(hex(location_of_attribute), COB_FLAG_CONSTANT)
-                gdb.execute(command, False, True)
+           
+            command = "set var ((cob_field_attr *){0})->flags = {1}".format(hex(location_of_attribute), COB_FLAG_CONSTANT)
+            gdb.execute(command, False, True)
 
             command = "call (char*)cob_malloc({0})".format(PRINT_BUFFER_SIZE)
             buffer = int(gdb.execute(command, False, True).split()[2], 16)
@@ -3640,6 +3666,9 @@ class CBreakWorker():
                     break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{0}".format(module_name))
             elif len(left_side) == 2 and left_side[0] == "section" and isinstance(left_side[1], self.strtype):
                 self.set_section_breakpoint(left_side)
+            else:
+                print('Breakpoint parameters not recognized')
+                return
         elif right_side and condition != "":
             if len(left_side) < 2:
                 print('Breakpoint parameters not recognized')
