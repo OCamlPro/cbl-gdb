@@ -151,6 +151,14 @@ PRINT_BUFFER_SIZE = 65536
 ALLOCATE = True
 DONT_ALLOCATE = False
 
+R_ALL_ZERO_SPACE = re.compile(r'ALL|ZERO(S|ES)?|SPACE(S)?', re.IGNORECASE)
+R_ZERO_SPACE = re.compile(r'ZERO(S|ES)?|SPACE(S)?', re.IGNORECASE)
+
+R_SPACE = re.compile(r'SPACE(S)?', re.IGNORECASE)
+R_ZERO = re.compile(r'ZERO(S|ES)?', re.IGNORECASE)
+R_ALLSPACE = re.compile(r'ALL[ ]*SPACE(S)?', re.IGNORECASE)
+R_ALLZERO = re.compile(r'ALL[ ]*ZERO(S|ES)?', re.IGNORECASE)
+
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
     limiting_debug_level = 1
@@ -1455,8 +1463,6 @@ class CobolVariable():
                       "(char *){1}, {2})".format(hex(field_loc),
                                                  hex(buffer),
                                                  PRINT_BUFFER_SIZE )
-            #print("self.Name",self.Name)
-            #print("command",command)
             gdb.execute(command, False, True)
         except gdb.error:
             traceback.print_exc()
@@ -1488,16 +1494,19 @@ class CobolVariable():
         if not location_of_field:
             return 0
 
-        rside_upper = rside.upper()
-        if rside_upper in ("ALL SPACES", "ALL SPACE"):
+        if R_ALLSPACE.match(rside):
             attr_type = COB_TYPE_ALPHANUMERIC_ALL
             rside = " "
             cb_move = 1
-        elif rside_upper in ("SPACES", "SPACE"):
+        elif R_ALLZERO.match(rside):
+            attr_type = COB_TYPE_ALPHANUMERIC_ALL
+            rside = "0"
+            cb_move = 1
+        elif R_SPACE.match(rside):
             attr_type = COB_TYPE_ALPHANUMERIC
             rside = " "
             cb_move = 1
-        elif rside_upper in ("ZERO", "ZEROS", "ZEROES"):
+        elif R_ZERO.match(rside):
             attr_type = COB_TYPE_NUMERIC_DISPLAY
             rside = "0"
             cb_move = 1
@@ -2889,20 +2898,17 @@ class CPrintWorker():
         # side first, and making a copy of the object in .VarLeft.  Then we process the
         # right side, and make a copy of that in .VarRight.  When we get here, we operate
         # on those.
+        return_value = 1
 
         value = value_[0]
-        if value_[0].upper() in ("ALL", "SPACE", "SPACES", "ZERO", "ZEROS", "ZEROES"):
-            if len(value_) == 2 and value_[1] in ("SPACE", "SPACES"):
+        if R_ALL_ZERO_SPACE.match(value_[0]):
+            if len(value_) == 2 and R_ZERO_SPACE.match(value_[1]):
                 value = "{0} {1}".format(value_[0], value_[1])
             else:
                 value = value_[0]
 
         # This routine deals with the various cases of "cprint <this>=<that>"
         # The ability to cope with refmods complicates things considerably.  Try to keep up.
-
-        number_regexp = re.compile(r'[-]?[0-9]+|[0-9]+[\.,][0-9]+')
-        return_value = 1
-
         var_left  = GV_GlobalVariables.VarLeft
         var_right = GV_GlobalVariables.VarRight
 
@@ -3171,7 +3177,7 @@ class CPrintWorker():
             print('Multiple symbols match the left-hand-side "{0}" in current context.'.format('/'.join(left_side)))
             return
 
-        if right_side and right_side[0].find('"') == -1 and right_side[0].find("'") == -1 and right_side[0].upper() not in ("ALL", "SPACE", "SPACES", "ZERO", "ZEROS", "ZEROES"):
+        if right_side and right_side[0].find('"') == -1 and right_side[0].find("'") == -1 and not R_ALL_ZERO_SPACE.match(right_side[0]):
             # We have to deal with the possibility that the right_side is a numeric constant,
             # as in "cprint var=1234".  We can't let get_sorted_possibilities mess with it,
             # because that routine will get confused thinking that we are looking for an
@@ -3318,6 +3324,9 @@ class CBreakWorker():
     def get_module_name(self, module):
         return_value = None
 
+        if module == "":
+            return ""
+
         try:
             if self.module_buffer is None:
                 self.module_buffer = gdb.execute("call (char*)cob_cache_malloc(100)", False, True).split()[2]
@@ -3434,7 +3443,7 @@ class CBreakWorker():
             print("Condition not implemented")
 
     def set_section_breakpoint(self, args):
-        mod_sec = args[1].split(":")
+        mod_sec = args[0].split(":")
         if len(mod_sec) == 1:
             section_name = self.get_section_name(mod_sec[0])
             if section_name is None:
@@ -3535,7 +3544,6 @@ class CBreakWorker():
     @staticmethod
     def create_cob_field(value, payload_l, case_ins):
         location_of_field = None
-        set_constant = 0
 
         try:
             command = "call (char*)cob_malloc(sizeof(cob_field))"
@@ -3544,14 +3552,16 @@ class CBreakWorker():
             command = "call (char*)cob_malloc(sizeof(cob_field_attr))"
             location_of_attribute = int(gdb.execute(command, False, True).split()[2], 16)
 
-            value_upper = value.upper()
-            if value_upper in ("ALL SPACES", "ALL SPACE"):
+            if R_ALLSPACE.match(value):
                 attr_type = COB_TYPE_ALPHANUMERIC_ALL
                 value = " "
-            elif value_upper in ("SPACES", "SPACE"):
+            elif R_ALLZERO.match(value):
+                attr_type = COB_TYPE_ALPHANUMERIC_ALL
+                value = "0"
+            elif R_SPACE.match(value):
                 attr_type = COB_TYPE_ALPHANUMERIC
                 value = " "
-            elif value_upper in ("ZERO", "ZEROS", "ZEROES"):
+            elif R_ZERO.match(value):
                 attr_type = COB_TYPE_NUMERIC_DISPLAY
                 value = "0"
             elif value.isdigit():
@@ -3569,7 +3579,7 @@ class CBreakWorker():
             buffer = int(gdb.execute(command, False, True).split()[2], 16)
 
             if case_ins == 1:
-                value = value_upper
+                value = value.upper()
 
             buf_ptr = buffer
             for index in range(len(value)):
@@ -3608,8 +3618,8 @@ class CBreakWorker():
 
         payload_l = copy.copy(payload_f)
 
-        if right_side[0].upper() in ("ALL", "SPACE", "SPACES", "ZERO", "ZEROS", "ZEROES"):
-            if len(right_side) == 2 and right_side[1] in ("SPACE", "SPACES"):
+        if R_ALL_ZERO_SPACE.match(right_side[0]):
+            if len(right_side) == 2 and R_ZERO_SPACE.match(right_side[1]):
                 value = "{0} {1}".format(right_side[0], right_side[1])
             else:
                 value = right_side[0]
@@ -3658,6 +3668,8 @@ class CBreakWorker():
         if not right_side:
             if len(left_side) == 1 and left_side[0].isdigit():
                 break_point = self.set_breakpoint(left_side[0])
+            elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and left_side[0].find(':') != -1:
+                self.set_section_breakpoint(left_side)
             elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and left_side[0] != "section":
                 module_name = self.get_module_name(left_side[0])
                 if module_name is None:
@@ -3665,6 +3677,7 @@ class CBreakWorker():
                 else:
                     break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{0}".format(module_name))
             elif len(left_side) == 2 and left_side[0] == "section" and isinstance(left_side[1], self.strtype):
+                del left_side[0]
                 self.set_section_breakpoint(left_side)
             else:
                 print('Breakpoint parameters not recognized')
