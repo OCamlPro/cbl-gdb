@@ -151,6 +151,14 @@ PRINT_BUFFER_SIZE = 65536
 ALLOCATE = True
 DONT_ALLOCATE = False
 
+R_ALL_ZERO_SPACE = re.compile(r'ALL|ZERO(S|ES)?|SPACE(S)?', re.IGNORECASE)
+R_ZERO_SPACE = re.compile(r'ZERO(S|ES)?|SPACE(S)?', re.IGNORECASE)
+
+R_SPACE = re.compile(r'SPACE(S)?', re.IGNORECASE)
+R_ZERO = re.compile(r'ZERO(S|ES)?', re.IGNORECASE)
+R_ALLSPACE = re.compile(r'ALL[ ]*SPACE(S)?', re.IGNORECASE)
+R_ALLZERO = re.compile(r'ALL[ ]*ZERO(S|ES)?', re.IGNORECASE)
+
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
     limiting_debug_level = 1
@@ -1455,8 +1463,6 @@ class CobolVariable():
                       "(char *){1}, {2})".format(hex(field_loc),
                                                  hex(buffer),
                                                  PRINT_BUFFER_SIZE )
-            #print("self.Name",self.Name)
-            #print("command",command)
             gdb.execute(command, False, True)
         except gdb.error:
             traceback.print_exc()
@@ -1482,26 +1488,49 @@ class CobolVariable():
 
     def PutDataAsString(self, rside, p_startloc, p_length):
         return_value = 1
+        cb_move = 0
 
         location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
         if not location_of_field:
             return 0
 
+        if R_ALLSPACE.match(rside):
+            attr_type = COB_TYPE_ALPHANUMERIC_ALL
+            rside = " "
+            cb_move = 1
+        elif R_ALLZERO.match(rside):
+            attr_type = COB_TYPE_ALPHANUMERIC_ALL
+            rside = "0"
+            cb_move = 1
+        elif R_SPACE.match(rside):
+            attr_type = COB_TYPE_ALPHANUMERIC
+            rside = " "
+            cb_move = 1
+        elif R_ZERO.match(rside):
+            attr_type = COB_TYPE_NUMERIC_DISPLAY
+            rside = "0"
+            cb_move = 1
+
         try:
-        # Let's leverage GDB to set our buffer to rside:
+            # Let's leverage GDB to set our buffer to rside:
             buffer = GV_GlobalVariables.cprint_buffer
 
             buf_ptr = buffer
             for index in range(len(rside)):
                 n = rside[index]
-                command = "set *(char *){0} = {1}".format(hex(buf_ptr),hex(ord(n)))
+                command = "set *(char *){0} = {1}".format(hex(buf_ptr), hex(ord(n)))
                 gdb.execute(command, False, True)
                 buf_ptr += 1
             command = "set *(char *){0} = '\\0'".format(hex(buf_ptr))
             gdb.execute(command, False, True)
 
             # Fetch a copy of the cob_field_attr
-            command = "set var *(cob_field_attr *){0} = {1}".format(hex(GV_GlobalVariables.cprint_a0),self.Aname)
+            if cb_move == 1:
+                command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(GV_GlobalVariables.cprint_a0), attr_type)
+                data_value = hex(buffer)
+            else:
+                command = "set var *(cob_field_attr *){0} = {1}".format(hex(GV_GlobalVariables.cprint_a0), self.Aname)
+                data_value = hex(self.location_of_data+self.TableOffset + p_startloc - 1)
             gdb.execute(command, False, True)
 
             if self.Refmod:
@@ -1509,23 +1538,26 @@ class CobolVariable():
                 # But for other types, this modification makes the debugger behave in the same perverse way
                 # that GnuCOBOL does: it just crams whatever ASCII sequence you've specified into
                 # whatever the target happens to be.
-                command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(GV_GlobalVariables.cprint_a0),COB_TYPE_GROUP)
+                command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(GV_GlobalVariables.cprint_a0), COB_TYPE_GROUP)
                 gdb.execute(command, False, True)
 
             # We will make our own cob_field in cprint_f0, using our own cprint_a0
             field_loc = GV_GlobalVariables.cprint_f0
             command = "set var *(cob_field *){0}".format(hex(field_loc)) + " = {"
             command += "{0}, (char *){1}, (cob_field_attr *){2}".format(p_length,
-                                                       hex(self.location_of_data+self.TableOffset+p_startloc-1),
-                                                       hex(GV_GlobalVariables.cprint_a0))
+                                                                        data_value,
+                                                                        hex(GV_GlobalVariables.cprint_a0))
             command += "}"
             gdb.execute(command, False, True)
 
-            # Now use the target executable's libcob to convert the string to the field:
-            command = "call (const char *)cob_put_field_str((cob_field *)"
-            command += hex(field_loc)
-            command += ",(char *)" + hex(buffer)
-            command += ")"
+            if cb_move == 1:
+                command = "call (void)cob_move((cob_field *){0}, (cob_field *){1})".format(hex(field_loc), hex(location_of_field))
+            else:
+                # Now use the target executable's libcob to convert the string to the field:
+                command = "call (const char *)cob_put_field_str((cob_field *)"
+                command += hex(field_loc)
+                command += ",(char *)" + hex(buffer)
+                command += ")"
             gdb.execute(command, False, True)
             self.IsDirty = True
         except gdb.error:
@@ -2866,15 +2898,17 @@ class CPrintWorker():
         # side first, and making a copy of the object in .VarLeft.  Then we process the
         # right side, and make a copy of that in .VarRight.  When we get here, we operate
         # on those.
+        return_value = 1
 
         value = value_[0]
+        if R_ALL_ZERO_SPACE.match(value_[0]):
+            if len(value_) == 2 and R_ZERO_SPACE.match(value_[1]):
+                value = "{0} {1}".format(value_[0], value_[1])
+            else:
+                value = value_[0]
 
         # This routine deals with the various cases of "cprint <this>=<that>"
         # The ability to cope with refmods complicates things considerably.  Try to keep up.
-
-        number_regexp = re.compile(r'[-]?[0-9]+|[0-9]+[\.,][0-9]+')
-        return_value = 1
-
         var_left  = GV_GlobalVariables.VarLeft
         var_right = GV_GlobalVariables.VarRight
 
@@ -3143,7 +3177,7 @@ class CPrintWorker():
             print('Multiple symbols match the left-hand-side "{0}" in current context.'.format('/'.join(left_side)))
             return
 
-        if right_side and right_side[0].find('"') == -1 and right_side[0].find("'") == -1:
+        if right_side and right_side[0].find('"') == -1 and right_side[0].find("'") == -1 and not R_ALL_ZERO_SPACE.match(right_side[0]):
             # We have to deal with the possibility that the right_side is a numeric constant,
             # as in "cprint var=1234".  We can't let get_sorted_possibilities mess with it,
             # because that routine will get confused thinking that we are looking for an
@@ -3290,6 +3324,9 @@ class CBreakWorker():
     def get_module_name(self, module):
         return_value = None
 
+        if module == "":
+            return ""
+
         try:
             if self.module_buffer is None:
                 self.module_buffer = gdb.execute("call (char*)cob_cache_malloc(100)", False, True).split()[2]
@@ -3376,21 +3413,14 @@ class CBreakWorker():
         return location_of_field
 
     def set_string_breakpoint(self, line_nr, condition, payload, diff_str, break_point):
-        if condition in ("=", "=i", "!=", "!=i", "==", "==i", "<>", "<>i", "=~"):
-            if condition[-1:] == "i":
-                cmp_func = "strncasecmp"
-            else:
-                cmp_func = "strncmp"
-
+        if condition == "=~":
             cmp_len = len(diff_str)
             if payload.Refmod:
                 bp_startloc = payload.RefmodOffset
                 bp_length = payload.RefmodLength
-                if bp_length > cmp_len:
-                    print("Length specifier > compare string ({0} > {1})".format(str(bp_length), str(cmp_len)))
+                if bp_length < cmp_len:
+                    print("Length specifier < compare string ({0} < {1})".format(str(bp_length), str(cmp_len)))
                     return
-                elif bp_length < cmp_len:
-                    print("Length specifier < compare string ({0} < {1}), truncating".format(str(bp_length), str(cmp_len)))
 
                 cmp_len = bp_length
             else:
@@ -3408,34 +3438,12 @@ class CBreakWorker():
                 else:
                     break_point = self.set_breakpoint(line_nr)
 
-            if condition in ("=", "=i", "==", "==i"):
-                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1})), \"{2}\", {3}) == 0".format(cmp_func, hex(location_of_field), diff_str, cmp_len))
-            elif condition in ("<>", "<>i", "!=", "!=i"):
-                self.set_condition(break_point, "(int){0}(((char *)cob_get_field_str_buffered({1})), \"{2}\", {3}) != 0".format(cmp_func, hex(location_of_field), diff_str, cmp_len))
-            else:
-                self.set_condition(break_point, "$_regex(((char *)cob_get_field_str_buffered({0}), \"{1}\")".format(hex(location_of_field), diff_str))
-        else:
-            print("Condition not implemented")
-
-    def set_numeric_breakpoint(self, line_nr, condition, payload, diff_num, break_point):
-
-        if condition in ("==", "<", "<=", ">", ">=", "<>", "!="):
-            location_of_field = self.get_payload_field_location(payload, 0, payload.Length)
-            if not location_of_field:
-                return
-
-            if break_point is None:
-                if line_nr == "-1":
-                    break_point = self.set_breakpoint("")
-                else:
-                    break_point = self.set_breakpoint(line_nr)
-
-            self.set_condition(break_point, "(double)atof((char *)cob_get_field_str_buffered({0})) {1} {2}".format(hex(location_of_field), condition, diff_num))
+            self.set_condition(break_point, "$_regex(((char *)cob_get_field_str_buffered({0}), \"{1}\")".format(hex(location_of_field), diff_str))
         else:
             print("Condition not implemented")
 
     def set_section_breakpoint(self, args):
-        mod_sec = args[1].split(":")
+        mod_sec = args[0].split(":")
         if len(mod_sec) == 1:
             section_name = self.get_section_name(mod_sec[0])
             if section_name is None:
@@ -3479,7 +3487,12 @@ class CBreakWorker():
 
         return location_of_field, cmp_len
 
-    def set_cob_cmp_breakpoint(self, line_nr, condition, payload_l, payload_r, break_point):
+    def set_cob_cmp_breakpoint(self, line_nr, condition, payload_l, payload_r, break_point, is_location):
+        case_ins = 0
+        if condition[-1:] == "i":
+            case_ins = 1
+            condition = condition[:-1]
+
         if condition in ("=", "=="):
             condition_str = "=="
         elif condition in ("<>", "!="):
@@ -3487,11 +3500,15 @@ class CBreakWorker():
         elif condition in (">=", "<=", ">", "<"):
             condition_str = condition
         else:
-            print("Condition not implemented")
+            print("Condition {0} not implemented".format(condition))
             return
 
         if payload_l.Refmod:
-            location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, payload_r.Length, 0)
+            if is_location == 1:
+                r_length = GetDataAt(payload_r, GV_GlobalVariables.SizeofPointer)
+                location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, r_length , 0)
+            else:
+                location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, payload_r.Length, 0)
         else:
             cmp_len = payload_l.Length
             location_of_field = self.get_payload_field_location(payload_l, 0, cmp_len)
@@ -3499,11 +3516,14 @@ class CBreakWorker():
         if not location_of_field:
             return
 
-        if payload_r.Refmod:
-            other_field, cmp_len = self.get_cob_cmp_refloc(payload_r, cmp_len, 1)
+        if is_location == 1:
+            other_field = payload_r
         else:
-            cmp_len = payload_r.Length
-            other_field = self.get_payload_field_location(payload_r, 0, cmp_len)
+            if payload_r.Refmod:
+                other_field, cmp_len = self.get_cob_cmp_refloc(payload_r, cmp_len, 1)
+            else:
+                cmp_len = payload_r.Length
+                other_field = self.get_payload_field_location(payload_r, 0, cmp_len)
 
         if not other_field:
             return
@@ -3513,12 +3533,83 @@ class CBreakWorker():
                 break_point = self.set_breakpoint("")
             else:
                 break_point = self.set_breakpoint(line_nr)
-        self.set_condition(break_point, "(int)cob_cmp({0}, {1}) {2} 0".format(hex(location_of_field), hex(other_field), condition_str))
+
+        if case_ins == 1 and is_location == 1:
+            self.set_condition(break_point, "(int)cob_cmp(cob_intr_upper_case(0,0,{0}), {1}) {2} 0".format(hex(location_of_field), hex(other_field), condition_str))
+        elif case_ins == 1 and is_location == 0:
+            self.set_condition(break_point, "(int)cob_cmp(cob_intr_upper_case(0,0,{0}), cob_intr_upper_case(0,0,{1})) {2} 0".format(hex(location_of_field), hex(other_field), condition_str))
+        else:
+            self.set_condition(break_point, "(int)cob_cmp({0}, {1}) {2} 0".format(hex(location_of_field), hex(other_field), condition_str))
+
+    @staticmethod
+    def create_cob_field(value, payload_l, case_ins):
+        location_of_field = None
+
+        try:
+            command = "call (char*)cob_malloc(sizeof(cob_field))"
+            location_of_field = int(gdb.execute(command, False, True).split()[2], 16)
+
+            command = "call (char*)cob_malloc(sizeof(cob_field_attr))"
+            location_of_attribute = int(gdb.execute(command, False, True).split()[2], 16)
+
+            if R_ALLSPACE.match(value):
+                attr_type = COB_TYPE_ALPHANUMERIC_ALL
+                value = " "
+            elif R_ALLZERO.match(value):
+                attr_type = COB_TYPE_ALPHANUMERIC_ALL
+                value = "0"
+            elif R_SPACE.match(value):
+                attr_type = COB_TYPE_ALPHANUMERIC
+                value = " "
+            elif R_ZERO.match(value):
+                attr_type = COB_TYPE_NUMERIC_DISPLAY
+                value = "0"
+            elif value.isdigit():
+                attr_type = COB_TYPE_NUMERIC_DISPLAY
+            else:
+                attr_type = hex(payload_l.AttrType)
+
+            command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(location_of_attribute), attr_type)
+            gdb.execute(command, False, True)
+           
+            command = "set var ((cob_field_attr *){0})->flags = {1}".format(hex(location_of_attribute), COB_FLAG_CONSTANT)
+            gdb.execute(command, False, True)
+
+            command = "call (char*)cob_malloc({0})".format(PRINT_BUFFER_SIZE)
+            buffer = int(gdb.execute(command, False, True).split()[2], 16)
+
+            if case_ins == 1:
+                value = value.upper()
+
+            buf_ptr = buffer
+            for index in range(len(value)):
+                n = value[index]
+                command = "set *(char *){0} = {1}".format(hex(buf_ptr), hex(ord(n)))
+                gdb.execute(command, False, True)
+                buf_ptr += 1
+            command = "set *(char *){0} = '\\0'".format(hex(buf_ptr))
+            gdb.execute(command, False, True)
+
+            command = "set var *(cob_field *){0}".format(location_of_field) + " = {"
+            command += "{0}, (char *){1}, {2}".format(len(value), hex(buffer), hex(location_of_attribute))
+            command += "}"
+            gdb.execute(command, False, True)
+        except gdb.error:
+            print("create_cob_field: Error creating cob_field for {0}".format(value))
+            return location_of_field
+
+        return location_of_field
 
     def set_cond_break(self, left_side, right_side, condition, break_point, is_lit):
         payload_s = None
+        is_location = 0
+        case_ins = 0
+
         line_nr = left_side[0]
         del left_side[0]
+
+        if condition[-1:] == "i":
+            case_ins = 1
 
         payload_f = self.get_var_payload(left_side)
         if payload_f is None:
@@ -3526,21 +3617,33 @@ class CBreakWorker():
             return
 
         payload_l = copy.copy(payload_f)
-        if is_lit == 0 and not right_side[0].isdigit():
+
+        if R_ALL_ZERO_SPACE.match(right_side[0]):
+            if len(right_side) == 2 and R_ZERO_SPACE.match(right_side[1]):
+                value = "{0} {1}".format(right_side[0], right_side[1])
+            else:
+                value = right_side[0]
+            payload_r = self.create_cob_field(value, payload_l, case_ins)
+            is_location = 1
+        elif is_lit == 0 and not right_side[0].isdigit():
             payload_s = self.get_var_payload(right_side)
             if payload_s is None:
                 # note: error handling already in get_var_payload
                 return
 
             payload_r = copy.copy(payload_s)
+        elif is_lit == 1 and condition != "=~":
+            payload_r = self.create_cob_field(right_side[0][1:-1], payload_l, case_ins)
+            is_location = 1
+        elif right_side[0].isdigit():
+            payload_r = self.create_cob_field(right_side[0], payload_l, case_ins)
+            is_location = 1
 
-        if payload_s is not None:
-            self.set_cob_cmp_breakpoint(line_nr, condition, payload_l, payload_r, break_point)
+        if payload_r is not None and condition != "=~":
+            self.set_cob_cmp_breakpoint(line_nr, condition, payload_l, payload_r, break_point, is_location)
         else:
             if payload_l.AttrType in (1, 33, 34, 35):
                 self.set_string_breakpoint(line_nr, condition, payload_l, right_side[0][1:-1], break_point)
-            elif payload_l.AttrType in (16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 36) and right_side[0].isdigit():
-                self.set_numeric_breakpoint(line_nr, condition, payload_l, right_side[0], break_point)
             else:
                 print("Not yet implemented (Attribute type", payload_l.AttrType, ")")
                 return
@@ -3565,6 +3668,8 @@ class CBreakWorker():
         if not right_side:
             if len(left_side) == 1 and left_side[0].isdigit():
                 break_point = self.set_breakpoint(left_side[0])
+            elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and left_side[0].find(':') != -1:
+                self.set_section_breakpoint(left_side)
             elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and left_side[0] != "section":
                 module_name = self.get_module_name(left_side[0])
                 if module_name is None:
@@ -3572,7 +3677,11 @@ class CBreakWorker():
                 else:
                     break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{0}".format(module_name))
             elif len(left_side) == 2 and left_side[0] == "section" and isinstance(left_side[1], self.strtype):
+                del left_side[0]
                 self.set_section_breakpoint(left_side)
+            else:
+                print('Breakpoint parameters not recognized')
+                return
         elif right_side and condition != "":
             if len(left_side) < 2:
                 print('Breakpoint parameters not recognized')
@@ -3631,7 +3740,7 @@ class CBreakWorker():
             return
 
         if len(left_side) == 1:
-            print("Removing condition from breakpoint {0}".format(left_side[0]))
+            print("Breakpoint {0} now unconditional.".format(left_side[0]))
             self.set_condition(break_point, None)
         elif len(left_side) >= 2 and len(left_side) <= 4:
             self.set_cond_break(left_side, right_side, condition, break_point, is_lit)
@@ -3775,11 +3884,13 @@ A breakpoint stops execution of your program whenever the expression matches
     cbreak LINENR if NUMVAR condition VALUE      set a breakpoint on line number (LINENR)
                                                  for numeric VARIABLE condition and value
                                                  where condition is == < <= > >= <>
-    cbreak LINENR if VARIABLE condition VARIABLE set a breakpoint on line numer (LINENR)
+    cbreak LINENR if VARIABLE condition VARIABLE set a breakpoint on line number (LINENR)
                                                  for variable condition and second variable
                                                  where condition is = <> >= <= > <
 
     if (start:length) is given the VARIABLE is checked with this startpoint and length
+
+    MSTRING may also be: (ALL)SPACE/SPACES, ZERO/ZEROS/ZEROES
 
     Examples:
     cbreak 28 VARIABLE = "breakstring"
@@ -3799,6 +3910,49 @@ A breakpoint stops execution of your program whenever the expression matches
         self.dont_repeat()
         self.worker.process_break_arguments(arguments)
 
+    def complete(self, text, word):
+
+        print(word)
+        print(text)
+        try:
+            # HACK: because of missing support for hypens: in identifiers
+            # we have to look at the text for that
+            # but the hack doesn't work because GDB won't complete at - either...
+            # if text and text.find('-'):
+            #    word = text # split, last part
+            if text == "" and word == "":
+                command = "frame"
+                frame_string = GdbExecute(currentframe(), command)
+                nfound = frame_string.find(':')
+                if nfound > -1:
+                    frame_string = frame_string[nfound + 1:]
+                    frame_string = frame_string.split()
+                    try:
+                        return [frame_string[0]]
+                    except ValueError:
+                        return ["0"]
+
+            if len(text.split()) == 1:
+                    return ["if"]
+
+            if len(text.split()) in (3, 4) and word == "":
+                return ["=", "!=", "<", "=<", ">", ">=", "<>", "=~"]
+
+            if word is None or word == "" or word.startswith('"'):
+                return gdb.COMPLETE_NONE
+
+            GV_ModuleState.EstablishModuleState(False)
+            lookup = TokenizeCanonicalName(word)
+            possibilities_1, limit_reached = get_sorted_possibilities(lookup, 0)
+            possibilities = []
+            for index in possibilities_1:
+                whole_name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
+                possibilities.append(whole_name)
+
+            return possibilities
+
+        except:
+            traceback.print_exc()
 
 class CCondition(gdb.Command):
     """Specify breakpoint number N to break only if COND is true.
