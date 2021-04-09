@@ -3971,6 +3971,150 @@ Do "help cbreak" for info on COBOL expressions"""
         self.dont_repeat()
         self.worker.process_condition_arguments(arguments)
 
+class CLoadWorker():
+    """Does most of the non-gdb work of CLoad(),
+    managing a list of (likely) COBOL modules and paths found via COB_LIBRARY_PATH
+    For remote/cross-debugging: needs local access to the executables along with the readelf binary
+    and possibly COB_MODULE_EXT set."""
+
+    def __init__(self):
+        from os import path
+        # TODO: try to get this "target" info from GDB
+        self.objext = os.getenv('COB_MODULE_EXT')
+        if self.objext is None:
+            # FIXME: this is not necessarily the same as the GDBs that executes this python...
+            debugged_system = platform.system()
+            if debugged_system == 'Windows':
+                self.objext = '.dll'
+            else:
+                self.objext = '.so'
+    
+        # note: try to get the value from libcob won't help for renotte-/cross-debugging, as the local
+        #       python iterates over the folders
+        library_path = os.getenv('COB_LIBRARY_PATH', '.')
+        self.module_paths = library_path.split(path.pathsep)
+
+        self.modules = []
+        for path_entry in self.module_paths:
+            try:
+                if not path.isdir(path_entry):
+                    print ("CloadWorker warning: entry in COB_LIBRARY_PATH skipped, is not a path:", path_entry)
+                    continue
+                files = os.listdir(path_entry)
+            except:
+                print ("CloadWorker warning: entry in COB_LIBRARY_PATH is not a path:", path_entry)
+                continue
+            for f in files:
+                parts = path.splitext(f)
+                if parts[1] == self.objext:
+                    self.modules.append(parts[0])
+        self.modules = set(self.modules)  # removing possible duplicates and order
+
+    def get_module_ext(self):
+        # returns the module extension
+        return self.objext
+
+    def get_module_paths(self):
+        # returns the paths in COB_LIBRARY_PATH
+        return self.module_paths
+
+    def query_modules(self, filters):
+        # returns the modules found on start, but only the ones matching the given regex filter(s)
+        if not filters:
+            filters = {""}
+        result_entries = []
+        max_entries = 200  # TODO get configured maximum from GDB (may-completions?)
+        for filter_entry in filters:
+            pattern = re.compile(filter_entry, re.IGNORECASE)
+            for module in self.modules:
+                if pattern.match(module) is not None:
+                    result_entries.append(module)
+                    if len(result_entries) == max_entries:
+                        result_entries = set(result_entries)  # removing duplicates
+                        if len(result_entries) == max_entries:
+                            # FIXME GDB asks: Display all 200 possibilities? (y or n)
+                            return "  ".join(result_entries) + "\n*** List may be truncated, max-completions reached. ***"
+        # FIXME: GDB returns a nice table
+        return "  ".join(set(result_entries))  # removing duplicates and order
+
+    def get_module_completion(self, word):
+        # returns the modules found on start, but only the ones starting with the given filter
+        if not word:
+            return self.modules
+        self.search = word.upper()
+        return filter(self.__filterCompletions, self.modules)
+
+    def __filterCompletions(self, word):
+        if word.upper().startswith(self.search):
+            return True
+        else:
+            return False
+
+CBLDBG_CLOAD_WORKER = CLoadWorker()
+
+# actual reading originally taken from https://stackoverflow.com/questions/20380204/how-to-load-multiple-symbol-files-in-gdb/62471062#62471062
+
+# Note: Replace "readelf" with path to binary if it is not in your PATH.
+READELF_BINARY = os.getenv('READELF', 'readelf')
+
+class CLoad (gdb.Command):
+    """Load symbols from COBOL module in COB_LIBRARY_PATH or query for available modules.
+Usage: cload MODULE           try to load given COBOL module into GDB
+       cload /q [REGEX ..]    query available modules
+       cload /c               re-read modules"""
+
+    def __init__(self):
+        print('Registering Cload')
+        super(CLoad, self).__init__("cload", gdb.COMMAND_FILES)
+        self.search = ''
+
+    def invoke(self, user_input, from_tty):
+        from os import path
+        self.dont_repeat()
+
+        if user_input:
+            module_names = user_input.split()
+        else:
+            print("module name missing")
+            return
+
+        if module_names[0][0:2] == '/c':
+            global CBLDBG_CLOAD_WORKER
+            CBLDBG_CLOAD_WORKER = CLoadWorker()
+            print("Modules re-read")
+            return
+
+        if module_names[0][0:2] == '/q':
+            del module_names[0]
+            print(CBLDBG_CLOAD_WORKER.query_modules(module_names))
+            return
+
+        for module_name in module_names:
+            solibpath = None
+            paths = CBLDBG_CLOAD_WORKER.get_module_paths()
+            for path_entry in paths:
+                module_path = path.join(path_entry, module_name + CBLDBG_CLOAD_WORKER.get_module_ext())
+                if path.isfile(module_path):
+                    solibpath = module_path
+                    break
+            if solibpath is None:
+                print("{0}: module not found in {1}" .format(module_name, paths))
+                return
+            offset = self.get_text_offset(solibpath)
+            gdb_cmd = "add-symbol-file %s %s" % (solibpath, offset)
+            gdb.execute(gdb_cmd, from_tty)
+
+    def get_text_offset(self, solibpath):
+        import subprocess
+        elfres = subprocess.check_output([READELF_BINARY, "-WS", solibpath])
+        for line in elfres.splitlines():
+            if "] .text " in line:
+                return "0x" + line.split()[4]
+        return ""  # TODO: Raise error when offset is not found?
+
+    def complete(self, text, word):
+        return CBLDBG_CLOAD_WORKER.get_module_completion(word)
+
 
 class CStart(gdb.Command):
     """(Re-)start the debugged program stopping at the beginning of the first COBOL statement.
@@ -4097,5 +4241,6 @@ CPrint()
 CWatch()
 CBreak()
 CCondition()
+CLoad()
 CNext()
 CStart()
