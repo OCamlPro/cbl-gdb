@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-#!/usr/bin/python3
 
 ################################################################################
 # Copyright (c) 2019-2021 COBOLworx and contributors
