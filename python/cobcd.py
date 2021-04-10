@@ -52,6 +52,7 @@ import re
 import sys
 import platform
 import os
+from os import path
 import traceback
 import subprocess
 from inspect import currentframe, getframeinfo
@@ -3325,26 +3326,47 @@ class CBreakWorker():
         return_value = None
 
         if module == "":
-            return ""
+            return None
 
         try:
             if self.module_buffer is None:
                 self.module_buffer = gdb.execute("call (char*)cob_cache_malloc(100)", False, True).split()[2]
         except gdb.error:
-            self.module_buffer = None
             try:
                 spec = "{0}_".format(module)
                 spec_ref = gdb.parse_and_eval(spec)
-                return_value = module
-            except:
-                return_value = None
-        else:
+                return module
+            except gdb.error:
+                return None
+
+        try:
+            spec = "{0}_".format(module)
+            spec_ref = gdb.parse_and_eval(spec)
+            return_value = module
+        except:
+            solibpath = None
+            paths = CBLDBG_CLOAD_WORKER.get_module_paths()
+            for path_entry in paths:
+                module_path = path.join(path_entry, MODULE_PREFIX + module + CBLDBG_CLOAD_WORKER.get_module_ext())
+                if path.isfile(module_path):
+                    solibpath = module_path
+                    break
+            if solibpath is None:
+                return None
+
+            offset = CBLDBG_CLOAD_WORKER.get_text_offset(solibpath)
             try:
-                command = "call (int)cob_encode_program_id(\"{0}\",{1},100,0)".format(module, self.module_buffer)
-                gdb.execute(command, False, True)
-                return_value = self.get_data_from_buffer(self.module_buffer)
-            except gdb.error as error:
-                raise gdb.GdbError("The program is not being run: " + str(error))
+                gdb_cmd = "add-symbol-file %s %s" % (solibpath, offset)
+                gdb.execute(gdb_cmd)
+            except gdb.error:
+                return_value = None
+
+        try:
+            command = "call (int)cob_encode_program_id(\"{0}\",{1},100,0)".format(module, self.module_buffer)
+            gdb.execute(command, False, True)
+            return_value = self.get_data_from_buffer(self.module_buffer)
+        except gdb.error as error:
+            raise gdb.GdbError("The program is not being run: " + str(error))
 
         return return_value
 
@@ -3567,7 +3589,7 @@ class CBreakWorker():
             elif value.isdigit():
                 attr_type = COB_TYPE_NUMERIC_DISPLAY
             else:
-                attr_type = hex(payload_l.AttrType)
+                attr_type = COB_TYPE_ALPHANUMERIC
 
             command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(location_of_attribute), attr_type)
             gdb.execute(command, False, True)
@@ -3912,8 +3934,6 @@ A breakpoint stops execution of your program whenever the expression matches
 
     def complete(self, text, word):
 
-        print(word)
-        print(text)
         try:
             # HACK: because of missing support for hypens: in identifiers
             # we have to look at the text for that
@@ -3978,7 +3998,6 @@ class CLoadWorker():
     and possibly COB_MODULE_EXT set."""
 
     def __init__(self):
-        from os import path
         # TODO: try to get this "target" info from GDB
         self.objext = os.getenv('COB_MODULE_EXT')
         if self.objext is None:
@@ -4037,6 +4056,15 @@ class CLoadWorker():
         # FIXME: GDB returns a nice table
         return "  ".join(set(result_entries))  # removing duplicates and order
 
+    @staticmethod
+    def get_text_offset(solibpath):
+        import subprocess
+        elfres = subprocess.check_output([READELF_BINARY, "-WS", solibpath])
+        for line in elfres.splitlines():
+            if "] .text " in str(line):
+                return "0x" + str(line.split()[4])
+        return ""  # TODO: Raise error when offset is not found?
+
     def get_module_completion(self, word):
         # returns the modules found on start, but only the ones starting with the given filter
         if not word:
@@ -4055,6 +4083,7 @@ CBLDBG_CLOAD_WORKER = CLoadWorker()
 # actual reading originally taken from https://stackoverflow.com/questions/20380204/how-to-load-multiple-symbol-files-in-gdb/62471062#62471062
 
 # Note: Replace "readelf" with path to binary if it is not in your PATH.
+MODULE_PREFIX = os.getenv('MODULE_PREFIX', '')
 READELF_BINARY = os.getenv('READELF', 'readelf')
 
 class CLoad (gdb.Command):
@@ -4100,17 +4129,10 @@ Usage: cload MODULE           try to load given COBOL module into GDB
             if solibpath is None:
                 print("{0}: module not found in {1}" .format(module_name, paths))
                 return
-            offset = self.get_text_offset(solibpath)
+            offset = CBLDBG_CLOAD_WORKER.get_text_offset(solibpath)
             gdb_cmd = "add-symbol-file %s %s" % (solibpath, offset)
             gdb.execute(gdb_cmd, from_tty)
 
-    def get_text_offset(self, solibpath):
-        import subprocess
-        elfres = subprocess.check_output([READELF_BINARY, "-WS", solibpath])
-        for line in elfres.splitlines():
-            if "] .text " in line:
-                return "0x" + line.split()[4]
-        return ""  # TODO: Raise error when offset is not found?
 
     def complete(self, text, word):
         return CBLDBG_CLOAD_WORKER.get_module_completion(word)
