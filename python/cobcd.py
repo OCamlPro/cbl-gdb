@@ -4072,6 +4072,105 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
             #traceback.print_exc()
             print("No stack.")
 
+
+class CFrameWorker:
+    """Does all of the gdb work of CUp() and CDown()"""
+
+    def __init__(self):
+        print('Registering commands cup, cdown, cup-silently, cdown-silently')
+        CUp()
+        CDown()
+        CUpS()
+        CDownS()
+    
+    @staticmethod
+    def Go(argument, up, silent):
+
+        number = 1
+        if argument:
+            if not argument.isdigit():
+                print ("argument must be a digit, not", argument)
+                return
+            number = int(argument)
+        
+        frame = gdb.selected_frame ()
+
+        while True:
+            if number != 0:
+                if up:
+                    frame = frame.older()
+                else:
+                    frame = frame.newer()
+                if frame is None:                    
+                    if up:
+                        print ("Initial COBOL frame selected; you cannot go up.")
+                    else:
+                        print ("Bottom (innermost) COBOL frame selected; you cannot go down.")
+                    return
+            else:
+                number = -1
+
+            try:
+                block = frame.block()
+            except:
+                # no debugging symbols, just skip
+                block = None
+                continue
+
+            symbol = gdb.lookup_symbol("module", block)[0]
+            if not symbol:
+                continue
+            if (str(symbol.type) != "cob_module *"):
+                continue
+
+            # quite likely a COBOL frame
+            if number <= 0:
+                frame.select()
+                gdb.execute("frame", (silent == False), silent)
+                return
+            number = number - 1
+
+class CUp (gdb.Command):
+    """Select and print COBOL stack frame that called this one.
+An argument says how many frames up to go, the special value 0
+may be used to also stop if the current frame is a COBOL frame.
+"""
+    def __init__(self):
+        super(CUp, self).__init__("cup", gdb.COMMAND_STACK)
+
+    def invoke(self, argument, from_tty):
+        CFrameWorker.Go(argument, True, False)
+
+class CDown (gdb.Command):
+    """Select and print COBOL stack frame called by this one.
+An argument says how many frames down to go, the special value 0
+may be used to also stop if the current frame is a COBOL frame.
+"""
+    def __init__(self):
+        super(CDown, self).__init__("cdown", gdb.COMMAND_STACK)
+    def invoke(self, argument, from_tty):
+        CFrameWorker.Go(argument, False, False)
+
+class CUpS (gdb.Command):
+    """Select COBOL stack frame that called this one silenthly.
+An argument says how many frames up to go, the special value 0
+may be used to also stop if the current frame is a COBOL frame.
+"""
+    def __init__(self):
+        super(CUpS, self).__init__("cup-silently", gdb.COMMAND_STACK)
+    def invoke(self, argument, from_tty):
+        CFrameWorker.Go(argument, True, True)
+
+class CDownS (gdb.Command):
+    """Select COBOL stack frame called by this one silently.
+An argument says how many frames down to go, the special value 0
+may be used to also stop if the current frame is a COBOL frame.
+"""
+    def __init__(self):
+        super(CDownS, self).__init__("cdown-silently", gdb.COMMAND_STACK)
+    def invoke(self, argument, from_tty):
+        CFrameWorker.Go(argument, False, True)
+
 def exit_handler(event):
     # With the disappearance of the inferior, we are going
     # to need new malloc-created buffers
@@ -4099,3 +4198,4 @@ CBreak()
 CCondition()
 CNext()
 CStart()
+CFrameWorker()
