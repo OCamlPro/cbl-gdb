@@ -3323,24 +3323,30 @@ class CBreakWorker():
     def set_condition(break_point, condition):
         break_point.condition = condition
 
-    def get_module_name(self, module):
-        if module == "":
-            return None
+    @staticmethod
+    def module_available(module):
+        try:
+            spec = "{0}_".format(module)
+            spec_ref = gdb.parse_and_eval(spec)
+            return True
+        except gdb.error:
+            return False
 
+    def get_module_name(self, module):
         return_value = None
 
-        # TODO: encode in cobcd.py, without manual malloc (fixes breakpoint before running))
+        if module == "":
+            return return_value
 
+        # TODO: encode in cobcd.py, without manual malloc (fixes breakpoint before running))
         try:
             if self.module_buffer is None:
                 self.module_buffer = gdb.execute("call (char*)cob_cache_malloc(100)", False, True).split()[2]
         except gdb.error:
-            try:
-                spec = "{0}_".format(module)
-                spec_ref = gdb.parse_and_eval(spec)
+            if self.module_available(module):
                 return module
-            except gdb.error:
-                return None
+            else:
+                return return_value
 
         try:
             command = "call (int)cob_encode_program_id(\"{0}\",{1},100,0)".format(module, self.module_buffer)
@@ -3349,14 +3355,12 @@ class CBreakWorker():
         except gdb.error as error:
             raise gdb.GdbError("The program is not being run: " + str(error))
 
-        try:
-            spec = "{0}_".format(module)
-            spec_ref = gdb.parse_and_eval(spec)
+        if self.module_available(module):
             return_value = module
-        except:
+        else:
             modules_loaded = CBLDBG_CLOAD_WORKER.load_modules(module.split())
-            if modules_loaded is None:
-                return_value = None
+            if modules_loaded is not None and self.module_available(module):
+                return_value = module
 
         return return_value
 
@@ -3691,7 +3695,7 @@ class CBreakWorker():
             elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and left_side[0] != "section":
                 module_name = self.get_module_name(left_side[0])
                 if module_name is None:
-                    print("Module not found")
+                    print("Module not found: {0}".format(left_side[0]))
                 else:
                     break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{0}".format(module_name), t_flag)
             elif len(left_side) == 2 and left_side[0] == "section" and isinstance(left_side[1], self.strtype):
