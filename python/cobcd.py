@@ -3340,33 +3340,20 @@ class CBreakWorker():
                 return None
 
         try:
+            command = "call (int)cob_encode_program_id(\"{0}\",{1},100,0)".format(module, self.module_buffer)
+            gdb.execute(command, False, True)
+            module = self.get_data_from_buffer(self.module_buffer)
+        except gdb.error as error:
+            raise gdb.GdbError("The program is not being run: " + str(error))
+
+        try:
             spec = "{0}_".format(module)
             spec_ref = gdb.parse_and_eval(spec)
             return_value = module
         except:
-            solibpath = None
-            paths = CBLDBG_CLOAD_WORKER.get_module_paths()
-            for path_entry in paths:
-                module_path = path.join(path_entry, MODULE_PREFIX + module + CBLDBG_CLOAD_WORKER.get_module_ext())
-                if path.isfile(module_path):
-                    solibpath = module_path
-                    break
-            if solibpath is None:
-                return None
-
-            offset = CBLDBG_CLOAD_WORKER.get_text_offset(solibpath)
-            try:
-                gdb_cmd = "add-symbol-file %s %s" % (solibpath, offset)
-                gdb.execute(gdb_cmd)
-            except gdb.error:
+            modules_loaded = CBLDBG_CLOAD_WORKER.load_modules(module.split())
+            if modules_loaded is None:
                 return_value = None
-
-        try:
-            command = "call (int)cob_encode_program_id(\"{0}\",{1},100,0)".format(module, self.module_buffer)
-            gdb.execute(command, False, True)
-            return_value = self.get_data_from_buffer(self.module_buffer)
-        except gdb.error as error:
-            raise gdb.GdbError("The program is not being run: " + str(error))
 
         return return_value
 
@@ -4056,6 +4043,32 @@ class CLoadWorker():
         # FIXME: GDB returns a nice table
         return "  ".join(set(result_entries))  # removing duplicates and order
 
+    def load_modules(self, module_names):
+        return_list = []
+
+        for module_name in module_names:
+            solibpath = None
+            paths = self.get_module_paths()
+            for path_entry in paths:
+                module_path = path.join(path_entry, module_name + CBLDBG_CLOAD_WORKER.get_module_ext())
+                if path.isfile(module_path):
+                    solibpath = module_path
+                    break
+
+            if solibpath is None:
+                print("{0}: module not found in {1}" .format(module_name, paths))
+                continue
+
+            offset = CBLDBG_CLOAD_WORKER.get_text_offset(solibpath)
+            try:
+                gdb_cmd = "add-symbol-file %s %s" % (solibpath, offset)
+                gdb.execute(gdb_cmd, False, True)
+                return_list.append(solibpath)
+            except gdb.error:
+                print("Error in loading: {0}".format(solibpath))
+
+        return return_list
+
     @staticmethod
     def get_text_offset(solibpath):
         import subprocess
@@ -4083,18 +4096,18 @@ CBLDBG_CLOAD_WORKER = CLoadWorker()
 # actual reading originally taken from https://stackoverflow.com/questions/20380204/how-to-load-multiple-symbol-files-in-gdb/62471062#62471062
 
 # Note: Replace "readelf" with path to binary if it is not in your PATH.
-MODULE_PREFIX = os.getenv('MODULE_PREFIX', '')
 READELF_BINARY = os.getenv('READELF', 'readelf')
 
-class CLoad (gdb.Command):
+
+class CLoad(gdb.Command):
     """Load symbols from COBOL module in COB_LIBRARY_PATH or query for available modules.
-Usage: cload MODULE           try to load given COBOL module into GDB
-       cload /q [REGEX ..]    query available modules
-       cload /c               re-read modules"""
+Usage: add-symbol-file-cobol MODULE           try to load given COBOL module into GDB
+       add-symbol-file-cobol /q [REGEX ..]    query available modules
+       add-symbol-file-cobol /c               re-read modules"""
 
     def __init__(self):
-        print('Registering Cload')
-        super(CLoad, self).__init__("cload", gdb.COMMAND_FILES)
+        print('Registering add-symbol-file-cobol')
+        super(CLoad, self).__init__("add-symbol-file-cobol", gdb.COMMAND_FILES)
         self.search = ''
 
     def invoke(self, user_input, from_tty):
@@ -4118,20 +4131,9 @@ Usage: cload MODULE           try to load given COBOL module into GDB
             print(CBLDBG_CLOAD_WORKER.query_modules(module_names))
             return
 
-        for module_name in module_names:
-            solibpath = None
-            paths = CBLDBG_CLOAD_WORKER.get_module_paths()
-            for path_entry in paths:
-                module_path = path.join(path_entry, module_name + CBLDBG_CLOAD_WORKER.get_module_ext())
-                if path.isfile(module_path):
-                    solibpath = module_path
-                    break
-            if solibpath is None:
-                print("{0}: module not found in {1}" .format(module_name, paths))
-                return
-            offset = CBLDBG_CLOAD_WORKER.get_text_offset(solibpath)
-            gdb_cmd = "add-symbol-file %s %s" % (solibpath, offset)
-            gdb.execute(gdb_cmd, from_tty)
+        modules_loaded = load_modules(module_names)
+        if module_names is None:
+            print("No modules found")
 
 
     def complete(self, text, word):
@@ -4252,11 +4254,6 @@ def stop_handler(event):
 
 gdb.events.exited.connect(exit_handler)
 gdb.events.stop.connect(stop_handler)
-
-#a = "x'313233'"
-#print(a,FromHexAlphaString(a))
-#a = "x'c5b6fc'"
-#print(a,FromHexAlphaString(a))
 
 
 CPrint()
