@@ -4148,21 +4148,8 @@ they override any that might have been passed to GDB with --args."""
                 # Turn hyphens into doubled underscores:
                 entry_point = cobol_program.replace("-","__") + "_"
 
-                # Learn the current breakpoint pending state
-                breakpoint_pending = gdb.execute("show breakpoint pending", False, True).split()[-1].replace('.','')
-
-                # Turn breakpoint pending on, because we might want to set a pending
-                # breakpoint if we are launching with cobcrun
-                command = "set breakpoint pending on"
-                gdb.execute(command, False, True)
-
-                # set a temporary breakpoint there
-                command = "tbreak " + entry_point
-                gdb.execute(command, False, True)
-
-                # Restore breakpoint pending to the original state:
-                command = "set breakpoint pending " + breakpoint_pending
-                gdb.execute(command, False, True)
+                # set temporary maintanance breakpoint
+                gdb.Breakpoint(entry_point, type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
 
             # And proceed to run the program:
             command = "run " + arguments
