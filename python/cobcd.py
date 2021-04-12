@@ -1478,7 +1478,6 @@ class CobolVariable():
             char = GetDataAt(buf_ptr, 1)
             if char == 0:
                 break
-            #print("char",char)
             retval += chr(char)
             buf_ptr += 1
         if is_alphanumeric :
@@ -1582,8 +1581,7 @@ class CobolVariable():
         encounters the "cp var1=var2.  Those copies go into GV_GlobalVariables.
 
         For now, this handles the basic user-interface case.  If more complex cases
-        crop up, this will obviously need to be changed.
-"""
+        crop up, this will obviously need to be changed."""
         return_value = 1
 
         # We use the ALLOCATE option because of the possibility that one
@@ -3233,6 +3231,8 @@ class CWatchWorker():
             break_point = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_ACCESS)
         else:
             print("Internal error: Watchpoint type not recognized")
+            return
+        break_point.commands = "cup 0"
 
     def process_watch_arguments(self, arguments):
         left_side = []
@@ -3322,10 +3322,12 @@ class CBreakWorker():
         break_point.condition = condition
 
     def get_module_name(self, module):
-        return_value = None
-
         if module == "":
             return ""
+
+        return_value = None
+
+        # TODO: encode in cobcd.py, without manual malloc (fixes breakpoint before running))
 
         try:
             if self.module_buffer is None:
@@ -3350,6 +3352,8 @@ class CBreakWorker():
 
     def get_section_name(self, section):
         return_value = None
+
+        # TODO: encode in cobcd.py, without manual malloc (fixes breakpoint before running))
 
         try:
             if self.section_buffer is None:
