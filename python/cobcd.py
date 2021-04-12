@@ -3453,6 +3453,8 @@ class CBreakWorker():
             print("Condition not implemented")
 
     def set_section_breakpoint(self, args, t_flag):
+        module_name = ""
+
         mod_sec = args[0].split(":")
         if len(mod_sec) == 1:
             section_name = self.get_section_name(mod_sec[0])
@@ -3465,10 +3467,12 @@ class CBreakWorker():
             if section_name is None:
                 print("Section not found")
                 return
-            module_name = self.get_module_name(mod_sec[0])
-            if module_name is None:
-                print("Module not found")
-                return
+
+            if mod_sec[0] != "":
+                module_name = self.get_module_name(mod_sec[0])
+                if module_name is None:
+                    print("Module not found: {0}".format(mod_sec[0]))
+                    return
 
         if not module_name:
             spec = "SECTION_{0}".format(section_name)
@@ -3861,7 +3865,6 @@ A watchpoint stops execution of your program whenever the value of an expression
 
     def __init__(self):
         super(CWatch, self).__init__("cwatch", gdb.COMMAND_BREAKPOINTS)
-        print('Registering CWatch')
         self.worker = CWatchWorker()
 
     def invoke(self, arguments, from_tty):
@@ -3881,8 +3884,8 @@ A breakpoint stops execution of your program whenever the expression matches
 
     cbreak                                       set a breakpoint on the current line
     cbreak MODULE                                set a breakpoint on MODULE entry
-    cbreak section SECTON                        set a breakpoint on SECTION entry
-    cbreak section MODULE:SECTON                 set a breakpoint on SECTION entry in MODULE
+    cbreak section SECTION                       set a breakpoint on SECTION entry
+    cbreak section MODULE:SECTION                set a breakpoint on SECTION entry in MODULE
     cbreak LINENR                                set a breakpoint on line number (LINENR)
     cbreak LINENR if VARIABLE =[i] MSTRING       set a breakpoint on line number (LINENR)
                                                  for string VARIABLE equals MSTRING
@@ -3912,8 +3915,10 @@ A breakpoint stops execution of your program whenever the expression matches
     def __init__(self):
         self.worker = CBLDBG_CBREAK_WORKER
 
-        print('Registering CBreak')
+        print('Registering commands cwatch, cbreak, ctbreak, ccondition')
         super(CBreak, self).__init__("cbreak", gdb.COMMAND_BREAKPOINTS)
+        CTBreak()
+        CCondition()
 
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
@@ -3940,7 +3945,7 @@ A breakpoint stops execution of your program whenever the expression matches
                         return ["0"]
 
             if len(text.split()) == 1:
-                    return ["if"]
+                return ["if"]
 
             if len(text.split()) in (3, 4) and word == "":
                 return ["=", "!=", "<", "=<", ">", ">=", "<>", "=~"]
@@ -3962,14 +3967,15 @@ A breakpoint stops execution of your program whenever the expression matches
             traceback.print_exc()
 
 class CTBreak(gdb.Command):
-    """Specify temporary break
+    """Set a temporary breakpoint.
+Like "cbreak" except the breakpoint is only temporary,
+so it will be deleted when hit.  Equivalent to "break" followed
+by using "enable delete" on the breakpoint number.
 
 Do "help cbreak" for info on COBOL expressions"""
 
     def __init__(self):
         self.worker = CBLDBG_CBREAK_WORKER
-
-        print('Registering CTBreak')
         super(CTBreak, self).__init__("ctbreak", gdb.COMMAND_BREAKPOINTS)
 
     def invoke(self, arguments, from_tty):
@@ -3985,8 +3991,6 @@ Do "help cbreak" for info on COBOL expressions"""
 
     def __init__(self):
         self.worker = CBLDBG_CBREAK_WORKER
-
-        print('Registering CCondition')
         super(CCondition, self).__init__("ccondition", gdb.COMMAND_BREAKPOINTS)
 
     def invoke(self, arguments, from_tty):
@@ -4079,6 +4083,7 @@ class CLoadWorker():
             try:
                 gdb_cmd = "add-symbol-file %s %s" % (solibpath, offset)
                 gdb.execute(gdb_cmd, False, True)
+                print("Reading symbols {0}...".format(solibpath))
                 return_list.append(solibpath)
             except gdb.error:
                 print("Error in loading: {0}".format(solibpath))
@@ -4127,7 +4132,6 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
         self.search = ''
 
     def invoke(self, user_input, from_tty):
-        from os import path
         self.dont_repeat()
 
         if user_input:
@@ -4147,7 +4151,7 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
             print(CBLDBG_CLOAD_WORKER.query_modules(module_names))
             return
 
-        modules_loaded = load_modules(module_names)
+        modules_loaded = CBLDBG_CLOAD_WORKER.load_modules(module_names)
         if module_names is None:
             print("No modules found")
 
@@ -4374,8 +4378,6 @@ gdb.events.stop.connect(stop_handler)
 CPrint()
 CWatch()
 CBreak()
-CTBreak()
-CCondition()
 CLoad()
 CNext()
 CStart()
