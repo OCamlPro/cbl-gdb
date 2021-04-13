@@ -52,6 +52,7 @@ import re
 import sys
 import platform
 import os
+import distutils.spawn
 from os import path
 import traceback
 import subprocess
@@ -152,6 +153,7 @@ PRINT_BUFFER_SIZE = 65536
 ALLOCATE = True
 DONT_ALLOCATE = False
 
+#  regexp's for ZERO and SPACE handling
 R_ALL_ZERO_SPACE = re.compile(r'ALL|ZERO(S|ES)?|SPACE(S)?', re.IGNORECASE)
 R_ZERO_SPACE = re.compile(r'ZERO(S|ES)?|SPACE(S)?', re.IGNORECASE)
 
@@ -159,6 +161,10 @@ R_SPACE = re.compile(r'SPACE(S)?', re.IGNORECASE)
 R_ZERO = re.compile(r'ZERO(S|ES)?', re.IGNORECASE)
 R_ALLSPACE = re.compile(r'ALL[ ]*SPACE(S)?', re.IGNORECASE)
 R_ALLZERO = re.compile(r'ALL[ ]*ZERO(S|ES)?', re.IGNORECASE)
+
+# executable available flags
+READELF_AVAILABLE = True
+COBCDRW_AVAILABLE = True
 
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
@@ -2646,6 +2652,10 @@ def get_sorted_possibilities(args, limit):
             # he is asking for a list of variables and values:
             possibilities_1 = GV_ModuleInformation.var_trie.GetAllPossibilities()
         elif args[0].find('?') != -1:
+            if not COBCDRW_AVAILABLE:
+                print("Function not available: cobcd-rw not in path")
+                return possibilities, False
+
             # If the first, presumably single, argument contains a question mark,
             # then we need to round up the usual suspects.
 
@@ -3399,8 +3409,11 @@ class CBreakWorker():
         if self.module_available(module):
             return_value = module
         else:
-            modules_loaded = CBLDBG_CLOAD_WORKER.load_modules(module.split())
-            if modules_loaded is not None and self.module_available(module):
+            if READELF_AVAILABLE:
+                modules_loaded = CBLDBG_CLOAD_WORKER.load_modules(module.split())
+                if modules_loaded is not None and self.module_available(module):
+                    return_value = module
+            else:
                 return_value = module
 
         return return_value
@@ -3805,7 +3818,7 @@ class CBreakWorker():
             print("Breakpoint {0} now unconditional.".format(left_side[0]))
             self.set_condition(break_point, None)
         elif len(left_side) >= 2 and len(left_side) <= 4:
-            self.set_cond_break(left_side, right_side, condition, break_point, is_lit)
+            self.set_cond_break(left_side, right_side, condition, break_point, is_lit, False)
         else:
             print('Breakpoint parameters not recognized')
             return
@@ -3845,11 +3858,11 @@ class CPrint(gdb.Command):
     The 'cprint' command can be changed to 'anything' with the environment variable CPRINT=anything"""
 
     def __init__(self):
-        #try:
-        #    subprocess.check_output(['cobcd-rw', '-v'])
-        #except OSError:
-        #    print("\n!! cobcd-rw not found on path, not registering cprint\n")
-        #    return
+        global COBCDRW_AVAILABLE
+
+        cobcdrw_exe = distutils.spawn.find_executable("cobcd-rw")
+        if cobcdrw_exe is None:
+            COBCDRW_AVAILABLE = False
 
         self.worker = CPrintWorker()
 
@@ -4173,7 +4186,6 @@ CBLDBG_CLOAD_WORKER = CLoadWorker()
 # Note: Replace "readelf" with path to binary if it is not in your PATH.
 READELF_BINARY = os.getenv('READELF', 'readelf')
 
-
 class CLoad(gdb.Command):
     """Load symbols from COBOL module in COB_LIBRARY_PATH or query for available modules.
 Usage: add-symbol-file-cobol MODULE           try to load given COBOL module into GDB
@@ -4181,9 +4193,12 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
        add-symbol-file-cobol /c               re-read modules"""
 
     def __init__(self):
+        global READELF_AVAILABLE
+
         try:
             subprocess.check_output([READELF_BINARY, '--version'])
         except OSError:
+            READELF_AVAILABLE = False
             print("\n!! {0} not found on path, not registering add-symbol-file-cobol \n".format(READELF_BINARY))
             return
 
