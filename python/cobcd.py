@@ -1420,7 +1420,7 @@ class CobolVariable():
         return retval
 
     def free_field_location(self,field_location):
-        gdb.execute("call (void *)cob_free({0})".format(hex(field_location)), False, True)
+        gdb.execute("call (void)cob_free({0})".format(hex(field_location)), False, True)
 
     def DumpJustAboutEverything(self):
         location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
