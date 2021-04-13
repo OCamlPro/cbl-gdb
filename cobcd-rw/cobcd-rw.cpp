@@ -229,7 +229,7 @@ main(int argc, char **argv)
 {
     if( argc > 1 AND (strcmp(argv[1],"--version") EQ 0 OR strcmp(argv[1],"-v") EQ 0 ) ) {
         cout << "cobcd-rw Version " << VERSION << endl;
-        return 1;
+        return 0;
     }
 
     if( argc < 4 ) {

@@ -704,6 +704,12 @@ def PreprocessSubscriptsAndRefmods(subscripts):
     # The logic below turns ONE TWO THREE into ONE, TWO, THREE
     # and it turns ONE OF TWO THREE into ONE TWO,THREE
 
+    separator = ','
+    if subscripts.find(':') > -1:
+        # We are doing a refmod.  There won't be a separator in
+        # a properly-formed refmod.
+        separator = ''
+
     subscripts = subscripts.upper()
     subscripts = subscripts.replace(';',' ')
     subscripts = subscripts.replace(',',' ')
@@ -714,7 +720,7 @@ def PreprocessSubscriptsAndRefmods(subscripts):
     i = 1
     while i < len(tokens):
         if tokens[i] != "IN" and tokens[i-1] != "IN":
-            tokens[i-1] += ","
+            tokens[i-1] += separator
         i += 1
     subscripts = ' '.join(tokens)
     subscripts = subscripts.replace(" IN "," ")
