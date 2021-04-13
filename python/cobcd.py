@@ -1344,7 +1344,6 @@ class CobolVariable():
         # Here is the string information decoded from the attributes and
         # the data we get from gdb:
         self.not_in_context = False
-        self.display_name = ""
         self.display_body = ""
 
         self.SubscriptFailure = False # Set to True when subscripts don't match the number of tables
@@ -1430,7 +1429,7 @@ class CobolVariable():
 
     def DumpJustAboutEverything(self):
         location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
-        print(    "           Name:", self.Name)
+        print(    "           Name:", self.NameToStringFull())
         if self.OccursMax:
             print(    " OCCURS min/max: {0}/{1}".format(self.OccursMin,self.OccursMax))
         if self.Subscripts:
@@ -1863,10 +1862,6 @@ class CobolVariable():
                 self.Refmod = None
                 return False
 
-            # Call NameToString after calculating subscripts and refmods,
-            # because those results get appended to display_name
-            self.display_name = self.NameToString()
-
             # First, check to see if the compiler provided us with the
             # the name of the field.  If so, use the run-time values in that named
             # field to override anything we might have gotten from compile-time
@@ -2024,7 +2019,7 @@ class CobolVariable():
                 self.IsDirty = False
         return True
 
-    def NameToString(self):
+    def NameToStringFull(self):
         storage_type = ""
         if self.Section == 'F':
             storage_type = "I/O"
@@ -2038,7 +2033,11 @@ class CobolVariable():
             storage_type = "L-S"
         elif self.Section == 'I':
             storage_type = "LNK"
+        name = self.Name.split('/')
+        name = '/'.join(name[0:-1])
+        return "{1:02} {2} [{0}]".format(storage_type, self.Level, name)
 
+    def NameToString(self):
         # Remove the final element of the Name, which is the program name
         name = self.Name.split('/')
         name = '/'.join(name[0:-1])
@@ -2050,7 +2049,10 @@ class CobolVariable():
         if self.Refmod:
             name += "({0}:{1})".format(self.RefmodOffset+1,self.RefmodLength)
 
-        s = "{1:02} {2} [{0}]".format(storage_type, self.Level, name)
+        if GV_ModuleState.current_display_mode in ('3','4','5'):
+            s = self.NameToStringFull()
+        else:
+            s = name
         return s
 
     def ShowFields(self):
@@ -2059,7 +2061,7 @@ class CobolVariable():
         if bname_location:
             bname_text = "( %s )" % hex(bname_location)
 
-        print("Name:       ", self.display_name)
+        print("Name:       ", self.NameToStringFull())
         if self.OccursMax:
             print("OCCURS:      min: {0} max: {1}".format(self.OccursMin,self.OccursMax))
 
@@ -2317,6 +2319,9 @@ class ModuleState():
         self.question_mark_range = int(os.environ.get("CPRINT_R", '6'))
         self.current_full_path = ""
         self.Stack = False
+        self.sticky_display_mode = '0';
+        self.current_display_mode = '0';
+        self.current_display_submode = '0';
 
     def ProcessStack(self):
         """ Figures out which routine we are currently trapped in"""
@@ -2787,7 +2792,7 @@ class CPrintWorker():
     # handle everything that doesn't actually need the gdb object
     def __init__(self):
         self.current_source_file = ""
-        self.sticky_display_mode = os.environ.get("CPRINT_V", '0')
+        GV_ModuleState.sticky_display_mode = os.environ.get("CPRINT_V", '0')
         self.use_cprint = os.environ.get("CPRINT", "cprint")
         self.machine_interface_mode = False
 
@@ -2798,12 +2803,12 @@ class CPrintWorker():
             # This is a single-digit display v-code:
             v_code = args[0][2]
             args.pop(0)
-        if v_code in "012d":
+        if v_code in "012345d":
             # It's a valid display_mode.  Make it the one-time mode:
-            self.current_display_mode = v_code
+            GV_ModuleState.current_display_mode = v_code
             if len(args) == 0:
                 # There are no additional arguments, so make it the session mode
-                self.sticky_display_mode = self.current_display_mode
+                GV_ModuleState.sticky_display_mode = GV_ModuleState.current_display_mode
         else:
             print("The /v code is invalid")
             args = []
@@ -2852,20 +2857,20 @@ class CPrintWorker():
         self.machine_interface_mode = False
 
         # Start off with the current display mode the same as the session mode
-        self.current_display_mode = self.sticky_display_mode
-        self.current_display_submode = ''
+        GV_ModuleState.current_display_mode = GV_ModuleState.sticky_display_mode
+        GV_ModuleState.current_display_submode = ''
 
         # Now see if he wants to change it
         if len(args) >= 1:
             # if the first argument is /d, turn on our debug flag:
             if args[0] == "/d":
-                self.current_display_mode = 'd'
+                GV_ModuleState.current_display_mode = 'd'
                 args.pop(0)
             elif args[0] == "/x":
-                self.current_display_submode = 'x'
+                GV_ModuleState.current_display_submode = 'x'
                 args.pop(0)
             elif args[0] == "/b":
-                self.current_display_submode = 'b'
+                GV_ModuleState.current_display_submode = 'b'
                 args.pop(0)
             elif args[0] == "/m":
                 self.machine_interface_mode = True
@@ -2881,7 +2886,7 @@ class CPrintWorker():
     def GetDisplayBody(self,payload):
         body = ""
         if payload.Refmod:
-            if not payload.display_body.startswith('"') or self.current_display_submode == 'x':
+            if not payload.display_body.startswith('"') or GV_ModuleState.current_display_submode == 'x':
                 # We are dealing with something that libcob thinks is not alphabetic.
                 body = '['
                 for i in range(len(payload.data)):
@@ -2904,9 +2909,9 @@ class CPrintWorker():
             body = WithRepeatCount(body)
         else:
             # There is no refmod involved:
-            if self.current_display_submode == 'x' and len(payload.data) <= 16:
+            if GV_ModuleState.current_display_submode == 'x' and len(payload.data) <= 16:
                 body = payload.display_body_hex
-            elif self.current_display_submode == 'b' and len(payload.data) <= 8:
+            elif GV_ModuleState.current_display_submode == 'b' and len(payload.data) <= 8:
                 # This is a kludge.  Convert the hex to binary:
                 body = ""
                 index = 2
@@ -2928,14 +2933,14 @@ class CPrintWorker():
     def FormattedDisplay(self, payload):
         body = self.GetDisplayBody(payload)
 
-        if self.current_display_mode == '0':
-            print(payload.display_name, " : ", body)
-        elif self.current_display_mode == '1':
+        if GV_ModuleState.current_display_mode in ('0','3'):
+            print(payload.NameToString(), " : ", body)
+        elif GV_ModuleState.current_display_mode in ('1','4'):
             print(body)
-        elif self.current_display_mode == '2':
-            print(payload.display_name)
+        elif GV_ModuleState.current_display_mode in ('2','5'):
+            print(payload.NameToString())
             print(body)
-        else:  # self.current_display_mode ==  'd':
+        else:  # GV_ModuleState.current_display_mode ==  'd':
             payload.ShowFields()
 
     @staticmethod
@@ -3073,7 +3078,7 @@ class CPrintWorker():
                 # The assignment failed
                 return
 
-            disp_str = payload.display_name + " set to " + WithRepeatCount(payload.display_body)
+            disp_str = payload.NameToString() + " set to " + WithRepeatCount(payload.display_body)
             print(disp_str)
 
             # Eliminate stale modifiers, if necessary
@@ -3124,11 +3129,11 @@ class CPrintWorker():
                     GV_GlobalVariables.ShortTermMemory.append(payload_index)
                     s = "{0:2} : ".format(line_counter)
                     line_counter += 1
-                    s += payload.display_name
+                    s += payload.NameToString()
                     s += " : "
 
                     body = WithRepeatCount(payload.display_body)
-                    if self.current_display_submode == 'x' and len(payload.data) <= 16:
+                    if GV_ModuleState.current_display_submode == 'x' and len(payload.data) <= 16:
                         body = payload.display_body_hex
 
                     s += body
@@ -3266,7 +3271,7 @@ class CWatchWorker():
     """Does most of the non-gdb work of CWatch()"""
 
     def __init__(self):
-        self.current_display_mode = "0"
+        pass
 
     @staticmethod
     def set_watchpoint(payload, wp_type):
@@ -3838,10 +3843,13 @@ class CPrint(gdb.Command):
     cprint <arg>        displays <arg> using session-default formatting
     cprint <arg>(N)     displays the Nth element of table <arg>. Multiple subscripts are allowed
     cprint <arg>(S:R)   reference modification: displays R characters starting at S in <arg>
+    cprint/v0           set session formatting to name and value on one line (this is the default)
+    cprint/v1           set session formatting to just value
+    cprint/v2           set session formatting to two-line display with name, then value
+    cprint/v3           like /v0, but with variable Level and Storage Type included
+    cprint/v4           same as /v1
+    cprint/v5           like /v2, but with variable Level and Storage Type included
     cprint/v<n> <arg>   displays <arg> with a one-time formatting override
-    cprint/v0           set session formatting to name and variable on one line (this is the default)
-    cprint/v1           set session formatting to just the variable
-    cprint/v2           set session formatting to two-line display with name, then variable
     cprint/x            show numeric value in hexadecimal
     cprint/b            show numeric value in binary
     cprint/d            show expanded information
