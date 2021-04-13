@@ -3845,6 +3845,12 @@ class CPrint(gdb.Command):
     The 'cprint' command can be changed to 'anything' with the environment variable CPRINT=anything"""
 
     def __init__(self):
+        #try:
+        #    subprocess.check_output(['cobcd-rw', '-v'])
+        #except OSError:
+        #    print("\n!! cobcd-rw not found on path, not registering cprint\n")
+        #    return
+
         self.worker = CPrintWorker()
 
         print('Registering CPrint as ' + self.worker.use_cprint + ' ' + COBCD_VERSION)
@@ -4141,7 +4147,6 @@ class CLoadWorker():
 
     @staticmethod
     def get_text_offset(solibpath):
-        import subprocess
         elfres = subprocess.check_output([READELF_BINARY, "-WS", solibpath])
         for line in elfres.splitlines():
             if "] .text " in str(line):
@@ -4176,6 +4181,12 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
        add-symbol-file-cobol /c               re-read modules"""
 
     def __init__(self):
+        try:
+            subprocess.check_output([READELF_BINARY, '--version'])
+        except OSError:
+            print("\n!! {0} not found on path, not registering add-symbol-file-cobol \n".format(READELF_BINARY))
+            return
+
         print('Registering add-symbol-file-cobol')
         super(CLoad, self).__init__("add-symbol-file-cobol", gdb.COMMAND_FILES)
         self.search = ''
