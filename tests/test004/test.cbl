@@ -37,8 +37,14 @@
         01 zed   PIC 9999 VALUE 0.
         01 one   PIC 9999 VALUE 1.
         01 two   PIC 9999 VALUE 2.
-        01 three PIC 9999 VALUE 3.
-        01 four  PIC 9999 VALUE 4.
+
+        01 nums1.
+            05 three PIC 9999 VALUE 3.
+            05 four  PIC 9999 VALUE 4.
+        
+        01 nums2.
+            05 three PIC 9999 VALUE 3.
+            05 four  PIC 9999 VALUE 4.
         
         01 svalue PIC S999999 BINARY VALUE -123456.
         
@@ -66,11 +72,14 @@
            DISPLAY 'WS-C(3,2) : ' WS-C(3,2).
            DISPLAY 'WS-D(1,1) : ' WS-D(1,1).
            DISPLAY 'WS-D(3,2) : ' WS-D(3,2).
+           DISPLAY 'WS-D(3;2) : ' WS-D(3;2).
+           DISPLAY 'WS-D(3 2) : ' WS-D(3 2).
+           DISPLAY 'WS-D(3,,,,,2) : ' WS-D(3,,,,,2).
            
            DISPLAY 'ONE       : ' ONE.
            DISPLAY 'TWO       : ' TWO.
-           DISPLAY 'THREE     : ' THREE.
-           DISPLAY 'FOUR      : ' FOUR.
+           DISPLAY 'THREE     : ' THREE in nums1.
+           DISPLAY 'FOUR      : ' FOUR  in nums1.
            
            MOVE "Hi, bob!" to T-ADR(1).
            MOVE "Hi, mom!" to T-ADR(2).

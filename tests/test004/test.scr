@@ -11,7 +11,7 @@ echo KNOWN GOOD FINISH\n
 echo KNOWN GOOD LINES: 1\n
 cprint *
 
-b 109
+b 118
 echo KNOWN GOOD START\n
 r
 cp *
@@ -37,10 +37,10 @@ echo cp ws-a(one)\n
 cp ws-a(one)
 echo cp ws-a(two)\n
 cp ws-a(two)
-echo cp ws-a(three)\n
-cp ws-a(three)
-echo cp ws-a(four)\n
-cp ws-a(four)
+echo cp ws-a(three of nums1)\n
+cp ws-a(three of nums1)
+echo cp ws-a(four of nums1)\n
+cp ws-a(four of nums1)
 echo cp ws-a(banana)\n
 cp ws-a(banana)
 echo cp ws-a(1\n
@@ -67,16 +67,16 @@ echo cp ws-table(25:100)\n
 cp ws-table(25:100)
 echo cp ws-table(3:4)\n
 cp ws-table(3:4)
-echo cp ws-table(three:4)\n
-cp ws-table(three:4)
-echo cp ws-table(3:four)\n
-cp ws-table(3:four)
-echo cp ws-table(three:four)\n
-cp ws-table(three:four)
-echo cp ws-table(three:four:two)\n
-cp ws-table(three:four:two)
-echo cp ws-table(three:banana)\n
-cp ws-table(three:banana)
+echo cp ws-table(three of nums1:4)\n
+cp ws-table(three of nums1:4)
+echo cp ws-table(3:four of nums2)\n
+cp ws-table(3:four of nums1)
+echo cp ws-table(three of nums1:four of nums2)\n
+cp ws-table(three of nums1:four of nums2)
+echo cp ws-table(three of nums1:four of nums1:two)\n
+cp ws-table(three of nums1:four of nums1:two)
+echo cp ws-table(three of nums1:banana)\n
+cp ws-table(three of nums1:banana)
 echo cp ws-table(banana:4)\n
 cp ws-table(banana:4)
 echo cp ws-table(banana:banana)\n
@@ -105,10 +105,10 @@ echo cp ws-c(zed,)\n
 cp ws-c(zed,)
 echo cp ws-c(,zed)\n
 cp ws-c(,zed)
-echo cp ws-c(four,)\n
-cp ws-c(four,)
-echo cp ws-c(,four)\n
-cp ws-c(,four)
+echo cp ws-c(four of nums1,)\n
+cp ws-c(four of nums1,)
+echo cp ws-c(,four of nums1)\n
+cp ws-c(,four of nums1)
 echo cp ws-c(2,1)\n
 cp ws-c(2,1)
 echo cp ws-c(two,1)\n
@@ -118,7 +118,20 @@ cp ws-c(2,one)
 echo cp ws-c(two,one)\n
 cp ws-c(two,one)
 
-cp ws-a(2) = "1"\n
+echo cp ws-c(two one)\n
+cp ws-c(two one)
+echo cp ws-c(two;one)\n
+cp ws-c(two;one)
+echo cp ws-c(two;;;;one)\n
+cp ws-c(two;;;;one)
+echo cp ws-c(three of nums1 one)\n
+cp ws-c(three of nums1 one)
+echo cp ws-c(three of nums1,one)\n
+cp ws-c(three of nums1,one)
+echo cp ws-c(three of nums1;one)\n
+cp ws-c(three of nums1;one)
+echo cp ws-c(three of nums1;;;;one)\n
+cp ws-c(three of nums1;;;;one)
 
 echo cp ws-a(2) = "1"\n
 cp ws-a(2) = "1"
@@ -168,12 +181,12 @@ echo cp ws-a(2)(two:1)   = ' '\n
 cp ws-a(2)(two:1)   = ' '
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(three:1) = ' '\n
-cp ws-a(2)(three:1) = ' '
+echo cp ws-a(2)(three of nums1:1) = ' '\n
+cp ws-a(2)(three of nums1:1) = ' '
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(four:1)  = ' '\n
-cp ws-a(2)(four:1)  = ' '
+echo cp ws-a(2)(four of nums1:1)  = ' '\n
+cp ws-a(2)(four of nums1:1)  = ' '
 echo cp ws-a(2)\n
 cp ws-a(2)
 echo cp ws-a(2)(5:one)   = ' '\n
@@ -197,6 +210,8 @@ cp ws-a(two)(9:1)   = ' '
 echo cp ws-a(2)\n
 cp ws-a(2)
 
+
+
 echo cp ws-a(1)\n
 cp ws-a(1)
 echo cp ws-a(2)\n
@@ -209,8 +224,8 @@ cp *
 
 echo cp/x ws-table(:)\n
 cp/x ws-table(:)
-echo cp/x ws-table(three:four)\n
-cp/x ws-table(three:four)
+echo cp/x ws-table(three of nums1:four of nums1)\n
+cp/x ws-table(three of nums1:four of nums1)
 
 echo cprint tab-adr-prgm\n
 cprint tab-adr-prgm
@@ -225,8 +240,8 @@ echo cprint tab-adr-prgm(2)(3:4) = "zz"\n
 cprint tab-adr-prgm(2)(3:4) = "zz"
 echo cprint tab-adr-prgm(2)\n
 cprint tab-adr-prgm(2)
-echo cprint tab-adr-prgm(2)(3:4) = ws-a(one)(two:three)\n
-cprint tab-adr-prgm(2)(3:4) = ws-a(one)(two:three)
+echo cprint tab-adr-prgm(2)(3:4) = ws-a(one)(two:three of nums1)\n
+cprint tab-adr-prgm(2)(3:4) = ws-a(one)(two:three of nums1)
 echo cprint tab-adr-prgm(2)\n
 cprint tab-adr-prgm(2)
 

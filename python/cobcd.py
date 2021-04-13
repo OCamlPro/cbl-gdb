@@ -688,12 +688,47 @@ def get_left_right_args(args):
 
     return left_side, right_side, condition
 
+def PreprocessSubscriptsAndRefmods(subscripts):
+    # We know this came from inside parentheses.  Although the
+    # the straight CPRINT treats "ONE TWO THREE" as "ONE OF TWO OF THREE",
+    # we do not.  The processing after this routine expects commas for
+    # subscripts and colons for refmods.  Commas, spaces, and semicolons
+    # all get treated the same.
+    #
+    # The logic below turns ONE TWO THREE into ONE, TWO, THREE
+    # and it turns ONE OF TWO THREE into ONE TWO,THREE
+
+    subscripts = subscripts.upper()
+    subscripts = subscripts.replace(';',' ')
+    subscripts = subscripts.replace(',',' ')
+    subscripts = subscripts.replace('/'," IN ")
+    subscripts = subscripts.replace('.'," IN ")
+    subscripts = subscripts.replace(" OF "," IN ")
+    tokens = subscripts.split()
+    i = 1
+    while i < len(tokens):
+        if tokens[i] != "IN" and tokens[i-1] != "IN":
+            tokens[i-1] += ","
+        i += 1
+    subscripts = ' '.join(tokens)
+    subscripts = subscripts.replace(" IN "," ")
+    return subscripts
 
 def TokenizeCanonicalName(desired):
-    # We expect a string, and we return a list of strings:
+    # We expect a string, and we return a list of strings.
 
     # We allow "A of B in C", where [of|in] is not case sensitive
     # We also allow A.B.C, A/B/C, and "A B C"
+
+    # We assume that anything after a '(' is subscripts and/or refmods.  We
+    # peel them off here, and tack them onto the final element of the list
+    # of strings for later processing
+
+    suffix = ""
+    nparen = desired.find('(')
+    if nparen > -1:
+        suffix = desired[nparen:]
+        desired = desired[0:nparen]
 
     # turn IN and OF into spaces
     pattern = re.compile(r"^(.*) (in|In|iN|IN|of|oF|Of|OF) (.*)$")
@@ -705,7 +740,8 @@ def TokenizeCanonicalName(desired):
             desired = match.group(1) + " " + match.group(3)
 
     desired = desired.replace(".", " ")
-    desired = desired.replace("/", " ")
+    desired = desired.replace("/", " ").strip()
+    desired += suffix
     retval = desired.split()
     return retval
 
@@ -1658,6 +1694,8 @@ class CobolVariable():
             nfound = subscripts.find(')')
             if nfound != -1:
                 subscripts = subscripts[:nfound]
+
+            subscripts = PreprocessSubscriptsAndRefmods(subscripts)
             list_of_subscripts = subscripts.split(',')
 
             # The list of subscripts is just that: a list of subscripts.
@@ -1725,6 +1763,7 @@ class CobolVariable():
             # There is a refmod
             # we know it starts and ends with parentheses, so strip them off
             refmod = self.Refmod[1:-1]
+            refmod = PreprocessSubscriptsAndRefmods(refmod)
             refmod = refmod.split(':')
             if len(refmod) != 2:
                 # There have to be two, and only two elements:
@@ -3593,7 +3632,7 @@ class CBreakWorker():
 
             command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(location_of_attribute), attr_type)
             gdb.execute(command, False, True)
-           
+
             command = "set var ((cob_field_attr *){0})->flags = {1}".format(hex(location_of_attribute), COB_FLAG_CONSTANT)
             gdb.execute(command, False, True)
 
@@ -4022,7 +4061,7 @@ class CLoadWorker():
                 self.objext = '.dll'
             else:
                 self.objext = '.so'
-    
+
         # note: try to get the value from libcob won't help for renotte-/cross-debugging, as the local
         #       python iterates over the folders
         library_path = os.getenv('COB_LIBRARY_PATH', '.')
@@ -4265,7 +4304,7 @@ class CFrameWorker:
         CDown()
         CUpS()
         CDownS()
-    
+
     @staticmethod
     def Go(argument, up, silent):
 
@@ -4275,7 +4314,7 @@ class CFrameWorker:
                 print ("argument must be a digit, not", argument)
                 return
             number = int(argument)
-        
+
         frame = gdb.selected_frame ()
 
         while True:
@@ -4284,7 +4323,7 @@ class CFrameWorker:
                     frame = frame.older()
                 else:
                     frame = frame.newer()
-                if frame is None:                    
+                if frame is None:
                     if up:
                         print ("Initial COBOL frame selected; you cannot go up.")
                     else:
