@@ -2027,7 +2027,9 @@ class CobolVariable():
         elif self.Section == 'I':
             storage_type = "LNK"
 
-        name = self.Name
+        # Remove the final element of the Name, which is the program name
+        name = self.Name.split('/')
+        name = '/'.join(name[0:-1])
         if self.Subscripts:
             name += "(" + ",".join(map(str,self.ResolvedSubscripts)) + ")"
         elif self.OccursMax:

@@ -64,68 +64,68 @@ svalue : -092416
 I am a BASED variable                                           
 
 118	           STOP RUN.
- 1 : 01 WS-TABLE/test [W-S] : "12ABCDEF34GHIJKL56MNOPQR"
- 2 : 05 WS-A/WS-TABLE/test(1) [W-S] : "12ABCDEF"
- 3 : 10 WS-B/WS-A/WS-TABLE/test [W-S] : "12"
- 4 : 10 WS-C/WS-A/WS-TABLE/test(1) [W-S] : "ABC"
- 5 : 15 WS-D/WS-C/WS-A/WS-TABLE/test [W-S] : "ABC"
- 6 : 01 Z-TABLE/test [EXT] : "87654321"
- 7 : 05 Z-PID/Z-TABLE/test [EXT] : 87654321
- 8 : 05 Z-ADR/Z-TABLE/test [EXT] : 
- 9 : 05 T-ENTRIES/Z-TABLE/test(1) [EXT] : "Hi, bob!        "
-10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S] : +000000001
-11 : 08 T-ADR/T-ENTRIES/Z-TABLE/test [EXT] : "Hi, bob!        "
-12 : 08 T-STAT/T-ENTRIES/Z-TABLE/test [EXT] : 
-13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE/test(1) [EXT] : 
-14 : 10 SUBTEXT/SUBTABLE/T-ENTRIES/Z-TABLE/test [EXT] : 
-15 : 10 SUBTEXT2/SUBTABLE/T-ENTRIES/Z-TABLE/test [EXT] : 
-16 : 08 T-PRGM/T-ENTRIES/Z-TABLE/test [EXT] : 
-17 : 08 T-ID/T-ENTRIES/Z-TABLE/test [EXT] : 
-18 : 08 T-ADR-SAVE/T-ENTRIES/Z-TABLE/test [EXT] : +00000000000000000000
-19 : 01 T_ENTRY/test [W-S] : 0013
-20 : 01 T_ADDRESSES/test(1) [W-S] : "First---11W."
-21 : 00 TAB-ADR-IND/T_ADDRESSES/test [W-S] : +000000003
-22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11W."
-23 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11"
-24 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---"
-25 : 15 TAB-ADR-ID/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "11"
-26 : 10 TAB-ADR-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : +00000000000000001111
-27 : 10 TAB-ADR-LAST-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : +00000000000000111111
-28 : 01 zed/test [W-S] : 0000
-29 : 01 one/test [W-S] : 0001
-30 : 01 two/test [W-S] : 0002
-31 : 01 nums1/test [W-S] : "00030004"
-32 : 05 three/nums1/test [W-S] : 0003
-33 : 05 four/nums1/test [W-S] : 0004
-34 : 01 nums2/test [W-S] : "00030004"
-35 : 05 three/nums2/test [W-S] : 0003
-36 : 05 four/nums2/test [W-S] : 0004
-37 : 01 svalue/test [W-S] : -123456
-38 : 01 WS-BASED/test [W-B] : "I am a BASED variable", ' ' <repeats 43 times>
+ 1 : 01 WS-TABLE [W-S] : "12ABCDEF34GHIJKL56MNOPQR"
+ 2 : 05 WS-A/WS-TABLE(1) [W-S] : "12ABCDEF"
+ 3 : 10 WS-B/WS-A/WS-TABLE [W-S] : "12"
+ 4 : 10 WS-C/WS-A/WS-TABLE(1) [W-S] : "ABC"
+ 5 : 15 WS-D/WS-C/WS-A/WS-TABLE [W-S] : "ABC"
+ 6 : 01 Z-TABLE [EXT] : "87654321"
+ 7 : 05 Z-PID/Z-TABLE [EXT] : 87654321
+ 8 : 05 Z-ADR/Z-TABLE [EXT] : 
+ 9 : 05 T-ENTRIES/Z-TABLE(1) [EXT] : "Hi, bob!        "
+10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE [W-S] : +000000001
+11 : 08 T-ADR/T-ENTRIES/Z-TABLE [EXT] : "Hi, bob!        "
+12 : 08 T-STAT/T-ENTRIES/Z-TABLE [EXT] : 
+13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE(1) [EXT] : 
+14 : 10 SUBTEXT/SUBTABLE/T-ENTRIES/Z-TABLE [EXT] : 
+15 : 10 SUBTEXT2/SUBTABLE/T-ENTRIES/Z-TABLE [EXT] : 
+16 : 08 T-PRGM/T-ENTRIES/Z-TABLE [EXT] : 
+17 : 08 T-ID/T-ENTRIES/Z-TABLE [EXT] : 
+18 : 08 T-ADR-SAVE/T-ENTRIES/Z-TABLE [EXT] : +00000000000000000000
+19 : 01 T_ENTRY [W-S] : 0013
+20 : 01 T_ADDRESSES(1) [W-S] : "First---11W."
+21 : 00 TAB-ADR-IND/T_ADDRESSES [W-S] : +000000003
+22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES [W-S] : "First---11W."
+23 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES [W-S] : "First---11"
+24 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES [W-S] : "First---"
+25 : 15 TAB-ADR-ID/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES [W-S] : "11"
+26 : 10 TAB-ADR-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES [W-S] : +00000000000000001111
+27 : 10 TAB-ADR-LAST-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES [W-S] : +00000000000000111111
+28 : 01 zed [W-S] : 0000
+29 : 01 one [W-S] : 0001
+30 : 01 two [W-S] : 0002
+31 : 01 nums1 [W-S] : "00030004"
+32 : 05 three/nums1 [W-S] : 0003
+33 : 05 four/nums1 [W-S] : 0004
+34 : 01 nums2 [W-S] : "00030004"
+35 : 05 three/nums2 [W-S] : 0003
+36 : 05 four/nums2 [W-S] : 0004
+37 : 01 svalue [W-S] : -123456
+38 : 01 WS-BASED [W-B] : "I am a BASED variable", ' ' <repeats 43 times>
 cp ws-table
-01 WS-TABLE/test [W-S]  :  "12ABCDEF34GHIJKL56MNOPQR"
+01 WS-TABLE [W-S]  :  "12ABCDEF34GHIJKL56MNOPQR"
 cp ws-a
-05 WS-A/WS-TABLE/test(1) [W-S]  :  "12ABCDEF"
+05 WS-A/WS-TABLE(1) [W-S]  :  "12ABCDEF"
 cp ws-a()
-05 WS-A/WS-TABLE/test(1) [W-S]  :  "12ABCDEF"
+05 WS-A/WS-TABLE(1) [W-S]  :  "12ABCDEF"
 cp ws-a(0)
 The subscript 'WS-A/WS-TABLE/test(0)' is out of range (1 through 3)
 cp ws-a(1)
-05 WS-A/WS-TABLE/test(1) [W-S]  :  "12ABCDEF"
+05 WS-A/WS-TABLE(1) [W-S]  :  "12ABCDEF"
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "34GHIJKL"
+05 WS-A/WS-TABLE(2) [W-S]  :  "34GHIJKL"
 cp ws-a(3)
-05 WS-A/WS-TABLE/test(3) [W-S]  :  "56MNOPQR"
+05 WS-A/WS-TABLE(3) [W-S]  :  "56MNOPQR"
 cp ws-a(4)
 The subscript 'WS-A/WS-TABLE/test(4)' is out of range (1 through 3)
 cp ws-a(zed)
 The subscript 'WS-A/WS-TABLE/test(0)' is out of range (1 through 3)
 cp ws-a(one)
-05 WS-A/WS-TABLE/test(1) [W-S]  :  "12ABCDEF"
+05 WS-A/WS-TABLE(1) [W-S]  :  "12ABCDEF"
 cp ws-a(two)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "34GHIJKL"
+05 WS-A/WS-TABLE(2) [W-S]  :  "34GHIJKL"
 cp ws-a(three of nums1)
-05 WS-A/WS-TABLE/test(3) [W-S]  :  "56MNOPQR"
+05 WS-A/WS-TABLE(3) [W-S]  :  "56MNOPQR"
 cp ws-a(four of nums1)
 The subscript 'WS-A/WS-TABLE/test(4)' is out of range (1 through 3)
 cp ws-a(banana)
@@ -134,17 +134,17 @@ cp ws-a(1
 A syntax error in >>ws-a(1<<
 No symbols match "ws-a(1" in current context
 cp ws-table
-01 WS-TABLE/test [W-S]  :  "12ABCDEF34GHIJKL56MNOPQR"
+01 WS-TABLE [W-S]  :  "12ABCDEF34GHIJKL56MNOPQR"
 cp ws-table(:)
-01 WS-TABLE/test(1:24) [W-S]  :  "12ABCDEF34GHIJKL56MNOPQR"
+01 WS-TABLE(1:24) [W-S]  :  "12ABCDEF34GHIJKL56MNOPQR"
 cp ws-table(0:)
 The refmod (0:) offset has to be greater than zero
 cp ws-table(25:)
 The refmod (25:) length has to be between 1 and 24
 cp ws-table(:24)
-01 WS-TABLE/test(1:24) [W-S]  :  "12ABCDEF34GHIJKL56MNOPQR"
+01 WS-TABLE(1:24) [W-S]  :  "12ABCDEF34GHIJKL56MNOPQR"
 cp ws-table(:12)
-01 WS-TABLE/test(1:12) [W-S]  :  "12ABCDEF34GH"
+01 WS-TABLE(1:12) [W-S]  :  "12ABCDEF34GH"
 cp ws-table(:100)
 The refmod (:100) length has to be between 1 and 24
 cp ws-table(23:100)
@@ -154,13 +154,13 @@ The refmod (24:100) length has to be between 1 and 24
 cp ws-table(25:100)
 The refmod (25:100) length has to be between 1 and 24
 cp ws-table(3:4)
-01 WS-TABLE/test(3:4) [W-S]  :  "ABCD"
+01 WS-TABLE(3:4) [W-S]  :  "ABCD"
 cp ws-table(three of nums1:4)
-01 WS-TABLE/test(3:4) [W-S]  :  "ABCD"
+01 WS-TABLE(3:4) [W-S]  :  "ABCD"
 cp ws-table(3:four of nums2)
-01 WS-TABLE/test(3:4) [W-S]  :  "ABCD"
+01 WS-TABLE(3:4) [W-S]  :  "ABCD"
 cp ws-table(three of nums1:four of nums2)
-01 WS-TABLE/test(3:4) [W-S]  :  "ABCD"
+01 WS-TABLE(3:4) [W-S]  :  "ABCD"
 cp ws-table(three of nums1:four of nums1:two)
 The refmod (THREE OF NUMS1:FOUR OF NUMS1:TWO) has to have two elements
 cp ws-table(three of nums1:banana)
@@ -173,7 +173,7 @@ cp ws-table(banana:banana
 A syntax error in >>ws-table(banana:banana<<
 No symbols match "ws-table(banana:banana" in current context
 cp ws-c
-10 WS-C/WS-A/WS-TABLE/test(1) [W-S]  :  "ABC"
+10 WS-C/WS-A/WS-TABLE(1) [W-S]  :  "ABC"
 cp ws-c()
 WS-C/WS-A/WS-TABLE/test needs 2 subscripts
 cp ws-c(1)
@@ -199,204 +199,204 @@ The subscript 'WS-C/WS-A/WS-TABLE/test(4)' is out of range (1 through 2)
 cp ws-c(,four of nums1)
 The subscript 'WS-C/WS-A/WS-TABLE/test(4)' is out of range (1 through 2)
 cp ws-c(2,1)
-10 WS-C/WS-A/WS-TABLE/test(2,1) [W-S]  :  "GHI"
+10 WS-C/WS-A/WS-TABLE(2,1) [W-S]  :  "GHI"
 cp ws-c(two,1)
-10 WS-C/WS-A/WS-TABLE/test(2,1) [W-S]  :  "GHI"
+10 WS-C/WS-A/WS-TABLE(2,1) [W-S]  :  "GHI"
 cp ws-c(2,one)
-10 WS-C/WS-A/WS-TABLE/test(2,1) [W-S]  :  "GHI"
+10 WS-C/WS-A/WS-TABLE(2,1) [W-S]  :  "GHI"
 cp ws-c(two,one)
-10 WS-C/WS-A/WS-TABLE/test(2,1) [W-S]  :  "GHI"
+10 WS-C/WS-A/WS-TABLE(2,1) [W-S]  :  "GHI"
 cp ws-c(two one)
-10 WS-C/WS-A/WS-TABLE/test(2,1) [W-S]  :  "GHI"
+10 WS-C/WS-A/WS-TABLE(2,1) [W-S]  :  "GHI"
 cp ws-c(two;one)
-10 WS-C/WS-A/WS-TABLE/test(2,1) [W-S]  :  "GHI"
+10 WS-C/WS-A/WS-TABLE(2,1) [W-S]  :  "GHI"
 cp ws-c(two;;;;one)
-10 WS-C/WS-A/WS-TABLE/test(2,1) [W-S]  :  "GHI"
+10 WS-C/WS-A/WS-TABLE(2,1) [W-S]  :  "GHI"
 cp ws-c(three of nums1 one)
-10 WS-C/WS-A/WS-TABLE/test(3,1) [W-S]  :  "MNO"
+10 WS-C/WS-A/WS-TABLE(3,1) [W-S]  :  "MNO"
 cp ws-c(three of nums1,one)
-10 WS-C/WS-A/WS-TABLE/test(3,1) [W-S]  :  "MNO"
+10 WS-C/WS-A/WS-TABLE(3,1) [W-S]  :  "MNO"
 cp ws-c(three of nums1;one)
-10 WS-C/WS-A/WS-TABLE/test(3,1) [W-S]  :  "MNO"
+10 WS-C/WS-A/WS-TABLE(3,1) [W-S]  :  "MNO"
 cp ws-c(three of nums1;;;;one)
-10 WS-C/WS-A/WS-TABLE/test(3,1) [W-S]  :  "MNO"
+10 WS-C/WS-A/WS-TABLE(3,1) [W-S]  :  "MNO"
 cp ws-a(2) = "1"
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "1       "
+05 WS-A/WS-TABLE(2) [W-S]  :  "1       "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "1       "
+05 WS-A/WS-TABLE(2) [W-S]  :  "1       "
 cp ws-a(2)(2:) = '1'
-05 WS-A/WS-TABLE/test(2)(2:7) [W-S]  :  "1      "
+05 WS-A/WS-TABLE(2)(2:7) [W-S]  :  "1      "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "11      "
+05 WS-A/WS-TABLE(2) [W-S]  :  "11      "
 cp ws-a(2)(3:) = '1'
-05 WS-A/WS-TABLE/test(2)(3:6) [W-S]  :  "1     "
+05 WS-A/WS-TABLE(2)(3:6) [W-S]  :  "1     "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "111     "
+05 WS-A/WS-TABLE(2) [W-S]  :  "111     "
 cp ws-a(2)(4:) = '1'
-05 WS-A/WS-TABLE/test(2)(4:5) [W-S]  :  "1    "
+05 WS-A/WS-TABLE(2)(4:5) [W-S]  :  "1    "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "1111    "
+05 WS-A/WS-TABLE(2) [W-S]  :  "1111    "
 cp ws-a(2)(5:) = '1'
-05 WS-A/WS-TABLE/test(2)(5:4) [W-S]  :  "1   "
+05 WS-A/WS-TABLE(2)(5:4) [W-S]  :  "1   "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "11111   "
+05 WS-A/WS-TABLE(2) [W-S]  :  "11111   "
 cp ws-a(2)(6:) = '1'
-05 WS-A/WS-TABLE/test(2)(6:3) [W-S]  :  "1  "
+05 WS-A/WS-TABLE(2)(6:3) [W-S]  :  "1  "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "111111  "
+05 WS-A/WS-TABLE(2) [W-S]  :  "111111  "
 cp ws-a(2)(7:)= '1'
-05 WS-A/WS-TABLE/test(2)(7:2) [W-S]  :  "1 "
+05 WS-A/WS-TABLE(2)(7:2) [W-S]  :  "1 "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "1111111 "
+05 WS-A/WS-TABLE(2) [W-S]  :  "1111111 "
 cp ws-a(2)(8:)= '1'
-05 WS-A/WS-TABLE/test(2)(8:1) [W-S]  :  "1"
+05 WS-A/WS-TABLE(2)(8:1) [W-S]  :  "1"
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "11111111"
+05 WS-A/WS-TABLE(2) [W-S]  :  "11111111"
 cp ws-a(2)(9:)= '1'
 The refmod (9:) length has to be between 1 and 8
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "11111111"
+05 WS-A/WS-TABLE(2) [W-S]  :  "11111111"
 cp ws-a(2)(zed:1)   = ' '
 The refmod (ZED:1) offset has to be greater than zero
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "11111111"
+05 WS-A/WS-TABLE(2) [W-S]  :  "11111111"
 cp ws-a(2)(one:1)   = ' '
-05 WS-A/WS-TABLE/test(2)(1:1) [W-S]  :  " "
+05 WS-A/WS-TABLE(2)(1:1) [W-S]  :  " "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  " 1111111"
+05 WS-A/WS-TABLE(2) [W-S]  :  " 1111111"
 cp ws-a(2)(two:1)   = ' '
-05 WS-A/WS-TABLE/test(2)(2:1) [W-S]  :  " "
+05 WS-A/WS-TABLE(2)(2:1) [W-S]  :  " "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "  111111"
+05 WS-A/WS-TABLE(2) [W-S]  :  "  111111"
 cp ws-a(2)(three of nums1:1) = ' '
-05 WS-A/WS-TABLE/test(2)(3:1) [W-S]  :  " "
+05 WS-A/WS-TABLE(2)(3:1) [W-S]  :  " "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "   11111"
+05 WS-A/WS-TABLE(2) [W-S]  :  "   11111"
 cp ws-a(2)(four of nums1:1)  = ' '
-05 WS-A/WS-TABLE/test(2)(4:1) [W-S]  :  " "
+05 WS-A/WS-TABLE(2)(4:1) [W-S]  :  " "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "    1111"
+05 WS-A/WS-TABLE(2) [W-S]  :  "    1111"
 cp ws-a(2)(5:one)   = ' '
-05 WS-A/WS-TABLE/test(2)(5:1) [W-S]  :  " "
+05 WS-A/WS-TABLE(2)(5:1) [W-S]  :  " "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "     111"
+05 WS-A/WS-TABLE(2) [W-S]  :  "     111"
 cp ws-a(2)(6:one)   = ' '
-05 WS-A/WS-TABLE/test(2)(6:1) [W-S]  :  " "
+05 WS-A/WS-TABLE(2)(6:1) [W-S]  :  " "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "      11"
+05 WS-A/WS-TABLE(2) [W-S]  :  "      11"
 cp ws-a(two)(7:1)   = ' '
-05 WS-A/WS-TABLE/test(2)(7:1) [W-S]  :  " "
+05 WS-A/WS-TABLE(2)(7:1) [W-S]  :  " "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "       1"
+05 WS-A/WS-TABLE(2) [W-S]  :  "       1"
 cp ws-a(two)(8:1)   = ' '
-05 WS-A/WS-TABLE/test(2)(8:1) [W-S]  :  " "
+05 WS-A/WS-TABLE(2)(8:1) [W-S]  :  " "
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "        "
+05 WS-A/WS-TABLE(2) [W-S]  :  "        "
 cp ws-a(two)(9:1)   = ' '
 The refmod (9:1) offset has to be less than 8
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "        "
+05 WS-A/WS-TABLE(2) [W-S]  :  "        "
 cp ws-a(1)
-05 WS-A/WS-TABLE/test(1) [W-S]  :  "12ABCDEF"
+05 WS-A/WS-TABLE(1) [W-S]  :  "12ABCDEF"
 cp ws-a(2)
-05 WS-A/WS-TABLE/test(2) [W-S]  :  "        "
+05 WS-A/WS-TABLE(2) [W-S]  :  "        "
 cp ws-a(3)
-05 WS-A/WS-TABLE/test(3) [W-S]  :  "56MNOPQR"
+05 WS-A/WS-TABLE(3) [W-S]  :  "56MNOPQR"
 cp *
- 1 : 01 WS-TABLE/test [W-S] : "12ABCDEF        56MNOPQR"
- 2 : 05 WS-A/WS-TABLE/test(1) [W-S] : "12ABCDEF"
- 3 : 10 WS-B/WS-A/WS-TABLE/test [W-S] : "12"
- 4 : 10 WS-C/WS-A/WS-TABLE/test(1) [W-S] : "ABC"
- 5 : 15 WS-D/WS-C/WS-A/WS-TABLE/test [W-S] : "ABC"
- 6 : 01 Z-TABLE/test [EXT] : "87654321"
- 7 : 05 Z-PID/Z-TABLE/test [EXT] : 87654321
- 8 : 05 Z-ADR/Z-TABLE/test [EXT] : 
- 9 : 05 T-ENTRIES/Z-TABLE/test(1) [EXT] : "Hi, bob!        "
-10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S] : +000000001
-11 : 08 T-ADR/T-ENTRIES/Z-TABLE/test [EXT] : "Hi, bob!        "
-12 : 08 T-STAT/T-ENTRIES/Z-TABLE/test [EXT] : 
-13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE/test(1) [EXT] : 
-14 : 10 SUBTEXT/SUBTABLE/T-ENTRIES/Z-TABLE/test [EXT] : 
-15 : 10 SUBTEXT2/SUBTABLE/T-ENTRIES/Z-TABLE/test [EXT] : 
-16 : 08 T-PRGM/T-ENTRIES/Z-TABLE/test [EXT] : 
-17 : 08 T-ID/T-ENTRIES/Z-TABLE/test [EXT] : 
-18 : 08 T-ADR-SAVE/T-ENTRIES/Z-TABLE/test [EXT] : +00000000000000000000
-19 : 01 T_ENTRY/test [W-S] : 0013
-20 : 01 T_ADDRESSES/test(1) [W-S] : "First---11W."
-21 : 00 TAB-ADR-IND/T_ADDRESSES/test [W-S] : +000000003
-22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11W."
-23 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11"
-24 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---"
-25 : 15 TAB-ADR-ID/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "11"
-26 : 10 TAB-ADR-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : +00000000000000001111
-27 : 10 TAB-ADR-LAST-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : +00000000000000111111
-28 : 01 zed/test [W-S] : 0000
-29 : 01 one/test [W-S] : 0001
-30 : 01 two/test [W-S] : 0002
-31 : 01 nums1/test [W-S] : "00030004"
-32 : 05 three/nums1/test [W-S] : 0003
-33 : 05 four/nums1/test [W-S] : 0004
-34 : 01 nums2/test [W-S] : "00030004"
-35 : 05 three/nums2/test [W-S] : 0003
-36 : 05 four/nums2/test [W-S] : 0004
-37 : 01 svalue/test [W-S] : -123456
-38 : 01 WS-BASED/test [W-B] : "I am a BASED variable", ' ' <repeats 43 times>
+ 1 : 01 WS-TABLE [W-S] : "12ABCDEF        56MNOPQR"
+ 2 : 05 WS-A/WS-TABLE(1) [W-S] : "12ABCDEF"
+ 3 : 10 WS-B/WS-A/WS-TABLE [W-S] : "12"
+ 4 : 10 WS-C/WS-A/WS-TABLE(1) [W-S] : "ABC"
+ 5 : 15 WS-D/WS-C/WS-A/WS-TABLE [W-S] : "ABC"
+ 6 : 01 Z-TABLE [EXT] : "87654321"
+ 7 : 05 Z-PID/Z-TABLE [EXT] : 87654321
+ 8 : 05 Z-ADR/Z-TABLE [EXT] : 
+ 9 : 05 T-ENTRIES/Z-TABLE(1) [EXT] : "Hi, bob!        "
+10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE [W-S] : +000000001
+11 : 08 T-ADR/T-ENTRIES/Z-TABLE [EXT] : "Hi, bob!        "
+12 : 08 T-STAT/T-ENTRIES/Z-TABLE [EXT] : 
+13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE(1) [EXT] : 
+14 : 10 SUBTEXT/SUBTABLE/T-ENTRIES/Z-TABLE [EXT] : 
+15 : 10 SUBTEXT2/SUBTABLE/T-ENTRIES/Z-TABLE [EXT] : 
+16 : 08 T-PRGM/T-ENTRIES/Z-TABLE [EXT] : 
+17 : 08 T-ID/T-ENTRIES/Z-TABLE [EXT] : 
+18 : 08 T-ADR-SAVE/T-ENTRIES/Z-TABLE [EXT] : +00000000000000000000
+19 : 01 T_ENTRY [W-S] : 0013
+20 : 01 T_ADDRESSES(1) [W-S] : "First---11W."
+21 : 00 TAB-ADR-IND/T_ADDRESSES [W-S] : +000000003
+22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES [W-S] : "First---11W."
+23 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES [W-S] : "First---11"
+24 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES [W-S] : "First---"
+25 : 15 TAB-ADR-ID/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES [W-S] : "11"
+26 : 10 TAB-ADR-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES [W-S] : +00000000000000001111
+27 : 10 TAB-ADR-LAST-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES [W-S] : +00000000000000111111
+28 : 01 zed [W-S] : 0000
+29 : 01 one [W-S] : 0001
+30 : 01 two [W-S] : 0002
+31 : 01 nums1 [W-S] : "00030004"
+32 : 05 three/nums1 [W-S] : 0003
+33 : 05 four/nums1 [W-S] : 0004
+34 : 01 nums2 [W-S] : "00030004"
+35 : 05 three/nums2 [W-S] : 0003
+36 : 05 four/nums2 [W-S] : 0004
+37 : 01 svalue [W-S] : -123456
+38 : 01 WS-BASED [W-B] : "I am a BASED variable", ' ' <repeats 43 times>
 cp/x ws-table(:)
-01 WS-TABLE/test(1:24) [W-S]  :  [3132414243444546202020202020202035364d4e4f505152]
+01 WS-TABLE(1:24) [W-S]  :  [3132414243444546202020202020202035364d4e4f505152]
 cp/x ws-table(three of nums1:four of nums1)
-01 WS-TABLE/test(3:4) [W-S]  :  [41424344]
+01 WS-TABLE(3:4) [W-S]  :  [41424344]
 cprint tab-adr-prgm
-15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S]  :  "First---"
+15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES [W-S]  :  "First---"
 cprint tab-adr-prgm()
-15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test(1) [W-S]  :  "First---"
+15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(1) [W-S]  :  "First---"
 cprint tab-adr-prgm(2)
-15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test(2) [W-S]  :  "Second--"
+15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2) [W-S]  :  "Second--"
 cprint tab-adr-prgm(2)(3:4)
-15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test(2)(3:4) [W-S]  :  "cond"
+15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)(3:4) [W-S]  :  "cond"
 cprint tab-adr-prgm(2)(3:4) = "zz"
-15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test(2)(3:4) [W-S]  :  "zz  "
+15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)(3:4) [W-S]  :  "zz  "
 cprint tab-adr-prgm(2)
-15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test(2) [W-S]  :  "Sezz  --"
+15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2) [W-S]  :  "Sezz  --"
 cprint tab-adr-prgm(2)(3:4) = ws-a(one)(two:three of nums1)
-15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test(2)(3:4) [W-S]  :  "2AB "
+15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)(3:4) [W-S]  :  "2AB "
 cprint tab-adr-prgm(2)
-15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test(2) [W-S]  :  "Se2AB --"
+15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2) [W-S]  :  "Se2AB --"
 cp TAB-ADR-IND
- 1 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S] : +000000001
- 2 : 00 TAB-ADR-IND/T_ADDRESSES/test [W-S] : +000000003
+ 1 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE [W-S] : +000000001
+ 2 : 00 TAB-ADR-IND/T_ADDRESSES [W-S] : +000000003
 cp TAB-ADR-IND of z-table = 1234
-00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S]  :  +000001234
+00 TAB-ADR-IND/T-ENTRIES/Z-TABLE [W-S]  :  +000001234
 cp TAB-ADR-IND of T_ADDRESSES = 5432
-00 TAB-ADR-IND/T_ADDRESSES/test [W-S]  :  +000005432
+00 TAB-ADR-IND/T_ADDRESSES [W-S]  :  +000005432
 cp TAB-ADR-IND
- 1 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S] : +000001234
- 2 : 00 TAB-ADR-IND/T_ADDRESSES/test [W-S] : +000005432
+ 1 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE [W-S] : +000001234
+ 2 : 00 TAB-ADR-IND/T_ADDRESSES [W-S] : +000005432
 cp TAB-ADR-IND of T_ENTRY = 9999
 No symbols match "TAB-ADR-IND/T_ENTRY" in current context
 cp svalue
-01 svalue/test [W-S]  :  -123456
+01 svalue [W-S]  :  -123456
 cp svalue = 1234
-01 svalue/test [W-S]  :  +001234
+01 svalue [W-S]  :  +001234
 cp svalue
-01 svalue/test [W-S]  :  +001234
+01 svalue [W-S]  :  +001234
 cp svalue(2:2) = 89
-01 svalue/test(2:2) [W-S]  :  [3839]
+01 svalue(2:2) [W-S]  :  [3839]
 cp svalue
-01 svalue/test [W-S]  :  +684818
+01 svalue [W-S]  :  +684818
 cp svalue(2:2) = x'89'
-01 svalue/test(2:2) [W-S]  :  [8920]
+01 svalue(2:2) [W-S]  :  [8920]
 cp svalue
-01 svalue/test [W-S]  :  +986834
+01 svalue [W-S]  :  +986834
 cp svalue(2:2) = x'1234'
-01 svalue/test(2:2) [W-S]  :  [1234]
+01 svalue(2:2) [W-S]  :  [1234]
 cp svalue
-01 svalue/test [W-S]  :  +193170
+01 svalue [W-S]  :  +193170
 cp svalue = -12345
-01 svalue/test [W-S]  :  -012345
+01 svalue [W-S]  :  -012345
 cp svalue
-01 svalue/test [W-S]  :  -012345
+01 svalue [W-S]  :  -012345
 cp WS-BASED
-01 WS-BASED/test [W-B]  :  "I am a BASED variable", ' ' <repeats 43 times>
+01 WS-BASED [W-B]  :  "I am a BASED variable", ' ' <repeats 43 times>
 cp WS-BASED(8:5)
-01 WS-BASED/test(8:5) [W-B]  :  "BASED"
+01 WS-BASED(8:5) [W-B]  :  "BASED"
 KNOWN GOOD FINISH
