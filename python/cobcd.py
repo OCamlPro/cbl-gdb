@@ -1459,7 +1459,7 @@ class CobolVariable():
 
         # Something we need to know:
         is_alphanumeric = False
-        if self.AttrType in( COB_TYPE_UNKNOWN,
+        if self.AttrType in (COB_TYPE_UNKNOWN,
                              COB_TYPE_GROUP,
                              COB_TYPE_BOOLEAN,
                              COB_TYPE_ALNUM,
