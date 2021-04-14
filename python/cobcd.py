@@ -166,6 +166,10 @@ R_ALLZERO = re.compile(r'ALL[ ]*ZERO(S|ES)?', re.IGNORECASE)
 READELF_AVAILABLE = True
 COBCDRW_AVAILABLE = True
 
+# Note: Replace "readelf" with path to binary if it is not in your PATH.
+READELF_BINARY = os.getenv('READELF', 'readelf')
+COBCDRW_BINARY = os.getenv('COBCDRW', 'cobcd-rw')
+
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
     limiting_debug_level = 1
@@ -2651,7 +2655,7 @@ def get_sorted_possibilities(args, limit):
             possibilities_1 = GV_ModuleInformation.var_trie.GetAllPossibilities()
         elif args[0].find('?') != -1:
             if not COBCDRW_AVAILABLE:
-                print("Function not available: cobcd-rw not in path")
+                print("Function not available: cobcd-rw not available")
                 return possibilities, False
 
             # If the first, presumably single, argument contains a question mark,
@@ -2679,7 +2683,7 @@ def get_sorted_possibilities(args, limit):
                     # -2 means there should be no "cprint ?" response
                     return_string = ""
                 else:
-                    return_string = subprocess.check_output(["cobcd-rw",
+                    return_string = subprocess.check_output([COBCDRW_BINARY,
                                                              GV_ModuleState.current_full_path,
                                                              str(GV_ModuleState.current_trapped_line),
                                                              str(qmrange)])
@@ -3861,8 +3865,9 @@ class CPrint(gdb.Command):
     def __init__(self):
         global COBCDRW_AVAILABLE
 
-        cobcdrw_exe = distutils.spawn.find_executable("cobcd-rw")
-        if cobcdrw_exe is None:
+        try:
+            subprocess.check_output([COBCDRW_BINARY, '-v'])
+        except OSError:
             COBCDRW_AVAILABLE = False
 
         self.worker = CPrintWorker()
@@ -4184,8 +4189,6 @@ CBLDBG_CLOAD_WORKER = CLoadWorker()
 
 # actual reading originally taken from https://stackoverflow.com/questions/20380204/how-to-load-multiple-symbol-files-in-gdb/62471062#62471062
 
-# Note: Replace "readelf" with path to binary if it is not in your PATH.
-READELF_BINARY = os.getenv('READELF', 'readelf')
 
 class CLoad(gdb.Command):
     """Load symbols from COBOL module in COB_LIBRARY_PATH or query for available modules.
