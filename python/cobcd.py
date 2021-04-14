@@ -2020,6 +2020,23 @@ class CobolVariable():
                 self.IsDirty = False
         return True
 
+    def NameWithSubscripts(self):
+        # Start with full name.
+        # Remove the program name from the right side:
+        name = self.Name.split('/')
+        name = '/'.join(name[0:-1])
+
+        # Tack on table subscripts:
+        if self.Subscripts:
+            name += "(" + ",".join(map(str,self.ResolvedSubscripts)) + ")"
+        elif self.OccursMax:
+            # This is a table, but no subscript was supplied.  Assume 1:
+            name += "(1)"
+        # Tack on reference modifications:
+        if self.Refmod:
+            name += "({0}:{1})".format(self.RefmodOffset+1,self.RefmodLength)
+        return name
+
     def NameToStringFull(self):
         storage_type = ""
         if self.Section == 'F':
@@ -2034,26 +2051,13 @@ class CobolVariable():
             storage_type = "L-S"
         elif self.Section == 'I':
             storage_type = "LNK"
-        name = self.Name.split('/')
-        name = '/'.join(name[0:-1])
-        return "{1:02} {2} [{0}]".format(storage_type, self.Level, name)
+        return "{1:02} {2} [{0}]".format(storage_type, self.Level, self.NameWithSubscripts())
 
     def NameToString(self):
-        # Remove the final element of the Name, which is the program name
-        name = self.Name.split('/')
-        name = '/'.join(name[0:-1])
-        if self.Subscripts:
-            name += "(" + ",".join(map(str,self.ResolvedSubscripts)) + ")"
-        elif self.OccursMax:
-            # This is a table, but no subscript was supplied.  Assume 1:
-            name += "(1)"
-        if self.Refmod:
-            name += "({0}:{1})".format(self.RefmodOffset+1,self.RefmodLength)
-
         if GV_ModuleState.current_display_mode in ('3','4','5'):
             s = self.NameToStringFull()
         else:
-            s = name
+            s = self.NameWithSubscripts()
         return s
 
     def ShowFields(self):

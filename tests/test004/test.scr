@@ -9,12 +9,24 @@ echo KNOWN GOOD FINISH\n
 
 ### Make sure 'cprint *' is clean at the end
 echo KNOWN GOOD LINES: 1\n
+cprint/v3
+cprint *
+cprint/v0
 cprint *
 
 b 135
 echo KNOWN GOOD START\n
 r
-cp *
+
+echo cprint/v3\n
+cprint/v3
+echo cprint *\n
+cprint *
+echo cprint/v0\n
+cprint/v0
+echo cprint *\n
+cprint *
+
 echo cp ws-table\n
 cp ws-table
 echo cp ws-a\n
@@ -291,6 +303,21 @@ echo cp WS-BASED\n
 cp WS-BASED
 echo cp WS-BASED(8:5)\n
 cp WS-BASED(8:5)
+
+echo cp ws-c(one two)(one : three of nums2)\n
+cp ws-c(one two)(one : three of nums2)
+echo cp/v0 ws-c(one two)(one : three of nums2)\n
+cp/v0 ws-c(one two)(one : three of nums2)
+echo cp/v1 ws-c(one two)(one : three of nums2)\n
+cp/v1 ws-c(one two)(one : three of nums2)
+echo cp/v2 ws-c(one two)(one : three of nums2)\n
+cp/v2 ws-c(one two)(one : three of nums2)
+echo cp/v3 ws-c(one two)(one : three of nums2)\n
+cp/v3 ws-c(one two)(one : three of nums2)
+echo cp/v4 ws-c(one two)(one : three of nums2)\n
+cp/v4 ws-c(one two)(one : three of nums2)
+echo cp/v5 ws-c(one two)(one : three of nums2)\n
+cp/v5 ws-c(one two)(one : three of nums2)
 
 echo KNOWN GOOD FINISH\n
 
