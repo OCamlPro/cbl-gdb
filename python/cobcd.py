@@ -3300,7 +3300,7 @@ class CWatchWorker():
         else:
             print("Internal error: Watchpoint type not recognized")
             return
-        break_point.commands = "cup 0"
+        break_point.commands = "echo Watched: {0} from {1}\\n \n cup 0".format(payload.NameToString(), payload.Program)
 
     def process_watch_arguments(self, arguments):
         left_side = []
