@@ -2037,10 +2037,10 @@ class CobolVariable():
             name += "({0}:{1})".format(self.RefmodOffset + 1, self.RefmodLength)
 
         if GV_ModuleState.current_display_mode in ('3', '4', '5'):
-            s = self.NameToStringFull()
+            n_str = self.NameToStringFull()
         else:
-            s = name
-        return s
+            n_str = name
+        return n_str
 
     def ShowFields(self):
         bname_location = GetAddressOf(self.Bname) or 0
@@ -2061,7 +2061,7 @@ class CobolVariable():
 
         if self.Refmod:
             print("Refmod:     ", self.Refmod, end='')
-            resolved = "({0}:{1})".format(self.RefmodOffset+1, self.RefmodLength)
+            resolved = "({0}:{1})".format(self.RefmodOffset + 1, self.RefmodLength)
             if resolved != self.Refmod:
                 print("; resolves to {0}".format(resolved), end='')
             print("")
@@ -2523,57 +2523,57 @@ class HNode():
         self.parent = None
         self.children = []
 
-def TrimComma(s):
-    if s and s[-1] == ',':
-        s = s[:-1]  # Strip off final comma
-    return s
+def TrimComma(t_str):
+    if t_str and t_str[-1] == ',':
+        t_str = t_str[:-1]  # Strip off final comma
+    return t_str
 
 def BuildHString(node):
-    s = ""
+    h_str = ""
     if node.Level == 0:
         # This is the root.  We live only for our children
         for child in node.children:
-            s += BuildHString(child)
+            h_str += BuildHString(child)
     else:
         if node.Level in (1, 77, 78):
             # Top level variables are treated this way:
-            s += r'{name="'
-            s += node.BaseName  #  + "/" + str(node.storage_table_index)
-            s += r'",value="'
+            h_str += r'{name="'
+            h_str += node.BaseName  # + "/" + str(node.storage_table_index)
+            h_str += r'",value="'
             if len(node.children) == 0:
                 # There are no children, which means this is just
                 # a simple variable:
-                s += r'\"'
-                s += MachineInterfaceBody(node.display_body)
-                s += r'\"'
-                s += r'"'
+                h_str += r'\"'
+                h_str += MachineInterfaceBody(node.display_body)
+                h_str += r'\"'
+                h_str += r'"'
             else:
                 # This is a top-level node with children:
-                s += r'{_groupvalue=\"'
-                s += MachineInterfaceBody(node.display_body)
-                s += r'\",'
+                h_str += r'{_groupvalue=\"'
+                h_str += MachineInterfaceBody(node.display_body)
+                h_str += r'\",'
                 for child in node.children:
-                    s += BuildHString(child)
-                s = TrimComma(s)
-                s += r'}"'
-            s += '},'
+                    h_str += BuildHString(child)
+                h_str = TrimComma(h_str)
+                h_str += r'}"'
+            h_str += '},'
         else:
             # This is a node whose level is 01-49, 66
             if len(node.children) == 0:
-                s += node.BaseName  # + "/" + str(node.storage_table_index)
-                s += r'=\"'
-                s += MachineInterfaceBody(node.display_body)
-                s += r'\",'
+                h_str += node.BaseName  # + "/" + str(node.storage_table_index)
+                h_str += r'=\"'
+                h_str += MachineInterfaceBody(node.display_body)
+                h_str += r'\",'
             else:
-                s += node.BaseName  # + "/" + str(node.storage_table_index)
-                s += r'={_groupvalue=\"'
-                s += MachineInterfaceBody(node.display_body)
-                s += r'\",'
+                h_str += node.BaseName  # + "/" + str(node.storage_table_index)
+                h_str += r'={_groupvalue=\"'
+                h_str += MachineInterfaceBody(node.display_body)
+                h_str += r'\",'
                 for child in node.children:
-                    s += BuildHString(child)
-                s = TrimComma(s)
-                s += r'},'
-    return s
+                    h_str += BuildHString(child)
+                h_str = TrimComma(h_str)
+                h_str += r'},'
+    return h_str
 
 def MachineInterfaceHeirarchical(possibilities):
     # This is the machine interface mode for returning the
@@ -2735,36 +2735,36 @@ def get_sorted_possibilities(args, limit):
 
     return possibilities, False # False means there was no 'limit' overflow
 
-def FromHexAlphaString(s):
+def FromHexAlphaString(conv_str):
     """Converts a COBOL hexadecimal alphanumeric string to an ordinary string"""
-    retval = s
-    if s[0:2].lower().replace('"', "'") == "x'" and s[-1] in ("'", '"') and (len(s)%2) == 1:
+    retval = conv_str
+    if conv_str[0:2].lower().replace('"', "'") == "x'" and conv_str[-1] in ("'", '"') and (len(conv_str) % 2) == 1:
         # This is correctly formed
         # Trim off the front and back:
-        s = s[2:-1]
+        conv_str = conv_str[2:-1]
         i = 0
         retval = '"'
-        while i < len(s):
+        while i < len(conv_str):
             try:
-                ch = int(s[i:i+2], 16)
+                conv_char = int(conv_str[i:i + 2], 16)
             except:
                 break
-            retval += chr(ch)
+            retval += chr(conv_char)
             i += 2
         retval += '"'
     return retval
 
-def FromHexLiteralNumber(s):
+def FromHexLiteralNumber(conv_str):
     """Converts a COBOL hexadecimal numeric literal string to an ordinary string"""
     retval = 0
-    if s[0:2].lower().replace('"', "'") == "h'" and s[-1] in ("'", '"'):
+    if conv_str[0:2].lower().replace('"', "'") == "h'" and conv_str[-1] in ("'", '"'):
         # This is correctly formed
         # Trim off the front and back:
-        s = s[2:-1]
+        conv_str = conv_str[2:-1]
         i = 0
-        while i < len(s):
+        while i < len(conv_str):
             try:
-                nch = int(s[i], 16)
+                nch = int(conv_str[i], 16)
             except:
                 break
             retval *= 16
@@ -2993,7 +2993,7 @@ class CPrintWorker():
             return_value = var_left.PutDataAsString(value, p_startloc, p_length)
 
         if return_value == 1:
-            payload   = GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex]
+            payload = GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex]
 
             # Adjust the modifiers in the storage_list to match var_left, so that subsequent
             # fetch/display shows what we just changed:
@@ -3054,8 +3054,8 @@ class CPrintWorker():
             # is also an 'rside'.  So, this code is in response to a `-data-evalute-expression` equivalent command
             payload_index = leftside_possibilities[0]
             payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
-            s = 'value="' + MachineInterfaceBodyAlt(WithRepeatCount(payload.display_body)) + '"'
-            print(s)
+            disp_str = 'value="' + MachineInterfaceBodyAlt(WithRepeatCount(payload.display_body)) + '"'
+            print(disp_str)
             return
 
         if len(leftside_possibilities) == 1 and rightside and leftside[0] != '*' and leftside[0] != '?':
@@ -3102,8 +3102,8 @@ class CPrintWorker():
         leftside_possibilities = list(ppp)
         leftside_possibilities.sort()
 
-        s = MachineInterfaceHeirarchical(leftside_possibilities)
-        print(s)
+        disp_str = MachineInterfaceHeirarchical(leftside_possibilities)
+        print(disp_str)
 
     def ProcessArgumentsHumanMode(self, leftside_possibilities, rightside):
         if len(leftside_possibilities) > 1:
@@ -3114,17 +3114,17 @@ class CPrintWorker():
                 payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
                 if not payload.not_in_context:
                     GV_GlobalVariables.ShortTermMemory.append(payload_index)
-                    s = "{0:2} : ".format(line_counter)
+                    print_str = "{0:2} : ".format(line_counter)
                     line_counter += 1
-                    s += payload.NameToString()
-                    s += " : "
+                    print_str += payload.NameToString()
+                    print_str += " : "
 
                     body = WithRepeatCount(payload.display_body)
                     if GV_ModuleState.current_display_submode == 'x' and len(payload.data) <= 16:
                         body = payload.display_body_hex
 
-                    s += body
-                    retval = OurPrint(NoNulls(s))
+                    print_str += body
+                    retval = OurPrint(NoNulls(print_str))
                     if retval == "Quit":
                         break
         elif len(leftside_possibilities) == 1:
@@ -3880,7 +3880,7 @@ class CPrint(gdb.Command):
                 GV_GlobalVariables.repeat_count = int(tokens[2])
                 if GV_GlobalVariables.repeat_count < 1:
                     GV_GlobalVariables.repeat_count = 1000000
-                GV_GlobalVariables.IsDirty=True  # To force reformatting
+                GV_GlobalVariables.IsDirty = True  # To force reformatting
                 return
 
             GV_ModuleState.EstablishModuleState(False)
@@ -3896,11 +3896,11 @@ class CPrint(gdb.Command):
             # HACK: because of missing support for hypens: in identifiers
             # we have to look at the text for that
             # but the hack doesn't work because GDB won't complete at - either...
-            #if text and text.find('-'):
+            # if text and text.find('-'):
             #    word = text # split, last part
 
             # note: modifier / slash is no word, so in this case word is None
-            if word is None or word == "" or word[0] in ('*','?', '(', ')', ',', ':', '"', '\'') or word[0].isdigit():
+            if word is None or word == "" or word[0] in ('*', '?', '(', ')', ',', ':', '"', '\'') or word[0].isdigit():
                 # if it doesn't look like a word then just return nothing
                 return gdb.COMPLETE_NONE
 
@@ -4230,7 +4230,6 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
         modules_loaded = CBLDBG_CLOAD_WORKER.load_modules(module_names)
         if modules_loaded is None:
             print("No modules found")
-
 
     def complete(self, text, word):
         return CBLDBG_CLOAD_WORKER.get_module_completion(word)
