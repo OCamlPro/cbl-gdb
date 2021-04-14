@@ -696,9 +696,10 @@ VARIABLES::FormatVariablesInfo(stringstream &ss) const
     for( V_VARIABLES::const_iterator variable = variables.begin();
             variable!=variables.end();
             variable++) {
-        if( variable->name EQ "FILLER" ) {
-            continue;
+        if( variable->name.empty() ) {
+            variable->name == "FILLER";
         }
+
         ss << variable->record_type             << "|" ;
         ss << ZeroIsNull(variable->level)       << "|" ;
         ss << variable->name                    << "|" ;

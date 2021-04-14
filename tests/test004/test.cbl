@@ -50,8 +50,25 @@
 
         01 WS-BASED PIC X(64) BASED.
 
+        77 var-one pic 9 value 1.
+        77 var-two pic 9 value 2.
+        01 .
+           03 var-tab pic x occurs 10.
+           03 var-entry pic x.
 
         PROCEDURE DIVISION.
+
+            move "1" to var-tab(1)
+            move "2" to var-tab(2)
+            move "3" to var-tab(3)
+            move "4" to var-tab(4)
+            move "5" to var-tab(5)
+            move "6" to var-tab(6)
+            move "7" to var-tab(7)
+            move "8" to var-tab(8)
+            move "9" to var-tab(9)
+            move "0" to var-tab(10)
+        
            MOVE 87654321 to Z-PID.
            MOVE 2 TO SUBINDEX.
            MOVE 3 TO TAB-ADR-IND in T_ADDRESSES.

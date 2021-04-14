@@ -947,7 +947,8 @@ class VarTrie():
 
                     # and now we put ourselves into the position of
                     # most favored child
-                    self.StackOfNames.append(tokens[self.IndexName])
+                    name_element = tokens[self.IndexName]
+                    self.StackOfNames.append(name_element)
                     self.StackOfLevels.append(our_level)
 
                     reversed = self.StackOfNames[:]
