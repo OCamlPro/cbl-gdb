@@ -58,8 +58,8 @@ import traceback
 import subprocess
 from inspect import currentframe, getframeinfo
 from struct import calcsize
-import gdb
 import copy
+import gdb
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
@@ -179,19 +179,6 @@ def GdbExecute(curframe, command):
                 print("####       retval:", line)
     return retval
 
-def GdbExecute2(curframe, command, debug_level):
-    # It is up to the caller to handle exceptions
-    limiting_debug_level = 1
-    if debug_level >= limiting_debug_level:
-        print("#### ", getframeinfo(curframe).lineno, ": gdb.execute: '", command, "'", sep='')
-    retval = gdb.execute(command, False, True)
-    if debug_level >= limiting_debug_level:
-        lines = retval.split('\n')
-        for line in lines:
-            if len(line) > 0:
-                print("####       retval:", line)
-    return retval
-
 class GlobalVariables():
     def __init__(self):
         # Establish the debugging verbosity level:
@@ -225,18 +212,18 @@ class GlobalVariables():
         if not self.cprint_buffer:
             try:
                 command = "call (char*)cob_malloc({0})".format(PRINT_BUFFER_SIZE)
-                self.cprint_buffer = int(gdb.execute(command, False, True).split()[2],16)
+                self.cprint_buffer = int(gdb.execute(command, False, True).split()[2], 16)
 
                 command = "call (char*)cob_malloc(sizeof(cob_field))"
-                self.cprint_f0 = int(gdb.execute(command, False, True).split()[2],16)
+                self.cprint_f0 = int(gdb.execute(command, False, True).split()[2], 16)
 
                 command = "call (char*)cob_malloc(sizeof(cob_field_attr))"
-                self.cprint_a0 = int(gdb.execute(command, False, True).split()[2],16)
+                self.cprint_a0 = int(gdb.execute(command, False, True).split()[2], 16)
             except:
                 traceback.print_exc()
                 self.cprint_buffer = None
                 self.cprint_f0 = None
-                pass
+
             if not self.cprint_buffer or not self.cprint_buffer:
                 print("Something is very wrong in GlobalVariables.AllocateBuffers()")
                 os.exit(1)
@@ -330,25 +317,25 @@ def Picture(s):
 
 def MachineInterfaceBody(s):
 
-#  This sequence:
-#  variables=[{name="L00L",value="{_groupvalue=\"Sn\\\"ap!\",fullname=\"Robert\\\"Dubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"\\\"Dubner\\\"\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]
-#
-#  Results in a heirarchical display:
-#
-#  L00L: Sn"ap!
-#     fullname : Robert"Dubner
-#        L02: Crackle!
-#            firstname: Robert
-#            lastname: "Dubner"
-#            L03: Pop!
-#                firstname: Judy
-#                lastname: Ruderman
-#
-#  This one:  variables=[{name="L01",value="===\">\\/<\"==="}]
-#
-#  Results in      ===">\/<"===
-#
-#  Counting up the backslashes is, to say the least, tricky
+    #  This sequence:
+    #  variables=[{name="L00L",value="{_groupvalue=\"Sn\\\"ap!\",fullname=\"Robert\\\"Dubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"\\\"Dubner\\\"\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]
+    #
+    #  Results in a heirarchical display:
+    #
+    #  L00L: Sn"ap!
+    #     fullname : Robert"Dubner
+    #        L02: Crackle!
+    #            firstname: Robert
+    #            lastname: "Dubner"
+    #            L03: Pop!
+    #                firstname: Judy
+    #                lastname: Ruderman
+    #
+    #  This one:  variables=[{name="L01",value="===\">\\/<\"==="}]
+    #
+    #  Results in      ===">\/<"===
+    #
+    #  Counting up the backslashes is, to say the least, tricky
 
     # Replace double-quotes and backslashes
     retval = ""
@@ -384,7 +371,6 @@ def ReplaceWithRepeatCountQuoted(s):
     s = s[1:-1]
     rabbit = 0
     fox = 0
-    count = 0
     prior_contraction = False
     in_a_quoted_run = False
     number_of_repeated_runs = 0
@@ -456,7 +442,6 @@ def ReplaceWithRepeatCountBracketed(s):
     s = s[1:-1]
     rabbit = 0
     fox = 0
-    count = 0
     prior_contraction = False
     in_a_quoted_run = False
     number_of_repeated_runs = 0
@@ -711,19 +696,19 @@ def PreprocessSubscriptsAndRefmods(subscripts):
         separator = ''
 
     subscripts = subscripts.upper()
-    subscripts = subscripts.replace(';',' ')
-    subscripts = subscripts.replace(',',' ')
-    subscripts = subscripts.replace('/'," IN ")
-    subscripts = subscripts.replace('.'," IN ")
-    subscripts = subscripts.replace(" OF "," IN ")
+    subscripts = subscripts.replace(';', ' ')
+    subscripts = subscripts.replace(',', ' ')
+    subscripts = subscripts.replace('/', " IN ")
+    subscripts = subscripts.replace('.', " IN ")
+    subscripts = subscripts.replace(" OF ", " IN ")
     tokens = subscripts.split()
     i = 1
     while i < len(tokens):
-        if tokens[i] != "IN" and tokens[i-1] != "IN":
-            tokens[i-1] += separator
+        if tokens[i] != "IN" and tokens[i - 1] != "IN":
+            tokens[i - 1] += separator
         i += 1
     subscripts = ' '.join(tokens)
-    subscripts = subscripts.replace(" IN "," ")
+    subscripts = subscripts.replace(" IN ", " ")
     return subscripts
 
 def TokenizeCanonicalName(desired):
@@ -766,7 +751,7 @@ def atoi(s):
     retval = 0
     sign = 1
     i = 0
-    while i<len(s):
+    while i < len(s):
         ch = s[i]
         i += 1
         if ch == '"':
@@ -785,7 +770,7 @@ def atoi(s):
             sign = -1
             continue
         n = ord(ch) - ord('0')
-        if n<0 or n>9:
+        if n < 0 or n > 9:
             # A non-digit ends the conversion
             break
         # This is a digit 0 through 9, so accumulate it into the result
@@ -912,9 +897,9 @@ class VarTrie():
                     our_level = int(tokens[self.IndexLevel])
                     if our_level in (77, 78):
                         our_level = 1
-                    if our_level > 0: # When our_level is zero, it means we are a table index,
-                                      # so we don't touch the stacks.
-                                      # We want the element above us to be our parent.
+                    if our_level > 0:  # When our_level is zero, it means we are a table index,
+                                       # so we don't touch the stacks.
+                                       # We want the element above us to be our parent.
                         while self.StackOfLevels[-1] >= our_level or self.StackOfLevels[-1] == 0:
                             # The guy above us is either our brother(==), or a nephew(>),
                             # or he's our crazy INDEXED inlaw (zero) that nobody wants as a parent:
@@ -976,26 +961,26 @@ class VarTrie():
                     if payload.Level > 1 and payload.Level <= 49:
                         # We start looking at the variable in the list right where we
                         # will go.
-                        i = len(self.storage_list)-1
+                        i = len(self.storage_list) - 1
                         while i >= 0:
                             candidate_level = self.storage_list[i].Level
                             if candidate_level == payload.Level:
-                            # Our older relative has the same level we do.  That means we
-                            # share a parent.  That value might be None, but that's okay.
+                                # Our older relative has the same level we do.  That means we
+                                # share a parent.  That value might be None, but that's okay.
                                 payload.index_of_parent = self.storage_list[i].index_of_parent
                                 break
-                            elif candidate_level>0 and candidate_level < payload.Level:
+                            elif candidate_level > 0 and candidate_level < payload.Level:
                                 # Because it is smaller than we are, this has to be our parent:
                                 # Unless, of course, it is a level 00 INDEXED BY variable, in which
                                 # case it can't be anybody's parent.
                                 payload.index_of_parent = i
                                 break
-                            else: # candidate_level > payload.Level:
-                                # This has to be a child of an older sibling.  They can't be
-                                # our parent, but we keep looking until we find that older sibling.
+                            else:  # candidate_level > payload.Level:
+                                   # This has to be a child of an older sibling.  They can't be
+                                   # our parent, but we keep looking until we find that older sibling.
                                 pass
                             i -= 1
-                    #print("Loading",payload.Level, payload.Name, payload.index_of_parent)
+                    # print("Loading",payload.Level, payload.Name, payload.index_of_parent)
                     payload.payload_index = len(self.storage_list)
                     self.storage_list.append(payload)
                     self.AddToTrie(self.storage_trie,
@@ -1244,6 +1229,7 @@ class VarTrie():
             self.storage_list[i].IsDirty = True
             i += 1
 
+
 class LineList():
     """List of starting lines of ProgramNames"""
 
@@ -1325,8 +1311,8 @@ class CobolVariable():
         # These elements are based on parenthesized subscripts after the
         # name:  name(array_index1 , array_index2 , ...)(refmod start : refmod run)
         # Note the commas and colons, which determine which is which
-        self.Subscripts          = None # This is the user's requested subscripts, integers or variables
-        self.ResolvedSubscripts  = None # These are the resolved values (offset is one-based)
+        self.Subscripts          = None  # This is the user's requested subscripts, integers or variables
+        self.ResolvedSubscripts  = None  # These are the resolved values (offset is one-based)
         self.TableOffset  = 0    # These are additional offset bytes based on the table Subscripts
         self.Refmod       = None
         self.RefmodOffset = 0   # This is the zero-based Offset in (Offset:Length)
@@ -1347,8 +1333,8 @@ class CobolVariable():
         self.not_in_context = False
         self.display_body = ""
 
-        self.SubscriptFailure = False # Set to True when subscripts don't match the number of tables
-        self.RefmodFailure    = False # Set to True when something is wrong with the refmod length
+        self.SubscriptFailure = False  # Set to True when subscripts don't match the number of tables
+        self.RefmodFailure    = False  # Set to True when something is wrong with the refmod length
 
         # When a variable is accessed for the first time, or when the Subscript changes,
         # or when the refmod changes, or when a previously-read variable is displayed through
@@ -1405,7 +1391,7 @@ class CobolVariable():
             # will be calling free_field_location
 
             command = "call (char*)cob_malloc(sizeof(cob_field))"
-            retval = int(gdb.execute(command, False, True).split()[2],16)
+            retval = int(gdb.execute(command, False, True).split()[2], 16)
 
             # Having allocated a synthetic cob_field, initialize it with the data
             # Unlike the DONT_ALLOCATE situation, where we aren't allowed to mess with the
@@ -1413,7 +1399,7 @@ class CobolVariable():
             # add in any table offset:
             command = "set var *(cob_field *){0}".format(hex(retval)) + " = {"
             command += "{0}, (char *){1}, &{2}".format(self.Length,
-                                                       hex(self.location_of_data+self.TableOffset),
+                                                       hex(self.location_of_data + self.TableOffset),
                                                        self.Aname)
             command += "}"
             gdb.execute(command, False, True)
@@ -1464,25 +1450,25 @@ class CobolVariable():
     def GetDataAsString(self):
         retval = ""
         GV_GlobalVariables.AllocateBuffers()
-        #location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
-        #if not location_of_field:
+        # location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
+        # if not location_of_field:
         #    return retval
 
         if False:  # For development
             self.DumpJustAboutEverything()
 
-        ## Something we need to know:
+        # Something we need to know:
         is_alphanumeric = False
-        if self.AttrType in ( COB_TYPE_UNKNOWN,
-                              COB_TYPE_GROUP,
-                              COB_TYPE_BOOLEAN,
-                              COB_TYPE_ALNUM,
-                              COB_TYPE_ALPHANUMERIC,
-                              COB_TYPE_ALPHANUMERIC_ALL,
-                              COB_TYPE_ALPHANUMERIC_EDITED,
-                              COB_TYPE_NUMERIC_EDITED,
-                              COB_TYPE_NATIONAL,
-                              COB_TYPE_NATIONAL_EDITED ) :
+        if self.AttrType in( COB_TYPE_UNKNOWN,
+                             COB_TYPE_GROUP,
+                             COB_TYPE_BOOLEAN,
+                             COB_TYPE_ALNUM,
+                             COB_TYPE_ALPHANUMERIC,
+                             COB_TYPE_ALPHANUMERIC_ALL,
+                             COB_TYPE_ALPHANUMERIC_EDITED,
+                             COB_TYPE_NUMERIC_EDITED,
+                             COB_TYPE_NATIONAL,
+                             COB_TYPE_NATIONAL_EDITED):
             is_alphanumeric = True
 
         try:
@@ -1494,7 +1480,7 @@ class CobolVariable():
                                                        hex(self.ActualLocation),
                                                        self.Aname)
             command += "}"
-            #print("command",command)
+            # print("command",command)
             gdb.execute(command, False, True)
 
             buffer = GV_GlobalVariables.cprint_buffer
@@ -1511,7 +1497,7 @@ class CobolVariable():
                       "cob_get_field_str((cob_field *){0}, " \
                       "(char *){1}, {2})".format(hex(field_loc),
                                                  hex(buffer),
-                                                 PRINT_BUFFER_SIZE )
+                                                 PRINT_BUFFER_SIZE)
             gdb.execute(command, False, True)
         except gdb.error:
             traceback.print_exc()
@@ -1519,7 +1505,7 @@ class CobolVariable():
             return "<Error in GetDataAsString>"
 
         # The formatted variable string is in buffer
-        if is_alphanumeric :
+        if is_alphanumeric:
             retval = '"'
 
         buf_ptr = buffer
@@ -1529,7 +1515,7 @@ class CobolVariable():
                 break
             retval += chr(char)
             buf_ptr += 1
-        if is_alphanumeric :
+        if is_alphanumeric:
             retval += '"'
 
         return retval
@@ -1578,7 +1564,7 @@ class CobolVariable():
                 data_value = hex(buffer)
             else:
                 command = "set var *(cob_field_attr *){0} = {1}".format(hex(GV_GlobalVariables.cprint_a0), self.Aname)
-                data_value = hex(self.location_of_data+self.TableOffset + p_startloc - 1)
+                data_value = hex(self.location_of_data + self.TableOffset + p_startloc - 1)
             gdb.execute(command, False, True)
 
             if self.Refmod:
@@ -1681,7 +1667,7 @@ class CobolVariable():
 
             output_bytes = self.data[:]
             if GV_GlobalVariables.byteorder == "little":
-                if (self.AttrFlags & COB_FLAG_BINARY_SWAP) == 0: # If this is ON, then it is already in display order
+                if (self.AttrFlags & COB_FLAG_BINARY_SWAP) == 0:  # If this is ON, then it is already in display order
                     if (self.AttrFlags & (COB_FLAG_REAL_BINARY | COB_FLAG_IS_POINTER | COB_FLAG_IS_FP)) != 0:
                         # These three types are little-endian; flip them so they display with the big byte to the left
                         output_bytes.reverse()
@@ -1732,11 +1718,11 @@ class CobolVariable():
                         subscript = 1
                     else:
                         subscript, limit_reached = IntegerOrVariable(list_of_subscripts[-1].strip())
-                        if subscript == None and limit_reached:
+                        if subscript is None and limit_reached:
                             print("Multiple symbols match \"{0}\"".format(list_of_subscripts[-1].strip()))
                             self.SubscriptFailure = True
                             break
-                        if subscript == None:
+                        if subscript is None:
                             print("No symbol matches \"{0}\"".format(list_of_subscripts[-1].strip()))
                             self.SubscriptFailure = True
                             break
@@ -1744,9 +1730,9 @@ class CobolVariable():
                     list_of_subscripts = list_of_subscripts[0:-1]
                     if subscript < 1 or subscript > variable.OccursMax:
                         print("The subscript '{0}({1})' is out of range (1 through {2})".format(variable.Name,
-                                                                                             subscript,
-                                                                                             variable.OccursMax))
-                        available = 0 # This will prevent an additional superfluous "too many subscripts" message
+                                                                                                subscript,
+                                                                                                variable.OccursMax))
+                        available = 0  # This will prevent an additional superfluous "too many subscripts" message
                         needed = 0
                         self.SubscriptFailure = True
                         break
@@ -1758,11 +1744,11 @@ class CobolVariable():
             available -= needed
             if available:
                 if needed == 1:
-                    print("{0} needs {1} subscript".format(self.Name,needed))
+                    print("{0} needs {1} subscript".format(self.Name, needed))
                 else:
-                    print("{0} needs {1} subscripts".format(self.Name,needed))
+                    print("{0} needs {1} subscripts".format(self.Name, needed))
                 self.SubscriptFailure = True
-        if self.SubscriptFailure :
+        if self.SubscriptFailure:
             self.ResolvedSubscripts = []
             self.TableOffset = 0
         return
@@ -1785,18 +1771,18 @@ class CobolVariable():
 
             if refmod[0]:
                 offset, limit_reached = IntegerOrVariable(refmod[0].strip())
-                if offset == None and limit_reached:
+                if offset is None and limit_reached:
                     print("Multiple symbols match \"{0}\"".format(refmod[0].strip()))
                     self.RefmodFailure = True
                     return
-                if offset == None:
+                if offset is None:
                     print("No symbol matches \"{0}\"".format(refmod[0].strip()))
                     self.RefmodFailure = True
                     return
             else:
                 offset = 1
 
-            if offset == None:
+            if offset is None:
                 offset = 1
 
             if offset < 1:
@@ -1806,11 +1792,11 @@ class CobolVariable():
 
             if refmod[1]:
                 length, limit_reached = IntegerOrVariable(refmod[1].strip())
-                if length == None and limit_reached:
+                if length is None and limit_reached:
                     print("Multiple symbols match \"{0}\"".format(refmod[1].strip()))
                     self.RefmodFailure = True
                     return
-                if length == None:
+                if length is None:
                     print("No symbol matches \"{0}\"".format(refmod[1].strip()))
                     self.RefmodFailure = True
                     return
@@ -1818,21 +1804,21 @@ class CobolVariable():
                 # No value was specified, so make it the maximum
                 length = self.Length - offset + 1
 
-            if length<1 or length>self.Length:
+            if length < 1 or length > self.Length:
                 print("The refmod {0} length has to be between 1 and {1}".format(self.Refmod, self.Length))
                 self.RefmodFailure = True
                 return
 
-            if offset-1 >= self.Length:
+            if offset - 1 >= self.Length:
                 print("The refmod {0} offset has to be less than {1}".format(self.Refmod, self.Length))
                 self.RefmodFailure = True
                 return
-            if offset-1 + length > self.Length:
+            if offset - 1 + length > self.Length:
                 # The requested refmod would overrun the end of the variable.
                 # Silently trim it for the user:
-                length = self.Length - (offset-1)
+                length = self.Length - (offset - 1)
 
-            self.RefmodOffset = offset-1    # Note that RefmodOffset is zero-based
+            self.RefmodOffset = offset - 1  # Note that RefmodOffset is zero-based
             self.RefmodLength = length
         return
 
@@ -1869,7 +1855,7 @@ class CobolVariable():
 
             if self.Fname:
                 # We have a field name
-                #print("FetchVariableData Fname", self.Fname)
+                # print("FetchVariableData Fname", self.Fname)
                 self.location_of_field = GetAddressOf(self.Fname)
                 if self.location_of_field is None:
                     self.not_in_context = True
@@ -1915,7 +1901,7 @@ class CobolVariable():
                         self.not_in_context = True
                         return False
                     self.location_of_data += self.Offset
-                    #print("  self.location_of_data + offset",hex(self.location_of_data),self.Offset)
+                    # print("  self.location_of_data + offset",hex(self.location_of_data),self.Offset)
                 else:
                     # print("There is no self.Bname")
                     pass
@@ -1945,7 +1931,7 @@ class CobolVariable():
                 self.AttrFlags  = GetDataAt(self.location_of_attribute + 6, 2)
                 self.location_of_pic = GetDataAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
 
-            if self.Section in('F', 'X', 'W', "WB", 'I'):
+            if self.Section in ('F', 'X', 'W', "WB", 'I'):
                 pass
             elif self.Section == 'L':
                 try:
@@ -2043,14 +2029,14 @@ class CobolVariable():
         name = self.Name.split('/')
         name = '/'.join(name[0:-1])
         if self.Subscripts:
-            name += "(" + ",".join(map(str,self.ResolvedSubscripts)) + ")"
+            name += "(" + ",".join(map(str, self.ResolvedSubscripts)) + ")"
         elif self.OccursMax:
             # This is a table, but no subscript was supplied.  Assume 1:
             name += "(1)"
         if self.Refmod:
-            name += "({0}:{1})".format(self.RefmodOffset+1,self.RefmodLength)
+            name += "({0}:{1})".format(self.RefmodOffset + 1, self.RefmodLength)
 
-        if GV_ModuleState.current_display_mode in ('3','4','5'):
+        if GV_ModuleState.current_display_mode in ('3', '4', '5'):
             s = self.NameToStringFull()
         else:
             s = name
@@ -2064,18 +2050,18 @@ class CobolVariable():
 
         print("Name:       ", self.NameToStringFull())
         if self.OccursMax:
-            print("OCCURS:      min: {0} max: {1}".format(self.OccursMin,self.OccursMax))
+            print("OCCURS:      min: {0} max: {1}".format(self.OccursMin, self.OccursMax))
 
         if self.Subscripts:
             print("Subscripts: ", self.Subscripts, end='')
-            resolved = "(" + ",".join(map(str,self.ResolvedSubscripts)) + ")"
+            resolved = "(" + ",".join(map(str, self.ResolvedSubscripts)) + ")"
             if resolved != self.Subscripts:
                 print("; resolves to {0}".format(resolved), end='')
             print("")
 
         if self.Refmod:
             print("Refmod:     ", self.Refmod, end='')
-            resolved = "({0}:{1})".format(self.RefmodOffset+1,self.RefmodLength)
+            resolved = "({0}:{1})".format(self.RefmodOffset+1, self.RefmodLength)
             if resolved != self.Refmod:
                 print("; resolves to {0}".format(resolved), end='')
             print("")
@@ -2085,7 +2071,7 @@ class CobolVariable():
 
         if self.Section == 'L':
             # This is local-storage
-            print("Field:      ", "f0" )
+            print("Field:      ", "f0")
         else:
             if self.Fname:
                 print("Field:      ", self.Fname, '   (', hex(self.location_of_field), ')')
@@ -2312,7 +2298,7 @@ class ModuleState():
     def __init__(self):
         # These variables contain state information that changes as the inferior
         # is debugged.
-        self.old_dogs = set() # One level of retained former variables when doing 'cprint ?'
+        self.old_dogs = set()  # One level of retained former variables when doing 'cprint ?'
         self.current_trapped_routine = ""
         self.current_trapped_file = ""
         self.current_trapped_frame = -1
@@ -2650,7 +2636,7 @@ def MachineInterfaceHeirarchical(possibilities):
     retval = TrimComma(retval)
     retval += ']'
     retval = NoNulls(retval)
-    #retval = r'variables=[{name="L01",value="{_groupvalue=\"Snap!\",fullname=\"RobertDubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"Dubner\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]'
+    # retval = r'variables=[{name="L01",value="{_groupvalue=\"Snap!\",fullname=\"RobertDubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"Dubner\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]'
     return retval
 
 def get_sorted_possibilities(args, limit):
@@ -2658,7 +2644,7 @@ def get_sorted_possibilities(args, limit):
     possibilities_1 = []
     possibilities = []
 
-    if len(args) >= 1 and GV_ModuleState.current_trapped_line>0:
+    if len(args) >= 1 and GV_ModuleState.current_trapped_line > 0:
         if args[0].find('*') != -1:
             # If the first, presumably single, argument contains an asterisk, then
             # he is asking for a list of variables and values:
@@ -2688,7 +2674,7 @@ def get_sorted_possibilities(args, limit):
                     # without that request, use the established +/- range
                     qmrange = GV_ModuleState.question_mark_range
                 if qmrange == -1:
-                    qmrange = 1000000000 # equivalent to "all"
+                    qmrange = 1000000000  # equivalent to "all"
                 if qmrange <= -2:
                     # -2 means there should be no "cprint ?" response
                     return_string = ""
@@ -2714,8 +2700,8 @@ def get_sorted_possibilities(args, limit):
                 # If index is valid, pick up the short-term memory entry
                 possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
             else:
-                print("The specified index ({0}) is out of range (1 to {1})".format(index+1,len(GV_GlobalVariables.ShortTermMemory)))
-                return possibilities, False # False means there was no 'limit' overflow
+                print("The specified index ({0}) is out of range (1 to {1})".format(index + 1,len(GV_GlobalVariables.ShortTermMemory)))
+                return possibilities, False  # False means there was no 'limit' overflow
         else:
             # There are one or more arguments.  Use our clever routine
             # to come up with the possibilities_1:
@@ -2752,7 +2738,7 @@ def get_sorted_possibilities(args, limit):
 def FromHexAlphaString(s):
     """Converts a COBOL hexadecimal alphanumeric string to an ordinary string"""
     retval = s
-    if s[0:2].lower().replace('"',"'") == "x'" and s[-1] in ("'",'"') and (len(s)%2) == 1:
+    if s[0:2].lower().replace('"', "'") == "x'" and s[-1] in ("'", '"') and (len(s)%2) == 1:
         # This is correctly formed
         # Trim off the front and back:
         s = s[2:-1]
@@ -2771,7 +2757,7 @@ def FromHexAlphaString(s):
 def FromHexLiteralNumber(s):
     """Converts a COBOL hexadecimal numeric literal string to an ordinary string"""
     retval = 0
-    if s[0:2].lower().replace('"',"'") == "h'" and s[-1] in ("'",'"'):
+    if s[0:2].lower().replace('"', "'") == "h'" and s[-1] in ("'", '"'):
         # This is correctly formed
         # Trim off the front and back:
         s = s[2:-1]
@@ -2819,7 +2805,7 @@ class CPrintWorker():
         # We know the first two characters of args[0] are "/r"
         #
         # We want "/rxxx" to be the same as "/r xxx":
-        first_arg = args[0][2:] # Might be empty
+        first_arg = args[0][2:]  # Might be empty
 
         args.pop(0)
         if first_arg:
@@ -2894,7 +2880,7 @@ class CPrintWorker():
                     # This is a trick. By adding 256 to the byte, we ensure that
                     # 0, for example, becomes 0x100 instead of 0x0.  Thus we can
                     # strip off the final two characters for our string
-                    body += hex(256+payload.data[i])[-2:]
+                    body += hex(256 + payload.data[i])[-2:]
                 body += ']'
             else:
                 # We are dealing with something that libcob thinks is alphabetic:
@@ -2934,11 +2920,11 @@ class CPrintWorker():
     def FormattedDisplay(self, payload):
         body = self.GetDisplayBody(payload)
 
-        if GV_ModuleState.current_display_mode in ('0','3'):
+        if GV_ModuleState.current_display_mode in ('0', '3'):
             print(payload.NameToString(), " : ", body)
-        elif GV_ModuleState.current_display_mode in ('1','4'):
+        elif GV_ModuleState.current_display_mode in ('1', '4'):
             print(body)
-        elif GV_ModuleState.current_display_mode in ('2','5'):
+        elif GV_ModuleState.current_display_mode in ('2', '5'):
             print(payload.NameToString())
             print(body)
         else:  # GV_ModuleState.current_display_mode ==  'd':
@@ -2982,7 +2968,7 @@ class CPrintWorker():
                 # this is a straight "cprint var1 = var2
                 return_value = CobolVariable.PutDataAsVar()
             else:
-                if var_right: # The logic requires that var_right.Refmod exists:
+                if var_right:  # The logic requires that var_right.Refmod exists:
                     # Because var_right has a refmod, we will use the var_right display
                     # body, which at this point is already trimmed to the data we need
                     value = var_right.display_body
@@ -2999,7 +2985,7 @@ class CPrintWorker():
 
             # There is a refmod on the left side, so arrange to replace the
             # data on the left
-            p_startloc = var_left.RefmodOffset+1
+            p_startloc = var_left.RefmodOffset + 1
             p_length   = var_left.RefmodLength
 
             if value.startswith(('"', "'")) and value.endswith(('"', "'")):
@@ -3221,7 +3207,7 @@ class CPrintWorker():
         leftside_possibilities, limit_reached = get_sorted_possibilities(left_side, 0)
         if not leftside_possibilities:
             # There are no leftside possibilities.  Let him know why, and then bug out
-            if left_side[0][0] in ('*','?') or left_side[0].isdigit():
+            if left_side[0][0] in ('*', '?') or left_side[0].isdigit():
                 # When '*' or '?' match nothing, then just return nothing
                 return
             print('No symbols match "{0}" in current context'.format('/'.join(left_side)))
@@ -3265,8 +3251,8 @@ class CPrintWorker():
                                              leftside_possibilities,
                                              rightside_possibilities)
         else:
-            self.ProcessArgumentsHumanMode( leftside_possibilities,
-                                            right_side)
+            self.ProcessArgumentsHumanMode(leftside_possibilities,
+                                           right_side)
 
 class CWatchWorker():
     """Does most of the non-gdb work of CWatch()"""
@@ -3594,7 +3580,7 @@ class CBreakWorker():
         if payload_l.Refmod:
             if is_location == 1:
                 r_length = GetDataAt(payload_r, GV_GlobalVariables.SizeofPointer)
-                location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, r_length , 0)
+                location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, r_length, 0)
             else:
                 location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, payload_r.Length, 0)
         else:
@@ -3894,7 +3880,7 @@ class CPrint(gdb.Command):
                 GV_GlobalVariables.repeat_count = int(tokens[2])
                 if GV_GlobalVariables.repeat_count < 1:
                     GV_GlobalVariables.repeat_count = 1000000
-                GV_GlobalVariables.IsDirty=True # To force reformatting
+                GV_GlobalVariables.IsDirty=True  # To force reformatting
                 return
 
             GV_ModuleState.EstablishModuleState(False)
@@ -3920,7 +3906,7 @@ class CPrint(gdb.Command):
 
             GV_ModuleState.EstablishModuleState(False)
             lookup = TokenizeCanonicalName(word)
-            #print ("DBG: lookup: <",  lookup,  ">")
+            # print ("DBG: lookup: <",  lookup,  ">")
             possibilities_1, limit_reached = get_sorted_possibilities(lookup, 0)
             # we now have the requested list, create the completion from its names
             possibilities = []
@@ -4107,11 +4093,11 @@ class CLoadWorker():
         for path_entry in self.module_paths:
             try:
                 if not path.isdir(path_entry):
-                    print ("CloadWorker warning: entry in COB_LIBRARY_PATH skipped, is not a path:", path_entry)
+                    print("CloadWorker warning: entry in COB_LIBRARY_PATH skipped, is not a path:", path_entry)
                     continue
                 files = os.listdir(path_entry)
             except:
-                print ("CloadWorker warning: entry in COB_LIBRARY_PATH is not a path:", path_entry)
+                print("CloadWorker warning: entry in COB_LIBRARY_PATH is not a path:", path_entry)
                 continue
             for f in files:
                 parts = path.splitext(f)
@@ -4214,7 +4200,7 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
             subprocess.check_output([READELF_BINARY, '--version'])
         except OSError:
             READELF_AVAILABLE = False
-            print("\n!! {0} not found on path, not registering add-symbol-file-cobol \n".format(READELF_BINARY))
+            print("\n!! {0} not found on path, not registering add-symbol-file-cobol\n".format(READELF_BINARY))
             return
 
         print('Registering add-symbol-file-cobol')
@@ -4242,7 +4228,7 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
             return
 
         modules_loaded = CBLDBG_CLOAD_WORKER.load_modules(module_names)
-        if module_names is None:
+        if modules_loaded is None:
             print("No modules found")
 
 
@@ -4265,7 +4251,7 @@ they override any that might have been passed to GDB with --args."""
             command = "info files"
             info_files = gdb.execute(command, False, True).split('\n')
             line1 = info_files[0]
-            line1 = line1.replace('\\','/') # In case of Windows
+            line1 = line1.replace('\\', '/') # In case of Windows
             main_program = line1.split('/')[-1].split('"')[0]
             if main_program == 'cobcrun':
                 command = "show args"
@@ -4280,7 +4266,7 @@ they override any that might have been passed to GDB with --args."""
             # If there is no cobol program, just run
             if cobol_program:
                 # Turn hyphens into doubled underscores:
-                entry_point = cobol_program.replace("-","__") + "_"
+                entry_point = cobol_program.replace("-", "__") + "_"
 
                 # set temporary maintanance breakpoint
                 gdb.Breakpoint(entry_point, type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
@@ -4334,7 +4320,7 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
                     gdb.execute(command, True, False)
                 ncount -= 1
         except:
-            #traceback.print_exc()
+            # traceback.print_exc()
             print("No stack.")
 
 
@@ -4354,11 +4340,11 @@ class CFrameWorker:
         number = 1
         if argument:
             if not argument.isdigit():
-                print ("argument must be a digit, not", argument)
+                print("argument must be a digit, not", argument)
                 return
             number = int(argument)
 
-        frame = gdb.selected_frame ()
+        frame = gdb.selected_frame()
 
         while True:
             if number != 0:
@@ -4368,9 +4354,9 @@ class CFrameWorker:
                     frame = frame.newer()
                 if frame is None:
                     if up:
-                        print ("Initial COBOL frame selected; you cannot go up.")
+                        print("Initial COBOL frame selected; you cannot go up.")
                     else:
-                        print ("Bottom (innermost) COBOL frame selected; you cannot go down.")
+                        print("Bottom (innermost) COBOL frame selected; you cannot go down.")
                     return
             else:
                 number = -1
@@ -4385,7 +4371,7 @@ class CFrameWorker:
             symbol = gdb.lookup_symbol("module", block)[0]
             if not symbol:
                 continue
-            if (str(symbol.type) != "cob_module *"):
+            if str(symbol.type) != "cob_module *":
                 continue
 
             # quite likely a COBOL frame
@@ -4436,17 +4422,18 @@ may be used to also stop if the current frame is a COBOL frame.
     def invoke(self, argument, from_tty):
         CFrameWorker.Go(argument, False, True)
 
+
 def exit_handler(event):
     # With the disappearance of the inferior, we are going
     # to need new malloc-created buffers
     GV_GlobalVariables.DestroyBuffers()
-    pass
+
 
 def stop_handler(event):
     # When the inferior has been running, and is now stopped, we
     # need to flag all cobol variables as IsDirty
     GV_GlobalVariables.IsDirty = True
-    pass
+
 
 gdb.events.exited.connect(exit_handler)
 gdb.events.stop.connect(stop_handler)
