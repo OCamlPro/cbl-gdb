@@ -3911,9 +3911,12 @@ class CPrint(gdb.Command):
             # note: modifier / slash is no word, so in this case word is None
             if word is None or word == "" or word[0] in ('*', '?', '(', ')', ',', ':', '"', '\'') or word[0].isdigit():
                 # if it doesn't look like a word then just return nothing
+                # CHECKME: gdb returns everything, possibly do the same
                 return gdb.COMPLETE_NONE
 
             GV_ModuleState.EstablishModuleState(False)
+            
+            word = word.upper()
             lookup = TokenizeCanonicalName(word)
             # print ("DBG: lookup: <",  lookup,  ">")
             possibilities_1, limit_reached = get_sorted_possibilities(lookup, 0)
@@ -3921,7 +3924,8 @@ class CPrint(gdb.Command):
             possibilities = []
             for index in possibilities_1:
                 whole_name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
-                possibilities.append(whole_name)
+                if whole_name.startswith(word):
+                    possibilities.append(whole_name)
 
             return possibilities
         except:
@@ -3952,6 +3956,8 @@ A watchpoint stops execution of your program whenever the value of an expression
             self.worker.process_watch_arguments(arguments)
         except:
             traceback.print_exc()
+        
+    # FIXME: add completion (call cprint's version there)
 
 class CBreak(gdb.Command):
     """Used for creating COBOL-NAMED breakpoints when debugging cobst processed object files.
@@ -4029,15 +4035,18 @@ A breakpoint stops execution of your program whenever the expression matches
                 return ["=", "!=", "<", "=<", ">", ">=", "<>", "=~"]
 
             if word is None or word == "" or word.startswith('"'):
+                # CHECKME: gdb returns everything, possibly do the same
                 return gdb.COMPLETE_NONE
 
             GV_ModuleState.EstablishModuleState(False)
+            word = word.upper()
             lookup = TokenizeCanonicalName(word)
             possibilities_1, limit_reached = get_sorted_possibilities(lookup, 0)
             possibilities = []
             for index in possibilities_1:
                 whole_name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
-                possibilities.append(whole_name)
+                if whole_name.startswith(word):
+                    possibilities.append(whole_name)
 
             return possibilities
 
@@ -4074,6 +4083,8 @@ Do "help cbreak" for info on COBOL expressions"""
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
         self.worker.process_condition_arguments(arguments)
+        
+    # FIXME: add completion (split part after cbreak if completion here and call it there)
 
 
 class CLoadWorker():
