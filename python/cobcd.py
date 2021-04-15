@@ -52,7 +52,6 @@ import re
 import sys
 import platform
 import os
-import distutils.spawn
 from os import path
 import traceback
 import subprocess
