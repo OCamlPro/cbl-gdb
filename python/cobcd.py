@@ -185,6 +185,25 @@ def GdbExecute(curframe, command):
 
 class GlobalVariables():
     def __init__(self):
+        # Establish the version of GDB
+        gdb_version_major = 0
+        gdb_version_minor = 0
+        gdb_version_patch = 0
+        match = re.search(r'^.*([0-9]+)[.]([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
+        if match:
+            self.gdb_version_major = int(match[1])
+            self.gdb_version_minor = int(match[2])
+            self.gdb_version_patch = int(match[3])
+        else:
+            match = re.search(r'^.*([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
+            if match:
+                self.gdb_version_major = int(match[1])
+                self.gdb_version_minor = int(match[2])
+
+        self.gdb_8dot3_plus = True
+        if self.gdb_version_major < 8 or self.gdb_version_major == 8 and self.gdb_version_minor < 3:
+            self.gdb_8dot3_plus = False
+
         # Establish the debugging verbosity level:
         self.debug_level = int(os.environ.get('CPRINT_D', '0'))
 
@@ -639,7 +658,6 @@ def AddEmUp(expression):
                 # ignore that for now.
                 pass
     return retval
-
 
 def get_left_right_args(args):
     left_side = []
@@ -1232,7 +1250,6 @@ class VarTrie():
         while i < len(self.storage_list):
             self.storage_list[i].IsDirty = True
             i += 1
-
 
 class LineList():
     """List of starting lines of ProgramNames"""
@@ -3345,9 +3362,7 @@ class CWatchWorker():
         # And go set the Watchpoint
         self.set_watchpoint(payload, wp_type)
 
-
 class CBreakWorker():
-
     def __init__(self):
         try:
             self.strtype = basestring
@@ -3359,7 +3374,10 @@ class CBreakWorker():
 
     @staticmethod
     def set_breakpoint(spec, t_flag):
-        break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, temporary=t_flag)
+        if GV_Variables.gdb_8dot3_plus:
+            break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, temporary=t_flag)
+        else:
+            break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT)
         return break_point
 
     @staticmethod
@@ -3869,9 +3887,15 @@ class CPrint(gdb.Command):
     def __init__(self):
         global COBCDRW_AVAILABLE
 
+        if GV_GlobalVariables.gdb_version_major < 8 or (GV_GlobalVariables.gdb_version_major == 8
+                                                    and GV_GlobalVariables.gdb_version_minor < 3):
+            print("\n !! warning: cload and ctbreak are not available with GDB-{0}.{1} (GDB 8.3 is required)\n".format,
+                                                                    GV_GlobalVariables.gdb_version_major,
+                                                                    GV_GlobalVariables.gdb_version_minor
+                                                                    )
         try:
             subprocess.check_output([COBCDRW_BINARY, '-v'])
-        except OSError:
+        except subprocess.CalledProcessError:
             COBCDRW_AVAILABLE = False
 
         self.worker = CPrintWorker()
@@ -4053,8 +4077,9 @@ by using "enable delete" on the breakpoint number.
 Do "help cbreak" for info on COBOL expressions"""
 
     def __init__(self):
-        self.worker = CBLDBG_CBREAK_WORKER
-        super(CTBreak, self).__init__("ctbreak", gdb.COMMAND_BREAKPOINTS)
+        if GV_GlobalVariables.gdb_version_major > 8 or GV_GlobalVariables.gdb_version_major == 8 and GV_GlobalVariables.gdb_version_minor >= 3:
+            self.worker = CBLDBG_CBREAK_WORKER
+            super(CTBreak, self).__init__("ctbreak", gdb.COMMAND_BREAKPOINTS)
 
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
@@ -4074,7 +4099,6 @@ Do "help cbreak" for info on COBOL expressions"""
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
         self.worker.process_condition_arguments(arguments)
-
 
 class CLoadWorker():
     """Does most of the non-gdb work of CLoad(),
@@ -4193,7 +4217,6 @@ CBLDBG_CLOAD_WORKER = CLoadWorker()
 
 # actual reading originally taken from https://stackoverflow.com/questions/20380204/how-to-load-multiple-symbol-files-in-gdb/62471062#62471062
 
-
 class CLoad(gdb.Command):
     """Load symbols from COBOL module in COB_LIBRARY_PATH or query for available modules.
 Usage: add-symbol-file-cobol MODULE           try to load given COBOL module into GDB
@@ -4205,7 +4228,7 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
 
         try:
             subprocess.check_output([READELF_BINARY, '--version'])
-        except OSError:
+        except subprocess.CalledProcessError:
             READELF_AVAILABLE = False
             print("\n!! {0} not found on path, not registering add-symbol-file-cobol\n".format(READELF_BINARY))
             return
@@ -4241,7 +4264,6 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
     def complete(self, text, word):
         return CBLDBG_CLOAD_WORKER.get_module_completion(word)
 
-
 class CStart(gdb.Command):
     """(Re-)start the debugged program stopping at the beginning of the first COBOL statement.
 Any arguments after the cstart command are passed to the executable.  If present,
@@ -4274,8 +4296,12 @@ they override any that might have been passed to GDB with --args."""
                 # Turn hyphens into doubled underscores:
                 entry_point = cobol_program.replace("-", "__") + "_"
 
-                # set temporary maintanance breakpoint
-                gdb.Breakpoint(entry_point, type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
+                # set temporary maintenance breakpoint
+                if GV_GlobalVariables.gdb_8dot3_plus:
+                    gdb.Breakpoint(entry_point, type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
+                else:
+                    command = "tbreak {0}".format(entry_point)
+                    gdb.execute(command, True, False)
 
             # And proceed to run the program:
             command = "run " + arguments
@@ -4328,7 +4354,6 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
         except:
             # traceback.print_exc()
             print("No stack.")
-
 
 class CFrameWorker:
     """Does all of the gdb work of CUp() and CDown()"""
@@ -4428,22 +4453,18 @@ may be used to also stop if the current frame is a COBOL frame.
     def invoke(self, argument, from_tty):
         CFrameWorker.Go(argument, False, True)
 
-
 def exit_handler(event):
     # With the disappearance of the inferior, we are going
     # to need new malloc-created buffers
     GV_GlobalVariables.DestroyBuffers()
-
 
 def stop_handler(event):
     # When the inferior has been running, and is now stopped, we
     # need to flag all cobol variables as IsDirty
     GV_GlobalVariables.IsDirty = True
 
-
 gdb.events.exited.connect(exit_handler)
 gdb.events.stop.connect(stop_handler)
-
 
 CPrint()
 CWatch()
