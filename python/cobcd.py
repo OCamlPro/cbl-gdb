@@ -191,18 +191,24 @@ class GlobalVariables():
         gdb_version_patch = 0
         match = re.search(r'^.*([0-9]+)[.]([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
         if match:
-            self.gdb_version_major = int(match[1])
-            self.gdb_version_minor = int(match[2])
-            self.gdb_version_patch = int(match[3])
+            self.gdb_version_major = int(match.group(1))
+            self.gdb_version_minor = int(match.group(2))
+            self.gdb_version_patch = int(match.group(3))
         else:
             match = re.search(r'^.*([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
             if match:
-                self.gdb_version_major = int(match[1])
-                self.gdb_version_minor = int(match[2])
+                self.gdb_version_major = int(match.group(1))
+                self.gdb_version_minor = int(match.group(2))
 
         self.gdb_8dot3_plus = True
-        if self.gdb_version_major < 8 or self.gdb_version_major == 8 and self.gdb_version_minor < 3:
+        if self.gdb_version_major < 8 or (self.gdb_version_major == 8 and self.gdb_version_minor < 3):
             self.gdb_8dot3_plus = False
+
+        if not self.gdb_8dot3_plus:
+            print("\n !! warning: cload and ctbreak are not available with GDB-{0}.{1} (GDB 8.3+ is required)\n".format(
+                                                                    self.gdb_version_major,
+                                                                    self.gdb_version_minor)
+                                                                    )
 
         # Establish the debugging verbosity level:
         self.debug_level = int(os.environ.get('CPRINT_D', '0'))
@@ -3887,12 +3893,6 @@ class CPrint(gdb.Command):
     def __init__(self):
         global COBCDRW_AVAILABLE
 
-        if GV_GlobalVariables.gdb_version_major < 8 or (GV_GlobalVariables.gdb_version_major == 8
-                                                    and GV_GlobalVariables.gdb_version_minor < 3):
-            print("\n !! warning: cload and ctbreak are not available with GDB-{0}.{1} (GDB 8.3 is required)\n".format,
-                                                                    GV_GlobalVariables.gdb_version_major,
-                                                                    GV_GlobalVariables.gdb_version_minor
-                                                                    )
         try:
             subprocess.check_output([COBCDRW_BINARY, '-v'])
         except subprocess.CalledProcessError:
