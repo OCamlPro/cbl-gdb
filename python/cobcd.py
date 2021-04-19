@@ -170,6 +170,9 @@ COBCDRW_AVAILABLE = True
 READELF_BINARY = os.getenv('READELF', 'readelf')
 COBCDRW_BINARY = os.getenv('COBCDRW', 'cobcd-rw')
 
+# old gdb version
+OLD_GDB = False
+
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
     limiting_debug_level = 1
@@ -3359,7 +3362,10 @@ class CBreakWorker():
 
     @staticmethod
     def set_breakpoint(spec, t_flag):
-        break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, temporary=t_flag)
+        if not OLD_GDB:
+            break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, temporary=t_flag)
+        else:
+            break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT)
         return break_point
 
     @staticmethod
@@ -3868,10 +3874,21 @@ class CPrint(gdb.Command):
 
     def __init__(self):
         global COBCDRW_AVAILABLE
+        global OLD_GDB
 
+        gdb_version = gdb.VERSION
+        if gdb_version.find('Linux 7') > -1:
+            print("\n !! warning: old gdb version, cload and temporary breakpoints are disabled\n")
+            OLD_GDB = True
+        else:
+            gdb_version = gdb.VERSION.split('.')
+            if int(gdb_version[0]) < 8 or (int(gdb_version[0]) == 8 and int(gdb_version[1]) < 3):
+                print("\n !! warning: old gdb version, cload and temporary breakpoints are disabled\n")
+                OLD_GDB = True
+                
         try:
             subprocess.check_output([COBCDRW_BINARY, '-v'])
-        except OSError:
+        except subprocess.CalledProcessError:
             COBCDRW_AVAILABLE = False
 
         self.worker = CPrintWorker()
@@ -4044,6 +4061,7 @@ A breakpoint stops execution of your program whenever the expression matches
         except:
             traceback.print_exc()
 
+
 class CTBreak(gdb.Command):
     """Set a temporary breakpoint.
 Like "cbreak" except the breakpoint is only temporary,
@@ -4053,8 +4071,9 @@ by using "enable delete" on the breakpoint number.
 Do "help cbreak" for info on COBOL expressions"""
 
     def __init__(self):
-        self.worker = CBLDBG_CBREAK_WORKER
-        super(CTBreak, self).__init__("ctbreak", gdb.COMMAND_BREAKPOINTS)
+        if not OLD_GDB:
+            self.worker = CBLDBG_CBREAK_WORKER
+            super(CTBreak, self).__init__("ctbreak", gdb.COMMAND_BREAKPOINTS)
 
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
@@ -4205,7 +4224,7 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
 
         try:
             subprocess.check_output([READELF_BINARY, '--version'])
-        except OSError:
+        except subprocess.CalledProcessError:
             READELF_AVAILABLE = False
             print("\n!! {0} not found on path, not registering add-symbol-file-cobol\n".format(READELF_BINARY))
             return
@@ -4248,8 +4267,9 @@ Any arguments after the cstart command are passed to the executable.  If present
 they override any that might have been passed to GDB with --args."""
 
     def __init__(self):
-        print('Registering CStart')
-        super(CStart, self).__init__("cstart", gdb.COMMAND_RUNNING)
+        if not OLD_GDB:
+            print('Registering CStart')
+            super(CStart, self).__init__("cstart", gdb.COMMAND_RUNNING)
 
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
