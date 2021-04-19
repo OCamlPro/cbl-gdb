@@ -3891,18 +3891,7 @@ class CPrint(gdb.Command):
 
     def __init__(self):
         global COBCDRW_AVAILABLE
-        global OLD_GDB
 
-        gdb_version = gdb.VERSION
-        if gdb_version.find('Linux 7') > -1:
-            print("\n !! warning: old gdb version, cload and temporary breakpoints are disabled\n")
-            OLD_GDB = True
-        else:
-            gdb_version = gdb.VERSION.split('.')
-            if int(gdb_version[0]) < 8 or (int(gdb_version[0]) == 8 and int(gdb_version[1]) < 3):
-                print("\n !! warning: old gdb version, cload and temporary breakpoints are disabled\n")
-                OLD_GDB = True
-                
         try:
             subprocess.check_output([COBCDRW_BINARY, '-v'])
         except subprocess.CalledProcessError:
@@ -4086,7 +4075,6 @@ A breakpoint stops execution of your program whenever the expression matches
 
         except:
             traceback.print_exc()
-
 
 class CTBreak(gdb.Command):
     """Set a temporary breakpoint.
@@ -4292,9 +4280,8 @@ Any arguments after the cstart command are passed to the executable.  If present
 they override any that might have been passed to GDB with --args."""
 
     def __init__(self):
-        if not OLD_GDB:
-            print('Registering CStart')
-            super(CStart, self).__init__("cstart", gdb.COMMAND_RUNNING)
+        print('Registering CStart')
+        super(CStart, self).__init__("cstart", gdb.COMMAND_RUNNING)
 
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
