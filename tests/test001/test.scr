@@ -22,6 +22,8 @@ define stutter
 
 file test
 
+cprint /v3
+
 ### Make sure we have a known 'cprint ?' range
 echo KNOWN GOOD LINES: 2\n
 cprint/r 6
