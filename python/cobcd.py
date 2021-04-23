@@ -2950,15 +2950,25 @@ class CPrintWorker():
     def FormattedDisplay(self, payload):
         body = self.GetDisplayBody(payload)
 
-        if GV_ModuleState.current_display_mode in ('0', '3'):
-            print(payload.NameToString(), " : ", body)
-        elif GV_ModuleState.current_display_mode in ('1', '4'):
-            print(body)
-        elif GV_ModuleState.current_display_mode in ('2', '5'):
-            print(payload.NameToString())
-            print(body)
-        else:  # GV_ModuleState.current_display_mode ==  'd':
-            payload.ShowFields()
+        # The following code catches the 'q' Quit option
+        retval = None
+        try:
+            if GV_ModuleState.current_display_mode in ('0', '3'):
+                print(payload.NameToString(), " : ", body)
+            elif GV_ModuleState.current_display_mode in ('1', '4'):
+                print(body)
+            elif GV_ModuleState.current_display_mode in ('2', '5'):
+                print(payload.NameToString())
+                print(body)
+            else:  # GV_ModuleState.current_display_mode ==  'd':
+                payload.ShowFields()
+        except KeyboardInterrupt as ki:
+            retval = str(ki)
+            # print("Quit")
+            print(retval) # is there a caller that does not like the print?
+        except:
+            traceback.print_exc()
+        return retval
 
     @staticmethod
     def set_var_value(value_):
