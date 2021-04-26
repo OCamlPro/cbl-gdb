@@ -1130,6 +1130,8 @@ class VarTrie():
         # been through TokenizeCanonicalName
         # We were handed a bunch of pieces.  Let's
         # glue them back together into a single space-separated string:
+
+        # TODO: also handle GDB escaping of symbols here:
         recombined = " ".join(cobol_variable_name).upper()
 
         # This is the return value:
@@ -2778,7 +2780,11 @@ def get_completion_possibilities(word):
     for index in possibilities_1:
         whole_name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
         if whole_name.startswith(word):
-            possibilities.append(whole_name)
+            # cater for words that will otherwise be split in GDB view
+            if whole_name.find("-"):
+                whole_name = "'" + whole_name + "'" 
+
+            possibilities.append(whole_name)   
 
     return possibilities
 
@@ -3429,6 +3435,7 @@ class CWatchWorker():
         # And go set the Watchpoint
         self.set_watchpoint(payload, wp_type)
 
+
 class CBreakWorker():
     def __init__(self):
         try:
@@ -3445,7 +3452,14 @@ class CBreakWorker():
             break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, temporary=t_flag)
         else:
             break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT)
+
+        if break_point.pending:
+            break_point.delete()
+            print("... and therefore removed")
+            return None
+
         return break_point
+
 
     @staticmethod
     def get_data_from_buffer(buffer):
