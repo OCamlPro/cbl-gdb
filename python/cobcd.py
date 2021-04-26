@@ -2765,6 +2765,68 @@ def get_sorted_possibilities(args, limit):
 
     return possibilities, False # False means there was no 'limit' overflow
 
+
+def get_completion_possibilities(word):
+    GV_ModuleState.EstablishModuleState(False)
+
+    word = word.upper()
+    lookup = TokenizeCanonicalName(word)
+    # print ("DBG: lookup: <",  lookup,  ">")
+    possibilities_1, limit_reached = get_sorted_possibilities(lookup, 0)
+    # we now have the requested list, create the completion from its names
+    possibilities = []
+    for index in possibilities_1:
+        whole_name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
+        if whole_name.startswith(word):
+            possibilities.append(whole_name)
+
+    return possibilities
+
+
+def break_completion(text, word, condition):
+    try:
+        # HACK: because of missing support for hypens: in identifiers
+        # we have to look at the text for that
+        # but the hack doesn't work because GDB won't complete at - either...
+        # if text and text.find('-'):
+        #    word = text # split, last part
+        if text == "" and word == "":
+            if condition == 1:
+                possibilities = []
+                for gdb_breakpoint in gdb.breakpoints():
+                    possibilities.append(str(gdb_breakpoint.number))
+                return possibilities
+            else:
+                command = "frame"
+                frame_string = GdbExecute(currentframe(), command)
+                nfound = frame_string.find(':')
+                if nfound > -1:
+                    frame_string = frame_string[nfound + 1:]
+                    frame_string = frame_string.split()
+                    try:
+                        return [frame_string[0]]
+                    except ValueError:
+                        return ["0"]
+
+        if condition == 0:
+            if len(text.split()) == 1:
+                return ["if"]
+
+            if len(text.split()) in (3, 4) and word == "":
+                return ["=", "!=", "<", "=<", ">", ">=", "<>", "=~"]
+        else:
+            if len(text.split()) in (2, 3) and word == "":
+                return ["=", "!=", "<", "=<", ">", ">=", "<>", "=~"]
+
+        if word is None or word == "" or word.startswith('"'):
+            # CHECKME: gdb returns everything, possibly do the same
+            return gdb.COMPLETE_NONE
+
+        possibilities = get_completion_possibilities(word)
+        return possibilities
+    except:
+        traceback.print_exc()
+
 def FromHexAlphaString(conv_str):
     """Converts a COBOL hexadecimal alphanumeric string to an ordinary string"""
     retval = conv_str
@@ -3379,7 +3441,7 @@ class CBreakWorker():
 
     @staticmethod
     def set_breakpoint(spec, t_flag):
-        if GV_Variables.gdb_8dot3_plus:
+        if GV_GlobalVariables.gdb_8dot3_plus:
             break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, temporary=t_flag)
         else:
             break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT)
@@ -3775,13 +3837,13 @@ class CBreakWorker():
                 break_point = self.set_breakpoint(left_side[0], t_flag)
             elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and left_side[0].find(':') != -1:
                 self.set_section_breakpoint(left_side, t_flag)
-            elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and left_side[0] != "section":
+            elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and (left_side[0].upper() != "SECTION" or left_side[0].upper() != "SEC"):
                 module_name = self.get_module_name(left_side[0])
                 if module_name is None:
                     print("Module not found: {0}".format(left_side[0]))
                 else:
                     break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{0}".format(module_name), t_flag)
-            elif len(left_side) == 2 and left_side[0] == "section" and isinstance(left_side[1], self.strtype):
+            elif len(left_side) == 2 and (left_side[0].upper() == "SECTION" or left_side[0].upper() == "SEC") and isinstance(left_side[1], self.strtype):
                 del left_side[0]
                 self.set_section_breakpoint(left_side, t_flag)
             else:
@@ -3937,19 +3999,8 @@ class CPrint(gdb.Command):
                 # CHECKME: gdb returns everything, possibly do the same
                 return gdb.COMPLETE_NONE
 
-            GV_ModuleState.EstablishModuleState(False)
+            possibilities = get_completion_possibilities(word)
             
-            word = word.upper()
-            lookup = TokenizeCanonicalName(word)
-            # print ("DBG: lookup: <",  lookup,  ">")
-            possibilities_1, limit_reached = get_sorted_possibilities(lookup, 0)
-            # we now have the requested list, create the completion from its names
-            possibilities = []
-            for index in possibilities_1:
-                whole_name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
-                if whole_name.startswith(word):
-                    possibilities.append(whole_name)
-
             return possibilities
         except:
             traceback.print_exc()
@@ -3980,7 +4031,17 @@ A watchpoint stops execution of your program whenever the value of an expression
         except:
             traceback.print_exc()
         
-    # FIXME: add completion (call cprint's version there)
+    @staticmethod
+    def complete(text, word):
+        try:
+            if word is None or word == "" or word.startswith('"'):
+                # CHECKME: gdb returns everything, possibly do the same
+                return gdb.COMPLETE_NONE
+
+            possibilities = get_completion_possibilities(word)
+            return possibilities
+        except:
+            traceback.print_exc()
 
 class CBreak(gdb.Command):
     """Used for creating COBOL-NAMED breakpoints when debugging cobst processed object files.
@@ -4031,50 +4092,10 @@ A breakpoint stops execution of your program whenever the expression matches
         self.dont_repeat()
         self.worker.process_break_arguments(arguments, False)
 
-    def complete(self, text, word):
-
-        try:
-            # HACK: because of missing support for hypens: in identifiers
-            # we have to look at the text for that
-            # but the hack doesn't work because GDB won't complete at - either...
-            # if text and text.find('-'):
-            #    word = text # split, last part
-            if text == "" and word == "":
-                command = "frame"
-                frame_string = GdbExecute(currentframe(), command)
-                nfound = frame_string.find(':')
-                if nfound > -1:
-                    frame_string = frame_string[nfound + 1:]
-                    frame_string = frame_string.split()
-                    try:
-                        return [frame_string[0]]
-                    except ValueError:
-                        return ["0"]
-
-            if len(text.split()) == 1:
-                return ["if"]
-
-            if len(text.split()) in (3, 4) and word == "":
-                return ["=", "!=", "<", "=<", ">", ">=", "<>", "=~"]
-
-            if word is None or word == "" or word.startswith('"'):
-                # CHECKME: gdb returns everything, possibly do the same
-                return gdb.COMPLETE_NONE
-
-            GV_ModuleState.EstablishModuleState(False)
-            word = word.upper()
-            lookup = TokenizeCanonicalName(word)
-            possibilities_1, limit_reached = get_sorted_possibilities(lookup, 0)
-            possibilities = []
-            for index in possibilities_1:
-                whole_name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
-                if whole_name.startswith(word):
-                    possibilities.append(whole_name)
-
-            return possibilities
-
-        except:
-            traceback.print_exc()
+    @staticmethod
+    def complete(text, word):
+        possibilities = break_completion(text, word, 0)
+        return possibilities
 
 class CTBreak(gdb.Command):
     """Set a temporary breakpoint.
@@ -4093,6 +4114,11 @@ Do "help cbreak" for info on COBOL expressions"""
         self.dont_repeat()
         self.worker.process_break_arguments(arguments, True)
 
+    @staticmethod
+    def complete(text, word):
+        possibilities = break_completion(text, word, 0)
+        return possibilities
+
 class CCondition(gdb.Command):
     """Specify breakpoint number N to break only if COND is true.
 
@@ -4108,7 +4134,10 @@ Do "help cbreak" for info on COBOL expressions"""
         self.dont_repeat()
         self.worker.process_condition_arguments(arguments)
         
-    # FIXME: add completion (split part after cbreak if completion here and call it there)
+    @staticmethod
+    def complete(text, word):
+        possibilities = break_completion(text, word, 1)
+        return possibilities
 
 class CLoadWorker():
     """Does most of the non-gdb work of CLoad(),
