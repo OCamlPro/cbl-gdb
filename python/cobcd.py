@@ -2732,7 +2732,7 @@ def get_sorted_possibilities(args, limit):
                 # If index is valid, pick up the short-term memory entry
                 possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
             else:
-                print("The specified index ({0}) is out of range (1 to {1})".format(index + 1,len(GV_GlobalVariables.ShortTermMemory)))
+                print("The specified index ({0}) is out of range (1 to {1})".format(index + 1, len(GV_GlobalVariables.ShortTermMemory)))
                 return possibilities, False  # False means there was no 'limit' overflow
         else:
             # There are one or more arguments.  Use our clever routine
@@ -2782,9 +2782,9 @@ def get_completion_possibilities(word):
         if whole_name.startswith(word):
             # cater for words that will otherwise be split in GDB view
             if whole_name.find("-"):
-                whole_name = "'" + whole_name + "'" 
+                whole_name = "'" + whole_name + "'"
 
-            possibilities.append(whole_name)   
+            possibilities.append(whole_name)
 
     return possibilities
 
@@ -2802,17 +2802,6 @@ def break_completion(text, word, condition):
                 for gdb_breakpoint in gdb.breakpoints():
                     possibilities.append(str(gdb_breakpoint.number))
                 return possibilities
-            else:
-                command = "frame"
-                frame_string = GdbExecute(currentframe(), command)
-                nfound = frame_string.find(':')
-                if nfound > -1:
-                    frame_string = frame_string[nfound + 1:]
-                    frame_string = frame_string.split()
-                    try:
-                        return [frame_string[0]]
-                    except ValueError:
-                        return ["0"]
 
         if condition == 0:
             if len(text.split()) == 1:
