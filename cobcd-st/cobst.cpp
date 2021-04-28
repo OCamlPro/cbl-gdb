@@ -129,6 +129,10 @@ TackVariablesOntoCfile(PARAMETERS &params,
     ssResult << "{cob_free(location);}" << endl;
     ssResult << endl;
 
+    ssResult << "void DEBUG_cob_move_" << fname2 << "(cob_field *f1, cob_field *f2)" << endl;
+    ssResult << "{cob_move(f1,f2);}" << endl;
+    ssResult << endl;
+
     if(insert_mode EQ IM_MODE_TEXT) {
         stringstream ssPython;
         ssPython.str("");

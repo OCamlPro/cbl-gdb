@@ -196,6 +196,12 @@ def cob_free(location):
     command = "call (void){0}({1})".format(GV_ModuleState.cob_free,hex(location))
     gdb.execute(command, False, True)
 
+def cob_move(source,destination):
+    command = "call (void){0}((cob_field *){1}, (cob_field *){2})".format(GV_ModuleState.cob_move,
+                                                                          hex(source),
+                                                                          hex(destination))
+    gdb.execute(command, False, True)
+
 class GlobalVariables():
     def __init__(self):
         # Establish the version of GDB
@@ -1626,14 +1632,14 @@ class CobolVariable():
             gdb.execute(command, False, True)
 
             if cb_move == 1:
-                command = "call (void)cob_move((cob_field *){0}, (cob_field *){1})".format(hex(field_loc), hex(location_of_field))
+                cob_move(field_loc,location_of_field)
             else:
                 # Now use the target executable's libcob to convert the string to the field:
                 command = "call (const char *)cob_put_field_str((cob_field *)"
                 command += hex(field_loc)
                 command += ",(char *)" + hex(buffer)
                 command += ")"
-            gdb.execute(command, False, True)
+                gdb.execute(command, False, True)
             self.IsDirty = True
         except gdb.error:
             traceback.print_exc()
@@ -1681,8 +1687,7 @@ class CobolVariable():
             return 0
 
         try:
-            command = "call (void)cob_move((cob_field *){0}, (cob_field *){1})".format(hex(source), hex(destination))
-            gdb.execute(command, False, True)
+            cob_move(source,destination)
             var_left.IsDirty = True
 
             # Recall that var_left is a copy of the GlobalVariable in var_trie.storage_list.  It has the same
@@ -2507,6 +2512,7 @@ class ModuleState():
                         string_name = "VARIABLE_STRING_" + name_root2
                         self.cob_malloc = "DEBUG_cob_malloc_" + name_root2
                         self.cob_free = "DEBUG_cob_free_" + name_root2
+                        self.cob_move = "DEBUG_cob_move_" + name_root2
 
                         if GV_ModuleInformation.ReadVariableString(string_name):
                             break
