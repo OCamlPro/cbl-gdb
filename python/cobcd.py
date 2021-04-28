@@ -1545,6 +1545,7 @@ class CobolVariable():
         except:
             # This can happen in Windows when cob_get_field_str returns an 0xFF
             # for a GROUP level variabvle thas has LEVEL 88 variables in it.
+            traceback.print_exc()
             return "<Error in GetDataAsString>"
 
         # The formatted variable string is in buffer

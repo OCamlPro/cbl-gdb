@@ -133,6 +133,30 @@ TackVariablesOntoCfile(PARAMETERS &params,
     ssResult << "{cob_move(f1,f2);}" << endl;
     ssResult << endl;
 
+    ssResult << "const char	*DEBUG_cob_get_field_str_" << fname2 << "(const cob_field *f, char *buff, size_t size)" << endl;
+    ssResult << "{return cob_get_field_str(f,buff,size);}" << endl;
+    ssResult << endl;
+
+    ssResult << "int DEBUG_cob_put_field_str_" << fname2 << "(const cob_field *f, const char *p)" << endl;
+    ssResult << "{return cob_put_field_str(f,p);}" << endl;
+    ssResult << endl;
+
+    ssResult << "void *DEBUG_cob_cache_malloc_" << fname2 << "(const size_t size)" << endl;
+    ssResult << "{return cob_cache_malloc(size);}" << endl;
+    ssResult << endl;
+
+    ssResult << "int DEBUG_cob_encode_program_id_" << fname2 << "(const unsigned char * const a, unsigned char * const b, const int c, const int d)" << endl;
+    ssResult << "{return cob_encode_program_id(a, b, c, d);}" << endl;
+    ssResult << endl;
+
+    ssResult << "const char	*DEBUG_cob_get_field_str_buffered_" << fname2 << "(const cob_field *p)" << endl;
+    ssResult << "{return cob_get_field_str_buffered(p);}" << endl;
+    ssResult << endl;
+
+    ssResult << "int DEBUG_cob_cmp_" << fname2 << "(cob_field *a, cob_field *b)" << endl;
+    ssResult << "{return cob_cmp(a, b);}" << endl;
+    ssResult << endl;
+
     if(insert_mode EQ IM_MODE_TEXT) {
         stringstream ssPython;
         ssPython.str("");
