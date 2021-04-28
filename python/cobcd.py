@@ -182,6 +182,18 @@ def GdbExecute(curframe, command):
                 print("####       retval:", line)
     return retval
 
+def cob_malloc(size):
+    # Wrapper for cob_malloc calls:
+    command = "call (char *)cob_malloc({0})".format(size)
+    hexback = gdb.execute(command, False, True).split()[2]
+    retval = int(hexback, 16)
+    return retval
+
+def cob_free(location):
+    # Wrapper for cob_free
+    command = "call (void)cob_free({0})".format(hex(location))
+    gdb.execute(command, False, True)
+
 class GlobalVariables():
     def __init__(self):
         # Establish the version of GDB
@@ -239,14 +251,9 @@ class GlobalVariables():
     def AllocateBuffers(self):
         if not self.cprint_buffer:
             try:
-                command = "call (char*)cob_malloc({0})".format(PRINT_BUFFER_SIZE)
-                self.cprint_buffer = int(gdb.execute(command, False, True).split()[2], 16)
-
-                command = "call (char*)cob_malloc(sizeof(cob_field))"
-                self.cprint_f0 = int(gdb.execute(command, False, True).split()[2], 16)
-
-                command = "call (char*)cob_malloc(sizeof(cob_field_attr))"
-                self.cprint_a0 = int(gdb.execute(command, False, True).split()[2], 16)
+                self.cprint_buffer = cob_malloc(PRINT_BUFFER_SIZE)
+                self.cprint_f0 = cob_malloc("sizeof(cob_field)")
+                self.cprint_a0 = cob_malloc("sizeof(cob_field_attr)")
             except:
                 traceback.print_exc()
                 self.cprint_buffer = None
@@ -254,7 +261,7 @@ class GlobalVariables():
 
             if not self.cprint_buffer or not self.cprint_buffer:
                 print("Something is very wrong in GlobalVariables.AllocateBuffers()")
-                os.exit(1)
+                sys.exit(1)
 
     def DestroyBuffers(self):
         self.cprint_buffer = None
@@ -1415,9 +1422,7 @@ class CobolVariable():
 
             # We *must* allocate, because our caller is expected us to, so they
             # will be calling free_field_location
-
-            command = "call (char*)cob_malloc(sizeof(cob_field))"
-            retval = int(gdb.execute(command, False, True).split()[2], 16)
+            retval = cob_malloc("sizeof(cob_field)")
 
             # Having allocated a synthetic cob_field, initialize it with the data
             # Unlike the DONT_ALLOCATE situation, where we aren't allowed to mess with the
@@ -1438,7 +1443,7 @@ class CobolVariable():
         return retval
 
     def free_field_location(self,field_location):
-        gdb.execute("call (void)cob_free({0})".format(hex(field_location)), False, True)
+        cob_free(field_location)
 
     def DumpJustAboutEverything(self):
         location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
@@ -3518,8 +3523,7 @@ class CBreakWorker():
         location_of_field = None
 
         try:
-            command = "call (char*)cob_malloc(sizeof(cob_field))"
-            location_of_field = int(gdb.execute(command, False, True).split()[2], 16)
+            location_of_field = cob_malloc("sizeof(cob_field)")
 
             command = "set var *(cob_field *){0}".format(location_of_field) + " = {"
             command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + payload.TableOffset + pl_startloc), payload.Aname)
@@ -3669,11 +3673,8 @@ class CBreakWorker():
         location_of_field = None
 
         try:
-            command = "call (char*)cob_malloc(sizeof(cob_field))"
-            location_of_field = int(gdb.execute(command, False, True).split()[2], 16)
-
-            command = "call (char*)cob_malloc(sizeof(cob_field_attr))"
-            location_of_attribute = int(gdb.execute(command, False, True).split()[2], 16)
+            location_of_field = cob_malloc("sizeof(cob_field)")
+            location_of_attribute = cob_malloc("sizeof(cob_field_attr)")
 
             if R_ALLSPACE.match(value):
                 attr_type = COB_TYPE_ALPHANUMERIC_ALL
@@ -3698,8 +3699,7 @@ class CBreakWorker():
             command = "set var ((cob_field_attr *){0})->flags = {1}".format(hex(location_of_attribute), COB_FLAG_CONSTANT)
             gdb.execute(command, False, True)
 
-            command = "call (char*)cob_malloc({0})".format(PRINT_BUFFER_SIZE)
-            buffer = int(gdb.execute(command, False, True).split()[2], 16)
+            buffer = cob_malloc(PRINT_BUFFER_SIZE)
 
             if case_ins == 1:
                 value = value.upper()
@@ -3956,7 +3956,7 @@ class CPrint(gdb.Command):
                 return gdb.COMPLETE_NONE
 
             GV_ModuleState.EstablishModuleState(False)
-            
+
             word = word.upper()
             lookup = TokenizeCanonicalName(word)
             # print ("DBG: lookup: <",  lookup,  ">")
@@ -3997,7 +3997,7 @@ A watchpoint stops execution of your program whenever the value of an expression
             self.worker.process_watch_arguments(arguments)
         except:
             traceback.print_exc()
-        
+
     # FIXME: add completion (call cprint's version there)
 
 class CBreak(gdb.Command):
@@ -4125,7 +4125,7 @@ Do "help cbreak" for info on COBOL expressions"""
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
         self.worker.process_condition_arguments(arguments)
-        
+
     # FIXME: add completion (split part after cbreak if completion here and call it there)
 
 class CLoadWorker():
