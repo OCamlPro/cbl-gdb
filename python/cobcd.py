@@ -1525,9 +1525,13 @@ class CobolVariable():
                                                  hex(buffer),
                                                  PRINT_BUFFER_SIZE)
             gdb.execute(command, False, True)
-        except gdb.error:
-            traceback.print_exc()
-            print("Command failed in GetDataAsString:", command)
+#        except gdb.error:
+#            traceback.print_exc()
+#            print("Command failed in GetDataAsString:", command)
+#            return "<Error in GetDataAsString>"
+        except:
+            # This can happen in Windows when cob_get_field_str returns an 0xFF
+            # for a GROUP level variabvle thas has LEVEL 88 variables in it.
             return "<Error in GetDataAsString>"
 
         # The formatted variable string is in buffer
@@ -1539,6 +1543,10 @@ class CobolVariable():
             char = GetDataAt(buf_ptr, 1)
             if char == 0:
                 break
+            if char < 32:
+                char = ord('.')
+            else if char >= 127:
+                char = ord('~')
             retval += chr(char)
             buf_ptr += 1
         if is_alphanumeric:
@@ -2820,14 +2828,14 @@ class CPrintWorker():
             # This is a single-digit display v-code:
             v_code = args[0][2]
             args.pop(0)
-        if v_code in "012345d":
+        if v_code and v_code in "012345d":
             # It's a valid display_mode.  Make it the one-time mode:
             GV_ModuleState.current_display_mode = v_code
             if len(args) == 0:
                 # There are no additional arguments, so make it the session mode
                 GV_ModuleState.sticky_display_mode = GV_ModuleState.current_display_mode
         else:
-            print("The /v code is invalid")
+            print("The /v code is invalid - it must be /v0 through /v5")
             args = []
         return args
 
