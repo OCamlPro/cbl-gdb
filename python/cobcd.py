@@ -2510,9 +2510,20 @@ class ModuleState():
                                 name_root2 += hh.upper()
 
                         string_name = "VARIABLE_STRING_" + name_root2
-                        self.cob_malloc = "DEBUG_cob_malloc_" + name_root2
-                        self.cob_free = "DEBUG_cob_free_" + name_root2
-                        self.cob_move = "DEBUG_cob_move_" + name_root2
+
+                        debugged_system = platform.system()
+                        if debugged_system == 'Windows':
+                            self.cob_malloc = "DEBUG_cob_malloc_" + name_root2
+                            self.cob_free   = "DEBUG_cob_free_" + name_root2
+                            self.cob_move = "DEBUG_cob_move_" + name_root2
+                        else:
+                            # This code was requested by Simon Sobisch, who wanted
+                            # to avoid recompiling his source code when the wrapper solution
+                            # was first deployed.  In time, this can be removed and everybody
+                            # can just use the wrapper solution.
+                            self.cob_malloc = "cob_malloc"
+                            self.cob_free   = "cob_free"
+                            self.cob_move   = "cob_move"
 
                         if GV_ModuleInformation.ReadVariableString(string_name):
                             break
