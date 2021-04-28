@@ -1545,7 +1545,7 @@ class CobolVariable():
                 break
             if char < 32:
                 char = ord('.')
-            else if char >= 127:
+            elif char >= 127:
                 char = ord('~')
             retval += chr(char)
             buf_ptr += 1
