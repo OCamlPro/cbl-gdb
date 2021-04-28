@@ -125,6 +125,10 @@ TackVariablesOntoCfile(PARAMETERS &params,
     ssResult << "{return cob_malloc(size);}" << endl;
     ssResult << endl;
 
+    ssResult << "void DEBUG_cob_free_" << fname2 << "(void *location)" << endl;
+    ssResult << "{cob_free(location);}" << endl;
+    ssResult << endl;
+
     if(insert_mode EQ IM_MODE_TEXT) {
         stringstream ssPython;
         ssPython.str("");

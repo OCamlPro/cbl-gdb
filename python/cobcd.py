@@ -193,7 +193,7 @@ def cob_malloc(size):
 
 def cob_free(location):
     # Wrapper for cob_free
-    command = "call (void)cob_free({0})".format(hex(location))
+    command = "call (void){0}({1})".format(GV_ModuleState.cob_free,hex(location))
     gdb.execute(command, False, True)
 
 class GlobalVariables():
@@ -2506,6 +2506,7 @@ class ModuleState():
 
                         string_name = "VARIABLE_STRING_" + name_root2
                         self.cob_malloc = "DEBUG_cob_malloc_" + name_root2
+                        self.cob_free = "DEBUG_cob_free_" + name_root2
 
                         if GV_ModuleInformation.ReadVariableString(string_name):
                             break
