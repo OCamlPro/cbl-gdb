@@ -1,4 +1,6 @@
 test
+test.exe
+*.dll
 *.so
 known-good.txt
 under-test.txt

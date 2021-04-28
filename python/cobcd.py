@@ -4340,6 +4340,8 @@ they override any that might have been passed to GDB with --args."""
             else:
                 cobol_program = main_program
 
+            cobol_program = cobol_program.replace(".exe","")    # This is a hack for Windows
+
             # If there is no cobol program, just run
             if cobol_program:
                 # Turn hyphens into doubled underscores:
