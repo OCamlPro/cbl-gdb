@@ -188,13 +188,13 @@ class GlobalVariables():
         gdb_version_major = 0
         gdb_version_minor = 0
         gdb_version_patch = 0
-        match = re.search(r'^.*([0-9]+)[.]([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
+        match = re.search(r'[^0-9]*([0-9]+)[.]([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
         if match:
             self.gdb_version_major = int(match.group(1))
             self.gdb_version_minor = int(match.group(2))
             self.gdb_version_patch = int(match.group(3))
         else:
-            match = re.search(r'^.*([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
+            match = re.search(r'^[^0-9]*([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
             if match:
                 self.gdb_version_major = int(match.group(1))
                 self.gdb_version_minor = int(match.group(2))
