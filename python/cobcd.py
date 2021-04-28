@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+#!/usr/bin/python3
 
 ################################################################################
 # Copyright (c) 2019-2021 COBOLworx and contributors
@@ -183,8 +184,9 @@ def GdbExecute(curframe, command):
     return retval
 
 def cob_malloc(size):
-    # Wrapper for cob_malloc calls:
-    command = "call (char *)cob_malloc({0})".format(size)
+    # This is the Python-side wrapper for cob_malloc calls.
+    # We use the C-side wrapper that cobcd-st put into the generated .C
+    command = "call (char *){0}({1})".format(GV_ModuleState.cob_malloc,size)
     hexback = gdb.execute(command, False, True).split()[2]
     retval = int(hexback, 16)
     return retval
@@ -2503,6 +2505,7 @@ class ModuleState():
                                 name_root2 += hh.upper()
 
                         string_name = "VARIABLE_STRING_" + name_root2
+                        self.cob_malloc = "DEBUG_cob_malloc_" + name_root2
 
                         if GV_ModuleInformation.ReadVariableString(string_name):
                             break
