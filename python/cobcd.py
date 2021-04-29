@@ -4504,11 +4504,13 @@ class CFrameWorker:
         number = 1
         if argument:
             if not argument.isdigit():
-                print("argument must be a digit, not", argument)
-                return
+                raise gdb.GdbError("argument must be a digit, not " + argument)
             number = int(argument)
 
-        frame = gdb.selected_frame()
+        try:
+            frame = gdb.selected_frame()
+        except gdb.error:
+            raise gdb.GdbError("No stack.")
 
         while True:
             if number != 0:
