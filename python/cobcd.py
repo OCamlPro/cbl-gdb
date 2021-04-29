@@ -41,7 +41,7 @@
 
 # Catalog of environment variables interpreted by this module:
 #
-# os.environ.get('CPRINT_D','0')   When non-zero, causes verbose output
+# os.environ.get('CPRINT_D', '0')  When non-zero, causes verbose output
 # os.environ.get('CPRINT_V', '0')  Default formatting p/v N value
 # os.environ.get('CPRINT_R', '6')) Default p/? range
 # os.environ.get('CPRINT', '<cmd>'))   When non-blank, registers "cmd" instead of "cprint" as the command
@@ -185,36 +185,36 @@ def GdbExecute(curframe, command):
 def cob_malloc(size):
     # This is the Python-side wrapper for cob_malloc calls.
     # We use the C-side wrapper that cobcd-st put into the generated .C
-    command = "call (char *){0}({1})".format(GV_ModuleState.cob_malloc,size)
+    command = "call (char *){0}({1})".format(GV_ModuleState.cob_malloc, size)
     hexback = gdb.execute(command, False, True).split()[2]
     retval = int(hexback, 16)
     return retval
 
 def cob_cache_malloc(size):
-    command = "call (char *){0}({1})".format(GV_ModuleState.cob_cache_malloc,size)
+    command = "call (char *){0}({1})".format(GV_ModuleState.cob_cache_malloc, size)
     hexback = gdb.execute(command, False, True).split()[2]
     retval = int(hexback, 16)
     return retval
 
 def cob_free(location):
     # Wrapper for cob_free
-    command = "call (void){0}({1})".format(GV_ModuleState.cob_free,hex(location))
+    command = "call (void){0}({1})".format(GV_ModuleState.cob_free, hex(location))
     gdb.execute(command, False, True)
 
-def cob_move(source,destination):
+def cob_move(source, destination):
     command = "call (void){0}((cob_field *){1}, (cob_field *){2})".format(GV_ModuleState.cob_move,
                                                                           hex(source),
                                                                           hex(destination))
     gdb.execute(command, False, True)
 
-def cob_get_field_str(field,buff,size):
+def cob_get_field_str(field, buff, size):
     command = "call (const char *){0}((cob_field *){1}, (char *){2}, {3})".format(GV_ModuleState.cob_get_field_str,
                                                                                   hex(field),
                                                                                   hex(buff),
                                                                                   hex(size))
     gdb.execute(command, False, True)
 
-def cob_put_field_str(field,buff):
+def cob_put_field_str(field, buff):
     command = "call (int){0}((cob_field *){1}, (char *){2})".format(GV_ModuleState.cob_put_field_str,
                                                                     hex(field),
                                                                     hex(buff))
@@ -234,13 +234,13 @@ class GlobalVariables():
         gdb_version_major = 0
         gdb_version_minor = 0
         gdb_version_patch = 0
-        match = re.search(r'[^0-9]*([0-9]+)[.]([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
+        match = re.search(r'[^0-9]*([0-9]+)[.]([0-9]+)[.]([0-9]+).*$', gdb.VERSION)
         if match:
             self.gdb_version_major = int(match.group(1))
             self.gdb_version_minor = int(match.group(2))
             self.gdb_version_patch = int(match.group(3))
         else:
-            match = re.search(r'^[^0-9]*([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
+            match = re.search(r'^[^0-9]*([0-9]+)[.]([0-9]+).*$', gdb.VERSION)
             if match:
                 self.gdb_version_major = int(match.group(1))
                 self.gdb_version_minor = int(match.group(2))
@@ -1048,7 +1048,7 @@ class VarTrie():
                                    # our parent, but we keep looking until we find that older sibling.
                                 pass
                             i -= 1
-                    # print("Loading",payload.Level, payload.Name, payload.index_of_parent)
+                    # print("Loading", payload.Level, payload.Name, payload.index_of_parent)
                     payload.payload_index = len(self.storage_list)
                     self.storage_list.append(payload)
                     self.AddToTrie(self.storage_trie,
@@ -1101,8 +1101,8 @@ class VarTrie():
         if boy_index < len(boys):
             # we still have at least one boy to leave off at his tree
             boy = boys[boy_index]
-            # print("DEBUG boy",boy)
-            # print("DEBUG trie.children.keys",trie.children.keys())
+            # print("DEBUG boy", boy)
+            # print("DEBUG trie.children.keys", trie.children.keys())
             # Do a case-insensitive match:
             bFound = False
             for child in trie.children:
@@ -1410,7 +1410,7 @@ class CobolVariable():
         # when the variable is next accessed.
         self.IsDirty = True
 
-    def get_verified_field_location(self,allocate):
+    def get_verified_field_location(self, allocate):
         # When calling this routine with ALLOCATE, the caller must do
         # free_field_location(returned_value)
         #
@@ -1476,14 +1476,14 @@ class CobolVariable():
             retval = None
         return retval
 
-    def free_field_location(self,field_location):
+    def free_field_location(self, field_location):
         cob_free(field_location)
 
     def DumpJustAboutEverything(self):
         location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
         print(    "           Name:", self.NameToStringFull())
         if self.OccursMax:
-            print(    " OCCURS min/max: {0}/{1}".format(self.OccursMin,self.OccursMax))
+            print(    " OCCURS min/max: {0}/{1}".format(self.OccursMin, self.OccursMax))
         if self.Subscripts:
             print("     Subscripts:", self.Subscripts)
         resolved = "(" + ",".join(self.ResolvedSubscripts) + ")"
@@ -1542,7 +1542,7 @@ class CobolVariable():
                                                        hex(self.ActualLocation),
                                                        self.Aname)
             command += "}"
-            # print("command",command)
+            # print("command", command)
             gdb.execute(command, False, True)
 
             buffer = GV_GlobalVariables.cprint_buffer
@@ -1647,9 +1647,9 @@ class CobolVariable():
             gdb.execute(command, False, True)
 
             if cb_move == 1:
-                cob_move(field_loc,location_of_field)
+                cob_move(field_loc, location_of_field)
             else:
-                cob_put_field_str(field_loc,buffer)
+                cob_put_field_str(field_loc, buffer)
             self.IsDirty = True
         except gdb.error:
             traceback.print_exc()
@@ -1697,7 +1697,7 @@ class CobolVariable():
             return 0
 
         try:
-            cob_move(source,destination)
+            cob_move(source, destination)
             var_left.IsDirty = True
 
             # Recall that var_left is a copy of the GlobalVariable in var_trie.storage_list.  It has the same
@@ -1880,7 +1880,7 @@ class CobolVariable():
 
     def FetchVariableData(self, show_failure):
         # print("FetchVariableData:", self.Name, self.Section)
-        # print("\nFetchVariableData",self.Name,self.IsDirty, self.Offset, self.Length)
+        # print("\nFetchVariableData", self.Name, self.IsDirty, self.Offset, self.Length)
         if self.IsDirty:
             # We do this work only if the IsDirty flag indicates that we have to do the work.
             self.location_of_field = 0
@@ -1957,7 +1957,7 @@ class CobolVariable():
                         self.not_in_context = True
                         return False
                     self.location_of_data += self.Offset
-                    # print("  self.location_of_data + offset",hex(self.location_of_data),self.Offset)
+                    # print("  self.location_of_data + offset", hex(self.location_of_data), self.Offset)
                 else:
                     # print("There is no self.Bname")
                     pass
@@ -2012,7 +2012,7 @@ class CobolVariable():
                         except:
                             line_number = -1
 
-                    # print("Trapped at ",line_number)
+                    # print("Trapped at ", line_number)
                     # We know we are trapped at line_number
 
                     # Look up the program-id of that line_number
@@ -2070,13 +2070,13 @@ class CobolVariable():
 
         # Tack on table subscripts:
         if self.Subscripts:
-            name += "(" + ",".join(map(str,self.ResolvedSubscripts)) + ")"
+            name += "(" + ",".join(map(str, self.ResolvedSubscripts)) + ")"
         elif self.OccursMax:
             # This is a table, but no subscript was supplied.  Assume 1:
             name += "(1)"
         # Tack on reference modifications:
         if self.Refmod:
-            name += "({0}:{1})".format(self.RefmodOffset+1,self.RefmodLength)
+            name += "({0}:{1})".format(self.RefmodOffset+1, self.RefmodLength)
         return name
 
     def NameToStringFull(self):
@@ -2096,7 +2096,7 @@ class CobolVariable():
         return "{1:02} {2} [{0}]".format(storage_type, self.Level, self.NameWithSubscripts())
 
     def NameToString(self):
-        if GV_ModuleState.current_display_mode in ('3','4','5'):
+        if GV_ModuleState.current_display_mode in ('3', '4', '5'):
             n_str = self.NameToStringFull()
         else:
             n_str = self.NameWithSubscripts()
@@ -2342,7 +2342,7 @@ class ModuleInformation():
                 pass
         return retval
 
-    def LoadPerformFromLine(self,variable_line):
+    def LoadPerformFromLine(self, variable_line):
         if len(variable_line) > 0 and variable_line[0] == 'p':
             tokens = variable_line.split("|")
             if len(tokens) > 3:
@@ -2782,7 +2782,7 @@ def get_sorted_possibilities(args, limit):
                 # If index is valid, pick up the short-term memory entry
                 possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
             else:
-                print("The specified index ({0}) is out of range (1 to {1})".format(index + 1,len(GV_GlobalVariables.ShortTermMemory)))
+                print("The specified index ({0}) is out of range (1 to {1})".format(index + 1, len(GV_GlobalVariables.ShortTermMemory)))
                 return possibilities, False  # False means there was no 'limit' overflow
         else:
             # There are one or more arguments.  Use our clever routine
@@ -2865,7 +2865,7 @@ class CPrintWorker():
         self.use_cprint = os.environ.get("CPRINT", "cprint")
         self.machine_interface_mode = False
 
-    def ProcessSlashV(self,args):
+    def ProcessSlashV(self, args):
         # We know the first two characters of args[0] are "/v"
         v_code = None
         if len(args[0]) == 3:
@@ -2883,7 +2883,7 @@ class CPrintWorker():
             args = []
         return args
 
-    def ProcessSlashR(self,args):
+    def ProcessSlashR(self, args):
         # We know the first two characters of args[0] are "/r"
         #
         # We want "/rxxx" to be the same as "/r xxx":
@@ -2952,7 +2952,7 @@ class CPrintWorker():
             args = ' '.join(args)
         return args
 
-    def GetDisplayBody(self,payload):
+    def GetDisplayBody(self, payload):
         body = ""
         if payload.Refmod:
             if not payload.display_body.startswith('"') or GV_ModuleState.current_display_submode == 'x':
@@ -3132,7 +3132,7 @@ class CPrintWorker():
 
         return return_value
 
-    def ProcessArgumentsMachineMode(self,leftside,rightside,leftside_possibilities,rightside_possibilities):
+    def ProcessArgumentsMachineMode(self, leftside, rightside, leftside_possibilities, rightside_possibilities):
         """We arrive here when processing a cprint/m"""
         if len(leftside_possibilities) == 0:
             # just return quietly.  A "variable not found" message
@@ -4355,7 +4355,7 @@ they override any that might have been passed to GDB with --args."""
             else:
                 cobol_program = main_program
 
-            cobol_program = cobol_program.replace(".exe","")    # This is a hack for Windows
+            cobol_program = cobol_program.replace(".exe", "")    # This is a hack for Windows
 
             # If there is no cobol program, just run
             if cobol_program:
