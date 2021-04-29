@@ -2522,7 +2522,7 @@ class ModuleState():
                         string_name = "VARIABLE_STRING_" + name_root2
 
                         debugged_system = platform.system()
-                        if True or debugged_system == 'Windows':
+                        if debugged_system == 'Windows':
                             self.cob_malloc            = "DEBUG_cob_malloc_"            + name_root2
                             self.cob_cache_malloc      = "DEBUG_cob_cache_malloc_"      + name_root2
                             self.cob_free              = "DEBUG_cob_free_"              + name_root2
