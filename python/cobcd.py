@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-#!/usr/bin/python3
 
 ################################################################################
 # Copyright (c) 2019-2021 COBOLworx and contributors
@@ -191,6 +190,12 @@ def cob_malloc(size):
     retval = int(hexback, 16)
     return retval
 
+def cob_cache_malloc(size):
+    command = "call (char *){0}({1})".format(GV_ModuleState.cob_cache_malloc,size)
+    hexback = gdb.execute(command, False, True).split()[2]
+    retval = int(hexback, 16)
+    return retval
+
 def cob_free(location):
     # Wrapper for cob_free
     command = "call (void){0}({1})".format(GV_ModuleState.cob_free,hex(location))
@@ -213,6 +218,14 @@ def cob_put_field_str(field,buff):
     command = "call (int){0}((cob_field *){1}, (char *){2})".format(GV_ModuleState.cob_put_field_str,
                                                                     hex(field),
                                                                     hex(buff))
+    gdb.execute(command, False, True)
+
+def cob_encode_program_id(name, buff, size, fold):
+    command = "call (const char *){0}((cob_field *){1}, (char *){2}, {3})".format(GV_ModuleState.cob_encode_program_id,
+                                                                                  name,
+                                                                                  hex(buff),
+                                                                                  hex(size),
+                                                                                  case)
     gdb.execute(command, False, True)
 
 class GlobalVariables():
@@ -2510,21 +2523,25 @@ class ModuleState():
 
                         debugged_system = platform.system()
                         if True or debugged_system == 'Windows':
-                            self.cob_malloc        = "DEBUG_cob_malloc_" + name_root2
-                            self.cob_free          = "DEBUG_cob_free_" + name_root2
-                            self.cob_move          = "DEBUG_cob_move_" + name_root2
-                            self.cob_get_field_str = "DEBUG_cob_get_field_str_" + name_root2
-                            self.cob_put_field_str = "DEBUG_cob_put_field_str_" + name_root2
+                            self.cob_malloc            = "DEBUG_cob_malloc_"            + name_root2
+                            self.cob_cache_malloc      = "DEBUG_cob_cache_malloc_"      + name_root2
+                            self.cob_free              = "DEBUG_cob_free_"              + name_root2
+                            self.cob_move              = "DEBUG_cob_move_"              + name_root2
+                            self.cob_get_field_str     = "DEBUG_cob_get_field_str_"     + name_root2
+                            self.cob_put_field_str     = "DEBUG_cob_put_field_str_"     + name_root2
+                            self.cob_encode_program_id = "DEBUG_cob_encode_program_id_" + name_root2
                         else:
                             # This code was requested by Simon Sobisch, who wanted
                             # to avoid recompiling his source code when the wrapper solution
                             # was first deployed.  In Version4.27, this will be removed and everybody
                             # will use the wrapper solution.
-                            self.cob_malloc          = "cob_malloc"
-                            self.cob_free            = "cob_free"
-                            self.cob_move            = "cob_move"
-                            self.cob_get_field_str   = "cob_get_field_str"
-                            self.cob_put_field_str   = "cob_put_field_str"
+                            self.cob_malloc            = "cob_malloc"
+                            self.cob_cache_malloc      = "cob_cache_malloc"
+                            self.cob_free              = "cob_free"
+                            self.cob_move              = "cob_move"
+                            self.cob_get_field_str     = "cob_get_field_str"
+                            self.cob_put_field_str     = "cob_put_field_str"
+                            self.cob_encode_program_id = "cob_encode_program_id"
 
                         if GV_ModuleInformation.ReadVariableString(string_name):
                             break
@@ -3466,7 +3483,7 @@ class CBreakWorker():
         # TODO: encode in cobcd.py, without manual malloc (fixes breakpoint before running))
         try:
             if self.module_buffer is None:
-                self.module_buffer = gdb.execute("call (char*)cob_cache_malloc(100)", False, True).split()[2]
+                self.module_buffer = cob_cache_malloc(100)
         except gdb.error:
             if self.module_available(module):
                 return module
@@ -3474,8 +3491,7 @@ class CBreakWorker():
                 return return_value
 
         try:
-            command = "call (int)cob_encode_program_id(\"{0}\",{1},100,0)".format(module, self.module_buffer)
-            gdb.execute(command, False, True)
+            cob_encode_program_id(module, self.module_buffer, 100, 0)
             module = self.get_data_from_buffer(self.module_buffer)
         except gdb.error as error:
             raise gdb.GdbError("The program is not being run: " + str(error))
@@ -3499,15 +3515,13 @@ class CBreakWorker():
 
         try:
             if self.section_buffer is None:
-                self.section_buffer = gdb.execute("call (char*)cob_cache_malloc(100)", False, True).split()[2]
+                self.section_buffer = cob_cache_malloc(100)
         except gdb.error as error:
             self.section_buffer = None
             raise gdb.GdbError("The program is not being run: " + str(error))
 
-        command = "call (int)cob_encode_program_id(\"{0}\",{1},100,1)".format(section, self.section_buffer)
-
         try:
-            gdb.execute(command, False, True)
+            cob_encode_program_id(section, self.section_buffer, 100, 1)
         except gdb.error as error:
             raise gdb.GdbError("execute failed: " + str(error))
 
