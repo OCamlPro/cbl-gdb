@@ -3306,6 +3306,10 @@ class CPrintWorker():
     def ProcessArguments(self, arguments):
         # Get rid of the bounding apostrophes of completed names:
         for i in range(len(self.completed_names)):
+            # Look for each completed_name in the 'arguments'.  If
+            # found, remove any bounding apostrophes.  This isn't foolproof; the
+            # user could make confusing things happen.  <shrug>  Like the joke
+            # says:  "Don't do that".
             completed_name = self.completed_names[i]
             nfound = arguments.find(completed_name)
             if nfound >= 0:
@@ -4050,9 +4054,9 @@ class CPrint(gdb.Command):
         super(CPrint, self).__init__(self.worker.use_cprint, gdb.COMMAND_DATA)
 
         self.worker.completed_names = []
+        self.first_completion = True;
 
     def invoke(self, arguments, from_tty):
-        # pick up the name of the current source file
         try:
             # Check if this is a special case.  (Enough of these will
             # mean putting this in a separate function.)
@@ -4073,6 +4077,10 @@ class CPrint(gdb.Command):
     def complete(self, text, word):
         # We expect COBOL variables which GDB doesn't have, so the fallback
         # gdb.COMPLETE_SYMBOL can't be used.
+
+        if self.first_completion:
+            self.first_completion = False
+
         try:
             # HACK: because of missing support for hypens: in identifiers
             # we have to look at the text for that
