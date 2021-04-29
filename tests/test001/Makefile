@@ -16,7 +16,7 @@ knowngood := $(knowngood)$(shell uname -r |grep el7| sed 's/\(^.*\)el7\(.*\)/-rh
 # We also need separate known-good files for MINGW32 and MINGW64
 knowngood := $(knowngood)$(shell uname -s | grep MINGW | sed -e 's/^\(MINGW..\).*/-\1/g')
 
-$(info known-good files: $(knowngood))
+# $(info known-good files: $(knowngood))
 
 .PHONY : known-good test all testprod
 

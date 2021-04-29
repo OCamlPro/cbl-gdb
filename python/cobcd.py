@@ -208,7 +208,10 @@ def cob_move(source, destination):
     gdb.execute(command, False, True)
 
 def cob_get_field_str(field, buff, size):
-    command = "call (const char *){0}((cob_field *){1}, (char *){2}, {3})".format(GV_ModuleState.cob_get_field_str,
+    # Cast the return to void so that GDB doesn't try to interpret the returned
+    # value as a string pointer, which can cause minor nightmares when a COBOL group variable
+    # contains non-string binary data.
+    command = "call (void){0}((cob_field *){1}, (char *){2}, {3})".format(GV_ModuleState.cob_get_field_str,
                                                                                   hex(field),
                                                                                   hex(buff),
                                                                                   hex(size))
@@ -1550,9 +1553,9 @@ class CobolVariable():
             # If the data to be displayed aren't valid, the cob routine
             # will sometimes return without having changed the buffer at all.
             # To prevent stale data from the prior call polluting the results,
-            # stick in a NULL:
+            # zero the buffer:
 
-            command = "set *(char *){0}=0".format(hex(buffer))
+            command = "call (void)memset((char *){0},0,{1})".format(hex(buffer),PRINT_BUFFER_SIZE)
             gdb.execute(command, False, True)
 
             cob_get_field_str(field_loc, buffer, PRINT_BUFFER_SIZE)
@@ -1563,22 +1566,28 @@ class CobolVariable():
             return "<Error in GetDataAsString>"
 
         # The formatted variable string is in buffer
+        buf_ptr = buffer
+
         if is_alphanumeric:
             retval = '"'
-
-        buf_ptr = buffer
-        while True:
-            char = GetDataAt(buf_ptr, 1)
-            if char == 0:
-                break
-            if char < 32:
-                char = ord('.')
-            elif char >= 127:
-                char = ord('~')
-            retval += chr(char)
-            buf_ptr += 1
-        if is_alphanumeric:
+            for i in range(self.Length):
+                # It's possible for cob_get_field_str() to return non-string
+                # data, so sanitize it a bit:
+                char = GetDataAt(buf_ptr, 1)
+                if char == 0:
+                    break
+                if char < 32:
+                    char = ord('.')
+                retval += chr(char)
+                buf_ptr += 1
             retval += '"'
+        else:
+            while True:
+                char = GetDataAt(buf_ptr, 1)
+                if char == 0:
+                    break
+                retval += chr(char)
+                buf_ptr += 1
 
         return retval
 

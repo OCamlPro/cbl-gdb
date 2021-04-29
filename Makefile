@@ -138,3 +138,13 @@ test :
 .PHONY : testprod
 testprod :
 	$(MAKE) -C tests testprod
+
+.PHONY : installw
+installw:
+	cp cobcd $(MINGW_PREFIX)/bin/
+	cp cobcd.bat $(MINGW_PREFIX)/bin/
+	cp cobcd-st/cobcd-st.exe $(MINGW_PREFIX)/bin/
+	cp cobcd-sfix/cobcd-sfix.exe $(MINGW_PREFIX)/bin/
+	cp cobcd-rw/cobcd-rw.exe $(MINGW_PREFIX)/bin/
+	cp python/cobcd.py $(MINGW_PREFIX)/bin/
+
