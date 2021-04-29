@@ -14,6 +14,8 @@ knowngood:=known-good
 # tack on "-rh7" on a RedHat7 system:
 knowngood := $(knowngood)$(shell uname -r |grep el7| sed 's/\(^.*\)el7\(.*\)/-rh7/g')
 
+# We also need separate known-good files for MINGW32 and MINGW64
+knowngood := $(knowngood)$(shell uname -s | grep MINGW | sed 's/^\(MINGW..\).*/-\1/g')
 
 .PHONY : known-good test all testprod
 
@@ -35,7 +37,7 @@ test:
 	COBCDEVEL=1 $(COBCD) -m C.cbl
 	$(GDB) -x test.scr > under-test.txt
 	../strip-diff under-test.txt >under-test.stripped
-	diff -u under-test.stripped $(knowngood).stripped
+	diff -uw under-test.stripped $(knowngood).stripped
 
 testprod:
 	cobcd -o test -x MAIN.cbl
@@ -44,4 +46,4 @@ testprod:
 	cobcd -m C.cbl
 	$(GDB) -x test.scr > under-test.txt
 	../strip-diff under-test.txt >under-test.stripped
-	diff -u under-test.stripped $(knowngood).stripped
+	diff -uw under-test.stripped $(knowngood).stripped

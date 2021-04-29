@@ -182,19 +182,38 @@ def GdbExecute(curframe, command):
                 print("####       retval:", line)
     return retval
 
+def cob_malloc(size):
+    # This is the Python-side wrapper for cob_malloc calls.
+    # We use the C-side wrapper that cobcd-st put into the generated .C
+    command = "call (char *){0}({1})".format(GV_ModuleState.cob_malloc,size)
+    hexback = gdb.execute(command, False, True).split()[2]
+    retval = int(hexback, 16)
+    return retval
+
+def cob_free(location):
+    # Wrapper for cob_free
+    command = "call (void){0}({1})".format(GV_ModuleState.cob_free,hex(location))
+    gdb.execute(command, False, True)
+
+def cob_move(source,destination):
+    command = "call (void){0}((cob_field *){1}, (cob_field *){2})".format(GV_ModuleState.cob_move,
+                                                                          hex(source),
+                                                                          hex(destination))
+    gdb.execute(command, False, True)
+
 class GlobalVariables():
     def __init__(self):
         # Establish the version of GDB
         gdb_version_major = 0
         gdb_version_minor = 0
         gdb_version_patch = 0
-        match = re.search(r'^.*([0-9]+)[.]([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
+        match = re.search(r'[^0-9]*([0-9]+)[.]([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
         if match:
             self.gdb_version_major = int(match.group(1))
             self.gdb_version_minor = int(match.group(2))
             self.gdb_version_patch = int(match.group(3))
         else:
-            match = re.search(r'^.*([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
+            match = re.search(r'^[^0-9]*([0-9]+)[.]([0-9]+).*$',gdb.VERSION)
             if match:
                 self.gdb_version_major = int(match.group(1))
                 self.gdb_version_minor = int(match.group(2))
@@ -239,14 +258,9 @@ class GlobalVariables():
     def AllocateBuffers(self):
         if not self.cprint_buffer:
             try:
-                command = "call (char*)cob_malloc({0})".format(PRINT_BUFFER_SIZE)
-                self.cprint_buffer = int(gdb.execute(command, False, True).split()[2], 16)
-
-                command = "call (char*)cob_malloc(sizeof(cob_field))"
-                self.cprint_f0 = int(gdb.execute(command, False, True).split()[2], 16)
-
-                command = "call (char*)cob_malloc(sizeof(cob_field_attr))"
-                self.cprint_a0 = int(gdb.execute(command, False, True).split()[2], 16)
+                self.cprint_buffer = cob_malloc(PRINT_BUFFER_SIZE)
+                self.cprint_f0 = cob_malloc("sizeof(cob_field)")
+                self.cprint_a0 = cob_malloc("sizeof(cob_field_attr)")
             except:
                 traceback.print_exc()
                 self.cprint_buffer = None
@@ -254,7 +268,7 @@ class GlobalVariables():
 
             if not self.cprint_buffer or not self.cprint_buffer:
                 print("Something is very wrong in GlobalVariables.AllocateBuffers()")
-                os.exit(1)
+                sys.exit(1)
 
     def DestroyBuffers(self):
         self.cprint_buffer = None
@@ -1417,9 +1431,7 @@ class CobolVariable():
 
             # We *must* allocate, because our caller is expected us to, so they
             # will be calling free_field_location
-
-            command = "call (char*)cob_malloc(sizeof(cob_field))"
-            retval = int(gdb.execute(command, False, True).split()[2], 16)
+            retval = cob_malloc("sizeof(cob_field)")
 
             # Having allocated a synthetic cob_field, initialize it with the data
             # Unlike the DONT_ALLOCATE situation, where we aren't allowed to mess with the
@@ -1440,7 +1452,7 @@ class CobolVariable():
         return retval
 
     def free_field_location(self,field_location):
-        gdb.execute("call (void)cob_free({0})".format(hex(field_location)), False, True)
+        cob_free(field_location)
 
     def DumpJustAboutEverything(self):
         location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
@@ -1527,9 +1539,13 @@ class CobolVariable():
                                                  hex(buffer),
                                                  PRINT_BUFFER_SIZE)
             gdb.execute(command, False, True)
-        except gdb.error:
-            traceback.print_exc()
-            print("Command failed in GetDataAsString:", command)
+#        except gdb.error:
+#            traceback.print_exc()
+#            print("Command failed in GetDataAsString:", command)
+#            return "<Error in GetDataAsString>"
+        except:
+            # This can happen in Windows when cob_get_field_str returns an 0xFF
+            # for a GROUP level variabvle thas has LEVEL 88 variables in it.
             return "<Error in GetDataAsString>"
 
         # The formatted variable string is in buffer
@@ -1541,6 +1557,10 @@ class CobolVariable():
             char = GetDataAt(buf_ptr, 1)
             if char == 0:
                 break
+            if char < 32:
+                char = ord('.')
+            elif char >= 127:
+                char = ord('~')
             retval += chr(char)
             buf_ptr += 1
         if is_alphanumeric:
@@ -1613,14 +1633,14 @@ class CobolVariable():
             gdb.execute(command, False, True)
 
             if cb_move == 1:
-                command = "call (void)cob_move((cob_field *){0}, (cob_field *){1})".format(hex(field_loc), hex(location_of_field))
+                cob_move(field_loc,location_of_field)
             else:
                 # Now use the target executable's libcob to convert the string to the field:
                 command = "call (const char *)cob_put_field_str((cob_field *)"
                 command += hex(field_loc)
                 command += ",(char *)" + hex(buffer)
                 command += ")"
-            gdb.execute(command, False, True)
+                gdb.execute(command, False, True)
             self.IsDirty = True
         except gdb.error:
             traceback.print_exc()
@@ -1668,8 +1688,7 @@ class CobolVariable():
             return 0
 
         try:
-            command = "call (void)cob_move((cob_field *){0}, (cob_field *){1})".format(hex(source), hex(destination))
-            gdb.execute(command, False, True)
+            cob_move(source,destination)
             var_left.IsDirty = True
 
             # Recall that var_left is a copy of the GlobalVariable in var_trie.storage_list.  It has the same
@@ -2493,6 +2512,20 @@ class ModuleState():
 
                         string_name = "VARIABLE_STRING_" + name_root2
 
+                        debugged_system = platform.system()
+                        if debugged_system == 'Windows':
+                            self.cob_malloc = "DEBUG_cob_malloc_" + name_root2
+                            self.cob_free   = "DEBUG_cob_free_" + name_root2
+                            self.cob_move = "DEBUG_cob_move_" + name_root2
+                        else:
+                            # This code was requested by Simon Sobisch, who wanted
+                            # to avoid recompiling his source code when the wrapper solution
+                            # was first deployed.  In time, this can be removed and everybody
+                            # can just use the wrapper solution.
+                            self.cob_malloc = "cob_malloc"
+                            self.cob_free   = "cob_free"
+                            self.cob_move   = "cob_move"
+
                         if GV_ModuleInformation.ReadVariableString(string_name):
                             break
                         stack_line += 1
@@ -2877,14 +2910,14 @@ class CPrintWorker():
             # This is a single-digit display v-code:
             v_code = args[0][2]
             args.pop(0)
-        if v_code in "012345d":
+        if v_code and v_code in "012345d":
             # It's a valid display_mode.  Make it the one-time mode:
             GV_ModuleState.current_display_mode = v_code
             if len(args) == 0:
                 # There are no additional arguments, so make it the session mode
                 GV_ModuleState.sticky_display_mode = GV_ModuleState.current_display_mode
         else:
-            print("The /v code is invalid")
+            print("The /v code is invalid - it must be /v0 through /v5")
             args = []
         return args
 
@@ -3007,15 +3040,25 @@ class CPrintWorker():
     def FormattedDisplay(self, payload):
         body = self.GetDisplayBody(payload)
 
-        if GV_ModuleState.current_display_mode in ('0', '3'):
-            print(payload.NameToString(), " : ", body)
-        elif GV_ModuleState.current_display_mode in ('1', '4'):
-            print(body)
-        elif GV_ModuleState.current_display_mode in ('2', '5'):
-            print(payload.NameToString())
-            print(body)
-        else:  # GV_ModuleState.current_display_mode ==  'd':
-            payload.ShowFields()
+        # The following code catches the 'q' Quit option
+        retval = None
+        try:
+            if GV_ModuleState.current_display_mode in ('0', '3'):
+                print(payload.NameToString(), " : ", body)
+            elif GV_ModuleState.current_display_mode in ('1', '4'):
+                print(body)
+            elif GV_ModuleState.current_display_mode in ('2', '5'):
+                print(payload.NameToString())
+                print(body)
+            else:  # GV_ModuleState.current_display_mode ==  'd':
+                payload.ShowFields()
+        except KeyboardInterrupt as ki:
+            retval = str(ki)
+            # print("Quit")
+            print(retval) # is there a caller that does not like the print?
+        except:
+            traceback.print_exc()
+        return retval
 
     @staticmethod
     def set_var_value(value_):
@@ -3565,8 +3608,7 @@ class CBreakWorker():
         location_of_field = None
 
         try:
-            command = "call (char*)cob_malloc(sizeof(cob_field))"
-            location_of_field = int(gdb.execute(command, False, True).split()[2], 16)
+            location_of_field = cob_malloc("sizeof(cob_field)")
 
             command = "set var *(cob_field *){0}".format(location_of_field) + " = {"
             command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + payload.TableOffset + pl_startloc), payload.Aname)
@@ -3716,11 +3758,8 @@ class CBreakWorker():
         location_of_field = None
 
         try:
-            command = "call (char*)cob_malloc(sizeof(cob_field))"
-            location_of_field = int(gdb.execute(command, False, True).split()[2], 16)
-
-            command = "call (char*)cob_malloc(sizeof(cob_field_attr))"
-            location_of_attribute = int(gdb.execute(command, False, True).split()[2], 16)
+            location_of_field = cob_malloc("sizeof(cob_field)")
+            location_of_attribute = cob_malloc("sizeof(cob_field_attr)")
 
             if R_ALLSPACE.match(value):
                 attr_type = COB_TYPE_ALPHANUMERIC_ALL
@@ -3745,8 +3784,7 @@ class CBreakWorker():
             command = "set var ((cob_field_attr *){0})->flags = {1}".format(hex(location_of_attribute), COB_FLAG_CONSTANT)
             gdb.execute(command, False, True)
 
-            command = "call (char*)cob_malloc({0})".format(PRINT_BUFFER_SIZE)
-            buffer = int(gdb.execute(command, False, True).split()[2], 16)
+            buffer = cob_malloc(PRINT_BUFFER_SIZE)
 
             if case_ins == 1:
                 value = value.upper()
@@ -4003,7 +4041,6 @@ class CPrint(gdb.Command):
                 return gdb.COMPLETE_NONE
 
             possibilities = get_completion_possibilities(word)
-            
             return possibilities
         except:
             traceback.print_exc()
@@ -4332,6 +4369,8 @@ they override any that might have been passed to GDB with --args."""
                 arguments = arguments or args
             else:
                 cobol_program = main_program
+
+            cobol_program = cobol_program.replace(".exe","")    # This is a hack for Windows
 
             # If there is no cobol program, just run
             if cobol_program:

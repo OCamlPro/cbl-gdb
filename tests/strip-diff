@@ -99,7 +99,7 @@ def main() :
                     print_this_line = False
 
             if print_this_line :
-                if line.find("[Thread debugging ") == 0 :
+                if line.find("[Thread ") == 0 :
                     print_this_line = False
 
             if print_this_line :

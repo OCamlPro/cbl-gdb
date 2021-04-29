@@ -258,7 +258,7 @@ main(int argc, char **argv)
     low_line = low_line < 1 ? 1 : low_line;
     high_line = high_line < 1 ? 1 : high_line;
 
-    FILE *f = fopen(argv[1],"r");
+    FILE *f = fopen(argv[1],"rb");
     if( !f ) {
         cout << "Unable to open the input file: " << argv[1] << endl;
         return 1;
@@ -280,7 +280,7 @@ main(int argc, char **argv)
         current_line += 1;
     }
 
-    // If current_line < center_line, then the file was too small.  Return nothing
+    // If current_line is less than center_line, then the file was too small.  Return nothing
     if( current_line EQ center_line ) {
         // ach[] now contains the text of the center line
         FindTokensIn(ach,results);
