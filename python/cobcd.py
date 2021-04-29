@@ -2828,7 +2828,6 @@ def get_sorted_possibilities(args, limit):
 
     return possibilities, False # False means there was no 'limit' overflow
 
-
 def get_completion_possibilities(word):
     GV_ModuleState.EstablishModuleState(False)
 
@@ -2841,14 +2840,11 @@ def get_completion_possibilities(word):
     for index in possibilities_1:
         whole_name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
         if whole_name.startswith(word):
-            # cater for words that will otherwise be split in GDB view
-            if whole_name.find("-"):
-                whole_name = "'" + whole_name + "'"
-
+            # make sure words are not split in GDB view
+            whole_name = "'" + whole_name + "'"
             possibilities.append(whole_name)
 
     return possibilities
-
 
 def break_completion(text, word, condition):
     try:
@@ -2930,6 +2926,7 @@ class CPrintWorker():
         GV_ModuleState.sticky_display_mode = os.environ.get("CPRINT_V", '0')
         self.use_cprint = os.environ.get("CPRINT", "cprint")
         self.machine_interface_mode = False
+        self.completed_names = []
 
     def ProcessSlashV(self, args):
         # We know the first two characters of args[0] are "/v"
@@ -3307,7 +3304,22 @@ class CPrintWorker():
                 payload.IsDirty = True
 
     def ProcessArguments(self, arguments):
-        # First, look for /[dxvmvr] switches:
+        # Get rid of the bounding apostrophes of completed names:
+        for i in range(len(self.completed_names)):
+            completed_name = self.completed_names[i]
+            nfound = arguments.find(completed_name)
+            if nfound >= 0:
+                nlength = len(completed_name)
+                beginning = arguments[:nfound]
+                middle    = arguments[nfound:nfound+nlength]
+                end       = arguments[nfound+nlength:]
+                if middle[-1] == "'":
+                    middle = middle[:-1]
+                if middle[0] == "'":
+                    middle = middle[1:]
+                arguments = beginning+middle+end
+
+        # Look for /[dxvmvr] switches:
         args = self.ProcessDisplayMode(arguments)
 
         # At this point, we have args[], which should be
@@ -3361,6 +3373,13 @@ class CPrintWorker():
         GV_GlobalVariables.VarLeft = None
         GV_GlobalVariables.VarLeftIndex = None
         GV_GlobalVariables.VarRight = None
+
+        if left_side[0][0] == "'":
+            # This can happen as a result of TAB completion:
+            left_side[0] = left_side[0][1:]
+        if left_side[-1][-1] == "'":
+            # This can happen as a result of TAB completion:
+            left_side[-1] = left_side[-1][:-1]
 
         leftside_possibilities, limit_reached = get_sorted_possibilities(left_side, 0)
         if not leftside_possibilities:
@@ -4030,6 +4049,8 @@ class CPrint(gdb.Command):
         print('Registering CPrint as ' + self.worker.use_cprint + ' ' + COBCD_VERSION)
         super(CPrint, self).__init__(self.worker.use_cprint, gdb.COMMAND_DATA)
 
+        self.worker.completed_names = []
+
     def invoke(self, arguments, from_tty):
         # pick up the name of the current source file
         try:
@@ -4045,13 +4066,13 @@ class CPrint(gdb.Command):
 
             GV_ModuleState.EstablishModuleState(False)
             self.worker.ProcessArguments(arguments)
+            self.completed_names = []
         except:
             traceback.print_exc()
 
     def complete(self, text, word):
         # We expect COBOL variables which GDB doesn't have, so the fallback
         # gdb.COMPLETE_SYMBOL can't be used.
-
         try:
             # HACK: because of missing support for hypens: in identifiers
             # we have to look at the text for that
@@ -4066,6 +4087,12 @@ class CPrint(gdb.Command):
                 return gdb.COMPLETE_NONE
 
             possibilities = get_completion_possibilities(word)
+            if len(possibilities) == 1:
+                # There are degenerate cases that this logic can't handle:  For example,
+                # the user can TAB out to a completed name, and then backspace and
+                # try again.  But we're trying to help out, here.
+                self.worker.completed_names.append(possibilities[0])
+
             return possibilities
         except:
             traceback.print_exc()
@@ -4095,7 +4122,7 @@ A watchpoint stops execution of your program whenever the value of an expression
             self.worker.process_watch_arguments(arguments)
         except:
             traceback.print_exc()
-        
+
     @staticmethod
     def complete(text, word):
         try:
@@ -4198,7 +4225,7 @@ Do "help cbreak" for info on COBOL expressions"""
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
         self.worker.process_condition_arguments(arguments)
-        
+
     @staticmethod
     def complete(text, word):
         possibilities = break_completion(text, word, 1)
