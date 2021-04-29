@@ -202,6 +202,19 @@ def cob_move(source,destination):
                                                                           hex(destination))
     gdb.execute(command, False, True)
 
+def cob_get_field_str(field,buff,size):
+    command = "call (const char *){0}((cob_field *){1}, (char *){2}, {3})".format(GV_ModuleState.cob_get_field_str,
+                                                                                  hex(field),
+                                                                                  hex(buff),
+                                                                                  hex(size))
+    gdb.execute(command, False, True)
+
+def cob_put_field_str(field,buff):
+    command = "call (int){0}((cob_field *){1}, (char *){2})".format(GV_ModuleState.cob_put_field_str,
+                                                                    hex(field),
+                                                                    hex(buff))
+    gdb.execute(command, False, True)
+
 class GlobalVariables():
     def __init__(self):
         # Establish the version of GDB
@@ -1489,9 +1502,6 @@ class CobolVariable():
     def GetDataAsString(self):
         retval = ""
         GV_GlobalVariables.AllocateBuffers()
-        # location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
-        # if not location_of_field:
-        #    return retval
 
         if False:  # For development
             self.DumpJustAboutEverything()
@@ -1532,16 +1542,7 @@ class CobolVariable():
             command = "set *(char *){0}=0".format(hex(buffer))
             gdb.execute(command, False, True)
 
-            command = "call (const char *)" \
-                      "cob_get_field_str((cob_field *){0}, " \
-                      "(char *){1}, {2})".format(hex(field_loc),
-                                                 hex(buffer),
-                                                 PRINT_BUFFER_SIZE)
-            gdb.execute(command, False, True)
-#        except gdb.error:
-#            traceback.print_exc()
-#            print("Command failed in GetDataAsString:", command)
-#            return "<Error in GetDataAsString>"
+            cob_get_field_str(field_loc, buffer, PRINT_BUFFER_SIZE)
         except:
             # This can happen in Windows when cob_get_field_str returns an 0xFF
             # for a GROUP level variabvle thas has LEVEL 88 variables in it.
@@ -1635,12 +1636,7 @@ class CobolVariable():
             if cb_move == 1:
                 cob_move(field_loc,location_of_field)
             else:
-                # Now use the target executable's libcob to convert the string to the field:
-                command = "call (const char *)cob_put_field_str((cob_field *)"
-                command += hex(field_loc)
-                command += ",(char *)" + hex(buffer)
-                command += ")"
-                gdb.execute(command, False, True)
+                cob_put_field_str(field_loc,buffer)
             self.IsDirty = True
         except gdb.error:
             traceback.print_exc()
@@ -2513,18 +2509,22 @@ class ModuleState():
                         string_name = "VARIABLE_STRING_" + name_root2
 
                         debugged_system = platform.system()
-                        if debugged_system == 'Windows':
-                            self.cob_malloc = "DEBUG_cob_malloc_" + name_root2
-                            self.cob_free   = "DEBUG_cob_free_" + name_root2
-                            self.cob_move = "DEBUG_cob_move_" + name_root2
+                        if True or debugged_system == 'Windows':
+                            self.cob_malloc        = "DEBUG_cob_malloc_" + name_root2
+                            self.cob_free          = "DEBUG_cob_free_" + name_root2
+                            self.cob_move          = "DEBUG_cob_move_" + name_root2
+                            self.cob_get_field_str = "DEBUG_cob_get_field_str_" + name_root2
+                            self.cob_put_field_str = "DEBUG_cob_put_field_str_" + name_root2
                         else:
                             # This code was requested by Simon Sobisch, who wanted
                             # to avoid recompiling his source code when the wrapper solution
-                            # was first deployed.  In time, this can be removed and everybody
-                            # can just use the wrapper solution.
-                            self.cob_malloc = "cob_malloc"
-                            self.cob_free   = "cob_free"
-                            self.cob_move   = "cob_move"
+                            # was first deployed.  In Version4.27, this will be removed and everybody
+                            # will use the wrapper solution.
+                            self.cob_malloc          = "cob_malloc"
+                            self.cob_free            = "cob_free"
+                            self.cob_move            = "cob_move"
+                            self.cob_get_field_str   = "cob_get_field_str"
+                            self.cob_put_field_str   = "cob_put_field_str"
 
                         if GV_ModuleInformation.ReadVariableString(string_name):
                             break
