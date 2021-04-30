@@ -168,6 +168,7 @@ COBCDRW_AVAILABLE = True
 # Note: Replace "readelf" with path to binary if it is not in your PATH.
 READELF_BINARY = os.getenv('READELF', 'readelf')
 COBCDRW_BINARY = os.getenv('COBCDRW', 'cobcd-rw')
+COBCRUN_NAME = os.getenv('COBCRUN', 'cobcrun') # _only_ the name
 
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
@@ -224,19 +225,17 @@ def cob_put_field_str(field, buff):
     gdb.execute(command, False, True)
 
 def cob_encode_program_id(name, buff, size, fold):
+    # TODO: complete encoding should be done here, not in libcob
     command = "call (const char *){0}((cob_field *){1}, (char *){2}, {3})".format(GV_ModuleState.cob_encode_program_id,
                                                                                   name,
                                                                                   hex(buff),
                                                                                   hex(size),
-                                                                                  case)
+                                                                                  fold)
     gdb.execute(command, False, True)
 
 class GlobalVariables():
     def __init__(self):
         # Establish the version of GDB
-        gdb_version_major = 0
-        gdb_version_minor = 0
-        gdb_version_patch = 0
         match = re.search(r'[^0-9]*([0-9]+)[.]([0-9]+)[.]([0-9]+).*$', gdb.VERSION)
         if match:
             self.gdb_version_major = int(match.group(1))
@@ -247,13 +246,18 @@ class GlobalVariables():
             if match:
                 self.gdb_version_major = int(match.group(1))
                 self.gdb_version_minor = int(match.group(2))
+                self.gdb_version_patch = 0
+            else:
+                self.gdb_version_major = 0
+                self.gdb_version_minor = 0
+                self.gdb_version_patch = 0
 
         self.gdb_8dot3_plus = True
         if self.gdb_version_major < 8 or (self.gdb_version_major == 8 and self.gdb_version_minor < 3):
             self.gdb_8dot3_plus = False
 
         if not self.gdb_8dot3_plus:
-            print("\n !! warning: cload and ctbreak are not available with GDB-{0}.{1} (GDB 8.3+ is required)\n".format(
+            print("\n !! warning: add-symbol-file-cobol is not available with GDB-{0}.{1} (GDB 8.3+ is required)\n".format(
                                                                     self.gdb_version_major,
                                                                     self.gdb_version_minor)
                                                                     )
@@ -296,7 +300,7 @@ class GlobalVariables():
                 self.cprint_buffer = None
                 self.cprint_f0 = None
 
-            if not self.cprint_buffer or not self.cprint_buffer:
+            if not self.cprint_buffer:
                 print("Something is very wrong in GlobalVariables.AllocateBuffers()")
                 sys.exit(1)
 
@@ -324,7 +328,6 @@ def OurPrint(s):
     try:
         print(s)
     except KeyboardInterrupt as ki:
-        print("Quit")
         retval = str(ki)
     except:
         traceback.print_exc()
@@ -807,8 +810,7 @@ def TokenizeCanonicalName(desired):
         else:
             desired = match.group(1) + " " + match.group(3)
 
-    desired = desired.replace(".", " ")
-    desired = desired.replace("/", " ").strip()
+    desired = desired.replace(".", " ").replace("/", " ").strip()
     desired += suffix
     retval = desired.split()
     return retval
@@ -1497,6 +1499,7 @@ class CobolVariable():
         if self.Refmod:
             print("         refmod:", self.Refmod)
         print(    "        Section:", self.Section)
+        print(    "        Program:", self.Program)
         print(    "          Fname:", self.Fname or "f0")
         print(    "          Bname:", self.Bname)
         print(    "          Aname:", self.Aname)
@@ -2377,9 +2380,9 @@ class ModuleState():
         self.question_mark_range = int(os.environ.get("CPRINT_R", '6'))
         self.current_full_path = ""
         self.Stack = False
-        self.sticky_display_mode = '0';
-        self.current_display_mode = '0';
-        self.current_display_submode = '0';
+        self.sticky_display_mode = '0'
+        self.current_display_mode = '0'
+        self.current_display_submode = '0'
 
     def ProcessStack(self):
         """ Figures out which routine we are currently trapped in"""
@@ -2573,6 +2576,12 @@ class ModuleState():
                         if match:
                             self.current_full_path = match.group(1)
                             break
+        except gdb.error:
+            self.current_trapped_routine = ""
+            self.current_trapped_file = ""
+            self.current_trapped_frame = -1
+            self.current_trapped_line = 0
+            raise gdb.GdbError("No stack.")
         except:
             self.current_trapped_routine = ""
             self.current_trapped_file = ""
@@ -2589,8 +2598,15 @@ class ModuleState():
             GV_GlobalVariables.IsDirty = False
 
         # Go read the frame and stack, and, if necessary, fetch the VariableStringData
-        if self.ProcessStack():
-            self.Stack = True
+        try:
+            self.Stack = self.ProcessStack()
+        except gdb.GdbError as user_error:
+            if announce:
+                # pass user errors unchanged
+                raise user_error
+            return
+
+        if self.Stack:
             # Figure out what routine we are trapped in, from
             # the line number
             for line in GV_ModuleInformation.line_list.line_list:
@@ -2601,8 +2617,8 @@ class ModuleState():
                 # Keep looking
                 self.current_trapped_routine = line[1]
         else:
-            self.Stack = False
             if announce:
+                # CHECKME: _printing_ here looks wrong
                 print("No stack.")
 
 GV_ModuleState = ModuleState()
@@ -2840,7 +2856,7 @@ def get_completion_possibilities(word):
     for index in possibilities_1:
         whole_name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
         if whole_name.startswith(word):
-            # make sure words are not split in GDB view
+            # make sure returned words are not seen as multiple words by GDB
             whole_name = "'" + whole_name + "'"
             possibilities.append(whole_name)
 
@@ -2942,7 +2958,7 @@ class CPrintWorker():
                 # There are no additional arguments, so make it the session mode
                 GV_ModuleState.sticky_display_mode = GV_ModuleState.current_display_mode
         else:
-            print("The /v code is invalid - it must be /v0 through /v5")
+            print("The /v code is invalid - it must be /v0 through /v5 or /vd")
             args = []
         return args
 
@@ -3280,7 +3296,9 @@ class CPrintWorker():
 
                     print_str += body
                     retval = OurPrint(NoNulls(print_str))
-                    if retval == "Quit":
+                    if retval:
+                        # print("Quit")
+                        print(retval)
                         break
         elif len(leftside_possibilities) == 1:
             # There is but one possibility
@@ -3292,7 +3310,8 @@ class CPrintWorker():
                     # The assignment failed
                     return
 
-            # Having done the assignment, display the left-side data that was changed:
+            # Having done the assignment, if any,
+            # now display the left-side data that was changed or requested to be printed:
             if payload.FetchVariableData(True):
                 self.FormattedDisplay(payload)
 
@@ -3345,8 +3364,7 @@ class CPrintWorker():
         # of them.  In any case, no arguments means do nothing:
 
         if not GV_ModuleState.Stack:
-            print("No stack.")
-            return
+            raise gdb.GdbError("No stack.")
 
         if not args or not args[0]:
             return
@@ -3531,10 +3549,16 @@ class CBreakWorker():
 
     @staticmethod
     def set_breakpoint(spec, t_flag):
+        # note: temporary support in python API only with GDB 8.3+
         if GV_GlobalVariables.gdb_8dot3_plus:
             break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, temporary=t_flag)
         else:
-            break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT)
+            if t_flag:
+                command = "tbreak {0}".format(spec)
+                gdb.execute(command, True, False)
+                break_point = gdb.breakpoints()[-1]
+            else:
+                break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT)
 
         if break_point.pending:
             break_point.delete()
@@ -3633,6 +3657,7 @@ class CBreakWorker():
 
         GV_ModuleState.EstablishModuleState(True)
         # HACK to let cbreak work until it is refactored
+        # TODO do the refactoring or at least document the issue
         possibilities, limit_reached = get_sorted_possibilities(search_args, 1)
 
         if limit_reached:
@@ -3717,7 +3742,8 @@ class CBreakWorker():
             if mod_sec[0] != "":
                 module_name = self.get_module_name(mod_sec[0])
                 if module_name is None:
-                    print("Module not found: {0}".format(mod_sec[0]))
+                    # message already from add-symbol-file-cobol
+                    # print("Module not found: {0}".format(mod_sec[0]))
                     return
 
         if not module_name:
@@ -4045,7 +4071,15 @@ class CPrint(gdb.Command):
 
         try:
             subprocess.check_output([COBCDRW_BINARY, '-v'])
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as ex:
+            # cobcd-rw until 4.26 release returned "1", assume this is fine
+            if ex.returncode != 1:
+                print("WARNING: \"cprint ?\" not available: {0} not available, consider setting COBCDRW".format(COBCDRW_BINARY))
+                COBCDRW_AVAILABLE = False
+        # note: specific errors were only added with Python 3.3, so we catch everything...
+        # except subprocess.CalledProcessError:
+        except:
+            print("WARNING: \"cprint ?\" not available: {0} not available, consider setting COBCDRW".format(COBCDRW_BINARY))
             COBCDRW_AVAILABLE = False
 
         self.worker = CPrintWorker()
@@ -4054,7 +4088,6 @@ class CPrint(gdb.Command):
         super(CPrint, self).__init__(self.worker.use_cprint, gdb.COMMAND_DATA)
 
         self.worker.completed_names = []
-        self.first_completion = True;
 
     def invoke(self, arguments, from_tty):
         try:
@@ -4071,15 +4104,15 @@ class CPrint(gdb.Command):
             GV_ModuleState.EstablishModuleState(False)
             self.worker.ProcessArguments(arguments)
             self.completed_names = []
+        except gdb.GdbError as user_error:
+            # pass user errors unchanged
+            raise user_error
         except:
             traceback.print_exc()
 
     def complete(self, text, word):
         # We expect COBOL variables which GDB doesn't have, so the fallback
         # gdb.COMPLETE_SYMBOL can't be used.
-
-        if self.first_completion:
-            self.first_completion = False
 
         try:
             # HACK: because of missing support for hypens: in identifiers
@@ -4128,6 +4161,9 @@ A watchpoint stops execution of your program whenever the value of an expression
         try:
             GV_ModuleState.EstablishModuleState(True)
             self.worker.process_watch_arguments(arguments)
+        except gdb.GdbError as user_error:
+            # pass user errors unchanged
+            raise user_error
         except:
             traceback.print_exc()
 
@@ -4367,10 +4403,11 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
 
         try:
             subprocess.check_output([READELF_BINARY, '--version'])
-        except subprocess.CalledProcessError:
+        # note: specific errors were only added with Python 3.3, so we catch everything...
+        # except subprocess.CalledProcessError:
+        except:
             READELF_AVAILABLE = False
-            print("\n!! {0} not found on path, not registering add-symbol-file-cobol\n".format(READELF_BINARY))
-            return
+            raise gdb.GdbError("{0} not found on path, not registering add-symbol-file-cobol, consider setting READELF".format(READELF_BINARY))
 
         print('Registering add-symbol-file-cobol')
         super(CLoad, self).__init__("add-symbol-file-cobol", gdb.COMMAND_FILES)
@@ -4417,10 +4454,15 @@ they override any that might have been passed to GDB with --args."""
         try:
             command = "info files"
             info_files = gdb.execute(command, False, True).split('\n')
+            if not info_files[0]:
+                # a remote connection cannot be issued by start, cstart does exactly the same
+                # instead, one may use (only for extended-remote) "run", with a previous tbreak
+                raise gdb.GdbError("No symbol table loaded.  Use the \"file\" command.")
             line1 = info_files[0]
             line1 = line1.replace('\\', '/') # In case of Windows
             main_program = line1.split('/')[-1].split('"')[0]
-            if main_program == 'cobcrun':
+            # Note: cobcrun may be renamed or contain version numbers - is there a better approach?
+            if main_program == COBCRUN_NAME:
                 command = "show args"
                 args = gdb.execute(command, False, True).split('"')[1].split()
                 cobol_program = args[0]
@@ -4435,6 +4477,7 @@ they override any that might have been passed to GDB with --args."""
             # If there is no cobol program, just run
             if cobol_program:
                 # Turn hyphens into doubled underscores:
+                # TODO: complete encoding as soon as this is done in cob_encode_program_id in python
                 entry_point = cobol_program.replace("-", "__") + "_"
 
                 # set temporary maintenance breakpoint
@@ -4443,13 +4486,23 @@ they override any that might have been passed to GDB with --args."""
                 else:
                     command = "tbreak {0}".format(entry_point)
                     gdb.execute(command, True, False)
+                command = "run " + arguments
+            else:
+                # "start" is not expected to actually "run", so we use start in the unknown case
+                command = "start " + arguments
 
             # And proceed to run the program:
-            command = "run " + arguments
             gdb.execute(command, True, False)
 
         except gdb.error:
             print("cstart failed: " + command)
+
+        except gdb.GdbError as user_error:
+            # pass user errors unchanged
+            raise user_error
+
+        except:
+            traceback.print_exc()
 
 class CNext(gdb.Command):
     """The cnext command behaves like GDB 'next', but it is smart enough to
@@ -4492,9 +4545,10 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
                     command = "next"
                     gdb.execute(command, True, False)
                 ncount -= 1
+        except gdb.error:
+            raise gdb.GdbError("No stack.")
         except:
-            # traceback.print_exc()
-            print("No stack.")
+            traceback.print_exc()
 
 class CFrameWorker:
     """Does all of the gdb work of CUp() and CDown()"""
