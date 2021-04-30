@@ -3453,6 +3453,110 @@ class CPrintWorker():
             self.ProcessArgumentsHumanMode(leftside_possibilities,
                                            right_side)
 
+class CobolAfterWatchBreakpoint(gdb.Breakpoint):
+    def __init__(self, creating_wp):
+
+        frame = gdb.newest_frame ()
+        cob_frame = CFrameWorker.Frame(True, 0)
+        if cob_frame and cob_frame != frame:
+            frame = cob_frame
+
+        resume_address = "*" + str(hex(frame.pc()))
+
+        if GV_GlobalVariables.gdb_8dot3_plus:
+            gdb.Breakpoint.__init__(self, resume_address, internal=True)
+        else:
+            gdb.Breakpoint.__init__(self, resume_address)
+
+        # we fake the output of the original watchpoint + COBOL in CobolWatchpointHandler
+        self.silent = True
+        self.creating_wp = creating_wp
+
+        # copy commands as necessary ("real watchpoint" never halts and therefore commands are never executed)
+        if creating_wp.commands:
+            commands_to_set = "cup 0" + "\n" + creating_wp.commands
+        else:
+            commands_to_set = "cup 0"
+        if GV_GlobalVariables.gdb_8dot3_plus:
+            self.commands = commands_to_set
+        else:
+            command = "commands {0}\n{1}\nend".format(gdb.breakpoints()[-1].number, commands_to_set)
+            gdb.execute(command, True, False)
+
+    def stop(self):
+        self.creating_wp.handler.output_wp()
+        self.creating_wp.activate_stop()
+        return True # _now_ we do want to stop
+
+    def out_of_scope (self):
+        self.creating_wp.handler.output__wp()
+        self.creating_wp.activate_stop()
+
+
+class CobolWatchpointHandler():
+    def __init__(self, creating_wp, payload):
+        print ("... for", payload.NameToString())
+        self.creating_wp = creating_wp
+        self.payload = payload
+        self.old_value = self.payload.GetDataAsString()
+
+    def output_wp (self):
+        title = {
+            # gdb.BP_WATCHPOINT : "Watchpoint",
+            gdb.BP_HARDWARE_WATCHPOINT : "Hardware watchpoint",
+            gdb.BP_READ_WATCHPOINT : "Hardware read watchpoint",
+            gdb.BP_ACCESS_WATCHPOINT : "Hardware access (read/write) watchpoint",
+        }
+        bp_type = self.creating_wp.type
+        title_string = title.get(bp_type, "Unknown watchpoint " + str(bp_type))
+        payload = self.payload
+        print("{0} {1}: {2} from {3}\n".format(title_string,
+                                               self.creating_wp.number,
+                                               payload.NameToString(),
+                                               payload.Program))
+        if bp_type == gdb.BP_HARDWARE_WATCHPOINT:
+            new_value = payload.GetDataAsString()
+            print("Old value: {0}".format(self.old_value))
+            print("New value: {0}".format(new_value))
+            self.old_value = new_value
+        elif bp_type == gdb.BP_ACCESS_WATCHPOINT:
+            new_value = payload.GetDataAsString()
+            if new_value != self.old_value:
+                print("Old value: {0}".format(self.old_value))
+                print("New value: {0}".format(new_value))
+                self.old_value = new_value
+            else:
+                print("Value: {0}".format(self.old_value))
+        else:
+            print("Value: {0}".format(self.old_value))
+
+
+class CobolWatchBreakpoint(gdb.Breakpoint):
+    def __init__(self, payload, bp_spec, bp_action):
+        try:
+            gdb.Breakpoint.__init__(self, bp_spec, gdb.BP_WATCHPOINT, bp_action)
+        except Exception as ex:
+            raise gdb.GdbError(ex)
+        if self.type == gdb.BP_WATCHPOINT:
+            self.delete()
+            raise gdb.GdbError("Expression cannot be implemented as hardware watchpoint.\n... and therefore removed")
+        self.handler = CobolWatchpointHandler(self, payload)
+        self.after_done = 0
+
+    def stop(self):
+        if self.after_done == 0:
+            self.after_done = 1
+            CobolAfterWatchBreakpoint(self)
+
+        # we never want the COBOL watchpoints to end directly because:
+        # * this would interfer internal multi-step-changes like memmove_sse_back
+        # * stopping here will also show the "C-like" output
+        # * commands would be executed (is done in the AfterWatchBreakPoint)
+        return False
+
+    def activate_stop(self):
+        self.after_done = 0
+
 class CWatchWorker():
     """Does most of the non-gdb work of CWatch()"""
 
@@ -3473,15 +3577,14 @@ class CWatchWorker():
         spec += '(' + hex(wp_startloc) + ')'
 
         if wp_type == 'WPW':
-            break_point = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_WRITE)
+            break_point = CobolWatchBreakpoint(payload, spec, gdb.WP_WRITE)
         elif wp_type == 'WPR':
-            break_point = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_READ)
+            break_point = CobolWatchBreakpoint(payload, spec, gdb.WP_READ)
         elif wp_type == 'WPRW':
-            break_point = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_ACCESS)
+            break_point = CobolWatchBreakpoint(payload, spec, gdb.WP_ACCESS)
         else:
             print("Internal error: Watchpoint type not recognized")
             return
-        break_point.commands = "echo Watched: {0} from {1}\\n \n cup 0".format(payload.NameToString(), payload.Program)
 
     def process_watch_arguments(self, arguments):
         left_side = []
@@ -4564,13 +4667,7 @@ class CFrameWorker:
         CDownS()
 
     @staticmethod
-    def Go(argument, up, silent):
-
-        number = 1
-        if argument:
-            if not argument.isdigit():
-                raise gdb.GdbError("argument must be a digit, not " + argument)
-            number = int(argument)
+    def Frame(up, number):
 
         try:
             frame = gdb.selected_frame()
@@ -4584,11 +4681,7 @@ class CFrameWorker:
                 else:
                     frame = frame.newer()
                 if frame is None:
-                    if up:
-                        print("Initial COBOL frame selected; you cannot go up.")
-                    else:
-                        print("Bottom (innermost) COBOL frame selected; you cannot go down.")
-                    return
+                    return None
             else:
                 number = -1
 
@@ -4607,10 +4700,28 @@ class CFrameWorker:
 
             # quite likely a COBOL frame
             if number <= 0:
-                frame.select()
-                gdb.execute("frame", (silent == False), silent)
-                return
+                return frame
             number = number - 1
+
+    @staticmethod
+    def Go(argument, up, silent):
+
+        number = 1
+        if argument:
+            if not argument.isdigit():
+                raise gdb.GdbError("argument must be a digit, not " + argument)
+            number = int(argument)
+
+        frame = CFrameWorker.Frame(up, number)
+        if not frame:
+            if up:
+                print("Initial COBOL frame selected; you cannot go up.")
+            else:
+                print("Bottom (innermost) COBOL frame selected; you cannot go down.")
+            return
+
+        frame.select()
+        gdb.execute("frame", (silent == False), silent)
 
 class CUp (gdb.Command):
     """Select and print COBOL stack frame that called this one.
