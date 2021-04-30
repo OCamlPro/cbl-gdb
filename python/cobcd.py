@@ -226,10 +226,10 @@ def cob_put_field_str(field, buff):
 
 def cob_encode_program_id(name, buff, size, fold):
     command = "call (int){0}(\"{1}\", {2}, {3}, {4})".format(GV_ModuleState.cob_encode_program_id,
-                                                                                  name,
-                                                                                  hex(buff),
-                                                                                  size,
-                                                                                  fold)
+                                                             name,
+                                                             hex(buff),
+                                                             size,
+                                                             fold)
     gdb.execute(command, False, True)
 
 class GlobalVariables():
@@ -2402,6 +2402,18 @@ class ModuleState():
         self.current_display_mode = '0'
         self.current_display_submode = '0'
 
+        # This code was requested by Simon Sobisch, who wanted
+        # to avoid recompiling his source code when the wrapper solution
+        # was first deployed.  In Version4.27, this will be removed and everybody
+        # will use the wrapper solution.
+        self.cob_malloc            = "cob_malloc"
+        self.cob_cache_malloc      = "cob_cache_malloc"
+        self.cob_free              = "cob_free"
+        self.cob_move              = "cob_move"
+        self.cob_get_field_str     = "cob_get_field_str"
+        self.cob_put_field_str     = "cob_put_field_str"
+        self.cob_encode_program_id = "cob_encode_program_id"
+
     def ProcessStack(self):
         """ Figures out which routine we are currently trapped in"""
 
@@ -2562,18 +2574,6 @@ class ModuleState():
                             self.cob_get_field_str     = "DEBUG_cob_get_field_str_"     + name_root2
                             self.cob_put_field_str     = "DEBUG_cob_put_field_str_"     + name_root2
                             self.cob_encode_program_id = "DEBUG_cob_encode_program_id_" + name_root2
-                        else:
-                            # This code was requested by Simon Sobisch, who wanted
-                            # to avoid recompiling his source code when the wrapper solution
-                            # was first deployed.  In Version4.27, this will be removed and everybody
-                            # will use the wrapper solution.
-                            self.cob_malloc            = "cob_malloc"
-                            self.cob_cache_malloc      = "cob_cache_malloc"
-                            self.cob_free              = "cob_free"
-                            self.cob_move              = "cob_move"
-                            self.cob_get_field_str     = "cob_get_field_str"
-                            self.cob_put_field_str     = "cob_put_field_str"
-                            self.cob_encode_program_id = "cob_encode_program_id"
 
                         if GV_ModuleInformation.ReadVariableString(string_name):
                             break
@@ -3557,7 +3557,6 @@ class CobolWatchpointHandler():
                 print("Value: {0}".format(self.old_value))
         else:
             print("Value: {0}".format(self.old_value))
-
 
 class CobolWatchBreakpoint(gdb.Breakpoint):
     def __init__(self, payload, bp_spec, bp_action):
