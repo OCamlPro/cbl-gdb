@@ -3548,17 +3548,18 @@ class CBreakWorker():
         self.module_buffer = None
 
     @staticmethod
-    def set_breakpoint(spec, t_flag):
+    def set_breakpoint(spec, t_flag, i_flag):
         # note: temporary support in python API only with GDB 8.3+
         if GV_GlobalVariables.gdb_8dot3_plus:
-            break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, temporary=t_flag)
+            break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, temporary=t_flag, internal=i_flag)
         else:
             if t_flag:
+                # note: we ignore internal here, because temporary is more important...
                 command = "tbreak {0}".format(spec)
                 gdb.execute(command, True, False)
                 break_point = gdb.breakpoints()[-1]
             else:
-                break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT)
+                break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, internal=i_flag)
 
         if break_point.pending:
             break_point.delete()
@@ -3693,7 +3694,7 @@ class CBreakWorker():
 
         return location_of_field
 
-    def set_regexp_breakpoint(self, line_nr, condition, payload, diff_str, break_point, t_flag):
+    def set_regexp_breakpoint(self, line_nr, condition, payload, diff_str, break_point, t_flag, i_flag):
         if condition == "=~":
             cmp_len = len(diff_str)
             if payload.Refmod:
@@ -3715,15 +3716,15 @@ class CBreakWorker():
             bp_startloc += payload.TableOffset
             if break_point is None:
                 if line_nr == "-1":
-                    break_point = self.set_breakpoint("", t_flag)
+                    break_point = self.set_breakpoint("", t_flag, i_flag)
                 else:
-                    break_point = self.set_breakpoint(line_nr, t_flag)
+                    break_point = self.set_breakpoint(line_nr, t_flag, i_flag)
 
             self.set_condition(break_point, "$_regex(((char *)cob_get_field_str_buffered({0}), \"{1}\")".format(hex(location_of_field), diff_str))
         else:
             print("Condition not implemented")
 
-    def set_section_breakpoint(self, args, t_flag):
+    def set_section_breakpoint(self, args, t_flag, i_flag):
         module_name = ""
 
         mod_sec = args[0].split(":")
@@ -3750,7 +3751,7 @@ class CBreakWorker():
             spec = "SECTION_{0}".format(section_name)
         else:
             spec = "{0}_:SECTION_{1}".format(module_name, section_name)
-        break_point = self.set_breakpoint(spec, t_flag)
+        break_point = self.set_breakpoint(spec, t_flag, i_flag)
 
     def get_cob_cmp_refloc(self, payload, cmp_len, second):
         bp_startloc = 1
@@ -3773,7 +3774,7 @@ class CBreakWorker():
 
         return location_of_field, cmp_len
 
-    def set_cob_cmp_breakpoint(self, line_nr, condition, payload_l, payload_r, break_point, is_location, t_flag):
+    def set_cob_cmp_breakpoint(self, line_nr, condition, payload_l, payload_r, break_point, is_location, t_flag, i_flag):
         case_ins = 0
         if condition[-1:] == "i":
             case_ins = 1
@@ -3816,9 +3817,9 @@ class CBreakWorker():
 
         if break_point is None:
             if line_nr == "-1":
-                break_point = self.set_breakpoint("", t_flag)
+                break_point = self.set_breakpoint("", t_flag, i_flag)
             else:
-                break_point = self.set_breakpoint(line_nr, t_flag)
+                break_point = self.set_breakpoint(line_nr, t_flag, i_flag)
 
         if case_ins == 1 and is_location == 1:
             self.set_condition(break_point, "(int)cob_cmp(cob_intr_upper_case(0,0,{0}), {1}) {2} 0".format(hex(location_of_field), hex(other_field), condition_str))
@@ -3882,7 +3883,7 @@ class CBreakWorker():
 
         return location_of_field
 
-    def set_cond_break(self, left_side, right_side, condition, break_point, is_lit, t_flag):
+    def set_cond_break(self, left_side, right_side, condition, break_point, is_lit, t_flag, i_flag):
         payload_s = None
         is_location = 0
         case_ins = 0
@@ -3922,15 +3923,15 @@ class CBreakWorker():
             is_location = 1
 
         if payload_r is not None and condition != "=~":
-            self.set_cob_cmp_breakpoint(line_nr, condition, payload_l, payload_r, break_point, is_location, t_flag)
+            self.set_cob_cmp_breakpoint(line_nr, condition, payload_l, payload_r, break_point, is_location, t_flag, i_flag)
         else:
             if payload_l.AttrType in (1, 33, 34, 35):
-                self.set_regexp_breakpoint(line_nr, condition, payload_l, right_side[0][1:-1], break_point, t_flag)
+                self.set_regexp_breakpoint(line_nr, condition, payload_l, right_side[0][1:-1], break_point, t_flag, i_flag)
             else:
                 print("Not yet implemented (Attribute type", payload_l.AttrType, ")")
                 return
 
-    def process_break_arguments(self, arguments, t_flag):
+    def process_break_arguments(self, arguments, t_flag, i_flag):
         is_lit = 0
         left_side = []
         right_side = []
@@ -3944,23 +3945,23 @@ class CBreakWorker():
             if not left_side:
                 return
         else:
-            break_point = self.set_breakpoint("", t_flag)
+            break_point = self.set_breakpoint("", t_flag, i_flag)
             return
 
         if not right_side:
             if len(left_side) == 1 and left_side[0].isdigit():
-                break_point = self.set_breakpoint(left_side[0], t_flag)
+                break_point = self.set_breakpoint(left_side[0], t_flag, i_flag)
             elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and left_side[0].find(':') != -1:
-                self.set_section_breakpoint(left_side, t_flag)
+                self.set_section_breakpoint(left_side, t_flag, i_flag)
             elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and (left_side[0].upper() != "SECTION" or left_side[0].upper() != "SEC"):
                 module_name = self.get_module_name(left_side[0])
                 if module_name is None:
                     print("Module not found: {0}".format(left_side[0]))
                 else:
-                    break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{0}".format(module_name), t_flag)
+                    break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{0}".format(module_name), t_flag, i_flag)
             elif len(left_side) == 2 and (left_side[0].upper() == "SECTION" or left_side[0].upper() == "SEC") and isinstance(left_side[1], self.strtype):
                 del left_side[0]
-                self.set_section_breakpoint(left_side, t_flag)
+                self.set_section_breakpoint(left_side, t_flag, i_flag)
             else:
                 print('Breakpoint parameters not recognized')
                 return
@@ -3979,7 +3980,7 @@ class CBreakWorker():
 
             del left_side[1]
 
-            self.set_cond_break(left_side, right_side, condition, None, is_lit, t_flag)
+            self.set_cond_break(left_side, right_side, condition, None, is_lit, t_flag, i_flag)
         else:
             print('Breakpoint parameters not recognized')
             return
@@ -4024,7 +4025,7 @@ class CBreakWorker():
             print("Breakpoint {0} now unconditional.".format(left_side[0]))
             self.set_condition(break_point, None)
         elif len(left_side) >= 2 and len(left_side) <= 4:
-            self.set_cond_break(left_side, right_side, condition, break_point, is_lit, False)
+            self.set_cond_break(left_side, right_side, condition, break_point, is_lit, False, False)
         else:
             print('Breakpoint parameters not recognized')
             return
@@ -4226,7 +4227,7 @@ A breakpoint stops execution of your program whenever the expression matches
 
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
-        self.worker.process_break_arguments(arguments, False)
+        self.worker.process_break_arguments(arguments, False, False)
 
     @staticmethod
     def complete(text, word):
@@ -4248,7 +4249,7 @@ Do "help cbreak" for info on COBOL expressions"""
 
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
-        self.worker.process_break_arguments(arguments, True)
+        self.worker.process_break_arguments(arguments, True, False)
 
     @staticmethod
     def complete(text, word):
@@ -4476,14 +4477,16 @@ they override any that might have been passed to GDB with --args."""
 
             # If there is no cobol program, just run
             if cobol_program:
-                # Turn hyphens into doubled underscores:
                 # TODO: complete encoding as soon as this is done in cob_encode_program_id in python
-                entry_point = cobol_program.replace("-", "__") + "_"
 
                 # set temporary maintenance breakpoint
                 if GV_GlobalVariables.gdb_8dot3_plus:
-                    gdb.Breakpoint(entry_point, type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
+                    # after its TODO is fixed: CBLDBG_CBREAK_WORKER.process_break_arguments(cobol_program, True, True)
+                    module = cobol_program.replace("-", "__")
+                    gdb.Breakpoint("-function {0}_ -label ENTRY_{0}".format(module), type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
                 else:
+                    # Turn hyphens into doubled underscores:
+                    entry_point = cobol_program.replace("-", "__") + "_"
                     command = "tbreak {0}".format(entry_point)
                     gdb.execute(command, True, False)
                 command = "run " + arguments
