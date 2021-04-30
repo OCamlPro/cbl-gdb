@@ -4126,7 +4126,7 @@ class CBreakWorker():
                 if module_name is None:
                     print("Module not found: {0}".format(left_side[0]))
                 else:
-                    break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{0}".format(module_name), t_flag, i_flag)
+                    break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{1}".format(module_name,module.upper()), t_flag, i_flag)
             elif len(left_side) == 2 and (left_side[0].upper() == "SECTION" or left_side[0].upper() == "SEC") and isinstance(left_side[1], self.strtype):
                 del left_side[0]
                 self.set_section_breakpoint(left_side, t_flag, i_flag)
