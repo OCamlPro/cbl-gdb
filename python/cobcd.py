@@ -2859,13 +2859,8 @@ def get_completion_possibilities(word):
     possibilities = []
     for index in possibilities_1:
         whole_name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
-<<<<<<< HEAD
-        if whole_name.startswith(word):
-            # make sure returned words are not seen as multiple words by GDB
-=======
         if word == "*" or whole_name.startswith(word):
             # make sure words are not split in GDB view
->>>>>>> ssobisch/cbl-gdb-patch-11
             whole_name = "'" + whole_name + "'"
             possibilities.append(whole_name)
 
