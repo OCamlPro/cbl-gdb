@@ -3514,8 +3514,10 @@ class CobolWatchpointHandler():
                                                payload.NameToString(),
                                                payload.Program))
         if bp_type == gdb.BP_HARDWARE_WATCHPOINT:
+            new_value = payload.GetDataAsString()
             print("Old value: {0}".format(self.old_value))
             print("New value: {0}".format(new_value))
+            self.old_value = new_value
         elif bp_type == gdb.BP_ACCESS_WATCHPOINT:
             new_value = payload.GetDataAsString()
             if new_value != self.old_value:
@@ -3526,7 +3528,6 @@ class CobolWatchpointHandler():
                 print("Value: {0}".format(self.old_value))
         else:
             print("Value: {0}".format(self.old_value))
-        
 
 class CobolWatchBreakpoint(gdb.Breakpoint):
     def __init__(self, payload, bp_spec, bp_action):
@@ -4664,13 +4665,7 @@ class CFrameWorker:
         CDownS()
 
     @staticmethod
-    def Go(argument, up, silent):
-
-        number = 1
-        if argument:
-            if not argument.isdigit():
-                raise gdb.GdbError("argument must be a digit, not " + argument)
-            number = int(argument)
+    def Frame(up, number):
 
         try:
             frame = gdb.selected_frame()
@@ -4684,11 +4679,7 @@ class CFrameWorker:
                 else:
                     frame = frame.newer()
                 if frame is None:
-                    if up:
-                        print("Initial COBOL frame selected; you cannot go up.")
-                    else:
-                        print("Bottom (innermost) COBOL frame selected; you cannot go down.")
-                    return
+                    return None
             else:
                 number = -1
 
@@ -4707,10 +4698,28 @@ class CFrameWorker:
 
             # quite likely a COBOL frame
             if number <= 0:
-                frame.select()
-                gdb.execute("frame", (silent == False), silent)
-                return
+                return frame
             number = number - 1
+
+    @staticmethod
+    def Go(argument, up, silent):
+
+        number = 1
+        if argument:
+            if not argument.isdigit():
+                raise gdb.GdbError("argument must be a digit, not " + argument)
+            number = int(argument)
+
+        frame = CFrameWorker.Frame(up, number)
+        if not frame:
+            if up:
+                print("Initial COBOL frame selected; you cannot go up.")
+            else:
+                print("Bottom (innermost) COBOL frame selected; you cannot go down.")
+            return
+
+        frame.select()
+        gdb.execute("frame", (silent == False), silent)
 
 class CUp (gdb.Command):
     """Select and print COBOL stack frame that called this one.
