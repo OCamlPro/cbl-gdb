@@ -1,7 +1,4 @@
 KNOWN GOOD LINES: 2
-No stack.
-KNOWN GOOD LINES: 1
-No stack.
 KNOWN GOOD START
 I am MAIN; I call A, B, and C
   I am 'A   ', called from 'MAIN'; I call B and C
@@ -13,8 +10,6 @@ I am MAIN; I call A, B, and C
   I am 'C   ', called from 'MAIN'; I call nobody
 [Inferior 1 (process 99999) exited normally]
 KNOWN GOOD FINISH
-KNOWN GOOD LINES: 1
-No stack.
 KNOWN GOOD START
  1 : CALL-BLOCK : "MAIN2"
  2 : WE-ARE/CALL-BLOCK : "MAIN"

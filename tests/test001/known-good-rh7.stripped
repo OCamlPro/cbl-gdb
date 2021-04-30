@@ -1,7 +1,4 @@
 KNOWN GOOD LINES: 2
-No stack.
-KNOWN GOOD LINES: 1
-No stack.
 KNOWN GOOD START
 entering: jimbob
 1234567.8
@@ -50,8 +47,6 @@ CARVER
 Wabash    
 [Inferior 1 (process 99999) exited normally]
 KNOWN GOOD FINISH
-KNOWN GOOD LINES: 1
-No stack.
 KNOWN GOOD START
  1 : 01 GEORGE [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 FILLER/GEORGE [L-S] : ' ' <repeats 13 times>
