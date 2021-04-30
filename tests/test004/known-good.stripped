@@ -69,23 +69,23 @@ cprint *
  3 : 10 WS-B/WS-A/WS-TABLE/test [W-S] : "12"
  4 : 10 WS-C/WS-A/WS-TABLE/test(1) [W-S] : "ABC"
  5 : 15 WS-D/WS-C/WS-A/WS-TABLE/test [W-S] : "ABC"
- 6 : 01 Z-TABLE/test [EXT] : "87654321"
+ 6 : 01 Z-TABLE/test [EXT] : "87654321^^Hi, bob!        ", '^' <repeats 23 times>, "subtext    ", '^' <repeats 205 times>, "Hi, mom!        ", '^' <repeats 22424 times>, "Hi, marty!      ", '^' <repeats 239 times>
  7 : 05 Z-PID/Z-TABLE/test [EXT] : 87654321
  8 : 05 Z-ADR/Z-TABLE/test [EXT] : 
- 9 : 05 T-ENTRIES/Z-TABLE/test(1) [EXT] : "Hi, bob!        "
+ 9 : 05 T-ENTRIES/Z-TABLE/test(1) [EXT] : "Hi, bob!        ", '^' <repeats 23 times>, "subtext    ", '^' <repeats 205 times>
 10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S] : +000000001
 11 : 08 T-ADR/T-ENTRIES/Z-TABLE/test [EXT] : "Hi, bob!        "
-12 : 08 T-STAT/T-ENTRIES/Z-TABLE/test [EXT] : 
-13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE/test(1) [EXT] : 
-14 : 10 SUBTEXT/SUBTABLE/T-ENTRIES/Z-TABLE/test [EXT] : 
-15 : 10 SUBTEXT2/SUBTABLE/T-ENTRIES/Z-TABLE/test [EXT] : 
-16 : 08 T-PRGM/T-ENTRIES/Z-TABLE/test [EXT] : 
-17 : 08 T-ID/T-ENTRIES/Z-TABLE/test [EXT] : 
+12 : 08 T-STAT/T-ENTRIES/Z-TABLE/test [EXT] : "^"
+13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE/test(1) [EXT] : '^' <repeats 22 times>
+14 : 10 SUBTEXT/SUBTABLE/T-ENTRIES/Z-TABLE/test [EXT] : '^' <repeats 11 times>
+15 : 10 SUBTEXT2/SUBTABLE/T-ENTRIES/Z-TABLE/test [EXT] : '^' <repeats 11 times>
+16 : 08 T-PRGM/T-ENTRIES/Z-TABLE/test [EXT] : "^^^^^^^^"
+17 : 08 T-ID/T-ENTRIES/Z-TABLE/test [EXT] : "^^"
 18 : 08 T-ADR-SAVE/T-ENTRIES/Z-TABLE/test [EXT] : +00000000000000000000
 19 : 01 T_ENTRY/test [W-S] : 0013
-20 : 01 T_ADDRESSES/test(1) [W-S] : "First---11W."
+20 : 01 T_ADDRESSES/test(1) [W-S] : "First---11W^^^^^^^^^^^^^^"
 21 : 00 TAB-ADR-IND/T_ADDRESSES/test [W-S] : +000000003
-22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11W."
+22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11W^^^^^^^^^^^^^^"
 23 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11"
 24 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---"
 25 : 15 TAB-ADR-ID/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "11"
@@ -114,23 +114,23 @@ cprint *
  3 : WS-B/WS-A/WS-TABLE : "12"
  4 : WS-C/WS-A/WS-TABLE(1) : "ABC"
  5 : WS-D/WS-C/WS-A/WS-TABLE : "ABC"
- 6 : Z-TABLE : "87654321"
+ 6 : Z-TABLE : "87654321^^Hi, bob!        ", '^' <repeats 23 times>, "subtext    ", '^' <repeats 205 times>, "Hi, mom!        ", '^' <repeats 22424 times>, "Hi, marty!      ", '^' <repeats 239 times>
  7 : Z-PID/Z-TABLE : 87654321
  8 : Z-ADR/Z-TABLE : 
- 9 : T-ENTRIES/Z-TABLE(1) : "Hi, bob!        "
+ 9 : T-ENTRIES/Z-TABLE(1) : "Hi, bob!        ", '^' <repeats 23 times>, "subtext    ", '^' <repeats 205 times>
 10 : TAB-ADR-IND/T-ENTRIES/Z-TABLE : +000000001
 11 : T-ADR/T-ENTRIES/Z-TABLE : "Hi, bob!        "
-12 : T-STAT/T-ENTRIES/Z-TABLE : 
-13 : SUBTABLE/T-ENTRIES/Z-TABLE(1) : 
-14 : SUBTEXT/SUBTABLE/T-ENTRIES/Z-TABLE : 
-15 : SUBTEXT2/SUBTABLE/T-ENTRIES/Z-TABLE : 
-16 : T-PRGM/T-ENTRIES/Z-TABLE : 
-17 : T-ID/T-ENTRIES/Z-TABLE : 
+12 : T-STAT/T-ENTRIES/Z-TABLE : "^"
+13 : SUBTABLE/T-ENTRIES/Z-TABLE(1) : '^' <repeats 22 times>
+14 : SUBTEXT/SUBTABLE/T-ENTRIES/Z-TABLE : '^' <repeats 11 times>
+15 : SUBTEXT2/SUBTABLE/T-ENTRIES/Z-TABLE : '^' <repeats 11 times>
+16 : T-PRGM/T-ENTRIES/Z-TABLE : "^^^^^^^^"
+17 : T-ID/T-ENTRIES/Z-TABLE : "^^"
 18 : T-ADR-SAVE/T-ENTRIES/Z-TABLE : +00000000000000000000
 19 : T_ENTRY : 0013
-20 : T_ADDRESSES(1) : "First---11W."
+20 : T_ADDRESSES(1) : "First---11W^^^^^^^^^^^^^^"
 21 : TAB-ADR-IND/T_ADDRESSES : +000000003
-22 : TAB-ADR-ELEMENT/T_ADDRESSES : "First---11W."
+22 : TAB-ADR-ELEMENT/T_ADDRESSES : "First---11W^^^^^^^^^^^^^^"
 23 : TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES : "First---11"
 24 : TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES : "First---"
 25 : TAB-ADR-ID/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES : "11"
@@ -358,23 +358,23 @@ cp *
  3 : WS-B/WS-A/WS-TABLE : "12"
  4 : WS-C/WS-A/WS-TABLE(1) : "ABC"
  5 : WS-D/WS-C/WS-A/WS-TABLE : "ABC"
- 6 : Z-TABLE : "87654321"
+ 6 : Z-TABLE : "87654321^^Hi, bob!        ", '^' <repeats 23 times>, "subtext    ", '^' <repeats 205 times>, "Hi, mom!        ", '^' <repeats 22424 times>, "Hi, marty!      ", '^' <repeats 239 times>
  7 : Z-PID/Z-TABLE : 87654321
  8 : Z-ADR/Z-TABLE : 
- 9 : T-ENTRIES/Z-TABLE(1) : "Hi, bob!        "
+ 9 : T-ENTRIES/Z-TABLE(1) : "Hi, bob!        ", '^' <repeats 23 times>, "subtext    ", '^' <repeats 205 times>
 10 : TAB-ADR-IND/T-ENTRIES/Z-TABLE : +000000001
 11 : T-ADR/T-ENTRIES/Z-TABLE : "Hi, bob!        "
-12 : T-STAT/T-ENTRIES/Z-TABLE : 
-13 : SUBTABLE/T-ENTRIES/Z-TABLE(1) : 
-14 : SUBTEXT/SUBTABLE/T-ENTRIES/Z-TABLE : 
-15 : SUBTEXT2/SUBTABLE/T-ENTRIES/Z-TABLE : 
-16 : T-PRGM/T-ENTRIES/Z-TABLE : 
-17 : T-ID/T-ENTRIES/Z-TABLE : 
+12 : T-STAT/T-ENTRIES/Z-TABLE : "^"
+13 : SUBTABLE/T-ENTRIES/Z-TABLE(1) : '^' <repeats 22 times>
+14 : SUBTEXT/SUBTABLE/T-ENTRIES/Z-TABLE : '^' <repeats 11 times>
+15 : SUBTEXT2/SUBTABLE/T-ENTRIES/Z-TABLE : '^' <repeats 11 times>
+16 : T-PRGM/T-ENTRIES/Z-TABLE : "^^^^^^^^"
+17 : T-ID/T-ENTRIES/Z-TABLE : "^^"
 18 : T-ADR-SAVE/T-ENTRIES/Z-TABLE : +00000000000000000000
 19 : T_ENTRY : 0013
-20 : T_ADDRESSES(1) : "First---11W."
+20 : T_ADDRESSES(1) : "First---11W^^^^^^^^^^^^^^"
 21 : TAB-ADR-IND/T_ADDRESSES : +000000003
-22 : TAB-ADR-ELEMENT/T_ADDRESSES : "First---11W."
+22 : TAB-ADR-ELEMENT/T_ADDRESSES : "First---11W^^^^^^^^^^^^^^"
 23 : TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES : "First---11"
 24 : TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES : "First---"
 25 : TAB-ADR-ID/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES : "11"
@@ -413,9 +413,9 @@ TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)(3:4)  :  "zz  "
 cprint tab-adr-prgm(2)
 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)  :  "Sezz  --"
 cprint tab-adr-prgm(2)(3:4) = ws-a(one)(two:three of nums1)
-TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)(3:4)  :  "2AB "
+TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)(3:4)  :  "2AB^"
 cprint tab-adr-prgm(2)
-TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)  :  "Se2AB --"
+TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)  :  "Se2AB^--"
 cp TAB-ADR-IND
  1 : TAB-ADR-IND/T-ENTRIES/Z-TABLE : +000000001
  2 : TAB-ADR-IND/T_ADDRESSES : +000000003

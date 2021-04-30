@@ -1584,7 +1584,7 @@ class CobolVariable():
             cob_get_field_str(field_loc, buffer, PRINT_BUFFER_SIZE)
         except:
             # This can happen in Windows when cob_get_field_str returns an 0xFF
-            # for a GROUP level variabvle thas has LEVEL 88 variables in it.
+            # for a GROUP level variable that has LEVEL 88 variables in it.
             traceback.print_exc()
             return "<Error in GetDataAsString>"
 
@@ -1597,10 +1597,8 @@ class CobolVariable():
                 # It's possible for cob_get_field_str() to return non-string
                 # data, so sanitize it a bit:
                 char = GetDataAt(buf_ptr, 1)
-                if char == 0:
-                    break
                 if char < 32:
-                    char = ord('.')
+                    char = ord('^')
                 retval += chr(char)
                 buf_ptr += 1
             retval += '"'
@@ -2096,9 +2094,12 @@ class CobolVariable():
 
     def NameWithSubscripts(self):
         # Start with full name.
-        # Remove the program name from the right side:
-        name = self.Name.split('/')
-        name = '/'.join(name[0:-1])
+        if GV_ModuleState.current_display_mode in ('0', '1', '2'):
+            # Remove the program name from the right side:
+            name = self.Name.split('/')
+            name = '/'.join(name[0:-1])
+        else:
+            name = self.Name
 
         # Tack on table subscripts:
         if self.Subscripts:
