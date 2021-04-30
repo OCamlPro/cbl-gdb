@@ -721,7 +721,11 @@ def get_left_right_args(args):
     # Pick up the left and right sides, and turn them into
     # "normalized" COBOL variable names.
     if len(leftright) > 0:
-        left_side = TokenizeCanonicalName(leftright[0])
+        if leftright[0].startswith ("if"):
+            left_side = TokenizeCanonicalName(leftright[0][2:].strip())
+            left_side.insert(0, "if")
+        else:
+            left_side = TokenizeCanonicalName(leftright[0])
 
     if len(leftright) > 2 and leftright[2] != '':
         # There is a rightside.
@@ -799,6 +803,21 @@ def TokenizeCanonicalName(desired):
     if nparen > -1:
         suffix = desired[nparen:]
         desired = desired[0:nparen]
+
+        sq_count = suffix.count("'")
+        if sq_count > 0 and sq_count % 2 != 0:
+            raise gdb.GdbError("Unmatched single quote.")
+
+    sq_count = desired.count("'")
+    if sq_count > 0 and sq_count % 2 != 0:
+        raise gdb.GdbError("Unmatched single quote.")
+
+    if desired[0] == "'":
+        # This can happen as a result of TAB completion:
+        desired = desired[1:]
+    if desired[-1] == "'":
+        # This can happen as a result of TAB completion:
+        desired = desired[:-1]
 
     # turn IN and OF into spaces
     pattern = re.compile(r"^(.*) (in|In|iN|IN|of|oF|Of|OF) (.*)$")
@@ -2849,12 +2868,17 @@ def get_completion_possibilities(word):
     word = word.upper()
     lookup = TokenizeCanonicalName(word)
     # print ("DBG: lookup: <",  lookup,  ">")
+    # FIXME: in case of completion "TXT" may complete to TXT TXT-A TXT-B,
+    #        but if there's a possibility which is a "complete" match like TXT
+    #        only this one is returned (which is correct for printing only)
+    # FIXME: for completion "get_sorted_possibilities" itself should work with
+    #        names that _start_ with the lookup so we don't need to filter later
     possibilities_1, limit_reached = get_sorted_possibilities(lookup, 0)
     # we now have the requested list, create the completion from its names
     possibilities = []
     for index in possibilities_1:
         whole_name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
-        if whole_name.startswith(word):
+        if word == "*" or whole_name.startswith(word):
             # make sure returned words are not seen as multiple words by GDB
             whole_name = "'" + whole_name + "'"
             possibilities.append(whole_name)
@@ -2863,11 +2887,6 @@ def get_completion_possibilities(word):
 
 def break_completion(text, word, condition):
     try:
-        # HACK: because of missing support for hypens: in identifiers
-        # we have to look at the text for that
-        # but the hack doesn't work because GDB won't complete at - either...
-        # if text and text.find('-'):
-        #    word = text # split, last part
         if text == "" and word == "":
             if condition == 1:
                 possibilities = []
@@ -2876,8 +2895,9 @@ def break_completion(text, word, condition):
                 return possibilities
 
         if condition == 0:
-            if len(text.split()) == 1:
-                return ["if"]
+            # gdb only completes this with "i" typed, disabled for now
+            # if len(text.split()) == 1:
+            #     return ["if"]
 
             if len(text.split()) in (3, 4) and word == "":
                 return ["=", "!=", "<", "=<", ">", ">=", "<>", "=~"]
@@ -2885,9 +2905,14 @@ def break_completion(text, word, condition):
             if len(text.split()) in (2, 3) and word == "":
                 return ["=", "!=", "<", "=<", ">", ">=", "<>", "=~"]
 
-        if word is None or word == "" or word.startswith('"'):
-            # CHECKME: gdb returns everything, possibly do the same
+        # note: modifier / slash is no word, so in this case word is None
+        if word and (word[0] in ('*', '?', '"', '\'') or word[0].isdigit()):
+            # if it doesn't look like a word then just return nothing
             return gdb.COMPLETE_NONE
+
+        if word is None or word == "" or word[0] in ('(', ')', ',', ':'):
+            # gdb returns everything, do the same here
+            word = "*"
 
         possibilities = get_completion_possibilities(word)
         return possibilities
@@ -3394,6 +3419,10 @@ class CPrintWorker():
         GV_GlobalVariables.VarLeft = None
         GV_GlobalVariables.VarLeftIndex = None
         GV_GlobalVariables.VarRight = None
+
+        sq_count = left_side[0].count("'")
+        if sq_count > 0 and sq_count % 2 != 0:
+            raise gdb.GdbError("Unmatched single quote.")
 
         if left_side[0][0] == "'":
             # This can happen as a result of TAB completion:
@@ -4206,7 +4235,6 @@ class CPrint(gdb.Command):
 
             GV_ModuleState.EstablishModuleState(False)
             self.worker.ProcessArguments(arguments)
-            self.completed_names = []
         except gdb.GdbError as user_error:
             # pass user errors unchanged
             raise user_error
@@ -4216,6 +4244,7 @@ class CPrint(gdb.Command):
     def complete(self, text, word):
         # We expect COBOL variables which GDB doesn't have, so the fallback
         # gdb.COMPLETE_SYMBOL can't be used.
+        self.completed_names = []
 
         try:
             # HACK: because of missing support for hypens: in identifiers
@@ -4225,10 +4254,13 @@ class CPrint(gdb.Command):
             #    word = text # split, last part
 
             # note: modifier / slash is no word, so in this case word is None
-            if word is None or word == "" or word[0] in ('*', '?', '(', ')', ',', ':', '"', '\'') or word[0].isdigit():
+            if word and (word[0] in ('*', '?', '"', '\'') or word[0].isdigit()):
                 # if it doesn't look like a word then just return nothing
-                # CHECKME: gdb returns everything, possibly do the same
                 return gdb.COMPLETE_NONE
+
+            if word is None or word == "" or word[0] in ('(', ')', ',', ':'):
+                # gdb returns everything, do the same here
+                word = "*"
 
             possibilities = get_completion_possibilities(word)
             if len(possibilities) == 1:
@@ -4273,9 +4305,14 @@ A watchpoint stops execution of your program whenever the value of an expression
     @staticmethod
     def complete(text, word):
         try:
-            if word is None or word == "" or word.startswith('"'):
-                # CHECKME: gdb returns everything, possibly do the same
+            # note: modifier / slash is no word, so in this case word is None
+            if word and (word[0] in ('*', '?', '"', '\'') or word[0].isdigit()):
+                # if it doesn't look like a word then just return nothing
                 return gdb.COMPLETE_NONE
+
+            if word is None or word == "" or word[0] in ('(', ')', ',', ':'):
+                # gdb returns everything, do the same here
+                word = "*"
 
             possibilities = get_completion_possibilities(word)
             return possibilities
