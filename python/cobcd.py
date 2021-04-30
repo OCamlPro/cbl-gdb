@@ -225,11 +225,10 @@ def cob_put_field_str(field, buff):
     gdb.execute(command, False, True)
 
 def cob_encode_program_id(name, buff, size, fold):
-    # TODO: complete encoding should be done here, not in libcob
-    command = "call (const char *){0}((cob_field *){1}, (char *){2}, {3})".format(GV_ModuleState.cob_encode_program_id,
+    command = "call (int){0}(\"{1}\", {2}, {3}, {4})".format(GV_ModuleState.cob_encode_program_id,
                                                                                   name,
                                                                                   hex(buff),
-                                                                                  hex(size),
+                                                                                  size,
                                                                                   fold)
     gdb.execute(command, False, True)
 
