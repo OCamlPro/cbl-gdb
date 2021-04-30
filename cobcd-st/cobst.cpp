@@ -157,6 +157,10 @@ TackVariablesOntoCfile(PARAMETERS &params,
     ssResult << "{return cob_cmp(a, b);}" << endl;
     ssResult << endl;
 
+    ssResult << "cob_field *DEBUG_cob_intr_upper_case_" << fname2 << "(const int a, const int b, cob_field *c)" << endl;
+    ssResult << "{return cob_intr_upper_case(a,b,c);}" << endl;
+    ssResult << endl;
+
     if(insert_mode EQ IM_MODE_TEXT) {
         stringstream ssPython;
         ssPython.str("");

@@ -3875,7 +3875,7 @@ class CBreakWorker():
                 else:
                     break_point = self.set_breakpoint(line_nr, t_flag, i_flag)
 
-            self.set_condition(break_point, "$_regex(((char *){0}({1}), \"{2}\")".format(GV_ModuleState.cob_get_field_str_buffered
+            self.set_condition(break_point, "$_regex(((char *){0}({1}), \"{2}\")".format(GV_ModuleState.cob_get_field_str_buffered,
                                                                                          hex(location_of_field),
                                                                                          diff_str))
         else:
