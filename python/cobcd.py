@@ -3363,11 +3363,11 @@ class CPrintWorker():
         # no arguments, or ProcessDisplayMode could have, properly, eaten all
         # of them.  In any case, no arguments means do nothing:
 
-        if not GV_ModuleState.Stack:
-            raise gdb.GdbError("No stack.")
-
         if not args or not args[0]:
             return
+
+        if not GV_ModuleState.Stack:
+            raise gdb.GdbError("No stack.")
 
         # Initialize for subsequent processing:
         leftside_possibilities = []

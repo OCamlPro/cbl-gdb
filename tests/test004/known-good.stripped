@@ -30,8 +30,6 @@ svalue : -092416
 I am a BASED variable                                           
 [Inferior 1 (process 99999) exited normally]
 KNOWN GOOD FINISH
-KNOWN GOOD LINES: 1
-No stack.
 KNOWN GOOD START
 TAB-ADR-IND  : +000000003
 Z-PID  : 87654321

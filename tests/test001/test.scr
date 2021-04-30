@@ -28,20 +28,13 @@ cprint /v3
 echo KNOWN GOOD LINES: 2\n
 cprint/r 6
 
-### Make sure 'cprint *' is clean at the beginning
-echo KNOWN GOOD LINES: 1\n
-cprint *
-
-### Just run the whole program clean, to establish a baseline
-### (We don't want to think we have a debugging problem when
-###  in fact it was the test program that changed.)
 echo KNOWN GOOD START\n
 r
 echo KNOWN GOOD FINISH\n
 
 ### Make sure 'cprint *' is clean at the end
-echo KNOWN GOOD LINES: 1\n
-cprint *
+#echo KNOWN GOOD LINES: 1\n
+#cprint *
 
 ### Run the whole program after a known good starting breakpoint
 cstart
