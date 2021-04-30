@@ -4483,7 +4483,7 @@ they override any that might have been passed to GDB with --args."""
                 if GV_GlobalVariables.gdb_8dot3_plus:
                     # after its TODO is fixed: CBLDBG_CBREAK_WORKER.process_break_arguments(cobol_program, True, True)
                     module = cobol_program.replace("-", "__")
-                    gdb.Breakpoint("-function {0}_ -label ENTRY_{0}".format(module), type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
+                    gdb.Breakpoint("-function {0}_ -label ENTRY_{1}".format(module,module.upper()), type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
                 else:
                     # Turn hyphens into doubled underscores:
                     entry_point = cobol_program.replace("-", "__") + "_"
