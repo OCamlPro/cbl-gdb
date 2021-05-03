@@ -1,7 +1,4 @@
 KNOWN GOOD LINES: 2
-No stack.
-KNOWN GOOD LINES: 1
-No stack.
 KNOWN GOOD START
 On this system, with this build of GnuCOBOL, the
 PICTURE-less USAGE's have these lengths (in bytes):
@@ -99,8 +96,6 @@ $    1.23+
 +988776654.1223345   def-DISPLAY                 
 [Inferior 1 (process 99999) exited normally]
 KNOWN GOOD FINISH
-KNOWN GOOD LINES: 1
-No stack.
 KNOWN GOOD START
  1 : header : ' ' <repeats 40 times>
  2 : withpic : "$    1.23+"
