@@ -3716,7 +3716,9 @@ class CBreakWorker():
             else:
                 break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, internal=i_flag)
 
-        if break_point.pending:
+        # TODO Modules loaded via readelf miss different information, commands not working: "adv", "cp"
+        #if READELF_AVAILABLE and break_point.pending:
+        if False:
             break_point.delete()
             print("... and therefore removed")
             return None
@@ -3776,7 +3778,9 @@ class CBreakWorker():
         if self.module_available(module):
             return_value = module
         else:
-            if READELF_AVAILABLE:
+            # if READELF_AVAILABLE:
+            # TODO Modules loaded via readelf miss different information, commands not working: "adv", "cp"
+            if False:
                 modules_loaded = CBLDBG_CLOAD_WORKER.load_modules(module.split())
                 if modules_loaded is not None and self.module_available(module):
                     return_value = module
@@ -4533,24 +4537,31 @@ class CLoadWorker():
                 print("{0}: module not found in {1}" .format(module_name, paths))
                 continue
 
-            offset = CBLDBG_CLOAD_WORKER.get_text_offset(solibpath)
+            text_addr, symbol_addrs = CBLDBG_CLOAD_WORKER.get_symbol_addrs(solibpath)
             try:
-                gdb_cmd = "add-symbol-file %s %s" % (solibpath, offset)
+                gdb_cmd = "add-symbol-file " + solibpath
+                if not text_addr:
+                    raise gdb.error("no text section found")
+                for s_section, s_address in symbol_addrs.items():
+                    gdb_cmd = gdb_cmd + " -s {0} {1}".format(s_section, s_address)
                 gdb.execute(gdb_cmd, False, True)
                 print("Reading symbols {0}...".format(solibpath))
                 return_list.append(solibpath)
             except gdb.error:
-                print("Error in loading: {0}".format(solibpath))
+                print("Error in loading:", solibpath)
+                # print("Done:", gdb_cmd)
 
         return return_list
 
     @staticmethod
-    def get_text_offset(solibpath):
+    def get_symbol_addrs(solibpath):
+        symbol_addrs = dict()
         elfres = subprocess.check_output([READELF_BINARY, "-WS", solibpath])
         for line in elfres.splitlines():
-            if "] .text " in str(line):
-                return "0x" + str(line.split()[4])
-        return ""  # TODO: Raise error when offset is not found?
+            line_split = line.split()
+            if len(line_split) >=5 and line_split[1][0] == '.':
+                symbol_addrs.update({line_split[1]: "0x" + line_split[4]})
+        return symbol_addrs['.text'], symbol_addrs
 
     def get_module_completion(self, word):
         # returns the modules found on start, but only the ones starting with the given filter
