@@ -97,7 +97,7 @@ TackVariablesOntoCfile(PARAMETERS &params,
             fname2 += ach;
         }
     }
-    ssResult << "char VARIABLE_STRING_" << fname2 << "[]=" << endl;
+    ssResult << "static char VARIABLE_STRING_" << fname2 << "[]=" << endl;
 
     size_t walker = 0;
     size_t length = (int)sVariables.length();
@@ -121,43 +121,43 @@ TackVariablesOntoCfile(PARAMETERS &params,
     // to LIBCOB routines into the generated .C here.  GDB will be able to find these
     // routines because their names are known, and global:
 
-    ssResult << "void *DEBUG_cob_malloc_" << fname2 << "(const size_t size)" << endl;
+    ssResult << "static void *DEBUG_cob_malloc_" << fname2 << "(const size_t size)" << endl;
     ssResult << "{return cob_malloc(size);}" << endl;
     ssResult << endl;
 
-    ssResult << "void DEBUG_cob_free_" << fname2 << "(void *location)" << endl;
+    ssResult << "static void DEBUG_cob_free_" << fname2 << "(void *location)" << endl;
     ssResult << "{cob_free(location);}" << endl;
     ssResult << endl;
 
-    ssResult << "void DEBUG_cob_move_" << fname2 << "(cob_field *f1, cob_field *f2)" << endl;
+    ssResult << "static void DEBUG_cob_move_" << fname2 << "(cob_field *f1, cob_field *f2)" << endl;
     ssResult << "{cob_move(f1,f2);}" << endl;
     ssResult << endl;
 
-    ssResult << "const char	*DEBUG_cob_get_field_str_" << fname2 << "(const cob_field *f, char *buff, size_t size)" << endl;
+    ssResult << "static const char	*DEBUG_cob_get_field_str_" << fname2 << "(const cob_field *f, char *buff, size_t size)" << endl;
     ssResult << "{return cob_get_field_str(f,buff,size);}" << endl;
     ssResult << endl;
 
-    ssResult << "int DEBUG_cob_put_field_str_" << fname2 << "(const cob_field *f, const char *p)" << endl;
+    ssResult << "static int DEBUG_cob_put_field_str_" << fname2 << "(const cob_field *f, const char *p)" << endl;
     ssResult << "{return cob_put_field_str(f,p);}" << endl;
     ssResult << endl;
 
-    ssResult << "void *DEBUG_cob_cache_malloc_" << fname2 << "(const size_t size)" << endl;
+    ssResult << "static void *DEBUG_cob_cache_malloc_" << fname2 << "(const size_t size)" << endl;
     ssResult << "{return cob_cache_malloc(size);}" << endl;
     ssResult << endl;
 
-    ssResult << "int DEBUG_cob_encode_program_id_" << fname2 << "(const unsigned char * const a, unsigned char * const b, const int c, const int d)" << endl;
+    ssResult << "static int DEBUG_cob_encode_program_id_" << fname2 << "(const unsigned char * const a, unsigned char * const b, const int c, const int d)" << endl;
     ssResult << "{return cob_encode_program_id(a, b, c, d);}" << endl;
     ssResult << endl;
 
-    ssResult << "const char	*DEBUG_cob_get_field_str_buffered_" << fname2 << "(const cob_field *p)" << endl;
+    ssResult << "static const char	*DEBUG_cob_get_field_str_buffered_" << fname2 << "(const cob_field *p)" << endl;
     ssResult << "{return cob_get_field_str_buffered(p);}" << endl;
     ssResult << endl;
 
-    ssResult << "int DEBUG_cob_cmp_" << fname2 << "(cob_field *a, cob_field *b)" << endl;
+    ssResult << "static int DEBUG_cob_cmp_" << fname2 << "(cob_field *a, cob_field *b)" << endl;
     ssResult << "{return cob_cmp(a, b);}" << endl;
     ssResult << endl;
 
-    ssResult << "cob_field *DEBUG_cob_intr_upper_case_" << fname2 << "(const int a, const int b, cob_field *c)" << endl;
+    ssResult << "static cob_field *DEBUG_cob_intr_upper_case_" << fname2 << "(const int a, const int b, cob_field *c)" << endl;
     ssResult << "{return cob_intr_upper_case(a,b,c);}" << endl;
     ssResult << endl;
 
