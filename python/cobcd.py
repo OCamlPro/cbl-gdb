@@ -4675,6 +4675,11 @@ they override any that might have been passed to GDB with --args."""
 #
 #                   Please stop putting back the "-function ..." version until it has been exhaustively
 #                   demonstrated to work properly.
+#
+#                   Specifically, in at least one program with a DECLARATIVES section, the ENTRY_prog point
+#                   ends up high in in the generated C in the DECLARATIVES section, when it should be
+#                   further down at the actual point where execution starts
+#
 #                                                   -- Bob Dubner, 2021-05-04
 #
 #                   module = cobol_program.replace("-", "__")
