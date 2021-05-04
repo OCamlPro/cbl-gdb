@@ -3,3 +3,4 @@ optfde01.so
 optfde01.exe
 dd_output
 optfde01-gdb.py
+optfde01.exe-gdb.py

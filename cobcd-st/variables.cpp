@@ -239,7 +239,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
             continue;
         }
 
-        if( strstr(ach, ": PROGRAM-ID ") ) {
+        if( strstr(ach, " PROGRAM-ID ") ) {
             //  When a PROCEDURE DIVISION starts off with a DECLARATIVES section,
             //  it's possible to have executable code before the ENTRY point
             //  of the PROGRAM-ID.  The CBL-GDB Python, however, requires
@@ -254,7 +254,7 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
             VSTRING tokens = Split(input," \t");
             if( tokens.size() EQ 4
                     AND tokens[0] EQ "/*"
-                    AND tokens[1] EQ "PROGRAM-ID:"
+                    AND tokens[1] EQ "PROGRAM-ID"
                     AND tokens[3] EQ "*/\n" ) {
                 VARIABLE variable;
                 variable.record_type = "PROGRAM-ID";
