@@ -7,7 +7,7 @@
       * 02/2021   kday         Original program.
 
        Identification Division.
-       Program-Id. QtrlyPyrlReg.
+       Program-Id. test.
 
        Environment Division.
 
