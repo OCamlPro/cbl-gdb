@@ -275,11 +275,15 @@ class GlobalVariables():
                 self.gdb_version_minor = 0
                 self.gdb_version_patch = 0
 
-        self.gdb_8dot3_plus = True
-        if self.gdb_version_major < 8 or (self.gdb_version_major == 8 and self.gdb_version_minor < 3):
+        if self.gdb_version_major > 8 or (self.gdb_version_major == 8 and self.gdb_version_minor >= 3):
+            self.gdb_8dot3_plus = True
+        else:
             self.gdb_8dot3_plus = False
-
-        if not self.gdb_8dot3_plus:
+            if self.gdb_version_major < 7 or (self.gdb_version_major == 7 and self.gdb_version_minor < 3):
+                # poosibly increment to 7.6?
+                raise gdb.GdbError("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.3+ is required)\n".format(
+                                                                    self.gdb_version_major,
+                                                                    self.gdb_version_minor))
             print("\n !! warning: add-symbol-file-cobol is not available with GDB-{0}.{1} (GDB 8.3+ is required)\n".format(
                                                                     self.gdb_version_major,
                                                                     self.gdb_version_minor)
