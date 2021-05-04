@@ -1,5 +1,5 @@
-test
-test.exe
+QtrlyPyrlReg
+QtrlyPyrlReg.exe
 *.dll
 *.so
 known-good.txt
@@ -11,3 +11,4 @@ under-test.stripped
 *.s
 *.h
 *.o
+QtrlyPyrlRegData.rpt

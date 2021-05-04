@@ -4670,13 +4670,9 @@ they override any that might have been passed to GDB with --args."""
                 if GV_GlobalVariables.gdb_8dot3_plus:
                     # after its TODO is fixed: CBLDBG_CBREAK_WORKER.process_break_arguments(cobol_program, True, True)
 #
-#                   I keep returning to "tbreak PROG__NAME_" for a simple and adequate reason:
-#                   It works.
+#                   I have returned the logic to for PROG-NAME to "tbreak PROG__NAME_" 
 #
-#                   Please stop putting back the "-function ..." version until it has been exhaustively
-#                   demonstrated to work properly.
-#
-#                   Specifically, in at least one program with a DECLARATIVES section, the ENTRY_prog point
+#                   In at least one program with a DECLARATIVES section, the ENTRY_prog point
 #                   ends up high in in the generated C in the DECLARATIVES section, when it should be
 #                   further down at the actual point where execution starts
 #
