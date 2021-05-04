@@ -4229,6 +4229,7 @@ class CPrint(gdb.Command):
     cprint ?            display in-context variables within +/- N lines of current line
     cprint ? R          display in-context variables within +/- R lines of current line
     cprint VARIABLE="STRING"    set variable to string
+    cprint VARIABLE='STRING'    set variable to string
     cprint VARIABLE=NUMERIC     set variable to numeric
     cprint VARIABLE=VARIABLE2   set variable to variable2
 
