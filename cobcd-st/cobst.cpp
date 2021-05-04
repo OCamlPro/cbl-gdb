@@ -69,7 +69,7 @@ TackVariablesOntoCfile(PARAMETERS &params,
 
     variables.FormatVariablesInfo(ssVariables);
 
-    // At this point, ss contains a potentially huge literal string.
+    // At this point, ssVariables contains a potentially huge literal string.
     // The Python code, in order to read it fairly efficiently, needs to know
     // how long it is.  We are going to prepend a nine digit number to the
     // beginning of the string
@@ -359,6 +359,8 @@ main(int argc, char *argv[])
 #if defined(DUMPING)
     variables.Dump();
 #endif
+
+    variables.BubbleUpProgramEntries();
 
     TackVariablesOntoCfile(params,
                            variables,

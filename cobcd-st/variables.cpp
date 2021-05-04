@@ -239,6 +239,30 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
             continue;
         }
 
+        if( strstr(ach, ": PROGRAM-ID ") ) {
+            //  When a PROCEDURE DIVISION starts off with a DECLARATIVES section,
+            //  it's possible to have executable code before the ENTRY point
+            //  of the PROGRAM-ID.  The CBL-GDB Python, however, requires
+            //  the "P" record_type to be the first entry for a program block.
+
+            //  We're handling this by putting a marker in when we see a PROGRAM-ID
+            //  line.  Later on, before we output the VARIABLE_STRING, we'll
+            //  bubble each "P" entry up to its parent PROGRAM-ID entry.
+
+            string input = ach;
+
+            VSTRING tokens = Split(input," \t");
+            if( tokens.size() EQ 4
+                    AND tokens[0] EQ "/*"
+                    AND tokens[1] EQ "PROGRAM-ID:"
+                    AND tokens[3] EQ "*/\n" ) {
+                VARIABLE variable;
+                variable.record_type = "PROGRAM-ID";
+                Insert(variable);
+            }
+            continue;
+        }
+
 check_for_another_perform:
         switch(perform_return) {
         case PR_LOOKING: {
@@ -690,19 +714,48 @@ VARIABLES::Dump() const
 }
 
 void
+VARIABLES::BubbleUpProgramEntries()
+{
+    // When a COBOL program has a DECLARATIVES section in the PROCEDURE division, it's possible
+    // to have, for example PERFORM entries in the variables vector before the "P" entry.
+    // The cobcd.py Python extension to GDB requires, however, that the "P" entry be
+    // the first for each program-id block.
+    //
+    // This routine looks for "P" entries and bubbles them up to the "PROGRAM-ID" entry
+    // that was inserted in the list when the /* PROGRAM-ID */ line was encountered
+
+    for( size_t i=variables.size()-1; i>0; i-- ) {
+        if( variables[i].record_type EQ "P" ) {
+            // This is a "P entry.
+            if( variables[i-1].record_type != "PROGRAM-ID" ) {
+                // It needs to be bubbled up:
+                swap(variables[i],variables[i-1]);
+            }
+        }
+    }
+}
+
+void
 VARIABLES::FormatVariablesInfo(stringstream &ss) const
 {
     CPROFILER;
     for( V_VARIABLES::const_iterator variable = variables.begin();
             variable!=variables.end();
             variable++) {
-        if( variable->name.empty() ) {
-            variable->name == "FILLER";
+        if( variable->record_type == "PROGRAM-ID" ) {
+            // This is a marker entry, which was needed by BubbleUpProgramEntries().
+            // It must not be included in the output
+            continue;
+        }
+
+        string name = variable->name;
+        if( name.empty() ) {
+            name = "FILLER";
         }
 
         ss << variable->record_type             << "|" ;
         ss << ZeroIsNull(variable->level)       << "|" ;
-        ss << variable->name                    << "|" ;
+        ss << name                              << "|" ;
         ss << variable->f_name                  << "|" ;
         ss << (variable->b_name EQ "cob_local_ptr" ? "" : variable->b_name) << "|" ;
         ss << variable->a_name                  << "|" ;

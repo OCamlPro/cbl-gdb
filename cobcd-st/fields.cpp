@@ -93,7 +93,7 @@ COB_FIELDS::ScanDotHFile(ifstream &ifs, const string &source)
             size_t nf2 = input.find(achCast);
             if( nf2 != string::npos ) {
                 input = input.replace(nf2,strlen(achCast),"");
-             }
+            }
 
             // Pick up the c_symbol
             string f_name = "f_" ;

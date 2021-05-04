@@ -62,6 +62,7 @@ public:
     void Dump() const;
     void
     Insert(VARIABLE &v);
+    void BubbleUpProgramEntries();
     void FormatVariablesInfo(std::stringstream &ss) const;
 };
 
