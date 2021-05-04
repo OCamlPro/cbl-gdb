@@ -16,7 +16,6 @@
 #    * Neither the name of the COBOLworx Corporation nor the names of its
 #      contributors may be used to endorse or promote products derived
 #      from this software without specific prior written permission.
-#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -3004,8 +3003,8 @@ class CPrintWorker():
             # It's a valid display_mode.  Make it the one-time mode:
             GV_ModuleState.current_display_mode = v_code
             if len(args) == 0:
-                # There are no additional arguments, so make it the session mode
-                GV_ModuleState.sticky_display_mode = GV_ModuleState.current_display_mode
+                # There are no additional arguments, so also make it the session mode
+                GV_ModuleState.sticky_display_mode = v_code
         else:
             print("The /v code is invalid - it must be /v0 through /v5 or /vd")
             args = []
@@ -3068,6 +3067,9 @@ class CPrintWorker():
                 args.pop(0)
             elif args[0] == "/b":
                 GV_ModuleState.current_display_submode = 'b'
+                args.pop(0)
+            elif args[0] == "/q":
+                GV_ModuleState.current_display_submode = 'q'
                 args.pop(0)
             elif args[0] == "/m":
                 self.machine_interface_mode = True
@@ -3333,17 +3335,20 @@ class CPrintWorker():
             for payload_index in leftside_possibilities:
                 payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
                 if not payload.not_in_context:
-                    GV_GlobalVariables.ShortTermMemory.append(payload_index)
-                    print_str = "{0:2} : ".format(line_counter)
-                    line_counter += 1
-                    print_str += payload.NameToString()
-                    print_str += " : "
+                    if GV_ModuleState.current_display_submode == 'q':
+                        print_str = payload.NameWithSubscripts()
+                    else:
+                        GV_GlobalVariables.ShortTermMemory.append(payload_index)
+                        print_str = "{0:2} : ".format(line_counter)
+                        line_counter += 1
+                        print_str += payload.NameToString()
+                        print_str += " : "
 
-                    body = WithRepeatCount(payload.display_body)
-                    if GV_ModuleState.current_display_submode == 'x' and len(payload.data) <= 16:
-                        body = payload.display_body_hex
+                        body = WithRepeatCount(payload.display_body)
+                        if GV_ModuleState.current_display_submode == 'x' and len(payload.data) <= 16:
+                            body = payload.display_body_hex
 
-                    print_str += body
+                        print_str += body
                     retval = OurPrint(NoNulls(print_str))
                     if retval:
                         # print("Quit")
@@ -3427,6 +3432,10 @@ class CPrintWorker():
         left_side, right_side, condition = get_left_right_args(args)
         if not left_side:
             return
+
+        if right_side and (GV_ModuleState.current_display_submode or GV_ModuleState.sticky_display_mode != GV_ModuleState.current_display_mode):
+            # FIXME: should be just "right_side and any-modifier-given" but that var does not exist
+            raise gdb.GdbError("Invalid arguments, cprint with modifier may not include a right-hand-side.")
 
         # From this point on, the left_side, and right_side (if there
         # is one), are handled as lists of strings
