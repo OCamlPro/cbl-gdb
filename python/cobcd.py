@@ -62,7 +62,7 @@ import gdb
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
-COBCD_VERSION = '[Version 4.26]'
+COBCD_VERSION = '[Version 4.26.1]'
 
 #   This module implements the gdb extension commands like cprint and cwatch
 #   It is executed by GDB.
@@ -4669,8 +4669,21 @@ they override any that might have been passed to GDB with --args."""
                 # set temporary maintenance breakpoint
                 if GV_GlobalVariables.gdb_8dot3_plus:
                     # after its TODO is fixed: CBLDBG_CBREAK_WORKER.process_break_arguments(cobol_program, True, True)
-                    module = cobol_program.replace("-", "__")
-                    gdb.Breakpoint("-function {0}_ -label ENTRY_{1}".format(module,module.upper()), type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
+#
+#                   I keep returning to "tbreak PROG__NAME_" for a simple and adequate reason:
+#                   It works.
+#
+#                   Please stop putting back the "-function ..." version until it has been exhaustively
+#                   demonstrated to work properly.
+#                                                   -- Bob Dubner, 2021-05-04
+#
+#                   module = cobol_program.replace("-", "__")
+#                    gdb.Breakpoint("-function {0}_ -label ENTRY_{1}".format(module,module.upper()), type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
+                    where_to_stop = cobol_program.replace("-", "__")+'_'
+                    gdb.Breakpoint(where_to_stop,
+                                   type=gdb.BP_BREAKPOINT,
+                                   temporary=True,
+                                   internal=True)
                 else:
                     # Turn hyphens into doubled underscores:
                     entry_point = cobol_program.replace("-", "__") + "_"

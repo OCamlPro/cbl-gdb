@@ -4,4 +4,4 @@
 // On the Unix side, there is scripting trickery to propogate this version
 // code into cobcd.py and the names of packages when they are created.
 
-#define VERSION "4.26"
+#define VERSION "4.26.1"
