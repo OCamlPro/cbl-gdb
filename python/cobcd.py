@@ -4669,8 +4669,22 @@ they override any that might have been passed to GDB with --args."""
                 # set temporary maintenance breakpoint
                 if GV_GlobalVariables.gdb_8dot3_plus:
                     # after its TODO is fixed: CBLDBG_CBREAK_WORKER.process_break_arguments(cobol_program, True, True)
-                    module = cobol_program.replace("-", "__")
-                    gdb.Breakpoint("-function {0}_ -label ENTRY_{1}".format(module,module.upper()), type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
+#
+#                   I have returned the logic to for PROG-NAME to "tbreak PROG__NAME_" 
+#
+#                   In at least one program with a DECLARATIVES section, the ENTRY_prog point
+#                   ends up high in in the generated C in the DECLARATIVES section, when it should be
+#                   further down at the actual point where execution starts
+#
+#                                                   -- Bob Dubner, 2021-05-04
+#
+#                   module = cobol_program.replace("-", "__")
+#                    gdb.Breakpoint("-function {0}_ -label ENTRY_{1}".format(module,module.upper()), type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
+                    where_to_stop = cobol_program.replace("-", "__")+'_'
+                    gdb.Breakpoint(where_to_stop,
+                                   type=gdb.BP_BREAKPOINT,
+                                   temporary=True,
+                                   internal=True)
                 else:
                     # Turn hyphens into doubled underscores:
                     entry_point = cobol_program.replace("-", "__") + "_"
