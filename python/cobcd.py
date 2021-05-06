@@ -3703,6 +3703,16 @@ class CBreakWorker():
         self.module_buffer = None
 
     @staticmethod
+    def set_entry_breakpoint(module_name, t_flag, i_flag):
+        # Note: currently the "encoding" of the module_name is done from outside
+        # TODO: move it here as soon as it is done completely in python
+
+        # Note: the following does NOT work reliable as cobc 3.0+ have a bug in generating the correct line reference for the ENTRY_prog label
+        #       when DECLARATIVES are used (it always points to the PROCEDURE DIVISION, not to the first (possibly implied) "real" section)
+        # return CBreakWorker.set_breakpoint("-function {0}_ -label ENTRY_{1}".format(module_name,module_name.upper()), t_flag, i_flag)
+        return CBreakWorker.set_breakpoint(module_name + "_", t_flag, i_flag)
+
+    @staticmethod
     def set_breakpoint(spec, t_flag, i_flag):
         # note: temporary support in python API only with GDB 8.3+
         if GV_GlobalVariables.gdb_8dot3_plus:
@@ -4130,7 +4140,7 @@ class CBreakWorker():
                 if module_name is None:
                     print("Module not found: {0}".format(left_side[0]))
                 else:
-                    break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{1}".format(module_name,module_name.upper()), t_flag, i_flag)
+                    break_point = self.set_entry_breakpoint(module_name, t_flag, i_flag)
             elif len(left_side) == 2 and (left_side[0].upper() == "SECTION" or left_side[0].upper() == "SEC") and isinstance(left_side[1], self.strtype):
                 del left_side[0]
                 self.set_section_breakpoint(left_side, t_flag, i_flag)
@@ -4664,32 +4674,11 @@ they override any that might have been passed to GDB with --args."""
 
             # If there is no cobol program, just run
             if cobol_program:
-                # TODO: complete encoding as soon as this is done in cob_encode_program_id in python
+                # TODO: complete encoding as soon as this is done in cob_encode_program_id in python - done in set_entry_breakpoint
+                module = cobol_program.replace("-", "__")
 
                 # set temporary maintenance breakpoint
-                if GV_GlobalVariables.gdb_8dot3_plus:
-                    # after its TODO is fixed: CBLDBG_CBREAK_WORKER.process_break_arguments(cobol_program, True, True)
-#
-#                   I have returned the logic to for PROG-NAME to "tbreak PROG__NAME_" 
-#
-#                   In at least one program with a DECLARATIVES section, the ENTRY_prog point
-#                   ends up high in in the generated C in the DECLARATIVES section, when it should be
-#                   further down at the actual point where execution starts
-#
-#                                                   -- Bob Dubner, 2021-05-04
-#
-#                   module = cobol_program.replace("-", "__")
-#                    gdb.Breakpoint("-function {0}_ -label ENTRY_{1}".format(module,module.upper()), type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
-                    where_to_stop = cobol_program.replace("-", "__")+'_'
-                    gdb.Breakpoint(where_to_stop,
-                                   type=gdb.BP_BREAKPOINT,
-                                   temporary=True,
-                                   internal=True)
-                else:
-                    # Turn hyphens into doubled underscores:
-                    entry_point = cobol_program.replace("-", "__") + "_"
-                    command = "tbreak {0}".format(entry_point)
-                    gdb.execute(command, True, False)
+                CBreakWorker.set_entry_breakpoint(module, True, True)
                 command = "run " + arguments
             else:
                 # "start" is not expected to actually "run", so we use start in the unknown case
