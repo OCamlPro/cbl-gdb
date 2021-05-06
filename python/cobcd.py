@@ -4121,17 +4121,19 @@ class CBreakWorker():
             return
 
         if not right_side:
+            if len(left_side) >= 1 and isinstance(left_side[0], self.strtype) and (left_side[0].upper() == "SECTION" or left_side[0].upper() == "SEC"):
+                left_side[0] = "SECTION"
             if len(left_side) == 1 and left_side[0].isdigit():
                 break_point = self.set_breakpoint(left_side[0], t_flag, i_flag)
             elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and left_side[0].find(':') != -1:
                 self.set_section_breakpoint(left_side, t_flag, i_flag)
-            elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and (left_side[0].upper() != "SECTION" or left_side[0].upper() != "SEC"):
+            elif len(left_side) == 1 and left_side[0] != "SECTION":
                 module_name = self.get_module_name(left_side[0])
                 if module_name is None:
                     print("Module not found: {0}".format(left_side[0]))
                 else:
                     break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{1}".format(module_name,module_name.upper()), t_flag, i_flag)
-            elif len(left_side) == 2 and (left_side[0].upper() == "SECTION" or left_side[0].upper() == "SEC") and isinstance(left_side[1], self.strtype):
+            elif len(left_side) == 2 and left_side[0] == "SECTION" and isinstance(left_side[1], self.strtype):
                 del left_side[0]
                 self.set_section_breakpoint(left_side, t_flag, i_flag)
             else:
