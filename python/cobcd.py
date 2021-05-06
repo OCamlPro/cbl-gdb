@@ -2686,7 +2686,7 @@ GV_ModuleState = ModuleState()
 class HNode():
     def __init__(self):
         self.storage_table_index = -1
-        self.Level = 0
+        self.Level = -666   # The Node of the Beast
         self.BaseName = ""  # Just A of A/B/C
         self.display_body = ""
         self.parent = None
@@ -2699,7 +2699,7 @@ def TrimComma(t_str):
 
 def BuildHString(node):
     h_str = ""
-    if node.Level == 0:
+    if node.Level == -666:
         # This is the root.  We live only for our children
         for child in node.children:
             h_str += BuildHString(child)
@@ -2727,7 +2727,7 @@ def BuildHString(node):
                 h_str += r'}"'
             h_str += '},'
         else:
-            # This is a node whose level is 01-49, 66
+            # This is a node whose level is 0, 02-49, 66
             if len(node.children) == 0:
                 h_str += node.BaseName  # + "/" + str(node.storage_table_index)
                 h_str += r'=\"'
@@ -2757,16 +2757,20 @@ def MachineInterfaceHeirarchical(possibilities):
     stack = [root]
     retval = "variables=["
 
+    stack_map = {}
+
     for payload_index in possibilities:
         payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+        if payload.Level == 66:
+            # We simply cannot, at this time, handle LEVEL 66.  The variable string
+            # doesn't have enough information because the COBC compiler didn't pass
+            # along enough information.
+            continue
+
+        parent_index = payload.index_of_parent
+        # payload_index and parent_index are indices into storage_list
         payload.FetchVariableData(False)
         if not payload.not_in_context:
-            # print("MIH", payload.Level, payload.Name, payload.display_body)
-            # First, if the stack has nephews of ours,
-            # let's get them off of the stack:
-            while stack[-1].Level > payload.Level:
-                stack.pop()
-
             # Create the new node
             new_node = HNode()
             new_node.storage_table_index = payload_index
@@ -2784,20 +2788,22 @@ def MachineInterfaceHeirarchical(possibilities):
 
             new_node.display_body = WithRepeatCount(payload.display_body)
 
-            if payload.Level in (77, 78):
-                stack = [root]
-            if stack[-1].Level == payload.Level or payload.Level == 66:
-                # The element on the stack is our brother, so
-                # so we are going to share parents:
-                new_node.parent = stack[-1].parent
-            else:  # stack[-1].Level < payload.Level
-                # The element on the stack is our parent
-                new_node.parent = stack[-1]
-            # And now we become the final stack entry
-            if payload.Level != 66:  # 66 is just a pain in the patootie.
-                stack.append(new_node)
-            # And let's let our parent know they have another child
-            new_node.parent.children.append(new_node)
+            if parent_index in stack_map:
+                # Our parent is in the stack map; make the association:
+                new_node.parent = stack[stack_map[parent_index]]
+
+            # Put our index into the stack map, in case we are somebody's parent:
+            stack_map[payload_index] = len(stack)
+
+            # Put this new node onto the stack of nodes:
+            stack.append(new_node)
+
+            if new_node.parent:
+                # Let our parent know they have another child
+                new_node.parent.children.append(new_node)
+            else:
+                # Nodes with no parent become wards of the state:
+                root.children.append(new_node)
 
     # We now have a tree that can be used to create the variables string
     retval += BuildHString(root)
