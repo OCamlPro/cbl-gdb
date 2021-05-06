@@ -4651,12 +4651,18 @@ they override any that might have been passed to GDB with --args."""
             main_program = line1.split('/')[-1].split('"')[0]
             # Note: cobcrun may be renamed or contain version numbers - is there a better approach?
             if main_program == COBCRUN_NAME:
-                command = "show args"
-                args = gdb.execute(command, False, True).split('"')[1].split()
-                cobol_program = args[0]
-                args = ' '.join(args)
                 # Arguments passed by CSTART override any that came from the command line:
-                arguments = arguments or args
+                if not arguments:
+                    command = "show args"
+                    args = gdb.execute(command, False, True).split('"')[1].split()
+                    if len (args) < 1 or not args[0]:
+                        # especially after attaching to a program args is empty
+                        raise gdb.GdbError("No args set.  Specify program to call or use the \"set args\" command.")
+                    cobol_program = args[0]
+                    arguments = ' '.join(args)
+                else:
+                    args = arguments.split()
+                    cobol_program = args[0]
             else:
                 cobol_program = main_program
 
