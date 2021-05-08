@@ -11,7 +11,6 @@
             "preLaunchTask": "make",
             "program": "${workspaceFolder}/${fileBasenameNoExtension}",
             "cwd": "${workspaceFolder}",
-            "terminal": ""
             "arguments": ""
         },
         {
