@@ -145,6 +145,14 @@ COB_FLAG_REAL_SIGN      = (1 << 10)  # /* 0x0400 */
 COB_FLAG_BINARY_TRUNC   = (1 << 11)  # /* 0x0800 */
 COB_FLAG_CONSTANT       = (1 << 12)  # /* 0x1000 */
 
+COB_FOLD_NONE = 0
+COB_FOLD_UPPER = 1
+COB_FOLD_LOWER = 2
+
+R_VALID_CHARS = re.compile('^[a-zA-Z0-9_]')
+
+HEXVAL = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
+
 # Buffer size for printing
 PRINT_BUFFER_SIZE = 65536
 
@@ -224,13 +232,7 @@ def cob_put_field_str(field, buff):
                                                                     hex(buff))
     gdb.execute(command, False, True)
 
-def cob_encode_program_id(name, buff, size, fold):
-    command = "call (int){0}(\"{1}\", {2}, {3}, {4})".format(GV_ModuleState.cob_encode_program_id,
-                                                             name,
-                                                             hex(buff),
-                                                             size,
-                                                             fold)
-    gdb.execute(command, False, True)
+
 
 def cob_cmp(a, b):
     command = "call (int){0}(\"{1}\", {2}, {3}, {4})".format(GV_ModuleState.cob_cmp,
@@ -2454,7 +2456,6 @@ class ModuleState():
         self.cob_move              = "cob_move"
         self.cob_get_field_str     = "cob_get_field_str"
         self.cob_put_field_str     = "cob_put_field_str"
-        self.cob_encode_program_id = "cob_encode_program_id"
 
     def ProcessStack(self):
         """ Figures out which routine we are currently trapped in"""
@@ -2615,7 +2616,6 @@ class ModuleState():
                             self.cob_move              = "DEBUG_cob_move_"              + name_root2
                             self.cob_get_field_str     = "DEBUG_cob_get_field_str_"     + name_root2
                             self.cob_put_field_str     = "DEBUG_cob_put_field_str_"     + name_root2
-                            self.cob_encode_program_id = "DEBUG_cob_encode_program_id_" + name_root2
 
                         if GV_ModuleInformation.ReadVariableString(string_name):
                             break
@@ -2966,6 +2966,36 @@ def break_completion(text, word, condition):
         return possibilities
     except:
         traceback.print_exc()
+
+
+def encode_program_id(name, fold_case):
+    return_name = name
+    list_count = 0
+
+    if return_name.startswith('9') or return_name.startswith('0'):
+        return_name = '_' + return_name[1:]
+
+    name_list = list(return_name)
+    return_name = ""
+    while list_count < len(name_list):
+        if not re.search(R_VALID_CHARS, name_list[list_count]):
+            return_name = return_name + '_'
+            if name_list[list_count] == '-':
+                return_name = return_name + '_'
+            else:
+                return_name = return_name + HEXVAL[int(ord(name_list[list_count]) / 16)]
+                return_name = return_name + HEXVAL[int(ord(name_list[list_count]) % 16)]
+        else:
+            return_name = return_name + name_list[list_count]
+
+        list_count += 1
+
+    if fold_case == COB_FOLD_LOWER:
+        return_name = return_name.lower()
+    elif fold_case == COB_FOLD_UPPER:
+        return_name = return_name.upper()
+
+    return return_name
 
 def FromHexAlphaString(conv_str):
     """Converts a COBOL hexadecimal alphanumeric string to an ordinary string"""
@@ -3722,9 +3752,6 @@ class CBreakWorker():
         except NameError:
             self.strtype = str
 
-        self.section_buffer = None
-        self.module_buffer = None
-
     @staticmethod
     def set_breakpoint(spec, t_flag, i_flag):
         # note: temporary support in python API only with GDB 8.3+
@@ -3740,14 +3767,13 @@ class CBreakWorker():
                 break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, internal=i_flag)
 
         # TODO Modules loaded via readelf miss different information, commands not working: "adv", "cp"
-        #if READELF_AVAILABLE and break_point.pending:
+        # if READELF_AVAILABLE and break_point.pending:
         if False:
             break_point.delete()
             print("... and therefore removed")
             return None
 
         return break_point
-
 
     @staticmethod
     def get_data_from_buffer(buffer):
@@ -3782,22 +3808,7 @@ class CBreakWorker():
         if module == "":
             return return_value
 
-        # TODO: encode in cobcd.py, without manual malloc (fixes breakpoint before running))
-        try:
-            if self.module_buffer is None:
-                self.module_buffer = cob_cache_malloc(100)
-        except gdb.error:
-            if self.module_available(module):
-                return module
-            else:
-                return return_value
-
-        try:
-            cob_encode_program_id(module, self.module_buffer, 100, 0)
-            module = self.get_data_from_buffer(self.module_buffer)
-        except gdb.error as error:
-            raise gdb.GdbError("The program is not being run: " + str(error))
-
+        module = encode_program_id(module, 0)
         if self.module_available(module):
             return_value = module
         else:
@@ -3815,21 +3826,7 @@ class CBreakWorker():
     def get_section_name(self, section):
         return_value = None
 
-        # TODO: encode in cobcd.py, without manual malloc (fixes breakpoint before running))
-
-        try:
-            if self.section_buffer is None:
-                self.section_buffer = cob_cache_malloc(100)
-        except gdb.error as error:
-            self.section_buffer = None
-            raise gdb.GdbError("The program is not being run: " + str(error))
-
-        try:
-            cob_encode_program_id(section, self.section_buffer, 100, 1)
-        except gdb.error as error:
-            raise gdb.GdbError("execute failed: " + str(error))
-
-        return_value = self.get_data_from_buffer(self.section_buffer)
+        return_value = encode_program_id(section, 1)
 
         return return_value
 
@@ -4687,8 +4684,6 @@ they override any that might have been passed to GDB with --args."""
 
             # If there is no cobol program, just run
             if cobol_program:
-                # TODO: complete encoding as soon as this is done in cob_encode_program_id in python
-
                 # set temporary maintenance breakpoint
                 if GV_GlobalVariables.gdb_8dot3_plus:
                     # after its TODO is fixed: CBLDBG_CBREAK_WORKER.process_break_arguments(cobol_program, True, True)
