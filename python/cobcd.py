@@ -2969,14 +2969,13 @@ def break_completion(text, word, condition):
 
 
 def encode_program_id(name, fold_case):
-    return_name = name
+    return_name = ""
     list_count = 0
 
-    if return_name.startswith('9') or return_name.startswith('0'):
-        return_name = '_' + return_name[1:]
+    name_list = list(name)
+    if name_list[0].isdigit():
+        return_name = '_'
 
-    name_list = list(return_name)
-    return_name = ""
     while list_count < len(name_list):
         if not re.search(R_VALID_CHARS, name_list[list_count]):
             return_name = return_name + '_'
@@ -4613,7 +4612,7 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
             subprocess.check_output([READELF_BINARY, '--version'])
         # note: specific errors were only added with Python 3.3, so we catch everything...
         # except subprocess.CalledProcessError:
-        except:
+        except: 
             READELF_AVAILABLE = False
             raise gdb.GdbError("{0} not found on path, not registering add-symbol-file-cobol, consider setting READELF".format(READELF_BINARY))
 
