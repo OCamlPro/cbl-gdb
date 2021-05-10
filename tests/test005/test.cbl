@@ -4,7 +4,9 @@
       * Modification History
       * Date      Programmer   Description
       * -------   ----------   ----------------------------------------
-      * 02/2021   kday         Original program.
+      * 02/2021   kday         This is a modified version of a program
+      *                        originally written By Jay Moseley in
+      *                        April, 2008.
 
        Identification Division.
        Program-Id. test.
