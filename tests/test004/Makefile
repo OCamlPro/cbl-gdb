@@ -11,10 +11,10 @@ GDB?=gdb
 knowngood:=known-good
 
 # tack on "-rh7" on a RedHat7 system:
-knowngood := $(knowngood)$(shell uname -r |grep el7| sed 's/\(^.*\)el7\(.*\)/-rh7/g')
+#knowngood := $(knowngood)$(shell uname -r |grep el7| sed 's/\(^.*\)el7\(.*\)/-rh7/g')
 
 # We also need separate known-good files for MINGW32 and MINGW64
-knowngood := $(knowngood)$(shell uname -s | grep MINGW | sed 's/^\(MINGW..\).*/-\1/g')
+#knowngood := $(knowngood)$(shell uname -s | grep MINGW | sed 's/^\(MINGW..\).*/-\1/g')
 
 # $(info known-good files: $(knowngood))
 

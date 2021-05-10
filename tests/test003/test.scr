@@ -13,12 +13,35 @@ define stutter_step
         end
     end
 
+define printem
+    echo KNOWN GOOD START\n
+    echo cprint/v0 *\n
+    cprint/v0 *
+    echo cprint/v0 ?\n
+    cprint/v0 ?
+    echo cprint/v3 *\n
+    cprint/v3 *
+    echo cprint/v3 ?\n
+    cprint/v3 ?
+    echo cprint/x 1\n
+    cprint/x 1
+    echo cprint/m *\n
+    cprint/m *
+    echo cprint/m ?\n
+    cprint/m ?
+    echo KNOWN GOOD FINISH\n
+    end
+
+define printloop
+    set variable $_exitcode=1031
+    while $_exitcode==1031
+       printem
+       continue
+       end
+    end
+
 file test
-
-cprint/v0
-
-### Make sure we have a known 'cprint ?' range
-echo KNOWN GOOD LINES: 2\n
+cprint/v3
 cprint/r 6
 
 ### Just run the whole program clean, to establish a baseline
@@ -28,57 +51,29 @@ echo KNOWN GOOD START\n
 r
 echo KNOWN GOOD FINISH\n
 
-b 9
-run
-echo KNOWN GOOD START\n
-stutter_step
-echo KNOWN GOOD FINISH\n
-clear 9
-
-## I want to check the 'frame N' handling, but, weirdly,
-## GDB 7 generates output on a gdb.execute("frame N",False,True) command
-## Hence the START/FINISH pairs sprinkled here.
+## We want to check the 'frame N' handling
 
 b INDENTER.cpy:2
+run
 
-echo KNOWN GOOD START\n
-r
 select-frame 8
-cprint *
-cprint ?
-cprint/x 1
+printem
 select-frame 7
-cprint *
-cprint ?
-cprint/x 1
+printem
 select-frame 6
-cprint *
-cprint ?
-cprint/x 1
+printem
 select-frame 5
-cprint *
-cprint ?
-cprint/x 1
+printem
 select-frame 4
-cprint *
-cprint ?
-cprint/x 1
+printem
 select-frame 3
-cprint *
-cprint ?
-cprint/x 1
+printem
 select-frame 2
-cprint *
-cprint ?
-cprint/x 1
+printem
 select-frame 1
-cprint *
-cprint ?
-cprint/x 1
+printem
 select-frame 0
-cprint *
-cprint ?
-cprint/x 1
+printem
 c
 echo KNOWN GOOD FINISH\n
 
