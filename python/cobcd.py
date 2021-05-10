@@ -59,6 +59,7 @@ from inspect import currentframe, getframeinfo
 from struct import calcsize
 import copy
 import gdb
+import time
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
@@ -4872,6 +4873,59 @@ def stop_handler(event):
     # need to flag all cobol variables as IsDirty
     GV_GlobalVariables.IsDirty = True
 
+class CmdAutoStep (gdb.Command):
+    """Auto-Step through the code until something happens or manually interrupted.
+An argument says how fast auto stepping is done (1-19, default 5)."""
+    def __init__(self):
+        print('Registering command auto-step')
+        super(CmdAutoStep, self).__init__("auto-step", gdb.COMMAND_RUNNING)
+        gdb.events.stop.connect(stop_handler_auto_step)
+    def invoke(self, argument, from_tty):
+
+        number = 5 # TODO: use a parameter for the default
+        if argument:
+            if not argument.isdigit():
+                raise gdb.GdbError("argument must be a digit, not " + argument)
+            number = int(argument)
+            if number == 0 or number > 19:
+                raise gdb.GdbError("argument must be a digit between 1 and 19")
+
+        sleep_time = 3.0 / (number * 1.4)
+        try:
+            frame = gdb.newest_frame()
+        except gdb.error:
+            raise gdb.GdbError("No stack.")
+
+        global last_stop_was_simple
+        last_stop_was_simple = True
+
+        pagination = gdb.execute("show pagination", False, True).find("on")
+        if pagination:
+            gdb.execute("set pagination off", False, False)
+        
+        try:
+            while (last_stop_was_simple):
+                gdb.execute ("step")
+                time.sleep(sleep_time)
+        except KeyboardInterrupt as ki:
+            if pagination:
+                gdb.execute("set pagination on", False, False)
+        except gdb.GdbError as user_error:
+            if pagination:
+                gdb.execute("set pagination on", False, False)
+            # pass user errors unchanged
+            raise user_error
+        except:
+            if pagination:
+                gdb.execute("set pagination on", False, False)
+            traceback.print_exc()
+
+def stop_handler_auto_step(event):
+    # check the type of stop, the following is the common one after step/next,
+    # a more complex one would be a subclass (for example breakpoint or signal)
+    global last_stop_was_simple
+    last_stop_was_simple = type(event) is gdb.StopEvent
+
 gdb.events.exited.connect(exit_handler)
 gdb.events.stop.connect(stop_handler)
 
@@ -4880,5 +4934,6 @@ CWatch()
 CBreak()
 CLoad()
 CNext()
+CmdAutoStep()
 CStart()
 CFrameWorker()
