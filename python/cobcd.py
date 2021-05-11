@@ -4811,6 +4811,7 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
                 ncount -= 1
         except gdb.GdbError as user_error:
             # pass user errors unchanged, for example "No stack."
+            pass
         except:
             traceback.print_exc()
 
