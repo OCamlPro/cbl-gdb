@@ -58,4 +58,38 @@ break 225
 run
 printloop
 
-q
+delete
+break 225
+run
+
+echo KNOWN GOOD START\n
+echo cprint com\n
+cprint com
+echo cprint *com\n
+cprint *com
+echo cprint com*\n
+cprint com*
+echo cprint *com*\n
+cprint *com*
+echo cprint def-b*\n
+cprint def-b*
+echo cprint *x\n
+cprint *x
+
+cprint/v0
+echo cprint com\n
+cprint com
+echo cprint *com\n
+cprint *com
+echo cprint com*\n
+cprint com*
+echo cprint *com*\n
+cprint *com*
+echo cprint def-b*\n
+cprint def-b*
+echo cprint *x\n
+cprint *x
+
+echo KNOWN GOOD FINISH\n
+
+quit

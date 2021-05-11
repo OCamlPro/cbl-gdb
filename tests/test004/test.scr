@@ -53,8 +53,6 @@ echo cp ws-table\n
 cp ws-table
 echo cp ws-a\n
 cp ws-a
-echo cp ws-a()\n
-cp ws-a()
 echo cp ws-a(0)\n
 cp ws-a(0)
 echo cp ws-a(1)\n
@@ -77,8 +75,6 @@ echo cp ws-a(four of nums1)\n
 cp ws-a(four of nums1)
 echo cp ws-a(banana)\n
 cp ws-a(banana)
-echo cp ws-a(1\n
-cp ws-a(1
 echo cp ws-table\n
 cp ws-table
 echo cp ws-table(:)\n
@@ -115,12 +111,8 @@ echo cp ws-table(banana:4)\n
 cp ws-table(banana:4)
 echo cp ws-table(banana:banana)\n
 cp ws-table(banana:banana)
-echo cp ws-table(banana:banana\n
-cp ws-table(banana:banana
 echo cp ws-c\n
 cp ws-c
-echo cp ws-c()\n
-cp ws-c()
 echo cp ws-c(1)\n
 cp ws-c(1)
 echo cp ws-c(,)\n
@@ -263,8 +255,6 @@ cp/x ws-table(three of nums1:four of nums1)
 
 echo cprint tab-adr-prgm\n
 cprint tab-adr-prgm
-echo cprint tab-adr-prgm()\n
-cprint tab-adr-prgm()
 echo cprint tab-adr-prgm(2)\n
 cprint tab-adr-prgm(2)
 

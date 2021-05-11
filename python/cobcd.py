@@ -831,6 +831,17 @@ def TokenizeCanonicalName(desired):
 
     suffix = ""
     nparen = desired.find('(')
+    nparen2 = desired.find(')')
+
+    if nparen > -1 and nparen2 < nparen:
+        raise gdb.GdbError("Unmatched parentheses")
+
+    if nparen2 > -1 and nparen > nparen2:
+        raise gdb.GdbError("Unmatched parentheses")
+
+    if nparen2 > -1 and nparen == -1:
+        raise gdb.GdbError("Unmatched parentheses")
+
     if nparen > -1:
         suffix = desired[nparen:]
         desired = desired[0:nparen]
@@ -843,24 +854,25 @@ def TokenizeCanonicalName(desired):
     if sq_count > 0 and sq_count % 2 != 0:
         raise gdb.GdbError("Unmatched single quote.")
 
-    if desired[0] == "'":
-        # This can happen as a result of TAB completion:
-        desired = desired[1:]
-    if desired[-1] == "'":
-        # This can happen as a result of TAB completion:
-        desired = desired[:-1]
+    if desired:
+        if desired[0] == "'":
+            # This can happen as a result of TAB completion:
+            desired = desired[1:]
+        if desired[-1] == "'":
+            # This can happen as a result of TAB completion:
+            desired = desired[:-1]
 
-    # turn IN and OF into spaces
-    pattern = re.compile(r"^(.*) (in|In|iN|IN|of|oF|Of|OF) (.*)$")
-    while True:
-        match = re.search(pattern, desired)
-        if not match:
-            break
-        else:
-            desired = match.group(1) + " " + match.group(3)
+        # turn IN and OF into spaces
+        pattern = re.compile(r"^(.*) (in|In|iN|IN|of|oF|Of|OF) (.*)$")
+        while True:
+            match = re.search(pattern, desired)
+            if not match:
+                break
+            else:
+                desired = match.group(1) + " " + match.group(3)
 
-    desired = desired.replace(".", " ").replace("/", " ").strip()
-    desired += suffix
+        desired = desired.replace(".", " ").replace("/", " ").strip()
+        desired += suffix
     retval = desired.split()
     return retval
 
@@ -1216,11 +1228,20 @@ class VarTrie():
                 # and terminate
                 return
 
-    def GetAllPossibilities(self):
-        # Typically in response to a 'cprint *'
+    def GetMatchingPossibilities(self,desired):
+        # Arriving here means that desired has an asterisk in it.
+        # We will convert "*" to ".*" and leverage regex:
+        pattern = '^' + desired.replace("*",".*").upper() + '$'
+        matcher = re.compile(pattern)
+
         paths = []
         for index in range(len(self.storage_list)):
-            paths.append(index)
+            fullname = self.storage_list[index].Name
+            for piece_of_name in fullname.split('/')[:-1]:
+                matched = re.search(matcher, piece_of_name.upper())
+                if matched:
+                    paths.append(index)
+                    break;
         return paths
 
     def GetListOfExactPossibilities(self, token):
@@ -1359,6 +1380,11 @@ class VarTrie():
             if refmod or self.storage_list[paths[0]].Refmod:
                 self.storage_list[paths[0]].IsDirty = True
             self.storage_list[paths[0]].Refmod = refmod
+        else:
+            # There are either zero possibilities, or else there are more than one.
+            # We provide the "*" matching capabilitity up above, so at this point,
+            # more than one is the same as none
+            paths = []
         return paths
 
     def FlagAllAsDirty(self):
@@ -2827,8 +2853,8 @@ def get_sorted_possibilities(args, limit):
     if len(args) >= 1 and GV_ModuleState.current_trapped_line > 0:
         if args[0].find('*') != -1:
             # If the first, presumably single, argument contains an asterisk, then
-            # he is asking for a list of variables and values:
-            possibilities_1 = GV_ModuleInformation.var_trie.GetAllPossibilities()
+            # he is asking for a list of variables that match the pattern:
+            possibilities_1 = GV_ModuleInformation.var_trie.GetMatchingPossibilities(args[0])
         elif args[0].find('?') != -1:
             if not COBCDRW_AVAILABLE:
                 print("Function not available: cobcd-rw not available")
@@ -3514,10 +3540,13 @@ class CPrintWorker():
         leftside_possibilities, limit_reached = get_sorted_possibilities(left_side, 0)
         if not leftside_possibilities:
             # There are no leftside possibilities.  Let him know why, and then bug out
-            if left_side[0][0] in ('*', '?') or left_side[0].isdigit():
+            if left_side[0][0] in ('?') or left_side[0].isdigit():
                 # When '*' or '?' match nothing, then just return nothing
                 return
-            print('No symbols match "{0}" in current context'.format('/'.join(left_side)))
+            if left_side[0].find('*') == -1:
+                print('No symbol matches "{0}" in current context'.format('/'.join(left_side)))
+            else:
+                print('No symbols match "{0}" in current context'.format('/'.join(left_side)))
             return
 
         if len(leftside_possibilities) == 1:

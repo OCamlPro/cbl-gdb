@@ -20,7 +20,7 @@
                10 SUBTEXT2 PIC X(11).
              08 T-PRGM                PIC X(08).
              08 T-ID                  PIC X(02).
-             08 T-ADR-SAVE            PIC S9(16) COMP-5.
+             08 T-ADR-SAVE            PIC S9(16).
 
         01 T_ENTRY PIC 9999 VALUE 13.
         01 T_ADDRESSES OCCURS 0 TO 1000 TIMES
@@ -31,8 +31,8 @@
              10 TAB-ADR-PRGM-ID.
                15 TAB-ADR-PRGM      PIC X(8).
                15 TAB-ADR-ID        PIC X(2).
-             10 TAB-ADR-ADR-64      PIC S9(16) COMP-5.
-             10 TAB-ADR-LAST-ADR-64 PIC S9(16) COMP-5.
+             10 TAB-ADR-ADR-64      PIC S9(16).
+             10 TAB-ADR-LAST-ADR-64 PIC S9(16).
 
         01 zed   PIC 9999 VALUE 0.
         01 one   PIC 9999 VALUE 1.
