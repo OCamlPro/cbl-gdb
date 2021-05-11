@@ -4724,14 +4724,11 @@ they override any that might have been passed to GDB with --args."""
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
         try:
-            command = "info files"
-            info_files = gdb.execute(command, False, True).split('\n')
-            if not info_files[0]:
-                # a remote connection cannot be issued by start, cstart does exactly the same
-                # instead, one may use (only for extended-remote) "run", with a previous tbreak
+            obj_files = gdb.objfiles()
+            if len(obj_files) < 1:
                 raise gdb.GdbError("No symbol table loaded.  Use the \"file\" command.")
-            line1 = info_files[0]
-            line1 = line1.replace('\\', '/') # In case of Windows
+            line1 = gdb.objfiles()[0].filename
+            line1 = line1.replace('\\', '/').replace(".exe", "")    # This is a hack for Windows
             main_program = line1.split('/')[-1].split('"')[0]
             # Note: cobcrun may be renamed or contain version numbers - is there a better approach?
             if main_program == COBCRUN_NAME:
@@ -4749,8 +4746,6 @@ they override any that might have been passed to GDB with --args."""
                     cobol_program = args[0]
             else:
                 cobol_program = main_program
-
-            cobol_program = cobol_program.replace(".exe", "")    # This is a hack for Windows
 
             # If there is no cobol program, just run
             if cobol_program:
