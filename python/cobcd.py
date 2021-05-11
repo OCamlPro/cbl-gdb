@@ -2943,25 +2943,19 @@ def get_sorted_possibilities(args, limit):
 
 def get_completion_possibilities(word):
     GV_ModuleState.EstablishModuleState(False)
+    possibilities = []
 
     word = word.upper()
-    lookup = TokenizeCanonicalName(word)
-    # print ("DBG: lookup: <",  lookup,  ">")
-    # FIXME: in case of completion "TXT" may complete to TXT TXT-A TXT-B,
-    #        but if there's a possibility which is a "complete" match like TXT
-    #        only this one is returned (which is correct for printing only)
-    # FIXME: for completion "get_sorted_possibilities" itself should work with
-    #        names that _start_ with the lookup so we don't need to filter later
-    possibilities_1, limit_reached = get_sorted_possibilities(lookup, 0)
-    # we now have the requested list, create the completion from its names
-    possibilities = []
-    for index in possibilities_1:
-        whole_name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
-        if word == "*" or whole_name.startswith(word):
-            # make sure returned words are not seen as multiple words by GDB
-            whole_name = "'" + whole_name + "'"
-            possibilities.append(whole_name)
-
+    if word == '*':
+        possibilities_1,limit_reached = get_sorted_possibilities(word, 0)
+        for index in possibilities:
+            name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
+            possibilities.append(name)
+    else:
+        for index in range( len(GV_ModuleInformation.var_trie.storage_list) ):
+            name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
+            if name.startswith(word):
+                possibilities.append("'" + name + "'")
     return possibilities
 
 def get_cobol_breakpoints(bp_filter):
