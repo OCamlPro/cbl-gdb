@@ -278,15 +278,19 @@ class GlobalVariables():
             self.gdb_8dot3_plus = True
         else:
             self.gdb_8dot3_plus = False
-            if self.gdb_version_major < 7 or (self.gdb_version_major == 7 and self.gdb_version_minor < 3):
-                # poosibly increment to 7.6?
-                raise gdb.GdbError("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.3+ is required)\n".format(
-                                                                    self.gdb_version_major,
-                                                                    self.gdb_version_minor))
-            print("\n !! warning: add-symbol-file-cobol is not available with GDB-{0}.{1} (GDB 8.3+ is required)\n".format(
+            #if self.gdb_version_major < 7 or (self.gdb_version_major == 7 and self.gdb_version_minor < 6):
+            #    raise gdb.GdbError("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.6+ is required)\n".format(
+            #                                                        self.gdb_version_major,
+            #                                                        self.gdb_version_minor))
+            print("\n !! warning: add-symbol-file-cobol is not available with GDB-{0}.{1} (GDB 8.3+ is required)".format(
                                                                     self.gdb_version_major,
                                                                     self.gdb_version_minor)
                                                                     )
+            if self.gdb_version_major == 8:
+                print(" !! There are known problems with GDB-8.1 and GDB-8.2")
+            if self.gdb_version_major <= 7:
+                print(" !! The COBOL debugger is known to work with reduced capability with GDB-7.6")
+            print(" ")
 
         # Establish the debugging verbosity level:
         self.debug_level = int(os.environ.get('CPRINT_D', '0'))
@@ -4459,7 +4463,7 @@ by using "enable delete" on the breakpoint number.
 Do "help cbreak" for info on COBOL expressions"""
 
     def __init__(self):
-        if GV_GlobalVariables.gdb_version_major > 8 or GV_GlobalVariables.gdb_version_major == 8 and GV_GlobalVariables.gdb_version_minor >= 3:
+        if GV_GlobalVariables.gdb_8dot3_plus:
             self.worker = CBLDBG_CBREAK_WORKER
             super(CTBreak, self).__init__("ctbreak", gdb.COMMAND_BREAKPOINTS)
 
