@@ -4986,7 +4986,7 @@ An argument says how fast auto stepping is done (1-19, default 5)."""
         pagination = gdb.execute("show pagination", False, True).find("on")
         if pagination:
             gdb.execute("set pagination off", False, False)
-        
+
         try:
             while (last_stop_was_simple):
                 gdb.execute ("step")
