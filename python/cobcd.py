@@ -4777,19 +4777,21 @@ compiler optimization removes the JUMP TO PARAGRAPH and JUMP BACK FROM PARAGRAPH
 logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
 
     def __init__(self):
-        super(CNext, self).__init__("cnext", gdb.COMMAND_BREAKPOINTS)
+        super(CNext, self).__init__("cnext", gdb.COMMAND_RUNNING)
         print('Registering CNext')
 
     def invoke(self, arguments, from_tty):
+        if argument:
+            if not argument.isdigit():
+                raise gdb.GdbError("argument must be a digit, not " + argument)
+            ncount = int(argument)
+        else:
+            ncount = 1
         try:
             GV_ModuleState.EstablishModuleState(True)
-            if arguments:
-                ncount = int(arguments)
-            else:
-                ncount = 1
             while ncount > 0:
-                command = "info stack"
-                key = gdb.execute(command, False, True).split('\n')[0].split()[-1]
+                sal = gdb.selected_frame().find_sal()
+                key = "{0}:{1}".format(sal.symtab, sal.line)
                 if key in GV_ModuleInformation.perform_commands:
                     command = "until " + GV_ModuleInformation.perform_commands[key]
                     gdb.execute(command, True, False)
@@ -4802,15 +4804,13 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
                     # COBOL source code line in sync.
 
                     if GV_ModuleInformation.perform_commands[key].find(':') == -1:
-                        command = "step"
-                        gdb.execute(command, True, False)
+                        gdb.execute("step", True, False)
 
                 else:
-                    command = "next"
-                    gdb.execute(command, True, False)
+                    gdb.execute("next", True, False)
                 ncount -= 1
-        except gdb.error:
-            raise gdb.GdbError("No stack.")
+        except gdb.GdbError as user_error:
+            # pass user errors unchanged, for example "No stack."
         except:
             traceback.print_exc()
 
