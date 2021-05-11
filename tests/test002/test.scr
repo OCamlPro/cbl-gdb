@@ -12,25 +12,50 @@ define stutter_step
         end
     end
 
-file test
+define printem
+    echo KNOWN GOOD START\n
+    echo cprint/v0 *\n
+    cprint/v0 *
+    echo cprint/v0 ?\n
+    cprint/v0 ?
+    echo cprint/v3 *\n
+    cprint/v3 *
+    echo cprint/v3 ?\n
+    cprint/v3 ?
+    echo cprint/x 1\n
+    cprint/x 1
+    echo cprint/m *\n
+    cprint/m *
+    echo cprint/m ?\n
+    cprint/m ?
+    echo KNOWN GOOD FINISH\n
+    end
 
-### Make sure we have a known 'cprint ?' range
-echo KNOWN GOOD LINES: 2\n
+define printloop
+    set variable $_exitcode=1031
+    while $_exitcode==1031
+       printem
+       continue
+       end
+    end
+
+file test
+cprint/v3
 cprint/r 6
 
-### Just run the whole program clean, to establish a baseline
-### (We don't want to think we have a debugging problem when
-###  in fact it was the test program that changed.)
-echo KNOWN GOOD START\n
-r
-echo KNOWN GOOD FINISH\n
+break 127
+break 137
+break 147
+break 157
+break 168
+break 175
+break 185
+break 195
+break 205
+break 215
+break 225
 
-### Run program after a known good starting breakpoint
-b 127
 run
-echo KNOWN GOOD START\n
-stutter_step
-echo KNOWN GOOD FINISH\n
+printloop
 
-## And having stepped through the program line-by-line, we are done
 q

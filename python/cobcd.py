@@ -985,8 +985,50 @@ class VarTrie():
         while our_node.parent:
             our_node.parent.count += our_node.count
             our_node = our_node.parent
-
         # and we are done
+
+    def PopulateIndexOfParent(self):
+        # For variables with levels 2-49, we need to populate the
+        # CobolVariable.index_of_parent member
+
+        for payload_index in range( 1, len(self.storage_list) ):
+            payload = self.storage_list[payload_index]
+
+            if payload.Level == 0:
+                # Level 00 is an INDEXED BY variable whose parent is
+                # the immediate preceding entry.  See self.LoadFromLine
+                self.storage_list[payload_index].index_of_parent = payload_index-1
+
+            if payload.Level > 1 and payload.Level <= 49 :
+                # LEVELs 01-49 obviously have parents.  Find ours:
+                i = payload_index-1
+                while i >= 0:
+                    candidate_level = self.storage_list[i].Level
+                    if candidate_level == payload.Level:
+                        # Our older relative has the same level we do.  That means we
+                        # share a parent.  That value might be None, but that's okay.
+                        self.storage_list[payload_index].index_of_parent = self.storage_list[i].index_of_parent
+                        break
+                    if candidate_level > 0 and candidate_level < payload.Level:
+                        # Because it is non-zero and smaller than we are, this has to be our parent.
+                        self.storage_list[payload_index].index_of_parent = i
+                        break
+                    # Arriving here means that candidate_level is either zero, making it
+                    # an INDEXED BY variable who is nobody's parent, or else candidate_level
+                    # bigger than we are, making it an uncle who isn't our parent.  So,
+                    # we keep looking:
+                    i -= 1
+
+        if False:
+            # Dump the list
+            for payload_index in range( len(self.storage_list) ) :
+                payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+                parent=None
+                if payload.index_of_parent is not None:
+                    parent  = GV_ModuleInformation.var_trie.storage_list[payload.index_of_parent]
+                    print("DEBUG   ", payload.Level, payload.Name, "parent is", parent.Level, parent.Name )
+                else:
+                    print("DEBUG   ", payload.Level, payload.Name, "(No parent)")
 
     def LoadFromLine(self, variable_line):
         tokens = variable_line.split("|")
@@ -1067,34 +1109,6 @@ class VarTrie():
                     payload.OccursMin  = int(tokens[self.IndexOccursMin] or "0")
                     payload.OccursMax  = int(tokens[self.IndexOccursMax] or "0")
 
-                    # We need to find our parent.  We will ignore the accursed
-                    # level 66, and anything above.
-
-                    # For now we are ignoring the possibility that a level 01
-                    # variable might have an FD parent.
-
-                    if payload.Level > 1 and payload.Level <= 49:
-                        # We start looking at the variable in the list right where we
-                        # will go.
-                        i = len(self.storage_list) - 1
-                        while i >= 0:
-                            candidate_level = self.storage_list[i].Level
-                            if candidate_level == payload.Level:
-                                # Our older relative has the same level we do.  That means we
-                                # share a parent.  That value might be None, but that's okay.
-                                payload.index_of_parent = self.storage_list[i].index_of_parent
-                                break
-                            elif candidate_level > 0 and candidate_level < payload.Level:
-                                # Because it is smaller than we are, this has to be our parent:
-                                # Unless, of course, it is a level 00 INDEXED BY variable, in which
-                                # case it can't be anybody's parent.
-                                payload.index_of_parent = i
-                                break
-                            else:  # candidate_level > payload.Level:
-                                   # This has to be a child of an older sibling.  They can't be
-                                   # our parent, but we keep looking until we find that older sibling.
-                                pass
-                            i -= 1
                     # print("Loading", payload.Level, payload.Name, payload.index_of_parent)
                     payload.payload_index = len(self.storage_list)
                     self.storage_list.append(payload)
@@ -2392,10 +2406,13 @@ class ModuleInformation():
                             self.var_trie.LoadFromLine(variable_line)
                             self.LoadPerformFromLine(variable_line)
 
+                        self.var_trie.PopulateIndexOfParent()
+
                         # Put a fencepost at the end of the line_list
                         self.line_list.Insert(self.line_list.EndOfTheWorld, "Ragnarok")
                         retval = True
             except:
+                traceback.print_exc()
                 pass
         return retval
 
@@ -2669,7 +2686,7 @@ GV_ModuleState = ModuleState()
 class HNode():
     def __init__(self):
         self.storage_table_index = -1
-        self.Level = 0
+        self.Level = -666   # The Node of the Beast
         self.BaseName = ""  # Just A of A/B/C
         self.display_body = ""
         self.parent = None
@@ -2682,7 +2699,7 @@ def TrimComma(t_str):
 
 def BuildHString(node):
     h_str = ""
-    if node.Level == 0:
+    if node.Level == -666:
         # This is the root.  We live only for our children
         for child in node.children:
             h_str += BuildHString(child)
@@ -2710,7 +2727,7 @@ def BuildHString(node):
                 h_str += r'}"'
             h_str += '},'
         else:
-            # This is a node whose level is 01-49, 66
+            # This is a node whose level is 0, 02-49, 66
             if len(node.children) == 0:
                 h_str += node.BaseName  # + "/" + str(node.storage_table_index)
                 h_str += r'=\"'
@@ -2738,18 +2755,22 @@ def MachineInterfaceHeirarchical(possibilities):
     # We will use a stack to build a tree from the ordered variables
     root = HNode()
     stack = [root]
-
     retval = "variables=["
+
+    stack_map = {}
+
     for payload_index in possibilities:
         payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+        if payload.Level == 66:
+            # We simply cannot, at this time, handle LEVEL 66.  The variable string
+            # doesn't have enough information because the COBC compiler didn't pass
+            # along enough information.
+            continue
+
+        parent_index = payload.index_of_parent
+        # payload_index and parent_index are indices into storage_list
         payload.FetchVariableData(False)
         if not payload.not_in_context:
-            # print("MIH", payload.Level, payload.Name, payload.display_body)
-            # First, if the stack has nephews of ours,
-            # let's get them off of the stack:
-            while stack[-1].Level > payload.Level:
-                stack.pop()
-
             # Create the new node
             new_node = HNode()
             new_node.storage_table_index = payload_index
@@ -2767,20 +2788,22 @@ def MachineInterfaceHeirarchical(possibilities):
 
             new_node.display_body = WithRepeatCount(payload.display_body)
 
-            if payload.Level in (77, 78):
-                stack = [root]
-            if stack[-1].Level == payload.Level or payload.Level == 66:
-                # The element on the stack is our brother, so
-                # so we are going to share parents:
-                new_node.parent = stack[-1].parent
-            else:  # stack[-1].Level < payload.Level
-                # The element on the stack is our parent
-                new_node.parent = stack[-1]
-            # And now we become the final stack entry
-            if payload.Level != 66:  # 66 is just a pain in the patootie.
-                stack.append(new_node)
-            # And let's let our parent know they have another child
-            new_node.parent.children.append(new_node)
+            if parent_index in stack_map:
+                # Our parent is in the stack map; make the association:
+                new_node.parent = stack[stack_map[parent_index]]
+
+            # Put our index into the stack map, in case we are somebody's parent:
+            stack_map[payload_index] = len(stack)
+
+            # Put this new node onto the stack of nodes:
+            stack.append(new_node)
+
+            if new_node.parent:
+                # Let our parent know they have another child
+                new_node.parent.children.append(new_node)
+            else:
+                # Nodes with no parent become wards of the state:
+                root.children.append(new_node)
 
     # We now have a tree that can be used to create the variables string
     retval += BuildHString(root)
@@ -4670,7 +4693,7 @@ they override any that might have been passed to GDB with --args."""
                 if GV_GlobalVariables.gdb_8dot3_plus:
                     # after its TODO is fixed: CBLDBG_CBREAK_WORKER.process_break_arguments(cobol_program, True, True)
 #
-#                   I have returned the logic to for PROG-NAME to "tbreak PROG__NAME_" 
+#                   I have returned the logic for PROG-NAME to "tbreak PROG__NAME_"
 #
 #                   In at least one program with a DECLARATIVES section, the ENTRY_prog point
 #                   ends up high in in the generated C in the DECLARATIVES section, when it should be

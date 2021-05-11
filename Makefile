@@ -11,6 +11,8 @@ else
 	SED := sed
 endif
 
+BITS:=$(shell echo $(MINGW_PREFIX)| $(SED) -E 's/.*(32|64)/\1/g')
+
 prefix_default = /usr/local
 prefix ?= $(prefix_default)
 
@@ -141,10 +143,17 @@ testprod :
 
 .PHONY : installw
 installw:
+	# Copy the files to our local bin
 	cp cobcd $(MINGW_PREFIX)/bin/
 	cp cobcd.bat $(MINGW_PREFIX)/bin/
 	cp cobcd-st/cobcd-st.exe $(MINGW_PREFIX)/bin/
 	cp cobcd-sfix/cobcd-sfix.exe $(MINGW_PREFIX)/bin/
 	cp cobcd-rw/cobcd-rw.exe $(MINGW_PREFIX)/bin/
 	cp python/cobcd.py $(MINGW_PREFIX)/bin/
-
+	# Copy the files to the native Windows bin
+	cp cobcd /c/gnucobol$(BITS)/bin/
+	cp cobcd.bat /c/gnucobol$(BITS)/bin/
+	cp cobcd-st/cobcd-st.exe /c/gnucobol$(BITS)/bin/
+	cp cobcd-sfix/cobcd-sfix.exe /c/gnucobol$(BITS)/bin/
+	cp cobcd-rw/cobcd-rw.exe /c/gnucobol$(BITS)/bin/
+	cp python/cobcd.py /c/gnucobol$(BITS)/bin/

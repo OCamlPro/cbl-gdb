@@ -4,7 +4,9 @@
       * Modification History
       * Date      Programmer   Description
       * -------   ----------   ----------------------------------------
-      * 02/2021   kday         Original program.
+      * 02/2021   kday         This is a modified version of a program
+      *                        originally written By Jay Moseley in
+      *                        April, 2008.
 
        Identification Division.
        Program-Id. test.
@@ -559,7 +561,7 @@
        0100-Initialization.
            Display '*** Program QtrlyPyrlReg '
                    'Has Started ***'.
-           Accept RunDateYYYYMMDD      From Date YYYYMMDD.
+           Move 20210510 to RunDateYYYYMMDD
            Move RunDateYYYYMMDD(5:2)   To RunDateMMDDYYYY(1:2).
            Move RunDateYYYYMMDD(7:2)   To RunDateMMDDYYYY(3:2).
            Move RunDateYYYYMMDD(1:4)   To RunDateMMDDYYYY(5:4).
