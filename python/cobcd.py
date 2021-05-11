@@ -2940,6 +2940,16 @@ def get_completion_possibilities(word):
 
     return possibilities
 
+def get_cobol_breakpoints(bp_filter):
+    possibilities = []
+    # for gdb_breakpoint in gdb.breakpoints():
+    for gdb_breakpoint in CBLDBG_CBREAK_WORKER.cobol_breaks:
+        bp_number = str(gdb_breakpoint.number)
+        if bp_filter and not bp_number.startswith(bp_filter):
+            continue
+        possibilities.append(bp_number)
+    return possibilities
+
 def break_completion(text, word, condition):
     try:
         if text == "" and word == "":
@@ -3548,6 +3558,8 @@ class CPrintWorker():
 
 class CobolAfterWatchBreakpoint(gdb.Breakpoint):
     def __init__(self, creating_wp):
+        if not GV_GlobalVariables.gdb_8dot3_plus:
+            raise gdb.GdbError("pure COBOL cwatch needs GDB 8.3+")
 
         frame = gdb.newest_frame ()
         cob_frame = CFrameWorker.Frame(True, 0)
@@ -3556,44 +3568,49 @@ class CobolAfterWatchBreakpoint(gdb.Breakpoint):
 
         resume_address = "*" + str(hex(frame.pc()))
 
-        if GV_GlobalVariables.gdb_8dot3_plus:
-            gdb.Breakpoint.__init__(self, resume_address, internal=True)
-        else:
-            gdb.Breakpoint.__init__(self, resume_address)
+        super(CobolAfterWatchBreakpoint, self).__init__(resume_address, temporary=True, internal=True)
 
         # we fake the output of the original watchpoint + COBOL in CobolWatchpointHandler
         self.silent = True
         self.creating_wp = creating_wp
+        # reference to allow the creating_wp to control this temporary breakpoint
+        creating_wp.after_watch = self
 
         # copy commands as necessary ("real watchpoint" never halts and therefore commands are never executed)
         if creating_wp.commands:
-            commands_to_set = "cup 0" + "\n" + creating_wp.commands
+            self.commands = "cup 0" + "\n" + creating_wp.commands
         else:
-            commands_to_set = "cup 0"
-        if GV_GlobalVariables.gdb_8dot3_plus:
-            self.commands = commands_to_set
-        else:
-            command = "commands {0}\n{1}\nend".format(gdb.breakpoints()[-1].number, commands_to_set)
-            gdb.execute(command, True, False)
+            self.commands = "cup 0"
 
     def stop(self):
-        self.creating_wp.handler.output_wp()
-        self.creating_wp.activate_stop()
-        return True # _now_ we do want to stop
+        return_value = self.creating_wp.handler.check_and_output_wp()
+        if return_value:
+            # if no output was done then we can keep the AfterWatchpoint
+            self.creating_wp.activate_stop()
+        # note: as this is a temporary breakpoint returning "True" will delete it
+        return return_value # _now_ we commonly do want to stop (with the exception of an unchanged watchpoint)
 
     def out_of_scope (self):
-        self.creating_wp.handler.output__wp()
+        # we never have something to do out of scope
         self.creating_wp.activate_stop()
+        if self.is_valid():
+            self.delete()
 
 
 class CobolWatchpointHandler():
     def __init__(self, creating_wp, payload):
-        print ("... for", payload.NameToString())
+        print ("... for " + payload.NameWithSubscripts())
         self.creating_wp = creating_wp
         self.payload = payload
         self.old_value = self.payload.GetDataAsString()
 
-    def output_wp (self):
+    def check_and_output_wp (self):
+        if not CFrameWorker.has_cobol_frame():
+            new_value = "<unreadable>"
+            if old_value != new_value:
+                old_value = new_value
+            else:
+                return False
         title = {
             # gdb.BP_WATCHPOINT : "Watchpoint",
             gdb.BP_HARDWARE_WATCHPOINT : "Hardware watchpoint",
@@ -3603,30 +3620,34 @@ class CobolWatchpointHandler():
         bp_type = self.creating_wp.type
         title_string = title.get(bp_type, "Unknown watchpoint " + str(bp_type))
         payload = self.payload
+        if bp_type in (gdb.BP_HARDWARE_WATCHPOINT, gdb.BP_ACCESS_WATCHPOINT):
+            new_value = payload.GetDataAsString()
+        else:
+            new_value = self.old_value
+
+        if bp_type == gdb.BP_HARDWARE_WATCHPOINT and new_value == self.old_value:
+            return False
+
         print("{0} {1}: {2} from {3}\n".format(title_string,
                                                self.creating_wp.number,
-                                               payload.NameToString(),
+                                               payload.NameWithSubscripts(),
                                                payload.Program))
-        if bp_type == gdb.BP_HARDWARE_WATCHPOINT:
-            new_value = payload.GetDataAsString()
+
+        if new_value != self.old_value:
             print("Old value: {0}".format(self.old_value))
             print("New value: {0}".format(new_value))
             self.old_value = new_value
-        elif bp_type == gdb.BP_ACCESS_WATCHPOINT:
-            new_value = payload.GetDataAsString()
-            if new_value != self.old_value:
-                print("Old value: {0}".format(self.old_value))
-                print("New value: {0}".format(new_value))
-                self.old_value = new_value
-            else:
-                print("Value: {0}".format(self.old_value))
         else:
             print("Value: {0}".format(self.old_value))
+        return True
 
 class CobolWatchBreakpoint(gdb.Breakpoint):
     def __init__(self, payload, bp_spec, bp_action):
+        if not GV_GlobalVariables.gdb_8dot3_plus:
+            raise gdb.GdbError("pure COBOL cwatch needs GDB 8.3+")
         try:
-            gdb.Breakpoint.__init__(self, bp_spec, gdb.BP_WATCHPOINT, bp_action)
+            super(CobolWatchBreakpoint, self).__init__(bp_spec, gdb.BP_WATCHPOINT, bp_action)
+            CBLDBG_CBREAK_WORKER.cobol_breaks.append(self)
         except Exception as ex:
             raise gdb.GdbError(ex)
         if self.type == gdb.BP_WATCHPOINT:
@@ -3634,9 +3655,13 @@ class CobolWatchBreakpoint(gdb.Breakpoint):
             raise gdb.GdbError("Expression cannot be implemented as hardware watchpoint.\n... and therefore removed")
         self.handler = CobolWatchpointHandler(self, payload)
         self.after_done = 0
+        self.after_watch = None
 
     def stop(self):
         if self.after_done == 0:
+            # in case of startup we may not have a single COBOL frame
+            if not CFrameWorker.has_cobol_frame():
+                return False
             self.after_done = 1
             CobolAfterWatchBreakpoint(self)
 
@@ -3645,6 +3670,14 @@ class CobolWatchBreakpoint(gdb.Breakpoint):
         # * stopping here will also show the "C-like" output
         # * commands would be executed (is done in the AfterWatchBreakPoint)
         return False
+
+    def out_of_scope (self):
+        # remove the after watchpoint and its reference
+        if self.after_watch:
+            if self.after_watch.is_valid():
+                self.after_watch.delete()
+            self.after_watch = None
+        self.after_done = 0
 
     def activate_stop(self):
         self.after_done = 0
@@ -3668,36 +3701,33 @@ class CWatchWorker():
         spec += '[' + str(wp_length) + '])'
         spec += '(' + hex(wp_startloc) + ')'
 
-        if wp_type == 'WPW':
-            break_point = CobolWatchBreakpoint(payload, spec, gdb.WP_WRITE)
-        elif wp_type == 'WPR':
-            break_point = CobolWatchBreakpoint(payload, spec, gdb.WP_READ)
-        elif wp_type == 'WPRW':
-            break_point = CobolWatchBreakpoint(payload, spec, gdb.WP_ACCESS)
+        if GV_GlobalVariables.gdb_8dot3_plus:
+            break_point = CobolWatchBreakpoint(payload, spec, wp_type)
         else:
-            print("Internal error: Watchpoint type not recognized")
-            return
+            break_point = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_ACCESS)
+            if break_point.type == gdb.BP_WATCHPOINT:
+                break_point.delete()
+                raise gdb.GdbError("Expression cannot be implemented as hardware watchpoint.\n... and therefore removed")
+            break_point.commands = "echo Watched: {0} from {1}\\n \n cup 0".format(payload.NameWithSubscripts(), payload.Program)
 
     def process_watch_arguments(self, arguments):
         left_side = []
         right_side = []
         condition = ""
 
-        wp_type = 'WPW'
-
         args = arguments.split()
         if not args:
             print("No variable given\n")
             return
 
+        wp_type = gdb.WP_WRITE
         if args[0] == '/r':
-            wp_type = 'WPR'
+            wp_type = gdb.WP_READ
             del args[0]
         elif args[0] == '/w':
-            wp_type = 'WPW'
             del args[0]
         elif args[0] == '/rw':
-            wp_type = 'WPRW'
+            wp_type = WP_ACCESS
             del args[0]
         elif args[0].startswith('/'):
             print("Option not recognized\n")
@@ -3741,6 +3771,7 @@ class CBreakWorker():
 
         self.section_buffer = None
         self.module_buffer = None
+        self.cobol_breaks = []
 
     @staticmethod
     def set_breakpoint(spec, t_flag, i_flag):
@@ -3762,7 +3793,7 @@ class CBreakWorker():
             break_point.delete()
             print("... and therefore removed")
             return None
-
+        CBLDBG_CBREAK_WORKER.cobol_breaks.append (break_point)
         return break_point
 
 
@@ -3783,6 +3814,9 @@ class CBreakWorker():
     @staticmethod
     def set_condition(break_point, condition):
         break_point.condition = condition
+        # if break_point.number > 0 and break_point not in CBLDBG_CBREAK_WORKER.cobol_breaks:
+        if break_point not in CBLDBG_CBREAK_WORKER.cobol_breaks:
+            CBLDBG_CBREAK_WORKER.cobol_breaks.append (break_point)
 
     @staticmethod
     def module_available(module):
@@ -4842,6 +4876,20 @@ class CFrameWorker:
             number = number - 1
 
     @staticmethod
+    def has_cobol_frame():
+        try:
+            frame = CFrameWorker.Frame(True, 0)
+            if not frame:
+                frame = CFrameWorker.Frame(False, 0)
+        except gdb.GdbError:
+            frame = None
+
+        if frame:
+            return True
+        else:
+            return False
+
+    @staticmethod
     def Go(argument, up, silent):
 
         number = 1
@@ -4906,6 +4954,15 @@ def exit_handler(event):
     # With the disappearance of the inferior, we are going
     # to need new malloc-created buffers
     GV_GlobalVariables.DestroyBuffers()
+    #
+    for cb in CBLDBG_CBREAK_WORKER.cobol_breaks:
+        # breakpoints included in our list may be invalid
+        # commonly by being deleted by the user, or being temporary
+        if not cb.is_valid():
+            CBLDBG_CBREAK_WORKER.cobol_breaks.remove(cb)
+            continue
+        if isinstance (cb, CobolWatchBreakpoint):
+            cb.out_of_scope()
 
 def stop_handler(event):
     # When the inferior has been running, and is now stopped, we
