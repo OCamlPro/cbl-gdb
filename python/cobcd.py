@@ -43,7 +43,6 @@
 # os.environ.get('CPRINT_D', '0')  When non-zero, causes verbose output
 # os.environ.get('CPRINT_V', '0')  Default formatting p/v N value
 # os.environ.get('CPRINT_R', '6')) Default p/? range
-# os.environ.get('CPRINT', '<cmd>'))   When non-blank, registers "cmd" instead of "cprint" as the command
 
 from __future__ import print_function
 
@@ -3056,7 +3055,6 @@ class CPrintWorker():
     def __init__(self):
         self.current_source_file = ""
         GV_ModuleState.sticky_display_mode = os.environ.get("CPRINT_V", '0')
-        self.use_cprint = os.environ.get("CPRINT", "cprint")
         self.machine_interface_mode = False
         self.completed_names = []
 
@@ -4317,8 +4315,7 @@ class CPrint(gdb.Command):
     cprint set repeat N sets the display <repeats> threshold to N characters
 
     The default v-level can be set with the environment variable CPRINT_V=n
-    The default r-level can be set with the environment variable CPRINT_R=n
-    The 'cprint' command can be changed to 'anything' with the environment variable CPRINT=anything"""
+    The default r-level can be set with the environment variable CPRINT_R=n"""
 
     def __init__(self):
         global COBCDRW_AVAILABLE
@@ -4338,8 +4335,8 @@ class CPrint(gdb.Command):
 
         self.worker = CPrintWorker()
 
-        print('Registering CPrint as ' + self.worker.use_cprint + ' ' + COBCD_VERSION)
-        super(CPrint, self).__init__(self.worker.use_cprint, gdb.COMMAND_DATA)
+        print('Registering CPrint ' + COBCD_VERSION)
+        super(CPrint, self).__init__("cprint", gdb.COMMAND_DATA)
 
         self.worker.completed_names = []
 
