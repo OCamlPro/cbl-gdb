@@ -4205,17 +4205,19 @@ class CBreakWorker():
             return
 
         if not right_side:
+            if len(left_side) >= 1 and isinstance(left_side[0], self.strtype) and (left_side[0].upper() == "SECTION" or left_side[0].upper() == "SEC"):
+                left_side[0] = "SECTION"
             if len(left_side) == 1 and left_side[0].isdigit():
                 break_point = self.set_breakpoint(left_side[0], t_flag, i_flag)
             elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and left_side[0].find(':') != -1:
                 self.set_section_breakpoint(left_side, t_flag, i_flag)
-            elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and (left_side[0].upper() != "SECTION" or left_side[0].upper() != "SEC"):
+            elif len(left_side) == 1 and left_side[0] != "SECTION":
                 module_name = self.get_module_name(left_side[0])
                 if module_name is None:
                     print("Module not found: {0}".format(left_side[0]))
                 else:
-                    break_point = self.set_entry_breakpoint(module_name, t_flag, i_flag)
-            elif len(left_side) == 2 and (left_side[0].upper() == "SECTION" or left_side[0].upper() == "SEC") and isinstance(left_side[1], self.strtype):
+                    break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{1}".format(module_name,module_name.upper()), t_flag, i_flag)
+            elif len(left_side) == 2 and left_side[0] == "SECTION" and isinstance(left_side[1], self.strtype):
                 del left_side[0]
                 self.set_section_breakpoint(left_side, t_flag, i_flag)
             else:
@@ -4753,33 +4755,7 @@ they override any that might have been passed to GDB with --args."""
                 module = cobol_program.replace("-", "__")
 
                 # set temporary maintenance breakpoint
-#<<<<<<< HEAD
-#                if GV_GlobalVariables.gdb_8dot3_plus:
-#                    # after its TODO is fixed: CBLDBG_CBREAK_WORKER.process_break_arguments(cobol_program, True, True)
-##
-##                   I have returned the logic for PROG-NAME to "tbreak PROG__NAME_"
-##
-##                   In at least one program with a DECLARATIVES section, the ENTRY_prog point
-##                   ends up high in in the generated C in the DECLARATIVES section, when it should be
-##                   further down at the actual point where execution starts
-##
-##                                                   -- Bob Dubner, 2021-05-04
-##
-##                   module = cobol_program.replace("-", "__")
-##                    gdb.Breakpoint("-function {0}_ -label ENTRY_{1}".format(module,module.upper()), type=gdb.BP_BREAKPOINT, temporary=True, internal=True)
-#                    where_to_stop = cobol_program.replace("-", "__")+'_'
-#                    gdb.Breakpoint(where_to_stop,
-#                                   type=gdb.BP_BREAKPOINT,
-#                                   temporary=True,
-#                                   internal=True)
-#                else:
-#                    # Turn hyphens into doubled underscores:
-#                    entry_point = cobol_program.replace("-", "__") + "_"
-#                    command = "tbreak {0}".format(entry_point)
-#                    gdb.execute(command, True, False)
-#=======
                 CBreakWorker.set_entry_breakpoint(module, True, True)
-#>>>>>>> ssobisch/cbl-gdb-patch-12
                 command = "run " + arguments
             else:
                 # "start" is not expected to actually "run", so we use start in the unknown case
