@@ -2971,7 +2971,7 @@ def get_completion_possibilities(word):
 
     word = word.upper()
     if word == '*':
-        possibilities_1,limit_reached = get_sorted_possibilities(['0'], 0, no_data=True)
+        possibilities_1,limit_reached = get_sorted_possibilities(['*'], 0, no_data=True)
         for index in possibilities_1:
             name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
             possibilities.append(name)
