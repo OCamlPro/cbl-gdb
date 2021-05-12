@@ -2477,17 +2477,6 @@ class ModuleState():
         self.current_display_mode = '0'
         self.current_display_submode = '0'
 
-        # This code was requested by Simon Sobisch, who wanted
-        # to avoid recompiling his source code when the wrapper solution
-        # was first deployed.  In Version4.27, this will be removed and everybody
-        # will use the wrapper solution.
-        self.cob_malloc            = "cob_malloc"
-        self.cob_cache_malloc      = "cob_cache_malloc"
-        self.cob_free              = "cob_free"
-        self.cob_move              = "cob_move"
-        self.cob_get_field_str     = "cob_get_field_str"
-        self.cob_put_field_str     = "cob_put_field_str"
-
     def ProcessStack(self):
         """ Figures out which routine we are currently trapped in"""
 
@@ -2641,12 +2630,29 @@ class ModuleState():
 
                         debugged_system = platform.system()
                         if debugged_system == 'Windows':
-                            self.cob_malloc            = "DEBUG_cob_malloc_"            + name_root2
-                            self.cob_cache_malloc      = "DEBUG_cob_cache_malloc_"      + name_root2
-                            self.cob_free              = "DEBUG_cob_free_"              + name_root2
-                            self.cob_move              = "DEBUG_cob_move_"              + name_root2
-                            self.cob_get_field_str     = "DEBUG_cob_get_field_str_"     + name_root2
-                            self.cob_put_field_str     = "DEBUG_cob_put_field_str_"     + name_root2
+                            self.cob_malloc                 = "DEBUG_cob_malloc_"                  + name_root2
+                            self.cob_cache_malloc           = "DEBUG_cob_cache_malloc_"            + name_root2
+                            self.cob_free                   = "DEBUG_cob_free_"                    + name_root2
+                            self.cob_move                   = "DEBUG_cob_move_"                    + name_root2
+                            self.cob_get_field_str          = "DEBUG_cob_get_field_str_"           + name_root2
+                            self.cob_put_field_str          = "DEBUG_cob_put_field_str_"           + name_root2
+                            self.cob_get_field_str_buffered = "DEBUG_cob_get_field_str_buffered_"  + name_root2
+                            self.cob_cmp                    = "DEBUG_cob_cmp _"                    + name_root2
+                            self.cob_intr_upper_case        = "DEBUG_cob_intr_upper_case_"         + name_root2
+                        else:
+                            # This code was requested by Simon Sobisch, who wanted
+                            # to avoid recompiling his source code when the wrapper solution
+                            # was first deployed.  In Version4.27, this will be removed and everybody
+                            # will use the wrapper solution.
+                            self.cob_malloc                 = "cob_malloc"
+                            self.cob_cache_malloc           = "cob_cache_malloc"
+                            self.cob_free                   = "cob_free"
+                            self.cob_move                   = "cob_move"
+                            self.cob_get_field_str          = "cob_get_field_str"
+                            self.cob_put_field_str          = "cob_put_field_str"
+                            self.cob_get_field_str_buffered = "cob_get_field_str_buffered"
+                            self.cob_cmp                    = "cob_cmp"
+                            self.cob_intr_upper_case        = "cob_intr_upper_case"
 
                         if GV_ModuleInformation.ReadVariableString(string_name):
                             break
