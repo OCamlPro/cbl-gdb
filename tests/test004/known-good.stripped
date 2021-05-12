@@ -405,13 +405,13 @@ TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)(3:4)  :  "2AB^"
 cprint tab-adr-prgm(2)
 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)  :  "Se2AB^--"
 cp TAB-ADR-IND
-No symbol matches "TAB-ADR-IND" in current context
+Multiple symbols match "TAB-ADR-IND" in current context
 cp TAB-ADR-IND of z-table = 1234
 TAB-ADR-IND/T-ENTRIES/Z-TABLE  :  +000001234
 cp TAB-ADR-IND of T_ADDRESSES = 5432
 TAB-ADR-IND/T_ADDRESSES  :  +000005432
 cp TAB-ADR-IND
-No symbol matches "TAB-ADR-IND" in current context
+Multiple symbols match "TAB-ADR-IND" in current context
 cp TAB-ADR-IND of T_ENTRY = 9999
 No symbol matches "TAB-ADR-IND/T_ENTRY" in current context
 cp svalue

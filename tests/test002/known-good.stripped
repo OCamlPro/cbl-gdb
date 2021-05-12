@@ -1518,7 +1518,7 @@ variables=[{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{nam
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint com
-No symbol matches "com" in current context
+Multiple symbols match "com" in current context
 cprint *com
 No symbols match "*com" in current context
 cprint com*
@@ -1566,7 +1566,7 @@ cprint *x
  3 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
  4 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 cprint com
-No symbol matches "com" in current context
+Multiple symbols match "com" in current context
 cprint *com
 No symbols match "*com" in current context
 cprint com*
