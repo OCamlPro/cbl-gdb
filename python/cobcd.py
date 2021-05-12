@@ -1230,8 +1230,8 @@ class VarTrie():
 
     def GetMatchingPossibilities(self,desired):
         # Arriving here means that desired has an asterisk in it.
-        # We will convert "*" to ".*" and leverage regex:
-        pattern = '^' + desired.replace("*",".*").upper() + '$'
+        # We will convert '*' to ".*" and leverage regex:
+        pattern = '^' + desired.replace('*',".*").upper() + '$'
         matcher = re.compile(pattern)
 
         paths = []
@@ -1382,7 +1382,7 @@ class VarTrie():
             self.storage_list[paths[0]].Refmod = refmod
         else:
             # There are either zero possibilities, or else there are more than one.
-            # We provide the "*" matching capabilitity up above, so at this point,
+            # We provide the '*' matching capabilitity up above, so at this point,
             # more than one is the same as none
             paths = []
         return paths
@@ -3001,7 +3001,7 @@ def break_completion(text, word, condition):
 
         if word is None or word == "" or word[0] in ('(', ')', ',', ':'):
             # gdb returns everything, do the same here
-            word = "*"
+            word = '*'
 
         possibilities = get_completion_possibilities(word)
         return possibilities
@@ -3600,7 +3600,7 @@ class CobolAfterWatchBreakpoint(gdb.Breakpoint):
         if cob_frame and cob_frame != frame:
             frame = cob_frame
 
-        resume_address = "*" + str(hex(frame.pc()))
+        resume_address = '*' + str(hex(frame.pc()))
 
         super(CobolAfterWatchBreakpoint, self).__init__(resume_address, temporary=True, internal=True)
 
@@ -4385,7 +4385,7 @@ class CPrint(gdb.Command):
 
             if word is None or word == "" or word[0] in ('(', ')', ',', ':'):
                 # gdb returns everything, do the same here
-                word = "*"
+                word = '*'
 
             possibilities = get_completion_possibilities(word)
 
@@ -4432,7 +4432,7 @@ A watchpoint stops execution of your program whenever the value of an expression
 
             if word is None or word == "" or word[0] in ('(', ')', ',', ':'):
                 # gdb returns everything, do the same here
-                word = "*"
+                word = '*'
 
             possibilities = get_completion_possibilities(word)
             return possibilities
