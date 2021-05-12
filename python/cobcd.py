@@ -1386,11 +1386,6 @@ class VarTrie():
             if refmod or self.storage_list[paths[0]].Refmod:
                 self.storage_list[paths[0]].IsDirty = True
             self.storage_list[paths[0]].Refmod = refmod
-        else:
-            # There are either zero possibilities, or else there are more than one.
-            # We provide the '*' matching capabilitity up above, so at this point,
-            # more than one is the same as none
-            paths = []
         return paths
 
     def FlagAllAsDirty(self):
@@ -3567,6 +3562,10 @@ class CPrintWorker():
                 print('No symbol matches "{0}" in current context'.format('/'.join(left_side)))
             else:
                 print('No symbols match "{0}" in current context'.format('/'.join(left_side)))
+            return
+
+        if len(leftside_possibilities) > 1 and left_side[0].find('*') == -1 and left_side[0][0] != '?':
+            print('Multiple symbols match "{0}" in current context'.format('/'.join(left_side)))
             return
 
         if len(leftside_possibilities) == 1:
