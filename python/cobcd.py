@@ -1228,6 +1228,12 @@ class VarTrie():
                 # and terminate
                 return
 
+    def GetAllPossibilities(self):
+        paths = []
+        for index in range(len(self.storage_list)):
+            paths.append(index)
+        return paths
+
     def GetMatchingPossibilities(self,desired):
         # Arriving here means that desired has an asterisk in it.
         # We will convert '*' to ".*" and leverage regex:
@@ -1241,7 +1247,7 @@ class VarTrie():
                 matched = re.search(matcher, piece_of_name.upper())
                 if matched:
                     paths.append(index)
-                    break;
+                    break
         return paths
 
     def GetListOfExactPossibilities(self, token):
@@ -2851,13 +2857,17 @@ def MachineInterfaceHeirarchical(possibilities):
     # retval = r'variables=[{name="L01",value="{_groupvalue=\"Snap!\",fullname=\"RobertDubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"Dubner\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]'
     return retval
 
-def get_sorted_possibilities(args, limit):
+def get_sorted_possibilities(args, limit, no_data=False):
     # We take a list of strings as args
     possibilities_1 = []
     possibilities = []
 
     if len(args) >= 1 and GV_ModuleState.current_trapped_line > 0:
-        if args[0].find('*') != -1:
+        if args[0] == '*':
+            # If the first, presumably single, argument is an asterisk, then
+            # he is asking for all variables:
+            possibilities_1 = GV_ModuleInformation.var_trie.GetAllPossibilities()
+        elif args[0].find('*') != -1:
             # If the first, presumably single, argument contains an asterisk, then
             # he is asking for a list of variables that match the pattern:
             possibilities_1 = GV_ModuleInformation.var_trie.GetMatchingPossibilities(args[0])
@@ -2919,15 +2929,23 @@ def get_sorted_possibilities(args, limit):
             # to come up with the possibilities_1:
             possibilities_1 = GV_ModuleInformation.var_trie.GetListOfPossibilities(args)
 
+    if no_data and not limit:
+        return possibilities_1, False # False means there was no 'limit' overflow
+
     # We now have a list of possibilities_1 based on the names of the variables
-    # typically, some of them will not be in context.  The only way of
-    # knowing which variables are in context is to try to read them.  If we
-    # can't read them, then we don't add them to our list:
+    # typically, some of them will not be in context.
     target_limit = 0
     for payload_index in possibilities_1:
-        payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
-        payload.FetchVariableData(False)
-        if not payload.not_in_context:
+        if no_data:
+            add_to_list = True
+        else:
+            # The only way of knowing which variables are in context
+            # is to try to read them.  If we can't read them,
+            # then we don't add them to our list:
+            payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+            payload.FetchVariableData(False)
+            add_to_list = not payload.not_in_context
+        if add_to_list:
             possibilities.append(payload_index)
             target_limit = target_limit + 1
 
@@ -2953,8 +2971,8 @@ def get_completion_possibilities(word):
 
     word = word.upper()
     if word == '*':
-        possibilities_1,limit_reached = get_sorted_possibilities(word, 0)
-        for index in possibilities:
+        possibilities_1,limit_reached = get_sorted_possibilities(['0'], 0, no_data=True)
+        for index in possibilities_1:
             name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
             possibilities.append(name)
     else:
@@ -3537,6 +3555,8 @@ class CPrintWorker():
             # This can happen as a result of TAB completion:
             left_side[-1] = left_side[-1][:-1]
 
+        # note: if we do have a right-side then we do not need the actual data, maybe add , no_data=True here
+        # ... but we do need to know if this variable is in the current context
         leftside_possibilities, limit_reached = get_sorted_possibilities(left_side, 0)
         if not leftside_possibilities:
             # There are no leftside possibilities.  Let him know why, and then bug out
@@ -3567,6 +3587,8 @@ class CPrintWorker():
             # because that routine will get confused thinking that we are looking for an
             # short_term_index into storage_list
             if len(right_side) != 1 or not IsNumber(right_side[0]):
+                # note: we don't need the right-side's actual data (as we use cob_move to copy it with any conversions needed), maybe
+                # add , no_data=True here ... but we do need to know if this variable is in the current context
                 rightside_possibilities, limit_reached = get_sorted_possibilities(right_side, 1)
                 if not rightside_possibilities and not limit_reached:
                     print('No symbol matches "{0}" in current context'.format('/'.join(right_side)))
