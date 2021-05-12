@@ -264,75 +264,75 @@ cp ws-a(2) = "1"
 WS-A/WS-TABLE(2)  :  "1       "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "1       "
-cp ws-a(2)(2:) = '1'
+cp ws-a(2)(2:) = "1"
 WS-A/WS-TABLE(2)(2:7)  :  "1      "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "11      "
-cp ws-a(2)(3:) = '1'
+cp ws-a(2)(3:) = "1"
 WS-A/WS-TABLE(2)(3:6)  :  "1     "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "111     "
-cp ws-a(2)(4:) = '1'
+cp ws-a(2)(4:) = "1"
 WS-A/WS-TABLE(2)(4:5)  :  "1    "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "1111    "
-cp ws-a(2)(5:) = '1'
+cp ws-a(2)(5:) = "1"
 WS-A/WS-TABLE(2)(5:4)  :  "1   "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "11111   "
-cp ws-a(2)(6:) = '1'
+cp ws-a(2)(6:) = "1"
 WS-A/WS-TABLE(2)(6:3)  :  "1  "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "111111  "
-cp ws-a(2)(7:)= '1'
+cp ws-a(2)(7:)= "1"
 WS-A/WS-TABLE(2)(7:2)  :  "1 "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "1111111 "
-cp ws-a(2)(8:)= '1'
+cp ws-a(2)(8:)= "1"
 WS-A/WS-TABLE(2)(8:1)  :  "1"
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "11111111"
-cp ws-a(2)(9:)= '1'
+cp ws-a(2)(9:)= "1"
 The refmod (9:) length has to be between 1 and 8
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "11111111"
-cp ws-a(2)(zed:1)   = ' '
+cp ws-a(2)(zed:1)   = " "
 The refmod (ZED:1) offset has to be greater than zero
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "11111111"
-cp ws-a(2)(one:1)   = ' '
+cp ws-a(2)(one:1)   = " "
 WS-A/WS-TABLE(2)(1:1)  :  " "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  " 1111111"
-cp ws-a(2)(two:1)   = ' '
+cp ws-a(2)(two:1)   = " "
 WS-A/WS-TABLE(2)(2:1)  :  " "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "  111111"
-cp ws-a(2)(three of nums1:1) = ' '
+cp ws-a(2)(three of nums1:1) = " "
 WS-A/WS-TABLE(2)(3:1)  :  " "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "   11111"
-cp ws-a(2)(four of nums1:1)  = ' '
+cp ws-a(2)(four of nums1:1)  = " "
 WS-A/WS-TABLE(2)(4:1)  :  " "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "    1111"
-cp ws-a(2)(5:one)   = ' '
+cp ws-a(2)(5:one)   = " "
 WS-A/WS-TABLE(2)(5:1)  :  " "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "     111"
-cp ws-a(2)(6:one)   = ' '
+cp ws-a(2)(6:one)   = " "
 WS-A/WS-TABLE(2)(6:1)  :  " "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "      11"
-cp ws-a(two)(7:1)   = ' '
+cp ws-a(two)(7:1)   = " "
 WS-A/WS-TABLE(2)(7:1)  :  " "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "       1"
-cp ws-a(two)(8:1)   = ' '
+cp ws-a(two)(8:1)   = " "
 WS-A/WS-TABLE(2)(8:1)  :  " "
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "        "
-cp ws-a(two)(9:1)   = ' '
+cp ws-a(two)(9:1)   = " "
 The refmod (9:1) offset has to be less than 8
 cp ws-a(2)
 WS-A/WS-TABLE(2)  :  "        "

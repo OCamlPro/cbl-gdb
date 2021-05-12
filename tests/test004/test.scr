@@ -163,76 +163,76 @@ echo cp ws-a(2) = "1"\n
 cp ws-a(2) = "1"
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(2:) = '1'\n
-cp ws-a(2)(2:) = '1'
+echo cp ws-a(2)(2:) = "1"\n
+cp ws-a(2)(2:) = "1"
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(3:) = '1'\n
-cp ws-a(2)(3:) = '1'
+echo cp ws-a(2)(3:) = "1"\n
+cp ws-a(2)(3:) = "1"
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(4:) = '1'\n
-cp ws-a(2)(4:) = '1'
+echo cp ws-a(2)(4:) = "1"\n
+cp ws-a(2)(4:) = "1"
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(5:) = '1'\n
-cp ws-a(2)(5:) = '1'
+echo cp ws-a(2)(5:) = "1"\n
+cp ws-a(2)(5:) = "1"
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(6:) = '1'\n
-cp ws-a(2)(6:) = '1'
+echo cp ws-a(2)(6:) = "1"\n
+cp ws-a(2)(6:) = "1"
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(7:)= '1'\n
-cp ws-a(2)(7:)= '1'
+echo cp ws-a(2)(7:)= "1"\n
+cp ws-a(2)(7:)= "1"
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(8:)= '1'\n
-cp ws-a(2)(8:)= '1'
+echo cp ws-a(2)(8:)= "1"\n
+cp ws-a(2)(8:)= "1"
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(9:)= '1'\n
-cp ws-a(2)(9:)= '1'
+echo cp ws-a(2)(9:)= "1"\n
+cp ws-a(2)(9:)= "1"
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(zed:1)   = ' '\n
-cp ws-a(2)(zed:1)   = ' '
+echo cp ws-a(2)(zed:1)   = " "\n
+cp ws-a(2)(zed:1)   = " "
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(one:1)   = ' '\n
-cp ws-a(2)(one:1)   = ' '
+echo cp ws-a(2)(one:1)   = " "\n
+cp ws-a(2)(one:1)   = " "
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(two:1)   = ' '\n
-cp ws-a(2)(two:1)   = ' '
+echo cp ws-a(2)(two:1)   = " "\n
+cp ws-a(2)(two:1)   = " "
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(three of nums1:1) = ' '\n
-cp ws-a(2)(three of nums1:1) = ' '
+echo cp ws-a(2)(three of nums1:1) = " "\n
+cp ws-a(2)(three of nums1:1) = " "
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(four of nums1:1)  = ' '\n
-cp ws-a(2)(four of nums1:1)  = ' '
+echo cp ws-a(2)(four of nums1:1)  = " "\n
+cp ws-a(2)(four of nums1:1)  = " "
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(5:one)   = ' '\n
-cp ws-a(2)(5:one)   = ' '
+echo cp ws-a(2)(5:one)   = " "\n
+cp ws-a(2)(5:one)   = " "
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(2)(6:one)   = ' '\n
-cp ws-a(2)(6:one)   = ' '
+echo cp ws-a(2)(6:one)   = " "\n
+cp ws-a(2)(6:one)   = " "
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(two)(7:1)   = ' '\n
-cp ws-a(two)(7:1)   = ' '
+echo cp ws-a(two)(7:1)   = " "\n
+cp ws-a(two)(7:1)   = " "
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(two)(8:1)   = ' '\n
-cp ws-a(two)(8:1)   = ' '
+echo cp ws-a(two)(8:1)   = " "\n
+cp ws-a(two)(8:1)   = " "
 echo cp ws-a(2)\n
 cp ws-a(2)
-echo cp ws-a(two)(9:1)   = ' '\n
-cp ws-a(two)(9:1)   = ' '
+echo cp ws-a(two)(9:1)   = " "\n
+cp ws-a(two)(9:1)   = " "
 echo cp ws-a(2)\n
 cp ws-a(2)
 

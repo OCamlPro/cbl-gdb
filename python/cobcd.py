@@ -761,7 +761,7 @@ def get_left_right_args(args):
     if len(leftright) > 2 and leftright[2] != '':
         # There is a rightside.
         right_side = leftright[2].strip()
-        if right_side[0] in ('"', "'"):  # I do love that construction
+        if right_side[0] in ('"'):
             if len(right_side) < 2 or right_side[-1] != right_side[0]:
                 print("A syntax error in >>{0}<<.".format(right_side))
                 left_side = []
@@ -2917,7 +2917,7 @@ def get_sorted_possibilities(args, limit, no_data=False):
                 # If index is valid, pick up the short-term memory entry
                 possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
             else:
-                print("The specified index ({0}) is out of range (1 to {1})".format(index + 1, len(GV_GlobalVariables.ShortTermMemory)))
+                print("The specified stored variable index ({0}) is out of range (1 to {1})".format(index + 1, len(GV_GlobalVariables.ShortTermMemory)))
                 return possibilities, False  # False means there was no 'limit' overflow
         else:
             # There are one or more arguments.  Use our clever routine
@@ -3508,6 +3508,10 @@ class CPrintWorker():
         if not GV_ModuleState.Stack:
             raise gdb.GdbError("No stack.")
 
+        if args[0][0] == '"':
+            self.HandleDoubleQuote(arguments)
+            return
+
         # Initialize for subsequent processing:
         leftside_possibilities = []
         rightside_possibilities = []
@@ -3610,6 +3614,18 @@ class CPrintWorker():
         else:
             self.ProcessArgumentsHumanMode(leftside_possibilities,
                                            right_side)
+
+    def HandleDoubleQuote(self,arguments):
+        # We know arguments has an early double-quote
+        nfound = arguments.find('"')
+        if nfound > -1:
+            arguments = arguments[nfound:]
+            nfound = arguments.find('"',1)
+            if nfound == -1:
+                print("Unterminated string")
+            else:
+                print(arguments[:nfound+1])
+        return
 
 class CobolAfterWatchBreakpoint(gdb.Breakpoint):
     def __init__(self, creating_wp):
