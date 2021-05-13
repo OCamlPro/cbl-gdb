@@ -1518,7 +1518,22 @@ variables=[{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{nam
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint com
-Multiple symbols match "com" in current context
+ 1 : 01 def-COMP-1/test [W-S] : 1.11
+ 2 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+ 3 : 01 def-COMP-2/test [W-S] : 2.22
+ 4 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+ 5 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+ 6 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+ 7 : 01 def-COMP/test [W-S] : +988776654.1223345
+ 8 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+ 9 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+10 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+11 : 01 def-COMP-5/test [W-S] : +00009887766541223345
+12 : 01 def-COMPUTATIONAL-5/test [W-S] : -00009887766541223345
+13 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+14 : 01 def-COMP-X/test [W-S] : +988776654.1223345
+15 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
+16 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 cprint *com
 No symbols match "*com" in current context
 cprint com*
@@ -1566,7 +1581,22 @@ cprint *x
  3 : 01 def-COMPUTATIONAL-X/test [W-S] : +988776654.1223345
  4 : 01 def-COMP-XX/test [W-S] : 009887766541223345
 cprint com
-Multiple symbols match "com" in current context
+ 1 : 01 def-COMP-1  : 1.11
+ 2 : 01 def-COMPUTATIONAL-1  : 3.3299999
+ 3 : 01 def-COMP-2  : 2.22
+ 4 : 01 def-COMPUTATIONAL-2  : 4.44
+ 5 : 01 def-COMP-3  : +988776654.1223345
+ 6 : 01 def-COMPUTATIONAL-3  : -988776654.1223345
+ 7 : 01 def-COMP  : +988776654.1223345
+ 8 : 01 def-COMPUTATIONAL  : -988776654.1223345
+ 9 : 01 def-COMP-4  : +988776654.1223345
+10 : 01 def-COMPUTATIONAL-4  : -988776654.1223345
+11 : 01 def-COMP-5  : +00009887766541223345
+12 : 01 def-COMPUTATIONAL-5  : -00009887766541223345
+13 : 01 def-COMP-6  : 88776654.1223345
+14 : 01 def-COMP-X  : +988776654.1223345
+15 : 01 def-COMPUTATIONAL-X  : +988776654.1223345
+16 : 01 def-COMP-XX  : 009887766541223345
 cprint *com
 No symbols match "*com" in current context
 cprint com*

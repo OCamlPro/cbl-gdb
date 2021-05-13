@@ -749,6 +749,23 @@ def get_left_right_args(args):
     # This can be an assignment, so check for it.
     leftright = re.split('(![=]*|=[=~<>]*[i]*|~|<[=>]*[i]*|>[=]*)', args)
 
+    if len(leftright) > 0:
+        if leftright[0][0] == "'":
+            # Tab completion starts with an apostrophe:
+            leftright[0] = leftright[0][1:]
+            # And it might not end with one.  But if there is, we want to 
+            # get rid of it:
+            if leftright[-1][-1] == "'":
+                leftright[-1] = leftright[-1][:-1]
+
+        sq_count = leftright[0].count("'")
+        if sq_count > 0 and sq_count % 2 != 0:
+            raise gdb.GdbError("Unmatched single quote.")
+
+        sq_count = leftright[0].count('"')
+        if sq_count > 0 and sq_count % 2 != 0:
+            raise gdb.GdbError("Unmatched double quote.")
+
     # Pick up the left and right sides, and turn them into
     # "normalized" COBOL variable names.
     if len(leftright) > 0:
@@ -846,21 +863,13 @@ def TokenizeCanonicalName(desired):
         suffix = desired[nparen:]
         desired = desired[0:nparen]
 
-        sq_count = suffix.count("'")
-        if sq_count > 0 and sq_count % 2 != 0:
-            raise gdb.GdbError("Unmatched single quote.")
-
-    sq_count = desired.count("'")
-    if sq_count > 0 and sq_count % 2 != 0:
-        raise gdb.GdbError("Unmatched single quote.")
-
     if desired:
         if desired[0] == "'":
             # This can happen as a result of TAB completion:
             desired = desired[1:]
-        if desired[-1] == "'":
-            # This can happen as a result of TAB completion:
-            desired = desired[:-1]
+            if desired[-1] == "'":
+                # This can happen as a result of TAB completion:
+                desired = desired[:-1]
 
         # turn IN and OF into spaces
         pattern = re.compile(r"^(.*) (in|In|iN|IN|of|oF|Of|OF) (.*)$")
@@ -3546,23 +3555,12 @@ class CPrintWorker():
         GV_GlobalVariables.VarLeftIndex = None
         GV_GlobalVariables.VarRight = None
 
-        sq_count = left_side[0].count("'")
-        if sq_count > 0 and sq_count % 2 != 0:
-            raise gdb.GdbError("Unmatched single quote.")
-
-        if left_side[0][0] == "'":
-            # This can happen as a result of TAB completion:
-            left_side[0] = left_side[0][1:]
-        if left_side[-1][-1] == "'":
-            # This can happen as a result of TAB completion:
-            left_side[-1] = left_side[-1][:-1]
-
         # note: if we do have a right-side then we do not need the actual data, maybe add , no_data=True here
         # ... but we do need to know if this variable is in the current context
         leftside_possibilities, limit_reached = get_sorted_possibilities(left_side, 0)
         if not leftside_possibilities:
             # There are no leftside possibilities.  Let him know why, and then bug out
-            if left_side[0][0] in ('?') or left_side[0].isdigit():
+            if left_side[0] == '?' or left_side[0].isdigit():
                 # When '*' or '?' match nothing, then just return nothing
                 return
             if left_side[0].find('*') == -1:
@@ -3572,7 +3570,7 @@ class CPrintWorker():
             return
 
         if len(leftside_possibilities) == 1:
-            # because there is but a single possibility, we might be in a "cprint var1=var2" situation
+            # because there is but a single leftside possibility, we might be in a "cprint var1=var2" situation
             GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]])
             GV_GlobalVariables.VarLeftIndex = leftside_possibilities[0]
             if GV_GlobalVariables.VarLeft.SubscriptFailure or GV_GlobalVariables.VarLeft.RefmodFailure:
