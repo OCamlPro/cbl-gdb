@@ -3493,6 +3493,15 @@ class CPrintWorker():
                 payload.IsDirty = True
 
     def ProcessArguments(self, arguments):
+
+        # Special case:
+        # If the final character is '!', we will list all ambiguous names
+        if arguments[-1] == '!':
+            just_count_ambiguities = False
+            arguments = arguments[0:-1]
+        else:
+            just_count_ambiguities = True
+
         # Look for /[dxvmvr] switches:
         args = self.ProcessDisplayMode(arguments)
 
@@ -3567,6 +3576,10 @@ class CPrintWorker():
                 print('No symbol matches "{0}" in current context'.format('/'.join(left_side)))
             else:
                 print('No symbols match "{0}" in current context'.format('/'.join(left_side)))
+            return
+
+        if len(leftside_possibilities) > 1 and left_side[0].find('*') == -1 and left_side[0][0] != '?' and just_count_ambiguities:
+            print('Multiple ({0}) symbols match "{1}" in current context'.format(len(leftside_possibilities),'/'.join(left_side)))
             return
 
         if len(leftside_possibilities) == 1:

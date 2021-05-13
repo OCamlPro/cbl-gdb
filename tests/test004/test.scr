@@ -236,8 +236,6 @@ cp ws-a(two)(9:1)   = " "
 echo cp ws-a(2)\n
 cp ws-a(2)
 
-
-
 echo cp ws-a(1)\n
 cp ws-a(1)
 echo cp ws-a(2)\n
@@ -271,12 +269,12 @@ cprint tab-adr-prgm(2)
 
 echo cp TAB-ADR-IND\n
 cp TAB-ADR-IND
+echo cp TAB-ADR-IND!\n
+cp TAB-ADR-IND!
 echo cp TAB-ADR-IND of z-table = 1234\n
 cp TAB-ADR-IND of z-table = 1234
 echo cp TAB-ADR-IND of T_ADDRESSES = 5432\n
 cp TAB-ADR-IND of T_ADDRESSES = 5432
-echo cp TAB-ADR-IND\n
-cp TAB-ADR-IND
 
 echo cp TAB-ADR-IND of T_ENTRY = 9999\n
 cp TAB-ADR-IND of T_ENTRY = 9999
