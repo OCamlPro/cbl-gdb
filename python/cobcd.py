@@ -3775,10 +3775,10 @@ class CWatchWorker():
             break_point = CobolWatchBreakpoint(payload, spec, wp_type)
         else:
             break_point = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_ACCESS)
-            if break_point.type == gdb.BP_WATCHPOINT:
-                break_point.delete()
-                raise gdb.GdbError("Expression cannot be implemented as hardware watchpoint.\n... and therefore removed")
-            break_point.commands = "echo Watched: {0} from {1}\\n \n cup 0".format(payload.NameWithSubscripts(), payload.Program)
+            #if break_point.type == gdb.BP_WATCHPOINT:
+            #    break_point.delete()
+            #    raise gdb.GdbError("Expression cannot be implemented as hardware watchpoint.\n... and therefore removed")
+            #break_point.commands = "echo Watched: {0} from {1}\\n \n cup 0".format(payload.NameWithSubscripts(), payload.Program)
 
     def process_watch_arguments(self, arguments):
         left_side = []
@@ -4539,9 +4539,9 @@ by using "enable delete" on the breakpoint number.
 Do "help cbreak" for info on COBOL expressions"""
 
     def __init__(self):
-        if GV_GlobalVariables.gdb_8dot3_plus:
-            self.worker = CBLDBG_CBREAK_WORKER
-            super(CTBreak, self).__init__("ctbreak", gdb.COMMAND_BREAKPOINTS)
+#        if GV_GlobalVariables.gdb_8dot3_plus:
+        self.worker = CBLDBG_CBREAK_WORKER
+        super(CTBreak, self).__init__("ctbreak", gdb.COMMAND_BREAKPOINTS)
 
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
