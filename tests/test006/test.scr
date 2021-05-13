@@ -1,0 +1,55 @@
+set height 0
+set width 0
+
+define printem
+	echo KNOWN GOOD START\n
+	cprint/v0 *
+	echo KNOWN GOOD FINISH\n
+	end
+
+file test
+cprint/v3
+cprint/r 6
+
+cstart
+cwatch D
+
+continue
+printem
+continue
+printem
+continue
+printem
+continue
+printem
+continue
+printem
+continue
+printem
+continue
+printem
+continue
+printem
+continue
+printem
+continue
+printem
+
+delete
+continue
+
+cstart
+cbreak  18 if b == 3
+ctbreak 20 if d == 5
+cbreak  22 if f == 7
+
+continue 
+printem
+continue 
+printem
+continue 
+printem
+continue 
+
+
+quit
