@@ -10,6 +10,9 @@ GDB?=gdb
 # start with "known-good"
 knowngood:=known-good
 
+gdbmajor:=$(shell gdb --version | head -n 1 | sed -E 's/.*([0-9]+)[.]([0-9]+)[.]([0-9]+).*/\1/g' )
+# $(info $(gdbmajor))
+
 # tack on "-rh7" on a RedHat7 system:
 #knowngood := $(knowngood)$(shell uname -r |grep el7| sed 's/\(^.*\)el7\(.*\)/-rh7/g')
 
@@ -25,17 +28,29 @@ all:
 
 known-good:
 	COBCDEVEL=1 $(COBCD) -x test.cbl
+ifeq ($(gdbmajor),7)
+	@echo "This function is suppressed in systems with GDB-7"
+else
 	$(GDB) -x test.scr > known-good.txt
 	../strip-diff known-good.txt >$(knowngood).stripped
+endif
 
 test:
 	COBCDEVEL=1 $(COBCD) -x test.cbl
+ifeq ($(gdbmajor),7)
+	@echo "This function is suppressed in systems with GDB-7"
+else
 	$(GDB) -x test.scr > under-test.txt
 	../strip-diff under-test.txt >under-test.stripped
 	diff -uw under-test.stripped $(knowngood).stripped
+endif
 
 testprod:
 	cobcd -x test.cbl
+ifeq ($(gdbmajor),7)
+	@echo "This function is suppressed in systems with GDB-7"
+else
 	$(GDB) -x test.scr > under-test.txt
 	../strip-diff under-test.txt >under-test.stripped
 	diff -uw under-test.stripped $(knowngood).stripped
+endif
