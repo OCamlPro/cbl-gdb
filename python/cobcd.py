@@ -4343,15 +4343,19 @@ class CPrint(gdb.Command):
     """Prints COBOL-NAMED variables when debugging cobst processed object files.
 
     COBOL cprint command usage:
-    cprint <arg>        displays <arg> using session-default formatting
-    cprint <arg>(N)     displays the Nth element of table <arg>. Multiple subscripts are allowed
-    cprint <arg>(S:R)   reference modification: displays R characters starting at S in <arg>
-    cprint/v0           set session formatting to name and value on one line (this is the default)
-    cprint/v1           set session formatting to just value
-    cprint/v2           set session formatting to two-line display with name, then value
-    cprint/v3           like /v0, but with variable Level and Storage Type included
+    cprint VAR          displays VAR using session-default formatting
+    cprint VAR!         when VAR is ambiguous, all the possibilities are listed instead of counted
+    cprint VAR(N)       displays the Nth element of table <arg>. Multiple subscripts are allowed
+    cprint VAR(S:R)     reference modification: displays R characters starting at S in <arg>
+    cprint/v0           session formatting is single line, with LEVEL & NAME and VALUE
+    cprint/v1           session formatting is single line, just the value
+    cprint/v2           session formatting two lines: LEVEL & NAME followed by VALUE
+    cprint/v3           like /v0, but with LEVEL & NAME/PROGRAM-ID and VALUE
     cprint/v4           same as /v1
-    cprint/v5           like /v2, but with variable Level and Storage Type included
+    cprint/v5           like /v2, but with LEVEL & NAME/PROGRAM-ID then VALUE
+    cprint/v6           like /v0, but with just NAME and VALUE
+    cprint/v7           same as /v1
+    cprint/v8           like /v2, but with just NAME then VALUE
     cprint/v<n> <arg>   displays <arg> with a one-time formatting override
     cprint/x            show numeric value in hexadecimal
     cprint/b            show numeric value in binary
