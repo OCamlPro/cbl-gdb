@@ -2638,7 +2638,7 @@ class ModuleState():
                             self.cob_get_field_str          = "DEBUG_cob_get_field_str_"           + name_root2
                             self.cob_put_field_str          = "DEBUG_cob_put_field_str_"           + name_root2
                             self.cob_get_field_str_buffered = "DEBUG_cob_get_field_str_buffered_"  + name_root2
-                            self.cob_cmp                    = "DEBUG_cob_cmp _"                    + name_root2
+                            self.cob_cmp                    = "DEBUG_cob_cmp_"                     + name_root2
                             self.cob_intr_upper_case        = "DEBUG_cob_intr_upper_case_"         + name_root2
                         else:
                             # This code was requested by Simon Sobisch, who wanted
