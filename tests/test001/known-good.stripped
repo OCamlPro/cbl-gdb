@@ -1,46 +1,46 @@
 KNOWN GOOD START
 cprint/v0 *
- 1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
- 2 : FILLER/GEORGE : ' ' <repeats 13 times>
- 3 : NAME-FIRST/GEORGE : "GEORGE    "
- 4 : WASHINGTON : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
- 5 : FILLER/WASHINGTON : ' ' <repeats 23 times>
- 6 : NAME-FIRST/WASHINGTON : "WASHINGTON"
- 7 : LOCATION/WASHINGTON : "DC        "
- 8 : TEMPERATURE/WASHINGTON : "HOT       "
- 9 : WABASH/TEMPERATURE/WASHINGTON : "          "
-10 : CARVER : ' ' <repeats 43 times>, "CARVER    "
-11 : FILLER/CARVER : ' ' <repeats 43 times>
-12 : NAME-FIRST/CARVER : "CARVER    "
-13 : PEANUTS : ' ' <repeats 63 times>, "123456789"
-14 : FILLER/PEANUTS : ' ' <repeats 63 times>
-15 : NAME-FIRST/PEANUTS : 123.456789
-16 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-17 : FILLER/LEGUMES : ' ' <repeats 63 times>
-18 : NAME-FIRST/LEGUMES : 123456.789
-19 : WS-JIM : '^' <repeats 22 times>
-20 : WS-FIRSTNAME/WS-JIM : "^^^^^^^^^^"
-21 : WS-MIDDLE-INITIAL/WS-JIM : "^"
-22 : FILLER/WS-JIM : "^"
-23 : WS-LASTNAME/WS-JIM : "^^^^^^^^^^"
-24 : WS-BOB : '^' <repeats 22 times>
-25 : WS-FIRSTNAME/WS-BOB : "^^^^^^^^^^"
-26 : WS-MIDDLE-INITIAL/WS-BOB : "^"
-27 : FILLER/WS-BOB : "^"
-28 : WS-LASTNAME/WS-BOB : "^^^^^^^^^^"
-29 : WS-FLOATTEST : 0
+ 1 : 01 GEORGE  : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 FILLER/GEORGE  : ' ' <repeats 13 times>
+ 3 : 02 NAME-FIRST/GEORGE  : "GEORGE    "
+ 4 : 01 WASHINGTON  : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 5 : 02 FILLER/WASHINGTON  : ' ' <repeats 23 times>
+ 6 : 02 NAME-FIRST/WASHINGTON  : "WASHINGTON"
+ 7 : 02 LOCATION/WASHINGTON  : "DC        "
+ 8 : 02 TEMPERATURE/WASHINGTON  : "HOT       "
+ 9 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
+10 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+11 : 02 FILLER/CARVER  : ' ' <repeats 43 times>
+12 : 02 NAME-FIRST/CARVER  : "CARVER    "
+13 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+14 : 02 FILLER/PEANUTS  : ' ' <repeats 63 times>
+15 : 02 NAME-FIRST/PEANUTS  : 123.456789
+16 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+17 : 02 FILLER/LEGUMES  : ' ' <repeats 63 times>
+18 : 02 NAME-FIRST/LEGUMES  : 123456.789
+19 : 01 WS-JIM  : '^' <repeats 22 times>
+20 : 02 WS-FIRSTNAME/WS-JIM  : "^^^^^^^^^^"
+21 : 02 WS-MIDDLE-INITIAL/WS-JIM  : "^"
+22 : 02 FILLER/WS-JIM  : "^"
+23 : 02 WS-LASTNAME/WS-JIM  : "^^^^^^^^^^"
+24 : 01 WS-BOB  : '^' <repeats 22 times>
+25 : 02 WS-FIRSTNAME/WS-BOB  : "^^^^^^^^^^"
+26 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "^"
+27 : 02 FILLER/WS-BOB  : "^"
+28 : 02 WS-LASTNAME/WS-BOB  : "^^^^^^^^^^"
+29 : 01 WS-FLOATTEST  : 0
 cprint/v0 ?
- 1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
- 2 : NAME-FIRST/GEORGE : "GEORGE    "
- 3 : WASHINGTON : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
- 4 : NAME-FIRST/WASHINGTON : "WASHINGTON"
- 5 : WABASH/TEMPERATURE/WASHINGTON : "          "
- 6 : CARVER : ' ' <repeats 43 times>, "CARVER    "
- 7 : NAME-FIRST/CARVER : "CARVER    "
- 8 : PEANUTS : ' ' <repeats 63 times>, "123456789"
- 9 : NAME-FIRST/PEANUTS : 123.456789
-10 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-11 : NAME-FIRST/LEGUMES : 123456.789
+ 1 : 01 GEORGE  : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE  : "GEORGE    "
+ 3 : 01 WASHINGTON  : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON  : "WASHINGTON"
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
+ 6 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+ 7 : 02 NAME-FIRST/CARVER  : "CARVER    "
+ 8 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+ 9 : 02 NAME-FIRST/PEANUTS  : 123.456789
+10 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+11 : 02 NAME-FIRST/LEGUMES  : 123456.789
 cprint/v3 *
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 FILLER/GEORGE/test [L-S] : ' ' <repeats 13 times>
@@ -92,47 +92,47 @@ KNOWN GOOD FINISH
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : TEST-NUMBER-A : 123456789
- 2 : TEST-NUMBER-B1 : 1234567.8
- 3 : TEST-NUMBER-B2 : 123456.78
- 4 : TEST-NUMBER-C : 123456789
- 5 : errno : +0000000000
- 6 : WS-JIM : "James     " Lowden    "
- 7 : WS-FIRSTNAME/WS-JIM : "James     "
- 8 : WS-MIDDLE-INITIAL/WS-JIM : """
- 9 : FILLER/WS-JIM : " "
-10 : WS-LASTNAME/WS-JIM : "Lowden    "
-11 : WS-BOB : "Robert    J Dubner    "
-12 : WS-FIRSTNAME/WS-BOB : "Robert    "
-13 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-14 : FILLER/WS-BOB : " "
-15 : WS-LASTNAME/WS-BOB : "Dubner    "
-16 : WS-JUDY : "Judy      L Ruderman  "
-17 : WS-FIRSTNAME/WS-JUDY : "Judy      "
-18 : WS-MIDDLE-INITIAL/WS-JUDY : "L"
-19 : FILLER/WS-JUDY : " "
-20 : WS-LASTNAME/WS-JUDY : "Ruderman  "
-21 : UNUSED : ' ' <repeats 24 times>
-22 : NOT-USED/UNUSED : ' ' <repeats 24 times>
-23 : WS-FLOATTEST : 1.234
+ 1 : 77 TEST-NUMBER-A  : 123456789
+ 2 : 77 TEST-NUMBER-B1  : 1234567.8
+ 3 : 77 TEST-NUMBER-B2  : 123456.78
+ 4 : 77 TEST-NUMBER-C  : 123456789
+ 5 : 77 errno  : +0000000000
+ 6 : 01 WS-JIM  : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 9 : 02 FILLER/WS-JIM  : " "
+10 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+11 : 01 WS-BOB  : "Robert    J Dubner    "
+12 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+13 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+14 : 02 FILLER/WS-BOB  : " "
+15 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+16 : 01 WS-JUDY  : "Judy      L Ruderman  "
+17 : 02 WS-FIRSTNAME/WS-JUDY  : "Judy      "
+18 : 02 WS-MIDDLE-INITIAL/WS-JUDY  : "L"
+19 : 02 FILLER/WS-JUDY  : " "
+20 : 02 WS-LASTNAME/WS-JUDY  : "Ruderman  "
+21 : 01 UNUSED  : ' ' <repeats 24 times>
+22 : 02 NOT-USED/UNUSED  : ' ' <repeats 24 times>
+23 : 01 WS-FLOATTEST  : 1.234
 cprint/v0 ?
- 1 : TEST-NUMBER-B1 : 1234567.8
- 2 : TEST-NUMBER-B2 : 123456.78
- 3 : WS-JIM : "James     " Lowden    "
- 4 : WS-FIRSTNAME/WS-JIM : "James     "
- 5 : WS-MIDDLE-INITIAL/WS-JIM : """
- 6 : WS-LASTNAME/WS-JIM : "Lowden    "
- 7 : WS-BOB : "Robert    J Dubner    "
- 8 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 9 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-JUDY : "Judy      L Ruderman  "
-12 : WS-FIRSTNAME/WS-JUDY : "Judy      "
-13 : WS-MIDDLE-INITIAL/WS-JUDY : "L"
-14 : WS-LASTNAME/WS-JUDY : "Ruderman  "
-15 : UNUSED : ' ' <repeats 24 times>
-16 : NOT-USED/UNUSED : ' ' <repeats 24 times>
-17 : WS-FLOATTEST : 1.234
+ 1 : 77 TEST-NUMBER-B1  : 1234567.8
+ 2 : 77 TEST-NUMBER-B2  : 123456.78
+ 3 : 01 WS-JIM  : "James     " Lowden    "
+ 4 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 5 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 6 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 7 : 01 WS-BOB  : "Robert    J Dubner    "
+ 8 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 9 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-JUDY  : "Judy      L Ruderman  "
+12 : 02 WS-FIRSTNAME/WS-JUDY  : "Judy      "
+13 : 02 WS-MIDDLE-INITIAL/WS-JUDY  : "L"
+14 : 02 WS-LASTNAME/WS-JUDY  : "Ruderman  "
+15 : 01 UNUSED  : ' ' <repeats 24 times>
+16 : 02 NOT-USED/UNUSED  : ' ' <repeats 24 times>
+17 : 01 WS-FLOATTEST  : 1.234
 cprint/v3 *
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
@@ -180,45 +180,45 @@ variables=[{name="TEST-NUMBER-B1/JIMBOB",value="\"1234567.8\""},{name="TEST-NUMB
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : TEST-NUMBER-A : 123456789
- 2 : TEST-NUMBER-B1 : 1234567.8
- 3 : TEST-NUMBER-B2 : 123456.78
- 4 : TEST-NUMBER-C : 123456789
- 5 : errno : +0000000000
- 6 : WS-JIM : "James     " Lowden    "
- 7 : WS-FIRSTNAME/WS-JIM : "James     "
- 8 : WS-MIDDLE-INITIAL/WS-JIM : """
- 9 : FILLER/WS-JIM : " "
-10 : WS-LASTNAME/WS-JIM : "Lowden    "
-11 : WS-BOB : "Robert    J Dubner    "
-12 : WS-FIRSTNAME/WS-BOB : "Robert    "
-13 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-14 : FILLER/WS-BOB : " "
-15 : WS-LASTNAME/WS-BOB : "Dubner    "
-16 : WS-JUDY : "Judy      L Ruderman  "
-17 : WS-FIRSTNAME/WS-JUDY : "Judy      "
-18 : WS-MIDDLE-INITIAL/WS-JUDY : "L"
-19 : FILLER/WS-JUDY : " "
-20 : WS-LASTNAME/WS-JUDY : "Ruderman  "
-21 : UNUSED : ' ' <repeats 24 times>
-22 : NOT-USED/UNUSED : ' ' <repeats 24 times>
-23 : WS-FLOATTEST : 1.234
+ 1 : 77 TEST-NUMBER-A  : 123456789
+ 2 : 77 TEST-NUMBER-B1  : 1234567.8
+ 3 : 77 TEST-NUMBER-B2  : 123456.78
+ 4 : 77 TEST-NUMBER-C  : 123456789
+ 5 : 77 errno  : +0000000000
+ 6 : 01 WS-JIM  : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 9 : 02 FILLER/WS-JIM  : " "
+10 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+11 : 01 WS-BOB  : "Robert    J Dubner    "
+12 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+13 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+14 : 02 FILLER/WS-BOB  : " "
+15 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+16 : 01 WS-JUDY  : "Judy      L Ruderman  "
+17 : 02 WS-FIRSTNAME/WS-JUDY  : "Judy      "
+18 : 02 WS-MIDDLE-INITIAL/WS-JUDY  : "L"
+19 : 02 FILLER/WS-JUDY  : " "
+20 : 02 WS-LASTNAME/WS-JUDY  : "Ruderman  "
+21 : 01 UNUSED  : ' ' <repeats 24 times>
+22 : 02 NOT-USED/UNUSED  : ' ' <repeats 24 times>
+23 : 01 WS-FLOATTEST  : 1.234
 cprint/v0 ?
- 1 : TEST-NUMBER-B1 : 1234567.8
- 2 : TEST-NUMBER-B2 : 123456.78
- 3 : WS-JIM : "James     " Lowden    "
- 4 : WS-FIRSTNAME/WS-JIM : "James     "
- 5 : WS-MIDDLE-INITIAL/WS-JIM : """
- 6 : WS-LASTNAME/WS-JIM : "Lowden    "
- 7 : WS-BOB : "Robert    J Dubner    "
- 8 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 9 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-JUDY : "Judy      L Ruderman  "
-12 : WS-FIRSTNAME/WS-JUDY : "Judy      "
-13 : WS-MIDDLE-INITIAL/WS-JUDY : "L"
-14 : WS-LASTNAME/WS-JUDY : "Ruderman  "
-15 : WS-FLOATTEST : 1.234
+ 1 : 77 TEST-NUMBER-B1  : 1234567.8
+ 2 : 77 TEST-NUMBER-B2  : 123456.78
+ 3 : 01 WS-JIM  : "James     " Lowden    "
+ 4 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 5 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 6 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 7 : 01 WS-BOB  : "Robert    J Dubner    "
+ 8 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 9 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-JUDY  : "Judy      L Ruderman  "
+12 : 02 WS-FIRSTNAME/WS-JUDY  : "Judy      "
+13 : 02 WS-MIDDLE-INITIAL/WS-JUDY  : "L"
+14 : 02 WS-LASTNAME/WS-JUDY  : "Ruderman  "
+15 : 01 WS-FLOATTEST  : 1.234
 cprint/v3 *
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
@@ -268,22 +268,22 @@ KNOWN GOOD FINISH
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 1.234
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 1.234
 cprint/v0 ?
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 4 : WS-FLOATTEST : 1.234
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 4 : 01 WS-FLOATTEST  : 1.234
 cprint/v3 *
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -307,25 +307,25 @@ variables=[{name="WS-JIM/JIMBOB",value="{_groupvalue=\"\\\"James     \\\" Lowden
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 1.234
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 1.234
 cprint/v0 ?
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : WS-LASTNAME/WS-JIM : "Lowden    "
- 5 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 6 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 7 : WS-LASTNAME/WS-BOB : "Dubner    "
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 5 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 6 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 7 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
 cprint/v3 *
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -353,26 +353,26 @@ variables=[{name="WS-JIM/JIMBOB",value="{_groupvalue=\"\\\"James     \\\" Lowden
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 1.234
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 1.234
 cprint/v0 ?
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : WS-LASTNAME/WS-JIM : "Lowden    "
- 5 : WS-BOB : "Robert    J Dubner    "
- 6 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 7 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 8 : WS-LASTNAME/WS-BOB : "Dubner    "
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 5 : 01 WS-BOB  : "Robert    J Dubner    "
+ 6 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 7 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 8 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
 cprint/v3 *
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -394,29 +394,29 @@ variables=[{name="WS-BOB/JIMBOB",value="{_groupvalue=\"\\\"Robert    J Dubner   
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 1.234
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 1.234
 cprint/v0 ?
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 1.234
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 1.234
 cprint/v3 *
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -448,29 +448,29 @@ variables=[{name="WS-JIM/JIMBOB",value="{_groupvalue=\"\\\"James     \\\" Lowden
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 1.234
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 1.234
 cprint/v0 ?
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 1.234
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 1.234
 cprint/v3 *
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -493,29 +493,29 @@ variables=[{name="WS-BOB/JIMBOB",value="{_groupvalue=\"\\\"Robert    J Dubner   
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 1.234
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 1.234
 cprint/v0 ?
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 1.234
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 1.234
 cprint/v3 *
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -547,29 +547,29 @@ variables=[{name="WS-JIM/JIMBOB",value="{_groupvalue=\"\\\"James     \\\" Lowden
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 1.234
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 1.234
 cprint/v0 ?
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 1.234
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 1.234
 cprint/v3 *
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -601,29 +601,29 @@ variables=[{name="WS-JIM/JIMBOB",value="{_groupvalue=\"\\\"James     \\\" Lowden
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 4.3210001
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v0 ?
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 4.3210001
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v3 *
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -655,49 +655,49 @@ variables=[{name="WS-JIM/JIMBOB",value="{_groupvalue=\"\\\"James     \\\" Lowden
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 4.3210001
-12 : LS-JORB : "Judy      L Ruderman  "
-13 : LS-FIRSTNAME/LS-JORB : "Judy      "
-14 : LS-MIDDLE-INITIAL/LS-JORB : "L"
-15 : FILLER/LS-JORB : " "
-16 : LS-LASTNAME/LS-JORB : "Ruderman  "
-17 : LS-JORB-2 : "James     " Lowden    "
-18 : LS-FIRSTNAME/LS-JORB-2 : "James     "
-19 : LS-MIDDLE-INITIAL/LS-JORB-2 : """
-20 : FILLER/LS-JORB-2 : " "
-21 : LS-LASTNAME/LS-JORB-2 : "Lowden    "
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 4.3210001
+12 : 01 LS-JORB  : "Judy      L Ruderman  "
+13 : 02 LS-FIRSTNAME/LS-JORB  : "Judy      "
+14 : 02 LS-MIDDLE-INITIAL/LS-JORB  : "L"
+15 : 02 FILLER/LS-JORB  : " "
+16 : 02 LS-LASTNAME/LS-JORB  : "Ruderman  "
+17 : 01 LS-JORB-2  : "James     " Lowden    "
+18 : 02 LS-FIRSTNAME/LS-JORB-2  : "James     "
+19 : 02 LS-MIDDLE-INITIAL/LS-JORB-2  : """
+20 : 02 FILLER/LS-JORB-2  : " "
+21 : 02 LS-LASTNAME/LS-JORB-2  : "Lowden    "
 cprint/v0 ?
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 4.3210001
-12 : LS-JORB : "Judy      L Ruderman  "
-13 : LS-FIRSTNAME/LS-JORB : "Judy      "
-14 : LS-MIDDLE-INITIAL/LS-JORB : "L"
-15 : FILLER/LS-JORB : " "
-16 : LS-LASTNAME/LS-JORB : "Ruderman  "
-17 : LS-JORB-2 : "James     " Lowden    "
-18 : LS-FIRSTNAME/LS-JORB-2 : "James     "
-19 : LS-MIDDLE-INITIAL/LS-JORB-2 : """
-20 : FILLER/LS-JORB-2 : " "
-21 : LS-LASTNAME/LS-JORB-2 : "Lowden    "
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 4.3210001
+12 : 01 LS-JORB  : "Judy      L Ruderman  "
+13 : 02 LS-FIRSTNAME/LS-JORB  : "Judy      "
+14 : 02 LS-MIDDLE-INITIAL/LS-JORB  : "L"
+15 : 02 FILLER/LS-JORB  : " "
+16 : 02 LS-LASTNAME/LS-JORB  : "Ruderman  "
+17 : 01 LS-JORB-2  : "James     " Lowden    "
+18 : 02 LS-FIRSTNAME/LS-JORB-2  : "James     "
+19 : 02 LS-MIDDLE-INITIAL/LS-JORB-2  : """
+20 : 02 FILLER/LS-JORB-2  : " "
+21 : 02 LS-LASTNAME/LS-JORB-2  : "Lowden    "
 cprint/v3 *
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -738,20 +738,20 @@ variables=[{name="LS-JORB/DISPLAY-JIM-OR-BOB",value="{_groupvalue=\"\\\"Judy    
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 4.3210001
-12 : A_BINARY_NUMBER : +0000001031
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 4.3210001
+12 : 01 A_BINARY_NUMBER  : +0000001031
 cprint/v0 ?
-A_BINARY_NUMBER  :  +0000001031
+01 A_BINARY_NUMBER   :  +0000001031
 cprint/v3 *
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -774,20 +774,20 @@ variables=[{name="A_BINARY_NUMBER/JUST_ONE",value="\"+0000001031\""}]
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 4.3210001
-12 : A_BINARY_NUMBER : +0000001032
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 4.3210001
+12 : 01 A_BINARY_NUMBER  : +0000001032
 cprint/v0 ?
-A_BINARY_NUMBER  :  +0000001032
+01 A_BINARY_NUMBER   :  +0000001032
 cprint/v3 *
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -810,21 +810,21 @@ variables=[{name="A_BINARY_NUMBER/JUST_ONE",value="\"+0000001032\""}]
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : WS-JIM : "James     " Lowden    "
- 2 : WS-FIRSTNAME/WS-JIM : "James     "
- 3 : WS-MIDDLE-INITIAL/WS-JIM : """
- 4 : FILLER/WS-JIM : " "
- 5 : WS-LASTNAME/WS-JIM : "Lowden    "
- 6 : WS-BOB : "Robert    J Dubner    "
- 7 : WS-FIRSTNAME/WS-BOB : "Robert    "
- 8 : WS-MIDDLE-INITIAL/WS-BOB : "J"
- 9 : FILLER/WS-BOB : " "
-10 : WS-LASTNAME/WS-BOB : "Dubner    "
-11 : WS-FLOATTEST : 4.3210001
-12 : A_BINARY_NUMBER : +0000001033
+ 1 : 01 WS-JIM  : "James     " Lowden    "
+ 2 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 3 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 4 : 02 FILLER/WS-JIM  : " "
+ 5 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+ 6 : 01 WS-BOB  : "Robert    J Dubner    "
+ 7 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+ 9 : 02 FILLER/WS-BOB  : " "
+10 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+11 : 01 WS-FLOATTEST  : 4.3210001
+12 : 01 A_BINARY_NUMBER  : +0000001033
 cprint/v0 ?
- 1 : WS-BOB : "Robert    J Dubner    "
- 2 : A_BINARY_NUMBER : +0000001033
+ 1 : 01 WS-BOB  : "Robert    J Dubner    "
+ 2 : 01 A_BINARY_NUMBER  : +0000001033
 cprint/v3 *
  1 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
  2 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
@@ -848,36 +848,36 @@ variables=[{name="WS-BOB/JIMBOB",value="{_groupvalue=\"\\\"Robert    J Dubner   
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : TEST-NUMBER-A : 123456789
- 2 : TEST-NUMBER-B1 : 1234567.8
- 3 : TEST-NUMBER-B2 : 123456.78
- 4 : TEST-NUMBER-C : 123456789
- 5 : errno : +0000000000
- 6 : WS-JIM : "James     " Lowden    "
- 7 : WS-FIRSTNAME/WS-JIM : "James     "
- 8 : WS-MIDDLE-INITIAL/WS-JIM : """
- 9 : FILLER/WS-JIM : " "
-10 : WS-LASTNAME/WS-JIM : "Lowden    "
-11 : WS-BOB : "Robert    J Dubner    "
-12 : WS-FIRSTNAME/WS-BOB : "Robert    "
-13 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-14 : FILLER/WS-BOB : " "
-15 : WS-LASTNAME/WS-BOB : "Dubner    "
-16 : WS-JUDY : "Judy      L Ruderman  "
-17 : WS-FIRSTNAME/WS-JUDY : "Judy      "
-18 : WS-MIDDLE-INITIAL/WS-JUDY : "L"
-19 : FILLER/WS-JUDY : " "
-20 : WS-LASTNAME/WS-JUDY : "Ruderman  "
-21 : UNUSED : ' ' <repeats 24 times>
-22 : NOT-USED/UNUSED : ' ' <repeats 24 times>
-23 : WS-FLOATTEST : 4.3210001
+ 1 : 77 TEST-NUMBER-A  : 123456789
+ 2 : 77 TEST-NUMBER-B1  : 1234567.8
+ 3 : 77 TEST-NUMBER-B2  : 123456.78
+ 4 : 77 TEST-NUMBER-C  : 123456789
+ 5 : 77 errno  : +0000000000
+ 6 : 01 WS-JIM  : "James     " Lowden    "
+ 7 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+ 8 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+ 9 : 02 FILLER/WS-JIM  : " "
+10 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+11 : 01 WS-BOB  : "Robert    J Dubner    "
+12 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+13 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+14 : 02 FILLER/WS-BOB  : " "
+15 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+16 : 01 WS-JUDY  : "Judy      L Ruderman  "
+17 : 02 WS-FIRSTNAME/WS-JUDY  : "Judy      "
+18 : 02 WS-MIDDLE-INITIAL/WS-JUDY  : "L"
+19 : 02 FILLER/WS-JUDY  : " "
+20 : 02 WS-LASTNAME/WS-JUDY  : "Ruderman  "
+21 : 01 UNUSED  : ' ' <repeats 24 times>
+22 : 02 NOT-USED/UNUSED  : ' ' <repeats 24 times>
+23 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v0 ?
- 1 : TEST-NUMBER-B1 : 1234567.8
- 2 : TEST-NUMBER-B2 : 123456.78
- 3 : WS-JIM : "James     " Lowden    "
- 4 : WS-BOB : "Robert    J Dubner    "
- 5 : WS-JUDY : "Judy      L Ruderman  "
- 6 : WS-FLOATTEST : 4.3210001
+ 1 : 77 TEST-NUMBER-B1  : 1234567.8
+ 2 : 77 TEST-NUMBER-B2  : 123456.78
+ 3 : 01 WS-JIM  : "James     " Lowden    "
+ 4 : 01 WS-BOB  : "Robert    J Dubner    "
+ 5 : 01 WS-JUDY  : "Judy      L Ruderman  "
+ 6 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v3 *
  1 : 77 TEST-NUMBER-A/JIMBOB [W-S] : 123456789
  2 : 77 TEST-NUMBER-B1/JIMBOB [W-S] : 1234567.8
@@ -915,49 +915,49 @@ variables=[{name="TEST-NUMBER-B1/JIMBOB",value="\"1234567.8\""},{name="TEST-NUMB
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
- 2 : FILLER/GEORGE : ' ' <repeats 13 times>
- 3 : NAME-FIRST/GEORGE : "GEORGE    "
- 4 : WASHINGTON : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
- 5 : FILLER/WASHINGTON : ' ' <repeats 23 times>
- 6 : NAME-FIRST/WASHINGTON : "WASHINGTON"
- 7 : LOCATION/WASHINGTON : "DC        "
- 8 : TEMPERATURE/WASHINGTON : "HOT       "
- 9 : WABASH/TEMPERATURE/WASHINGTON : "          "
-10 : CARVER : ' ' <repeats 43 times>, "CARVER    "
-11 : FILLER/CARVER : ' ' <repeats 43 times>
-12 : NAME-FIRST/CARVER : "CARVER    "
-13 : PEANUTS : ' ' <repeats 63 times>, "123456789"
-14 : FILLER/PEANUTS : ' ' <repeats 63 times>
-15 : NAME-FIRST/PEANUTS : 123.456789
-16 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-17 : FILLER/LEGUMES : ' ' <repeats 63 times>
-18 : NAME-FIRST/LEGUMES : 123456.789
-19 : WS-JIM : "James     " Lowden    "
-20 : WS-FIRSTNAME/WS-JIM : "James     "
-21 : WS-MIDDLE-INITIAL/WS-JIM : """
-22 : FILLER/WS-JIM : " "
-23 : WS-LASTNAME/WS-JIM : "Lowden    "
-24 : WS-BOB : "Robert    J Dubner    "
-25 : WS-FIRSTNAME/WS-BOB : "Robert    "
-26 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-27 : FILLER/WS-BOB : " "
-28 : WS-LASTNAME/WS-BOB : "Dubner    "
-29 : WS-FLOATTEST : 4.3210001
+ 1 : 01 GEORGE  : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 FILLER/GEORGE  : ' ' <repeats 13 times>
+ 3 : 02 NAME-FIRST/GEORGE  : "GEORGE    "
+ 4 : 01 WASHINGTON  : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 5 : 02 FILLER/WASHINGTON  : ' ' <repeats 23 times>
+ 6 : 02 NAME-FIRST/WASHINGTON  : "WASHINGTON"
+ 7 : 02 LOCATION/WASHINGTON  : "DC        "
+ 8 : 02 TEMPERATURE/WASHINGTON  : "HOT       "
+ 9 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
+10 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+11 : 02 FILLER/CARVER  : ' ' <repeats 43 times>
+12 : 02 NAME-FIRST/CARVER  : "CARVER    "
+13 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+14 : 02 FILLER/PEANUTS  : ' ' <repeats 63 times>
+15 : 02 NAME-FIRST/PEANUTS  : 123.456789
+16 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+17 : 02 FILLER/LEGUMES  : ' ' <repeats 63 times>
+18 : 02 NAME-FIRST/LEGUMES  : 123456.789
+19 : 01 WS-JIM  : "James     " Lowden    "
+20 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+21 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+22 : 02 FILLER/WS-JIM  : " "
+23 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+24 : 01 WS-BOB  : "Robert    J Dubner    "
+25 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+26 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+27 : 02 FILLER/WS-BOB  : " "
+28 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+29 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v0 ?
- 1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
- 2 : NAME-FIRST/GEORGE : "GEORGE    "
- 3 : WASHINGTON : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
- 4 : NAME-FIRST/WASHINGTON : "WASHINGTON"
- 5 : WABASH/TEMPERATURE/WASHINGTON : "          "
- 6 : CARVER : ' ' <repeats 43 times>, "CARVER    "
- 7 : NAME-FIRST/CARVER : "CARVER    "
- 8 : PEANUTS : ' ' <repeats 63 times>, "123456789"
- 9 : NAME-FIRST/PEANUTS : 123.456789
-10 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-11 : NAME-FIRST/LEGUMES : 123456.789
-12 : WS-JIM : "James     " Lowden    "
-13 : WS-FLOATTEST : 4.3210001
+ 1 : 01 GEORGE  : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE  : "GEORGE    "
+ 3 : 01 WASHINGTON  : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON  : "WASHINGTON"
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
+ 6 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+ 7 : 02 NAME-FIRST/CARVER  : "CARVER    "
+ 8 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+ 9 : 02 NAME-FIRST/PEANUTS  : 123.456789
+10 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+11 : 02 NAME-FIRST/LEGUMES  : 123456.789
+12 : 01 WS-JIM  : "James     " Lowden    "
+13 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v3 *
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 FILLER/GEORGE/test [L-S] : ' ' <repeats 13 times>
@@ -1007,58 +1007,58 @@ variables=[{name="GEORGE/test",value="{_groupvalue=\"' ' <repeats 13 times>, \\\
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
- 2 : FILLER/GEORGE : ' ' <repeats 13 times>
- 3 : NAME-FIRST/GEORGE : "GEORGE    "
- 4 : WASHINGTON : ' ' <repeats 23 times>, "Wabash    DC        HOT       "
- 5 : FILLER/WASHINGTON : ' ' <repeats 23 times>
- 6 : NAME-FIRST/WASHINGTON : "Wabash    "
- 7 : LOCATION/WASHINGTON : "DC        "
- 8 : TEMPERATURE/WASHINGTON : "HOT       "
- 9 : WABASH/TEMPERATURE/WASHINGTON : "          "
-10 : CARVER : ' ' <repeats 43 times>, "CARVER    "
-11 : FILLER/CARVER : ' ' <repeats 43 times>
-12 : NAME-FIRST/CARVER : "CARVER    "
-13 : PEANUTS : ' ' <repeats 63 times>, "123456789"
-14 : FILLER/PEANUTS : ' ' <repeats 63 times>
-15 : NAME-FIRST/PEANUTS : 123.456789
-16 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-17 : FILLER/LEGUMES : ' ' <repeats 63 times>
-18 : NAME-FIRST/LEGUMES : 123456.789
-19 : WS-JIM : "James     " Lowden    "
-20 : WS-FIRSTNAME/WS-JIM : "James     "
-21 : WS-MIDDLE-INITIAL/WS-JIM : """
-22 : FILLER/WS-JIM : " "
-23 : WS-LASTNAME/WS-JIM : "Lowden    "
-24 : WS-BOB : "Robert    J Dubner    "
-25 : WS-FIRSTNAME/WS-BOB : "Robert    "
-26 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-27 : FILLER/WS-BOB : " "
-28 : WS-LASTNAME/WS-BOB : "Dubner    "
-29 : WS-FLOATTEST : 4.3210001
+ 1 : 01 GEORGE  : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 FILLER/GEORGE  : ' ' <repeats 13 times>
+ 3 : 02 NAME-FIRST/GEORGE  : "GEORGE    "
+ 4 : 01 WASHINGTON  : ' ' <repeats 23 times>, "Wabash    DC        HOT       "
+ 5 : 02 FILLER/WASHINGTON  : ' ' <repeats 23 times>
+ 6 : 02 NAME-FIRST/WASHINGTON  : "Wabash    "
+ 7 : 02 LOCATION/WASHINGTON  : "DC        "
+ 8 : 02 TEMPERATURE/WASHINGTON  : "HOT       "
+ 9 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
+10 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+11 : 02 FILLER/CARVER  : ' ' <repeats 43 times>
+12 : 02 NAME-FIRST/CARVER  : "CARVER    "
+13 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+14 : 02 FILLER/PEANUTS  : ' ' <repeats 63 times>
+15 : 02 NAME-FIRST/PEANUTS  : 123.456789
+16 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+17 : 02 FILLER/LEGUMES  : ' ' <repeats 63 times>
+18 : 02 NAME-FIRST/LEGUMES  : 123456.789
+19 : 01 WS-JIM  : "James     " Lowden    "
+20 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+21 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+22 : 02 FILLER/WS-JIM  : " "
+23 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+24 : 01 WS-BOB  : "Robert    J Dubner    "
+25 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+26 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+27 : 02 FILLER/WS-BOB  : " "
+28 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+29 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v0 ?
- 1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
- 2 : NAME-FIRST/GEORGE : "GEORGE    "
- 3 : WASHINGTON : ' ' <repeats 23 times>, "Wabash    DC        HOT       "
- 4 : NAME-FIRST/WASHINGTON : "Wabash    "
- 5 : WABASH/TEMPERATURE/WASHINGTON : "          "
- 6 : CARVER : ' ' <repeats 43 times>, "CARVER    "
- 7 : NAME-FIRST/CARVER : "CARVER    "
- 8 : PEANUTS : ' ' <repeats 63 times>, "123456789"
- 9 : NAME-FIRST/PEANUTS : 123.456789
-10 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-11 : NAME-FIRST/LEGUMES : 123456.789
-12 : WS-JIM : "James     " Lowden    "
-13 : WS-FIRSTNAME/WS-JIM : "James     "
-14 : WS-MIDDLE-INITIAL/WS-JIM : """
-15 : FILLER/WS-JIM : " "
-16 : WS-LASTNAME/WS-JIM : "Lowden    "
-17 : WS-BOB : "Robert    J Dubner    "
-18 : WS-FIRSTNAME/WS-BOB : "Robert    "
-19 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-20 : FILLER/WS-BOB : " "
-21 : WS-LASTNAME/WS-BOB : "Dubner    "
-22 : WS-FLOATTEST : 4.3210001
+ 1 : 01 GEORGE  : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE  : "GEORGE    "
+ 3 : 01 WASHINGTON  : ' ' <repeats 23 times>, "Wabash    DC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON  : "Wabash    "
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
+ 6 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+ 7 : 02 NAME-FIRST/CARVER  : "CARVER    "
+ 8 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+ 9 : 02 NAME-FIRST/PEANUTS  : 123.456789
+10 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+11 : 02 NAME-FIRST/LEGUMES  : 123456.789
+12 : 01 WS-JIM  : "James     " Lowden    "
+13 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+14 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+15 : 02 FILLER/WS-JIM  : " "
+16 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+17 : 01 WS-BOB  : "Robert    J Dubner    "
+18 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+19 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+20 : 02 FILLER/WS-BOB  : " "
+21 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+22 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v3 *
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 FILLER/GEORGE/test [L-S] : ' ' <repeats 13 times>
@@ -1119,58 +1119,58 @@ variables=[{name="GEORGE/test",value="{_groupvalue=\"' ' <repeats 13 times>, \\\
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
- 1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
- 2 : FILLER/GEORGE : ' ' <repeats 13 times>
- 3 : NAME-FIRST/GEORGE : "GEORGE    "
- 4 : WASHINGTON : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
- 5 : FILLER/WASHINGTON : ' ' <repeats 23 times>
- 6 : NAME-FIRST/WASHINGTON : "WASHINGTON"
- 7 : LOCATION/WASHINGTON : "DC        "
- 8 : TEMPERATURE/WASHINGTON : "HOT       "
- 9 : WABASH/TEMPERATURE/WASHINGTON : "          "
-10 : CARVER : ' ' <repeats 43 times>, "CARVER    "
-11 : FILLER/CARVER : ' ' <repeats 43 times>
-12 : NAME-FIRST/CARVER : "CARVER    "
-13 : PEANUTS : ' ' <repeats 63 times>, "123456789"
-14 : FILLER/PEANUTS : ' ' <repeats 63 times>
-15 : NAME-FIRST/PEANUTS : 123.456789
-16 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-17 : FILLER/LEGUMES : ' ' <repeats 63 times>
-18 : NAME-FIRST/LEGUMES : 123456.789
-19 : WS-JIM : "Lowden    " Lowden    "
-20 : WS-FIRSTNAME/WS-JIM : "Lowden    "
-21 : WS-MIDDLE-INITIAL/WS-JIM : """
-22 : FILLER/WS-JIM : " "
-23 : WS-LASTNAME/WS-JIM : "Lowden    "
-24 : WS-BOB : "bobby     J Dubner    "
-25 : WS-FIRSTNAME/WS-BOB : "bobby     "
-26 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-27 : FILLER/WS-BOB : " "
-28 : WS-LASTNAME/WS-BOB : "Dubner    "
-29 : WS-FLOATTEST : 4.3210001
+ 1 : 01 GEORGE  : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 FILLER/GEORGE  : ' ' <repeats 13 times>
+ 3 : 02 NAME-FIRST/GEORGE  : "GEORGE    "
+ 4 : 01 WASHINGTON  : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 5 : 02 FILLER/WASHINGTON  : ' ' <repeats 23 times>
+ 6 : 02 NAME-FIRST/WASHINGTON  : "WASHINGTON"
+ 7 : 02 LOCATION/WASHINGTON  : "DC        "
+ 8 : 02 TEMPERATURE/WASHINGTON  : "HOT       "
+ 9 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
+10 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+11 : 02 FILLER/CARVER  : ' ' <repeats 43 times>
+12 : 02 NAME-FIRST/CARVER  : "CARVER    "
+13 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+14 : 02 FILLER/PEANUTS  : ' ' <repeats 63 times>
+15 : 02 NAME-FIRST/PEANUTS  : 123.456789
+16 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+17 : 02 FILLER/LEGUMES  : ' ' <repeats 63 times>
+18 : 02 NAME-FIRST/LEGUMES  : 123456.789
+19 : 01 WS-JIM  : "Lowden    " Lowden    "
+20 : 02 WS-FIRSTNAME/WS-JIM  : "Lowden    "
+21 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+22 : 02 FILLER/WS-JIM  : " "
+23 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+24 : 01 WS-BOB  : "bobby     J Dubner    "
+25 : 02 WS-FIRSTNAME/WS-BOB  : "bobby     "
+26 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+27 : 02 FILLER/WS-BOB  : " "
+28 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+29 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v0 ?
- 1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
- 2 : NAME-FIRST/GEORGE : "GEORGE    "
- 3 : WASHINGTON : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
- 4 : NAME-FIRST/WASHINGTON : "WASHINGTON"
- 5 : WABASH/TEMPERATURE/WASHINGTON : "          "
- 6 : CARVER : ' ' <repeats 43 times>, "CARVER    "
- 7 : NAME-FIRST/CARVER : "CARVER    "
- 8 : PEANUTS : ' ' <repeats 63 times>, "123456789"
- 9 : NAME-FIRST/PEANUTS : 123.456789
-10 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-11 : NAME-FIRST/LEGUMES : 123456.789
-12 : WS-JIM : "Lowden    " Lowden    "
-13 : WS-FIRSTNAME/WS-JIM : "Lowden    "
-14 : WS-MIDDLE-INITIAL/WS-JIM : """
-15 : FILLER/WS-JIM : " "
-16 : WS-LASTNAME/WS-JIM : "Lowden    "
-17 : WS-BOB : "bobby     J Dubner    "
-18 : WS-FIRSTNAME/WS-BOB : "bobby     "
-19 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-20 : FILLER/WS-BOB : " "
-21 : WS-LASTNAME/WS-BOB : "Dubner    "
-22 : WS-FLOATTEST : 4.3210001
+ 1 : 01 GEORGE  : ' ' <repeats 13 times>, "GEORGE    "
+ 2 : 02 NAME-FIRST/GEORGE  : "GEORGE    "
+ 3 : 01 WASHINGTON  : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
+ 4 : 02 NAME-FIRST/WASHINGTON  : "WASHINGTON"
+ 5 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
+ 6 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+ 7 : 02 NAME-FIRST/CARVER  : "CARVER    "
+ 8 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+ 9 : 02 NAME-FIRST/PEANUTS  : 123.456789
+10 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+11 : 02 NAME-FIRST/LEGUMES  : 123456.789
+12 : 01 WS-JIM  : "Lowden    " Lowden    "
+13 : 02 WS-FIRSTNAME/WS-JIM  : "Lowden    "
+14 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+15 : 02 FILLER/WS-JIM  : " "
+16 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+17 : 01 WS-BOB  : "bobby     J Dubner    "
+18 : 02 WS-FIRSTNAME/WS-BOB  : "bobby     "
+19 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+20 : 02 FILLER/WS-BOB  : " "
+21 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+22 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v3 *
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 FILLER/GEORGE/test [L-S] : ' ' <repeats 13 times>

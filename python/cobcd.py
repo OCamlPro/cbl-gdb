@@ -61,7 +61,7 @@ import time
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
-COBCD_VERSION = '[Version 4.27.0-dev]'
+COBCD_VERSION = '[Version 4.27.0-dev2]'
 
 #   This module implements the gdb extension commands like cprint and cwatch
 #   It is executed by GDB.
@@ -2200,11 +2200,14 @@ class CobolVariable():
             storage_type = "LNK"
         return "{1:02} {2} [{0}]".format(storage_type, self.Level, self.NameWithSubscripts())
 
+    def NameWithLevel(self):
+        return "{0:02} {1} ".format(self.Level, self.NameWithSubscripts())
+
     def NameToString(self):
         if GV_ModuleState.current_display_mode in ('3', '4', '5'):
             n_str = self.NameToStringFull()
         else:
-            n_str = self.NameWithSubscripts()
+            n_str = self.NameWithLevel() # Use self.NameWithSubscripts() to eliminate LEVEL
         return n_str
 
     def ShowFields(self):
