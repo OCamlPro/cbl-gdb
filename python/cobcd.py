@@ -3571,10 +3571,6 @@ class CPrintWorker():
                 print('No symbols match "{0}" in current context'.format('/'.join(left_side)))
             return
 
-        if len(leftside_possibilities) > 1 and left_side[0].find('*') == -1 and left_side[0][0] != '?':
-            print('Multiple symbols match "{0}" in current context'.format('/'.join(left_side)))
-            return
-
         if len(leftside_possibilities) == 1:
             # because there is but a single possibility, we might be in a "cprint var1=var2" situation
             GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]])

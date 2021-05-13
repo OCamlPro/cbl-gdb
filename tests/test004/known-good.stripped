@@ -405,13 +405,15 @@ cprint tab-adr-prgm(2)(3:4) = ws-a(one)(two:three of nums1)
 cprint tab-adr-prgm(2)
 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)   :  "Se2AB^--"
 cp TAB-ADR-IND
-Multiple symbols match "TAB-ADR-IND" in current context
+ 1 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE  : +000000001
+ 2 : 00 TAB-ADR-IND/T_ADDRESSES  : +000000003
 cp TAB-ADR-IND of z-table = 1234
 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE   :  +000001234
 cp TAB-ADR-IND of T_ADDRESSES = 5432
 00 TAB-ADR-IND/T_ADDRESSES   :  +000005432
 cp TAB-ADR-IND
-Multiple symbols match "TAB-ADR-IND" in current context
+ 1 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE  : +000001234
+ 2 : 00 TAB-ADR-IND/T_ADDRESSES  : +000005432
 cp TAB-ADR-IND of T_ENTRY = 9999
 No symbol matches "TAB-ADR-IND/T_ENTRY" in current context
 cp svalue
