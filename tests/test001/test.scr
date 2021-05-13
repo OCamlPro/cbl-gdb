@@ -30,6 +30,10 @@ define printem
     cprint/v3 *
     echo cprint/v3 ?\n
     cprint/v3 ?
+    echo cprint/v6 *\n
+    cprint/v6 *
+    echo cprint/v6 ?\n
+    cprint/v6 ?
     echo cprint/m *\n
     cprint/m *
     echo cprint/m ?\n

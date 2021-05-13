@@ -2175,7 +2175,7 @@ class CobolVariable():
 
     def NameWithSubscripts(self):
         # Start with full name.
-        if GV_ModuleState.current_display_mode in ('0', '1', '2'):
+        if GV_ModuleState.current_display_mode in ('0', '1', '2', '6', '7', '8'):
             # Remove the program name from the right side:
             name = self.Name.split('/')
             name = '/'.join(name[0:-1])
@@ -2213,10 +2213,12 @@ class CobolVariable():
         return "{0:02} {1} ".format(self.Level, self.NameWithSubscripts())
 
     def NameToString(self):
+        if GV_ModuleState.current_display_mode in ('0', '1', '2'):
+            n_str = self.NameWithLevel()        # LEVEL
         if GV_ModuleState.current_display_mode in ('3', '4', '5'):
-            n_str = self.NameToStringFull()
-        else:
-            n_str = self.NameWithLevel() # Use self.NameWithSubscripts() to eliminate LEVEL
+            n_str = self.NameToStringFull()     # LEVEL NAME/PROGRAM-ID
+        if GV_ModuleState.current_display_mode in ('6', '7', '8'):
+            n_str = self.NameWithSubscripts()   # Just NAME
         return n_str
 
     def ShowFields(self):
@@ -3115,14 +3117,14 @@ class CPrintWorker():
             # This is a single-digit display v-code:
             v_code = args[0][2]
             args.pop(0)
-        if v_code and v_code in "012345d":
+        if v_code and v_code in "012345678d":
             # It's a valid display_mode.  Make it the one-time mode:
             GV_ModuleState.current_display_mode = v_code
             if len(args) == 0:
                 # There are no additional arguments, so also make it the session mode
                 GV_ModuleState.sticky_display_mode = v_code
         else:
-            print("The /v code is invalid - it must be /v0 through /v5 or /vd")
+            print("The /v code is invalid - it must be /v0 through /v8 or /vd")
             args = []
         return args
 
@@ -3251,11 +3253,11 @@ class CPrintWorker():
         # The following code catches the 'q' Quit option
         retval = None
         try:
-            if GV_ModuleState.current_display_mode in ('0', '3'):
+            if GV_ModuleState.current_display_mode in ('0', '3', '6'):
                 print(payload.NameToString(), " : ", body)
-            elif GV_ModuleState.current_display_mode in ('1', '4'):
+            elif GV_ModuleState.current_display_mode in ('1', '4', '7'):
                 print(body)
-            elif GV_ModuleState.current_display_mode in ('2', '5'):
+            elif GV_ModuleState.current_display_mode in ('2', '5', '8'):
                 print(payload.NameToString())
                 print(body)
             else:  # GV_ModuleState.current_display_mode ==  'd':
@@ -4350,9 +4352,9 @@ class CPrint(gdb.Command):
     cprint/v0           session formatting is single line, with LEVEL & NAME and VALUE
     cprint/v1           session formatting is single line, just the value
     cprint/v2           session formatting two lines: LEVEL & NAME followed by VALUE
-    cprint/v3           like /v0, but with LEVEL & NAME/PROGRAM-ID and VALUE
+    cprint/v3           like /v0, but with LEVEL & NAME/PROGRAM-ID [STORAGE] and VALUE
     cprint/v4           same as /v1
-    cprint/v5           like /v2, but with LEVEL & NAME/PROGRAM-ID then VALUE
+    cprint/v5           like /v2, but with LEVEL & NAME/PROGRAM-ID [STORAGE] then VALUE
     cprint/v6           like /v0, but with just NAME and VALUE
     cprint/v7           same as /v1
     cprint/v8           like /v2, but with just NAME then VALUE
