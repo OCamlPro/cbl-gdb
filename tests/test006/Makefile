@@ -1,6 +1,14 @@
 COBCD?=../../cobcd
 GDB?=gdb
 
+UNAME_O := $(shell uname -o)
+
+ifeq "$(UNAME_O)" "Solaris"
+	SED := gsed
+else
+	SED := sed
+endif
+
 # For reasons that remain unknown -- probably because of the older
 # version of GDB, but who knows? -- the response on RedHat7 isn't quite
 # the same as for Ubuntu.
@@ -10,7 +18,7 @@ GDB?=gdb
 # start with "known-good"
 knowngood:=known-good
 
-gdbmajor:=$(shell gdb --version | head -n 1 | sed -E 's/.*([0-9]+)[.]([0-9]+)[.]([0-9]+).*/\1/g' )
+gdbmajor:=$(shell gdb --version | head -n 1 | $(SED) -E 's/.*([0-9]+)[.]([0-9]+)[.]([0-9]+).*/\1/g' )
 # $(info $(gdbmajor))
 
 # tack on "-rh7" on a RedHat7 system:

@@ -7,10 +7,12 @@ define printem
 	echo KNOWN GOOD FINISH\n
 	end
 
+# initialisation
 file test
 cprint/v3
 cprint/r 6
 
+# cwatch test
 cstart
 cwatch D
 
@@ -38,10 +40,11 @@ printem
 delete
 continue
 
+# cbreak variable test
 cstart
-cbreak  18 if b == 3
-ctbreak 20 if d == 5
-cbreak  22 if f == 7
+cbreak  24 if b == 3
+ctbreak 26 if d == 5
+cbreak  28 if f == 7
 
 continue 
 printem
@@ -49,7 +52,33 @@ continue
 printem
 continue 
 printem
+delete
 continue 
 
+# ccondition variable test
+cstart
+cbreak  28 if f == 3
+continue
+printem
+
+ccondition 5 f == 7
+continue 
+printem
+delete
+continue 
+
+# cbreak section test
+cstart
+cbreak SECTION P-CALC
+printem
+delete
+continue
+
+# cbreak file:section test
+cstart
+cbreak test:P-CALC
+printem
+delete
+continue
 
 quit
