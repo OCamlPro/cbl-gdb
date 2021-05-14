@@ -2491,6 +2491,8 @@ class ModuleState():
         self.sticky_display_mode = '0'
         self.current_display_mode = '0'
         self.current_display_submode = '0'
+        self.sticky_pretty_mode = ''
+        self.current_pretty_mode = ''
 
     def ProcessStack(self):
         """ Figures out which routine we are currently trapped in"""
@@ -2795,20 +2797,11 @@ def BuildHString(node):
                 h_str = TrimComma(h_str)
                 h_str += r'},'
     return h_str
-
-def MachineInterfaceHeirarchical(possibilities):
-    # This is the machine interface mode for returning the
-    # the variables in a flat manner.
-    # Our mission is to emulate
-    # '-stack-list-variables --all-values'
-    # e.g.,
-    # variables=[{name="L00",value="\"Standalone\""},{name="L01",value="{fullname = \"RobertDubner\", L02 = {firstname = \"Robert\", lastname = \"Dubner\"}}"},{name="L01_2",value="{fullname = \"JudyRuderman\", L02 = {firstname = \"Judy\", lastname = \"Ruderman\"}}"}]
-
+    
+def BuildHeirarchicalTree(possibilities):
     # We will use a stack to build a tree from the ordered variables
     root = HNode()
     stack = [root]
-    retval = "variables=["
-
     stack_map = {}
 
     for payload_index in possibilities:
@@ -2856,8 +2849,21 @@ def MachineInterfaceHeirarchical(possibilities):
             else:
                 # Nodes with no parent become wards of the state:
                 root.children.append(new_node)
+    return root
+
+def MachineInterfaceHeirarchical(possibilities):
+    # This is the machine interface mode for returning the
+    # the variables in a flat manner.
+    # Our mission is to emulate
+    # '-stack-list-variables --all-values'
+    # e.g.,
+    # variables=[{name="L00",value="\"Standalone\""},{name="L01",value="{fullname = \"RobertDubner\", L02 = {firstname = \"Robert\", lastname = \"Dubner\"}}"},{name="L01_2",value="{fullname = \"JudyRuderman\", L02 = {firstname = \"Judy\", lastname = \"Ruderman\"}}"}]
+
+    root = BuildHeirarchicalTree(possibilities)
 
     # We now have a tree that can be used to create the variables string
+    retval = "variables=["
+
     retval += BuildHString(root)
 
     retval = TrimComma(retval)
@@ -3117,14 +3123,20 @@ class CPrintWorker():
             # This is a single-digit display v-code:
             v_code = args[0][2]
             args.pop(0)
-        if v_code and v_code in "012345678d":
+        if v_code and v_code in "012345678":
             # It's a valid display_mode.  Make it the one-time mode:
             GV_ModuleState.current_display_mode = v_code
             if len(args) == 0:
                 # There are no additional arguments, so also make it the session mode
                 GV_ModuleState.sticky_display_mode = v_code
+        elif v_code and v_code in "p":
+            # It's a valid pretty_mode.  Make it the one-time mode:
+            GV_ModuleState.current_pretty_mode = v_code
+            if len(args) == 0:
+                # There are no additional arguments, so also make it the session mode
+                GV_ModuleState.sticky_pretty_mode = v_code
         else:
-            print("The /v code is invalid - it must be /v0 through /v8 or /vd")
+            print("The /v code is invalid - it must be /v0 through /v8 or /vp")
             args = []
         return args
 
@@ -3173,6 +3185,7 @@ class CPrintWorker():
         # Start off with the current display mode the same as the session mode
         GV_ModuleState.current_display_mode = GV_ModuleState.sticky_display_mode
         GV_ModuleState.current_display_submode = ''
+        GV_ModuleState.current_pretty_mode = GV_ModuleState.sticky_pretty_mode
 
         # Now see if he wants to change it
         if len(args) >= 1:
