@@ -753,7 +753,7 @@ def get_left_right_args(args):
         if leftright[0][0] == "'":
             # Tab completion starts with an apostrophe:
             leftright[0] = leftright[0][1:]
-            # And it might not end with one.  But if there is, we want to 
+            # And it might not end with one.  But if there is, we want to
             # get rid of it:
             if leftright[-1][-1] == "'":
                 leftright[-1] = leftright[-1][:-1]
@@ -2213,11 +2213,14 @@ class CobolVariable():
         return "{0:02} {1} ".format(self.Level, self.NameWithSubscripts())
 
     def NameToString(self):
-        if GV_ModuleState.current_display_mode in ('0', '1', '2'):
+        display_mode = GV_ModuleState.current_display_mode
+        if display_mode == 'd':
+            display_mode = GV_ModuleState.sticky_display_mode
+        if display_mode in ('0', '1', '2'):
             n_str = self.NameWithLevel()        # LEVEL
-        if GV_ModuleState.current_display_mode in ('3', '4', '5'):
+        if display_mode in ('3', '4', '5'):
             n_str = self.NameToStringFull()     # LEVEL NAME/PROGRAM-ID
-        if GV_ModuleState.current_display_mode in ('6', '7', '8'):
+        if display_mode in ('6', '7', '8'):
             n_str = self.NameWithSubscripts()   # Just NAME
         return n_str
 
@@ -2751,12 +2754,12 @@ def TrimComma(t_str):
         t_str = t_str[:-1]  # Strip off final comma
     return t_str
 
-def BuildHString(node):
+def BuildMachineHString(node):
     h_str = ""
     if node.Level == -666:
         # This is the root.  We live only for our children
         for child in node.children:
-            h_str += BuildHString(child)
+            h_str += BuildMachineHString(child)
     else:
         if node.Level in (1, 77, 78):
             # Top level variables are treated this way:
@@ -2776,7 +2779,7 @@ def BuildHString(node):
                 h_str += MachineInterfaceBody(node.display_body)
                 h_str += r'\",'
                 for child in node.children:
-                    h_str += BuildHString(child)
+                    h_str += BuildMachineHString(child)
                 h_str = TrimComma(h_str)
                 h_str += r'}"'
             h_str += '},'
@@ -2793,11 +2796,50 @@ def BuildHString(node):
                 h_str += MachineInterfaceBody(node.display_body)
                 h_str += r'\",'
                 for child in node.children:
-                    h_str += BuildHString(child)
+                    h_str += BuildMachineHString(child)
                 h_str = TrimComma(h_str)
                 h_str += r'},'
     return h_str
-    
+
+def BuildHumanHString(node, level):
+    h_str = ""
+    if node.Level == -666:
+        # This is the root.  We live only for our children
+        for child in node.children:
+            h_str += BuildHumanHString(child,0)
+    else:
+        # Prefix with some number of spaces per level:
+        for i in range(level):
+            h_str += "  "
+        if GV_ModuleState.sticky_display_mode in ('0', '1', '2', '3', '4', '5'):
+            # We are in a mode that wants the level displayed:
+            h_str += "{0:02} ".format(node.Level)
+
+        name = node.BaseName
+        if GV_ModuleState.sticky_display_mode in ('3','4','5'):
+            pass
+        else:
+            # This mode doesn't want the program name, if it is there
+            nfound = name.find('/')
+            if nfound > -1:
+                name = name[0:nfound]
+        h_str += name
+
+        if len(node.children):
+            # We have children, so we don't display anything:
+            h_str += "\n"
+            for child in node.children:
+                h_str += BuildHumanHString(child,level+1)
+        else:
+            # We have no children, so we must be elementary, which
+            # means it's time to display something:
+            h_str += " : "
+            h_str += node.display_body
+            h_str += "\n"
+    if not h_str:
+        h_str = '\n'
+    return h_str
+
 def BuildHeirarchicalTree(possibilities):
     # We will use a stack to build a tree from the ordered variables
     root = HNode()
@@ -2864,7 +2906,7 @@ def MachineInterfaceHeirarchical(possibilities):
     # We now have a tree that can be used to create the variables string
     retval = "variables=["
 
-    retval += BuildHString(root)
+    retval += BuildMachineHString(root)
 
     retval = TrimComma(retval)
     retval += ']'
@@ -3129,14 +3171,8 @@ class CPrintWorker():
             if len(args) == 0:
                 # There are no additional arguments, so also make it the session mode
                 GV_ModuleState.sticky_display_mode = v_code
-        elif v_code and v_code in "p":
-            # It's a valid pretty_mode.  Make it the one-time mode:
-            GV_ModuleState.current_pretty_mode = v_code
-            if len(args) == 0:
-                # There are no additional arguments, so also make it the session mode
-                GV_ModuleState.sticky_pretty_mode = v_code
         else:
-            print("The /v code is invalid - it must be /v0 through /v8 or /vp")
+            print("The /v code is invalid - it must be /v0 through /v8")
             args = []
         return args
 
@@ -3191,23 +3227,40 @@ class CPrintWorker():
         if len(args) >= 1:
             # if the first argument is /d, turn on our debug flag:
             if args[0] == "/d":
+                GV_ModuleState.current_pretty_mode = ''
                 GV_ModuleState.current_display_mode = 'd'
                 args.pop(0)
             elif args[0] == "/x":
+                GV_ModuleState.current_pretty_mode = ''
                 GV_ModuleState.current_display_submode = 'x'
                 args.pop(0)
             elif args[0] == "/b":
+                GV_ModuleState.current_pretty_mode = ''
                 GV_ModuleState.current_display_submode = 'b'
                 args.pop(0)
             elif args[0] == "/q":
+                GV_ModuleState.current_pretty_mode = ''
                 GV_ModuleState.current_display_submode = 'q'
                 args.pop(0)
             elif args[0] == "/m":
+                GV_ModuleState.current_pretty_mode = ''
                 self.machine_interface_mode = True
                 args.pop(0)
+            elif args[0] == "/p":
+                GV_ModuleState.current_pretty_mode = 'p'
+                args.pop(0)
+                if len(args) == 0:
+                    # There are no additional arguments, so also make it the session mode
+                    GV_ModuleState.sticky_pretty_mode = GV_ModuleState.current_pretty_mode
+            elif args[0] == "/P":
+                GV_ModuleState.current_pretty_mode = ''
+                GV_ModuleState.sticky_pretty_mode = GV_ModuleState.current_pretty_mode
+                args.pop(0)
             elif args[0][0:2] == "/v":
+                GV_ModuleState.current_pretty_mode = ''
                 args = self.ProcessSlashV(args)
             elif args[0][0:2] == "/r":
+                GV_ModuleState.current_pretty_mode = ''
                 args = self.ProcessSlashR(args)
         if args:
             args = ' '.join(args)
@@ -3458,7 +3511,33 @@ class CPrintWorker():
         disp_str = MachineInterfaceHeirarchical(leftside_possibilities)
         print(disp_str)
 
+    def ProcessArgumentsHumanHeirarchical(self,possibilities_1):
+        # Because we are doing a heirarchical display, we need to
+        # expand possibilities_1 to include all its children
+
+        all_parents = set(possibilities_1)
+
+        possibilities = []
+
+        for index in range( len(GV_ModuleInformation.var_trie.storage_list) ):
+            if index in all_parents:
+                # If we are a founding father, we go into the list
+                possibilities.append(index)
+                continue
+            if GV_ModuleInformation.var_trie.storage_list[index].index_of_parent in all_parents:
+                # We aren't in the list, but our parent is, so we go onto the list
+                possibilities.append(index)
+                # And if we have children, we go onto the parents list:
+                if GV_ModuleInformation.var_trie.storage_list[index].AttrType == COB_TYPE_GROUP:
+                    all_parents.add(index)
+
+        root = BuildHeirarchicalTree(possibilities)
+        result = BuildHumanHString(root,0)
+        print(result,end='')
+
     def ProcessArgumentsHumanMode(self, leftside_possibilities, rightside):
+        if GV_ModuleState.current_pretty_mode == 'p':
+            return self.ProcessArgumentsHumanHeirarchical(leftside_possibilities)
         if len(leftside_possibilities) > 1:
             GV_GlobalVariables.ShortTermMemory = []
 
@@ -4374,6 +4453,8 @@ class CPrint(gdb.Command):
     cprint/v7           same as /v1
     cprint/v8           like /v2, but with just NAME then VALUE
     cprint/v<n> <arg>   displays <arg> with a one-time formatting override
+    cprint/p            enable  'pretty print' (one-time override if there is an argument)
+    cprint/P            disable 'pretty print'
     cprint/x            show numeric value in hexadecimal
     cprint/b            show numeric value in binary
     cprint/d            show expanded information
