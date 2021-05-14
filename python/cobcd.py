@@ -3495,6 +3495,8 @@ class CPrintWorker():
                 payload.IsDirty = True
 
     def ProcessArguments(self, arguments):
+        if not arguments or len(arguments) == 0:
+            return
 
         # Special case:
         # If the final character is '!', we will list all ambiguous names
