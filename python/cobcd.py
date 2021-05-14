@@ -42,6 +42,7 @@
 #
 # os.environ.get('CPRINT_D', '0')  When non-zero, causes verbose output
 # os.environ.get('CPRINT_V', '0')  Default formatting p/v N value
+# os.environ.get('CPRINT_P', '')   Default pretty_print switch.
 # os.environ.get('CPRINT_R', '6')) Default p/? range
 
 from __future__ import print_function
@@ -3156,6 +3157,7 @@ class CPrintWorker():
     def __init__(self):
         self.current_source_file = ""
         GV_ModuleState.sticky_display_mode = os.environ.get("CPRINT_V", '0')
+        GV_ModuleState.sticky_pretty_mode  = os.environ.get("CPRINT_P", '')
         self.machine_interface_mode = False
 
     def ProcessSlashV(self, args):
@@ -4472,8 +4474,9 @@ class CPrint(gdb.Command):
 
     cprint set repeat N sets the display <repeats> threshold to N characters
 
-    The default v-level can be set with the environment variable CPRINT_V=n
-    The default r-level can be set with the environment variable CPRINT_R=n"""
+    The default v-level can be set with the environment variable CPRINT_V=<n>
+    The default 'pretty print' mode can be turned on with        CPRINT_P=p
+    The default r-level can be set with the environment variable CPRINT_R=<n>"""
 
     def __init__(self):
         global COBCDRW_AVAILABLE
