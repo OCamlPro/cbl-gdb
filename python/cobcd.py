@@ -61,7 +61,7 @@ import time
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
-COBCD_VERSION = '[Version 4.27.0-dev3]'
+COBCD_VERSION = '[Version 4.27.0-dev2]'
 
 #   This module implements the gdb extension commands like cprint and cwatch
 #   It is executed by GDB.
@@ -749,6 +749,23 @@ def get_left_right_args(args):
     # This can be an assignment, so check for it.
     leftright = re.split('(![=]*|=[=~<>]*[i]*|~|<[=>]*[i]*|>[=]*)', args)
 
+    if len(leftright) > 0:
+        if leftright[0][0] == "'":
+            # Tab completion starts with an apostrophe:
+            leftright[0] = leftright[0][1:]
+            # And it might not end with one.  But if there is, we want to 
+            # get rid of it:
+            if leftright[-1][-1] == "'":
+                leftright[-1] = leftright[-1][:-1]
+
+        sq_count = leftright[0].count("'")
+        if sq_count > 0 and sq_count % 2 != 0:
+            raise gdb.GdbError("Unmatched single quote.")
+
+        sq_count = leftright[0].count('"')
+        if sq_count > 0 and sq_count % 2 != 0:
+            raise gdb.GdbError("Unmatched double quote.")
+
     # Pick up the left and right sides, and turn them into
     # "normalized" COBOL variable names.
     if len(leftright) > 0:
@@ -846,21 +863,13 @@ def TokenizeCanonicalName(desired):
         suffix = desired[nparen:]
         desired = desired[0:nparen]
 
-        sq_count = suffix.count("'")
-        if sq_count > 0 and sq_count % 2 != 0:
-            raise gdb.GdbError("Unmatched single quote.")
-
-    sq_count = desired.count("'")
-    if sq_count > 0 and sq_count % 2 != 0:
-        raise gdb.GdbError("Unmatched single quote.")
-
     if desired:
         if desired[0] == "'":
             # This can happen as a result of TAB completion:
             desired = desired[1:]
-        if desired[-1] == "'":
-            # This can happen as a result of TAB completion:
-            desired = desired[:-1]
+            if desired[-1] == "'":
+                # This can happen as a result of TAB completion:
+                desired = desired[:-1]
 
         # turn IN and OF into spaces
         pattern = re.compile(r"^(.*) (in|In|iN|IN|of|oF|Of|OF) (.*)$")
@@ -2166,7 +2175,7 @@ class CobolVariable():
 
     def NameWithSubscripts(self):
         # Start with full name.
-        if GV_ModuleState.current_display_mode in ('0', '1', '2'):
+        if GV_ModuleState.current_display_mode in ('0', '1', '2', '6', '7', '8'):
             # Remove the program name from the right side:
             name = self.Name.split('/')
             name = '/'.join(name[0:-1])
@@ -2200,11 +2209,16 @@ class CobolVariable():
             storage_type = "LNK"
         return "{1:02} {2} [{0}]".format(storage_type, self.Level, self.NameWithSubscripts())
 
+    def NameWithLevel(self):
+        return "{0:02} {1} ".format(self.Level, self.NameWithSubscripts())
+
     def NameToString(self):
+        if GV_ModuleState.current_display_mode in ('0', '1', '2'):
+            n_str = self.NameWithLevel()        # LEVEL
         if GV_ModuleState.current_display_mode in ('3', '4', '5'):
-            n_str = self.NameToStringFull()
-        else:
-            n_str = self.NameWithSubscripts()
+            n_str = self.NameToStringFull()     # LEVEL NAME/PROGRAM-ID
+        if GV_ModuleState.current_display_mode in ('6', '7', '8'):
+            n_str = self.NameWithSubscripts()   # Just NAME
         return n_str
 
     def ShowFields(self):
@@ -3103,14 +3117,14 @@ class CPrintWorker():
             # This is a single-digit display v-code:
             v_code = args[0][2]
             args.pop(0)
-        if v_code and v_code in "012345d":
+        if v_code and v_code in "012345678d":
             # It's a valid display_mode.  Make it the one-time mode:
             GV_ModuleState.current_display_mode = v_code
             if len(args) == 0:
                 # There are no additional arguments, so also make it the session mode
                 GV_ModuleState.sticky_display_mode = v_code
         else:
-            print("The /v code is invalid - it must be /v0 through /v5 or /vd")
+            print("The /v code is invalid - it must be /v0 through /v8 or /vd")
             args = []
         return args
 
@@ -3239,11 +3253,11 @@ class CPrintWorker():
         # The following code catches the 'q' Quit option
         retval = None
         try:
-            if GV_ModuleState.current_display_mode in ('0', '3'):
+            if GV_ModuleState.current_display_mode in ('0', '3', '6'):
                 print(payload.NameToString(), " : ", body)
-            elif GV_ModuleState.current_display_mode in ('1', '4'):
+            elif GV_ModuleState.current_display_mode in ('1', '4', '7'):
                 print(body)
-            elif GV_ModuleState.current_display_mode in ('2', '5'):
+            elif GV_ModuleState.current_display_mode in ('2', '5', '8'):
                 print(payload.NameToString())
                 print(body)
             else:  # GV_ModuleState.current_display_mode ==  'd':
@@ -3481,6 +3495,15 @@ class CPrintWorker():
                 payload.IsDirty = True
 
     def ProcessArguments(self, arguments):
+
+        # Special case:
+        # If the final character is '!', we will list all ambiguous names
+        if arguments[-1] == '!':
+            just_count_ambiguities = False
+            arguments = arguments[0:-1]
+        else:
+            just_count_ambiguities = True
+
         # Look for /[dxvmvr] switches:
         args = self.ProcessDisplayMode(arguments)
 
@@ -3543,23 +3566,12 @@ class CPrintWorker():
         GV_GlobalVariables.VarLeftIndex = None
         GV_GlobalVariables.VarRight = None
 
-        sq_count = left_side[0].count("'")
-        if sq_count > 0 and sq_count % 2 != 0:
-            raise gdb.GdbError("Unmatched single quote.")
-
-        if left_side[0][0] == "'":
-            # This can happen as a result of TAB completion:
-            left_side[0] = left_side[0][1:]
-        if left_side[-1][-1] == "'":
-            # This can happen as a result of TAB completion:
-            left_side[-1] = left_side[-1][:-1]
-
         # note: if we do have a right-side then we do not need the actual data, maybe add , no_data=True here
         # ... but we do need to know if this variable is in the current context
         leftside_possibilities, limit_reached = get_sorted_possibilities(left_side, 0)
         if not leftside_possibilities:
             # There are no leftside possibilities.  Let him know why, and then bug out
-            if left_side[0][0] in ('?') or left_side[0].isdigit():
+            if left_side[0] == '?' or left_side[0].isdigit():
                 # When '*' or '?' match nothing, then just return nothing
                 return
             if left_side[0].find('*') == -1:
@@ -3568,12 +3580,12 @@ class CPrintWorker():
                 print('No symbols match "{0}" in current context'.format('/'.join(left_side)))
             return
 
-        if len(leftside_possibilities) > 1 and left_side[0].find('*') == -1 and left_side[0][0] != '?':
-            print('Multiple symbols match "{0}" in current context'.format('/'.join(left_side)))
+        if len(leftside_possibilities) > 1 and left_side[0].find('*') == -1 and left_side[0][0] != '?' and just_count_ambiguities:
+            print('Multiple ({0}) symbols match "{1}" in current context'.format(len(leftside_possibilities),'/'.join(left_side)))
             return
 
         if len(leftside_possibilities) == 1:
-            # because there is but a single possibility, we might be in a "cprint var1=var2" situation
+            # because there is but a single leftside possibility, we might be in a "cprint var1=var2" situation
             GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]])
             GV_GlobalVariables.VarLeftIndex = leftside_possibilities[0]
             if GV_GlobalVariables.VarLeft.SubscriptFailure or GV_GlobalVariables.VarLeft.RefmodFailure:
@@ -4333,15 +4345,19 @@ class CPrint(gdb.Command):
     """Prints COBOL-NAMED variables when debugging cobst processed object files.
 
     COBOL cprint command usage:
-    cprint <arg>        displays <arg> using session-default formatting
-    cprint <arg>(N)     displays the Nth element of table <arg>. Multiple subscripts are allowed
-    cprint <arg>(S:R)   reference modification: displays R characters starting at S in <arg>
-    cprint/v0           set session formatting to name and value on one line (this is the default)
-    cprint/v1           set session formatting to just value
-    cprint/v2           set session formatting to two-line display with name, then value
-    cprint/v3           like /v0, but with variable Level and Storage Type included
+    cprint VAR          displays VAR using session-default formatting
+    cprint VAR!         when VAR is ambiguous, all the possibilities are listed instead of counted
+    cprint VAR(N)       displays the Nth element of table <arg>. Multiple subscripts are allowed
+    cprint VAR(S:R)     reference modification: displays R characters starting at S in <arg>
+    cprint/v0           session formatting is single line, with LEVEL & NAME and VALUE
+    cprint/v1           session formatting is single line, just the value
+    cprint/v2           session formatting two lines: LEVEL & NAME followed by VALUE
+    cprint/v3           like /v0, but with LEVEL & NAME/PROGRAM-ID [STORAGE] and VALUE
     cprint/v4           same as /v1
-    cprint/v5           like /v2, but with variable Level and Storage Type included
+    cprint/v5           like /v2, but with LEVEL & NAME/PROGRAM-ID [STORAGE] then VALUE
+    cprint/v6           like /v0, but with just NAME and VALUE
+    cprint/v7           same as /v1
+    cprint/v8           like /v2, but with just NAME then VALUE
     cprint/v<n> <arg>   displays <arg> with a one-time formatting override
     cprint/x            show numeric value in hexadecimal
     cprint/b            show numeric value in binary

@@ -65,6 +65,8 @@ run
 echo KNOWN GOOD START\n
 echo cprint com\n
 cprint com
+echo cprint com!\n
+cprint com!
 echo cprint *com\n
 cprint *com
 echo cprint com*\n
@@ -79,6 +81,8 @@ cprint *x
 cprint/v0
 echo cprint com\n
 cprint com
+echo cprint com!\n
+cprint com!
 echo cprint *com\n
 cprint *com
 echo cprint com*\n
