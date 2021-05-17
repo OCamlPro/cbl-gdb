@@ -4772,7 +4772,7 @@ class CLoadWorker():
             try:
                 gdb_cmd = "add-symbol-file " + solibpath
                 if not text_addr:
-                    raise gdb.error("no text section found")
+                    raise gdb.GdbError("no text section found")
                 for s_section, s_address in symbol_addrs.items():
                     gdb_cmd = gdb_cmd + " -s {0} {1}".format(s_section, s_address)
                 gdb.execute(gdb_cmd, False, True)
