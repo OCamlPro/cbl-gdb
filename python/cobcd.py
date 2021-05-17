@@ -4828,6 +4828,7 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
             READELF_AVAILABLE = False
             # No raise here as we don't want a backtrace
             print("WARNING: {0} not found on path, not registering add-symbol-file-cobol, consider setting READELF".format(READELF_BINARY))
+            return
 
         print('Registering add-symbol-file-cobol')
         super(CLoad, self).__init__("add-symbol-file-cobol", gdb.COMMAND_FILES)
