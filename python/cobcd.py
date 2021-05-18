@@ -5141,18 +5141,16 @@ An argument says how fast auto stepping is done (1-19, default 5)."""
             while (last_stop_was_simple):
                 gdb.execute ("step")
                 time.sleep(sleep_time)
-        except KeyboardInterrupt as ki:
+        # we just quit the loop as requested
+        except KeyboardInterrupt as ki: pass
+        # pass user errors unchanged
+        except gdb.GdbError: raise
+        # that exception is unexpected, but we never know...
+        except: traceback.print_exc()
+        # don't leave without cleanup...
+        finally:
             if pagination:
                 gdb.execute("set pagination on", False, False)
-        except gdb.GdbError as user_error:
-            if pagination:
-                gdb.execute("set pagination on", False, False)
-            # pass user errors unchanged
-            raise user_error
-        except:
-            if pagination:
-                gdb.execute("set pagination on", False, False)
-            traceback.print_exc()
 
 def stop_handler_auto_step(event):
     # check the type of stop, the following is the common one after step/next,
