@@ -4881,8 +4881,7 @@ they override any that might have been passed to GDB with --args."""
             if main_program == COBCRUN_NAME:
                 # Arguments passed by CSTART override any that came from the command line:
                 if not arguments:
-                    command = "show args"
-                    args = gdb.execute(command, False, True).split('"')[1].split()
+                    args = gdb.parameter("args").split()
                     if len (args) < 1 or not args[0]:
                         # especially after attaching to a program args is empty
                         raise gdb.GdbError("No args set.  Specify program to call or use the \"set args\" command.")
@@ -5133,7 +5132,7 @@ An argument says how fast auto stepping is done (1-19, default 5)."""
         global last_stop_was_simple
         last_stop_was_simple = True
 
-        pagination = gdb.execute("show pagination", False, True).find("on")
+        pagination = gdb.parameter("pagination")
         if pagination:
             gdb.execute("set pagination off", False, False)
 
