@@ -255,6 +255,12 @@ echo cprint tab-adr-prgm\n
 cprint tab-adr-prgm
 echo cprint tab-adr-prgm(2)\n
 cprint tab-adr-prgm(2)
+echo \'cprint tab-adr-prgm\' (2)\n
+cprint 'tab-adr-prgm' (2)
+echo \'cprint tab-adr-prgm\' (two)\n
+cprint 'tab-adr-prgm' (two)
+echo \'cprint tab-adr-prgm\' (\'two\')\n
+cprint 'tab-adr-prgm' ('two')
 
 echo cprint tab-adr-prgm(2)(3:4)\n
 cprint tab-adr-prgm(2)(3:4)
@@ -328,11 +334,6 @@ echo cp/v4 ws-c(one two)(one : three of nums2)\n
 cp/v4 ws-c(one two)(one : three of nums2)
 echo cp/v5 ws-c(one two)(one : three of nums2)\n
 cp/v5 ws-c(one two)(one : three of nums2)
-
-echo Some extended tests\n
-echo \'cprint tab-adr-prgm\' (2)\n
-cprint 'tab-adr-prgm' (2)
-
 
 echo KNOWN GOOD FINISH\n
 

@@ -750,23 +750,6 @@ def get_left_right_args(args):
     # This can be an assignment, so check for it.
     leftright = re.split('(![=]*|=[=~<>]*[i]*|~|<[=>]*[i]*|>[=]*)', args)
 
-    if len(leftright) > 0:
-        if leftright[0][0] == "'":
-            # Tab completion starts with an apostrophe:
-            leftright[0] = leftright[0][1:]
-            # And it might not end with one.  But if there is, we want to
-            # get rid of it:
-            if leftright[-1][-1] == "'":
-                leftright[-1] = leftright[-1][:-1]
-
-        sq_count = leftright[0].count("'")
-        if sq_count > 0 and sq_count % 2 != 0:
-            raise gdb.GdbError("Unmatched single quote.")
-
-        sq_count = leftright[0].count('"')
-        if sq_count > 0 and sq_count % 2 != 0:
-            raise gdb.GdbError("Unmatched double quote.")
-
     # Pick up the left and right sides, and turn them into
     # "normalized" COBOL variable names.
     if len(leftright) > 0:
@@ -846,6 +829,11 @@ def TokenizeCanonicalName(desired):
     # We assume that anything after a '(' is subscripts and/or refmods.  We
     # peel them off here, and tack them onto the final element of the list
     # of strings for later processing
+
+    # At this point, if there are any apostrophes, it's time to get rid of them.
+    # They get inserted by the TAB-completion process, and there can be one, or two.
+    # So, just hammer them down:
+    desired = desired.replace("'",'')
 
     suffix = ""
     nparen = desired.find('(')
