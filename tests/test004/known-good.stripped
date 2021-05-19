@@ -394,6 +394,12 @@ cprint tab-adr-prgm
 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES   :  "First---"
 cprint tab-adr-prgm(2)
 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)   :  "Second--"
+'cprint tab-adr-prgm' (2)
+15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)   :  "Second--"
+'cprint tab-adr-prgm' (two)
+15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)   :  "Second--"
+'cprint tab-adr-prgm' ('two')
+15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)   :  "Second--"
 cprint tab-adr-prgm(2)(3:4)
 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES(2)(3:4)   :  "cond"
 cprint tab-adr-prgm(2)(3:4) = "zz"
