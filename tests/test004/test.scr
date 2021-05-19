@@ -255,6 +255,12 @@ echo cprint tab-adr-prgm\n
 cprint tab-adr-prgm
 echo cprint tab-adr-prgm(2)\n
 cprint tab-adr-prgm(2)
+echo \'cprint tab-adr-prgm\' (2)\n
+cprint 'tab-adr-prgm' (2)
+echo \'cprint tab-adr-prgm\' (two)\n
+cprint 'tab-adr-prgm' (two)
+echo \'cprint tab-adr-prgm\' (\'two\')\n
+cprint 'tab-adr-prgm' ('two')
 
 echo cprint tab-adr-prgm(2)(3:4)\n
 cprint tab-adr-prgm(2)(3:4)
