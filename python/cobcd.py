@@ -4921,7 +4921,7 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
         super(CNext, self).__init__("cnext", gdb.COMMAND_RUNNING)
         print('Registering CNext')
 
-    def invoke(self, arguments, from_tty):
+    def invoke(self, argument, from_tty):
         if argument:
             if not argument.isdigit():
                 raise gdb.GdbError("argument must be a digit, not " + argument)
