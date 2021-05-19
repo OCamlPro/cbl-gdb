@@ -4860,6 +4860,7 @@ they override any that might have been passed to GDB with --args."""
 
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
+        bp = None
         try:
             obj_files = gdb.objfiles()
             if len(obj_files) < 1:
@@ -4871,8 +4872,7 @@ they override any that might have been passed to GDB with --args."""
             if main_program == COBCRUN_NAME:
                 # Arguments passed by CSTART override any that came from the command line:
                 if not arguments:
-                    command = "show args"
-                    args = gdb.execute(command, False, True).split('"')[1].split()
+                    args = gdb.execute("show args", False, True).split('"')[1].split()
                     if len (args) < 1 or not args[0]:
                         # especially after attaching to a program args is empty
                         raise gdb.GdbError("No args set.  Specify program to call or use the \"set args\" command.")
@@ -4890,7 +4890,7 @@ they override any that might have been passed to GDB with --args."""
                 module = cobol_program.replace("-", "__")
 
                 # set temporary maintenance breakpoint
-                CBreakWorker.set_entry_breakpoint(module, True, True)
+                bp = CBreakWorker.set_entry_breakpoint(module, True, True)
                 command = "run " + arguments
             else:
                 # "start" is not expected to actually "run", so we use start in the unknown case
@@ -4899,8 +4899,11 @@ they override any that might have been passed to GDB with --args."""
             # And proceed to run the program:
             gdb.execute(command, True, False)
 
-        except gdb.error:
-            print("cstart failed: " + command)
+        except gdb.error as error:
+            print("cstart failed: " +  str(error))
+            if bp and bp.is_valid():
+                print("... and therefore breakpoint {0} was removed".format(bp.number))
+                bp.delete()
 
         except gdb.GdbError as user_error:
             # pass user errors unchanged
