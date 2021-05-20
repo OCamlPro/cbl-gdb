@@ -44,6 +44,7 @@
 # os.environ.get('CPRINT_V', '0')  Default formatting p/v N value
 # os.environ.get('CPRINT_P', '')   Default pretty_print switch.
 # os.environ.get('CPRINT_R', '6')) Default p/? range
+# os.environ.get('CPRINT_RAISE, 1) 1 means gdb.error, 0 means just print and continue
 
 from __future__ import print_function
 
@@ -295,6 +296,14 @@ class GlobalVariables():
             if self.gdb_version_major <= 7:
                 print(" !! The COBOL debugger is known to work with reduced capability with GDB-7.6")
             print(" ")
+
+        # Establish what we do on ConditionalRaise:
+        conraise = int(os.environ.get('CPRINT_RAISE', '1'))
+        conraise = '0'
+        if conraise == '1':
+            self.raise_error = True
+        else:
+            self.raise_error = False
 
         # Establish the debugging verbosity level:
         self.debug_level = int(os.environ.get('CPRINT_D', '0'))
@@ -823,6 +832,15 @@ def PreprocessSubscriptsAndRefmods(subscripts):
     subscripts = subscripts.replace(" IN ", " ")
     return subscripts
 
+def ConditionalRaise(msg):
+    # I have a problem.  When running test scripts, I don't want to invoke gdb.error, because
+    # it causes the scripts to stop dead.  I know of no way to cleanly avoid that.  So, I
+    # collect all raises here, so I can do something about it.
+    if GV_GlobalVariables.raise_error:
+        raise gdb.GdbError(msg)
+    else:
+        print(msg)
+
 def TokenizeCanonicalName(desired):
     # We expect a string, and we return a list of strings.
 
@@ -843,13 +861,16 @@ def TokenizeCanonicalName(desired):
     nparen2 = desired.find(')')
 
     if nparen > -1 and nparen2 < nparen:
-        raise gdb.GdbError("Unmatched parentheses")
+        ConditionalRaise("Unmatched parentheses")
+        return None
 
     if nparen2 > -1 and nparen > nparen2:
-        raise gdb.GdbError("Unmatched parentheses")
+        ConditionalRaise("Unmatched parentheses")
+        return None
 
     if nparen2 > -1 and nparen == -1:
-        raise gdb.GdbError("Unmatched parentheses")
+        ConditionalRaise("Unmatched parentheses")
+        return None
 
     if nparen > -1:
         suffix = desired[nparen:]
@@ -1819,8 +1840,6 @@ class CobolVariable():
 
     def GetDataAsHex(self):
         retval = ""
-        if len(self.data) > 16:
-            return "<see below>"
         if len(self.data) > 0:
             retval = "0x"
 
@@ -1991,7 +2010,6 @@ class CobolVariable():
             self.location_of_attribute = 0
             self.data = []
             self.display_body = ""
-            self.display_body_hex = ""
             self.not_in_context = False
 
             # Let's update everything we might need:
@@ -2160,7 +2178,6 @@ class CobolVariable():
                 # can't read this data.  So, get the data:
 
                 self.data = GetBytesAt(self.ActualLocation, self.ActualLength)
-                self.display_body_hex = self.GetDataAsHex()
                 self.display_body = self.GetDataAsString()
                 self.IsDirty = False
         return True
@@ -2240,8 +2257,18 @@ class CobolVariable():
                 print("; resolves to {0}".format(resolved), end='')
             print("")
 
-        print("Display:    ", WithRepeatCount(self.display_body))
-        print("Hex:        ", self.display_body_hex)
+        if self.Refmod:
+            print("Display:     ",end="")
+            for byte in self.data:
+                if 32 <= byte:   # valid ASCII characters
+                    print(chr(byte), end="")
+                else:
+                    print('.', end="")
+            print("")
+        else:
+            print("Display:    ", WithRepeatCount(self.display_body))
+
+        print("Hex:        ", self.GetDataAsHex())
 
         if self.Section == 'L':
             # This is local-storage
@@ -2690,12 +2717,14 @@ class ModuleState():
             self.current_trapped_file = ""
             self.current_trapped_frame = -1
             self.current_trapped_line = 0
-            raise gdb.GdbError("No stack.")
+            ConditionalRaise("No stack.")
+            retval = False
         except:
             self.current_trapped_routine = ""
             self.current_trapped_file = ""
             self.current_trapped_frame = -1
             self.current_trapped_line = 0
+            retval = False
 
         return retval
 
@@ -3165,7 +3194,7 @@ class CPrintWorker():
                 # There are no additional arguments, so also make it the session mode
                 GV_ModuleState.sticky_display_mode = v_code
         else:
-            print("The /v code is invalid - it must be /v0 through /v8")
+            ConditionalRaise("The /v code is invalid - it must be /v0 through /v8")
             args = []
         return args
 
@@ -3202,57 +3231,75 @@ class CPrintWorker():
             GV_ModuleState.question_mark_range = int(r_code)
             GV_ModuleState.old_dogs = set()
         else:
-            print("The /r command is malformed")
+            ConditionalRaise("The /r command is malformed")
             args = []
 
         return args
 
     def ProcessDisplayMode(self, args):
         args = args.split(' ')
-        self.machine_interface_mode = False
 
-        # Start off with the current display mode the same as the session mode
+        # Start off with the current display modes the same as the session modes
+        self.machine_interface_mode = False
         GV_ModuleState.current_display_mode = GV_ModuleState.sticky_display_mode
         GV_ModuleState.current_display_submode = ''
         GV_ModuleState.current_pretty_mode = GV_ModuleState.sticky_pretty_mode
 
-        # Now see if he wants to change it
-        if len(args) >= 1 and len(args[0]) > 1 and args[0][0] == '/':
-            modifier = args[0][1]
-            if modifier not in "rv" and len(args[0]) > 2:
-                raise gdb.GdbError("Undefined output format \"{0}\"".format(args[0][1:]))
-            if modifier == 'm':
+        # Generalized parsing of /<mode><param> or /<mode> <param>
+        slash = None
+        mode = None
+        param = None
+        if len(args) > 0 and len(args[0]) > 0 and args[0][0] == '/':
+            # The first character of the first argument is a slash
+
+            # The immediately following character is the mode:
+            if len(args[0]) > 1:
+                mode = args[0][1]
+
+            # We now have a choice.  We allow things like "/r6" and "/r 6"
+            # We don't allow "/v 6", so we have to keep that in mind
+            if len(args[0]) > 2:
+                #Anything after the /<mode><param> is a parameter
+                param = args[0][2:]
+            else:
+                if len(args) > 1:
+                    # We are dealing with /v<mode> <something>
+                    # <something> might be a parameter:
+                    param = args[1]
+
+            if mode in "mvdxbq":
+                # Any of these switches suppress the heirarchical pretty printing
                 GV_ModuleState.current_pretty_mode = ''
+
+            if mode == 'm':
                 self.machine_interface_mode = True
                 args.pop(0)
-            elif modifier == 'r':
-                GV_ModuleState.current_pretty_mode = ''
+            elif mode == 'r':
                 args = self.ProcessSlashR(args)
-            elif modifier == 'v':
-                GV_ModuleState.current_pretty_mode = ''
+            elif mode == 'v':
                 args = self.ProcessSlashV(args)
-            elif modifier == 'p':
+            elif mode == 'p':
                 GV_ModuleState.current_pretty_mode = 'p'
                 args.pop(0)
                 if len(args) == 0:
                     # There are no additional arguments, so also make it the session mode
                     GV_ModuleState.sticky_pretty_mode = GV_ModuleState.current_pretty_mode
-            elif modifier == 'P':
+            elif mode == 'P':
                 GV_ModuleState.current_pretty_mode = ''
                 args.pop(0)
                 if len(args) == 0:
                     # There are no additional arguments, so also make it the session mode
                     GV_ModuleState.sticky_pretty_mode = GV_ModuleState.current_pretty_mode
-            elif modifier == 'd':
-                GV_ModuleState.current_pretty_mode = ''
+            elif mode == 'd':
                 GV_ModuleState.current_display_mode = 'd'
                 args.pop(0)
-            elif modifier in "xbq":
-                GV_ModuleState.current_pretty_mode = ''
-                GV_ModuleState.current_display_submode = modifier
+            elif mode in "xbq":
+                GV_ModuleState.current_display_submode = mode
                 args.pop(0)
             else:
-                raise gdb.GdbError("Undefined output format \"{0}\"".format(args[0][1:]))
+                ConditionalRaise("Undefined output format \"{0}\"".format(args[0][1:]))
+                args = []
+
         if args:
             args = ' '.join(args)
         return args
@@ -3289,8 +3336,8 @@ class CPrintWorker():
             if GV_ModuleState.current_display_submode == 'x':
                 # CHECKME: why use a different printing than refmod and a size-limit
                 if len(payload.data) > 16:
-                    raise gdb.GdbError("hex modifier needs a symbol which has a size not bigger than 16")
-                body = payload.display_body_hex
+                    ConditionalRaise("hex modifier needs a symbol which has a size not bigger than 16")
+                body = payload.GetDataAsHex()
             elif GV_ModuleState.current_display_submode == 'b':
                 # FIXME: support for 128-bit characters -> use 16
                 if len(payload.data) > 8:
@@ -3298,8 +3345,8 @@ class CPrintWorker():
                 # This is a kludge.  Convert the hex to binary:
                 body = ""
                 index = 2
-                while index < len(payload.display_body_hex) and index < 8 * 2 + 2:
-                    hexchar = int(payload.display_body_hex[index])
+                while index < len(payload.GetDataAsHex()) and index < 8 * 2 + 2:
+                    hexchar = int(payload.GetDataAsHex()[index])
                     mask = 8
                     while mask > 0:
                         if hexchar & mask:
@@ -3556,12 +3603,11 @@ class CPrintWorker():
 
                         body = WithRepeatCount(payload.display_body)
                         if GV_ModuleState.current_display_submode == 'x' and len(payload.data) <= 16:
-                            body = payload.display_body_hex
+                            body = payload.GetDataAsHex()
 
                         print_str += body
                     retval = OurPrint(NoNulls(print_str))
                     if retval:
-                        # print("Quit")
                         print(retval)
                         break
         elif len(leftside_possibilities) == 1:
