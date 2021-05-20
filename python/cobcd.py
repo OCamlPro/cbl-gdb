@@ -284,9 +284,10 @@ class GlobalVariables():
         else:
             self.gdb_8dot3_plus = False
             #if self.gdb_version_major < 7 or (self.gdb_version_major == 7 and self.gdb_version_minor < 6):
-            #    raise gdb.GdbError("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.6+ is required)\n".format(
+            #    ConditionalRaise("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.6+ is required)\n".format(
             #                                                        self.gdb_version_major,
             #                                                        self.gdb_version_minor))
+            #    return
             print("\n !! warning: add-symbol-file-cobol is not available with GDB-{0}.{1} (GDB 8.3+ is required)".format(
                                                                     self.gdb_version_major,
                                                                     self.gdb_version_minor)
@@ -1838,22 +1839,54 @@ class CobolVariable():
 
         return return_value
 
-    def GetDataAsHex(self):
+    def GetDataAsBinary(self):
+        binary_byte_limit = 16
         retval = ""
         if len(self.data) > 0:
-            retval = "0x"
-
             output_bytes = self.data[:]
-            if GV_GlobalVariables.byteorder == "little":
+            if GV_GlobalVariables.byteorder == "little" and not self.Refmod :
                 if (self.AttrFlags & COB_FLAG_BINARY_SWAP) == 0:  # If this is ON, then it is already in display order
                     if (self.AttrFlags & (COB_FLAG_REAL_BINARY | COB_FLAG_IS_POINTER | COB_FLAG_IS_FP)) != 0:
                         # These three types are little-endian; flip them so they display with the big byte to the left
                         output_bytes.reverse()
+            binary_byte = 0
+            for byte in output_bytes:
+                for bit in range(8):
+                    if byte >= 128:
+                        retval += '1'
+                    else:
+                        retval += '0'
+                    byte *= 2
+                    byte %= 256
+                binary_byte += 1
+                if binary_byte >= binary_byte_limit:
+                    break;
+        if len(output_bytes) > binary_byte_limit:
+            retval += "..."
+        return retval
+
+    def GetDataAsHex(self):
+        hex_byte_limit = 16
+        retval = ""
+        if len(self.data) > 0:
+            retval = "0x"
+            output_bytes = self.data[:]
+            if GV_GlobalVariables.byteorder == "little" and not self.Refmod :
+                if (self.AttrFlags & COB_FLAG_BINARY_SWAP) == 0:  # If this is ON, then it is already in display order
+                    if (self.AttrFlags & (COB_FLAG_REAL_BINARY | COB_FLAG_IS_POINTER | COB_FLAG_IS_FP)) != 0:
+                        # These three types are little-endian; flip them so they display with the big byte to the left
+                        output_bytes.reverse()
+            hex_byte = 0
             for byte in output_bytes:
                 hexout = hex(byte)[-2:]
                 if hexout[0:1] == 'x':
                     hexout = '0' + hexout[-1:]
                 retval += hexout
+                hex_byte += 1
+                if hex_byte >= hex_byte_limit:
+                    break;
+        if len(output_bytes) > hex_byte_limit:
+            retval += "..."
         return retval
 
     def CalculateTableOffset(self):
@@ -2497,6 +2530,11 @@ class ModuleInformation():
 
 GV_ModuleInformation = ModuleInformation()
 
+DISPLAY_SUBMODE_NONE = None
+DISPLAY_SUBMODE_BINARY = 'b'
+DISPLAY_SUBMODE_HEX = 'x'
+DISPLAY_SUBMODE_Q = 'q'
+
 class ModuleState():
     """State of the inferior as it is debugged"""
     def __init__(self):
@@ -2512,7 +2550,7 @@ class ModuleState():
         self.Stack = False
         self.sticky_display_mode = '0'
         self.current_display_mode = '0'
-        self.current_display_submode = '0'
+        self.current_display_submode = DISPLAY_SUBMODE_NONE
         self.sticky_pretty_mode = ''
         self.current_pretty_mode = ''
 
@@ -3242,7 +3280,7 @@ class CPrintWorker():
         # Start off with the current display modes the same as the session modes
         self.machine_interface_mode = False
         GV_ModuleState.current_display_mode = GV_ModuleState.sticky_display_mode
-        GV_ModuleState.current_display_submode = ''
+        GV_ModuleState.current_display_submode = DISPLAY_SUBMODE_NONE
         GV_ModuleState.current_pretty_mode = GV_ModuleState.sticky_pretty_mode
 
         # Generalized parsing of /<mode><param> or /<mode> <param>
@@ -3307,22 +3345,22 @@ class CPrintWorker():
     def GetDisplayBody(self, payload):
         body = ""
         if payload.Refmod:
-            # FIXME
-            if GV_ModuleState.current_display_submode == 'b':
-                raise gdb.GdbError("FIXME: binary modifier for refmod not imnplemented yet.")
-            # CHECKME: why use a different printing than non-refmod
-            if not payload.display_body.startswith('"') or GV_ModuleState.current_display_submode == 'x':
-                # We are dealing with something that libcob thinks is not alphabetic.
+            if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_BINARY:
+                body = self.GetDataAsBinary()
+            if not payload.display_body.startswith('"') or GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_HEX:
+                # The refmod payload is not alphabetic (or the submode is x for hex) and so we are
+                # going to display the refmodded payload in hex:
                 body = '['
                 for i in range(len(payload.data)):
                     # This is a trick. By adding 256 to the byte, we ensure that
                     # 0, for example, becomes 0x100 instead of 0x0.  Thus we can
-                    # strip off the final two characters for our string
+                    # strip off the final two characters for our hexadecimal string
                     body += hex(256 + payload.data[i])[-2:]
                 body += ']'
             else:
-                # We are dealing with something that libcob thinks is alphabetic:
-                # Pull out those characters as ASCII.
+                # We are dealing with something that libcob thinks is alphabetic, so
+                # we are going to extract the refmodded characters from the data buffer
+                # and display them as ASCII
                 body = '"'
                 for i in range(len(payload.data)):
                     nch = payload.data[i]
@@ -3333,28 +3371,10 @@ class CPrintWorker():
             body = WithRepeatCount(body)
         else:
             # There is no refmod involved:
-            if GV_ModuleState.current_display_submode == 'x':
-                # CHECKME: why use a different printing than refmod and a size-limit
-                if len(payload.data) > 16:
-                    ConditionalRaise("hex modifier needs a symbol which has a size not bigger than 16")
+            if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_HEX:
                 body = payload.GetDataAsHex()
-            elif GV_ModuleState.current_display_submode == 'b':
-                # FIXME: support for 128-bit characters -> use 16
-                if len(payload.data) > 8:
-                    raise gdb.GdbError("binary modifier needs a symbol which has a size not bigger than 8")
-                # This is a kludge.  Convert the hex to binary:
-                body = ""
-                index = 2
-                while index < len(payload.GetDataAsHex()) and index < 8 * 2 + 2:
-                    hexchar = int(payload.GetDataAsHex()[index])
-                    mask = 8
-                    while mask > 0:
-                        if hexchar & mask:
-                            body += '1'
-                        else:
-                            body += '0'
-                        mask >>= 1
-                    index += 1
+            elif GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_BINARY:
+                body = payload.GetDataAsBinary()
             else:
                 body = WithRepeatCount(payload.display_body)
 
@@ -3592,7 +3612,7 @@ class CPrintWorker():
             for payload_index in leftside_possibilities:
                 payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
                 if not payload.not_in_context:
-                    if GV_ModuleState.current_display_submode == 'q':
+                    if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_Q:
                         print_str = payload.NameWithSubscripts()
                     else:
                         GV_GlobalVariables.ShortTermMemory.append(payload_index)
@@ -3601,9 +3621,10 @@ class CPrintWorker():
                         print_str += payload.NameToString()
                         print_str += " : "
 
-                        body = WithRepeatCount(payload.display_body)
-                        if GV_ModuleState.current_display_submode == 'x' and len(payload.data) <= 16:
+                        if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_HEX:
                             body = payload.GetDataAsHex()
+                        else :
+                            body = WithRepeatCount(payload.display_body)
 
                         print_str += body
                     retval = OurPrint(NoNulls(print_str))
@@ -3669,7 +3690,8 @@ class CPrintWorker():
             return
 
         if not GV_ModuleState.Stack:
-            raise gdb.GdbError("No stack.")
+            ConditionalRaise("No stack.")
+            return
 
         if args[0][0] == '"':
             self.HandleDoubleQuote(arguments)
@@ -3687,7 +3709,8 @@ class CPrintWorker():
 
         if right_side and (GV_ModuleState.current_display_submode or GV_ModuleState.sticky_display_mode != GV_ModuleState.current_display_mode):
             # FIXME: should be just "right_side and any-modifier-given" but that var does not exist
-            raise gdb.GdbError("Invalid arguments, cprint with modifier may not include a right-hand-side.")
+            ConditionalRaise("Invalid arguments, cprint with modifier may not include a right-hand-side.")
+            return
 
         # From this point on, the left_side, and right_side (if there
         # is one), are handled as lists of strings
@@ -3782,7 +3805,8 @@ class CPrintWorker():
 class CobolAfterWatchBreakpoint(gdb.Breakpoint):
     def __init__(self, creating_wp):
         if not GV_GlobalVariables.gdb_8dot3_plus:
-            raise gdb.GdbError("pure COBOL cwatch needs GDB 8.3+")
+            ConditionalRaise("pure COBOL cwatch needs GDB 8.3+")
+            return
 
         frame = gdb.newest_frame ()
         cob_frame = CFrameWorker.Frame(True, 0)
@@ -3866,15 +3890,18 @@ class CobolWatchpointHandler():
 class CobolWatchBreakpoint(gdb.Breakpoint):
     def __init__(self, payload, bp_spec, bp_action):
         if not GV_GlobalVariables.gdb_8dot3_plus:
-            raise gdb.GdbError("pure COBOL cwatch needs GDB 8.3+")
+            ConditionalRaise("pure COBOL cwatch needs GDB 8.3+")
+            return
         try:
             super(CobolWatchBreakpoint, self).__init__(bp_spec, gdb.BP_WATCHPOINT, bp_action)
             CBLDBG_CBREAK_WORKER.cobol_breaks.append(self)
         except Exception as ex:
-            raise gdb.GdbError(ex)
+            ConditionalRaise(ex)
+            return
         if self.type == gdb.BP_WATCHPOINT:
             self.delete()
-            raise gdb.GdbError("Expression cannot be implemented as hardware watchpoint.\n... and therefore removed")
+            ConditionalRaise("Expression cannot be implemented as hardware watchpoint.\n... and therefore removed")
+            return
         self.handler = CobolWatchpointHandler(self, payload)
         self.after_done = 0
         self.after_watch = None
@@ -3929,7 +3956,8 @@ class CWatchWorker():
             break_point = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_ACCESS)
             if break_point.type == gdb.BP_WATCHPOINT:
                 break_point.delete()
-                raise gdb.GdbError("Expression cannot be implemented as hardware watchpoint.\n... and therefore removed")
+                ConditionalRaise("Expression cannot be implemented as hardware watchpoint.\n... and therefore removed")
+                return
             # GDB 7.6 has no writable commands attribute, gdb.execute with multi-lines does not work either)
             #break_point.commands = "echo Watched: {0} from {1}\\n \n cup 0".format(payload.NameWithSubscripts(), payload.Program)
 
@@ -4816,7 +4844,8 @@ class CLoadWorker():
             try:
                 gdb_cmd = "add-symbol-file " + solibpath
                 if not text_addr:
-                    raise gdb.GdbError("no text section found")
+                    ConditionalRaise("no text section found")
+                    return return_list
                 for s_section, s_address in symbol_addrs.items():
                     gdb_cmd = gdb_cmd + " -s {0} {1}".format(s_section, s_address)
                 gdb.execute(gdb_cmd, False, True)
@@ -4920,7 +4949,8 @@ they override any that might have been passed to GDB with --args."""
         try:
             obj_files = gdb.objfiles()
             if len(obj_files) < 1:
-                raise gdb.GdbError("No symbol table loaded.  Use the \"file\" command.")
+                ConditionalRaise("No symbol table loaded.  Use the \"file\" command.")
+                return
             line1 = gdb.objfiles()[0].filename
             line1 = line1.replace('\\', '/').replace(".exe", "")    # This is a hack for Windows
             main_program = line1.split('/')[-1].split('"')[0]
@@ -4931,7 +4961,8 @@ they override any that might have been passed to GDB with --args."""
                     args = gdb.parameter("args").split()
                     if len (args) < 1 or not args[0]:
                         # especially after attaching to a program args is empty
-                        raise gdb.GdbError("No args set.  Specify program to call or use the \"set args\" command.")
+                        ConditionalRaise("No args set.  Specify program to call or use the \"set args\" command.")
+                        return
                     cobol_program = args[0]
                     arguments = ' '.join(args)
                 else:
@@ -4983,7 +5014,8 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
     def invoke(self, argument, from_tty):
         if argument:
             if not argument.isdigit():
-                raise gdb.GdbError("argument must be a digit, not " + argument)
+                ConditionalRaise("argument must be a digit, not " + argument)
+                return
             ncount = int(argument)
         else:
             ncount = 1
@@ -5031,7 +5063,8 @@ class CFrameWorker:
         try:
             frame = gdb.selected_frame()
         except gdb.error:
-            raise gdb.GdbError("No stack.")
+            ConditionalRaise("No stack.")
+            return
 
         while True:
             if number != 0:
@@ -5082,7 +5115,8 @@ class CFrameWorker:
         number = 1
         if argument:
             if not argument.isdigit():
-                raise gdb.GdbError("argument must be a digit, not " + argument)
+                ConditionalRaise("argument must be a digit, not " + argument)
+                return
             number = int(argument)
 
         frame = CFrameWorker.Frame(up, number)
@@ -5163,21 +5197,24 @@ An argument says how fast auto stepping is done (1-19, default 5)."""
         print('Registering command auto-step')
         super(CmdAutoStep, self).__init__("auto-step", gdb.COMMAND_RUNNING)
         gdb.events.stop.connect(stop_handler_auto_step)
-    def invoke(self, argument, from_tty):
 
+    def invoke(self, argument, from_tty):
         number = 5 # TODO: use a parameter for the default
         if argument:
             if not argument.isdigit():
-                raise gdb.GdbError("argument must be a digit, not " + argument)
+                ConditionalRaise("argument must be a digit, not " + argument)
+                return
             number = int(argument)
             if number == 0 or number > 19:
-                raise gdb.GdbError("argument must be a digit between 1 and 19")
+                ConditionalRaise("argument must be a digit between 1 and 19")
+                return
 
         sleep_time = 3.0 / (number * 1.4)
         try:
             frame = gdb.newest_frame()
         except gdb.error:
-            raise gdb.GdbError("No stack.")
+            ConditionalRaise("No stack.")
+            return
 
         global last_stop_was_simple
         last_stop_was_simple = True

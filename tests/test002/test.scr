@@ -28,6 +28,10 @@ define printem
     cprint/m *
     echo cprint/m ?\n
     cprint/m ?
+	echo cprint/x 1\n
+	cprint/x 1
+	echo cprint/b 1\n
+	cprint/b 1
     echo KNOWN GOOD FINISH\n
     end
 
