@@ -156,6 +156,9 @@ HEXVAL = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 
 # Buffer size for printing
 PRINT_BUFFER_SIZE = 65536
 
+# Unlike GnuCOBOL, we aregoing to replace characters we don't recognize
+NON_PRINTABLE_CHAR = ord('^')
+
 # These constants are used when calling get_verified_field_location
 ALLOCATE = True
 DONT_ALLOCATE = False
@@ -1668,7 +1671,7 @@ class CobolVariable():
                 # data, so sanitize it a bit:
                 char = GetDataAt(buf_ptr, 1)
                 if char < 32:
-                    char = ord('^')
+                    char = NON_PRINTABLE_CHAR
                 retval += chr(char)
                 buf_ptr += 1
             retval += '"'
@@ -3214,44 +3217,42 @@ class CPrintWorker():
         GV_ModuleState.current_pretty_mode = GV_ModuleState.sticky_pretty_mode
 
         # Now see if he wants to change it
-        if len(args) >= 1:
-            # if the first argument is /d, turn on our debug flag:
-            if args[0] == "/d":
-                GV_ModuleState.current_pretty_mode = ''
-                GV_ModuleState.current_display_mode = 'd'
-                args.pop(0)
-            elif args[0] == "/x":
-                GV_ModuleState.current_pretty_mode = ''
-                GV_ModuleState.current_display_submode = 'x'
-                args.pop(0)
-            elif args[0] == "/b":
-                GV_ModuleState.current_pretty_mode = ''
-                GV_ModuleState.current_display_submode = 'b'
-                args.pop(0)
-            elif args[0] == "/q":
-                GV_ModuleState.current_pretty_mode = ''
-                GV_ModuleState.current_display_submode = 'q'
-                args.pop(0)
-            elif args[0] == "/m":
+        if len(args) >= 1 and len(args[0]) > 1 and args[0][0] == '/':
+            modifier = args[0][1]
+            if modifier not in "rv" and len(args[0]) > 2:
+                raise gdb.GdbError("Undefined output format \"{0}\"".format(args[0][1:]))
+            if modifier == 'm':
                 GV_ModuleState.current_pretty_mode = ''
                 self.machine_interface_mode = True
                 args.pop(0)
-            elif args[0] == "/p":
+            elif modifier == 'r':
+                GV_ModuleState.current_pretty_mode = ''
+                args = self.ProcessSlashR(args)
+            elif modifier == 'v':
+                GV_ModuleState.current_pretty_mode = ''
+                args = self.ProcessSlashV(args)
+            elif modifier == 'p':
                 GV_ModuleState.current_pretty_mode = 'p'
                 args.pop(0)
                 if len(args) == 0:
                     # There are no additional arguments, so also make it the session mode
                     GV_ModuleState.sticky_pretty_mode = GV_ModuleState.current_pretty_mode
-            elif args[0] == "/P":
+            elif modifier == 'P':
                 GV_ModuleState.current_pretty_mode = ''
-                GV_ModuleState.sticky_pretty_mode = GV_ModuleState.current_pretty_mode
                 args.pop(0)
-            elif args[0][0:2] == "/v":
+                if len(args) == 0:
+                    # There are no additional arguments, so also make it the session mode
+                    GV_ModuleState.sticky_pretty_mode = GV_ModuleState.current_pretty_mode
+            elif modifier == 'd':
                 GV_ModuleState.current_pretty_mode = ''
-                args = self.ProcessSlashV(args)
-            elif args[0][0:2] == "/r":
+                GV_ModuleState.current_display_mode = 'd'
+                args.pop(0)
+            elif modifier in "xbq":
                 GV_ModuleState.current_pretty_mode = ''
-                args = self.ProcessSlashR(args)
+                GV_ModuleState.current_display_submode = modifier
+                args.pop(0)
+            else:
+                raise gdb.GdbError("Undefined output format \"{0}\"".format(args[0][1:]))
         if args:
             args = ' '.join(args)
         return args
@@ -3259,6 +3260,10 @@ class CPrintWorker():
     def GetDisplayBody(self, payload):
         body = ""
         if payload.Refmod:
+            # FIXME
+            if GV_ModuleState.current_display_submode == 'b':
+                raise gdb.GdbError("FIXME: binary modifier for refmod not imnplemented yet.")
+            # CHECKME: why use a different printing than non-refmod
             if not payload.display_body.startswith('"') or GV_ModuleState.current_display_submode == 'x':
                 # We are dealing with something that libcob thinks is not alphabetic.
                 body = '['
@@ -3270,21 +3275,26 @@ class CPrintWorker():
                 body += ']'
             else:
                 # We are dealing with something that libcob thinks is alphabetic:
-                # Pull out those characters as ASCII.  Unlike GnuCOBOL, we are
-                # going to replace characters we don't recognize with dots
+                # Pull out those characters as ASCII.
                 body = '"'
                 for i in range(len(payload.data)):
                     nch = payload.data[i]
                     if nch < 32:
-                        nch = ord('.')
+                        nch = NON_PRINTABLE_CHAR
                     body += chr(nch)
                 body += '"'
             body = WithRepeatCount(body)
         else:
             # There is no refmod involved:
-            if GV_ModuleState.current_display_submode == 'x' and len(payload.data) <= 16:
+            if GV_ModuleState.current_display_submode == 'x':
+                # CHECKME: why use a different printing than refmod and a size-limit
+                if len(payload.data) > 16:
+                    raise gdb.GdbError("hex modifier needs a symbol which has a size not bigger than 16")
                 body = payload.display_body_hex
-            elif GV_ModuleState.current_display_submode == 'b' and len(payload.data) <= 8:
+            elif GV_ModuleState.current_display_submode == 'b':
+                # FIXME: support for 128-bit characters -> use 16
+                if len(payload.data) > 8:
+                    raise gdb.GdbError("binary modifier needs a symbol which has a size not bigger than 8")
                 # This is a kludge.  Convert the hex to binary:
                 body = ""
                 index = 2
