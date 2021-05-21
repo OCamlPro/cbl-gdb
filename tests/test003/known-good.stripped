@@ -10,28 +10,7 @@ I am MAIN; I call A, B, and C
 [Inferior 1 (process 99999) exited normally]
 KNOWN GOOD FINISH
 KNOWN GOOD START
-cprint/v0 *
- 1 : 01 CALL-BLOCK  : "MAIN2"
- 2 : 05 WE-ARE/CALL-BLOCK  : "MAIN"
- 3 : 05 WS-INDENT/CALL-BLOCK  : 2
-cprint/v0 ?
- 1 : 01 CALL-BLOCK  : "MAIN2"
- 2 : 05 WE-ARE/CALL-BLOCK  : "MAIN"
- 3 : 05 WS-INDENT/CALL-BLOCK  : 2
-cprint/v3 *
- 1 : 01 CALL-BLOCK/MAIN [W-S] : "MAIN2"
- 2 : 05 WE-ARE/CALL-BLOCK/MAIN [W-S] : "MAIN"
- 3 : 05 WS-INDENT/CALL-BLOCK/MAIN [W-S] : 2
-cprint/v3 ?
- 1 : 01 CALL-BLOCK/MAIN [W-S] : "MAIN2"
- 2 : 05 WE-ARE/CALL-BLOCK/MAIN [W-S] : "MAIN"
- 3 : 05 WS-INDENT/CALL-BLOCK/MAIN [W-S] : 2
-cprint/x 1
-01 CALL-BLOCK/MAIN [W-S]  :  0x4d41494e32
-cprint/m *
-variables=[{name="CALL-BLOCK/MAIN",value="{_groupvalue=\"\\\"MAIN2\\\"\",WE-ARE=\"\\\"MAIN\\\"\",WS-INDENT=\"2\"}"}]
-cprint/m ?
-variables=[{name="CALL-BLOCK/MAIN",value="{_groupvalue=\"\\\"MAIN2\\\"\",WE-ARE=\"\\\"MAIN\\\"\",WS-INDENT=\"2\"}"}]
+select-frame 8
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -58,6 +37,9 @@ cprint/m ?
 variables=[{name="CALL-BLOCK/MAIN",value="{_groupvalue=\"\\\"MAIN2\\\"\",WE-ARE=\"\\\"MAIN\\\"\",WS-INDENT=\"2\"}"}]
 KNOWN GOOD FINISH
 KNOWN GOOD START
+select-frame 7
+KNOWN GOOD FINISH
+KNOWN GOOD START
 cprint/v0 *
  1 : 01 CALL-BLOCK  : "MAIN2"
  2 : 05 WE-ARE/CALL-BLOCK  : "MAIN"
@@ -80,6 +62,36 @@ cprint/m *
 variables=[{name="CALL-BLOCK/MAIN",value="{_groupvalue=\"\\\"MAIN2\\\"\",WE-ARE=\"\\\"MAIN\\\"\",WS-INDENT=\"2\"}"}]
 cprint/m ?
 variables=[{name="CALL-BLOCK/MAIN",value="{_groupvalue=\"\\\"MAIN2\\\"\",WE-ARE=\"\\\"MAIN\\\"\",WS-INDENT=\"2\"}"}]
+KNOWN GOOD FINISH
+KNOWN GOOD START
+select-frame 6
+KNOWN GOOD FINISH
+KNOWN GOOD START
+cprint/v0 *
+ 1 : 01 CALL-BLOCK  : "MAIN2"
+ 2 : 05 WE-ARE/CALL-BLOCK  : "MAIN"
+ 3 : 05 WS-INDENT/CALL-BLOCK  : 2
+cprint/v0 ?
+ 1 : 01 CALL-BLOCK  : "MAIN2"
+ 2 : 05 WE-ARE/CALL-BLOCK  : "MAIN"
+ 3 : 05 WS-INDENT/CALL-BLOCK  : 2
+cprint/v3 *
+ 1 : 01 CALL-BLOCK/MAIN [W-S] : "MAIN2"
+ 2 : 05 WE-ARE/CALL-BLOCK/MAIN [W-S] : "MAIN"
+ 3 : 05 WS-INDENT/CALL-BLOCK/MAIN [W-S] : 2
+cprint/v3 ?
+ 1 : 01 CALL-BLOCK/MAIN [W-S] : "MAIN2"
+ 2 : 05 WE-ARE/CALL-BLOCK/MAIN [W-S] : "MAIN"
+ 3 : 05 WS-INDENT/CALL-BLOCK/MAIN [W-S] : 2
+cprint/x 1
+01 CALL-BLOCK/MAIN [W-S]  :  0x4d41494e32
+cprint/m *
+variables=[{name="CALL-BLOCK/MAIN",value="{_groupvalue=\"\\\"MAIN2\\\"\",WE-ARE=\"\\\"MAIN\\\"\",WS-INDENT=\"2\"}"}]
+cprint/m ?
+variables=[{name="CALL-BLOCK/MAIN",value="{_groupvalue=\"\\\"MAIN2\\\"\",WE-ARE=\"\\\"MAIN\\\"\",WS-INDENT=\"2\"}"}]
+KNOWN GOOD FINISH
+KNOWN GOOD START
+select-frame 5
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -114,6 +126,9 @@ cprint/m ?
 variables=[{name="CALL-BLOCK/A",value="{_groupvalue=\"\\\"A   4\\\"\",WE-ARE=\"\\\"A   \\\"\",WS-INDENT=\"4\"}"},{name="CALLED-BLOCK/A",value="{_groupvalue=\"\\\"MAIN2\\\"\",CALLED-FROM=\"\\\"MAIN\\\"\",INDENT=\"2\"}"}]
 KNOWN GOOD FINISH
 KNOWN GOOD START
+select-frame 4
+KNOWN GOOD FINISH
+KNOWN GOOD START
 cprint/v0 *
  1 : 01 CALL-BLOCK  : "A   4"
  2 : 05 WE-ARE/CALL-BLOCK  : "A   "
@@ -146,36 +161,7 @@ cprint/m ?
 variables=[{name="CALL-BLOCK/A",value="{_groupvalue=\"\\\"A   4\\\"\",WE-ARE=\"\\\"A   \\\"\",WS-INDENT=\"4\"}"},{name="CALLED-BLOCK/A",value="{_groupvalue=\"\\\"MAIN2\\\"\",CALLED-FROM=\"\\\"MAIN\\\"\",INDENT=\"2\"}"}]
 KNOWN GOOD FINISH
 KNOWN GOOD START
-cprint/v0 *
- 1 : 01 CALL-BLOCK  : "B   6"
- 2 : 05 WE-ARE/CALL-BLOCK  : "B   "
- 3 : 05 WS-INDENT/CALL-BLOCK  : 6
- 4 : 01 CALLED-BLOCK  : "A   4"
- 5 : 05 CALLED-FROM/CALLED-BLOCK  : "A   "
- 6 : 05 INDENT/CALLED-BLOCK  : 4
-cprint/v0 ?
- 1 : 01 CALL-BLOCK  : "B   6"
- 2 : 05 WE-ARE/CALL-BLOCK  : "B   "
- 3 : 05 CALLED-FROM/CALLED-BLOCK  : "A   "
- 4 : 05 INDENT/CALLED-BLOCK  : 4
-cprint/v3 *
- 1 : 01 CALL-BLOCK/B [W-S] : "B   6"
- 2 : 05 WE-ARE/CALL-BLOCK/B [W-S] : "B   "
- 3 : 05 WS-INDENT/CALL-BLOCK/B [W-S] : 6
- 4 : 01 CALLED-BLOCK/B [LNK] : "A   4"
- 5 : 05 CALLED-FROM/CALLED-BLOCK/B [LNK] : "A   "
- 6 : 05 INDENT/CALLED-BLOCK/B [LNK] : 4
-cprint/v3 ?
- 1 : 01 CALL-BLOCK/B [W-S] : "B   6"
- 2 : 05 WE-ARE/CALL-BLOCK/B [W-S] : "B   "
- 3 : 05 CALLED-FROM/CALLED-BLOCK/B [LNK] : "A   "
- 4 : 05 INDENT/CALLED-BLOCK/B [LNK] : 4
-cprint/x 1
-01 CALL-BLOCK/B [W-S]  :  0x4220202036
-cprint/m *
-variables=[{name="CALL-BLOCK/B",value="{_groupvalue=\"\\\"B   6\\\"\",WE-ARE=\"\\\"B   \\\"\",WS-INDENT=\"6\"}"},{name="CALLED-BLOCK/B",value="{_groupvalue=\"\\\"A   4\\\"\",CALLED-FROM=\"\\\"A   \\\"\",INDENT=\"4\"}"}]
-cprint/m ?
-variables=[{name="CALL-BLOCK/B",value="{_groupvalue=\"\\\"B   6\\\"\",WE-ARE=\"\\\"B   \\\"\",WS-INDENT=\"6\"}"},{name="CALLED-BLOCK/B",value="{_groupvalue=\"\\\"A   4\\\"\",CALLED-FROM=\"\\\"A   \\\"\",INDENT=\"4\"}"}]
+select-frame 3
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -208,6 +194,44 @@ cprint/m *
 variables=[{name="CALL-BLOCK/B",value="{_groupvalue=\"\\\"B   6\\\"\",WE-ARE=\"\\\"B   \\\"\",WS-INDENT=\"6\"}"},{name="CALLED-BLOCK/B",value="{_groupvalue=\"\\\"A   4\\\"\",CALLED-FROM=\"\\\"A   \\\"\",INDENT=\"4\"}"}]
 cprint/m ?
 variables=[{name="CALL-BLOCK/B",value="{_groupvalue=\"\\\"B   6\\\"\",WE-ARE=\"\\\"B   \\\"\",WS-INDENT=\"6\"}"},{name="CALLED-BLOCK/B",value="{_groupvalue=\"\\\"A   4\\\"\",CALLED-FROM=\"\\\"A   \\\"\",INDENT=\"4\"}"}]
+KNOWN GOOD FINISH
+KNOWN GOOD START
+select-frame 2
+KNOWN GOOD FINISH
+KNOWN GOOD START
+cprint/v0 *
+ 1 : 01 CALL-BLOCK  : "B   6"
+ 2 : 05 WE-ARE/CALL-BLOCK  : "B   "
+ 3 : 05 WS-INDENT/CALL-BLOCK  : 6
+ 4 : 01 CALLED-BLOCK  : "A   4"
+ 5 : 05 CALLED-FROM/CALLED-BLOCK  : "A   "
+ 6 : 05 INDENT/CALLED-BLOCK  : 4
+cprint/v0 ?
+ 1 : 01 CALL-BLOCK  : "B   6"
+ 2 : 05 WE-ARE/CALL-BLOCK  : "B   "
+ 3 : 05 CALLED-FROM/CALLED-BLOCK  : "A   "
+ 4 : 05 INDENT/CALLED-BLOCK  : 4
+cprint/v3 *
+ 1 : 01 CALL-BLOCK/B [W-S] : "B   6"
+ 2 : 05 WE-ARE/CALL-BLOCK/B [W-S] : "B   "
+ 3 : 05 WS-INDENT/CALL-BLOCK/B [W-S] : 6
+ 4 : 01 CALLED-BLOCK/B [LNK] : "A   4"
+ 5 : 05 CALLED-FROM/CALLED-BLOCK/B [LNK] : "A   "
+ 6 : 05 INDENT/CALLED-BLOCK/B [LNK] : 4
+cprint/v3 ?
+ 1 : 01 CALL-BLOCK/B [W-S] : "B   6"
+ 2 : 05 WE-ARE/CALL-BLOCK/B [W-S] : "B   "
+ 3 : 05 CALLED-FROM/CALLED-BLOCK/B [LNK] : "A   "
+ 4 : 05 INDENT/CALLED-BLOCK/B [LNK] : 4
+cprint/x 1
+01 CALL-BLOCK/B [W-S]  :  0x4220202036
+cprint/m *
+variables=[{name="CALL-BLOCK/B",value="{_groupvalue=\"\\\"B   6\\\"\",WE-ARE=\"\\\"B   \\\"\",WS-INDENT=\"6\"}"},{name="CALLED-BLOCK/B",value="{_groupvalue=\"\\\"A   4\\\"\",CALLED-FROM=\"\\\"A   \\\"\",INDENT=\"4\"}"}]
+cprint/m ?
+variables=[{name="CALL-BLOCK/B",value="{_groupvalue=\"\\\"B   6\\\"\",WE-ARE=\"\\\"B   \\\"\",WS-INDENT=\"6\"}"},{name="CALLED-BLOCK/B",value="{_groupvalue=\"\\\"A   4\\\"\",CALLED-FROM=\"\\\"A   \\\"\",INDENT=\"4\"}"}]
+KNOWN GOOD FINISH
+KNOWN GOOD START
+select-frame 1
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -232,6 +256,9 @@ cprint/m *
 variables=[{name="CALLED-BLOCK/C",value="{_groupvalue=\"\\\"B   6\\\"\",CALLED-FROM=\"\\\"B   \\\"\",INDENT=\"6\"}"}]
 cprint/m ?
 variables=[{name="CALLED-BLOCK/C",value="{_groupvalue=\"\\\"B   6\\\"\",CALLED-FROM=\"\\\"B   \\\"\",INDENT=\"6\"}"}]
+KNOWN GOOD FINISH
+KNOWN GOOD START
+select-frame 0
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
