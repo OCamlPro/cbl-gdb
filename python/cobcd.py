@@ -157,8 +157,8 @@ HEXVAL = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 
 # Buffer size for printing
 PRINT_BUFFER_SIZE = 65536
 
-# Unlike GnuCOBOL, we aregoing to replace characters we don't recognize
-NON_PRINTABLE_CHAR = ord('^')
+# Unlike GnuCOBOL, we are going to replace characters we don't recognize
+NON_PRINTABLE_CHAR = '^'
 
 # These constants are used when calling get_verified_field_location
 ALLOCATE = True
@@ -300,7 +300,6 @@ class GlobalVariables():
 
         # Establish what we do on ConditionalRaise:
         conraise = int(os.environ.get('CPRINT_RAISE', '1'))
-        conraise = '0'
         if conraise == '1':
             self.raise_error = True
         else:
@@ -1693,7 +1692,7 @@ class CobolVariable():
                 # data, so sanitize it a bit:
                 char = GetDataAt(buf_ptr, 1)
                 if char < 32:
-                    char = NON_PRINTABLE_CHAR
+                    char = ord(NON_PRINTABLE_CHAR)
                 retval += chr(char)
                 buf_ptr += 1
             retval += '"'
@@ -1862,7 +1861,7 @@ class CobolVariable():
                 if binary_byte >= binary_byte_limit:
                     break;
         if len(output_bytes) > binary_byte_limit:
-            retval += "..."
+            retval += "...({0} total bytes)".format(len(output_bytes))
         return retval
 
     def GetDataAsHex(self):
@@ -1886,7 +1885,7 @@ class CobolVariable():
                 if hex_byte >= hex_byte_limit:
                     break;
         if len(output_bytes) > hex_byte_limit:
-            retval += "..."
+            retval += "...({0} total bytes)".format(len(output_bytes))
         return retval
 
     def CalculateTableOffset(self):
@@ -2755,7 +2754,6 @@ class ModuleState():
             self.current_trapped_file = ""
             self.current_trapped_frame = -1
             self.current_trapped_line = 0
-            ConditionalRaise("No stack.")
             retval = False
         except:
             self.current_trapped_routine = ""
@@ -3365,7 +3363,7 @@ class CPrintWorker():
                 for i in range(len(payload.data)):
                     nch = payload.data[i]
                     if nch < 32:
-                        nch = NON_PRINTABLE_CHAR
+                        nch = ord(NON_PRINTABLE_CHAR)
                     body += chr(nch)
                 body += '"'
             body = WithRepeatCount(body)
@@ -3445,7 +3443,7 @@ class CPrintWorker():
                     # Because var_right has a refmod, we will use the var_right display
                     # body, which at this point is already trimmed to the data we need
                     value = var_right.display_body
-                if value.startswith(('"', "'")) and value.endswith(('"', "'")):
+                if value.startswith(('"')) and value.endswith(('"')):
                     # Get rid of the quotes around a string:
                     value = value[1:-1]
                 return_value = var_left.PutDataAsString(value, 1, var_left.Length)
@@ -3461,7 +3459,7 @@ class CPrintWorker():
             p_startloc = var_left.RefmodOffset + 1
             p_length   = var_left.RefmodLength
 
-            if value.startswith(('"', "'")) and value.endswith(('"', "'")):
+            if value.startswith(('"')) and value.endswith(('"')):
                 value = value[1:-1]
             return_value = var_left.PutDataAsString(value, p_startloc, p_length)
 
@@ -3589,10 +3587,14 @@ class CPrintWorker():
         for index in range( len(GV_ModuleInformation.var_trie.storage_list) ):
             if index in all_parents:
                 # If we are a founding father, we go into the list
+                # Make sure our data are available
+                GV_ModuleInformation.var_trie.storage_list[index].FetchVariableData(False)
                 possibilities.append(index)
                 continue
             if GV_ModuleInformation.var_trie.storage_list[index].index_of_parent in all_parents:
                 # We aren't in the list, but our parent is, so we go onto the list
+                GV_ModuleInformation.var_trie.storage_list[index].FetchVariableData(False)
+                # Make sure our data are available, including AttrType
                 possibilities.append(index)
                 # And if we have children, we go onto the parents list:
                 if GV_ModuleInformation.var_trie.storage_list[index].AttrType == COB_TYPE_GROUP:
