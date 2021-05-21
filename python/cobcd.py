@@ -3605,7 +3605,14 @@ class CPrintWorker():
         print(result,end='')
 
     def ProcessArgumentsHumanMode(self, leftside_possibilities, rightside):
-        if GV_ModuleState.current_pretty_mode == 'p':
+        # If it happens that there is only one leftside_possibility, and it
+        # happens to have a Refmod, then we can't do heirarchical:
+        payload_okay = True
+        if len(leftside_possibilities) == 1:
+            payload = GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]]
+            if payload.Refmod:
+                payload_okay = False
+        if payload_okay and GV_ModuleState.current_pretty_mode == 'p':
             return self.ProcessArgumentsHumanHeirarchical(leftside_possibilities)
         if len(leftside_possibilities) > 1:
             GV_GlobalVariables.ShortTermMemory = []
