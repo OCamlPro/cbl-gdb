@@ -56,22 +56,49 @@ echo KNOWN GOOD FINISH\n
 b INDENTER.cpy:2
 run
 
+echo KNOWN GOOD START\n
+echo select-frame 8\n
+echo KNOWN GOOD FINISH\n
 select-frame 8
 printem
+echo KNOWN GOOD START\n
+echo select-frame 7\n
+echo KNOWN GOOD FINISH\n
 select-frame 7
 printem
+echo KNOWN GOOD START\n
+echo select-frame 6\n
+echo KNOWN GOOD FINISH\n
 select-frame 6
 printem
+echo KNOWN GOOD START\n
+echo select-frame 5\n
+echo KNOWN GOOD FINISH\n
 select-frame 5
 printem
+echo KNOWN GOOD START\n
+echo select-frame 4\n
+echo KNOWN GOOD FINISH\n
 select-frame 4
 printem
+echo KNOWN GOOD START\n
+echo select-frame 3\n
+echo KNOWN GOOD FINISH\n
 select-frame 3
 printem
+echo KNOWN GOOD START\n
+echo select-frame 2\n
+echo KNOWN GOOD FINISH\n
 select-frame 2
 printem
+echo KNOWN GOOD START\n
+echo select-frame 1\n
+echo KNOWN GOOD FINISH\n
 select-frame 1
 printem
+echo KNOWN GOOD START\n
+echo select-frame 0\n
+echo KNOWN GOOD FINISH\n
 select-frame 0
 printem
 c
