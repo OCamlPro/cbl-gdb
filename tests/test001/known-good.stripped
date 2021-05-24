@@ -1,4 +1,7 @@
 KNOWN GOOD START
+No stack.
+KNOWN GOOD FINISH
+KNOWN GOOD START
 cprint/v0 *
  1 : 01 GEORGE  : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 FILLER/GEORGE  : ' ' <repeats 13 times>

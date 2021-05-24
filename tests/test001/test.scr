@@ -53,6 +53,10 @@ file test
 cprint/v3
 cprint/r 6
 
+echo KNOWN GOOD START\n
+cprint *
+echo KNOWN GOOD FINISH\n
+
 break 27
 break 30
 break 34

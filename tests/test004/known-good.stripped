@@ -214,6 +214,8 @@ cp ws-table(banana:4)
 No symbol matches "BANANA"
 cp ws-table(banana:banana)
 No symbol matches "BANANA"
+cp ws-table(banana:banana
+Unmatched parentheses
 cp ws-c
 10 WS-C/WS-A/WS-TABLE(1)   :  "ABC"
 cp ws-c(1)

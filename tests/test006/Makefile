@@ -39,7 +39,7 @@ known-good:
 ifeq ($(gdbmajor),7)
 	@echo "This function is suppressed in systems with GDB-7"
 else
-	$(GDB) -x test.scr > known-good.txt
+	CPRINT_RAISE=0 $(GDB) -x test.scr > known-good.txt
 	../strip-diff known-good.txt >$(knowngood).stripped
 endif
 
@@ -48,7 +48,7 @@ test:
 ifeq ($(gdbmajor),7)
 	@echo "This function is suppressed in systems with GDB-7"
 else
-	$(GDB) -x test.scr > under-test.txt
+	CPRINT_RAISE=0 $(GDB) -x test.scr > under-test.txt
 	../strip-diff under-test.txt >under-test.stripped
 	diff -uw under-test.stripped $(knowngood).stripped
 endif
@@ -58,7 +58,7 @@ testprod:
 ifeq ($(gdbmajor),7)
 	@echo "This function is suppressed in systems with GDB-7"
 else
-	$(GDB) -x test.scr > under-test.txt
+	CPRINT_RAISE=0 $(GDB) -x test.scr > under-test.txt
 	../strip-diff under-test.txt >under-test.stripped
 	diff -uw under-test.stripped $(knowngood).stripped
 endif

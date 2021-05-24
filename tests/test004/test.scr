@@ -111,6 +111,8 @@ echo cp ws-table(banana:4)\n
 cp ws-table(banana:4)
 echo cp ws-table(banana:banana)\n
 cp ws-table(banana:banana)
+echo cp ws-table(banana:banana\n
+cp ws-table(banana:banana
 echo cp ws-c\n
 cp ws-c
 echo cp ws-c(1)\n

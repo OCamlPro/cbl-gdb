@@ -300,7 +300,7 @@ class GlobalVariables():
 
         # Establish what we do on ConditionalRaise:
         conraise = int(os.environ.get('CPRINT_RAISE', '1'))
-        if conraise == '1':
+        if conraise == '1' or conraise==1:
             self.raise_error = True
         else:
             self.raise_error = False
@@ -2792,8 +2792,7 @@ class ModuleState():
                 self.current_trapped_routine = line[1]
         else:
             if announce:
-                # CHECKME: _printing_ here looks wrong
-                print("No stack.")
+                ConditionalRaise("No stack.")
 
 GV_ModuleState = ModuleState()
 
