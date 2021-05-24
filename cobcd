@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
-#######################################################################
-# Copyright (c) 2019-2020 COBOLworx
+################################################################################
+# Copyright (c) 2019-2021 COBOLworx and contributors
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,15 +30,22 @@
 #
 #######################################################################
 
+################################################################################
+# pylint: disable=line-too-long,unused-argument,unused-wildcard-import,import-error
+#
+# flake8 settings used
+# [flake8]
+# ignore = E402
+# max-line-length = 160
+################################################################################
+
 ## Nasty command line for testing:
 ## mkdir -p /tmp/list && cobcd -gv -T /tmp/lis/TEST.lis -Xref -ftsymbols -tlines=0 -Wall -fno-ec=DATA-INCOMPATIBLE -foptional-file -ext lib -fdump=all -D 'MY-COMPILER=2' -D 'MY-OS=Linux' -fno-ec=bound-ref-mod -lgmp -o TEST.so /home/bob/repos/cbl-gdb-samples/ref_test_2/rtest.cbl
 
 from __future__ import print_function
 
-import re
 import sys
 import os
-import platform
 import platform
 import traceback
 import subprocess
@@ -148,16 +155,16 @@ def InfoFetch(linelist,var) :
                 if linelist[i][0:1] not in (' ','\t') or linelist[i][2:3] not in (' ','\t') :
                     ## The third char is 'e' when COBC reports an existing environment variable
                     ## The first char is non-blank when reporting a new variable
-                    break;
+                    break
                 retval += linelist[i].split()
                 i += 1
     return retval
 
 def RunCommand(command) :
     # command must be a list of strings
-    std_file = tempfile.TemporaryFile();
-    err_file = tempfile.TemporaryFile();
-    errcode = -2;
+    std_file = tempfile.TemporaryFile()
+    err_file = tempfile.TemporaryFile()
+    errcode = -2
     try:
         errcode = subprocess.call(command,stdout=std_file,stderr=err_file)
     except:
@@ -230,7 +237,7 @@ def CollapseFoldedLines(lines) :
             i = 0
             while i < len(line) :
                 if line[i] != ' ' and line[i] != '\t' :
-                    break;
+                    break
                 i += 1
             output += ' '
             output += line[i:]
@@ -258,11 +265,11 @@ def Main() :
         SHOW_TIME = True    # For timing analysis.  Won't work on Python2
     if SHOW_TIME :
         clock_start = time.monotonic()
-        lap_start = 0;
+        lap_start = 0
 
     windows = False
     os_name = platform.system()
-    processor = platform.processor()
+    # processor = platform.processor()
     if os_name == "Windows" or os_name.find("MINGW") != -1 :
         windows = True
 
@@ -311,7 +318,6 @@ def Main() :
     COBCDEVEL    = os.environ.get("COBCDEVEL")    or ""
     COBCDNOCLEAN = os.environ.get("COBCDNOCLEAN") or ""
     COBCDFLAGS   = (os.environ.get("COBCDFLAGS")  or "").split()
-    COBCD_COBC   = os.environ.get("COBCD_COBC")   or ""
     ECHO         = os.environ.get("ECHO")         or ""
     COBC         = os.environ.get("COBCD_COBC")   or "cobc"
     COBCDFMODE   = os.environ.get("COBCDFMODE")   or "@COBCDFMODE@" ## This construction allows for ./configure or "make install" modifications
@@ -371,7 +377,6 @@ def Main() :
     ORIGINAL_COMMAND_LINE=[]
     COMMAND_LINE=[]
     COMMANDS_REMOVED=[]
-    TO_BE_LINKED_AT_THE_END=[]
 
     ASKED_FOR_HELP=False
     ASKED_FOR_VERSION=False
@@ -549,7 +554,7 @@ def Main() :
             # We'll take care of it at the end.
             SAVE_TEMPS=param
             COMMANDS_REMOVED.append(param)
-            continue;
+            continue
         if param in ("-E","-###","--###","-") :
             command = [COBC] + ORIGINAL_COMMAND_LINE
             if ECHO :
@@ -605,6 +610,9 @@ def Main() :
     #    print("   os_name....",os_name)
     #    print("   processor..",processor)
     #    print("")
+
+    # from now on we parse the output of different commands - and need the English ones
+    os.environ["LANG"]= 'en'
 
     ## Now we have to call `COBC --info`; there are some things we need to know:
     errcode, std, err = RunCommand([COBC, "--info"])
@@ -688,12 +696,12 @@ def Main() :
     ## will add the first two switches in order to get what we need:
 
     if resultcode == 0 :
-        s = COB_CFLAGS_BASE + [FCF_PROTECTION];
+        s = COB_CFLAGS_BASE + [FCF_PROTECTION]
         os.environ["COB_CFLAGS"]= ' '.join(s)
         os.environ["COBC_GEN_DUMP_COMMENTS"]= '1'
         TRIPLE_X_COMMAND = DeSpace(COBC + " -### -save-temps -A -ggdb -fgen-c-line-directives -fgen-c-labels ") + COMMAND_LINE
         try :
-            result_file = tempfile.TemporaryFile();
+            result_file = tempfile.TemporaryFile()
             if ECHO :
                 SmartPrint(["COBC_GEN_DUMP_COMMENTS=1"]+TRIPLE_X_COMMAND)
             compiler_out = subprocess.check_output(TRIPLE_X_COMMAND,stderr=result_file)
@@ -727,7 +735,7 @@ def Main() :
     ## Let's process the results we got back from the -### request.
     result_text = result_text.replace('"','')
     result_lines = CollapseFoldedLines(result_text)
-    waiting_for_initial_file = True;
+    waiting_for_initial_file = True
     cbl_file = ""
     c_file = ""
     i_file = ""
@@ -974,7 +982,7 @@ def Main() :
 
     if not we_translated_something :
         ## If we didn't translate something, then don't clean up.
-        cleaning_up = False;
+        cleaning_up = False
 
     if len(save_temps_split) >= 2 :
         print("save_temps_split", save_temps_split)
@@ -1015,7 +1023,7 @@ def Main() :
                 ## .h files around as well  Setting DASH_BIGC at this
                 ## point is an easy way of doing that
                 DASH_BIGC = 'xxx'
-                break;
+                break
 
         for file in to_be_deleted :
             if file not in keepers :
@@ -1047,3 +1055,4 @@ try :
     Main()
 except :
     traceback.print_exc()
+
