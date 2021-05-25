@@ -11,6 +11,8 @@
        01 F Pic 9999 Value 1.
        01 G Pic 9999 Value 1.
 
+       01 TSTR  Pic X(10) Value 'TESTSTRING'.
+
        Procedure Division.
 
        TEST-START SECTION.
@@ -29,5 +31,7 @@
            Add 1 to G
            Display G
        End-Perform.
+
+       DISPLAY TSTR.
        
        GOBACK.
