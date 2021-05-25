@@ -69,14 +69,16 @@ continue
 
 # cbreak string test
 cstart
-cbreak 36 if TSTR = 'TESTSTRING'
+cbreak 36 if TSTR = "TESTSTRING"
+continue
 printem
 delete
 continue
 
 # cbreak substring test
 cstart
-cbreak 36 if TSTR (2:3) = 'EST'
+cbreak 36 if TSTR (2:3) = "EST"
+continue
 printem
 delete
 continue
@@ -84,6 +86,7 @@ continue
 # cbreak substring + string test
 cstart
 cbreak 36 if TSTR (3:3) = TSUBSTR
+continue
 printem
 delete
 continue
@@ -91,6 +94,7 @@ continue
 # cbreak section test
 cstart
 cbreak SECTION P-CALC
+continue
 printem
 delete
 continue
@@ -98,6 +102,7 @@ continue
 # cbreak file:section test
 cstart
 cbreak test:P-CALC
+continue
 printem
 delete
 continue
