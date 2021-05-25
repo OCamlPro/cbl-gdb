@@ -12,6 +12,7 @@
        01 G Pic 9999 Value 1.
 
        01 TSTR  Pic X(10) Value 'TESTSTRING'.
+       01 TSUBSTR  Pic X(10) Value 'STS'.
 
        Procedure Division.
 
