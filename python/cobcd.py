@@ -3035,7 +3035,7 @@ def get_sorted_possibilities(args, limit, no_data=False):
                 # If index is valid, pick up the short-term memory entry
                 possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
             else:
-                print("The specified stored variable index ({0}) is out of range (1 to {1})".format(index + 1, len(GV_GlobalVariables.ShortTermMemory)))
+                ConditionalRaise("The specified stored variable index ({0}) is out of range (1 to {1})".format(index + 1, len(GV_GlobalVariables.ShortTermMemory)))
                 return possibilities, False  # False means there was no 'limit' overflow
         else:
             # There are one or more arguments.  Use our clever routine
@@ -3510,8 +3510,20 @@ class CPrintWorker():
 
         return return_value
 
+    def ConditionalClearSubscripts(self,leftside_possibilities):
+        if len(leftside_possibilities) > 1:
+            # Because there is more than one possibility, we need to clear
+            # out any subscripts and refmods.  If we don't, then we can have situations
+            # where doing a CPRINT * after a CPRINT VAR(3) results in an improper display
+            for index in leftside_possibilities:
+                if GV_ModuleInformation.var_trie.storage_list[index].Subscripts or GV_ModuleInformation.var_trie.storage_list[index].Refmod:
+                    GV_ModuleInformation.var_trie.storage_list[index].Subscripts = None
+                    GV_ModuleInformation.var_trie.storage_list[index].Refmod = None
+                    GV_ModuleInformation.var_trie.storage_list[index].IsDirty = True
+
     def ProcessArgumentsMachineMode(self, leftside, rightside, leftside_possibilities, rightside_possibilities):
         """We arrive here when processing a cprint/m"""
+        self.ConditionalClearSubscripts(leftside_possibilities)
         if len(leftside_possibilities) == 0:
             # just return quietly.  A "variable not found" message
             # confuses Visual Studio Code
@@ -3604,6 +3616,7 @@ class CPrintWorker():
         print(result,end='')
 
     def ProcessArgumentsHumanMode(self, leftside_possibilities, rightside):
+        self.ConditionalClearSubscripts(leftside_possibilities)
         # If it happens that there is only one leftside_possibility, and it
         # happens to have a Refmod, then we can't do heirarchical:
         payload_okay = True
