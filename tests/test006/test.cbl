@@ -14,6 +14,9 @@
        01 TSTR  Pic X(10) Value 'TESTSTRING'.
        01 TSUBSTR  Pic X(10) Value 'STS'.
 
+       01 TOCCUR.
+           03 TOSTR Pic X(10) Value SPACE OCCURS 10.
+
        Procedure Division.
 
        TEST-START SECTION.
@@ -23,6 +26,7 @@
        P-CALC SECTION.
 
        Perform 10 Times
+           MOVE 'TESTSTRING' TO TOSTR(A)
            Add 1 to A
            Add 1 to B
            Add 1 to C
