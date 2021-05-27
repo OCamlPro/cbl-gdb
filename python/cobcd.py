@@ -236,9 +236,8 @@ def cob_put_field_str(field, buff):
                                                                     hex(buff))
     gdb.execute(command, False, True)
 
-def cob_cmp(a, b, c, d):
-    command = "call (int){0}(\"{1}\", {2}, {3}, {4})".format(GV_ModuleState.cob_cmp,
-                                                             a, b, c, d)
+def cob_cmp(a, b):
+    command = "call (int){0}({1}, {2})".format(GV_ModuleState.cob_cmp, a, b)
     hexback = gdb.execute(command, False, True).split()[2]
     retval = int(hexback, 16)
     return retval
@@ -247,14 +246,13 @@ def cob_intr_upper_case(a, b, c):
     command = "call (cob_field *){0}({1}, {2}, (cob_field *){3})".format(GV_ModuleState.cob_intr_upper_case,
                                                                          a,
                                                                          b,
-                                                                         hex(c))
+                                                                         c)
     hexback = gdb.execute(command, False, True).split()[2]
     retval = int(hexback, 16)
     return retval
 
 def cob_get_field_str_buffered(a):
-    command = "call (const char	*){0}({1}, {2}, (cob_field *){3})".format(GV_ModuleState.cob_get_field_str_buffered,
-                                                                         hex(a))
+    command = "call (const char *){0}({1})".format(GV_ModuleState.cob_get_field_str_buffered, a)
     hexback = gdb.execute(command, False, True).split()[2]
     retval = int(hexback, 16)
     return retval
