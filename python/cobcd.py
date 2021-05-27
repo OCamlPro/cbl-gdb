@@ -236,10 +236,9 @@ def cob_put_field_str(field, buff):
                                                                     hex(buff))
     gdb.execute(command, False, True)
 
-def cob_cmp(a, b):
+def cob_cmp(a, b, c, d):
     command = "call (int){0}(\"{1}\", {2}, {3}, {4})".format(GV_ModuleState.cob_cmp,
-                                                             a,
-                                                             b)
+                                                             a, b, c, d)
     hexback = gdb.execute(command, False, True).split()[2]
     retval = int(hexback, 16)
     return retval
@@ -1830,7 +1829,7 @@ class CobolVariable():
             GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex].IsDirty = True
 
         except gdb.error:
-            print("COMMAND failed in PutDataAsVar: ", command)
+            ConditionalRaise("cob_move() failed in PutDataAsVar")
             return_value = 0
 
         var_left.free_field_location(source)
@@ -3293,6 +3292,9 @@ class CPrintWorker():
 
             # We now have a choice.  We allow things like "/r6" and "/r 6"
             # We don't allow "/v 6", so we have to keep that in mind
+            # Note: At the present time, param isn't used; I am keeping this code
+            # around because I have it in the back of my head to re-write the
+            # parameter processing.
             if len(args[0]) > 2:
                 #Anything after the /<mode><param> is a parameter
                 param = args[0][2:]
