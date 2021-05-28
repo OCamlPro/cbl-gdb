@@ -268,14 +268,13 @@ class GlobalVariables():
         if m.group(4):
             self.gdb_version = self.gdb_version + int(m.group(4))
 
-        if gdb_version < 80300:
+        if self.gdb_version < 80300:
             #if gdb_version < 70600):
             #    ConditionalRaise("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.6+ is required)\n".format(
             #                                                        self.gdb_version/10000, self.gdb_version%10000))
             #    return
             print("\n !! warning: add-symbol-file-cobol is not available with GDB-{0}.{1} (GDB 8.3+ is required)".format(
                                                                     self.gdb_version/10000, self.gdb_version%10000))
-                                                                    )
             if self.gdb_version >= 80000:
                 print(" !! There are known problems with GDB-8.1 and GDB-8.2")
             else:
