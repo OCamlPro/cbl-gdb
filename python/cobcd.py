@@ -5134,7 +5134,7 @@ class CFrameWorker:
         CDown()
         CUpS()
         CDownS()
-        if GV_GlobalVariables.gdb_8dot3_plus:
+        if GV_GlobalVariables.gdb_version < 80300:
             print('Registering frame-filters COBOL-FrameFilter (disabled), COBOL-Only-FrameFilter (disabled)')
             CobolOnlyFrameFilter()
             CobolFrameFilter()
