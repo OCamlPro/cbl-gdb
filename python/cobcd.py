@@ -5134,6 +5134,46 @@ class CFrameWorker:
         CDown()
         CUpS()
         CDownS()
+        if GV_GlobalVariables.gdb_8dot3_plus:
+            print('Registering frame-filters COBOL-FrameFilter (disabled), COBOL-Only-FrameFilter (disabled)')
+            CobolOnlyFrameFilter()
+            CobolFrameFilter()
+            print('Registering command cbacktrace')
+            CBacktrace()
+
+    @staticmethod
+    def is_cobol_frame(frame):
+        """Return a Tuple as follows: COBOL-Frame, inner COBOL-Frame (actual COBOL code)"""
+        if not isinstance(frame, gdb.Frame):
+            raise gdb.error("bad argument passed, frame is " + str(type(frame)))
+        
+        if not frame.is_valid():
+            return False, False
+        try:
+            block = frame.block()
+        except:
+            # no debugging symbols, just skip
+            return False, False
+
+        # available in all cobc generated functions (static variable):
+        symbol = gdb.lookup_symbol("cob_module_path", block)[0]
+        if not (symbol and str(symbol.type) == "const char *"):
+            return False, False
+        
+        # check for COBOL "inner" frame
+        symbol = gdb.lookup_symbol("module", block)[0]
+        if symbol and str(symbol.type) == "cob_module *":
+            # quite likely an "inner" COBOL frame
+            return True, True
+            
+        # quite likely an "outer" COBOL frame
+        return True, False
+
+    @staticmethod
+    def is_cobol_inner_frame(frame):
+        cobol, inner = CFrameWorker.is_cobol_frame(frame)
+        return inner
+
 
     @staticmethod
     def Frame(up, number):
@@ -5148,24 +5188,23 @@ class CFrameWorker:
             if number != 0:
                 if up:
                     frame = frame.older()
+                    if frame is None:
+                        return None
                 else:
+                    old_frame = frame
                     frame = frame.newer()
                 if frame is None:
                     return None
+                    if frame is None:
+                        # on the way down we may see an outer COBOL frame last, then take that
+                        if old_frame != gdb.selected_frame() and CFrameWorker.is_cobol_frame(old_frame):
+                            return old_frame
+                        return None
+
             else:
                 number = -1
 
-            try:
-                block = frame.block()
-            except:
-                # no debugging symbols, just skip
-                block = None
-                continue
-
-            symbol = gdb.lookup_symbol("module", block)[0]
-            if not symbol:
-                continue
-            if str(symbol.type) != "cob_module *":
+            if not CFrameWorker.is_cobol_inner_frame(frame):
                 continue
 
             # quite likely a COBOL frame
@@ -5198,11 +5237,13 @@ class CFrameWorker:
             number = int(argument)
 
         frame = CFrameWorker.Frame(up, number)
-        if not frame:
+        if not frame:            # note: we raise here to prevent hookpost-defines to be triggered
             if up:
                 print("Initial COBOL frame selected; you cannot go up.")
+                ConditionalRaise("Initial COBOL frame selected; you cannot go up.")
             else:
                 print("Bottom (innermost) COBOL frame selected; you cannot go down.")
+                ConditionalRaise("Bottom (innermost) COBOL frame selected; you cannot go down.")
             return
 
         frame.select()
@@ -5255,6 +5296,143 @@ may be used to also stop if the current frame is a COBOL frame.
 
     def invoke(self, argument, from_tty):
         CFrameWorker.Go(argument, False, True)
+class CBacktrace (gdb.Command):
+    """Print backtrace of all COBOL stack frames (common backtrace, filtered).
+For detailed usage see 'help backtrace'."""
+    def __init__(self):
+        super(CBacktrace, self).__init__("cbacktrace", gdb.COMMAND_STACK)
+
+    def invoke(self, arguments, from_tty):
+        remove_filter = gdb.frame_filters["COBOL-Only-FrameFilter"]
+        old_enable = remove_filter.enabled
+        remove_filter.enabled = True
+        try:
+            command = "backtrace " + ' '.join(arguments).replace("- ","-")
+            gdb.execute(command)
+        except gdb.error as error:
+            raise gdb.GdbError("cbacktrace failed: " +  str(error))
+        finally:
+            remove_filter.enabled = old_enable
+
+
+class ElidingDecorator(gdb.FrameDecorator.FrameDecorator):
+    def __init__(self, frame, elided_frames=[]):
+        super(ElidingDecorator, self).__init__(frame)
+        self.frame = frame
+        self.elided_frames = elided_frames
+
+    def elided(self):
+        return iter(self.elided_frames)
+
+class ElideNonCobolIterator():
+    def __init__(self, ii):
+        self.input_iterator = ii
+        self.next_frame = None
+
+    def __iter__(self):
+        return self
+
+
+    # python3 iteration
+    def __next__(self):
+        return self.next()
+
+    # python2 iteration
+    def next(self):
+
+        if self.next_frame is None:
+            frame = next(self.input_iterator)
+        else:
+            frame = self.next_frame
+            self.next_frame = None
+
+        real_frame = frame.inferior_frame()
+        if CFrameWorker.is_cobol_inner_frame(real_frame):
+            try:
+                next_frame = next(self.input_iterator)
+            except StopIteration:
+                return frame
+            
+            # check if we have an inner frame next - likely because of
+            # another filter with higher priority
+            if CFrameWorker.is_cobol_inner_frame(next_frame.inferior_frame()):
+                self.next_frame = next_frame
+                return frame
+            # next frame is, as expected, a contained frame
+            return ElidingDecorator(frame, [next_frame])
+        
+        # pass non-COBOL-inner-frames as-is
+        return frame
+
+class CobolFrameFilter():
+    def __init__(self):
+        self.name = "COBOL-FrameFilter"
+        self.priority = 99
+        # self.enabled = True   disabled until #58 is solved
+        self.enabled = False
+        gdb.frame_filters[self.name] = self
+
+    def filter(self, frame_iter):
+        return ElideNonCobolIterator(frame_iter)
+
+
+class CobolOnlyDecoration(gdb.FrameDecorator.FrameDecorator):
+    def __init__(self, filter_frame, frame):
+        super(CobolOnlyDecoration, self).__init__(filter_frame)
+        self.cob_module = frame.read_var("module")
+
+    def function(self):
+        return self.cob_module['module_name'].string()
+
+    def address(self):
+        # nearly never useful for a COBOL programmer
+        return None
+
+    # def frame_args(self):
+    #     # possibly print the COBOL name and start of the values here
+    #     return None
+      
+class RemoveNonCobolIterator():
+    def __init__(self, ii):
+        self.input_iterator = ii
+        self.first_iteration = True
+
+    def __iter__(self):
+        return self
+
+
+    # python3 iteration
+    def __next__(self):
+        return self.next()
+
+    # python2 iteration
+    def next(self):
+        
+        frame = next(self.input_iterator)
+
+        real_frame = frame.inferior_frame()
+        cobol, inner = CFrameWorker.is_cobol_frame(real_frame)
+        
+        if inner:
+            self.first_iteration = False
+            # yay, an inner COBOL frame...
+            return CobolOnlyDecoration(frame, real_frame)
+        if cobol and self.first_iteration:
+            # we have nothing returned yet, but an outer frame --> return as-is
+            return frame
+
+        return self.next()
+
+class CobolOnlyFrameFilter():
+    def __init__(self):
+        self.name = "COBOL-Only-FrameFilter"
+        self.priority = 100
+        self.enabled = False
+        gdb.frame_filters[self.name] = self
+
+    def filter(self, frame_iter):
+        return RemoveNonCobolIterator(frame_iter)
+
 
 
 def exit_handler(event):
