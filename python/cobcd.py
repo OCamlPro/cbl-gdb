@@ -260,38 +260,21 @@ def cob_get_field_str_buffered(a):
 class GlobalVariables():
     def __init__(self):
         # Establish the version of GDB
-        match = re.search(r'[^0-9]*([0-9]+)[.]([0-9]+)[.]([0-9]+).*$', gdb.VERSION)
-        if match:
-            self.gdb_version_major = int(match.group(1))
-            self.gdb_version_minor = int(match.group(2))
-            self.gdb_version_patch = int(match.group(3))
-        else:
-            match = re.search(r'^[^0-9]*([0-9]+)[.]([0-9]+).*$', gdb.VERSION)
-            if match:
-                self.gdb_version_major = int(match.group(1))
-                self.gdb_version_minor = int(match.group(2))
-                self.gdb_version_patch = 0
-            else:
-                self.gdb_version_major = 0
-                self.gdb_version_minor = 0
-                self.gdb_version_patch = 0
+        m = re.search(r'[^0-9]*([0-9]+)\.([0-9]+)(\.([0-9]+))?', gdb.VERSION)
+        self.gdb_version = int(m.group(1))*10000 + int(m.group(2))*100
+        if m.group(4):
+            self.gdb_version = self.gdb_version + int(m.group(4))
 
-        if self.gdb_version_major > 8 or (self.gdb_version_major == 8 and self.gdb_version_minor >= 3):
-            self.gdb_8dot3_plus = True
-        else:
-            self.gdb_8dot3_plus = False
-            #if self.gdb_version_major < 7 or (self.gdb_version_major == 7 and self.gdb_version_minor < 6):
+        if self.gdb_version < 80300:
+            #if gdb_version < 70600):
             #    ConditionalRaise("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.6+ is required)\n".format(
-            #                                                        self.gdb_version_major,
-            #                                                        self.gdb_version_minor))
+            #                                                        self.gdb_version/10000, self.gdb_version%10000))
             #    return
             print("\n !! warning: add-symbol-file-cobol is not available with GDB-{0}.{1} (GDB 8.3+ is required)".format(
-                                                                    self.gdb_version_major,
-                                                                    self.gdb_version_minor)
-                                                                    )
-            if self.gdb_version_major == 8:
+                                                                    self.gdb_version/10000, self.gdb_version%10000))
+            if self.gdb_version >= 80000:
                 print(" !! There are known problems with GDB-8.1 and GDB-8.2")
-            if self.gdb_version_major <= 7:
+            else:
                 print(" !! The COBOL debugger is known to work with reduced capability with GDB-7.6")
             print(" ")
 
@@ -3825,7 +3808,7 @@ class CPrintWorker():
 
 class CobolAfterWatchBreakpoint(gdb.Breakpoint):
     def __init__(self, creating_wp):
-        if not GV_GlobalVariables.gdb_8dot3_plus:
+        if GV_GlobalVariables.gdb_version < 80300:
             ConditionalRaise("pure COBOL cwatch needs GDB 8.3+")
             return
 
@@ -3910,7 +3893,7 @@ class CobolWatchpointHandler():
 
 class CobolWatchBreakpoint(gdb.Breakpoint):
     def __init__(self, payload, bp_spec, bp_action):
-        if not GV_GlobalVariables.gdb_8dot3_plus:
+        if GV_GlobalVariables.gdb_version < 80300:
             ConditionalRaise("pure COBOL cwatch needs GDB 8.3+")
             return
         try:
@@ -3971,7 +3954,7 @@ class CWatchWorker():
         spec += '[' + str(wp_length) + '])'
         spec += '(' + hex(wp_startloc) + ')'
 
-        if GV_GlobalVariables.gdb_8dot3_plus:
+        if GV_GlobalVariables.gdb_version >= 80300:
             break_point = CobolWatchBreakpoint(payload, spec, wp_type)
         else:
             break_point = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_ACCESS)
@@ -4057,7 +4040,7 @@ class CBreakWorker():
     @staticmethod
     def set_breakpoint(spec, t_flag, i_flag):
         # note: temporary support in python API only with GDB 8.3+
-        if GV_GlobalVariables.gdb_8dot3_plus:
+        if GV_GlobalVariables.gdb_version >= 80300:
             break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, temporary=t_flag, internal=i_flag)
         else:
             if t_flag:
