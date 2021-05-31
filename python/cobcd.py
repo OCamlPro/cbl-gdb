@@ -277,17 +277,17 @@ class GlobalVariables():
             self.gdb_version = self.gdb_version + int(m.group(4))
 
         if self.gdb_version < 80300:
-            #if gdb_version < 70600):
-            #    ConditionalRaise("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.6+ is required)\n".format(
-            #                                                        self.gdb_version/10000, self.gdb_version%10000))
-            #    return
-            print("\n !! warning: add-symbol-file-cobol is not available with GDB-{0}.{1} (GDB 8.3+ is required)".format(
+            if self.gdb_version < 70600:
+                # Sanity check with expected stack trace - as everything will be broken in this case
+                raise("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.6+ is required)!".format(
                                                                     self.gdb_version/10000, self.gdb_version%10000))
+                return
+            if self.gdb_version < 70700:
+                print(" !! Warning: frame-filters and cbacktrace are not available with GDB-{0}.{1} (GDB 7.7+ is required)\n{2}".format(
+                                                                        self.gdb_version/10000, self.gdb_version%10000,
+                                                                    "cwatch handling will be severely limited"))
             if self.gdb_version >= 80000:
-                print(" !! There are known problems with GDB-8.1 and GDB-8.2")
-            else:
-                print(" !! The COBOL debugger is known to work with reduced capability with GDB-7.6")
-            print(" ")
+                print(" !! Warning: there are known problems with GDB-8.1 and GDB-8.2")
 
         # Establish what we do on ConditionalRaise:
         conraise = int(os.environ.get('CPRINT_RAISE', '1'))
@@ -4023,7 +4023,7 @@ class CWatchWorker():
                 break_point.delete()
                 ConditionalRaise("Expression cannot be implemented as hardware watchpoint.\n... and therefore removed")
                 return
-            # GDB 7.6 has no writable commands attribute, gdb.execute with multi-lines does not work either)
+            # Note: GDB 7.6 has no writable commands attribute, gdb.execute with multi-lines does not work either)
             # break_point.commands = "echo Watched: {0} from {1}\\n \n cup 0".format(payload.NameWithSubscripts(), payload.Program)
 
     def process_watch_arguments(self, arguments):
@@ -4101,8 +4101,8 @@ class CBreakWorker():
 
     @staticmethod
     def set_breakpoint(spec, t_flag, i_flag):
-        # note: temporary support in python API only with GDB 8.3+
-        if GV_GlobalVariables.gdb_version >= 80300:
+        # Note: temporary support in python API only with GDB 7.7+
+        if GV_GlobalVariables.gdb_version >= 70700:
             break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, temporary=t_flag, internal=i_flag)
         else:
             if t_flag:
@@ -4919,6 +4919,8 @@ class CLoadWorker():
                 if not text_addr:
                     ConditionalRaise("no text section found")
                     return return_list
+                # GDB 7.6 has text-address as mandatory
+                gdb_cmd = gdb_cmd + " " + text_addr
                 for s_section, s_address in symbol_addrs.items():
                     gdb_cmd = gdb_cmd + " -s {0} {1}".format(s_section, s_address)
                 gdb.execute(gdb_cmd, False, True)
@@ -5126,7 +5128,7 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
 
 
 class CFrameWorker:
-    """Does all of the gdb work of CUp() and CDown()"""
+    """Does all of the gdb work related to frames, especially for CUp() and CDown()"""
 
     def __init__(self):
         print('Registering commands cup, cdown, cup-silently, cdown-silently')
@@ -5134,7 +5136,8 @@ class CFrameWorker:
         CDown()
         CUpS()
         CDownS()
-        if GV_GlobalVariables.gdb_version < 80300:
+        # Note: frame filter support in python API only with GDB 7.7+
+        if GV_GlobalVariables.gdb_version > 70700:
             print('Registering frame-filters COBOL-FrameFilter (disabled), COBOL-Only-FrameFilter (disabled)')
             CobolOnlyFrameFilter()
             CobolFrameFilter()
