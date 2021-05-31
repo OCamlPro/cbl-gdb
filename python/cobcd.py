@@ -16,6 +16,7 @@
 #    * Neither the name of the COBOLworx Corporation nor the names of its
 #      contributors may be used to endorse or promote products derived
 #      from this software without specific prior written permission.
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -180,7 +181,7 @@ COBCDRW_AVAILABLE = True
 # Note: Replace "readelf" with path to binary if it is not in your PATH.
 READELF_BINARY = os.getenv('READELF', 'readelf')
 COBCDRW_BINARY = os.getenv('COBCDRW', 'cobcd-rw')
-COBCRUN_NAME = os.getenv('COBCRUN', 'cobcrun')  # _only_ the name
+COBCRUN_NAME = os.getenv('COBCRUN', 'cobcrun')  # _only_ the name, also: no extension
 
 
 def GdbExecute(curframe, command):
@@ -784,7 +785,7 @@ def get_left_right_args(args):
     if len(leftright) > 2 and leftright[2] != '':
         # There is a rightside.
         right_side = leftright[2].strip()
-        if right_side[0] in ('"'):
+        if right_side[0] == '"':
             if len(right_side) < 2 or right_side[-1] != right_side[0]:
                 print("A syntax error in >>{0}<<.".format(right_side))
                 left_side = []
@@ -2797,10 +2798,10 @@ class ModuleState():
         # Go read the frame and stack, and, if necessary, fetch the VariableStringData
         try:
             self.Stack = self.ProcessStack()
-        except gdb.GdbError as user_error:
+        except gdb.GdbError:
             if announce:
                 # pass user errors unchanged
-                raise user_error
+                raise
             return
 
         if self.Stack:
@@ -3482,7 +3483,7 @@ class CPrintWorker():
                     # Because var_right has a refmod, we will use the var_right display
                     # body, which at this point is already trimmed to the data we need
                     value = var_right.display_body
-                if value.startswith(('"')) and value.endswith(('"')):
+                if value.startswith('"') and value.endswith('"'):
                     # Get rid of the quotes around a string:
                     value = value[1:-1]
                 return_value = var_left.PutDataAsString(value, 1, var_left.Length)
@@ -3498,7 +3499,8 @@ class CPrintWorker():
             p_startloc = var_left.RefmodOffset + 1
             p_length = var_left.RefmodLength
 
-            if value.startswith(('"')) and value.endswith(('"')):
+            # CHECKME: possibly use startswith/endswith in other places, ... or nowhere
+            if value.startswith('"') and value.endswith('"'):
                 value = value[1:-1]
             return_value = var_left.PutDataAsString(value, p_startloc, p_length)
 
@@ -3886,6 +3888,7 @@ class CobolAfterWatchBreakpoint(gdb.Breakpoint):
         creating_wp.after_watch = self
 
         # copy commands as necessary ("real watchpoint" never halts and therefore commands are never executed)
+        # note: we do need to place "cup 0" here as the stop method is not allowed to adjust the current frame
         if creating_wp.commands:
             self.commands = "cup 0" + "\n" + creating_wp.commands
         else:
@@ -4091,9 +4094,7 @@ class CBreakWorker():
 
     @staticmethod
     def set_entry_breakpoint(module_name, t_flag, i_flag):
-        # Note: currently the "encoding" of the module_name is done from outside
-        # TODO: move it here as soon as it is done completely in python
-
+        module_name = encode_program_id(module_name, 0)
         # Note: the following does NOT work reliable as cobc 3.0+ have a bug in generating the correct line reference for the ENTRY_prog label
         #       when DECLARATIVES are used (it always points to the PROCEDURE DIVISION, not to the first (possibly implied) "real" section)
         # return CBreakWorker.set_breakpoint("-function {0}_ -label ENTRY_{1}".format(module_name,module_name.upper()), t_flag, i_flag)
@@ -4109,7 +4110,12 @@ class CBreakWorker():
                 # note: we ignore internal here, because temporary is more important...
                 command = "tbreak {0}".format(spec)
                 gdb.execute(command, True, False)
-                break_point = gdb.breakpoints()[-1]
+                bps = gdb.breakpoints()
+                if bps:
+                    # this is not fool-proof - but good enough
+                    break_point = bps[-1]
+                else:
+                    return None
             else:
                 break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, internal=i_flag)
 
@@ -4174,11 +4180,7 @@ class CBreakWorker():
         return return_value
 
     def get_section_name(self, section):
-        return_value = None
-
-        return_value = encode_program_id(section, 1)
-
-        return return_value
+        return encode_program_id(section, 1)
 
     @staticmethod
     def get_var_payload(search_args):
@@ -4502,7 +4504,7 @@ class CBreakWorker():
                 if module_name is None:
                     print("Module not found: {0}".format(left_side[0]))
                 else:
-                    break_point = self.set_breakpoint("-function {0}_ -label ENTRY_{1}".format(module_name,module_name.upper()), t_flag, i_flag)
+                    break_point = self.set_entry_breakpoint(module_name, t_flag, i_flag)
             elif len(left_side) == 2 and left_side[0] == "SECTION" and isinstance(left_side[1], self.strtype):
                 del left_side[0]
                 self.set_section_breakpoint(left_side, t_flag, i_flag)
@@ -4654,9 +4656,8 @@ class CPrint(gdb.Command):
 
             GV_ModuleState.EstablishModuleState(False)
             self.worker.ProcessArguments(arguments)
-        except gdb.GdbError as user_error:
-            # pass user errors unchanged
-            raise user_error
+        # pass user errors unchanged
+        except gdb.GdbError: raise
         except:
             traceback.print_exc()
 
@@ -4710,9 +4711,8 @@ A watchpoint stops execution of your program whenever the value of an expression
         try:
             GV_ModuleState.EstablishModuleState(True)
             self.worker.process_watch_arguments(arguments)
-        except gdb.GdbError as user_error:
-            # pass user errors unchanged
-            raise user_error
+        # pass user errors unchanged
+        except gdb.GdbError: raise
         except:
             traceback.print_exc()
 
@@ -4793,9 +4793,9 @@ class CTBreak(gdb.Command):
     """Set a temporary breakpoint.
 Like "cbreak" except the breakpoint is only temporary,
 so it will be deleted when hit.  Equivalent to "break" followed
-by using "enable delete" on the breakpoint number.
+by using "delete" on the breakpoint number.
 
-Do "help cbreak" for info on COBOL expressions"""
+Do "help cbreak" for info on COBOL expressions."""
 
     def __init__(self):
         self.worker = CBLDBG_CBREAK_WORKER
@@ -5049,11 +5049,9 @@ they override any that might have been passed to GDB with --args."""
 
             # If there is no cobol program, just run
             if cobol_program:
-                # TODO: complete encoding as soon as this is done in cob_encode_program_id in python - done in set_entry_breakpoint
-                module = cobol_program.replace("-", "__")
-
                 # set temporary maintenance breakpoint
-                bp = CBreakWorker.set_entry_breakpoint(module, True, True)
+                bp = CBreakWorker.set_entry_breakpoint(cobol_program, True, True)
+                # CHECKME: Do we still want to run if breakpoint was not set?
                 command = "run " + arguments
             else:
                 # "start" is not expected to actually "run", so we use start in the unknown case
@@ -5068,9 +5066,8 @@ they override any that might have been passed to GDB with --args."""
                 print("... and therefore breakpoint {0} was removed".format(bp.number))
                 bp.delete()
 
-        except gdb.GdbError as user_error:
-            # pass user errors unchanged
-            raise user_error
+        # pass user errors unchanged
+        except gdb.GdbError: raise
 
         except:
             traceback.print_exc()
@@ -5118,9 +5115,8 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
                 else:
                     gdb.execute("next", True, False)
                 ncount -= 1
-        except gdb.GdbError as user_error:
-            # pass user errors unchanged, for example "No stack."
-            pass
+        # pass user errors unchanged, for example "No stack."
+        except gdb.GdbError: raise
         except:
             traceback.print_exc()
 
@@ -5194,12 +5190,10 @@ class CFrameWorker:
                     old_frame = frame
                     frame = frame.newer()
                 if frame is None:
+                    # on the way down we may see an outer COBOL frame last, then take that
+                    if old_frame != gdb.selected_frame() and CFrameWorker.is_cobol_frame(old_frame):
+                        return old_frame
                     return None
-                    if frame is None:
-                        # on the way down we may see an outer COBOL frame last, then take that
-                        if old_frame != gdb.selected_frame() and CFrameWorker.is_cobol_frame(old_frame):
-                            return old_frame
-                        return None
 
             else:
                 number = -1
@@ -5237,12 +5231,11 @@ class CFrameWorker:
             number = int(argument)
 
         frame = CFrameWorker.Frame(up, number)
-        if not frame:            # note: we raise here to prevent hookpost-defines to be triggered
+        if not frame:
+        # note: we raise here to prevent hookpost-defines to be triggered
             if up:
-                print("Initial COBOL frame selected; you cannot go up.")
                 ConditionalRaise("Initial COBOL frame selected; you cannot go up.")
             else:
-                print("Bottom (innermost) COBOL frame selected; you cannot go down.")
                 ConditionalRaise("Bottom (innermost) COBOL frame selected; you cannot go down.")
             return
 
@@ -5253,8 +5246,7 @@ class CFrameWorker:
 class CUp (gdb.Command):
     """Select and print COBOL stack frame that called this one.
 An argument says how many frames up to go, the special value 0
-may be used to also stop if the current frame is a COBOL frame.
-"""
+may be used to also stop if the current frame is a COBOL frame."""
     def __init__(self):
         super(CUp, self).__init__("cup", gdb.COMMAND_STACK)
 
@@ -5265,8 +5257,7 @@ may be used to also stop if the current frame is a COBOL frame.
 class CDown (gdb.Command):
     """Select and print COBOL stack frame called by this one.
 An argument says how many frames down to go, the special value 0
-may be used to also stop if the current frame is a COBOL frame.
-"""
+may be used to also stop if the current frame is a COBOL frame."""
     def __init__(self):
         super(CDown, self).__init__("cdown", gdb.COMMAND_STACK)
 
@@ -5277,8 +5268,7 @@ may be used to also stop if the current frame is a COBOL frame.
 class CUpS (gdb.Command):
     """Select COBOL stack frame that called this one silenthly.
 An argument says how many frames up to go, the special value 0
-may be used to also stop if the current frame is a COBOL frame.
-"""
+may be used to also stop if the current frame is a COBOL frame."""
     def __init__(self):
         super(CUpS, self).__init__("cup-silently", gdb.COMMAND_STACK)
 
@@ -5289,8 +5279,7 @@ may be used to also stop if the current frame is a COBOL frame.
 class CDownS (gdb.Command):
     """Select COBOL stack frame called by this one silently.
 An argument says how many frames down to go, the special value 0
-may be used to also stop if the current frame is a COBOL frame.
-"""
+may be used to also stop if the current frame is a COBOL frame."""
     def __init__(self):
         super(CDownS, self).__init__("cdown-silently", gdb.COMMAND_STACK)
 
@@ -5339,7 +5328,6 @@ class ElideNonCobolIterator():
 
     # python2 iteration
     def next(self):
-
         if self.next_frame is None:
             frame = next(self.input_iterator)
         else:
@@ -5407,7 +5395,6 @@ class RemoveNonCobolIterator():
 
     # python2 iteration
     def next(self):
-        
         frame = next(self.input_iterator)
 
         real_frame = frame.inferior_frame()
