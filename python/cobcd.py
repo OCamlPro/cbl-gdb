@@ -4640,6 +4640,12 @@ class CPrint(gdb.Command):
         print('Registering CPrint ' + COBCD_VERSION)
         super(CPrint, self).__init__("cprint", gdb.COMMAND_DATA)
 
+        # set alias, ignore errors (most likely because already defined)
+        try:
+            gdb.execute("alias -a cp = cprint", False, True)
+        except:
+            pass
+
     def invoke(self, arguments, from_tty):
         try:
             # Check if this is a special case.  (Enough of these will
@@ -4776,6 +4782,11 @@ A breakpoint stops execution of your program whenever the expression matches
 
         print('Registering commands cwatch, cbreak, ctbreak, ccondition')
         super(CBreak, self).__init__("cbreak", gdb.COMMAND_BREAKPOINTS)
+        # set alias, ignore errors (most likely because already defined)
+        try:
+            gdb.execute("alias -a cb = cbreak", False, True)
+        except:
+            pass
         CTBreak()
         CCondition()
 
@@ -5140,6 +5151,15 @@ class CFrameWorker:
             CobolFrameFilter()
             print('Registering command cbacktrace')
             CBacktrace()
+            # set aliases, ignore errors (most likely because already defined)
+            try:
+                gdb.execute("alias -a cbt = cbacktrace", False, True)
+            except:
+                pass
+            try:
+                gdb.execute("alias cwhere = cbacktrace", False, True)
+            except:
+                pass
 
     @staticmethod
     def is_cobol_frame(frame):
