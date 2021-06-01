@@ -13,21 +13,21 @@ if echo $(uname -o) | grep -qi solaris
   SED=gsed
   fi
 
-if ! test -f $1 ; then
-  echo "Couldn't find the target file $1"
+if ! test -f "$1" ; then
+  echo "Couldn't find the target file '$1'"
   exit 1
   fi
 
 VERSION_FILE=$2
 
-if ! test -f $VERSION_FILE ; then
-  echo "Couldn't find the version.h file $VERSION_FILE"
+if ! test -f "$VERSION_FILE" ; then
+  echo "Couldn't find the version.h file '$VERSION_FILE'"
   exit 1
   fi
 
 ## Extract '2.4' from '#define VERSION "2.4"'
 input="$VERSION_FILE"
-while read -r line
+while IFS=$'\n\r' read -r line
   do
     IFS=' '; arrIN=($line); unset IFS;
     ## Find the line in question:
@@ -37,10 +37,10 @@ while read -r line
       fi
   done < "$input"
 
-VERSION_STRING='[Version '$VERSION']'
+VERSION_STRING="[Version $VERSION]"
 
 ## We need to replace the existing out-of-date version string
 ## with our new one
-echo Updating $1 to $VERSION_STRING
+echo "Updating '$1' to '$VERSION_STRING'"
 $SED -i -r "s/[[]Version.*[]]/$VERSION_STRING/g" $1
 
