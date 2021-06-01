@@ -5347,13 +5347,8 @@ class ElideNonCobolIterator():
     def __iter__(self):
         return self
 
-
     # python3 iteration
     def __next__(self):
-        return self.next()
-
-    # python2 iteration
-    def next(self):
         if self.next_frame is None:
             frame = next(self.input_iterator)
         else:
@@ -5377,6 +5372,10 @@ class ElideNonCobolIterator():
         
         # pass non-COBOL-inner-frames as-is
         return frame
+
+    # python2 iteration
+    def next(self):
+        return self.__next__()
 
 class CobolFrameFilter():
     def __init__(self):
@@ -5414,13 +5413,8 @@ class RemoveNonCobolIterator():
     def __iter__(self):
         return self
 
-
     # python3 iteration
     def __next__(self):
-        return self.next()
-
-    # python2 iteration
-    def next(self):
         frame = next(self.input_iterator)
 
         real_frame = frame.inferior_frame()
@@ -5434,7 +5428,11 @@ class RemoveNonCobolIterator():
             # we have nothing returned yet, but an outer frame --> return as-is
             return frame
 
-        return self.next()
+        return self.__next__()
+
+    # python2 iteration
+    def next(self):
+        return self.__next__()
 
 class CobolOnlyFrameFilter():
     def __init__(self):
