@@ -4663,7 +4663,8 @@ class CPrint(gdb.Command):
             GV_ModuleState.EstablishModuleState(False)
             self.worker.ProcessArguments(arguments)
         # pass user errors unchanged
-        except gdb.GdbError: raise
+        except gdb.GdbError:
+            raise
         except:
             traceback.print_exc()
 
@@ -4718,7 +4719,8 @@ A watchpoint stops execution of your program whenever the value of an expression
             GV_ModuleState.EstablishModuleState(True)
             self.worker.process_watch_arguments(arguments)
         # pass user errors unchanged
-        except gdb.GdbError: raise
+        except gdb.GdbError:
+            raise
         except:
             traceback.print_exc()
 
@@ -5080,8 +5082,8 @@ they override any that might have been passed to GDB with --args."""
                 bp.delete()
 
         # pass user errors unchanged
-        except gdb.GdbError: raise
-
+        except gdb.GdbError:
+            raise
         except:
             traceback.print_exc()
 
@@ -5129,7 +5131,8 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
                     gdb.execute("next", True, False)
                 ncount -= 1
         # pass user errors unchanged, for example "No stack."
-        except gdb.GdbError: raise
+        except gdb.GdbError:
+            raise
         except:
             traceback.print_exc()
 
