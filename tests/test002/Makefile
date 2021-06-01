@@ -1,4 +1,5 @@
-COBCD?=../../cobcd
+PYTHON?=/usr/bin/python3
+COBCD?=$(PYTHON) ../../cobcd
 GDB?=gdb
 
 # For reasons that remain unknown -- probably because of the older
@@ -27,17 +28,17 @@ all:
 
 known-good:
 	COBCDEVEL=1 $(COBCD) -x test.cbl
-	CPRINT_RAISE=0 $(GDB) -x test.scr > known-good.txt
-	../strip-diff known-good.txt >$(knowngood).stripped
+	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch -x ../../python/cobcd.py -x test.scr > known-good.txt
+	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
 
 test:
 	COBCDEVEL=1 $(COBCD) -x test.cbl
-	CPRINT_RAISE=0 $(GDB) -x test.scr > under-test.txt
-	../strip-diff under-test.txt >under-test.stripped
-	diff -uw under-test.stripped $(knowngood).stripped
+	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch -x ../../python/cobcd.py -x test.scr > under-test.txt
+	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
+	diff -uw $(knowngood).stripped under-test.stripped
 
 testprod:
 	cobcd -x test.cbl
-	CPRINT_RAISE=0 $(GDB) -x test.scr > under-test.txt
-	../strip-diff under-test.txt >under-test.stripped
-	diff -uw under-test.stripped $(knowngood).stripped
+	CPRINT_RAISE=0 $(GDB) --batch -x test.scr > under-test.txt
+	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
+	diff -uw $(knowngood).stripped under-test.stripped

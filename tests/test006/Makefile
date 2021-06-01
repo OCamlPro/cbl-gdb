@@ -1,4 +1,5 @@
-COBCD?=../../cobcd
+PYTHON?=/usr/bin/python3
+COBCD?=$(PYTHON) ../../cobcd
 GDB?=gdb
 
 UNAME_O := $(shell uname -o)
@@ -39,8 +40,8 @@ known-good:
 ifeq ($(gdbmajor),7)
 	@echo "This function is suppressed in systems with GDB-7"
 else
-	CPRINT_RAISE=0 $(GDB) -x test.scr > known-good.txt
-	../strip-diff known-good.txt >$(knowngood).stripped
+	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch -x ../../python/cobcd.py -x test.scr > known-good.txt
+	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
 endif
 
 test:
@@ -48,9 +49,9 @@ test:
 ifeq ($(gdbmajor),7)
 	@echo "This function is suppressed in systems with GDB-7"
 else
-	CPRINT_RAISE=0 $(GDB) -x test.scr > under-test.txt
-	../strip-diff under-test.txt >under-test.stripped
-	diff -uw under-test.stripped $(knowngood).stripped
+	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch -x ../../python/cobcd.py -x test.scr > under-test.txt
+	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
+	diff -uw $(knowngood).stripped under-test.stripped
 endif
 
 testprod:
@@ -58,7 +59,7 @@ testprod:
 ifeq ($(gdbmajor),7)
 	@echo "This function is suppressed in systems with GDB-7"
 else
-	CPRINT_RAISE=0 $(GDB) -x test.scr > under-test.txt
-	../strip-diff under-test.txt >under-test.stripped
-	diff -uw under-test.stripped $(knowngood).stripped
+	CPRINT_RAISE=0 $(GDB) --batch -x test.scr > under-test.txt
+	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
+	diff -uw $(knowngood).stripped under-test.stripped
 endif

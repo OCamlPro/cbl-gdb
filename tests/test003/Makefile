@@ -1,6 +1,6 @@
-COBCD?=../../cobcd
+PYTHON?=/usr/bin/python3
+COBCD?=$(PYTHON) ../../cobcd
 GDB?=gdb
-
 
 # For reasons that remain unknown -- probably because of the older
 # version of GDB, but who knows? -- the response on RedHat7 isn't quite
@@ -32,23 +32,23 @@ known-good:
 	COBCDEVEL=1 $(COBCD) -m A.cbl
 	COBCDEVEL=1 $(COBCD) -m B.cbl
 	COBCDEVEL=1 $(COBCD) -m C.cbl
-	CPRINT_RAISE=0 CPRINT_V=3 $(GDB) -x test.scr > known-good.txt
-	../strip-diff known-good.txt >$(knowngood).stripped
+	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) --batch -x test.scr > known-good.txt
+	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
 
 test:
 	COBCDEVEL=1 $(COBCD) -o test -x MAIN.cbl
 	COBCDEVEL=1 $(COBCD) -m A.cbl
 	COBCDEVEL=1 $(COBCD) -m B.cbl
 	COBCDEVEL=1 $(COBCD) -m C.cbl
-	CPRINT_RAISE=0 CPRINT_V=3 $(GDB) -x test.scr > under-test.txt
-	../strip-diff under-test.txt >under-test.stripped
-	diff -uw under-test.stripped $(knowngood).stripped
+	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) --batch -x test.scr > under-test.txt
+	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
+	diff -uw $(knowngood).stripped under-test.stripped
 
 testprod:
 	cobcd -o test -x MAIN.cbl
 	cobcd -m A.cbl
 	cobcd -m B.cbl
 	cobcd -m C.cbl
-	CPRINT_RAISE=0 CPRINT_RAISE=0 CPRINT_V=3 $(GDB) -x test.scr > under-test.txt
-	../strip-diff under-test.txt >under-test.stripped
-	diff -uw under-test.stripped $(knowngood).stripped
+	CPRINT_RAISE=0 CPRINT_V=3 $(GDB) --batch -x test.scr > under-test.txt
+	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
+	diff -uw $(knowngood).stripped under-test.stripped
