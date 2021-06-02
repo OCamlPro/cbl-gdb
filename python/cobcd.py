@@ -4829,7 +4829,8 @@ class CCondition(gdb.Command):
 
 Usage is `ccondition N COND', where N is an integer and COND is a COBOL
 expression to be evaluated whenever breakpoint N is reached.
-Do "help cbreak" for info on COBOL expressions"""
+
+Do "help cbreak" for info on COBOL expressions."""
 
     def __init__(self):
         self.worker = CBLDBG_CBREAK_WORKER
@@ -5215,11 +5216,11 @@ class CFrameWorker:
                 else:
                     old_frame = frame
                     frame = frame.newer()
-                if frame is None:
-                    # on the way down we may see an outer COBOL frame last, then take that
-                    if old_frame != gdb.selected_frame() and CFrameWorker.is_cobol_frame(old_frame):
-                        return old_frame
-                    return None
+                    if frame is None:
+                        # on the way down we may see an outer COBOL frame last, then take that
+                        if old_frame != gdb.selected_frame() and CFrameWorker.is_cobol_frame(old_frame):
+                            return old_frame
+                        return None
 
             else:
                 number = -1
@@ -5258,7 +5259,7 @@ class CFrameWorker:
 
         frame = CFrameWorker.Frame(up, number)
         if not frame:
-        # note: we raise here to prevent hookpost-defines to be triggered
+            # note: we raise here to prevent hookpost-defines to be triggered
             if up:
                 ConditionalRaise("Initial COBOL frame selected; you cannot go up.")
             else:
@@ -5311,6 +5312,7 @@ may be used to also stop if the current frame is a COBOL frame."""
 
     def invoke(self, argument, from_tty):
         CFrameWorker.Go(argument, False, True)
+
 class CBacktrace (gdb.Command):
     """Print backtrace of all COBOL stack frames (common backtrace, filtered).
 For detailed usage see 'help backtrace'."""
