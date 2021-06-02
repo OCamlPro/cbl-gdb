@@ -36,6 +36,11 @@ test:
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
 
+dev:
+	# For development: launch test under GDB.
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -x test.cbl
+	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) -x ../../python/cobcd.py test
+
 testprod:
 	cobcd -x test.cbl
 	CPRINT_RAISE=0 $(GDB) --batch -x test.scr > under-test.txt

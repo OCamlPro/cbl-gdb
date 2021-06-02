@@ -33,7 +33,7 @@ known-good:
 	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m A.cbl
 	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m B.cbl
 	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m C.cbl
-	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) --batch -x test.scr > known-good.txt
+	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) --batch -x ../../python/cobcd.py -x test.scr > known-good.txt
 	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
 
 test:
@@ -41,9 +41,14 @@ test:
 	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m A.cbl
 	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m B.cbl
 	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m C.cbl
-	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) --batch -x test.scr > under-test.txt
+	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) --batch -x ../../python/cobcd.py -x test.scr > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
+
+dev:
+	# For development: launch test under GDB.
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -x test.cbl
+	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) -x ../../python/cobcd.py test
 
 testprod:
 	cobcd -o test -x MAIN.cbl

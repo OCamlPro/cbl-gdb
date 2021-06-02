@@ -1,6 +1,6 @@
 PYTHON?=/usr/bin/python3
 COBCD?=$(PYTHON) ../../cobcd
-COBCDRW?=../../cobcd-rw/cobcd-rws
+COBCDRW?=../../cobcd-rw/cobcd-rw
 GDB?=gdb
 
 # For reasons that remain unknown -- probably because of the older
@@ -37,6 +37,11 @@ test:
 	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch -x ../../python/cobcd.py -x test.scr > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
+
+dev:
+	# For development: launch test under GDB.
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -x test.cbl
+	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) -x ../../python/cobcd.py test
 
 testprod:
 	cobcd -x test.cbl

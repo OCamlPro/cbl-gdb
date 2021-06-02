@@ -55,6 +55,11 @@ else
 	diff -uw $(knowngood).stripped under-test.stripped
 endif
 
+dev:
+	# For development: launch test under GDB.
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -x test.cbl
+	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) -x ../../python/cobcd.py test
+
 testprod:
 	cobcd -x test.cbl
 ifeq ($(gdbmajor),7)
