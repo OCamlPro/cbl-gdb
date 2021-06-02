@@ -1,5 +1,6 @@
 PYTHON?=/usr/bin/python3
 COBCD?=$(PYTHON) ../../cobcd
+COBCDRW?=../../cobcd-rw/cobcd-rws
 GDB?=gdb
 
 # For reasons that remain unknown -- probably because of the older
@@ -27,12 +28,12 @@ all:
 	@echo "Your choices are 'make known-good' and 'make test' and 'make testprod'"
 
 known-good:
-	COBCDEVEL=1 $(COBCD) -x test.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -x test.cbl
 	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch -x ../../python/cobcd.py -x test.scr > known-good.txt
 	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
 
 test:
-	COBCDEVEL=1 $(COBCD) -x test.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -x test.cbl
 	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch -x ../../python/cobcd.py -x test.scr > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped

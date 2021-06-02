@@ -1,5 +1,6 @@
 PYTHON?=/usr/bin/python3
 COBCD?=$(PYTHON) ../../cobcd
+COBCDRW?=../../cobcd-rw/cobcd-rw
 GDB?=gdb
 
 # For reasons that remain unknown -- probably because of the older
@@ -28,18 +29,18 @@ all:
 # way to override it from inside the GDB test.scr script.
 
 known-good:
-	COBCDEVEL=1 $(COBCD) -o test -x MAIN.cbl
-	COBCDEVEL=1 $(COBCD) -m A.cbl
-	COBCDEVEL=1 $(COBCD) -m B.cbl
-	COBCDEVEL=1 $(COBCD) -m C.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -o test -x MAIN.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m A.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m B.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m C.cbl
 	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) --batch -x test.scr > known-good.txt
 	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
 
 test:
-	COBCDEVEL=1 $(COBCD) -o test -x MAIN.cbl
-	COBCDEVEL=1 $(COBCD) -m A.cbl
-	COBCDEVEL=1 $(COBCD) -m B.cbl
-	COBCDEVEL=1 $(COBCD) -m C.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -o test -x MAIN.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m A.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m B.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m C.cbl
 	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) --batch -x test.scr > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped

@@ -1,5 +1,6 @@
 PYTHON?=/usr/bin/python3
 COBCD?=$(PYTHON) ../../cobcd
+COBCDRW?=../../cobcd-rw/cobcd-rw
 GDB?=gdb
 
 UNAME_O := $(shell uname -o)
@@ -36,7 +37,7 @@ all:
 	@echo "Your choices are 'make known-good' and 'make test' and 'make testprod'"
 
 known-good:
-	COBCDEVEL=1 $(COBCD) -x test.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -x test.cbl
 ifeq ($(gdbmajor),7)
 	@echo "This function is suppressed in systems with GDB-7"
 else
@@ -45,7 +46,7 @@ else
 endif
 
 test:
-	COBCDEVEL=1 $(COBCD) -x test.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -x test.cbl
 ifeq ($(gdbmajor),7)
 	@echo "This function is suppressed in systems with GDB-7"
 else
