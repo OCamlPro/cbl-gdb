@@ -201,17 +201,15 @@ def GdbExecute(curframe, command):
 def cob_malloc(size):
     # This is the Python-side wrapper for cob_malloc calls.
     # We use the C-side wrapper that cobcd-st put into the generated .C
-    command = "call (char *){0}({1})".format(GV_ModuleState.cob_malloc, size)
-    hexback = gdb.execute(command, False, True).split()[2]
-    retval = int(hexback, 16)
-    return retval
+    expression = "(void *(*)(const size_t)){0}({1})".format(GV_ModuleState.cob_malloc, size)
+    ret = gdb.parse_and_eval(expression)
+    return int(ret)
 
 
 def cob_cache_malloc(size):
-    command = "call (char *){0}({1})".format(GV_ModuleState.cob_cache_malloc, size)
-    hexback = gdb.execute(command, False, True).split()[2]
-    retval = int(hexback, 16)
-    return retval
+    expression = "(void *(*)(const size_t)){0}({1})".format(GV_ModuleState.cob_cache_malloc, size)
+    ret = gdb.parse_and_eval(expression)
+    return int(ret)
 
 
 def cob_free(location):
