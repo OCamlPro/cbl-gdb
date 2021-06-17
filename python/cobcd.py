@@ -271,7 +271,7 @@ class GlobalVariables():
     def __init__(self):
         # Establish the version of GDB
         m = re.search(r'[^0-9]*([0-9]+)\.([0-9]+)(\.([0-9]+))?', gdb.VERSION)
-        self.gdb_version = int(m.group(1))*10000 + int(m.group(2))*100
+        self.gdb_version = int(m.group(1)) * 10000 + int(m.group(2)) * 100
         if m.group(4):
             self.gdb_version = self.gdb_version + int(m.group(4))
 
@@ -279,12 +279,12 @@ class GlobalVariables():
             if self.gdb_version < 70600:
                 # Sanity check with expected stack trace - as everything will be broken in this case
                 raise("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.6+ is required)!".format(
-                                                                    self.gdb_version/10000, self.gdb_version%10000))
+                      self.gdb_version / 10000, self.gdb_version % 10000))
                 return
             if self.gdb_version < 70700:
                 print(" !! Warning: frame-filters and cbacktrace are not available with GDB-{0}.{1} (GDB 7.7+ is required)\n{2}".format(
-                                                                        self.gdb_version/10000, self.gdb_version%10000,
-                                                                    "cwatch handling will be severely limited"))
+                      self.gdb_version / 10000, self.gdb_version % 10000,
+                      "cwatch handling will be severely limited"))
             if self.gdb_version >= 80000:
                 print(" !! Warning: there are known problems with GDB-8.1 and GDB-8.2")
 
@@ -1155,17 +1155,17 @@ class VarTrie():
                     reversed.reverse()
 
                     payload = CobolVariable()
-                    payload.Program    = self.StackOfNames[0]
-                    payload.Section    = tokens[self.IndexType]
-                    payload.Level      = int(tokens[self.IndexLevel])
-                    payload.Name       = '/'.join(reversed)
-                    payload.Fname      = tokens[self.IndexFname]
-                    payload.Bname      = tokens[self.IndexBname]
-                    payload.Aname      = tokens[self.IndexAname]
-                    payload.Offset     = AddEmUp(tokens[self.IndexOffset])
-                    payload.Length     = AddEmUp(tokens[self.IndexLength])
-                    payload.OccursMin  = int(tokens[self.IndexOccursMin] or "0")
-                    payload.OccursMax  = int(tokens[self.IndexOccursMax] or "0")
+                    payload.Program   = self.StackOfNames[0]
+                    payload.Section   = tokens[self.IndexType]
+                    payload.Level     = int(tokens[self.IndexLevel])
+                    payload.Name      = '/'.join(reversed)
+                    payload.Fname     = tokens[self.IndexFname]
+                    payload.Bname     = tokens[self.IndexBname]
+                    payload.Aname     = tokens[self.IndexAname]
+                    payload.Offset    = AddEmUp(tokens[self.IndexOffset])
+                    payload.Length    = AddEmUp(tokens[self.IndexLength])
+                    payload.OccursMin = int(tokens[self.IndexOccursMin] or "0")
+                    payload.OccursMax = int(tokens[self.IndexOccursMax] or "0")
 
                     # print("Loading", payload.Level, payload.Name, payload.index_of_parent)
                     payload.payload_index = len(self.storage_list)
@@ -1490,21 +1490,21 @@ class CobolVariable():
     def __init__(self):
         # This block of data comes from the VariableString
         self.index_of_parent = None
-        self.Program     = ""
-        self.Section     = ""
-        self.Level       = -1
-        self.Name        = ""
-        self.Fname       = ""
-        self.Bname       = ""
-        self.Aname       = ""
-        self.Offset      = 0
-        self.Length      = 0
-        self.OccursMin   = 0
-        self.OccursMax   = 0
-        self.AttrType    = 0
-        self.AttrDigits  = 0
-        self.AttrScale   = 0
-        self.AttrFlags   = 0
+        self.Program    = ""
+        self.Section    = ""
+        self.Level      = -1
+        self.Name       = ""
+        self.Fname      = ""
+        self.Bname      = ""
+        self.Aname      = ""
+        self.Offset     = 0
+        self.Length     = 0
+        self.OccursMin  = 0
+        self.OccursMax  = 0
+        self.AttrType   = 0
+        self.AttrDigits = 0
+        self.AttrScale  = 0
+        self.AttrFlags  = 0
 
         # These are established at the run-time executable instance level.
         # Eventually we'll have to pay attention to what the run-time libcob
@@ -1516,8 +1516,8 @@ class CobolVariable():
         # These elements are based on parenthesized subscripts after the
         # name:  name(array_index1 , array_index2 , ...)(refmod start : refmod run)
         # Note the commas and colons, which determine which is which
-        self.Subscripts          = None  # This is the user's requested subscripts, integers or variables
-        self.ResolvedSubscripts  = None  # These are the resolved values (offset is one-based)
+        self.Subscripts         = None  # This is the user's requested subscripts, integers or variables
+        self.ResolvedSubscripts = None  # These are the resolved values (offset is one-based)
         self.TableOffset  = 0    # These are additional offset bytes based on the table Subscripts
         self.Refmod       = None
         self.RefmodOffset = 0   # This is the zero-based Offset in (Offset:Length)
@@ -1527,7 +1527,7 @@ class CobolVariable():
         self.location_of_field     = 0  # location of Fname, when available
         self.location_of_data      = 0  # value of Fname->data, when available
         self.location_of_attribute = 0  # value of Fname->attr
-        self.data       = []            # list of Length bytes
+        self.data = []                  # list of Length bytes
 
         self.ActualLocation = 0         # This is the location_of_data qualified by table
                                         # subscripts and refmod offset
@@ -2912,7 +2912,7 @@ def BuildHumanHString(node, level):
             # We have children, so we don't display anything:
             h_str += "\n"
             for child in node.children:
-                h_str += BuildHumanHString(child,level + 1)
+                h_str += BuildHumanHString(child, level + 1)
         else:
             # We have no children, so we must be elementary, which
             # means it's time to display something:
@@ -5167,7 +5167,7 @@ class CFrameWorker:
         """Return a Tuple as follows: COBOL-Frame, inner COBOL-Frame (actual COBOL code)"""
         if not isinstance(frame, gdb.Frame):
             raise gdb.error("bad argument passed, frame is " + str(type(frame)))
-        
+
         if not frame.is_valid():
             return False, False
         try:
@@ -5180,13 +5180,13 @@ class CFrameWorker:
         symbol = gdb.lookup_symbol("cob_module_path", block)[0]
         if not (symbol and str(symbol.type) == "const char *"):
             return False, False
-        
+
         # check for COBOL "inner" frame
         symbol = gdb.lookup_symbol("module", block)[0]
         if symbol and str(symbol.type) == "cob_module *":
             # quite likely an "inner" COBOL frame
             return True, True
-            
+
         # quite likely an "outer" COBOL frame
         return True, False
 
@@ -5194,7 +5194,6 @@ class CFrameWorker:
     def is_cobol_inner_frame(frame):
         cobol, inner = CFrameWorker.is_cobol_frame(frame)
         return inner
-
 
     @staticmethod
     def Frame(up, number):
@@ -5311,6 +5310,7 @@ may be used to also stop if the current frame is a COBOL frame."""
     def invoke(self, argument, from_tty):
         CFrameWorker.Go(argument, False, True)
 
+
 class CBacktrace (gdb.Command):
     """Print backtrace of all COBOL stack frames (common backtrace, filtered).
 For detailed usage see 'help backtrace'."""
@@ -5322,10 +5322,10 @@ For detailed usage see 'help backtrace'."""
         old_enable = remove_filter.enabled
         remove_filter.enabled = True
         try:
-            command = "backtrace " + ' '.join(arguments).replace("- ","-")
+            command = "backtrace " + ' '.join(arguments).replace("- ", "-")
             gdb.execute(command)
         except gdb.error as error:
-            raise gdb.GdbError("cbacktrace failed: " +  str(error))
+            raise gdb.GdbError("cbacktrace failed: " + str(error))
         finally:
             remove_filter.enabled = old_enable
 
@@ -5338,6 +5338,7 @@ class ElidingDecorator(gdb.FrameDecorator.FrameDecorator):
 
     def elided(self):
         return iter(self.elided_frames)
+
 
 class ElideNonCobolIterator():
     def __init__(self, ii):
@@ -5361,7 +5362,7 @@ class ElideNonCobolIterator():
                 next_frame = next(self.input_iterator)
             except StopIteration:
                 return frame
-            
+
             # check if we have an inner frame next - likely because of
             # another filter with higher priority
             if CFrameWorker.is_cobol_inner_frame(next_frame.inferior_frame()):
@@ -5369,13 +5370,14 @@ class ElideNonCobolIterator():
                 return frame
             # next frame is, as expected, a contained frame
             return ElidingDecorator(frame, [next_frame])
-        
+
         # pass non-COBOL-inner-frames as-is
         return frame
 
     # python2 iteration
     def next(self):
         return self.__next__()
+
 
 class CobolFrameFilter():
     def __init__(self):
@@ -5404,7 +5406,8 @@ class CobolOnlyDecoration(gdb.FrameDecorator.FrameDecorator):
     # def frame_args(self):
     #     # possibly print the COBOL name and start of the values here
     #     return None
-      
+
+
 class RemoveNonCobolIterator():
     def __init__(self, ii):
         self.input_iterator = ii
@@ -5419,7 +5422,7 @@ class RemoveNonCobolIterator():
 
         real_frame = frame.inferior_frame()
         cobol, inner = CFrameWorker.is_cobol_frame(real_frame)
-        
+
         if inner:
             self.first_iteration = False
             # yay, an inner COBOL frame...
@@ -5434,6 +5437,7 @@ class RemoveNonCobolIterator():
     def next(self):
         return self.__next__()
 
+
 class CobolOnlyFrameFilter():
     def __init__(self):
         self.name = "COBOL-Only-FrameFilter"
@@ -5443,7 +5447,6 @@ class CobolOnlyFrameFilter():
 
     def filter(self, frame_iter):
         return RemoveNonCobolIterator(frame_iter)
-
 
 
 def exit_handler(event):
