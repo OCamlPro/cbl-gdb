@@ -1433,7 +1433,6 @@ class VarTrie():
             self.storage_list[i].IsDirty = True
             i += 1
 
-
 class LineList():
     """List of starting lines of ProgramNames"""
 
@@ -1505,6 +1504,8 @@ class CobolVariable():
         self.AttrDigits  = 0
         self.AttrScale   = 0
         self.AttrFlags   = 0
+
+        self.Picture    = ""
 
         # These are established at the run-time executable instance level.
         # Eventually we'll have to pay attention to what the run-time libcob
@@ -2229,7 +2230,8 @@ class CobolVariable():
                 # can't read this data.  So, get the data:
 
                 self.data = GetBytesAt(self.ActualLocation, self.ActualLength)
-                self.display_body = self.GetDataAsString()
+                ###self.display_body = self.GetDataAsString()
+                self.display_body = self.DataToString()
                 self.IsDirty = False
         return True
 
@@ -2446,6 +2448,129 @@ class CobolVariable():
 
     def NumericValue(self):
         return atoi(self.display_body)
+
+####################################################################
+###  Start of recovered data formatting code #######################
+####################################################################
+
+### In June of 2021, a decision was made to undo a set of changes made
+### in September of 2020.  Specifically, it was back in 2020 that the
+### Python routines for outputting COBOL variables were replaced with
+### a call to cob_get_field_str.  In 2021, we discovered that was a
+### mistake, because the cob_get_field_str uses stdio.h routines that
+### not async-signal-safe.  It is not safe for GDB to force the
+### inferior to call routines that are not async-signal-safe.  This
+### problem actually cropped up when Simon was debugging some complex
+### code.
+
+### The code in this section was recovered from Version 3.23
+
+    def DataToString(self) :
+        noisy = False
+        value = ""
+        pic = "Unknown"
+        if False :  # dummy code that can be followed by elifs
+            pass
+        elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY :
+            if noisy :
+                print("COB_TYPE_NUMERIC_DISPLAY")
+            value, pic = self.NumericDisplayToString()
+        elif self.AttrType == COB_TYPE_NUMERIC_BINARY :
+            if noisy :
+                print("COB_TYPE_NUMERIC_BINARY")
+            value, pic = self.NumericBinaryToString()
+        elif self.AttrType == COB_TYPE_NUMERIC_PACKED :
+            if noisy :
+                print("COB_TYPE_NUMERIC_PACKED")
+            value, pic = self.PackedDecimalToString()
+        elif self.AttrType == COB_TYPE_NUMERIC_FLOAT :
+            if noisy :
+                print("COB_TYPE_NUMERIC_FLOAT")
+            value, pic = self.IeeeBinaryToString()
+        elif self.AttrType == COB_TYPE_NUMERIC_DOUBLE :
+            if noisy :
+                print("COB_TYPE_NUMERIC_DOUBLE")
+            value, pic = self.IeeeBinaryToString()
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC64 :
+            if noisy :
+                print("COB_TYPE_NUMERIC_FP_DEC64")
+            value, pic = self.GnuCobolDecimal64ToString()
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128 :
+            if noisy :
+                print("")
+            value, pic = self.GnuCobolDecimal128ToString()
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32 :
+            if noisy :
+                print("")
+            value, pic = self.IeeeBinaryToString()
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64 :
+            if noisy :
+                print("")
+            value, pic = self.IeeeBinaryToString()
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128 :
+            if noisy :
+                print("")
+            value, pic = self.IeeeBinaryToString()
+        elif self.AttrType == COB_TYPE_ALPHANUMERIC :
+            if noisy :
+                print("")
+            value, pic = self.AlphanumericToString()
+        elif self.AttrType == COB_TYPE_NUMERIC_EDITED :
+            if noisy :
+                print("COB_TYPE_NUMERIC_EDITED")
+            value, pic = self.NumericEditedToString()
+        else :
+            # We were handed an unknown type.  Let's look at the data:
+            non_printable = 0;
+            for i in range(len(self.data)) :
+                if self.data[i] < 32 or self.data[i] >= 128 :
+                    non_printable += 1
+
+            if non_printable >= 1 :
+                value = "["
+                for byte in self.data :
+                    hexout = hex(byte)[-2:]
+                    if hexout[0:1] == 'x' :
+                        hexout = '0' + hexout[-1:]
+                    value += hexout
+                value += "]"
+            else :
+                value = '"'
+                for byte in self.data :
+                    if 32 <= byte < 128 :   # valid ASCII characters
+                        value += chr(byte)
+                    else :
+                        value += '.'
+                value += '"'
+
+        pcount = 0
+        for ch in Picture(self.Picture) :
+            if ch == 'P' :
+                pcount += 1
+        pcount = 0
+
+        if pcount > 0 :
+            if self.AttrScale < 0 :
+                for i in range(pcount) :
+                    value += '0'
+            else :
+                stash = ''
+                if value[0] == '+' or value[0] == '-' :
+                    stash = value[0]
+                    value = value[1:]
+                for i in range(pcount) :
+                    value = '0' + value
+                value = stash + self.decimal_point + value
+
+        ## Because we are in COBOL land, we replace any embedded quotes
+        ## with doubled quotes:
+        if value and value[0] == '"' :
+            value = '"' + value[1:-1].replace('"','""') + '"'
+        return value;
+
+####################################################################
+###  End of recovered data formatting code #########################
+####################################################################
 
 
 class ModuleInformation():
