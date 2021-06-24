@@ -224,8 +224,10 @@ DISPLAY def-COMP-X                 "   def-COMP-X                  "
 DISPLAY def-COMPUTATIONAL-X        "   def-COMPUTATIONAL-X         " 
 DISPLAY def-COMP-XX                "   def-COMP-XX                 " 
 DISPLAY def-DISPLAY                "   def-DISPLAY                 " 
-DISPLAY def-POINTER                "   def-POINTER                 " 
-DISPLAY def-PROCEDURE-POINTER      "   def-PROCEDURE-POINTER       " 
-DISPLAY def-PROGRAM-POINTER        "   def-PROGRAM-POINTER         " 
+
+
+
+
+
 .
 

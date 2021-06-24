@@ -2508,6 +2508,8 @@ class CobolVariable():
         bytes = self.data
         length = len(bytes)
         if length == 10:
+            # This will generate an error, if it ever happens.  If
+            # it does, let me know.  I'll buy you a beer
             return self.X86_extended_precision_from_bytes(bytes)
 
         exponent_bits = 0
@@ -2629,6 +2631,7 @@ class CobolVariable():
         #
         # Take advantage of python's unlimited integer capability, and find the
         # decimal equivalent of the unit place of the fraction:
+
         decimal_exponent = 0
         while exponent != 0 :
             if exponent < 0 :
@@ -3465,7 +3468,7 @@ class CobolVariable():
 
     def NumericBinaryToString(self) :
         # Generic Binary
-        
+
         if (self.AttrFlags & COB_FLAG_IS_POINTER) != 0:
             return self.GetDataAsHex(), ""
 
