@@ -3174,10 +3174,7 @@ class CobolVariable():
             pics += " ]"
         return body, pic
 
-    def PackedDecimalToString(self) :
-        body = ""
-        pic = ""
-
+    def GetPscale(self):
         # In case there is p-scaling:
         pdelta = 0
         pscale = 0
@@ -3187,12 +3184,18 @@ class CobolVariable():
                     if pdelta == 0:
                         # If there are any P's, they'll be at the end
                         pdelta = 1
-                    digit_count += 1
                 if ch == 'P' :
                     if pdelta == 0:
                         # The P's are before the digits, so they are at the beginning
                         pdelta = -1
                     pscale += pdelta
+        return pscale
+
+    def PackedDecimalToString(self) :
+        body = ""
+        pic = ""
+
+        pscale = self.GetPscale()
 
         # These comments aren't consistent.  I don't actually remember
         # where they came from.  F,A,C,E traditionally means positive.  GnuCOBOL
@@ -3236,16 +3239,15 @@ class CobolVariable():
         print("BODY",body)
 
         if pscale > 0 :
-            if self.AttrScale < 0 :
-                # Scaling to the left of decimal point
-                for i in range(pscale) :
-                    body += '0'
+            # The extra zeroes are to the left of the decimal point
+            for i in range(pscale) :
+                body += '0'
         elif pscale < 0 :
-            # Scaling to the right of decimal point
+            # The extra decimal points are between the decimal point and the digits
             for i in range(-pscale) :
                 body = body + '0'
-            body = '.' + body
-        else:
+            body = self.decimal_point + body
+        elif self.AttrScale > 0 :
             body = body[:self.AttrDigits-self.AttrScale] + \
                     self.decimal_point + \
                     body[self.AttrDigits-self.AttrScale:]
@@ -3318,10 +3320,7 @@ class CobolVariable():
         pic = ""
 
         # Count up any P-scalers in the Picture string:
-        pcount = 0
-        for ch in Picture(self.Picture) :
-            if ch == 'P' :
-                pcount += 1;
+        pscale = self.GetPscale()
 
         negative = False
         if self.Length > 0 :
@@ -3334,19 +3333,15 @@ class CobolVariable():
                 digit = self.data[i] & 0x3F
                 body += chr(digit)
 
-            if pcount > 0 :
-                # There is scaling involved
-                if self.AttrScale < 0 :
-                    # scaling to the left of the decimal point
-                    for i in range(pcount) :
-                        body += '0'
-                else:
-                    # scaling to the right of the decimal point
-                    for i in range(pcount) :
-                        body = '0' + body
-                    body = self.decimal_point + body
+            if pscale > 0 :
+                for i in range(pscale) :
+                    body += '0'
+            elif pscale < 0 :
+                # scaling to the right of the decimal point
+                for i in range(-pscale) :
+                    body = '0' + body
+                body = self.decimal_point + body
             elif self.AttrScale > 0 :
-                # No scaling
                 radix_point = self.Length - self.AttrScale
                 body = body[:radix_point] + self.decimal_point + body[radix_point:]
 
@@ -3470,6 +3465,9 @@ class CobolVariable():
 
     def NumericBinaryToString(self) :
         # Generic Binary
+        
+        if (self.AttrFlags & COB_FLAG_IS_POINTER) != 0:
+            return self.GetDataAsHex(), ""
 
         pcount = 0
         for ch in Picture(self.Picture) :
