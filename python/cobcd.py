@@ -3239,8 +3239,6 @@ class CobolVariable():
         # Trim the string to the number of digits:
         body = body[ len(body)-self.AttrDigits : ]
 
-        print("BODY",body)
-
         if pscale > 0 :
             # The extra zeroes are to the left of the decimal point
             for i in range(pscale) :
