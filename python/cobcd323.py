@@ -1368,6 +1368,8 @@ class CobolVariable() :
         bytes = self.data
         length = len(bytes)
         if length == 10 :
+            # This is going to generate an error.  This is the x87 80-bit extended format.
+            # Let me know if this happens.  I'll buy you a beer.  Bob Dubner
             return self.X86_extended_precision_from_bytes(bytes)
 
         exponent_bits = 0
@@ -1482,7 +1484,9 @@ class CobolVariable() :
         # our rather daunting goal is to convert this to 1.234E10
         #
 
-        # fraction is a value ranging from 1.0000 to 1.999999, and
+        print("FRACTION",hex(fraction),fraction)
+
+        # fraction is a value ranging from 1.0000 to 1.999999....
         #
         # Take advantage of python's unlimited integer capability, and find the
         # decimal equivalent of the unit place of the fraction:

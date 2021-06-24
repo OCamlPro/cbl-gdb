@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+#!/usr/bin/python3
 
 ################################################################################
 # Copyright (c) 2019-2021 COBOLworx and contributors
@@ -1504,8 +1505,7 @@ class CobolVariable():
         self.AttrDigits  = 0
         self.AttrScale   = 0
         self.AttrFlags   = 0
-
-        self.Picture    = ""
+        self.Picture     = None
 
         # These are established at the run-time executable instance level.
         # Eventually we'll have to pay attention to what the run-time libcob
@@ -1528,6 +1528,7 @@ class CobolVariable():
         self.location_of_field     = 0  # location of Fname, when available
         self.location_of_data      = 0  # value of Fname->data, when available
         self.location_of_attribute = 0  # value of Fname->attr
+        self.location_of_pic       = 0  # value of Fname->attr.pic
         self.data       = []            # list of Length bytes
 
         self.ActualLocation = 0         # This is the location_of_data qualified by table
@@ -2159,6 +2160,42 @@ class CobolVariable():
                 self.AttrScale  = GetDataAt(self.location_of_attribute + 4, 2)
                 self.AttrFlags  = GetDataAt(self.location_of_attribute + 6, 2)
                 self.location_of_pic = GetDataAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
+                self.Picture = ""
+                if self.location_of_pic:
+                    # There is PICTURE information; we need to build it up as a string.
+                    # The data are stored as described in cob_pic_symbol above.  Unfortunately,
+                    # we have real-world difficulties to live with.  In particular, the structure
+                    # in C is defined as {char, int}.  The GCC compiler for Intel is observed to compile that
+                    # structure with padding, so that char is followed by three empty bytes, and then
+                    # the count follows.
+                    #
+                    # This code, therefore, has to be red-flagged; we don't know if GCC will always do
+                    # this.  We don't know if the compiler options can be changed.  We don't know
+                    # what might happen with other compilers.  Good luck to us:
+                    offset = 0
+                    while True:
+                        # Pick up the character:
+                        ch = GetDataAt(self.location_of_pic + offset, 1)
+                        if ch == 0:
+                            break
+                        if ch < 32:
+                            # This should never happen; we're inside a PICTURE string
+                            ch = '^'
+                        else:
+                            ch = chr(ch)
+                        offset += calcsize('i')
+
+                        # Pick up the integer count:
+                        count = GetDataAt(self.location_of_pic + offset, calcsize('i'))
+                        offset += calcsize('i');
+
+                        while count > 0:
+                            count -= 1
+                            self.Picture += ch
+                    # Just to make life easier down the road, replace DB and CR
+                    # with something easier to work with.
+                    self.Picture = self.Picture.replace("DB","d")
+                    self.Picture = self.Picture.replace("CR","c")
 
             if self.Section in ('F', 'X', 'W', "WB", 'I'):
                 pass
@@ -2429,6 +2466,8 @@ class CobolVariable():
         if (self.AttrFlags & COB_FLAG_CONSTANT) != 0:
             print(" CONSTANT ", end='')
         print()
+        if self.location_of_pic:
+            print("Picture:    ", self.Picture)
 
         print("Data: (HEX)   [", end=" ")
         for byte in self.data:
@@ -2465,6 +2504,1401 @@ class CobolVariable():
 
 ### The code in this section was recovered from Version 3.23
 
+    def IeeeBinaryToString(self):
+        bytes = self.data
+        length = len(bytes)
+        if length == 10:
+            return self.X86_extended_precision_from_bytes(bytes)
+
+        exponent_bits = 0
+        fraction_bits = 0
+        bias = 0
+        valid_digits = 0
+
+        if length == 2:
+            # binary16
+            exponent_bits = 5
+            fraction_bits = 10
+            bias = 15
+            valid_digits = 4
+        elif length == 4:
+            # binary32
+            exponent_bits = 8
+            fraction_bits = 23
+            bias = 127
+            valid_digits = 8
+        elif length == 8:
+            # binary64
+            exponent_bits = 11
+            fraction_bits = 52
+            bias = 1023
+            valid_digits = 16
+        elif length == 16:
+            # binary128
+            exponent_bits = 15
+            fraction_bits = 112
+            bias = 16383
+            valid_digits = 34
+        elif length == 32:
+            # binary256
+            exponent_bits = 19
+            fraction_bits = 236
+            bias = 262143
+            valid_digits = 72
+        else:
+            message = "Don't know how to handle IEEE 754 floating point with a length of "
+            message += str(length)
+            message += " bytes"
+            raise Exception (message)
+
+        # At one point I thought it useful to append this information
+        #type = "  [ IEEE binary"
+        #type += str(length*8)
+        #type += " ]"
+
+        # Now I don't
+        type = ""
+
+        exponent_mask = ((1<<exponent_bits)-1)
+        unit_point = 1<<fraction_bits
+        ten_point = unit_point * 10
+        fraction_mask = unit_point-1
+
+        # combine the bytes into a single value
+        value = 1   # This is a guard bit; it ensure that, for example,
+                    # a bunch of bytes of zeros have at least the number
+                    # of bits we're going to need.
+
+        for i in range(length-1,-1,-1):
+            value <<= 8
+            value += bytes[i]
+
+        # extract the various IEEE 754 fields:
+        sign = (value >> exponent_bits + fraction_bits) & 1
+        exponent = (value >> fraction_bits) & exponent_mask
+        fraction = value & fraction_mask
+
+        # start creating the output string:
+
+        body = ""
+        pic = ""
+
+        if sign == 1:
+            body += '-'
+
+        if ((exponent+1) & exponent_mask) == 0:
+            # exponent is the maximum possible value
+            if fraction == 0:
+                body += "Inf"
+                body += type
+                return body , pic
+            body = "NaN"
+            body += type
+            return body , pic
+
+        if exponent == 0:
+            if fraction == 0:
+                body += "0.0"
+                body += type
+                return body , pic
+            else:
+                # faction is != 0, so this is a denormal number
+                # fraction stays the same, with the implied binary
+                # point fraction_bits to the left of the whole value
+                # exponent becomes -N, where N is -(bias-1)
+                exponent = -(bias-1)
+                # now, adjust fraction to look like a regular number:
+                while (fraction & (1<<fraction_bits)) == 0 :
+                    fraction <<= 1
+                    exponent -= 1
+        else:
+            # At this point, the exponent is in the range of 1 - exponent_mask-1,
+            # meaning that this is an ordinary floating point number.
+            # subtract bias from the exponent, as per the specification
+            exponent -= bias
+            # and add in the implied "1" bit to the left edge of the fraction
+            fraction += unit_point
+
+        # Now it gets interesting.  We have an exponent, which multiplies fraction
+        # by a power of 2^exponent.  And we have fraction, which currently has
+        # an implied binary point between bits fraction_bits+1 and fraction_bits
+        #
+        # our rather daunting goal is to convert this to 1.234E10
+        #
+        # fraction is a value ranging from 1.0000 to 1.999999....
+        #
+        # Take advantage of python's unlimited integer capability, and find the
+        # decimal equivalent of the unit place of the fraction:
+        decimal_exponent = 0
+        while exponent != 0 :
+            if exponent < 0 :
+                # We want to increase the exponent, which means we want to divide
+                # the fraction by two.  To avoid losing bits, we're going to
+                # do that by multiplying it by 5, and dividing it by ten via
+                # the decimal exponent:
+                exponent += 1;  # increase exponent towards zero
+                fraction *= 5;  # multiply by five
+                decimal_exponent -= 1; # divide by ten
+            else:
+                exponent -= 1;
+                fraction <<= 1;
+
+            # Multiply or divide by ten to normalize fraction to be
+            # between unit_point <= fraction < ten_point
+
+            while fraction > ten_point :
+                fraction //= 10
+                decimal_exponent += 1;
+            while fraction < unit_point :
+                fraction *= 10
+                decimal_exponent -= 1;
+
+        # when you pop out here, you have a big number
+        # whose left-most decimal digit is 1-9 (and is the
+        # units place) and the correct decimal_exponent
+        # We can now peel of the digits, largest to smallest:
+
+        digit_count = 1
+        digit = fraction // unit_point;
+        fraction -= digit * unit_point
+        fraction *= 10
+        body += chr( ord('0') + digit)
+        body += '.'
+        while fraction != 0 :
+            digit = fraction // unit_point;
+            fraction -= digit * unit_point
+            fraction *= 10
+            body += chr( ord('0') + digit)
+            digit_count += 1
+            if digit_count >= valid_digits :
+                break;
+
+        while body[len(body)-1] == '0' :
+            body = body[:len(body)-1]
+
+        if body[len(body)-1] == '.' :
+            body += '0';
+
+        if decimal_exponent != 0:
+            body += 'e'
+            body += str(decimal_exponent)
+        body += type
+        return body , pic
+
+    def StringToIeeeBinary(self,rside) :
+        self.data = bytearray(self.Length)
+        length = self.Length
+
+        if length == 2 :
+            # binary16
+            exponent_bits = 5
+            fraction_bits = 10
+            bias = 15
+            valid_digits = 4
+        elif length == 4 :
+            # binary32
+            exponent_bits = 8
+            fraction_bits = 23
+            bias = 127
+            valid_digits = 8
+        elif length == 8 :
+            # binary64
+            exponent_bits = 11
+            fraction_bits = 52
+            bias = 1023
+            valid_digits = 16
+        elif length == 16 :
+            # binary128
+            exponent_bits = 15
+            fraction_bits = 112
+            bias = 16383
+            valid_digits = 34
+        elif length == 32 :
+            # binary256
+            exponent_bits = 19
+            fraction_bits = 236
+            bias = 262143
+            valid_digits = 72
+        else:
+            message = "Don't know how to handle IEEE 754 floating point with a length of "
+            message += str(length)
+            message += " bytes"
+            raise Exception (message)
+
+        rside = rside.lower()
+
+        if rside == "inf" or rside == "+inf" :
+            # Positive infinity
+            sign = 0
+            exponent = (1<<exponent_bits)-1
+            significand = 0
+        elif rside == "-inf" :
+            # Negative infinity
+            sign = 1
+            exponent = (1<<exponent_bits)-1
+            significand = 0
+        elif rside == "nan" or rside == "snan" :
+            # signalling NaN
+            sign = 0
+            exponent = (1<<exponent_bits)-1
+            significand = 1
+        elif rside == "qnan" :
+            # quiet NaN
+            sign = 0
+            exponent = (1<<exponent_bits)-1
+            significand = (1<<(fraction_bits-1)) + 1
+        else:
+            try:
+                fpnumber = float(rside)
+            except:
+                print("Ill-formed floating point input")
+                fpnumber = 0
+
+            if fpnumber == 0 :
+                sign = 0
+                exponent = 0
+                significand = 0
+            else:
+                # We have run out of dodges; we have to actually encode
+                # the floating point number
+                if fpnumber < 0 :
+                    sign = 1
+                    fpnumber = -fpnumber
+                else:
+                    sign = 0
+
+                astring = "{0:24.18e}".format(fpnumber)
+
+                eloc = astring.find("e")
+                point10 = -1 # Just to the right of the leftmost digit
+                lside = astring[0]
+                lside += astring[2:eloc]
+
+                exp10 = int(astring[eloc+1:])
+
+                while exp10 < 0 :
+                    point10 += 1
+                    if point10 > 0 :
+                        lside = '0' + lside
+                    exp10 += 1
+
+                while exp10 > 0 :
+                    lside = lside + '0'
+                    lside = lside
+                    point10 -= 1
+                    exp10 -= 1
+
+                if point10 < 0 :
+                    intpart = lside[0:-point10]
+                    fracpart = lside[-point10:]
+                else:
+                    intpart = ""
+                    fracpart = lside
+
+                while len(fracpart) > 0 :
+                    if  fracpart[-1:] != '0' : # Just the last char
+                        break
+                    fracpart = fracpart[0:-1] # All but last char
+
+                # Convert the integer part to a string of bytes:
+                intba = bytearray(intpart.encode("utf8"))
+                for i in range(len(intba)) :
+                    intba[i] -= 0x30    # "0"
+
+                # Convert the integer part to a string of bits:
+                intbits = ""
+                while len(intba) > 0 :
+                    # divide intba by two
+                    borrow = 0
+                    for i in range(len(intba)) :
+                        newborrow = intba[i] & 0x01
+                        intba[i] = (borrow*10 + intba[i]) // 2
+                        borrow = newborrow
+                    # Push the lowest order bit onto the bitstring
+                    if borrow ==  1 :
+                        intbits += "1"
+                    else:
+                        intbits += "0"
+                    if intba[0] == 0x00 :
+                        intba = intba[1:]
+
+                # Reverse the order of intbits:
+                intbits = intbits[::-1]
+
+                # Convert the fractional part to a string of bytes:
+                fracba = bytearray(fracpart.encode("utf8"))
+                for i in range(len(fracba)) :
+                    fracba[i] -= 0x30    # "0"
+
+                # Convert the fractional part to a string of bits.  We
+                # we will create one more than we can possibly need
+
+                fracbits = ""
+                while len(fracbits) < fraction_bits+1+1 :
+                    # Multiply fracbits by two:
+                    carry = 0
+                    for i in range(len(fracba)-1,-1,-1) :
+                        fracba[i] = fracba[i]*2 + carry
+                        carry = fracba[i] // 10
+                        fracba[i] = fracba[i] % 10
+                    # Pick up the bit that means >= 0.5
+                    if carry == 1 :
+                        fracbits += '1'
+                    else:
+                        fracbits += '0'
+
+                sigbits = intbits + fracbits
+                binary_point = len(intbits)
+
+                # Round to the actual number of places we'll need
+                carry = sigbits[fraction_bits+1]
+                sigbits = sigbits[0:fraction_bits+1]
+
+                i = len(sigbits)-1
+                while(i >= 0) :
+                    if carry == '0' :
+                        break;
+                    if sigbits[i] == '0' :
+                        sigbits = sigbits[:i] + '1' + sigbits[i+1:]
+                        break;
+                    sigbits = sigbits[:i] + '0' + sigbits[i+1:]
+                    carry = 1
+                    i -= 1
+
+                if carry == 1 :
+                    # Well, this is improbable.  Somebody must've entered
+                    # 0.999999999999999999999999999999999, but in a way
+                    # that snuck past the Python floating point input
+                    # conversion.
+                    #
+                    # What a jerk
+                    #
+                    sigbits = '1' + sigbits
+                    sigbits = sigbits[0:fraction_bits+1]
+                    binary_point += 1
+
+                # If the number is >= 1, it's already normalized.
+
+                # Otherwise, strip off leading zeroes while adjusting the
+                # binary point:
+                while sigbits[0] == '0' :
+                    sigbits = sigbits[1:] + '0'
+                    binary_point -= 1;
+
+                # calculate the power_of_two from the binary_point position
+                power_of_two = binary_point - 1
+
+                # Convert the power_of_two using the bias:
+
+                exponent = power_of_two + bias
+
+                if exponent <= 0 :
+                    # I am not going to mess with sub-normal numbers.  This
+                    # is, therefore, just too damned small.  Make it zero
+                    sign = 0
+                    exponent = 0
+                    significand = 0
+                elif exponent >= (1<<exponent_bits)-1 :
+                    # The number is too big for this IEEE format.
+                    # Make it infinite
+                    exponent = (1<<exponent_bits)-1
+                    significand = 0
+                else:
+                    # We have the sign and exponent.  Build the signicand:
+                    significand = 0
+                    # Trim off the implicit high-order bit:
+                    sigbits = sigbits[1:]
+                    for ch in sigbits :
+                        significand <<= 1
+                        if ch == '1' :
+                            significand += 1;
+
+        # We can now build the self.data bytearray:
+
+        mask = 0x80
+        offset = 0;
+        if sign == 1:
+            self.data[offset] |= mask
+        mask >>= 1
+        if mask == 0 :
+            mask = 0x80
+            offset += 1
+
+        for i in range(exponent_bits) :
+            if exponent & 1<<(exponent_bits-1-i) != 0 :
+                self.data[offset] |= mask
+            mask >>= 1
+            if mask == 0 :
+                mask = 0x80
+                offset += 1
+
+        for i in range(fraction_bits) :
+            if significand & 1<<(fraction_bits-1-i) != 0 :
+                self.data[offset] |= mask
+            mask >>= 1
+            if mask == 0 :
+                mask = 0x80
+                offset += 1
+        self.data.reverse()
+
+    def FpNormalize(self,coefficient,exponent) :
+        # convert anything to 1.234E5
+        if coefficient == 0 :
+            exponent = 0
+
+        str_coefficient = str(coefficient)
+        # make sure it's at least two characters
+        if len(str_coefficient) == 1 :
+            str_coefficient += '0'
+            exponent -= 1
+        places = len(str_coefficient) - 1   # One digit to the left of the
+                                            # decimal point; places to the right
+        exponent += places
+        # insert the decimal point:
+        str_coefficient = str_coefficient[0:1] + '.' + str_coefficient[1:]
+
+        # strip off trailing zeroes
+        while str_coefficient[-1:] == '0' :
+            str_coefficient = str_coefficient[:len(str_coefficient)-1]
+
+        # when left with "3." make it "3.0"
+        if len(str_coefficient) == 2 :
+            str_coefficient += '0'
+
+        return str_coefficient,exponent
+
+    def GnuCobolDecimal128ToString(self) :
+        # This decodes the GnuCOBOL version of the decimal64 format.  This is
+        # based on a misreading of the actual IEEE format:
+        # See https://en.wikipedia.org/wiki/Decimal64_floating-point_format
+        # Either that, or they were using an early draft version.  Anyway,
+        # follow along to see how it works:
+
+        # Convert the bytes of data to a single 128-bit value:
+        our_bytes = self.data
+        if self.AttrFlags & COB_FLAG_BINARY_SWAP :
+            our_bytes.reverse()
+        value = 1   # This is a guard bit.  Without it, we wouldn't get a
+                    # 128-bit zero, for example
+        for i in range(self.Length-1,-1, -1) :
+            value <<= 8
+            value += our_bytes[i]
+
+        if self.Length == 16 :
+            # decimal128
+            # The format is 1 S, 4 combination,  14 exponent, 110 coefficient
+            type = "decimal64"
+            coefficient_bits1 = 111  # Top 4 are 100x
+            coefficient_bits2 = 113  # Top 4 are 0xxx
+            exponent_loc1 = 128 - 1 - 2 - 14
+            exponent_loc2 = 128 - 1 - 0 - 14
+            exponent_bits = 14
+            bias = 6176
+
+        sign = (value >> (128-1)) & 1
+        combination = (value >> (128-5)) & 0xF;
+
+        coefficient1 = value & ((1<<coefficient_bits1)-1)
+        coefficient2 = value & ((1<<coefficient_bits2)-1)
+        exponent1 = (value >> exponent_loc1) & ((1<<exponent_bits)-1)
+        exponent2 = (value >> exponent_loc2) & ((1<<exponent_bits)-1)
+
+        body = ""
+        pic = ""
+        if combination == 0b1111 : # It's NaN/Inf
+            body = "NaN/Inf"
+        else:
+            # It's a number
+            if sign == 1 :
+                body += '-'
+            if combination >= 0b1100 :
+                # Mode 1:
+                exponent = exponent1
+                coefficient = coefficient1 + (1<<113)
+            else:
+                exponent = exponent2
+                coefficient = coefficient2
+
+            exponent -= bias
+            str_coefficient, exponent = self.FpNormalize(coefficient,exponent)
+            body += str_coefficient
+
+            body += 'e'
+            body += str(exponent)
+
+            pic += "  [ GnuCOBOL "
+            pic += type
+            pic += " ]"
+        return body,pic
+
+
+    def GnuCobolDecimal64ToString(self) :
+        # This decodes the GnuCOBOL version of the decimal64 format.  This is
+        # based on a misreading of the actual IEEE format:
+        # See https://en.wikipedia.org/wiki/Decimal64_floating-point_format
+        # Either that, or they were using an early draft version.  Anyway,
+        # follow along to see how it works:
+
+        # Convert the bytes of data to a single 64-bit value:
+        our_bytes = self.data
+        if self.AttrFlags & COB_FLAG_BINARY_SWAP :
+            our_bytes.reverse()
+        value = 1   # This is a guard bit.  Without it, we wouldn't get a
+                    # 64-bit zero, for example
+        for i in range(self.Length-1,-1, -1) :
+            value <<= 8
+            value += our_bytes[i]
+
+        if self.Length == 8 :
+            # decimal64
+            # The format is 1 S, 4 combination, 8 exponent, 50 coefficient
+            type = "decimal64"
+            coefficient_bits1 = 51  # Top 4 are 100x
+            coefficient_bits2 = 53  # Top 4 are 0xxx
+            exponent_loc1 = 64 - 1 - 2 - 10
+            exponent_loc2 = 64 - 1 - 0 - 10
+            exponent_bits = 10
+            bias = 398
+
+        sign = (value >> (64-1)) & 1
+        combination = (value >> (64-5)) & 0xF;
+
+        coefficient1 = value & ((1<<coefficient_bits1)-1)
+        coefficient2 = value & ((1<<coefficient_bits2)-1)
+        exponent1 = (value >> exponent_loc1) & ((1<<exponent_bits)-1)
+        exponent2 = (value >> exponent_loc2) & ((1<<exponent_bits)-1)
+
+        body = ""
+        pic = ""
+        if combination == 0b1111 : # It's NaN/Inf
+            body = "NaN/Inf"
+        else:
+            # It's a number
+            if sign == 1 :
+                body += '-'
+            if combination >= 0b1100 :
+                # Mode 1:
+                exponent = exponent1
+                coefficient = coefficient1 + (1<<53)
+            else:
+                exponent = exponent2
+                coefficient = coefficient2
+
+            exponent -= bias
+            str_coefficient, exponent = self.FpNormalize(coefficient,exponent)
+            body += str_coefficient
+
+            body += 'e'
+            body += str(exponent)
+
+            pic += "[ GnuCOBOL "
+            pic += type
+            pic += " ]"
+        return body, pic
+
+    def IeeeDecimal64ToString(self) :
+        # NOTE: This code is more-or-less untested.  This is legitimate code
+        # for IEEE decimal64.  As of this writing, version 3.0- of GnuCOBOL
+        # has a flawed implementation.  It is internally consistent, but it
+        # isn't IEEE.  See GnuCobolDecimal64ToString
+
+        # This is the IEEE decimal64/128 format
+        # See https://en.wikipedia.org/wiki/Decimal64_floating-point_format
+        # GnuCOBOL uses the Binary Integer Decimal option, rather than
+        # the Densely Packed Decimal option.
+
+        # Convert the bytes of data to a single 64-bit value:
+        our_bytes = self.data
+        if self.AttrFlags & COB_FLAG_BINARY_SWAP :
+            our_bytes.reverse()
+        value = 1   # This is a guard bit.  Without it, we wouldn't get a
+                    # 64-bit zero, for example
+        for i in range(self.Length-1,-1, -1) :
+            value <<= 8
+            value += our_bytes[i]
+
+        if self.Length == 8 :
+            # decimal64
+            # The format is 1 S, 5 combination, 8 exponent, 50 coefficient
+            type = "binary64"
+            coefficient_bits = 50
+            exponent_bits = 8
+            combination_bits = 5
+            bias = 398
+
+        coefficient = value & ((1<<coefficient_bits)-1)
+        exponent = (value >> coefficient_bits) & ((1<<exponent_bits)-1)
+        combination = (value >> (coefficient_bits+exponent_bits)) \
+                              & ((1<<combination_bits)-1)
+        sign = (value >> (coefficient_bits+exponent_bits+combination_bits)) & 1
+
+        print( hex(value) )
+        print( bin(combination) )
+        print( hex(exponent) )
+        print( hex(coefficient) )
+
+        body = ""
+        pic = ""
+        if combination == 0b11111 : # It's NaN
+            if (exponent & (1<<(exponent_bits-1))) != 0 :
+                body += 's'
+            else:
+                body += 'q'
+            body += "NaN"
+        elif combination == 0b11110 : # It's Infinity
+            if sign == 1 :
+                body += '-'
+            else:
+                body += '+'
+            body += "Inf"
+        else:
+            # It's a number
+            if sign == 1 :
+                body += '-'
+            if combination >= 0b11000 :
+                ms_exponent = (combination>>1)&0x03
+                ms_coefficient = 8 + (combination&1)
+            else:
+                ms_exponent = (combination>>3)&0x03
+                ms_coefficient = combination & 0x07
+
+            exponent = (ms_exponent<<exponent_bits) + exponent
+            exponent -= bias
+            #coefficient = (ms_coefficient<<coefficient_bits) + coefficient
+            body += str(coefficient)
+            body += 'e'
+            body += str(exponent)
+
+            pics += "[ IEEE "
+            pics += type
+            pics += " ]"
+        return body, pic
+
+    def PackedDecimalToString(self) :
+        body = ""
+        pic = ""
+
+        # In case there is p-scaling:
+        pdelta = 0
+        pscale = 0
+        if self.Picture:
+            for ch in Picture(self.Picture) :
+                if ch == '9' :
+                    if pdelta == 0:
+                        # If there are any P's, they'll be at the end
+                        pdelta = 1
+                    digit_count += 1
+                if ch == 'P' :
+                    if pdelta == 0:
+                        # The P's are before the digits, so they are at the beginning
+                        pdelta = -1
+                    pscale += pdelta
+
+        # These comments aren't consistent.  I don't actually remember
+        # where they came from.  F,A,C,E traditionally means positive.  GnuCOBOL
+        # has its own logic.  We'll reconcile this as best we can:
+
+        # We have to figure out if this guy is signed, and whether
+        # or not there is a sign nybble.  (comp-3 and comp-6 aren't the same)
+
+        # The sign nybble: 0x0C = positive  I think these came an analysis of GnuCOBOL
+        #                  0x0D = negative
+        #                  0x0F = unsigned
+        has_sign_nybble = (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0
+        signed = (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0
+
+        # Extract all the nybbles.  The actual value is right-justified in the binary stream:
+        nybbles = []
+        for i in range(self.Length):
+            nybbles.append(self.data[i] >> 4)
+            nybbles.append(self.data[i] & 0x0F)
+
+        negative = False
+        if has_sign_nybble:
+            # Extract and remove the sign nybble from nybbles
+            sign_nybble = nybbles[-1]
+            nybbles = nybbles[:-1]
+
+            if sign_nybble not in (0xf, 0xa, 0xc, 0xe):
+                negative = True
+
+            if sign_nybble == 0xf:
+                signed = False
+
+        # Convert the nybbles to a string of digits:
+        body = ""
+        for nybble in nybbles:
+            body += chr( nybble + ord('0') )
+
+        # Trim the string to the number of digits:
+        body = body[ len(body)-self.AttrDigits : ]
+
+        print("BODY",body)
+
+        if pscale > 0 :
+            if self.AttrScale < 0 :
+                # Scaling to the left of decimal point
+                for i in range(pscale) :
+                    body += '0'
+        elif pscale < 0 :
+            # Scaling to the right of decimal point
+            for i in range(-pscale) :
+                body = body + '0'
+            body = '.' + body
+        else:
+            body = body[:self.AttrDigits-self.AttrScale] + \
+                    self.decimal_point + \
+                    body[self.AttrDigits-self.AttrScale:]
+
+        if negative :
+            body = '-' + body
+
+        if signed and not negative :
+            body = '+' + body
+
+        pic += "[ "
+        if signed :
+            pic += "SIGNED"
+        else:
+            pic += "UNSIGNED"
+        pic += " PACKED DECIMAL ("
+        pic += str(self.AttrDigits - self.AttrScale)
+        pic += ','
+        pic += str(self.AttrScale)
+        pic += ") ]"
+        return body, pic
+
+    def StringToPackedDecimal(self,rside) :
+        self.data = bytearray()
+        if self.CleanAndScale(rside) :
+            # The sign nybble: 0x0C = positive
+            #                  0x0D = negative
+            #                  0x0F = unsigned
+            # Note: Those values are from the internet, and match a number of
+            # documents.  I haven't strictly verified what GNUCobol does, except
+            # that I have seen 0x0D for negative numbers and I have seen 0x0C
+            # for positives.
+
+            if self.is_negative :
+                sign_nybble = 0x0D  # Indicates negative
+            else:
+                sign_nybble = 0x0C  # Indicates positive
+
+            if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
+                sign_nybble = 0x0F  # Indicates unsigned
+
+            # Reverse the combined string, because we will build it up
+            # from low-order to high-order
+            rvalue = self.cleaned_rvalue[::-1]
+
+            # We can now put together the self.data package:
+            self.data = bytearray(self.Length)
+            offset = len(self.data)-1
+            mask = 0
+            if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0 :
+                self.data[offset] |= ((sign_nybble&0xF) << (mask*4))
+                #print(''.join(format(x, '02x') for x in self.data))
+                mask += 1;
+                offset -= mask//2
+                mask %= 2
+
+            for ch in rvalue :
+                nch = ord(ch) - ord('0');
+                nch &= 0x0F
+                nch <<= (mask*4)
+                self.data[offset] |= nch;
+                #print(''.join(format(x, '02x') for x in self.data))
+                mask += 1;
+                offset -= mask//2
+                mask %= 2
+
+    def NumericDisplayToString(self) :
+        # numeric digits, but with a decimal point:
+        body = ""
+        pic = ""
+
+        # Count up any P-scalers in the Picture string:
+        pcount = 0
+        for ch in Picture(self.Picture) :
+            if ch == 'P' :
+                pcount += 1;
+
+        negative = False
+        if self.Length > 0 :
+            # DISPLAY keeps the negative bit in an oddball place:
+            if (self.data[self.Length-1] & 0x40) != 0 :
+                negative = True
+
+            # Convert the binary value in self.data to a string
+            for i in range(self.Length) :
+                digit = self.data[i] & 0x3F
+                body += chr(digit)
+
+            if pcount > 0 :
+                # There is scaling involved
+                if self.AttrScale < 0 :
+                    # scaling to the left of the decimal point
+                    for i in range(pcount) :
+                        body += '0'
+                else:
+                    # scaling to the right of the decimal point
+                    for i in range(pcount) :
+                        body = '0' + body
+                    body = self.decimal_point + body
+            elif self.AttrScale > 0 :
+                # No scaling
+                radix_point = self.Length - self.AttrScale
+                body = body[:radix_point] + self.decimal_point + body[radix_point:]
+
+            if negative :
+                body = '-' + body
+            else:
+                if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+                    body = '+' + body
+
+            pic += "[ DISPLAY ("
+            pic += str(self.AttrDigits - self.AttrScale)
+            pic += ','
+            pic += str(self.AttrScale)
+            pic += ") ]"
+        return body , pic
+
+    def StringToNumericDisplay(self,rside) :
+        self.data = bytearray()
+
+        if self.CleanAndScale(rside) :
+            self.data = bytearray(self.Length)
+            for i in range(self.Length) :
+                self.data[i] = ord(self.cleaned_rvalue[i])
+
+            if self.is_negative :
+                self.data[self.Length-1] |= 0x40
+
+    def NumericBinaryToStringComp5(self) :
+        # Special processing for COMP-5, which as of this writing
+        # behaves differently when compared to other Generic Binary variables
+
+        pcount = 0
+        for ch in Picture(self.Picture) :
+            if ch == 'P' :
+                pcount += 1
+
+        # we can be handed binary data in either little-endian
+        # or big-endian.  We will operated little-endian
+        our_bytes = self.data
+
+        #our_bytes = [0x00, 0xb4, 0x21, 0x50, 0x1f, 0x01, 0x00, 0x00]
+        #our_bytes.reverse();
+
+        if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
+            our_bytes.reverse()
+
+        # we need to figure out if we are dealing with a signed
+        # and negative number.
+
+        negative = False
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+            # This is a binary number that can be signed; let's
+            # see if it is.
+            if (our_bytes[self.Length-1] & 0x80) != 0 :
+                # and it is negative
+                negative = True
+
+                # we need to do a complement & increment.  We will
+                # be fighting Python the whole way:
+
+                carry = 1
+                for i in range(self.Length) :
+                    our_bytes[i] = ~our_bytes[i];
+                    our_bytes[i] &= 0xFF
+                    our_bytes[i] += carry;
+                    carry = our_bytes[i] >> 8
+                    our_bytes[i] &= 0xFF
+
+        # at this point, the negative flag has been set, and
+        # our_bytes is the absolute value of the output
+        # build up the little-endian value:
+
+        value = 0
+        for i in range(self.Length-1,-1, -1) :
+            value <<= 8
+            value += our_bytes[i]
+
+        # we should be in business:
+
+        body = ""
+        pic = ""
+
+        # Do an initial conversion to a string
+        body += str(value)
+
+        # We need to expand it by adding leading zeroes to get up
+        # to the appropriate length
+
+        length = self.AttrDigits
+        if self.AttrScale == 0:
+            #length += 1
+            if self.Length >= 8 and not (self.AttrFlags & COB_FLAG_REAL_BINARY):
+                length -= 1
+            if self.Length >= 8 and (self.AttrFlags & COB_FLAG_REAL_BINARY):
+                length += 1
+
+        while len(body) < length :
+            body = '0' + body
+
+        pic += '['
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+            if negative :
+                body = '-' + body
+            else:
+                body = '+' + body
+            pic += " signed "
+        else:
+            pic += " unsigned "
+
+        pic += "binary-"
+        pic += str(self.Length*8)
+        if self.AttrScale != 0 :
+            pic += " ("
+            pic += str(self.AttrDigits - self.AttrScale)
+            pic += ','
+            pic += str(self.AttrScale)
+            pic += ")"
+
+        pic += ' ]'
+        return body, pic
+
+    def NumericBinaryToString(self) :
+        # Generic Binary
+
+        pcount = 0
+        for ch in Picture(self.Picture) :
+            if ch == 'P' :
+                pcount += 1
+
+        # we can be handed binary data in either little-endian
+        # or big-endian.  We will operated little-endian
+        our_bytes = self.data
+
+        if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
+            # Unless told otherwise
+            our_bytes.reverse()
+
+        # we need to figure out if we are dealing with a signed
+        # and negative number.
+
+        negative = False
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+            # This is a binary number that can be signed; let's
+            # see if it is.
+            if (our_bytes[self.Length-1] & 0x80) != 0 :
+                # and it is negative
+                negative = True
+
+                # we need to do a complement & increment.  We will
+                # be fighting Python the whole way:
+
+                carry = 1
+                for i in range(self.Length) :
+                    our_bytes[i] = ~our_bytes[i];
+                    our_bytes[i] &= 0xFF
+                    our_bytes[i] += carry;
+                    carry = our_bytes[i] >> 8
+                    our_bytes[i] &= 0xFF
+
+        # at this point, the negative flag has been set, and
+        # our_bytes is the absolute value of the output
+        # build up the little-endian value:
+
+        value = 0
+        for i in range(self.Length-1,-1, -1) :
+            value <<= 8
+            value += our_bytes[i]
+
+        # we should be in business:
+
+        body = ""
+        pic = ""
+
+        # Do an initial conversion to a string, keeping in mind that because of
+        # COBOL truncation issues, value may have more digits to the left than
+        # we actually want to see.
+        body += str(value)
+        body = body[-self.AttrDigits:]
+
+        # We need to expand it by adding leading zeroes to get up
+        # to the appropriate length
+
+        length = self.AttrDigits
+        if self.AttrScale == 0:
+            if self.AttrType != COB_TYPE_NUMERIC_COMP5:
+                length += 1
+            if self.Length >= 8 and not (self.AttrFlags & COB_FLAG_REAL_BINARY):
+                length -= 1
+            if self.Length >= 8 and (self.AttrFlags & COB_FLAG_REAL_BINARY):
+                length += 1
+
+        while len(body) < length :
+            body = '0' + body
+
+        if pcount > 0 :
+            if self.AttrScale < 0 :
+                for i in range(pcount) :
+                    body = body[1:] + '0'
+            else:
+                for i in range(pcount) :
+                    body = '0' + body[1:]
+                body = '.' + body
+        else:
+            # Let's put in a decimal point, if necessary
+            if  self.AttrScale > 0 :
+                breakat = len(body) - self.AttrScale
+                body = body[:breakat] + self.decimal_point + body[breakat:]
+
+        pic += '['
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+            if negative :
+                body = '-' + body
+            else:
+                body = '+' + body
+            pic += " signed "
+        else:
+            pic += " unsigned "
+
+        pic += "binary-"
+        pic += str(self.Length*8)
+        if self.AttrScale != 0 :
+            pic += " ("
+            pic += str(self.AttrDigits - self.AttrScale)
+            pic += ','
+            pic += str(self.AttrScale)
+            pic += ")"
+
+        pic += ' ]'
+        return body, pic;
+
+
+    def StringToNumericBinary(self,rside) :
+        # Generic binary
+        self.data = bytearray()
+        if self.CleanAndScale(rside) :
+            value = int(self.cleaned_rvalue,10)
+            if self.is_negative :
+                value = -value
+
+            # Build up that value as little-endian
+            self.data = bytearray(self.Length)
+            for i in range(self.Length) :
+                self.data[i] += value & 0xFF
+                value = value // 256
+
+            if self.AttrFlags & COB_FLAG_BINARY_SWAP :
+                self.data.reverse()
+
+    def AlphanumericToString(self) :
+        # ALPHANUMERIC
+        body = ""
+        pic = ""
+        body += '"'
+        for i in range(len(self.data)) :
+            if self.data[i] < 32 or self.data[i] >= 128 :
+                body += self.decimal_point
+            else:
+                body += chr(self.data[i])
+        body += '"'
+        pic = '[ alphanumeric-'
+        pic += str(self.Length)
+        pic += ' ]'
+        return body, pic;
+
+    def StringToAlphanumeric(self,rside):
+        # String from string:
+        self.data = rside[0:self.Length]
+        while len(self.data) < self.Length :
+            self.data += ' '
+        # convert to bytearray:
+        self.data = bytearray(self.data,"utf8")
+
+    def NumericEditedToString(self) :
+        # NUMERIC(EDITED)
+        body = ""
+        pic = ""
+
+        for i in range(self.Length) :
+            if self.data[i] < 32 or self.data[i] >= 128 :
+                body += '.'
+            else:
+                body += chr(self.data[i])
+
+        if False :  # False means "Match observed GnuCOBOL v3.00rc1 behavior"
+
+            # There seems to be an inconsistency in GnuCOBOL's behavior.
+
+            # Given the value 1234.56,
+            # a variable declared 9,999V99 will display as 1,23456
+            # a variable declared 9,999.99 will display as 1,234.56
+            # Both of those are represented internally as NUMERIC-EDITED
+
+            # Meanwhile,
+            # a variable declared 9999V99 will display as 1234.56
+            # a variable declared 9999.99 will display as 1234.56
+            # Both of those are represented internally as NUMERIC-DISPLAY
+
+            # I haven't asked Simon Sobisch about this, and I haven't found
+            # anything definitive in documentation avaialable on the Web; the
+            # topic just seems too danged complex and there are too many
+            # possibilities to enumerate them all.
+
+            # I put in the "if False" up above to make cprint match cobc
+            # behavior, mainly so that my automated selfcheck program can
+            # work properly.  Making it "if True" will put the decimal point
+            # back on display, which really seems like the right thing. I
+            # have the feeling cobc should be changed, or at least the
+            # inconsistency explained.
+
+            # If self.Picture does not contain the decimal point character,
+            # AND self.AttrScale indicates there are characters to the right
+            # of a decimal point, then we need to insert one.
+
+            if self.Picture.find(self.decimal_point) == -1 and self.AttrScale > 0 :
+                body = body[:len(body)-self.AttrScale] + self.decimal_point + body[-self.AttrScale:]
+
+        pic += '[ PIC '
+        pic += self.Picture
+        pic += ' ]'
+        return body, pic;
+
+    def StringToNumericEdited(self,rside) :
+        self.data = bytearray()
+        if self.CleanAndScale(rside) :
+            # We have to look for are "floating insertion" symbols
+            # A floating insertion range is indicated by duplicated '$', '+', or
+            # '-' characters.  One caveat: the floating range can have embedded
+            # commas in it.
+
+            pic_without_commas = ""
+            for ch in self.expanded_picture :
+                if ch != self.comma_separator :
+                    pic_without_commas += ch
+
+            floating_insertion = None
+            floating_insertion_start = None
+            floating_insertion_end = None
+
+            currency_doubled = self.currency_symbol + self.currency_symbol
+            if pic_without_commas.find(currency_doubled) > -1 :
+                floating_insertion = self.currency_symbol
+            elif pic_without_commas.find("++") > -1 :
+                floating_insertion = '+'
+            elif pic_without_commas.find("--") > -1 :
+                floating_insertion = '-'
+
+            # find the start and end of the floating sequence in self.expanded_picture
+            if floating_insertion :
+                for i in range(len(self.expanded_picture)) :
+                    if self.expanded_picture[i] == floating_insertion :
+                        if floating_insertion_start == None:
+                            floating_insertion_start = i
+                        floating_insertion_end = i
+
+            # We need to convert leading zeroes to the 'z' character:
+            input = self.cleaned_rvalue
+
+            # zero-flag the integer portion
+            i = 0
+            while i < self.ldigits :
+                if input[i] == '0' :
+                    input = input[:i] + 'z' + input[i+1:]
+                else:
+                    break;
+                i += 1
+            if i >= self.ldigits :
+                # The entire integer part is zero.  How about the fractional part?
+                if self.rdigits > 0 :
+                    if int(input[-self.rdigits:]) == 0 :
+                        # The fractional part is also zero; flag them, too
+                        input = input[0:self.ldigits]
+                        for i in range(self.rdigits) :
+                            input += 'z'
+
+            # Recap:  input is now abs(numeric input), with leading
+            # zeroes to the left of the decimal position replaced with 'z'
+            # (Or everthing is 'z' if the value was zero to begin with)
+
+            # We will now walk the picture and input strings from right
+            # to left, building the resulting string as we go
+
+            pindex = len(self.expanded_picture)-1
+            dindex = len(input)-1
+
+            # This is, perforce, a state machine.  At this stage of development
+            # is is mostly an ad hoc state machine.
+
+            body = ""
+
+            rightmost = True
+            did_floating = False
+
+            while pindex >= 0 :
+                pch = self.expanded_picture[pindex]
+                pindex -= 1
+
+                if rightmost :
+                    rightmost = False
+
+                    if pch == '+' :
+                        if self.is_negative :
+                            body += '-'
+                        else:
+                            body += '+'
+                        continue
+
+                    if pch == '-' :
+                        if self.is_negative :
+                            body += '-'
+                        else:
+                            body += '+'
+                        continue
+
+                    if pch == 'c' :
+                        # This is a CR (See the Picture() function)
+                        if self.is_negative :
+                            body += 'RC'    # We are building body backwards
+                        else:
+                            body += "  "
+                        continue
+
+                    if pch == 'd'  :
+                        # This is a DB
+                        if self.is_negative :
+                            body += 'BD'
+                        else:
+                            body += "  "
+                        continue
+
+                if did_floating :
+                    # Everything to the left of the floating_insertion is
+                    # supposed to be a blank
+                    body += ' '
+                    continue;
+
+                if not did_floating and pindex+1 == floating_insertion_start :
+                    # The leftmost character of the floating_insertion has
+                    # to be set, even at the cost of truncating the input
+                    did_floating = True
+                    if floating_insertion == '-' :
+                        if self.is_negative :
+                            body += '-'
+                        else:
+                            body += ' '
+                        continue
+                    if floating_insertion == '-' :
+                        if self.is_negative :
+                            body += '-'
+                        else:
+                            body += '+'
+                        continue
+                    if floating_insertion == self.currency_symbol :
+                        body += self.currency_symbol
+                        continue
+
+                if "PV".find(pch) > -1 :
+                    # We ignore scaling P characters here, because we processed
+                    # them earlier by scaling the input string
+                    # We also ignore the implicate decimal point 'V'
+                    continue
+
+                inside_floating = False
+                if floating_insertion_start != None :
+                    inside_floating = (pindex+1 >= floating_insertion_start and pindex+1 <= floating_insertion_end)
+
+                include_literal = "B0/,."
+                if not inside_floating:
+                    include_literal += self.currency_symbol
+                if include_literal.find(pch) > -1 :
+                    body += pch
+                    continue
+
+                # After this point, we need to pull out an input character
+                dch = input[dindex]
+                dindex -= 1
+
+                if inside_floating :
+                    if dch == 'z' :
+                        did_floating = True
+                        body += floating_insertion
+                        continue
+
+                if pch == '9' or inside_floating:
+                    # Explicit characters are expressed explicitly
+                    if dch == 'z' :
+                        dch = '0'
+                    body += dch
+                    continue
+
+                if pch == 'Z' :
+                    # Convert leading zeroes to blanks
+                    if dch == 'z' :
+                        dch = ' '
+                    body += dch
+                    continue
+
+                if pch == '*' :
+                    # Convert leading zeroes to asterisks
+                    if dch == 'z' :
+                        dch = '*'
+                    body += dch
+                    continue
+
+            # We've built body.  Flip it right-side around
+            body = body[::-1]
+
+            # Depending on the numbers, we could have some interesting
+            # entries.  Let's just power through them.
+
+            # Get rid of commas preceded by spaces
+            wipe_me = ' ' + self.comma_separator
+            while True :
+                i = body.find(wipe_me)
+                if i == -1 :
+                    break;
+                body = body[:i] + "  " + body[i+2:]
+
+            # Get rid of commas preceded by asterisks:
+            wipe_me = '*' + self.comma_separator
+            while True :
+                i = body.find(wipe_me)
+                if i == -1 :
+                    break;
+                body = body[:i] + "**" + body[i+2:]
+
+            # Get rid of commas preceded by currency symbols:
+            wipe_me = self.currency_symbol + self.comma_separator
+            while True :
+                i = body.find(wipe_me)
+                if i == -1 :
+                    break;
+                body = body[:i] + ' ' + self.currency_symbol + body[i+2:]
+
+            if (body[-2:] == 'CR' or body[-2:0] == 'DB') and body[-3] == ' '  :
+                body = body[:-2] + "  "
+
+            if (body[-2:] == 'CR' or body[-2:0] == 'DB') and body[-4:-2] == " ."  :
+                body = body[:-2] + "  "
+
+            if (body[-1:] == '+' or body[-1] == '-') and body[-2] == ' '  :
+                body = body[:-1] + " "
+
+            if (body[-1:] == '-' or body[-1] == '+') and body[-3:-1] == " ."  :
+                body = body[:-1] + " "
+
+            # If we ended up with just a decimal point, get rid of that:
+            if body.strip() == self.decimal_point :
+                i = body.find(self.decimal_point)
+                body = body[:i] + ' ' + body[i+1:]
+
+            self.data = bytearray(body.encode("utf8"))
+
     def DataToString(self) :
         noisy = False
         value = ""
@@ -2478,6 +3912,11 @@ class CobolVariable():
         elif self.AttrType == COB_TYPE_NUMERIC_BINARY :
             if noisy :
                 print("COB_TYPE_NUMERIC_BINARY")
+            value, pic = self.NumericBinaryToString()
+        elif self.AttrType == COB_TYPE_NUMERIC_COMP5 :
+            if noisy :
+                print("COB_TYPE_NUMERIC_COMP5")
+            #value, pic = self.NumericBinaryToStringComp5()
             value, pic = self.NumericBinaryToString()
         elif self.AttrType == COB_TYPE_NUMERIC_PACKED :
             if noisy :
@@ -2519,7 +3958,7 @@ class CobolVariable():
             if noisy :
                 print("COB_TYPE_NUMERIC_EDITED")
             value, pic = self.NumericEditedToString()
-        else :
+        else:
             # We were handed an unknown type.  Let's look at the data:
             non_printable = 0;
             for i in range(len(self.data)) :
@@ -2534,12 +3973,12 @@ class CobolVariable():
                         hexout = '0' + hexout[-1:]
                     value += hexout
                 value += "]"
-            else :
+            else:
                 value = '"'
                 for byte in self.data :
                     if 32 <= byte < 128 :   # valid ASCII characters
                         value += chr(byte)
-                    else :
+                    else:
                         value += '.'
                 value += '"'
 
@@ -2553,7 +3992,7 @@ class CobolVariable():
             if self.AttrScale < 0 :
                 for i in range(pcount) :
                     value += '0'
-            else :
+            else:
                 stash = ''
                 if value[0] == '+' or value[0] == '-' :
                     stash = value[0]
@@ -5292,7 +6731,7 @@ class CFrameWorker:
         """Return a Tuple as follows: COBOL-Frame, inner COBOL-Frame (actual COBOL code)"""
         if not isinstance(frame, gdb.Frame):
             raise gdb.error("bad argument passed, frame is " + str(type(frame)))
-        
+
         if not frame.is_valid():
             return False, False
         try:
@@ -5305,13 +6744,13 @@ class CFrameWorker:
         symbol = gdb.lookup_symbol("cob_module_path", block)[0]
         if not (symbol and str(symbol.type) == "const char *"):
             return False, False
-        
+
         # check for COBOL "inner" frame
         symbol = gdb.lookup_symbol("module", block)[0]
         if symbol and str(symbol.type) == "cob_module *":
             # quite likely an "inner" COBOL frame
             return True, True
-            
+
         # quite likely an "outer" COBOL frame
         return True, False
 
@@ -5486,7 +6925,7 @@ class ElideNonCobolIterator():
                 next_frame = next(self.input_iterator)
             except StopIteration:
                 return frame
-            
+
             # check if we have an inner frame next - likely because of
             # another filter with higher priority
             if CFrameWorker.is_cobol_inner_frame(next_frame.inferior_frame()):
@@ -5494,7 +6933,7 @@ class ElideNonCobolIterator():
                 return frame
             # next frame is, as expected, a contained frame
             return ElidingDecorator(frame, [next_frame])
-        
+
         # pass non-COBOL-inner-frames as-is
         return frame
 
@@ -5529,7 +6968,7 @@ class CobolOnlyDecoration(gdb.FrameDecorator.FrameDecorator):
     # def frame_args(self):
     #     # possibly print the COBOL name and start of the values here
     #     return None
-      
+
 class RemoveNonCobolIterator():
     def __init__(self, ii):
         self.input_iterator = ii
@@ -5544,7 +6983,7 @@ class RemoveNonCobolIterator():
 
         real_frame = frame.inferior_frame()
         cobol, inner = CFrameWorker.is_cobol_frame(real_frame)
-        
+
         if inner:
             self.first_iteration = False
             # yay, an inner COBOL frame...
