@@ -3435,6 +3435,8 @@ class CobolVariable():
         # we need to figure out if we are dealing with a signed
         # and negative number.
 
+        print("STUFF",self.Length, self.RefmodOffset, self.RefmodLength)
+
         negative = False
         if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0:
             # This is a binary number that can be signed; let's
@@ -3481,7 +3483,7 @@ class CobolVariable():
         if self.AttrScale == 0:
             if self.AttrType != COB_TYPE_NUMERIC_COMP5:
                 length += 1
-            if self.Length >= 8 and not (self.AttrFlags & COB_FLAG_REAL_BINARY):
+            if self.Length >= 4 and not (self.AttrFlags & COB_FLAG_REAL_BINARY):
                 length -= 1
             if self.Length >= 8 and (self.AttrFlags & COB_FLAG_REAL_BINARY):
                 length += 1
