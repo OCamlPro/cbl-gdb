@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-#!/usr/bin/python3
 
 ################################################################################
 # Copyright (c) 2019-2021 COBOLworx and contributors
@@ -2540,13 +2539,14 @@ class CobolVariable():
             exponent_bits = 15
             fraction_bits = 112
             bias = 16383
-            valid_digits = 34
-        elif length == 32:
-            # binary256
-            exponent_bits = 19
-            fraction_bits = 236
-            bias = 262143
-            valid_digits = 72
+            valid_digits = 35
+        # Handleing binary256 means doubling the 76-digit expansion below
+        #elif length == 32:
+        #    # binary256
+        #    exponent_bits = 19
+        #    fraction_bits = 236
+        #    bias = 262143
+        #    valid_digits = 72
         else:
             message = "Don't know how to handle IEEE 754 floating point with a length of "
             message += str(length)
@@ -2600,7 +2600,7 @@ class CobolVariable():
 
         if exponent == 0:
             if fraction == 0:
-                body += "0.0"
+                body += "0" # This is how GnuCOBOL prints a floating-point zero.  I think it should be "0.0"
                 body += type
                 return body , pic
             else:
@@ -2610,7 +2610,7 @@ class CobolVariable():
                 # exponent becomes -N, where N is -(bias-1)
                 exponent = -(bias-1)
                 # now, adjust fraction to look like a regular number:
-                while (fraction & (1<<fraction_bits)) == 0 :
+                while (fraction & (1<<fraction_bits)) == 0:
                     fraction <<= 1
                     exponent -= 1
         else:
@@ -2629,94 +2629,133 @@ class CobolVariable():
         #
         # fraction is a value ranging from 1.0000 to 1.999999....
         #
-        # Take advantage of python's unlimited integer capability, and find the
+        # Take advantage of python's unlimited integer capability to find the
         # decimal equivalent of the unit place of the fraction:
 
+        # The biggest number we anticipate working with is binary128 quadruple precision,
+        # which is 34.02 digits.  So, we bump that to 35, and thus we need a 76-digit
+        # value of 1.000 as our 2^0 power_of_two:
+
+        # The power-of-two starts at 2^0, and gets divided by two each time through the loop:
+        expanded = 0
+        power_of_two = 1000000000000000000000000000000000000000000000000000000000000000000000000000
+        mask = 1<<fraction_bits
+        while mask:
+            #print(power_of_two, end = ' ')
+            if fraction & mask:
+                #print("***", end = '')
+                expanded += power_of_two
+            #print(" ")
+            power_of_two >>= 1
+            mask >>= 1
+
+        # expanded is still a 76-digit decimal 1.something number.  We now multiply or divide by 2
+
         decimal_exponent = 0
-        while exponent != 0 :
-            if exponent < 0 :
+        while exponent != 0:
+            if exponent < 0:
                 # We want to increase the exponent, which means we want to divide
                 # the fraction by two.  To avoid losing bits, we're going to
                 # do that by multiplying it by 5, and dividing it by ten via
                 # the decimal exponent:
                 exponent += 1;  # increase exponent towards zero
-                fraction *= 5;  # multiply by five
+                expanded *= 5;  # multiply by five
                 decimal_exponent -= 1; # divide by ten
             else:
+                # Decrease the exponent, and multiply by two
                 exponent -= 1;
-                fraction <<= 1;
+                expanded <<= 1;
 
             # Multiply or divide by ten to normalize fraction to be
             # between unit_point <= fraction < ten_point
 
-            while fraction > ten_point :
-                fraction //= 10
-                decimal_exponent += 1;
-            while fraction < unit_point :
-                fraction *= 10
-                decimal_exponent -= 1;
+            #print("expanded",expanded)
+            excess = 76 - len(str(expanded))
 
-        # when you pop out here, you have a big number
-        # whose left-most decimal digit is 1-9 (and is the
-        # units place) and the correct decimal_exponent
-        # We can now peel of the digits, largest to smallest:
+            while excess > 0:
+                excess -= 1
+                expanded //= 10
+                decimal_exponent += 1
+            while excess < 0:
+                excess -= 1
+                expanded *= 10
+                decimal_exponent -= 1
 
-        digit_count = 1
-        digit = fraction // unit_point;
-        fraction -= digit * unit_point
-        fraction *= 10
-        body += chr( ord('0') + digit)
-        body += '.'
-        while fraction != 0 :
-            digit = fraction // unit_point;
-            fraction -= digit * unit_point
-            fraction *= 10
-            body += chr( ord('0') + digit)
-            digit_count += 1
-            if digit_count >= valid_digits :
-                break;
+        #print(self.Name,"expanded",expanded)
 
-        while body[len(body)-1] == '0' :
+        # Expanded is a 76-digit decimal expansion of the final result,
+        # with the implied decimal point to the right of the left-most
+        # digit.
+
+        # Extract all the digits we need, plus one for rounding:
+        expanded = int(str(expanded)[0:valid_digits+1])
+        #print(self.Name,"expanded",expanded)
+
+        # Add five to that shortened extraction, in order to round up
+        expanded += 5
+
+        # Extract the rounded portion:
+        expanded = str(expanded)[:-1]
+
+        # Here's a tricky bit.  If valid_digits is 4, and expanded started off as 99999
+        # then it became 100004 after the rounding addition, and expanded is now "10000"
+        #
+        # Note that we can detect this because len(expanded) is 5, not 4.
+        if len(expanded) != valid_digits:
+            # discard final zero
+            expanded = expanded[0:-1]
+            # Adjust the decimal_exponent:
+            decimal_exponent += 1
+
+        # Build up the body of the number
+        body += expanded[0]
+        body += self.decimal_point
+        body += expanded[1:]
+
+        # eliminate trailing zeroes:
+        while body[len(body)-1] == '0':
             body = body[:len(body)-1]
 
-        if body[len(body)-1] == '.' :
+        # Make sure there is at least one '0' to the right of the decimal point
+        if body[len(body)-1] == '.':
             body += '0';
 
+        # Appended the exponent part of the number:
         if decimal_exponent != 0:
             body += 'e'
             body += str(decimal_exponent)
         body += type
         return body , pic
 
-    def StringToIeeeBinary(self,rside) :
+    def StringToIeeeBinary(self,rside):
         self.data = bytearray(self.Length)
         length = self.Length
 
-        if length == 2 :
+        if length == 2:
             # binary16
             exponent_bits = 5
             fraction_bits = 10
             bias = 15
             valid_digits = 4
-        elif length == 4 :
+        elif length == 4:
             # binary32
             exponent_bits = 8
             fraction_bits = 23
             bias = 127
             valid_digits = 8
-        elif length == 8 :
+        elif length == 8:
             # binary64
             exponent_bits = 11
             fraction_bits = 52
             bias = 1023
             valid_digits = 16
-        elif length == 16 :
+        elif length == 16:
             # binary128
             exponent_bits = 15
             fraction_bits = 112
             bias = 16383
             valid_digits = 34
-        elif length == 32 :
+        elif length == 32:
             # binary256
             exponent_bits = 19
             fraction_bits = 236
@@ -2730,22 +2769,22 @@ class CobolVariable():
 
         rside = rside.lower()
 
-        if rside == "inf" or rside == "+inf" :
+        if rside == "inf" or rside == "+inf":
             # Positive infinity
             sign = 0
             exponent = (1<<exponent_bits)-1
             significand = 0
-        elif rside == "-inf" :
+        elif rside == "-inf":
             # Negative infinity
             sign = 1
             exponent = (1<<exponent_bits)-1
             significand = 0
-        elif rside == "nan" or rside == "snan" :
+        elif rside == "nan" or rside == "snan":
             # signalling NaN
             sign = 0
             exponent = (1<<exponent_bits)-1
             significand = 1
-        elif rside == "qnan" :
+        elif rside == "qnan":
             # quiet NaN
             sign = 0
             exponent = (1<<exponent_bits)-1
@@ -2757,14 +2796,14 @@ class CobolVariable():
                 print("Ill-formed floating point input")
                 fpnumber = 0
 
-            if fpnumber == 0 :
+            if fpnumber == 0:
                 sign = 0
                 exponent = 0
                 significand = 0
             else:
                 # We have run out of dodges; we have to actually encode
                 # the floating point number
-                if fpnumber < 0 :
+                if fpnumber < 0:
                     sign = 1
                     fpnumber = -fpnumber
                 else:
@@ -2779,27 +2818,27 @@ class CobolVariable():
 
                 exp10 = int(astring[eloc+1:])
 
-                while exp10 < 0 :
+                while exp10 < 0:
                     point10 += 1
-                    if point10 > 0 :
+                    if point10 > 0:
                         lside = '0' + lside
                     exp10 += 1
 
-                while exp10 > 0 :
+                while exp10 > 0:
                     lside = lside + '0'
                     lside = lside
                     point10 -= 1
                     exp10 -= 1
 
-                if point10 < 0 :
+                if point10 < 0:
                     intpart = lside[0:-point10]
                     fracpart = lside[-point10:]
                 else:
                     intpart = ""
                     fracpart = lside
 
-                while len(fracpart) > 0 :
-                    if  fracpart[-1:] != '0' : # Just the last char
+                while len(fracpart) > 0:
+                    if  fracpart[-1:] != '0': # Just the last char
                         break
                     fracpart = fracpart[0:-1] # All but last char
 
@@ -2810,7 +2849,7 @@ class CobolVariable():
 
                 # Convert the integer part to a string of bits:
                 intbits = ""
-                while len(intba) > 0 :
+                while len(intba) > 0:
                     # divide intba by two
                     borrow = 0
                     for i in range(len(intba)) :
@@ -2818,11 +2857,11 @@ class CobolVariable():
                         intba[i] = (borrow*10 + intba[i]) // 2
                         borrow = newborrow
                     # Push the lowest order bit onto the bitstring
-                    if borrow ==  1 :
+                    if borrow ==  1:
                         intbits += "1"
                     else:
                         intbits += "0"
-                    if intba[0] == 0x00 :
+                    if intba[0] == 0x00:
                         intba = intba[1:]
 
                 # Reverse the order of intbits:
@@ -2837,7 +2876,7 @@ class CobolVariable():
                 # we will create one more than we can possibly need
 
                 fracbits = ""
-                while len(fracbits) < fraction_bits+1+1 :
+                while len(fracbits) < fraction_bits+1+1:
                     # Multiply fracbits by two:
                     carry = 0
                     for i in range(len(fracba)-1,-1,-1) :
@@ -2845,7 +2884,7 @@ class CobolVariable():
                         carry = fracba[i] // 10
                         fracba[i] = fracba[i] % 10
                     # Pick up the bit that means >= 0.5
-                    if carry == 1 :
+                    if carry == 1:
                         fracbits += '1'
                     else:
                         fracbits += '0'
@@ -2858,17 +2897,17 @@ class CobolVariable():
                 sigbits = sigbits[0:fraction_bits+1]
 
                 i = len(sigbits)-1
-                while(i >= 0) :
-                    if carry == '0' :
+                while(i >= 0):
+                    if carry == '0':
                         break;
-                    if sigbits[i] == '0' :
+                    if sigbits[i] == '0':
                         sigbits = sigbits[:i] + '1' + sigbits[i+1:]
                         break;
                     sigbits = sigbits[:i] + '0' + sigbits[i+1:]
                     carry = 1
                     i -= 1
 
-                if carry == 1 :
+                if carry == 1:
                     # Well, this is improbable.  Somebody must've entered
                     # 0.999999999999999999999999999999999, but in a way
                     # that snuck past the Python floating point input
@@ -2884,7 +2923,7 @@ class CobolVariable():
 
                 # Otherwise, strip off leading zeroes while adjusting the
                 # binary point:
-                while sigbits[0] == '0' :
+                while sigbits[0] == '0':
                     sigbits = sigbits[1:] + '0'
                     binary_point -= 1;
 
@@ -2895,13 +2934,13 @@ class CobolVariable():
 
                 exponent = power_of_two + bias
 
-                if exponent <= 0 :
+                if exponent <= 0:
                     # I am not going to mess with sub-normal numbers.  This
                     # is, therefore, just too damned small.  Make it zero
                     sign = 0
                     exponent = 0
                     significand = 0
-                elif exponent >= (1<<exponent_bits)-1 :
+                elif exponent >= (1<<exponent_bits)-1:
                     # The number is too big for this IEEE format.
                     # Make it infinite
                     exponent = (1<<exponent_bits)-1
@@ -2913,7 +2952,7 @@ class CobolVariable():
                     sigbits = sigbits[1:]
                     for ch in sigbits :
                         significand <<= 1
-                        if ch == '1' :
+                        if ch == '1':
                             significand += 1;
 
         # We can now build the self.data bytearray:
@@ -2923,35 +2962,35 @@ class CobolVariable():
         if sign == 1:
             self.data[offset] |= mask
         mask >>= 1
-        if mask == 0 :
+        if mask == 0:
             mask = 0x80
             offset += 1
 
         for i in range(exponent_bits) :
-            if exponent & 1<<(exponent_bits-1-i) != 0 :
+            if exponent & 1<<(exponent_bits-1-i) != 0:
                 self.data[offset] |= mask
             mask >>= 1
-            if mask == 0 :
+            if mask == 0:
                 mask = 0x80
                 offset += 1
 
         for i in range(fraction_bits) :
-            if significand & 1<<(fraction_bits-1-i) != 0 :
+            if significand & 1<<(fraction_bits-1-i) != 0:
                 self.data[offset] |= mask
             mask >>= 1
-            if mask == 0 :
+            if mask == 0:
                 mask = 0x80
                 offset += 1
         self.data.reverse()
 
-    def FpNormalize(self,coefficient,exponent) :
+    def FpNormalize(self,coefficient,exponent):
         # convert anything to 1.234E5
-        if coefficient == 0 :
+        if coefficient == 0:
             exponent = 0
 
         str_coefficient = str(coefficient)
         # make sure it's at least two characters
-        if len(str_coefficient) == 1 :
+        if len(str_coefficient) == 1:
             str_coefficient += '0'
             exponent -= 1
         places = len(str_coefficient) - 1   # One digit to the left of the
@@ -2961,16 +3000,16 @@ class CobolVariable():
         str_coefficient = str_coefficient[0:1] + '.' + str_coefficient[1:]
 
         # strip off trailing zeroes
-        while str_coefficient[-1:] == '0' :
+        while str_coefficient[-1:] == '0':
             str_coefficient = str_coefficient[:len(str_coefficient)-1]
 
         # when left with "3." make it "3.0"
-        if len(str_coefficient) == 2 :
+        if len(str_coefficient) == 2:
             str_coefficient += '0'
 
         return str_coefficient,exponent
 
-    def GnuCobolDecimal128ToString(self) :
+    def GnuCobolDecimal128ToString(self):
         # This decodes the GnuCOBOL version of the decimal64 format.  This is
         # based on a misreading of the actual IEEE format:
         # See https://en.wikipedia.org/wiki/Decimal64_floating-point_format
@@ -2979,7 +3018,7 @@ class CobolVariable():
 
         # Convert the bytes of data to a single 128-bit value:
         our_bytes = self.data
-        if self.AttrFlags & COB_FLAG_BINARY_SWAP :
+        if self.AttrFlags & COB_FLAG_BINARY_SWAP:
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 128-bit zero, for example
@@ -2987,7 +3026,7 @@ class CobolVariable():
             value <<= 8
             value += our_bytes[i]
 
-        if self.Length == 16 :
+        if self.Length == 16:
             # decimal128
             # The format is 1 S, 4 combination,  14 exponent, 110 coefficient
             type = "decimal64"
@@ -3008,13 +3047,13 @@ class CobolVariable():
 
         body = ""
         pic = ""
-        if combination == 0b1111 : # It's NaN/Inf
+        if combination == 0b1111: # It's NaN/Inf
             body = "NaN/Inf"
         else:
             # It's a number
-            if sign == 1 :
+            if sign == 1:
                 body += '-'
-            if combination >= 0b1100 :
+            if combination >= 0b1100:
                 # Mode 1:
                 exponent = exponent1
                 coefficient = coefficient1 + (1<<113)
@@ -3026,8 +3065,9 @@ class CobolVariable():
             str_coefficient, exponent = self.FpNormalize(coefficient,exponent)
             body += str_coefficient
 
-            body += 'e'
-            body += str(exponent)
+            if exponent:
+                body += 'e'
+                body += str(exponent)
 
             pic += "  [ GnuCOBOL "
             pic += type
@@ -3035,7 +3075,7 @@ class CobolVariable():
         return body,pic
 
 
-    def GnuCobolDecimal64ToString(self) :
+    def GnuCobolDecimal64ToString(self):
         # This decodes the GnuCOBOL version of the decimal64 format.  This is
         # based on a misreading of the actual IEEE format:
         # See https://en.wikipedia.org/wiki/Decimal64_floating-point_format
@@ -3044,7 +3084,7 @@ class CobolVariable():
 
         # Convert the bytes of data to a single 64-bit value:
         our_bytes = self.data
-        if self.AttrFlags & COB_FLAG_BINARY_SWAP :
+        if self.AttrFlags & COB_FLAG_BINARY_SWAP:
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 64-bit zero, for example
@@ -3052,7 +3092,7 @@ class CobolVariable():
             value <<= 8
             value += our_bytes[i]
 
-        if self.Length == 8 :
+        if self.Length == 8:
             # decimal64
             # The format is 1 S, 4 combination, 8 exponent, 50 coefficient
             type = "decimal64"
@@ -3073,13 +3113,13 @@ class CobolVariable():
 
         body = ""
         pic = ""
-        if combination == 0b1111 : # It's NaN/Inf
+        if combination == 0b1111: # It's NaN/Inf
             body = "NaN/Inf"
         else:
             # It's a number
-            if sign == 1 :
+            if sign == 1:
                 body += '-'
-            if combination >= 0b1100 :
+            if combination >= 0b1100:
                 # Mode 1:
                 exponent = exponent1
                 coefficient = coefficient1 + (1<<53)
@@ -3091,15 +3131,16 @@ class CobolVariable():
             str_coefficient, exponent = self.FpNormalize(coefficient,exponent)
             body += str_coefficient
 
-            body += 'e'
-            body += str(exponent)
+            if exponent:
+                body += 'e'
+                body += str(exponent)
 
             pic += "[ GnuCOBOL "
             pic += type
             pic += " ]"
         return body, pic
 
-    def IeeeDecimal64ToString(self) :
+    def IeeeDecimal64ToString(self):
         # NOTE: This code is more-or-less untested.  This is legitimate code
         # for IEEE decimal64.  As of this writing, version 3.0- of GnuCOBOL
         # has a flawed implementation.  It is internally consistent, but it
@@ -3112,7 +3153,7 @@ class CobolVariable():
 
         # Convert the bytes of data to a single 64-bit value:
         our_bytes = self.data
-        if self.AttrFlags & COB_FLAG_BINARY_SWAP :
+        if self.AttrFlags & COB_FLAG_BINARY_SWAP:
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 64-bit zero, for example
@@ -3120,7 +3161,7 @@ class CobolVariable():
             value <<= 8
             value += our_bytes[i]
 
-        if self.Length == 8 :
+        if self.Length == 8:
             # decimal64
             # The format is 1 S, 5 combination, 8 exponent, 50 coefficient
             type = "binary64"
@@ -3142,23 +3183,23 @@ class CobolVariable():
 
         body = ""
         pic = ""
-        if combination == 0b11111 : # It's NaN
-            if (exponent & (1<<(exponent_bits-1))) != 0 :
+        if combination == 0b11111: # It's NaN
+            if (exponent & (1<<(exponent_bits-1))) != 0:
                 body += 's'
             else:
                 body += 'q'
             body += "NaN"
-        elif combination == 0b11110 : # It's Infinity
-            if sign == 1 :
+        elif combination == 0b11110: # It's Infinity
+            if sign == 1:
                 body += '-'
             else:
                 body += '+'
             body += "Inf"
         else:
             # It's a number
-            if sign == 1 :
+            if sign == 1:
                 body += '-'
-            if combination >= 0b11000 :
+            if combination >= 0b11000:
                 ms_exponent = (combination>>1)&0x03
                 ms_coefficient = 8 + (combination&1)
             else:
@@ -3169,8 +3210,10 @@ class CobolVariable():
             exponent -= bias
             #coefficient = (ms_coefficient<<coefficient_bits) + coefficient
             body += str(coefficient)
-            body += 'e'
-            body += str(exponent)
+
+            if exponent:
+                body += 'e'
+                body += str(exponent)
 
             pics += "[ IEEE "
             pics += type
@@ -3183,18 +3226,18 @@ class CobolVariable():
         pscale = 0
         if self.Picture:
             for ch in Picture(self.Picture) :
-                if ch == '9' :
+                if ch == '9':
                     if pdelta == 0:
                         # If there are any P's, they'll be at the end
                         pdelta = 1
-                if ch == 'P' :
+                if ch == 'P':
                     if pdelta == 0:
                         # The P's are before the digits, so they are at the beginning
                         pdelta = -1
                     pscale += pdelta
         return pscale
 
-    def PackedDecimalToString(self) :
+    def PackedDecimalToString(self):
         body = ""
         pic = ""
 
@@ -3239,28 +3282,28 @@ class CobolVariable():
         # Trim the string to the number of digits:
         body = body[ len(body)-self.AttrDigits : ]
 
-        if pscale > 0 :
+        if pscale > 0:
             # The extra zeroes are to the left of the decimal point
             for i in range(pscale) :
                 body += '0'
-        elif pscale < 0 :
+        elif pscale < 0:
             # The extra decimal points are between the decimal point and the digits
             for i in range(-pscale) :
                 body = body + '0'
             body = self.decimal_point + body
-        elif self.AttrScale > 0 :
+        elif self.AttrScale > 0:
             body = body[:self.AttrDigits-self.AttrScale] + \
                     self.decimal_point + \
                     body[self.AttrDigits-self.AttrScale:]
 
-        if negative :
+        if negative:
             body = '-' + body
 
-        if signed and not negative :
+        if signed and not negative:
             body = '+' + body
 
         pic += "[ "
-        if signed :
+        if signed:
             pic += "SIGNED"
         else:
             pic += "UNSIGNED"
@@ -3271,9 +3314,9 @@ class CobolVariable():
         pic += ") ]"
         return body, pic
 
-    def StringToPackedDecimal(self,rside) :
+    def StringToPackedDecimal(self,rside):
         self.data = bytearray()
-        if self.CleanAndScale(rside) :
+        if self.CleanAndScale(rside):
             # The sign nybble: 0x0C = positive
             #                  0x0D = negative
             #                  0x0F = unsigned
@@ -3282,12 +3325,12 @@ class CobolVariable():
             # that I have seen 0x0D for negative numbers and I have seen 0x0C
             # for positives.
 
-            if self.is_negative :
+            if self.is_negative:
                 sign_nybble = 0x0D  # Indicates negative
             else:
                 sign_nybble = 0x0C  # Indicates positive
 
-            if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
+            if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0:
                 sign_nybble = 0x0F  # Indicates unsigned
 
             # Reverse the combined string, because we will build it up
@@ -3298,7 +3341,7 @@ class CobolVariable():
             self.data = bytearray(self.Length)
             offset = len(self.data)-1
             mask = 0
-            if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0 :
+            if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0:
                 self.data[offset] |= ((sign_nybble&0xF) << (mask*4))
                 #print(''.join(format(x, '02x') for x in self.data))
                 mask += 1;
@@ -3315,7 +3358,7 @@ class CobolVariable():
                 offset -= mask//2
                 mask %= 2
 
-    def NumericDisplayToString(self) :
+    def NumericDisplayToString(self):
         # numeric digits, but with a decimal point:
         body = ""
         pic = ""
@@ -3324,9 +3367,9 @@ class CobolVariable():
         pscale = self.GetPscale()
 
         negative = False
-        if self.Length > 0 :
+        if self.Length > 0:
             # DISPLAY keeps the negative bit in an oddball place:
-            if (self.data[self.Length-1] & 0x40) != 0 :
+            if (self.data[self.Length-1] & 0x40) != 0:
                 negative = True
 
             # Convert the binary value in self.data to a string
@@ -3334,22 +3377,22 @@ class CobolVariable():
                 digit = self.data[i] & 0x3F
                 body += chr(digit)
 
-            if pscale > 0 :
+            if pscale > 0:
                 for i in range(pscale) :
                     body += '0'
-            elif pscale < 0 :
+            elif pscale < 0:
                 # scaling to the right of the decimal point
                 for i in range(-pscale) :
                     body = '0' + body
                 body = self.decimal_point + body
-            elif self.AttrScale > 0 :
+            elif self.AttrScale > 0:
                 radix_point = self.Length - self.AttrScale
                 body = body[:radix_point] + self.decimal_point + body[radix_point:]
 
-            if negative :
+            if negative:
                 body = '-' + body
             else:
-                if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+                if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0:
                     body = '+' + body
 
             pic += "[ DISPLAY ("
@@ -3359,24 +3402,24 @@ class CobolVariable():
             pic += ") ]"
         return body , pic
 
-    def StringToNumericDisplay(self,rside) :
+    def StringToNumericDisplay(self,rside):
         self.data = bytearray()
 
-        if self.CleanAndScale(rside) :
+        if self.CleanAndScale(rside):
             self.data = bytearray(self.Length)
             for i in range(self.Length) :
                 self.data[i] = ord(self.cleaned_rvalue[i])
 
-            if self.is_negative :
+            if self.is_negative:
                 self.data[self.Length-1] |= 0x40
 
-    def NumericBinaryToStringComp5(self) :
+    def NumericBinaryToStringComp5(self):
         # Special processing for COMP-5, which as of this writing
         # behaves differently when compared to other Generic Binary variables
 
         pcount = 0
         for ch in Picture(self.Picture) :
-            if ch == 'P' :
+            if ch == 'P':
                 pcount += 1
 
         # we can be handed binary data in either little-endian
@@ -3386,17 +3429,17 @@ class CobolVariable():
         #our_bytes = [0x00, 0xb4, 0x21, 0x50, 0x1f, 0x01, 0x00, 0x00]
         #our_bytes.reverse();
 
-        if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
+        if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0:
             our_bytes.reverse()
 
         # we need to figure out if we are dealing with a signed
         # and negative number.
 
         negative = False
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0:
             # This is a binary number that can be signed; let's
             # see if it is.
-            if (our_bytes[self.Length-1] & 0x80) != 0 :
+            if (our_bytes[self.Length-1] & 0x80) != 0:
                 # and it is negative
                 negative = True
 
@@ -3439,12 +3482,12 @@ class CobolVariable():
             if self.Length >= 8 and (self.AttrFlags & COB_FLAG_REAL_BINARY):
                 length += 1
 
-        while len(body) < length :
+        while len(body) < length:
             body = '0' + body
 
         pic += '['
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
-            if negative :
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0:
+            if negative:
                 body = '-' + body
             else:
                 body = '+' + body
@@ -3454,7 +3497,7 @@ class CobolVariable():
 
         pic += "binary-"
         pic += str(self.Length*8)
-        if self.AttrScale != 0 :
+        if self.AttrScale != 0:
             pic += " ("
             pic += str(self.AttrDigits - self.AttrScale)
             pic += ','
@@ -3464,7 +3507,7 @@ class CobolVariable():
         pic += ' ]'
         return body, pic
 
-    def NumericBinaryToString(self) :
+    def NumericBinaryToString(self):
         # Generic Binary
 
         if (self.AttrFlags & COB_FLAG_IS_POINTER) != 0:
@@ -3472,14 +3515,14 @@ class CobolVariable():
 
         pcount = 0
         for ch in Picture(self.Picture) :
-            if ch == 'P' :
+            if ch == 'P':
                 pcount += 1
 
         # we can be handed binary data in either little-endian
         # or big-endian.  We will operated little-endian
         our_bytes = self.data
 
-        if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0 :
+        if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0:
             # Unless told otherwise
             our_bytes.reverse()
 
@@ -3487,10 +3530,10 @@ class CobolVariable():
         # and negative number.
 
         negative = False
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0:
             # This is a binary number that can be signed; let's
             # see if it is.
-            if (our_bytes[self.Length-1] & 0x80) != 0 :
+            if (our_bytes[self.Length-1] & 0x80) != 0:
                 # and it is negative
                 negative = True
 
@@ -3537,11 +3580,11 @@ class CobolVariable():
             if self.Length >= 8 and (self.AttrFlags & COB_FLAG_REAL_BINARY):
                 length += 1
 
-        while len(body) < length :
+        while len(body) < length:
             body = '0' + body
 
-        if pcount > 0 :
-            if self.AttrScale < 0 :
+        if pcount > 0:
+            if self.AttrScale < 0:
                 for i in range(pcount) :
                     body = body[1:] + '0'
             else:
@@ -3550,13 +3593,13 @@ class CobolVariable():
                 body = '.' + body
         else:
             # Let's put in a decimal point, if necessary
-            if  self.AttrScale > 0 :
+            if  self.AttrScale > 0:
                 breakat = len(body) - self.AttrScale
                 body = body[:breakat] + self.decimal_point + body[breakat:]
 
         pic += '['
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0 :
-            if negative :
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0:
+            if negative:
                 body = '-' + body
             else:
                 body = '+' + body
@@ -3566,7 +3609,7 @@ class CobolVariable():
 
         pic += "binary-"
         pic += str(self.Length*8)
-        if self.AttrScale != 0 :
+        if self.AttrScale != 0:
             pic += " ("
             pic += str(self.AttrDigits - self.AttrScale)
             pic += ','
@@ -3577,12 +3620,12 @@ class CobolVariable():
         return body, pic;
 
 
-    def StringToNumericBinary(self,rside) :
+    def StringToNumericBinary(self,rside):
         # Generic binary
         self.data = bytearray()
-        if self.CleanAndScale(rside) :
+        if self.CleanAndScale(rside):
             value = int(self.cleaned_rvalue,10)
-            if self.is_negative :
+            if self.is_negative:
                 value = -value
 
             # Build up that value as little-endian
@@ -3591,17 +3634,17 @@ class CobolVariable():
                 self.data[i] += value & 0xFF
                 value = value // 256
 
-            if self.AttrFlags & COB_FLAG_BINARY_SWAP :
+            if self.AttrFlags & COB_FLAG_BINARY_SWAP:
                 self.data.reverse()
 
-    def AlphanumericToString(self) :
+    def AlphanumericToString(self):
         # ALPHANUMERIC
         body = ""
         pic = ""
         body += '"'
         for i in range(len(self.data)) :
-            if self.data[i] < 32 or self.data[i] >= 128 :
-                body += self.decimal_point
+            if self.data[i] < 32:
+                body += '^'
             else:
                 body += chr(self.data[i])
         body += '"'
@@ -3613,23 +3656,23 @@ class CobolVariable():
     def StringToAlphanumeric(self,rside):
         # String from string:
         self.data = rside[0:self.Length]
-        while len(self.data) < self.Length :
+        while len(self.data) < self.Length:
             self.data += ' '
         # convert to bytearray:
         self.data = bytearray(self.data,"utf8")
 
-    def NumericEditedToString(self) :
+    def NumericEditedToString(self):
         # NUMERIC(EDITED)
         body = ""
         pic = ""
 
         for i in range(self.Length) :
-            if self.data[i] < 32 or self.data[i] >= 128 :
+            if self.data[i] < 32 or self.data[i] >= 128:
                 body += '.'
             else:
                 body += chr(self.data[i])
 
-        if False :  # False means "Match observed GnuCOBOL v3.00rc1 behavior"
+        if False:  # False means "Match observed GnuCOBOL v3.00rc1 behavior"
 
             # There seems to be an inconsistency in GnuCOBOL's behavior.
 
@@ -3659,17 +3702,18 @@ class CobolVariable():
             # AND self.AttrScale indicates there are characters to the right
             # of a decimal point, then we need to insert one.
 
-            if self.Picture.find(self.decimal_point) == -1 and self.AttrScale > 0 :
+            if self.Picture.find(self.decimal_point) == -1 and self.AttrScale > 0:
                 body = body[:len(body)-self.AttrScale] + self.decimal_point + body[-self.AttrScale:]
 
         pic += '[ PIC '
         pic += self.Picture
         pic += ' ]'
+        body = '"' + body + '"'
         return body, pic;
 
-    def StringToNumericEdited(self,rside) :
+    def StringToNumericEdited(self,rside):
         self.data = bytearray()
-        if self.CleanAndScale(rside) :
+        if self.CleanAndScale(rside):
             # We have to look for are "floating insertion" symbols
             # A floating insertion range is indicated by duplicated '$', '+', or
             # '-' characters.  One caveat: the floating range can have embedded
@@ -3677,7 +3721,7 @@ class CobolVariable():
 
             pic_without_commas = ""
             for ch in self.expanded_picture :
-                if ch != self.comma_separator :
+                if ch != self.comma_separator:
                     pic_without_commas += ch
 
             floating_insertion = None
@@ -3685,17 +3729,17 @@ class CobolVariable():
             floating_insertion_end = None
 
             currency_doubled = self.currency_symbol + self.currency_symbol
-            if pic_without_commas.find(currency_doubled) > -1 :
+            if pic_without_commas.find(currency_doubled) > -1:
                 floating_insertion = self.currency_symbol
-            elif pic_without_commas.find("++") > -1 :
+            elif pic_without_commas.find("++") > -1:
                 floating_insertion = '+'
-            elif pic_without_commas.find("--") > -1 :
+            elif pic_without_commas.find("--") > -1:
                 floating_insertion = '-'
 
             # find the start and end of the floating sequence in self.expanded_picture
-            if floating_insertion :
+            if floating_insertion:
                 for i in range(len(self.expanded_picture)) :
-                    if self.expanded_picture[i] == floating_insertion :
+                    if self.expanded_picture[i] == floating_insertion:
                         if floating_insertion_start == None:
                             floating_insertion_start = i
                         floating_insertion_end = i
@@ -3705,16 +3749,16 @@ class CobolVariable():
 
             # zero-flag the integer portion
             i = 0
-            while i < self.ldigits :
-                if input[i] == '0' :
+            while i < self.ldigits:
+                if input[i] == '0':
                     input = input[:i] + 'z' + input[i+1:]
                 else:
                     break;
                 i += 1
-            if i >= self.ldigits :
+            if i >= self.ldigits:
                 # The entire integer part is zero.  How about the fractional part?
-                if self.rdigits > 0 :
-                    if int(input[-self.rdigits:]) == 0 :
+                if self.rdigits > 0:
+                    if int(input[-self.rdigits:]) == 0:
                         # The fractional part is also zero; flag them, too
                         input = input[0:self.ldigits]
                         for i in range(self.rdigits) :
@@ -3738,83 +3782,83 @@ class CobolVariable():
             rightmost = True
             did_floating = False
 
-            while pindex >= 0 :
+            while pindex >= 0:
                 pch = self.expanded_picture[pindex]
                 pindex -= 1
 
-                if rightmost :
+                if rightmost:
                     rightmost = False
 
-                    if pch == '+' :
-                        if self.is_negative :
+                    if pch == '+':
+                        if self.is_negative:
                             body += '-'
                         else:
                             body += '+'
                         continue
 
-                    if pch == '-' :
-                        if self.is_negative :
+                    if pch == '-':
+                        if self.is_negative:
                             body += '-'
                         else:
                             body += '+'
                         continue
 
-                    if pch == 'c' :
+                    if pch == 'c':
                         # This is a CR (See the Picture() function)
-                        if self.is_negative :
+                        if self.is_negative:
                             body += 'RC'    # We are building body backwards
                         else:
                             body += "  "
                         continue
 
-                    if pch == 'd'  :
+                    if pch == 'd':
                         # This is a DB
-                        if self.is_negative :
+                        if self.is_negative:
                             body += 'BD'
                         else:
                             body += "  "
                         continue
 
-                if did_floating :
+                if did_floating:
                     # Everything to the left of the floating_insertion is
                     # supposed to be a blank
                     body += ' '
                     continue;
 
-                if not did_floating and pindex+1 == floating_insertion_start :
+                if not did_floating and pindex+1 == floating_insertion_start:
                     # The leftmost character of the floating_insertion has
                     # to be set, even at the cost of truncating the input
                     did_floating = True
-                    if floating_insertion == '-' :
-                        if self.is_negative :
+                    if floating_insertion == '-':
+                        if self.is_negative:
                             body += '-'
                         else:
                             body += ' '
                         continue
-                    if floating_insertion == '-' :
-                        if self.is_negative :
+                    if floating_insertion == '-':
+                        if self.is_negative:
                             body += '-'
                         else:
                             body += '+'
                         continue
-                    if floating_insertion == self.currency_symbol :
+                    if floating_insertion == self.currency_symbol:
                         body += self.currency_symbol
                         continue
 
-                if "PV".find(pch) > -1 :
+                if "PV".find(pch) > -1:
                     # We ignore scaling P characters here, because we processed
                     # them earlier by scaling the input string
                     # We also ignore the implicate decimal point 'V'
                     continue
 
                 inside_floating = False
-                if floating_insertion_start != None :
+                if floating_insertion_start != None:
                     inside_floating = (pindex+1 >= floating_insertion_start and pindex+1 <= floating_insertion_end)
 
                 include_literal = "B0/,."
                 if not inside_floating:
                     include_literal += self.currency_symbol
-                if include_literal.find(pch) > -1 :
+                if include_literal.find(pch) > -1:
                     body += pch
                     continue
 
@@ -3822,29 +3866,29 @@ class CobolVariable():
                 dch = input[dindex]
                 dindex -= 1
 
-                if inside_floating :
-                    if dch == 'z' :
+                if inside_floating:
+                    if dch == 'z':
                         did_floating = True
                         body += floating_insertion
                         continue
 
                 if pch == '9' or inside_floating:
                     # Explicit characters are expressed explicitly
-                    if dch == 'z' :
+                    if dch == 'z':
                         dch = '0'
                     body += dch
                     continue
 
-                if pch == 'Z' :
+                if pch == 'Z':
                     # Convert leading zeroes to blanks
-                    if dch == 'z' :
+                    if dch == 'z':
                         dch = ' '
                     body += dch
                     continue
 
-                if pch == '*' :
+                if pch == '*':
                     # Convert leading zeroes to asterisks
-                    if dch == 'z' :
+                    if dch == 'z':
                         dch = '*'
                     body += dch
                     continue
@@ -3857,125 +3901,125 @@ class CobolVariable():
 
             # Get rid of commas preceded by spaces
             wipe_me = ' ' + self.comma_separator
-            while True :
+            while True:
                 i = body.find(wipe_me)
-                if i == -1 :
+                if i == -1:
                     break;
                 body = body[:i] + "  " + body[i+2:]
 
             # Get rid of commas preceded by asterisks:
             wipe_me = '*' + self.comma_separator
-            while True :
+            while True:
                 i = body.find(wipe_me)
-                if i == -1 :
+                if i == -1:
                     break;
                 body = body[:i] + "**" + body[i+2:]
 
             # Get rid of commas preceded by currency symbols:
             wipe_me = self.currency_symbol + self.comma_separator
-            while True :
+            while True:
                 i = body.find(wipe_me)
-                if i == -1 :
+                if i == -1:
                     break;
                 body = body[:i] + ' ' + self.currency_symbol + body[i+2:]
 
-            if (body[-2:] == 'CR' or body[-2:0] == 'DB') and body[-3] == ' '  :
+            if (body[-2:] == 'CR' or body[-2:0] == 'DB') and body[-3] == ' ':
                 body = body[:-2] + "  "
 
-            if (body[-2:] == 'CR' or body[-2:0] == 'DB') and body[-4:-2] == " ."  :
+            if (body[-2:] == 'CR' or body[-2:0] == 'DB') and body[-4:-2] == " .":
                 body = body[:-2] + "  "
 
-            if (body[-1:] == '+' or body[-1] == '-') and body[-2] == ' '  :
+            if (body[-1:] == '+' or body[-1] == '-') and body[-2] == ' ':
                 body = body[:-1] + " "
 
-            if (body[-1:] == '-' or body[-1] == '+') and body[-3:-1] == " ."  :
+            if (body[-1:] == '-' or body[-1] == '+') and body[-3:-1] == " .":
                 body = body[:-1] + " "
 
             # If we ended up with just a decimal point, get rid of that:
-            if body.strip() == self.decimal_point :
+            if body.strip() == self.decimal_point:
                 i = body.find(self.decimal_point)
                 body = body[:i] + ' ' + body[i+1:]
 
             self.data = bytearray(body.encode("utf8"))
 
-    def DataToString(self) :
+    def DataToString(self):
         noisy = False
         value = ""
         pic = "Unknown"
-        if False :  # dummy code that can be followed by elifs
+        if False:  # dummy code that can be followed by elifs
             pass
-        elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY :
-            if noisy :
+        elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY:
+            if noisy:
                 print("COB_TYPE_NUMERIC_DISPLAY")
             value, pic = self.NumericDisplayToString()
-        elif self.AttrType == COB_TYPE_NUMERIC_BINARY :
-            if noisy :
+        elif self.AttrType == COB_TYPE_NUMERIC_BINARY:
+            if noisy:
                 print("COB_TYPE_NUMERIC_BINARY")
             value, pic = self.NumericBinaryToString()
-        elif self.AttrType == COB_TYPE_NUMERIC_COMP5 :
-            if noisy :
+        elif self.AttrType == COB_TYPE_NUMERIC_COMP5:
+            if noisy:
                 print("COB_TYPE_NUMERIC_COMP5")
             #value, pic = self.NumericBinaryToStringComp5()
             value, pic = self.NumericBinaryToString()
-        elif self.AttrType == COB_TYPE_NUMERIC_PACKED :
-            if noisy :
+        elif self.AttrType == COB_TYPE_NUMERIC_PACKED:
+            if noisy:
                 print("COB_TYPE_NUMERIC_PACKED")
             value, pic = self.PackedDecimalToString()
-        elif self.AttrType == COB_TYPE_NUMERIC_FLOAT :
-            if noisy :
+        elif self.AttrType == COB_TYPE_NUMERIC_FLOAT:
+            if noisy:
                 print("COB_TYPE_NUMERIC_FLOAT")
             value, pic = self.IeeeBinaryToString()
-        elif self.AttrType == COB_TYPE_NUMERIC_DOUBLE :
-            if noisy :
+        elif self.AttrType == COB_TYPE_NUMERIC_DOUBLE:
+            if noisy:
                 print("COB_TYPE_NUMERIC_DOUBLE")
             value, pic = self.IeeeBinaryToString()
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC64 :
-            if noisy :
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC64:
+            if noisy:
                 print("COB_TYPE_NUMERIC_FP_DEC64")
             value, pic = self.GnuCobolDecimal64ToString()
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128 :
-            if noisy :
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128:
+            if noisy:
                 print("")
             value, pic = self.GnuCobolDecimal128ToString()
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32 :
-            if noisy :
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32:
+            if noisy:
                 print("")
             value, pic = self.IeeeBinaryToString()
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64 :
-            if noisy :
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64:
+            if noisy:
                 print("")
             value, pic = self.IeeeBinaryToString()
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128 :
-            if noisy :
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128:
+            if noisy:
                 print("")
             value, pic = self.IeeeBinaryToString()
-        elif self.AttrType == COB_TYPE_ALPHANUMERIC :
-            if noisy :
+        elif self.AttrType == COB_TYPE_ALPHANUMERIC:
+            if noisy:
                 print("")
             value, pic = self.AlphanumericToString()
-        elif self.AttrType == COB_TYPE_NUMERIC_EDITED :
-            if noisy :
+        elif self.AttrType == COB_TYPE_NUMERIC_EDITED:
+            if noisy:
                 print("COB_TYPE_NUMERIC_EDITED")
             value, pic = self.NumericEditedToString()
         else:
             # We were handed an unknown type.  Let's look at the data:
             non_printable = 0;
             for i in range(len(self.data)) :
-                if self.data[i] < 32 or self.data[i] >= 128 :
+                if self.data[i] < 32 or self.data[i] >= 128:
                     non_printable += 1
 
-            if non_printable >= 1 :
+            if non_printable >= 1:
                 value = "["
                 for byte in self.data :
                     hexout = hex(byte)[-2:]
-                    if hexout[0:1] == 'x' :
+                    if hexout[0:1] == 'x':
                         hexout = '0' + hexout[-1:]
                     value += hexout
                 value += "]"
             else:
                 value = '"'
                 for byte in self.data :
-                    if 32 <= byte < 128 :   # valid ASCII characters
+                    if 32 <= byte < 128:   # valid ASCII characters
                         value += chr(byte)
                     else:
                         value += '.'
@@ -3983,27 +4027,23 @@ class CobolVariable():
 
         pcount = 0
         for ch in Picture(self.Picture) :
-            if ch == 'P' :
+            if ch == 'P':
                 pcount += 1
         pcount = 0
 
-        if pcount > 0 :
-            if self.AttrScale < 0 :
+        if pcount > 0:
+            if self.AttrScale < 0:
                 for i in range(pcount) :
                     value += '0'
             else:
                 stash = ''
-                if value[0] == '+' or value[0] == '-' :
+                if value[0] == '+' or value[0] == '-':
                     stash = value[0]
                     value = value[1:]
                 for i in range(pcount) :
                     value = '0' + value
                 value = stash + self.decimal_point + value
 
-        ## Because we are in COBOL land, we replace any embedded quotes
-        ## with doubled quotes:
-        if value and value[0] == '"' :
-            value = '"' + value[1:-1].replace('"','""') + '"'
         return value;
 
 ####################################################################
