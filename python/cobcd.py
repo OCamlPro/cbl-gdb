@@ -2257,7 +2257,7 @@ class CobolVariable():
                 return False
 
             if self.location_of_data != 0:
-                # With those calculations in hand, we can calculate the actuals:
+                # With those calculations in hand, we can calculate the actual location and length:
                 self.ActualLocation = self.location_of_data + self.TableOffset + self.RefmodOffset
                 self.ActualLength = self.RefmodLength or self.Length
 
@@ -3979,30 +3979,36 @@ class CobolVariable():
             value, pic = self.GnuCobolDecimal64ToString()
         elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128:
             if noisy:
-                print("")
+                print("COB_TYPE_NUMERIC_FP_DEC128")
             value, pic = self.GnuCobolDecimal128ToString()
         elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32:
             if noisy:
-                print("")
+                print("COB_TYPE_NUMERIC_FP_BIN32")
             value, pic = self.IeeeBinaryToString()
         elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64:
             if noisy:
-                print("")
+                print("COB_TYPE_NUMERIC_FP_BIN64")
             value, pic = self.IeeeBinaryToString()
         elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128:
             if noisy:
-                print("")
+                print("COB_TYPE_NUMERIC_FP_BIN128")
             value, pic = self.IeeeBinaryToString()
         elif self.AttrType == COB_TYPE_ALPHANUMERIC:
             if noisy:
-                print("")
+                print("COB_TYPE_ALPHANUMERIC")
             value, pic = self.AlphanumericToString()
         elif self.AttrType == COB_TYPE_NUMERIC_EDITED:
             if noisy:
                 print("COB_TYPE_NUMERIC_EDITED")
             value, pic = self.NumericEditedToString()
+        elif self.AttrType == COB_TYPE_GROUP:
+            if noisy:
+                print("COB_TYPE_GROUP")
+            value, pic = self.AlphanumericToString()
         else:
             # We were handed an unknown type.  Let's look at the data:
+            if noisy:
+                print("Unknown COB_TYPE", self.AttrType, hex(self.AttrType))
             non_printable = 0;
             for i in range(len(self.data)) :
                 if self.data[i] < 32 or self.data[i] >= 128:
