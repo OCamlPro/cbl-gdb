@@ -3413,100 +3413,6 @@ class CobolVariable():
             if self.is_negative:
                 self.data[self.Length-1] |= 0x40
 
-    def NumericBinaryToStringComp5(self):
-        # Special processing for COMP-5, which as of this writing
-        # behaves differently when compared to other Generic Binary variables
-
-        pcount = 0
-        for ch in Picture(self.Picture) :
-            if ch == 'P':
-                pcount += 1
-
-        # we can be handed binary data in either little-endian
-        # or big-endian.  We will operated little-endian
-        our_bytes = self.data
-
-        #our_bytes = [0x00, 0xb4, 0x21, 0x50, 0x1f, 0x01, 0x00, 0x00]
-        #our_bytes.reverse();
-
-        if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0:
-            our_bytes.reverse()
-
-        # we need to figure out if we are dealing with a signed
-        # and negative number.
-
-        negative = False
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0:
-            # This is a binary number that can be signed; let's
-            # see if it is.
-            if (our_bytes[self.Length-1] & 0x80) != 0:
-                # and it is negative
-                negative = True
-
-                # we need to do a complement & increment.  We will
-                # be fighting Python the whole way:
-
-                carry = 1
-                for i in range(self.Length) :
-                    our_bytes[i] = ~our_bytes[i];
-                    our_bytes[i] &= 0xFF
-                    our_bytes[i] += carry;
-                    carry = our_bytes[i] >> 8
-                    our_bytes[i] &= 0xFF
-
-        # at this point, the negative flag has been set, and
-        # our_bytes is the absolute value of the output
-        # build up the little-endian value:
-
-        value = 0
-        for i in range(self.Length-1,-1, -1) :
-            value <<= 8
-            value += our_bytes[i]
-
-        # we should be in business:
-
-        body = ""
-        pic = ""
-
-        # Do an initial conversion to a string
-        body += str(value)
-
-        # We need to expand it by adding leading zeroes to get up
-        # to the appropriate length
-
-        length = self.AttrDigits
-        if self.AttrScale == 0:
-            #length += 1
-            if self.Length >= 8 and not (self.AttrFlags & COB_FLAG_REAL_BINARY):
-                length -= 1
-            if self.Length >= 8 and (self.AttrFlags & COB_FLAG_REAL_BINARY):
-                length += 1
-
-        while len(body) < length:
-            body = '0' + body
-
-        pic += '['
-        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0:
-            if negative:
-                body = '-' + body
-            else:
-                body = '+' + body
-            pic += " signed "
-        else:
-            pic += " unsigned "
-
-        pic += "binary-"
-        pic += str(self.Length*8)
-        if self.AttrScale != 0:
-            pic += " ("
-            pic += str(self.AttrDigits - self.AttrScale)
-            pic += ','
-            pic += str(self.AttrScale)
-            pic += ")"
-
-        pic += ' ]'
-        return body, pic
-
     def NumericBinaryToString(self):
         # Generic Binary
 
@@ -3959,7 +3865,6 @@ class CobolVariable():
         elif self.AttrType == COB_TYPE_NUMERIC_COMP5:
             if noisy:
                 print("COB_TYPE_NUMERIC_COMP5")
-            #value, pic = self.NumericBinaryToStringComp5()
             value, pic = self.NumericBinaryToString()
         elif self.AttrType == COB_TYPE_NUMERIC_PACKED:
             if noisy:
