@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ################################################################################
-# pylint: disable=line-too-long,unused-argument,unused-wildcard-import,import-error,invalid-name
+# pylint: disable=line-too-long, unused-argument, unused-wildcard-import, import-error, invalid-name
 #
 # flake8 settings used
 # [flake8]
@@ -818,7 +818,7 @@ def PreprocessSubscriptsAndRefmods(subscripts):
     # all get treated the same.
     #
     # The logic below turns ONE TWO THREE into ONE, TWO, THREE
-    # and it turns ONE OF TWO THREE into ONE TWO,THREE
+    # and it turns ONE OF TWO THREE into ONE TWO, THREE
 
     separator = ','
     if subscripts.find(':') > -1:
@@ -2200,8 +2200,8 @@ class CobolVariable():
                             self.Picture += ch
                     # Just to make life easier down the road, replace DB and CR
                     # with something easier to work with.
-                    self.Picture = self.Picture.replace("DB","d")
-                    self.Picture = self.Picture.replace("CR","c")
+                    self.Picture = self.Picture.replace("DB", "d")
+                    self.Picture = self.Picture.replace("CR", "c")
 
             if self.Section in ('F', 'X', 'W', "WB", 'I'):
                 pass
@@ -2364,7 +2364,7 @@ class CobolVariable():
             else:
                 print("[", end="")
                 for byte in self.data:
-                    print( hex(256+byte)[-2:] ,end="")
+                    print( hex(256+byte)[-2:] , end="")
                 print("]", end="")
 
             print("")
@@ -2588,7 +2588,7 @@ class CobolVariable():
                     # a bunch of bytes of zeros have at least the number
                     # of bits we're going to need.
 
-        for i in range(length-1,-1,-1):
+        for i in range(length-1, -1, -1):
             value <<= 8
             value += bytes[i]
 
@@ -2686,7 +2686,7 @@ class CobolVariable():
             # Multiply or divide by ten to normalize fraction to be
             # between unit_point <= fraction < ten_point
 
-            #print("expanded",expanded)
+            #print("expanded", expanded)
             excess = 76 - len(str(expanded))
 
             while excess > 0:
@@ -2698,7 +2698,7 @@ class CobolVariable():
                 expanded *= 10
                 decimal_exponent -= 1
 
-        #print(self.Name,"expanded",expanded)
+        #print(self.Name, "expanded", expanded)
 
         # Expanded is a 76-digit decimal expansion of the final result,
         # with the implied decimal point to the right of the left-most
@@ -2706,7 +2706,7 @@ class CobolVariable():
 
         # Extract all the digits we need, plus one for rounding:
         expanded = int(str(expanded)[0:valid_digits+1])
-        #print(self.Name,"expanded",expanded)
+        #print(self.Name, "expanded", expanded)
 
         # Add five to that shortened extraction, in order to round up
         expanded += 5
@@ -2744,7 +2744,7 @@ class CobolVariable():
         body += type
         return body , pic
 
-    def StringToIeeeBinary(self,rside):
+    def StringToIeeeBinary(self, rside):
         self.data = bytearray(self.Length)
         length = self.Length
 
@@ -2896,7 +2896,7 @@ class CobolVariable():
                 while len(fracbits) < fraction_bits+1+1:
                     # Multiply fracbits by two:
                     carry = 0
-                    for i in range(len(fracba)-1,-1,-1):
+                    for i in range(len(fracba)-1, -1, -1):
                         fracba[i] = fracba[i]*2 + carry
                         carry = fracba[i] // 10
                         fracba[i] = fracba[i] % 10
@@ -3000,7 +3000,7 @@ class CobolVariable():
                 offset += 1
         self.data.reverse()
 
-    def FpNormalize(self,coefficient,exponent):
+    def FpNormalize(self, coefficient, exponent):
         # convert anything to 1.234E5
         if coefficient == 0:
             exponent = 0
@@ -3024,7 +3024,7 @@ class CobolVariable():
         if len(str_coefficient) == 2:
             str_coefficient += '0'
 
-        return str_coefficient,exponent
+        return str_coefficient, exponent
 
     def GnuCobolDecimal128ToString(self):
         # This decodes the GnuCOBOL version of the decimal64 format.  This is
@@ -3039,7 +3039,7 @@ class CobolVariable():
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 128-bit zero, for example
-        for i in range(self.Length-1,-1, -1):
+        for i in range(self.Length-1, -1, -1):
             value <<= 8
             value += our_bytes[i]
 
@@ -3079,7 +3079,7 @@ class CobolVariable():
                 coefficient = coefficient2
 
             exponent -= bias
-            str_coefficient, exponent = self.FpNormalize(coefficient,exponent)
+            str_coefficient, exponent = self.FpNormalize(coefficient, exponent)
             body += str_coefficient
 
             if exponent:
@@ -3089,7 +3089,7 @@ class CobolVariable():
             pic += "  [ GnuCOBOL "
             pic += type
             pic += " ]"
-        return body,pic
+        return body, pic
 
     def GnuCobolDecimal64ToString(self):
         # This decodes the GnuCOBOL version of the decimal64 format.  This is
@@ -3104,7 +3104,7 @@ class CobolVariable():
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 64-bit zero, for example
-        for i in range(self.Length-1,-1, -1):
+        for i in range(self.Length-1, -1, -1):
             value <<= 8
             value += our_bytes[i]
 
@@ -3144,7 +3144,7 @@ class CobolVariable():
                 coefficient = coefficient2
 
             exponent -= bias
-            str_coefficient, exponent = self.FpNormalize(coefficient,exponent)
+            str_coefficient, exponent = self.FpNormalize(coefficient, exponent)
             body += str_coefficient
 
             if exponent:
@@ -3173,7 +3173,7 @@ class CobolVariable():
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 64-bit zero, for example
-        for i in range(self.Length-1,-1, -1):
+        for i in range(self.Length-1, -1, -1):
             value <<= 8
             value += our_bytes[i]
 
@@ -3330,7 +3330,7 @@ class CobolVariable():
         pic += ") ]"
         return body, pic
 
-    def StringToPackedDecimal(self,rside):
+    def StringToPackedDecimal(self, rside):
         self.data = bytearray()
         if self.CleanAndScale(rside):
             # The sign nybble: 0x0C = positive
@@ -3421,7 +3421,7 @@ class CobolVariable():
             pic += ") ]"
         return body , pic
 
-    def StringToNumericDisplay(self,rside):
+    def StringToNumericDisplay(self, rside):
         self.data = bytearray()
 
         if self.CleanAndScale(rside):
@@ -3492,7 +3492,7 @@ class CobolVariable():
         # build up the little-endian value:
 
         value = 0
-        for i in range(self.Length-1,-1, -1):
+        for i in range(self.Length-1, -1, -1):
             value <<= 8
             value += our_bytes[i]
 
@@ -3554,11 +3554,11 @@ class CobolVariable():
         return body, pic;
 
 
-    def StringToNumericBinary(self,rside):
+    def StringToNumericBinary(self, rside):
         # Generic binary
         self.data = bytearray()
         if self.CleanAndScale(rside):
-            value = int(self.cleaned_rvalue,10)
+            value = int(self.cleaned_rvalue, 10)
             if self.is_negative:
                 value = -value
 
@@ -3588,13 +3588,13 @@ class CobolVariable():
         pic += ' ]'
         return body, pic;
 
-    def StringToAlphanumeric(self,rside):
+    def StringToAlphanumeric(self, rside):
         # String from string:
         self.data = rside[0:self.Length]
         while len(self.data) < self.Length:
             self.data += ' '
         # convert to bytearray:
-        self.data = bytearray(self.data,"utf8")
+        self.data = bytearray(self.data, "utf8")
 
     def NumericEditedToString(self):
         # NUMERIC(EDITED)
@@ -3646,7 +3646,7 @@ class CobolVariable():
         body = '"' + body + '"'
         return body, pic;
 
-    def StringToNumericEdited(self,rside):
+    def StringToNumericEdited(self, rside):
         self.data = bytearray()
         if self.CleanAndScale(rside):
             # We have to look for are "floating insertion" symbols
