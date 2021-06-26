@@ -1652,15 +1652,9 @@ class CobolVariable():
         print("    loc_of_attr:", hex(self.location_of_attribute))
         print("     loc_of_pic:", hex(self.location_of_pic))
 
-    def GetDataAsString(self):
-        retval = ""
-        GV_GlobalVariables.AllocateBuffers()
 
-        if False:  # For development
-            self.DumpJustAboutEverything()
-
-        # Something we need to know:
-        is_alphanumeric = False
+    def IsAlphanumeric(self):
+        retval = False
         if self.AttrType in (COB_TYPE_UNKNOWN,
                              COB_TYPE_GROUP,
                              COB_TYPE_BOOLEAN,
@@ -1671,7 +1665,19 @@ class CobolVariable():
                              COB_TYPE_NUMERIC_EDITED,
                              COB_TYPE_NATIONAL,
                              COB_TYPE_NATIONAL_EDITED):
-            is_alphanumeric = True
+            retval = True
+        return retval
+
+
+    def GetDataAsString(self):
+        retval = ""
+        GV_GlobalVariables.AllocateBuffers()
+
+        if False:  # For development
+            self.DumpJustAboutEverything()
+
+        # Something we need to know:
+        is_alphanumeric = self.IsAlphanumeric()
 
         try:
             # We will make our own cob_field in cprint_f0, with location of
@@ -2058,11 +2064,13 @@ class CobolVariable():
         if self.IsDirty:
             # We do this work only if the IsDirty flag indicates that we have to do the work.
             self.location_of_field = 0
-            self.location_of_data = 0
+            self.location_of_data = 0           # value of p_variable, or location on stack
             self.location_of_attribute = 0
             self.data = []
             self.display_body = ""
             self.not_in_context = False
+            self.ActualLocation = 0
+            self.ActualLength = 0
 
             # Let's update everything we might need:
             # Calculate the additional table offsets
@@ -2348,11 +2356,18 @@ class CobolVariable():
 
         if self.Refmod:
             print("Display:     ", end="")
-            for byte in self.data:
-                if 32 <= byte:   # valid ASCII characters
-                    print(chr(byte), end="")
-                else:
-                    print('.', end="")
+            if self.IsAlphanumeric():
+                for byte in self.data:
+                    if 32 <= byte:   # valid ASCII characters
+                        print(chr(byte), end="")
+                    else:
+                        print('^', end="")
+            else:
+                print("[", end="")
+                for byte in self.data:
+                    print( hex(256+byte)[-2:] ,end="")
+                print("]", end="")
+
             print("")
         else:
             print("Display:    ", WithRepeatCount(self.display_body))
@@ -2377,11 +2392,11 @@ class CobolVariable():
         print("Offset:     ", self.Offset)
         if self.Subscripts:
             print("TableOffset:", self.TableOffset)
+        print("Length:     ", self.Length)
         if self.Refmod:
             print("RefmodOff:  ", self.RefmodOffset)
             print("RefmodRun:  ", self.RefmodLength)
         print("DataLoc:    ", hex(self.ActualLocation))
-        print("Length:     ", self.ActualLength)
 
         print("Attr:       ", self.Aname, '   (', hex(self.location_of_attribute), ')')
         print("AttrType:   ", self.AttrType, end="")
@@ -2468,16 +2483,19 @@ class CobolVariable():
         if self.location_of_pic:
             print("Picture:    ", self.Picture)
 
+        # At this point, we want to show the raw data at location_of_data.
+        # But if .Refmod or .Subscripts is active, self.data is the modified
+        # information, not the "raw" data.  So, we need the raw data:
+
+        raw_data = GetBytesAt(self.location_of_data, self.Length)
         print("Data: (HEX)   [", end=" ")
-        for byte in self.data:
-            hexout = hex(byte)[-2:]
-            if hexout[0:1] == 'x':
-                hexout = '0' + hexout[-1:]
+        for byte in raw_data:
+            hexout = hex(256+byte)[-2:]
             print(hexout, end=" ")
         print("]")
 
         print("Data: (ASCII) \"", end="")
-        for byte in self.data:
+        for byte in raw_data:
             if 32 <= byte:   # valid ASCII characters
                 print(chr(byte), end="")
             else:
@@ -3375,7 +3393,10 @@ class CobolVariable():
             # Convert the binary value in self.data to a string
             for i in range(self.Length) :
                 digit = self.data[i] & 0x3F
-                body += chr(digit)
+                if digit < 32:
+                    body += '^'
+                else:
+                    body += chr(digit)
 
             if pscale > 0:
                 for i in range(pscale) :
@@ -3425,8 +3446,12 @@ class CobolVariable():
                 pcount += 1
 
         # we can be handed binary data in either little-endian
-        # or big-endian.  We will operated little-endian
-        our_bytes = self.data
+        # or big-endian.  We will operated little-endian:
+
+        # And, as our first bout of doing battle with Python and its
+        # never-to-be-sufficiently damned "references to objects" idiocy,
+        # we are going to make a copy by using slice:
+        our_bytes = self.data[:]
 
         if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0:
             # Unless told otherwise
@@ -3435,7 +3460,15 @@ class CobolVariable():
         # we need to figure out if we are dealing with a signed
         # and negative number.
 
-        print("STUFF",self.Length, self.RefmodOffset, self.RefmodLength)
+        body = ""
+        pic = ""
+
+        if self.Refmod:
+            # Special case of refmod.  Just dump the desired bytes in in hex
+            i = self.RefmodOffset
+            for j in range(self.RefmodLength):
+                body += hex(256 + self.data[i])[-2:]    # Add 0x100 to get leading zeroes
+            return body, pic
 
         negative = False
         if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0:
@@ -3464,11 +3497,6 @@ class CobolVariable():
         for i in range(self.Length-1,-1, -1) :
             value <<= 8
             value += our_bytes[i]
-
-        # we should be in business:
-
-        body = ""
-        pic = ""
 
         # Do an initial conversion to a string, keeping in mind that because of
         # COBOL truncation issues, value may have more digits to the left than
@@ -3544,6 +3572,7 @@ class CobolVariable():
 
             if self.AttrFlags & COB_FLAG_BINARY_SWAP:
                 self.data.reverse()
+
 
     def AlphanumericToString(self):
         # ALPHANUMERIC
@@ -3852,6 +3881,10 @@ class CobolVariable():
 
     def DataToString(self):
         noisy = False
+
+        if noisy:
+            self.DumpJustAboutEverything()
+
         value = ""
         pic = "Unknown"
         if False:  # dummy code that can be followed by elifs
@@ -3918,7 +3951,7 @@ class CobolVariable():
                 print("Unknown COB_TYPE", self.AttrType, hex(self.AttrType))
             non_printable = 0;
             for i in range(len(self.data)) :
-                if self.data[i] < 32 or self.data[i] >= 128:
+                if self.data[i] < 32:
                     non_printable += 1
 
             if non_printable >= 1:
@@ -3932,10 +3965,10 @@ class CobolVariable():
             else:
                 value = '"'
                 for byte in self.data :
-                    if 32 <= byte < 128:   # valid ASCII characters
+                    if 32 <= byte:   # valid extended ASCII characters
                         value += chr(byte)
                     else:
-                        value += '.'
+                        value += '^'
                 value += '"'
 
         pcount = 0
