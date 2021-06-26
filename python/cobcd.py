@@ -164,15 +164,18 @@ NON_PRINTABLE_CHAR = '^'
 # These constants are used when calling get_verified_field_location
 ALLOCATE = True
 DONT_ALLOCATE = False
-
-#  regexp's for ZERO and SPACE handling
+ 
+#  regexp's for ZERO, SPACE and numeric handling
 R_ALL_ZERO_SPACE = re.compile(r'ALL|ZERO(S|ES)?|SPACE(S)?', re.IGNORECASE)
 R_ZERO_SPACE = re.compile(r'ZERO(S|ES)?|SPACE(S)?', re.IGNORECASE)
-
+ 
 R_SPACE = re.compile(r'SPACE(S)?', re.IGNORECASE)
 R_ZERO = re.compile(r'ZERO(S|ES)?', re.IGNORECASE)
 R_ALLSPACE = re.compile(r'ALL[ ]*SPACE(S)?', re.IGNORECASE)
 R_ALLZERO = re.compile(r'ALL[ ]*ZERO(S|ES)?', re.IGNORECASE)
+
+R_INTEGER = re.compile(r'^[-]?[0-9]+$')
+R_NUMBER = re.compile(r'^[-]?[0-9]+$|^([-]?[0-9]+)[.][0-9]*$|^([-]?[0-9]*)[.][0-9]+$')
 
 # executable available flags
 READELF_AVAILABLE = True
@@ -851,6 +854,16 @@ def ConditionalRaise(msg):
         raise gdb.GdbError(msg)
     else:
         print(msg)
+        
+ 
+def GetNumericArgument(argument):
+    number = 1
+    if argument:
+        if not argument.isdigit():
+            ConditionalRaise("argument must be a digit, not " + argument)
+            return
+        number = int(argument)
+    return number
 
 
 def TokenizeCanonicalName(desired):
@@ -897,7 +910,7 @@ def TokenizeCanonicalName(desired):
                 desired = desired[:-1]
 
         # turn IN and OF into spaces
-        pattern = re.compile(r"^(.*) (in|In|iN|IN|of|oF|Of|OF) (.*)$")
+        pattern = re.compile(r"^(.*) (IN|OF) (.*)$", re.IGNORECASE)
         while True:
             match = re.search(pattern, desired)
             if not match:
@@ -961,20 +974,12 @@ def IsInteger(s):
     # return 10 for "10-DOWNING-STREET", which is a perfectly valid
     # COBOL identifier.
 
-    re_integer = re.compile(r'^[-]?[0-9]+$')
-    found = re_integer.match(s)
-    if found:
-        return True
-    return False
+    return R_INTEGER.match(s)
 
 
 def IsNumber(s):
     # positive or negative number, with or without decimal point
-    re_integer = re.compile(r'^[-]?[0-9]+$|^([-]?[0-9]+)[.][0-9]*$|^([-]?[0-9]*)[.][0-9]+$')
-    found = re_integer.match(s)
-    if found:
-        return True
-    return False
+    return R_NUMBER.match(s)
 
 
 def IntegerOrVariable(s):
@@ -3201,6 +3206,22 @@ def encode_program_id(name, fold_case):
 
     return return_name
 
+ 
+def get_section_spec(arg):
+    module_name = ""
+    mod_sec = arg.split(":")
+    if len(mod_sec) == 1:
+        section_name = encode_program_id(mod_sec[0], 1)
+    elif len(mod_sec) == 2:
+        section_name = encode_program_id(mod_sec[1], 1)
+        if mod_sec[0] != "":
+            module_name =  encode_program_id(mod_sec[0], 0)
+ 
+    if not module_name:
+        return "SECTION_{0}".format(section_name)
+    else:
+        return "{0}_:SECTION_{1}".format(module_name, section_name)
+
 
 def FromHexAlphaString(conv_str):
     """Converts a COBOL hexadecimal alphanumeric string to an ordinary string"""
@@ -4156,6 +4177,7 @@ class CBreakWorker():
         except gdb.error:
             return False
 
+    # FIXME: this function should only "get module name", the check for loaded and loading is a different thing
     def get_module_name(self, module):
         return_value = None
 
@@ -4176,9 +4198,6 @@ class CBreakWorker():
                 return_value = module
 
         return return_value
-
-    def get_section_name(self, section):
-        return encode_program_id(section, 1)
 
     @staticmethod
     def get_var_payload(search_args):
@@ -4256,32 +4275,7 @@ class CBreakWorker():
             print("Condition not implemented")
 
     def set_section_breakpoint(self, args, t_flag, i_flag):
-        module_name = ""
-
-        mod_sec = args[0].split(":")
-        if len(mod_sec) == 1:
-            section_name = self.get_section_name(mod_sec[0])
-            if section_name is None:
-                print("Section not found")
-                return
-            module_name = ""
-        elif len(mod_sec) == 2:
-            section_name = self.get_section_name(mod_sec[1])
-            if section_name is None:
-                print("Section not found")
-                return
-
-            if mod_sec[0] != "":
-                module_name = self.get_module_name(mod_sec[0])
-                if module_name is None:
-                    # message already from add-symbol-file-cobol
-                    # print("Module not found: {0}".format(mod_sec[0]))
-                    return
-
-        if not module_name:
-            spec = "SECTION_{0}".format(section_name)
-        else:
-            spec = "{0}_:SECTION_{1}".format(module_name, section_name)
+        spec = get_section_spec(args[0])
         break_point = self.set_breakpoint(spec, t_flag, i_flag)
 
     def get_cob_cmp_refloc(self, payload, cmp_len, second):
@@ -4709,6 +4703,11 @@ A watchpoint stops execution of your program whenever the value of an expression
 
     def __init__(self):
         super(CWatch, self).__init__("cwatch", gdb.COMMAND_BREAKPOINTS)
+        # set alias, ignore errors (most likely because already defined)
+        try:
+            gdb.execute("alias -a cw = cwatch", False, True)
+        except:
+            pass
         self.worker = CWatchWorker()
 
     def invoke(self, arguments, from_tty):
@@ -5100,13 +5099,7 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
         print('Registering CNext')
 
     def invoke(self, argument, from_tty):
-        if argument:
-            if not argument.isdigit():
-                ConditionalRaise("argument must be a digit, not " + argument)
-                return
-            ncount = int(argument)
-        else:
-            ncount = 1
+        ncount = GetNumericArgument(argument)
         try:
             GV_ModuleState.EstablishModuleState(True)
             while ncount > 0:
@@ -5140,11 +5133,15 @@ class CFrameWorker:
     """Does all of the gdb work related to frames, especially for CUp() and CDown()"""
 
     def __init__(self):
-        print('Registering commands cup, cdown, cup-silently, cdown-silently')
+        print('Registering commands cup, cdown, cup-silently, cdown-silently, until-cobol, finish-module, finish-out-of-line-perform, local-backtrace')
         CUp()
         CDown()
         CUpS()
         CDownS()
+        CUntilCobol()
+        CFinishModule()
+        CFinishOutOfLinePerform()
+        CLocalBacktrace()
         # Note: frame filter support in python API only with GDB 7.7+
         if GV_GlobalVariables.gdb_version > 70700:
             print('Registering frame-filters COBOL-FrameFilter (disabled), COBOL-Only-FrameFilter (disabled)')
@@ -5175,25 +5172,25 @@ class CFrameWorker:
         except:
             # no debugging symbols, just skip
             return False, False
-
-        # available in all cobc generated functions (static variable):
+ 
+        # available in all cobc generated functions (static variable) - check if it is reachable
+        # and at least in the same object file as the frame [TODO: limit lookup to _local_ variables]
         symbol = gdb.lookup_symbol("cob_module_path", block)[0]
-        if not (symbol and str(symbol.type) == "const char *"):
+        if not (symbol and str(symbol.type) == "const char *" and symbol.symtab.objfile == frame.find_sal().symtab.objfile):
             return False, False
-        
+ 
         # check for COBOL "inner" frame
         symbol = gdb.lookup_symbol("module", block)[0]
         if symbol and str(symbol.type) == "cob_module *":
             # quite likely an "inner" COBOL frame
             return True, True
-            
+ 
         # quite likely an "outer" COBOL frame
         return True, False
-
+ 
     @staticmethod
     def is_cobol_inner_frame(frame):
-        cobol, inner = CFrameWorker.is_cobol_frame(frame)
-        return inner
+        return CFrameWorker.is_cobol_frame(frame)[1]
 
 
     @staticmethod
@@ -5216,7 +5213,7 @@ class CFrameWorker:
                     frame = frame.newer()
                     if frame is None:
                         # on the way down we may see an outer COBOL frame last, then take that
-                        if old_frame != gdb.selected_frame() and CFrameWorker.is_cobol_frame(old_frame):
+                        if old_frame != gdb.selected_frame() and CFrameWorker.is_cobol_frame(old_frame)[0]:
                             return old_frame
                         return None
 
@@ -5248,13 +5245,7 @@ class CFrameWorker:
     @staticmethod
     def Go(argument, up, silent):
 
-        number = 1
-        if argument:
-            if not argument.isdigit():
-                ConditionalRaise("argument must be a digit, not " + argument)
-                return
-            number = int(argument)
-
+        number = GetNumericArgument(argument)
         frame = CFrameWorker.Frame(up, number)
         if not frame:
             # note: we raise here to prevent hookpost-defines to be triggered
@@ -5310,6 +5301,199 @@ may be used to also stop if the current frame is a COBOL frame."""
 
     def invoke(self, argument, from_tty):
         CFrameWorker.Go(argument, False, True)
+
+
+class CFinishOutOfLinePerform(gdb.Command):
+    """Execute until selected stack frame's current internal PERFORM returns.
+Applies to any out-of-line PERFORM."""
+ 
+    def __init__(self):
+        super(CFinishOutOfLinePerform, self).__init__("finish-out-of-line-perform", gdb.COMMAND_RUNNING)
+ 
+    def invoke(self, argument, from_tty):
+        if argument:
+            ConditionalRaise('The "finish-out-of-line-perform" command does not take any arguments.')
+            return
+        # sanity check: Do we have any frame at all?
+        try:
+            frame = gdb.selected_frame()
+        except gdb.error:
+            ConditionalRaise("No stack.")
+            return
+ 
+        if not CFrameWorker.is_cobol_inner_frame(frame):
+            ConditionalRaise("finish-out-of-line-perform only applies to COBOL")
+            return
+ 
+        sanitize_place = gdb.parse_and_eval("frame_ptr->perform_through")
+        if not sanitize_place:
+            ConditionalRaise("Initial COBOL program, no out-of-line PERFORM to finish.")
+            return
+        gdb.execute("until *frame_ptr->return_address_ptr", False, False)
+ 
+class CFinishModule(gdb.Command):
+    """Execute until current COBOL module exits."""
+ 
+    def __init__(self):
+        super(CFinishModule, self).__init__("finish-module", gdb.COMMAND_RUNNING)
+ 
+    def invoke(self, argument, from_tty):
+        if argument:
+            ConditionalRaise('The "finish-module" command does not take any arguments.')
+            return
+        # sanity check: Do we have any frame at all?
+        try:
+            frame = gdb.selected_frame()
+        except gdb.error:
+            ConditionalRaise("No stack.")
+            return
+ 
+        cobol, inner = CFrameWorker.is_cobol_frame(frame)
+        if not cobol:
+            ConditionalRaise("finish-module only applies to COBOL")
+            return
+ 
+        if inner:
+            frame = frame.older()
+            frame.select()
+ 
+        gdb.execute("finish", False, False)
+ 
+class CUntilCobol(gdb.Command):
+    """Execute until most current COBOL module"""
+ 
+    def __init__(self):
+        super(CUntilCobol, self).__init__("until-cobol", gdb.COMMAND_RUNNING)
+ 
+    def invoke(self, argument, from_tty):
+        if argument:
+            ConditionalRaise('The "until-cobol" command does not take any arguments.')
+            return
+        # sanity check: Do we have any frame at all? (need to be here because of ConditioalRaise in CFrameWorker)
+        try:
+            frame = gdb.selected_frame()
+        except gdb.error:
+            ConditionalRaise("No stack.")
+            return
+ 
+        cob_frame = CFrameWorker.Frame(True, 0)
+ 
+        if CFrameWorker.is_cobol_frame(frame)[0] or cob_frame is None:
+            ConditionalRaise("until-cobol only applies to non-COBOL called by a COBOL frame.")
+            return
+ 
+        cob_frame.newer().select()
+        gdb.execute("finish", False, False)
+
+class CLocalBacktrace(gdb.Command):
+    """Output the "local" backtrace of the selected COBOL module."""
+ 
+    def __init__(self):
+        super(CLocalBacktrace, self).__init__("local-backtrace", gdb.COMMAND_STACK)
+        # match everything between modern free format: "495  TESTME section." and
+        # historic fixed-form with sequence number segment  "495 000495 TESTME SECTION 00 ."
+        self.section_pattern = re.compile(r"^\d*\s+\d*\s+(.*)\s+(SECTION)\s*\d*\.", re.IGNORECASE)
+        # set alias, ignore errors (most likely because already defined)
+        try:
+            gdb.execute("alias -a lbt = local-backtrace", False, True)
+        except:
+            pass
+ 
+ 
+    def get_section_for_sal(self, sal):
+        output = gdb.execute("list *" +  hex(sal.pc), False, True)
+ 
+        try:
+            while True:
+                lines = output.split('\n')
+                if len(lines) > 2:
+                    line = lines[1]
+                else:
+                    line = lines[0]
+                match = re.search(self.section_pattern, line)
+                if match:
+                    return match.group(1) + " " + match.group(2)
+                output = gdb.execute("list -", False, True)
+        # leave the loop upon request
+        except KeyboardInterrupt:
+            raise
+        # we expect an error if the current source does not contain a section name
+        # ... or we did not catched it
+        except gdb.error:
+            pass
+ 
+        return "unknown"
+ 
+ 
+    def invoke(self, argument, from_tty):
+        # TODO: handle two arguments -> "- 5" -> was entered as -5
+        # join(arguments).replace("- ","-")
+        if argument:
+            number = GetNumericArgument(argument)
+        else:
+            number = 0
+ 
+        # sanity check: Do we have any frame at all?
+        try:
+            frame = gdb.selected_frame()
+        except gdb.error:
+            ConditionalRaise("No stack.")
+            return
+ 
+        if not CFrameWorker.is_cobol_inner_frame(frame):
+            ConditionalRaise("local-backtrace only applies to COBOL")
+            return
+ 
+        frame_ptr_txt = None
+ 
+        if GV_GlobalVariables.gdb_version >= 110000:
+            level = frame.level()
+        else:
+            level = 0
+            frame_counter = gdb.newest_frame()
+            while frame_counter != frame:
+                frame_counter = frame_counter.older()
+                level = level + 1
+ 
+        sanitize_place = 1
+        sal = None
+ 
+        listsize = gdb.parameter("listsize")
+        gdb.execute("set listsize 1", False, False)
+        try:
+            while sanitize_place:
+                # the only way in GC 3.1 to get the section name is to query manually,
+                # doe below for testing pruposes (actually works quite fine)
+                name = None
+                if not sal:
+                    sal = frame.find_sal()
+                    steps_taken = 0
+                    name = self.get_section_for_sal(sal)
+                else:
+                    frame_ptr_txt = "(frame_ptr - {0})".format(steps_taken)
+                    steps_taken = steps_taken + 1
+                    sanitize_place = gdb.parse_and_eval(frame_ptr_txt + "->perform_through")
+                    if not sanitize_place:
+                        sal = gdb.decode_line(str(frame.function()))[1][0]
+                        name = str(frame.older().function())
+                    else:
+                        sal = gdb.decode_line("*(" + frame_ptr_txt + "->return_address_ptr)")[1][0]
+                        name = self.get_section_for_sal(sal)
+                print("#{0}.{1}  {2} at {3}:{4}".format(level, steps_taken, name, sal.symtab, sal.line))
+        # we just quit the loop as requested
+        # pass user errors unchanged
+        except (KeyboardInterrupt, gdb.GdbError):
+            raise
+        # that exception is unexpected, but we never know...
+        except:
+            traceback.print_exc()
+        # don't leave without cleanup...
+        finally:
+            if listsize is None:
+                gdb.execute("set listsize unlimited", False, False)
+            else:
+                gdb.execute("set listsize {0}".format(listsize), False, False)
+ 
 
 class CBacktrace (gdb.Command):
     """Print backtrace of all COBOL stack frames (common backtrace, filtered).
@@ -5463,7 +5647,7 @@ def exit_handler(event):
 
 def stop_handler(event):
     # When the inferior has been running, and is now stopped, we
-    # need to flag all cobol variables as IsDirty
+    # need to flag all COBOL variables as IsDirty
     GV_GlobalVariables.IsDirty = True
 
 
@@ -5478,10 +5662,7 @@ An argument says how fast auto stepping is done (1-19, default 5)."""
     def invoke(self, argument, from_tty):
         number = 5  # TODO: use a parameter for the default
         if argument:
-            if not argument.isdigit():
-                ConditionalRaise("argument must be a digit, not " + argument)
-                return
-            number = int(argument)
+            number = GetNumericArgument(argument)
             if number == 0 or number > 19:
                 ConditionalRaise("argument must be a digit between 1 and 19")
                 return
@@ -5529,6 +5710,7 @@ def stop_handler_auto_step(event):
 gdb.events.exited.connect(exit_handler)
 gdb.events.stop.connect(stop_handler)
 
+CFrameWorker()
 CPrint()
 CWatch()
 CBreak()
@@ -5536,4 +5718,3 @@ CLoad()
 CNext()
 CmdAutoStep()
 CStart()
-CFrameWorker()
