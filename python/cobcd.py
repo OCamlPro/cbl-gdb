@@ -271,7 +271,7 @@ class GlobalVariables():
     def __init__(self):
         # Establish the version of GDB
         m = re.search(r'[^0-9]*([0-9]+)\.([0-9]+)(\.([0-9]+))?', gdb.VERSION)
-        self.gdb_version = int(m.group(1))*10000 + int(m.group(2))*100
+        self.gdb_version = int(m.group(1)) * 10000 + int(m.group(2)) * 100
         if m.group(4):
             self.gdb_version = self.gdb_version + int(m.group(4))
 
@@ -279,12 +279,12 @@ class GlobalVariables():
             if self.gdb_version < 70600:
                 # Sanity check with expected stack trace - as everything will be broken in this case
                 raise("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.6+ is required)!".format(
-                                                                    self.gdb_version/10000, self.gdb_version%10000))
+                      self.gdb_version / 10000, self.gdb_version % 10000))
                 return
             if self.gdb_version < 70700:
                 print(" !! Warning: frame-filters and cbacktrace are not available with GDB-{0}.{1} (GDB 7.7+ is required)\n{2}".format(
-                                                                        self.gdb_version/10000, self.gdb_version%10000,
-                                                                    "cwatch handling will be severely limited"))
+                      self.gdb_version / 10000, self.gdb_version % 10000,
+                      "cwatch handling will be severely limited"))
             if self.gdb_version >= 80000:
                 print(" !! Warning: there are known problems with GDB-8.1 and GDB-8.2")
 
@@ -1155,17 +1155,17 @@ class VarTrie():
                     reversed.reverse()
 
                     payload = CobolVariable()
-                    payload.Program    = self.StackOfNames[0]
-                    payload.Section    = tokens[self.IndexType]
-                    payload.Level      = int(tokens[self.IndexLevel])
-                    payload.Name       = '/'.join(reversed)
-                    payload.Fname      = tokens[self.IndexFname]
-                    payload.Bname      = tokens[self.IndexBname]
-                    payload.Aname      = tokens[self.IndexAname]
-                    payload.Offset     = AddEmUp(tokens[self.IndexOffset])
-                    payload.Length     = AddEmUp(tokens[self.IndexLength])
-                    payload.OccursMin  = int(tokens[self.IndexOccursMin] or "0")
-                    payload.OccursMax  = int(tokens[self.IndexOccursMax] or "0")
+                    payload.Program   = self.StackOfNames[0]
+                    payload.Section   = tokens[self.IndexType]
+                    payload.Level     = int(tokens[self.IndexLevel])
+                    payload.Name      = '/'.join(reversed)
+                    payload.Fname     = tokens[self.IndexFname]
+                    payload.Bname     = tokens[self.IndexBname]
+                    payload.Aname     = tokens[self.IndexAname]
+                    payload.Offset    = AddEmUp(tokens[self.IndexOffset])
+                    payload.Length    = AddEmUp(tokens[self.IndexLength])
+                    payload.OccursMin = int(tokens[self.IndexOccursMin] or "0")
+                    payload.OccursMax = int(tokens[self.IndexOccursMax] or "0")
 
                     # print("Loading", payload.Level, payload.Name, payload.index_of_parent)
                     payload.payload_index = len(self.storage_list)
@@ -1433,6 +1433,7 @@ class VarTrie():
             self.storage_list[i].IsDirty = True
             i += 1
 
+
 class LineList():
     """List of starting lines of ProgramNames"""
 
@@ -1489,22 +1490,22 @@ class CobolVariable():
     def __init__(self):
         # This block of data comes from the VariableString
         self.index_of_parent = None
-        self.Program     = ""
-        self.Section     = ""
-        self.Level       = -1
-        self.Name        = ""
-        self.Fname       = ""
-        self.Bname       = ""
-        self.Aname       = ""
-        self.Offset      = 0
-        self.Length      = 0
-        self.OccursMin   = 0
-        self.OccursMax   = 0
-        self.AttrType    = 0
-        self.AttrDigits  = 0
-        self.AttrScale   = 0
-        self.AttrFlags   = 0
-        self.Picture     = None
+        self.Program    = ""
+        self.Section    = ""
+        self.Level      = -1
+        self.Name       = ""
+        self.Fname      = ""
+        self.Bname      = ""
+        self.Aname      = ""
+        self.Offset     = 0
+        self.Length     = 0
+        self.OccursMin  = 0
+        self.OccursMax  = 0
+        self.AttrType   = 0
+        self.AttrDigits = 0
+        self.AttrScale  = 0
+        self.AttrFlags  = 0
+        self.Picture    = None
 
         # These are established at the run-time executable instance level.
         # Eventually we'll have to pay attention to what the run-time libcob
@@ -1516,8 +1517,8 @@ class CobolVariable():
         # These elements are based on parenthesized subscripts after the
         # name:  name(array_index1 , array_index2 , ...)(refmod start : refmod run)
         # Note the commas and colons, which determine which is which
-        self.Subscripts          = None  # This is the user's requested subscripts, integers or variables
-        self.ResolvedSubscripts  = None  # These are the resolved values (offset is one-based)
+        self.Subscripts         = None  # This is the user's requested subscripts, integers or variables
+        self.ResolvedSubscripts = None  # These are the resolved values (offset is one-based)
         self.TableOffset  = 0    # These are additional offset bytes based on the table Subscripts
         self.Refmod       = None
         self.RefmodOffset = 0   # This is the zero-based Offset in (Offset:Length)
@@ -1528,11 +1529,11 @@ class CobolVariable():
         self.location_of_data      = 0  # value of Fname->data, when available
         self.location_of_attribute = 0  # value of Fname->attr
         self.location_of_pic       = 0  # value of Fname->attr.pic
-        self.data       = []            # list of Length bytes
+        self.data                  = [] # list of Length bytes
 
-        self.ActualLocation = 0         # This is the location_of_data qualified by table
+        self.ActualLocation        = 0  # This is the location_of_data qualified by table
                                         # subscripts and refmod offset
-        self.ActualLength = 0           # This is the length after applying refmod
+        self.ActualLength          = 0  # This is the length after applying refmod
 
         # Here is the string information decoded from the attributes and
         # the data we get from gdb:
@@ -1652,7 +1653,6 @@ class CobolVariable():
         print("    loc_of_attr:", hex(self.location_of_attribute))
         print("     loc_of_pic:", hex(self.location_of_pic))
 
-
     def IsAlphanumeric(self):
         retval = False
         if self.AttrType in (COB_TYPE_UNKNOWN,
@@ -1667,7 +1667,6 @@ class CobolVariable():
                              COB_TYPE_NATIONAL_EDITED):
             retval = True
         return retval
-
 
     def GetDataAsString(self):
         retval = ""
@@ -2862,7 +2861,7 @@ class CobolVariable():
 
                 # Convert the integer part to a string of bytes:
                 intba = bytearray(intpart.encode("utf8"))
-                for i in range(len(intba)) :
+                for i in range(len(intba)):
                     intba[i] -= 0x30    # "0"
 
                 # Convert the integer part to a string of bits:
@@ -2870,7 +2869,7 @@ class CobolVariable():
                 while len(intba) > 0:
                     # divide intba by two
                     borrow = 0
-                    for i in range(len(intba)) :
+                    for i in range(len(intba)):
                         newborrow = intba[i] & 0x01
                         intba[i] = (borrow*10 + intba[i]) // 2
                         borrow = newborrow
@@ -2887,7 +2886,7 @@ class CobolVariable():
 
                 # Convert the fractional part to a string of bytes:
                 fracba = bytearray(fracpart.encode("utf8"))
-                for i in range(len(fracba)) :
+                for i in range(len(fracba)):
                     fracba[i] -= 0x30    # "0"
 
                 # Convert the fractional part to a string of bits.  We
@@ -2897,7 +2896,7 @@ class CobolVariable():
                 while len(fracbits) < fraction_bits+1+1:
                     # Multiply fracbits by two:
                     carry = 0
-                    for i in range(len(fracba)-1,-1,-1) :
+                    for i in range(len(fracba)-1,-1,-1):
                         fracba[i] = fracba[i]*2 + carry
                         carry = fracba[i] // 10
                         fracba[i] = fracba[i] % 10
@@ -2968,7 +2967,7 @@ class CobolVariable():
                     significand = 0
                     # Trim off the implicit high-order bit:
                     sigbits = sigbits[1:]
-                    for ch in sigbits :
+                    for ch in sigbits:
                         significand <<= 1
                         if ch == '1':
                             significand += 1;
@@ -2984,7 +2983,7 @@ class CobolVariable():
             mask = 0x80
             offset += 1
 
-        for i in range(exponent_bits) :
+        for i in range(exponent_bits):
             if exponent & 1<<(exponent_bits-1-i) != 0:
                 self.data[offset] |= mask
             mask >>= 1
@@ -2992,7 +2991,7 @@ class CobolVariable():
                 mask = 0x80
                 offset += 1
 
-        for i in range(fraction_bits) :
+        for i in range(fraction_bits):
             if significand & 1<<(fraction_bits-1-i) != 0:
                 self.data[offset] |= mask
             mask >>= 1
@@ -3040,7 +3039,7 @@ class CobolVariable():
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 128-bit zero, for example
-        for i in range(self.Length-1,-1, -1) :
+        for i in range(self.Length-1,-1, -1):
             value <<= 8
             value += our_bytes[i]
 
@@ -3092,7 +3091,6 @@ class CobolVariable():
             pic += " ]"
         return body,pic
 
-
     def GnuCobolDecimal64ToString(self):
         # This decodes the GnuCOBOL version of the decimal64 format.  This is
         # based on a misreading of the actual IEEE format:
@@ -3106,7 +3104,7 @@ class CobolVariable():
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 64-bit zero, for example
-        for i in range(self.Length-1,-1, -1) :
+        for i in range(self.Length-1,-1, -1):
             value <<= 8
             value += our_bytes[i]
 
@@ -3175,7 +3173,7 @@ class CobolVariable():
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 64-bit zero, for example
-        for i in range(self.Length-1,-1, -1) :
+        for i in range(self.Length-1,-1, -1):
             value <<= 8
             value += our_bytes[i]
 
@@ -3243,7 +3241,7 @@ class CobolVariable():
         pdelta = 0
         pscale = 0
         if self.Picture:
-            for ch in Picture(self.Picture) :
+            for ch in Picture(self.Picture):
                 if ch == '9':
                     if pdelta == 0:
                         # If there are any P's, they'll be at the end
@@ -3302,11 +3300,11 @@ class CobolVariable():
 
         if pscale > 0:
             # The extra zeroes are to the left of the decimal point
-            for i in range(pscale) :
+            for i in range(pscale):
                 body += '0'
         elif pscale < 0:
             # The extra decimal points are between the decimal point and the digits
-            for i in range(-pscale) :
+            for i in range(-pscale):
                 body = body + '0'
             body = self.decimal_point + body
         elif self.AttrScale > 0:
@@ -3366,7 +3364,7 @@ class CobolVariable():
                 offset -= mask//2
                 mask %= 2
 
-            for ch in rvalue :
+            for ch in rvalue:
                 nch = ord(ch) - ord('0');
                 nch &= 0x0F
                 nch <<= (mask*4)
@@ -3391,7 +3389,7 @@ class CobolVariable():
                 negative = True
 
             # Convert the binary value in self.data to a string
-            for i in range(self.Length) :
+            for i in range(self.Length):
                 digit = self.data[i] & 0x3F
                 if digit < 32:
                     body += '^'
@@ -3399,11 +3397,11 @@ class CobolVariable():
                     body += chr(digit)
 
             if pscale > 0:
-                for i in range(pscale) :
+                for i in range(pscale):
                     body += '0'
             elif pscale < 0:
                 # scaling to the right of the decimal point
-                for i in range(-pscale) :
+                for i in range(-pscale):
                     body = '0' + body
                 body = self.decimal_point + body
             elif self.AttrScale > 0:
@@ -3428,7 +3426,7 @@ class CobolVariable():
 
         if self.CleanAndScale(rside):
             self.data = bytearray(self.Length)
-            for i in range(self.Length) :
+            for i in range(self.Length):
                 self.data[i] = ord(self.cleaned_rvalue[i])
 
             if self.is_negative:
@@ -3441,7 +3439,7 @@ class CobolVariable():
             return self.GetDataAsHex(), ""
 
         pcount = 0
-        for ch in Picture(self.Picture) :
+        for ch in Picture(self.Picture):
             if ch == 'P':
                 pcount += 1
 
@@ -3482,7 +3480,7 @@ class CobolVariable():
                 # be fighting Python the whole way:
 
                 carry = 1
-                for i in range(self.Length) :
+                for i in range(self.Length):
                     our_bytes[i] = ~our_bytes[i];
                     our_bytes[i] &= 0xFF
                     our_bytes[i] += carry;
@@ -3494,7 +3492,7 @@ class CobolVariable():
         # build up the little-endian value:
 
         value = 0
-        for i in range(self.Length-1,-1, -1) :
+        for i in range(self.Length-1,-1, -1):
             value <<= 8
             value += our_bytes[i]
 
@@ -3521,10 +3519,10 @@ class CobolVariable():
 
         if pcount > 0:
             if self.AttrScale < 0:
-                for i in range(pcount) :
+                for i in range(pcount):
                     body = body[1:] + '0'
             else:
-                for i in range(pcount) :
+                for i in range(pcount):
                     body = '0' + body[1:]
                 body = '.' + body
         else:
@@ -3566,7 +3564,7 @@ class CobolVariable():
 
             # Build up that value as little-endian
             self.data = bytearray(self.Length)
-            for i in range(self.Length) :
+            for i in range(self.Length):
                 self.data[i] += value & 0xFF
                 value = value // 256
 
@@ -3579,7 +3577,7 @@ class CobolVariable():
         body = ""
         pic = ""
         body += '"'
-        for i in range(len(self.data)) :
+        for i in range(len(self.data)):
             if self.data[i] < 32:
                 body += '^'
             else:
@@ -3603,7 +3601,7 @@ class CobolVariable():
         body = ""
         pic = ""
 
-        for i in range(self.Length) :
+        for i in range(self.Length):
             if self.data[i] < 32 or self.data[i] >= 128:
                 body += '.'
             else:
@@ -3657,7 +3655,7 @@ class CobolVariable():
             # commas in it.
 
             pic_without_commas = ""
-            for ch in self.expanded_picture :
+            for ch in self.expanded_picture:
                 if ch != self.comma_separator:
                     pic_without_commas += ch
 
@@ -3675,7 +3673,7 @@ class CobolVariable():
 
             # find the start and end of the floating sequence in self.expanded_picture
             if floating_insertion:
-                for i in range(len(self.expanded_picture)) :
+                for i in range(len(self.expanded_picture)):
                     if self.expanded_picture[i] == floating_insertion:
                         if floating_insertion_start == None:
                             floating_insertion_start = i
@@ -3698,7 +3696,7 @@ class CobolVariable():
                     if int(input[-self.rdigits:]) == 0:
                         # The fractional part is also zero; flag them, too
                         input = input[0:self.ldigits]
-                        for i in range(self.rdigits) :
+                        for i in range(self.rdigits):
                             input += 'z'
 
             # Recap:  input is now abs(numeric input), with leading
@@ -3950,13 +3948,13 @@ class CobolVariable():
             if noisy:
                 print("Unknown COB_TYPE", self.AttrType, hex(self.AttrType))
             non_printable = 0;
-            for i in range(len(self.data)) :
+            for i in range(len(self.data)):
                 if self.data[i] < 32:
                     non_printable += 1
 
             if non_printable >= 1:
                 value = "["
-                for byte in self.data :
+                for byte in self.data:
                     hexout = hex(byte)[-2:]
                     if hexout[0:1] == 'x':
                         hexout = '0' + hexout[-1:]
@@ -3964,7 +3962,7 @@ class CobolVariable():
                 value += "]"
             else:
                 value = '"'
-                for byte in self.data :
+                for byte in self.data:
                     if 32 <= byte:   # valid extended ASCII characters
                         value += chr(byte)
                     else:
@@ -3972,21 +3970,21 @@ class CobolVariable():
                 value += '"'
 
         pcount = 0
-        for ch in Picture(self.Picture) :
+        for ch in Picture(self.Picture):
             if ch == 'P':
                 pcount += 1
         pcount = 0
 
         if pcount > 0:
             if self.AttrScale < 0:
-                for i in range(pcount) :
+                for i in range(pcount):
                     value += '0'
             else:
                 stash = ''
                 if value[0] == '+' or value[0] == '-':
                     stash = value[0]
                     value = value[1:]
-                for i in range(pcount) :
+                for i in range(pcount):
                     value = '0' + value
                 value = stash + self.decimal_point + value
 
@@ -4461,7 +4459,7 @@ def BuildHumanHString(node, level):
             # We have children, so we don't display anything:
             h_str += "\n"
             for child in node.children:
-                h_str += BuildHumanHString(child,level + 1)
+                h_str += BuildHumanHString(child, level + 1)
         else:
             # We have no children, so we must be elementary, which
             # means it's time to display something:
@@ -6744,7 +6742,6 @@ class CFrameWorker:
         cobol, inner = CFrameWorker.is_cobol_frame(frame)
         return inner
 
-
     @staticmethod
     def Frame(up, number):
 
@@ -6860,6 +6857,7 @@ may be used to also stop if the current frame is a COBOL frame."""
     def invoke(self, argument, from_tty):
         CFrameWorker.Go(argument, False, True)
 
+
 class CBacktrace (gdb.Command):
     """Print backtrace of all COBOL stack frames (common backtrace, filtered).
 For detailed usage see 'help backtrace'."""
@@ -6871,10 +6869,10 @@ For detailed usage see 'help backtrace'."""
         old_enable = remove_filter.enabled
         remove_filter.enabled = True
         try:
-            command = "backtrace " + ' '.join(arguments).replace("- ","-")
+            command = "backtrace " + ' '.join(arguments).replace("- ", "-")
             gdb.execute(command)
         except gdb.error as error:
-            raise gdb.GdbError("cbacktrace failed: " +  str(error))
+            raise gdb.GdbError("cbacktrace failed: " + str(error))
         finally:
             remove_filter.enabled = old_enable
 
@@ -6887,6 +6885,7 @@ class ElidingDecorator(gdb.FrameDecorator.FrameDecorator):
 
     def elided(self):
         return iter(self.elided_frames)
+
 
 class ElideNonCobolIterator():
     def __init__(self, ii):
@@ -6926,6 +6925,7 @@ class ElideNonCobolIterator():
     def next(self):
         return self.__next__()
 
+
 class CobolFrameFilter():
     def __init__(self):
         self.name = "COBOL-FrameFilter"
@@ -6953,6 +6953,7 @@ class CobolOnlyDecoration(gdb.FrameDecorator.FrameDecorator):
     # def frame_args(self):
     #     # possibly print the COBOL name and start of the values here
     #     return None
+
 
 class RemoveNonCobolIterator():
     def __init__(self, ii):
@@ -6983,6 +6984,7 @@ class RemoveNonCobolIterator():
     def next(self):
         return self.__next__()
 
+
 class CobolOnlyFrameFilter():
     def __init__(self):
         self.name = "COBOL-Only-FrameFilter"
@@ -6992,7 +6994,6 @@ class CobolOnlyFrameFilter():
 
     def filter(self, frame_iter):
         return RemoveNonCobolIterator(frame_iter)
-
 
 
 def exit_handler(event):
