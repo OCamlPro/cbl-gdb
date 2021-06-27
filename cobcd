@@ -699,7 +699,8 @@ def Main() :
         s = COB_CFLAGS_BASE + [FCF_PROTECTION]
         os.environ["COB_CFLAGS"]= ' '.join(s)
         os.environ["COBC_GEN_DUMP_COMMENTS"]= '1'
-        TRIPLE_X_COMMAND = DeSpace(COBC + " -### -save-temps -A -ggdb -fgen-c-line-directives -fgen-c-labels ") + COMMAND_LINE
+        TRIPLE_X_ADDITION = " -### -save-temps -A -ggdb -fgen-c-line-directives -fgen-c-labels "
+        TRIPLE_X_COMMAND = DeSpace(COBC + TRIPLE_X_ADDITION) + COMMAND_LINE
         try :
             result_file = tempfile.TemporaryFile()
             if ECHO :
@@ -721,10 +722,14 @@ def Main() :
             ## from bad file names to syntax errors in the code.  Let's go for a minimal
             ## response with an ordinary compilation and exit
             command = [COBC] + ORIGINAL_COMMAND_LINE
-            if ECHO :
-                print('#### Ordinary compile due to thrown exception')
-                SmartPrint(command)
+            print('#### Ordinary compile due to thrown exception')
+            SmartPrint(command)
+            ## Execute it, ensuring we report a failure via return code:
             resultcode = SubprocessCall(command,True)
+            if resultcode == 0 :
+                print('#### Exception only because of additional options, possibly bad cobc version?')
+                SmartPrint(TRIPLE_X_ADDITION)
+                resultcode = 1
             os._exit(resultcode)
 
     if SHOW_TIME :
