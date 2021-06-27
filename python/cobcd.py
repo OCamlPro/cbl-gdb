@@ -1673,69 +1673,6 @@ class CobolVariable():
             retval = True
         return retval
 
-    def GetDataAsString(self):
-        retval = ""
-        GV_GlobalVariables.AllocateBuffers()
-
-        if False:  # For development
-            self.DumpJustAboutEverything()
-
-        # Something we need to know:
-        is_alphanumeric = self.IsAlphanumeric()
-
-        try:
-            # We will make our own cob_field in cprint_f0, with location of
-            # data modified by .TableOffset
-            field_loc = GV_GlobalVariables.cprint_f0
-            command = "set var *(cob_field *){0}".format(hex(field_loc)) + " = {"
-            command += "{0}, (char *){1}, &{2}".format(self.ActualLength,
-                                                       hex(self.ActualLocation),
-                                                       self.Aname)
-            command += "}"
-            # print("command", command)
-            gdb.execute(command, False, True)
-
-            buffer = GV_GlobalVariables.cprint_buffer
-
-            # If the data to be displayed aren't valid, the cob routine
-            # will sometimes return without having changed the buffer at all.
-            # To prevent stale data from the prior call polluting the results,
-            # zero the buffer:
-
-            command = "call (void)memset((char *){0},0,{1})".format(hex(buffer), PRINT_BUFFER_SIZE)
-            gdb.execute(command, False, True)
-
-            cob_get_field_str(field_loc, buffer, PRINT_BUFFER_SIZE)
-        except:
-            # This can happen in Windows when cob_get_field_str returns an 0xFF
-            # for a GROUP level variable that has LEVEL 88 variables in it.
-            traceback.print_exc()
-            return "<Error in GetDataAsString>"
-
-        # The formatted variable string is in buffer
-        buf_ptr = buffer
-
-        if is_alphanumeric:
-            retval = '"'
-            for i in range(self.Length):
-                # It's possible for cob_get_field_str() to return non-string
-                # data, so sanitize it a bit:
-                char = GetDataAt(buf_ptr, 1)
-                if char < 32:
-                    char = ord(NON_PRINTABLE_CHAR)
-                retval += chr(char)
-                buf_ptr += 1
-            retval += '"'
-        else:
-            while True:
-                char = GetDataAt(buf_ptr, 1)
-                if char == 0:
-                    break
-                retval += chr(char)
-                buf_ptr += 1
-
-        return retval
-
     def PutDataAsString(self, rside, p_startloc, p_length):
         return_value = 1
         cb_move = 0
@@ -2278,7 +2215,6 @@ class CobolVariable():
                 # can't read this data.  So, get the data:
 
                 self.data = GetBytesAt(self.ActualLocation, self.ActualLength)
-                ###self.display_body = self.GetDataAsString()
                 self.display_body = self.DataToString()
                 self.IsDirty = False
         return True
@@ -5480,9 +5416,10 @@ class CobolWatchpointHandler():
         print("... for " + payload.NameWithSubscripts())
         self.creating_wp = creating_wp
         self.payload = payload
-        self.old_value = self.payload.GetDataAsString()
+        self.old_value = self.payload.DataToString()
 
     def check_and_output_wp(self):
+        print("check_and_output_wp")
         if not CFrameWorker.has_cobol_frame():
             new_value = "<unreadable>"
             if self.old_value != new_value:
@@ -5499,7 +5436,10 @@ class CobolWatchpointHandler():
         title_string = title.get(bp_type, "Unknown watchpoint " + str(bp_type))
         payload = self.payload
         if bp_type in (gdb.BP_HARDWARE_WATCHPOINT, gdb.BP_ACCESS_WATCHPOINT):
-            new_value = payload.GetDataAsString()
+            # Set IsDirty and refetch:
+            self.payload.IsDirty = True;
+            self.payload.FetchVariableData(False)
+            new_value = self.payload.DataToString()
         else:
             new_value = self.old_value
 
