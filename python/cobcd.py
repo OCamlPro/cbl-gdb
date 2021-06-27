@@ -209,12 +209,6 @@ def cob_malloc(size):
     return int(ret)
 
 
-def cob_cache_malloc(size):
-    expression = "(void *(*)(const size_t)){0}({1})".format(GV_ModuleState.cob_cache_malloc, size)
-    ret = gdb.parse_and_eval(expression)
-    return int(ret)
-
-
 def cob_free(location):
     # Wrapper for cob_free
     command = "call (void){0}({1})".format(GV_ModuleState.cob_free, hex(location))
@@ -4206,7 +4200,6 @@ class ModuleState():
                         debugged_system = platform.system()
                         if debugged_system == 'Windows':
                             self.cob_malloc                 = "DEBUG_cob_malloc_"                  + name_root2
-                            self.cob_cache_malloc           = "DEBUG_cob_cache_malloc_"            + name_root2
                             self.cob_free                   = "DEBUG_cob_free_"                    + name_root2
                             self.cob_move                   = "DEBUG_cob_move_"                    + name_root2
                             self.cob_put_field_str          = "DEBUG_cob_put_field_str_"           + name_root2
@@ -4219,7 +4212,6 @@ class ModuleState():
                             # was first deployed.  In Version4.27, this will be removed and everybody
                             # will use the wrapper solution.
                             self.cob_malloc                 = "cob_malloc"
-                            self.cob_cache_malloc           = "cob_cache_malloc"
                             self.cob_free                   = "cob_free"
                             self.cob_move                   = "cob_move"
                             self.cob_put_field_str          = "cob_put_field_str"
@@ -5620,20 +5612,6 @@ class CBreakWorker():
             return None
         CBLDBG_CBREAK_WORKER.cobol_breaks.append(break_point)
         return break_point
-
-    @staticmethod
-    def get_data_from_buffer(buffer):
-        return_value = ""
-
-        buf_addr = GetAddressOf("{0}".format(buffer))
-        while True:
-            char = GetDataAt(buf_addr, 1)
-            if char == 0:
-                break
-            return_value += chr(char)
-            buf_addr += 1
-
-        return return_value
 
     @staticmethod
     def set_condition(break_point, condition):
