@@ -228,17 +228,6 @@ def cob_move(source, destination):
     gdb.execute(command, False, True)
 
 
-def cob_get_field_str(field, buff, size):
-    # Cast the return to void so that GDB doesn't try to interpret the returned
-    # value as a string pointer, which can cause minor nightmares when a COBOL group variable
-    # contains non-string binary data.
-    command = "call (void){0}((cob_field *){1}, (char *){2}, {3})".format(GV_ModuleState.cob_get_field_str,
-                                                                          hex(field),
-                                                                          hex(buff),
-                                                                          hex(size))
-    gdb.execute(command, False, True)
-
-
 def cob_put_field_str(field, buff):
     command = "call (int){0}((cob_field *){1}, (char *){2})".format(GV_ModuleState.cob_put_field_str,
                                                                     hex(field),
@@ -4220,7 +4209,6 @@ class ModuleState():
                             self.cob_cache_malloc           = "DEBUG_cob_cache_malloc_"            + name_root2
                             self.cob_free                   = "DEBUG_cob_free_"                    + name_root2
                             self.cob_move                   = "DEBUG_cob_move_"                    + name_root2
-                            self.cob_get_field_str          = "DEBUG_cob_get_field_str_"           + name_root2
                             self.cob_put_field_str          = "DEBUG_cob_put_field_str_"           + name_root2
                             self.cob_get_field_str_buffered = "DEBUG_cob_get_field_str_buffered_"  + name_root2
                             self.cob_cmp                    = "DEBUG_cob_cmp_"                     + name_root2
@@ -4234,7 +4222,6 @@ class ModuleState():
                             self.cob_cache_malloc           = "cob_cache_malloc"
                             self.cob_free                   = "cob_free"
                             self.cob_move                   = "cob_move"
-                            self.cob_get_field_str          = "cob_get_field_str"
                             self.cob_put_field_str          = "cob_put_field_str"
                             self.cob_get_field_str_buffered = "cob_get_field_str_buffered"
                             self.cob_cmp                    = "cob_cmp"
