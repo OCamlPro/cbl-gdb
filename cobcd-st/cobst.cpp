@@ -133,10 +133,6 @@ TackVariablesOntoCfile(PARAMETERS &params,
     ssResult << "{cob_move(f1,f2);}" << endl;
     ssResult << endl;
 
-    ssResult << "static const char	*DEBUG_cob_get_field_str_" << fname2 << "(const cob_field *f, char *buff, size_t size)" << endl;
-    ssResult << "{return cob_get_field_str(f,buff,size);}" << endl;
-    ssResult << endl;
-
     ssResult << "static int DEBUG_cob_put_field_str_" << fname2 << "(const cob_field *f, const char *p)" << endl;
     ssResult << "{return cob_put_field_str(f,p);}" << endl;
     ssResult << endl;
