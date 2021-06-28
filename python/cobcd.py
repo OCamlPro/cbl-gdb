@@ -1663,141 +1663,71 @@ class CobolVariable():
         return retval
 
 
-
-    def SetToRside(self, line_list , rside) :
-        #print( "Inside SetToRside", rside)
-
-        GotData = True
-        
+    def DataFromRside(self, rside):
         data = []
 
         # The following routines return self.Length bytes in a bytearray
-        if self.AttrType == COB_TYPE_NUMERIC_DISPLAY :
+        if self.AttrType == COB_TYPE_NUMERIC_DISPLAY:
             data = self.StringToNumericDisplay(rside)
-        elif self.AttrType == COB_TYPE_NUMERIC_BINARY :
-            self.StringToNumericBinary(rside)
-        elif self.AttrType == COB_TYPE_NUMERIC_PACKED :
-            self.StringToPackedDecimal(rside)
-        elif self.AttrType == COB_TYPE_NUMERIC_FLOAT :
-            self.StringToIeeeBinary(rside)
-        elif self.AttrType == COB_TYPE_NUMERIC_DOUBLE :
-            self.StringToIeeeBinary(rside)
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC64 :
-            GotData = False
+        elif self.AttrType == COB_TYPE_NUMERIC_BINARY:
+            data = self.StringToNumericBinary(rside)
+        elif self.AttrType == COB_TYPE_NUMERIC_PACKED:
+            data = self.StringToPackedDecimal(rside)
+        elif self.AttrType == COB_TYPE_NUMERIC_FLOAT:
+            data = self.StringToIeeeBinary(rside)
+        elif self.AttrType == COB_TYPE_NUMERIC_DOUBLE:
+            data = self.StringToIeeeBinary(rside)
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC64:
             print("Need to implement: COB_TYPE_NUMERIC_FP_DEC64")
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128 :
-            GotData = False
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128:
             print("Need to implement: COB_TYPE_NUMERIC_FP_DEC128")
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32 :
-            GotData = False
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32:
             print("Need to implement: COB_TYPE_NUMERIC_FP_BIN32")
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64 :
-            GotData = False
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64:
             print("Need to implement: COB_TYPE_NUMERIC_FP_BIN64")
-        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128 :
-            GotData = False
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128:
             print("Need to implement: COB_TYPE_NUMERIC_FP_BIN128")
-        elif self.AttrType == COB_TYPE_ALPHANUMERIC :
-            self.StringToAlphanumeric(rside)
-        elif self.AttrType == COB_TYPE_NUMERIC_EDITED :
-            self.StringToNumericEdited(rside)
-        else :
-            GotData = False
-            print("Probably a POINTER type.  Not yet implemented")
-
-        if GotData and len(self.data) > 0:
-            #print("We've GotData: self.data")
-            #print(' '.join(format(x, '02x') for x in self.data))
-
-            # We've got self.ListSize bytes in self.data
-            # Put them into memory
-
-            the_address = self.GetTheAddress(line_list)
-
-            if the_address :
-                i = 0
-                while i < len(self.data) :
-                    command = "set {char}" + hex(the_address+i) + "=" + hex(self.data[i])
-                    if 'gdb' in sys.modules :
-                         gdb.execute(command,False,True)
-                    i += 1
-
-
-
+        elif self.AttrType == COB_TYPE_ALPHANUMERIC:
+            data = self.StringToAlphanumeric(rside)
+        elif self.AttrType == COB_TYPE_NUMERIC_EDITED:
+            data = self.StringToNumericEdited(rside)
+        else:
+            print("Unimplemented attribute type: {0}.".format(self.AttrType))
+        return data
 
     def PutDataAsString(self, rside, p_startloc, p_length):
         return_value = 1
-        cb_move = 0
 
-        location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
-        if not location_of_field:
+        # Make sure we actually have a location 
+        if not self.ActualLocation:
             return 0
 
+        # Convert various figurative constants to useful forms:
         if R_ALLSPACE.match(rside):
             attr_type = COB_TYPE_ALPHANUMERIC_ALL
             rside = " "
-            cb_move = 1
         elif R_ALLZERO.match(rside):
             attr_type = COB_TYPE_ALPHANUMERIC_ALL
-            rside = "0"
-            cb_move = 1
+            rside = "0" * self.Length
         elif R_SPACE.match(rside):
             attr_type = COB_TYPE_ALPHANUMERIC
             rside = " "
-            cb_move = 1
         elif R_ZERO.match(rside):
             attr_type = COB_TYPE_NUMERIC_DISPLAY
             rside = "0"
-            cb_move = 1
 
-        try:
-            # Let's leverage GDB to set our buffer to rside:
-            buffer = GV_GlobalVariables.cprint_buffer
+        normalized_input = Rside()
+        normalized_input.FromString(rside)
 
-            buf_ptr = buffer
-            for index in range(len(rside)):
-                n = rside[index]
-                command = "set *(char *){0} = {1}".format(hex(buf_ptr), hex(ord(n)))
-                gdb.execute(command, False, True)
-                buf_ptr += 1
-            command = "set *(char *){0} = '\\0'".format(hex(buf_ptr))
-            gdb.execute(command, False, True)
+        new_data = self.DataFromRside(normalized_input)
 
-            # Fetch a copy of the cob_field_attr
-            if cb_move == 1:
-                command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(GV_GlobalVariables.cprint_a0), attr_type)
-                data_value = hex(buffer)
-            else:
-                command = "set var *(cob_field_attr *){0} = {1}".format(hex(GV_GlobalVariables.cprint_a0), self.Aname)
-                data_value = hex(self.location_of_data + self.TableOffset + p_startloc - 1)
-            gdb.execute(command, False, True)
-
-            if self.Refmod:
-                # Modify the attribute type.  If it was already COB_TYPE_GROUP, this is obviously harmless.
-                # But for other types, this modification makes the debugger behave in the same perverse way
-                # that GnuCOBOL does: it just crams whatever ASCII sequence you've specified into
-                # whatever the target happens to be.
-                command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(GV_GlobalVariables.cprint_a0), COB_TYPE_GROUP)
-                gdb.execute(command, False, True)
-
-            # We will make our own cob_field in cprint_f0, using our own cprint_a0
-            field_loc = GV_GlobalVariables.cprint_f0
-            command = "set var *(cob_field *){0}".format(hex(field_loc)) + " = {"
-            command += "{0}, (char *){1}, (cob_field_attr *){2}".format(p_length,
-                                                                        data_value,
-                                                                        hex(GV_GlobalVariables.cprint_a0))
-            command += "}"
-            gdb.execute(command, False, True)
-
-            if cb_move == 1:
-                cob_move(field_loc, location_of_field)
-            else:
-                cob_put_field_str(field_loc, buffer)
-            self.IsDirty = True
-        except gdb.error:
-            traceback.print_exc()
-            print("COMMAND failed in PutDataAsString: ", command)
-            return_value = 0
+        # This next code automatically handles table offset and refmods:
+        i = 0
+        while i < self.ActualLength:
+            command = "set {char}" + hex(self.ActualLocation+i) + "=" + hex(new_data[i])
+            gdb.execute(command,False,True)
+            i += 1
+        self.IsDirty = True
 
         return return_value
 
@@ -2512,130 +2442,6 @@ class CobolVariable():
 ### code.
 
 ### The code in this section was recovered from Version 3.23
-
-    def CleanAndScale(self,rside) :
-        """ Returns False if the number could not be CleanedAndScaled """
-        # rside is the raw data from the user.
-        self.rvalue = rside
-
-        # Expand 9(6)V9(5) to 999999V99999
-        self.expanded_picture = Picture(self.Picture)
-
-        pcount = 0
-        for ch in self.expanded_picture :
-            if ch == 'P' :
-                pcount += 1
-
-        # If there is a minus sign, flag this value as negative, and flush
-        # out everything to the left of the minus sign
-        nhyphen = rside.find('-')
-        if nhyphen > -1 :
-            self.is_negative = True
-            rside = rside[nhyphen+1:]
-        else :
-            self.is_negative = False
-
-        # A negative number without the HAVE_SIGN is not valid
-        if self.is_negative and (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
-            print("Error: Minus sign not allowed on unsigned variable")
-            return False
-
-        # Let's flush out everything but numeric stuff, so that 1,000 becomes
-        # 1000 and things like 1953/02/02 become 19530202
-        self.cleaned_rvalue = ""
-        for ch in rside :
-            if "0123456789-.".find(ch) > -1 :
-                self.cleaned_rvalue += ch
-
-        # Figure out the initial left/right digit count
-        self.rdigits = self.AttrScale
-        self.ldigits = self.AttrDigits - self.rdigits
-
-        # We need to handle the possibility of
-        # scaling 'P' characters in the PICTURE clause.
-
-        # Canonical examples:
-        # PICTURE 9PPP yields DIGITS 4, SCALE -3, and an input of
-        # 3000 gets converted to self.data 3
-
-        # PICTURE PPP9 yields DIGITS 4, SCALE 4, and an input of
-        # 0.0003 gets converted to self.data 3
-
-        if pcount > 0 :
-            # Sigh.  Well, we have to do it.  Let's count on GnuCOBOL having
-            # figured out whether this is a left-side or right-side scaling
-
-            lstr, rstr = LeftRight(rside,self.decimal_point)
-
-            if self.rdigits < 0 :
-                self.ldigits = self.AttrDigits
-
-                # This is a 9PPP style picture.  Whether implied or explicit,
-                # the decimal point will be at the right edge of the number
-
-                # There is, therefore, no right string
-                self.rdigits = 0
-                rstr = ""
-
-                # We lop off the rightmost -ldigits from lstr
-                for i in range(pcount) :
-                    self.ldigits -= 1
-                    lstr = '0' + lstr
-                    lstr = lstr[0:-1];
-
-            elif self.rdigits > 0 :
-                # This is a PPP9 style picture
-
-                # There is, therefore, no left string
-                self.ldigits = 0
-                lstr = ""
-                # And we lop off the leftmost digits of rstr
-                self.rdigits = self.AttrScale
-                for i in range(pcount) :
-                    self.rdigits -= 1
-                    rstr = rstr[1:]
-                    rstr = rstr + '0'
-
-            # Put the number back together for further processing:
-            self.cleaned_rvalue = lstr + self.decimal_point + rstr
-
-        # Let's turn cleaned_rvalue into a string of exactly AttrDigits
-        # characters, zero-filled to the left and right, as necessary
-
-        lstr, rstr = LeftRight(self.cleaned_rvalue,self.decimal_point)
-
-        # Trim off leading zeroes
-        while len(lstr) > 0 and lstr[0] == '0' :
-            lstr = lstr[1:]
-
-        # Trim off any trailing zeroes:
-        while len(rstr)>0 and rstr[len(rstr)-1] == '0' :
-            rstr = rstr[:len(rstr)-1]
-
-        # If there are too many ldigits flag this as an error
-        if len(lstr) > self.ldigits :
-            print("Error: Magnitude too large")
-            return False
-
-        # If there are too many rdigits, just grab the leftmost
-        if len(rstr) > self.rdigits :
-            print("Warning: Least significant digits truncated")
-            rstr = rstr[:self.rdigits]
-
-        # Make sure there are exactly ldigits:
-        while len(lstr) < self.ldigits :
-            lstr = '0' + lstr
-
-        # Make sure there are exactly rdigits:
-        while len(rstr) < self.rdigits :
-            rstr = rstr + '0'
-
-        self.cleaned_rvalue = lstr + rstr
-        if int(self.cleaned_rvalue) == 0 :
-            self.is_negative = False
-
-        return True
-
 
     def IeeeBinaryToString(self):
         bytes = self.data
@@ -3706,12 +3512,16 @@ class CobolVariable():
         return body, pic;
 
     def StringToAlphanumeric(self, rside):
-        # String from string:
-        self.data = rside[0:self.Length]
-        while len(self.data) < self.Length:
-            self.data += ' '
+        data = ""
+        i = 0
+        while i<self.Length and i<len(rside.original_string):
+            data += rside.original_string[i]
+            print("data", data)
+            i += 1
+        data += ' ' * (self.Length - i)
         # convert to bytearray:
-        self.data = bytearray(self.data, "utf8")
+        data = bytearray(data, "utf8")
+        return data
 
     def NumericEditedToString(self):
         # NUMERIC(EDITED)
@@ -4118,6 +3928,18 @@ class Rside():
         self.exponent_is_negative = False
         self.exponent = 0           # Note that this is an integer, and not a string
 
+    def __str__(self):
+        retval = ""
+        
+        retval += "original_string     : {0}\n".format('"'+self.original_string+'"')
+        retval += "is_symbol           : {0}\n".format(self.is_symbol              )
+        retval += "is_negative         : {0}\n".format(self.is_negative            )
+        retval += "left_of_decimal     : {0}\n".format(self.left_of_decimal        )
+        retval += "right_of_decimal    : {0}\n".format(self.right_of_decimal       )
+        retval += "exponent_is_negative: {0}\n".format(self.exponent_is_negative   )
+        retval += "exponent            : {0}\n".format(self.exponent               )
+        return retval
+
     def FromString(self,rside):
         self.__init__()
         # Accepts rside input.  These are *not* expressions; these are
@@ -4157,7 +3979,7 @@ class Rside():
         #
         #           cprint a = 1e2
         #
-        # has two possible meanings.  The user can disambiguate:  
+        # has two possible meanings.  The user can disambiguate:
         #
         #           a=1.e2
         #           a='1e2'
@@ -4198,7 +4020,7 @@ class Rside():
         # not be negative, or have a decimal fraction, or a floating-point exponent.
         #
         # This is a job for regular expressions!
-        # 
+        #
         # It might lead off with '+' '-'
         # followed by zero or more digits
         # followed by zero or one decimal points
@@ -4206,7 +4028,7 @@ class Rside():
         # followed by one of "" "e" "e+" or "e-"
         # That's followed by zero or more exponent digits
         #
-        R_NUMERICAL = re.compile( r"^([+]|[-])?(\d*)[.]?(\d*)(e|e[+]|e[-])?(\d*)$" ) 
+        R_NUMERICAL = re.compile( r"^([+]|[-])?(\d*)[.]?(\d*)(e|e[+]|e[-])?(\d*)$" )
         m = re.search(R_NUMERICAL, rside.lower())
         if m:
             print("We have a match!")
@@ -4229,7 +4051,7 @@ class Rside():
         # Arriving here means it doesn't start with an apostrophe, is
         # not surrounded by double-quotes, isn't hex or binary, and
         # fails the R_NUMERICAL regular expression
-        
+
         self.is_symbol
         return
 
@@ -5248,9 +5070,9 @@ class CPrintWorker():
         # The left-hand-side of the assignment is found in GV_GlobalVariables.VarLeft
         # Its index in storage_list is .VarLeftIndex.  See ProcessArguments
 
-        # value_ is a list.  It should have only one element.  It will be a literal constant
-        # or numerical constant.  If it is a variable name, we don't use it; we use
-        # GV_GlobalVariables.VarRight instead.
+        # value_ is a list.  It should have only one element, which is a string.
+        # That string will be a literal constant, a numerical constant, or the name of
+        # a variable.  If it is a variable name, use GV_GlobalVariables.VarRight.DataToString().
 
         # Just a reminder:  We use .VarLeft and .VarRight to handle the situation
         # where the same table name is on the left and right: "cprint A(2)=A(3).  Because
@@ -5336,11 +5158,17 @@ class CPrintWorker():
             # When LastName.FetchVariableData and FirstName.FetchVariableData are
             # called, second copies are made of those 20 bytes of data.
             #
+            # Said another way, embarrasingly:  We are O(n^squared) with regard to storage.
+            #
             # This is not just wasteful -- it's screwed up.  When set_var_value
             # is called to change LastName, that IsDirty bit gets set.  But the
             # IsDirty for PERSON is still False -- and so, even though LastName was
             # changed, displaying PERSON will show the stale data from the fetch
             # before the set_var_value.
+            #
+            # There really should be just one copy of data for the level-01 variable, with
+            # changes to the lower level variables propogating up to the level-01 IsDirty
+            # bit.
             #
             # As a purely temporary expedient, I am setting the global dirty
             # flag, which will prevent the display of stale data, but at the
@@ -7514,3 +7342,5 @@ rtest.FromString("0.0")
 rtest.FromString("+0")
 rtest.FromString("-0.0")
 rtest.FromString("-123.456e-2")
+rtest.FromString("")
+
