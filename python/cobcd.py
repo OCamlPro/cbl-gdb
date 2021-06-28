@@ -1662,6 +1662,69 @@ class CobolVariable():
             retval = True
         return retval
 
+
+
+    def SetToRside(self, line_list , rside) :
+        #print( "Inside SetToRside", rside)
+
+        GotData = True
+        
+        data = []
+
+        # The following routines return self.Length bytes in a bytearray
+        if self.AttrType == COB_TYPE_NUMERIC_DISPLAY :
+            data = self.StringToNumericDisplay(rside)
+        elif self.AttrType == COB_TYPE_NUMERIC_BINARY :
+            self.StringToNumericBinary(rside)
+        elif self.AttrType == COB_TYPE_NUMERIC_PACKED :
+            self.StringToPackedDecimal(rside)
+        elif self.AttrType == COB_TYPE_NUMERIC_FLOAT :
+            self.StringToIeeeBinary(rside)
+        elif self.AttrType == COB_TYPE_NUMERIC_DOUBLE :
+            self.StringToIeeeBinary(rside)
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC64 :
+            GotData = False
+            print("Need to implement: COB_TYPE_NUMERIC_FP_DEC64")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128 :
+            GotData = False
+            print("Need to implement: COB_TYPE_NUMERIC_FP_DEC128")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32 :
+            GotData = False
+            print("Need to implement: COB_TYPE_NUMERIC_FP_BIN32")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64 :
+            GotData = False
+            print("Need to implement: COB_TYPE_NUMERIC_FP_BIN64")
+        elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128 :
+            GotData = False
+            print("Need to implement: COB_TYPE_NUMERIC_FP_BIN128")
+        elif self.AttrType == COB_TYPE_ALPHANUMERIC :
+            self.StringToAlphanumeric(rside)
+        elif self.AttrType == COB_TYPE_NUMERIC_EDITED :
+            self.StringToNumericEdited(rside)
+        else :
+            GotData = False
+            print("Probably a POINTER type.  Not yet implemented")
+
+        if GotData and len(self.data) > 0:
+            #print("We've GotData: self.data")
+            #print(' '.join(format(x, '02x') for x in self.data))
+
+            # We've got self.ListSize bytes in self.data
+            # Put them into memory
+
+            the_address = self.GetTheAddress(line_list)
+
+            if the_address :
+                i = 0
+                while i < len(self.data) :
+                    command = "set {char}" + hex(the_address+i) + "=" + hex(self.data[i])
+                    if 'gdb' in sys.modules :
+                         gdb.execute(command,False,True)
+                    i += 1
+
+
+
+
     def PutDataAsString(self, rside, p_startloc, p_length):
         return_value = 1
         cb_move = 0
@@ -2449,6 +2512,130 @@ class CobolVariable():
 ### code.
 
 ### The code in this section was recovered from Version 3.23
+
+    def CleanAndScale(self,rside) :
+        """ Returns False if the number could not be CleanedAndScaled """
+        # rside is the raw data from the user.
+        self.rvalue = rside
+
+        # Expand 9(6)V9(5) to 999999V99999
+        self.expanded_picture = Picture(self.Picture)
+
+        pcount = 0
+        for ch in self.expanded_picture :
+            if ch == 'P' :
+                pcount += 1
+
+        # If there is a minus sign, flag this value as negative, and flush
+        # out everything to the left of the minus sign
+        nhyphen = rside.find('-')
+        if nhyphen > -1 :
+            self.is_negative = True
+            rside = rside[nhyphen+1:]
+        else :
+            self.is_negative = False
+
+        # A negative number without the HAVE_SIGN is not valid
+        if self.is_negative and (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0 :
+            print("Error: Minus sign not allowed on unsigned variable")
+            return False
+
+        # Let's flush out everything but numeric stuff, so that 1,000 becomes
+        # 1000 and things like 1953/02/02 become 19530202
+        self.cleaned_rvalue = ""
+        for ch in rside :
+            if "0123456789-.".find(ch) > -1 :
+                self.cleaned_rvalue += ch
+
+        # Figure out the initial left/right digit count
+        self.rdigits = self.AttrScale
+        self.ldigits = self.AttrDigits - self.rdigits
+
+        # We need to handle the possibility of
+        # scaling 'P' characters in the PICTURE clause.
+
+        # Canonical examples:
+        # PICTURE 9PPP yields DIGITS 4, SCALE -3, and an input of
+        # 3000 gets converted to self.data 3
+
+        # PICTURE PPP9 yields DIGITS 4, SCALE 4, and an input of
+        # 0.0003 gets converted to self.data 3
+
+        if pcount > 0 :
+            # Sigh.  Well, we have to do it.  Let's count on GnuCOBOL having
+            # figured out whether this is a left-side or right-side scaling
+
+            lstr, rstr = LeftRight(rside,self.decimal_point)
+
+            if self.rdigits < 0 :
+                self.ldigits = self.AttrDigits
+
+                # This is a 9PPP style picture.  Whether implied or explicit,
+                # the decimal point will be at the right edge of the number
+
+                # There is, therefore, no right string
+                self.rdigits = 0
+                rstr = ""
+
+                # We lop off the rightmost -ldigits from lstr
+                for i in range(pcount) :
+                    self.ldigits -= 1
+                    lstr = '0' + lstr
+                    lstr = lstr[0:-1];
+
+            elif self.rdigits > 0 :
+                # This is a PPP9 style picture
+
+                # There is, therefore, no left string
+                self.ldigits = 0
+                lstr = ""
+                # And we lop off the leftmost digits of rstr
+                self.rdigits = self.AttrScale
+                for i in range(pcount) :
+                    self.rdigits -= 1
+                    rstr = rstr[1:]
+                    rstr = rstr + '0'
+
+            # Put the number back together for further processing:
+            self.cleaned_rvalue = lstr + self.decimal_point + rstr
+
+        # Let's turn cleaned_rvalue into a string of exactly AttrDigits
+        # characters, zero-filled to the left and right, as necessary
+
+        lstr, rstr = LeftRight(self.cleaned_rvalue,self.decimal_point)
+
+        # Trim off leading zeroes
+        while len(lstr) > 0 and lstr[0] == '0' :
+            lstr = lstr[1:]
+
+        # Trim off any trailing zeroes:
+        while len(rstr)>0 and rstr[len(rstr)-1] == '0' :
+            rstr = rstr[:len(rstr)-1]
+
+        # If there are too many ldigits flag this as an error
+        if len(lstr) > self.ldigits :
+            print("Error: Magnitude too large")
+            return False
+
+        # If there are too many rdigits, just grab the leftmost
+        if len(rstr) > self.rdigits :
+            print("Warning: Least significant digits truncated")
+            rstr = rstr[:self.rdigits]
+
+        # Make sure there are exactly ldigits:
+        while len(lstr) < self.ldigits :
+            lstr = '0' + lstr
+
+        # Make sure there are exactly rdigits:
+        while len(rstr) < self.rdigits :
+            rstr = rstr + '0'
+
+        self.cleaned_rvalue = lstr + rstr
+        if int(self.cleaned_rvalue) == 0 :
+            self.is_negative = False
+
+        return True
+
 
     def IeeeBinaryToString(self):
         bytes = self.data
@@ -3352,15 +3539,15 @@ class CobolVariable():
         return body , pic
 
     def StringToNumericDisplay(self, rside):
-        self.data = bytearray()
+        data = bytearray()
 
         if self.CleanAndScale(rside):
-            self.data = bytearray(self.Length)
+            data = bytearray(self.Length)
             for i in range(self.Length):
-                self.data[i] = ord(self.cleaned_rvalue[i])
+                data[i] = ord(self.cleaned_rvalue[i])
 
             if self.is_negative:
-                self.data[self.Length-1] |= 0x40
+                data[self.Length-1] |= 0x40
 
     def NumericBinaryToString(self):
         # Generic Binary
@@ -3919,6 +4106,132 @@ class CobolVariable():
                 value = stash + self.decimal_point + value
 
         return value;
+
+class Rside():
+    """Universal value extractor"""
+    def __init__(self):
+        self.original_string = ""
+        self.is_symbol = False
+        self.is_negative = False
+        self.left_of_decimal  = ""   # Note that these are string
+        self.right_of_decimal = ""
+        self.exponent_is_negative = False
+        self.exponent = 0           # Note that this is an integer, and not a string
+
+    def FromString(self,rside):
+        self.__init__()
+        # Accepts rside input.  These are *not* expressions; these are
+        # "atomic" values
+        rside = rside.strip()
+        if len(rside) > 0 and rside[0] == '\'':
+            # An apostrophe means that the text is believed to be a symbol;
+            # we see this happen when using TAB-completion.  And a user might have
+            # to disambiguate a symbol like '0XAB' or '1E00', which can be either
+            # constants or symbols unless put into single quotes.
+            self.original_string = rside
+            self.is_symbol = True
+            return
+        if len(rside) > 0 and rside[0] == '\"':
+            # A double-quote has to start a string ending with a double-quote
+            if len(rside) == 1:
+                # The string has only one character
+                ConditionalRaise("Unterminated string")
+                return
+            if rside[-1] != '\"':
+                # The last character needs to be another double-quote
+                ConditionalRaise("Unterminated string")
+                return
+            # We have "something".
+            # Clean off the bracketing double-quotes:
+            rside = rside[1:-1]
+            #
+            # We are now going to fall through.  This is because in
+            # COBOL-land, it is possible to assign a string to, say, an integer
+            # variable.  The conversion i="123" is the same as i=123
+        self.original_string = rside
+        #
+        # Just for completeness, it must be observed that COBOL naming allows for
+        # some unresolvable ambiguities at this point.  For example, it's perfectly
+        # possible, although (in my opinion) quite stupid, to have a variable named
+        # "1e2".  This means that the statement
+        #
+        #           cprint a = 1e2
+        #
+        # has two possible meanings.  The user can disambiguate:  
+        #
+        #           a=1.e2
+        #           a='1e2'
+        #
+        # are unambiguous, the second being GDB-speak for a symbol
+        #
+        # In my opinion, interpreting 1e2 as a floating-point number is more useful, so
+        # that's what I am going to do here.  My reasoning: although "1e2 is a legitimate
+        # COBOL name, it would be unusual.  "00-SOMETHING" and 00SOMETHING are more common.
+        #
+        # If a user does use "1e2", then they'll have to live with the consequences and
+        # disambiguate with apostrophes.
+        #
+        # That concept is also true for 0x<hex digits> and 0b<binary>: The numerical
+        # interpretation supercedes the symbolic one
+        #
+        # This does make for unreasonably complicated logic for us at this point.
+        #
+        rlower = rside.lower()
+        print("RSIDE:", rside)
+
+        R_HEXADECIMALCONSTANT = re.compile( r"0x([0-9a-f])+$" )
+        m = re.search(R_HEXADECIMALCONSTANT, rlower)
+        if m:
+            # This is a hexadecimal constant:
+            # Convert the hex to an integer, and then convert that to a string:
+            self.left_of_decimal = str(int(m.group(1)[2:],16))
+            return
+
+        R_BINARYCONSTANT = re.compile( r"0b([01])+$" )
+        m = re.search(R_BINARYCONSTANT, rlower)
+        if m:
+            # This is a binary constant:
+            self.left_of_decimal = str(int(m.group(1)[2:],2))
+            return
+
+        # We are now dealing with the possibility of a decimal number.  It might or might
+        # not be negative, or have a decimal fraction, or a floating-point exponent.
+        #
+        # This is a job for regular expressions!
+        # 
+        # It might lead off with '+' '-'
+        # followed by zero or more digits
+        # followed by zero or one decimal points
+        # followed by zero or more digits
+        # followed by one of "" "e" "e+" or "e-"
+        # That's followed by zero or more exponent digits
+        #
+        R_NUMERICAL = re.compile( r"^([+]|[-])?(\d*)[.]?(\d*)(e|e[+]|e[-])?(\d*)$" ) 
+        m = re.search(R_NUMERICAL, rside.lower())
+        if m:
+            print("We have a match!")
+            print("   Prefix:  ",m.group(1))
+            print("   LDigits: ",m.group(2))
+            print("   RDigits: ",m.group(3))
+            print("   EFlag:   ",m.group(4))
+            print("   EDigits: ",m.group(5))
+
+            if m.group(1) == '-':
+                self.is_negative  = True
+                self.left_of_decimal  = m.group(2)
+                self.right_of_decimal = m.group(3)
+                if m.group(4) and len(m.group(4)) > 1 and m.group(4)[1] == '-':
+                    self.exponent_is_negative = True
+                if m.group(5):
+                    self.exponent = int(m.group(5))
+                return
+
+        # Arriving here means it doesn't start with an apostrophe, is
+        # not surrounded by double-quotes, isn't hex or binary, and
+        # fails the R_NUMERICAL regular expression
+        
+        self.is_symbol
+        return
 
 ####################################################################
 ###  End of recovered data formatting code #########################
@@ -7194,3 +7507,10 @@ CLoad()
 CNext()
 CmdAutoStep()
 CStart()
+
+rtest = Rside()
+rtest.FromString("0")
+rtest.FromString("0.0")
+rtest.FromString("+0")
+rtest.FromString("-0.0")
+rtest.FromString("-123.456e-2")

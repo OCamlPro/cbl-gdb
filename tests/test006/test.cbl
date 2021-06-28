@@ -16,6 +16,8 @@
 
        01 TOCCUR.
            03 TOSTR Pic X(10) Value SPACE OCCURS 10.
+       
+       01 0e00 PIC 9V9.
 
        Procedure Division.
 
