@@ -165,12 +165,17 @@ NON_PRINTABLE_CHAR = '^'
 ALLOCATE = True
 DONT_ALLOCATE = False
 
-#  regexp's for ZERO, SPACE and numeric handling
+#  regexp's for ALL, ZERO, SPACE and numeric handling.
+R_ALL   = re.compile(r"^ALL\b", re.IGNORECASE)
+R_SPACE = re.compile(r'\bSPACE(S)?\b', re.IGNORECASE)
+R_ZERO  = re.compile(r'\bZERO(S|ES)?\b', re.IGNORECASE)
+# The following works for signed or unsigned integer or floating=point numbers
+# See Rside.FromString()
+R_NUMERICALCONSTANT = re.compile(r"^([+]|[-])?(\d*)[.]?(\d*)(e|e[+]|e[-])?(\d*)$", re.IGNORECASE)
+
 R_ALL_ZERO_SPACE = re.compile(r'ALL|ZERO(S|ES)?|SPACE(S)?', re.IGNORECASE)
 R_ZERO_SPACE = re.compile(r'ZERO(S|ES)?|SPACE(S)?', re.IGNORECASE)
 
-R_SPACE = re.compile(r'SPACE(S)?', re.IGNORECASE)
-R_ZERO = re.compile(r'ZERO(S|ES)?', re.IGNORECASE)
 R_ALLSPACE = re.compile(r'ALL[ ]*SPACE(S)?', re.IGNORECASE)
 R_ALLZERO = re.compile(r'ALL[ ]*ZERO(S|ES)?', re.IGNORECASE)
 
@@ -766,7 +771,7 @@ def get_left_right_args(args):
     # Pick up the left and right sides, and turn them into
     # "normalized" COBOL variable names.
     if len(leftright) > 0:
-        if leftright[0].startswith("if"):
+        if re.match( r"if\b", leftright[0], re.IGNORECASE):
             left_side = TokenizeCanonicalName(leftright[0][2:].strip())
             left_side.insert(0, "if")
         else:
@@ -775,6 +780,8 @@ def get_left_right_args(args):
     if len(leftright) > 2 and leftright[2] != '':
         # There is a rightside.
         right_side = leftright[2].strip()
+
+        # Check to see if it is a quoted string
         if right_side[0] == '"':
             if len(right_side) < 2 or right_side[-1] != right_side[0]:
                 print("A syntax error in >>{0}<<.".format(right_side))
@@ -782,19 +789,23 @@ def get_left_right_args(args):
                 right_side = []
                 return left_side, left_side, ""
             right_side = [right_side]
+        # Check for various literal integer forms:
         elif right_side[0:2].lower().replace('"', "'") == "x'":
             right_side = FromHexAlphaString(right_side)
             right_side = [right_side]
         elif right_side[0:2].lower().replace('"', "'") == "h'":
             right_side = FromHexLiteralNumber(right_side)
             right_side = [right_side]
+        elif right_side[0:2].lower().replace('"', "'") == "b'":
+            right_side = FromBinaryLiteralNumber(right_side)
+            right_side = [right_side]
         else:
-            # This is not a quoted string, so canonicalize it.
+            # It's not a quoted string, nor is it a numeric literal in the form of X", H", or B"
             right_side = TokenizeCanonicalName(leftright[2])
 
         condition = leftright[1]
     elif len(leftright) > 2 and leftright[2] == '':
-        print("No rightside specified.")
+        print("Syntax error: There is nothing after the \"{0}\".".format(leftright[1]))
         left_side = []
         right_side = []
         return left_side, left_side, ""
@@ -859,7 +870,7 @@ def TokenizeCanonicalName(desired):
     # We expect a string, and we return a list of strings.
 
     # We allow "A of B in C", where [of|in] is not case sensitive
-    # We also allow A.B.C, A/B/C, and "A B C"
+    # We also allow "A/B/C" and "A B C"
 
     # We assume that anything after a '(' is subscripts and/or refmods.  We
     # peel them off here, and tack them onto the final element of the list
@@ -907,7 +918,7 @@ def TokenizeCanonicalName(desired):
             else:
                 desired = match.group(1) + " " + match.group(3)
 
-        desired = desired.replace(".", " ").replace("/", " ").strip()
+        desired = desired.replace("/", " ").strip()
         desired += suffix
     retval = desired.split()
     return retval
@@ -1671,6 +1682,8 @@ class CobolVariable():
             data = self.StringToNumericDisplay(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_BINARY:
             data = self.StringToNumericBinary(rside)
+        elif self.AttrType == COB_TYPE_NUMERIC_COMP5:
+            data = self.StringToNumericBinary(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_PACKED:
             data = self.StringToPackedDecimal(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_FLOAT:
@@ -1678,27 +1691,27 @@ class CobolVariable():
         elif self.AttrType == COB_TYPE_NUMERIC_DOUBLE:
             data = self.StringToIeeeBinary(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC64:
-            print("Need to implement: COB_TYPE_NUMERIC_FP_DEC64")
+            print("DataFromRside(): Need to implement: COB_TYPE_NUMERIC_FP_DEC64")
         elif self.AttrType == COB_TYPE_NUMERIC_FP_DEC128:
-            print("Need to implement: COB_TYPE_NUMERIC_FP_DEC128")
+            print("DataFromRside(): Need to implement: COB_TYPE_NUMERIC_FP_DEC128")
         elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN32:
-            print("Need to implement: COB_TYPE_NUMERIC_FP_BIN32")
+            print("DataFromRside(): Need to implement: COB_TYPE_NUMERIC_FP_BIN32")
         elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN64:
-            print("Need to implement: COB_TYPE_NUMERIC_FP_BIN64")
+            print("DataFromRside(): Need to implement: COB_TYPE_NUMERIC_FP_BIN64")
         elif self.AttrType == COB_TYPE_NUMERIC_FP_BIN128:
-            print("Need to implement: COB_TYPE_NUMERIC_FP_BIN128")
+            print("DataFromRside(): Need to implement: COB_TYPE_NUMERIC_FP_BIN128")
         elif self.AttrType == COB_TYPE_ALPHANUMERIC:
             data = self.StringToAlphanumeric(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_EDITED:
             data = self.StringToNumericEdited(rside)
         else:
-            print("Unimplemented attribute type: {0}.".format(self.AttrType))
+            print("DataFromRside(): Unimplemented attribute type: {0}.".format(self.AttrType))
         return data
 
     def PutDataAsString(self, rside, p_startloc, p_length):
         return_value = 1
 
-        # Make sure we actually have a location 
+        # Make sure we actually have a location
         if not self.ActualLocation:
             return 0
 
@@ -1721,13 +1734,14 @@ class CobolVariable():
 
         new_data = self.DataFromRside(normalized_input)
 
-        # This next code automatically handles table offset and refmods:
-        i = 0
-        while i < self.ActualLength:
-            command = "set {char}" + hex(self.ActualLocation+i) + "=" + hex(new_data[i])
-            gdb.execute(command,False,True)
-            i += 1
-        self.IsDirty = True
+        if new_data:
+            # This next code automatically handles table offset and refmods:
+            i = 0
+            while i < self.ActualLength:
+                command = "set {char}" + hex(self.ActualLocation+i) + "=" + hex(new_data[i])
+                gdb.execute(command,False,True)
+                i += 1
+            self.IsDirty = True
 
         return return_value
 
@@ -2617,7 +2631,7 @@ class CobolVariable():
                 expanded //= 10
                 decimal_exponent += 1
             while excess < 0:
-                excess -= 1
+                excess += 1
                 expanded *= 10
                 decimal_exponent -= 1
 
@@ -2668,7 +2682,7 @@ class CobolVariable():
         return body , pic
 
     def StringToIeeeBinary(self, rside):
-        self.data = bytearray(self.Length)
+        retval = bytearray(self.Length)
         length = self.Length
 
         if length == 2:
@@ -2695,43 +2709,41 @@ class CobolVariable():
             fraction_bits = 112
             bias = 16383
             valid_digits = 34
-        elif length == 32:
-            # binary256
-            exponent_bits = 19
-            fraction_bits = 236
-            bias = 262143
-            valid_digits = 72
+#        elif length == 32:
+#            # binary256
+#            exponent_bits = 19
+#            fraction_bits = 236
+#            bias = 262143
+#            valid_digits = 72
         else:
             message = "Don't know how to handle IEEE 754 floating point with a length of "
             message += str(length)
             message += " bytes"
             raise Exception (message)
 
-        rside = rside.lower()
-
-        if rside == "inf" or rside == "+inf":
+        if rside.original_string.lower() == "inf" or rside.original_string.lower() == "+inf":
             # Positive infinity
             sign = 0
             exponent = (1<<exponent_bits)-1
             significand = 0
-        elif rside == "-inf":
+        elif rside.original_string.lower() == "-inf":
             # Negative infinity
             sign = 1
             exponent = (1<<exponent_bits)-1
             significand = 0
-        elif rside == "nan" or rside == "snan":
-            # signalling NaN
+        elif rside.original_string.lower() == "nan" or rside == "snan":
+            # signalling rside.original_string.lower()
             sign = 0
             exponent = (1<<exponent_bits)-1
             significand = 1
-        elif rside == "qnan":
+        elif rside.original_string.lower() == "qnan":
             # quiet NaN
             sign = 0
             exponent = (1<<exponent_bits)-1
             significand = (1<<(fraction_bits-1)) + 1
         else:
             try:
-                fpnumber = float(rside)
+                fpnumber = float(rside.original_string)
             except:
                 print("Ill-formed floating point input")
                 fpnumber = 0
@@ -2895,12 +2907,12 @@ class CobolVariable():
                         if ch == '1':
                             significand += 1;
 
-        # We can now build the self.data bytearray:
+        # We can now build the retval bytearray:
 
         mask = 0x80
         offset = 0;
         if sign == 1:
-            self.data[offset] |= mask
+            retval[offset] |= mask
         mask >>= 1
         if mask == 0:
             mask = 0x80
@@ -2908,7 +2920,7 @@ class CobolVariable():
 
         for i in range(exponent_bits):
             if exponent & 1<<(exponent_bits-1-i) != 0:
-                self.data[offset] |= mask
+                retval[offset] |= mask
             mask >>= 1
             if mask == 0:
                 mask = 0x80
@@ -2916,12 +2928,13 @@ class CobolVariable():
 
         for i in range(fraction_bits):
             if significand & 1<<(fraction_bits-1-i) != 0:
-                self.data[offset] |= mask
+                retval[offset] |= mask
             mask >>= 1
             if mask == 0:
                 mask = 0x80
                 offset += 1
-        self.data.reverse()
+        retval.reverse()
+        return retval
 
     def FpNormalize(self, coefficient, exponent):
         # convert anything to 1.234E5
@@ -3254,48 +3267,46 @@ class CobolVariable():
         return body, pic
 
     def StringToPackedDecimal(self, rside):
-        self.data = bytearray()
-        if self.CleanAndScale(rside):
-            # The sign nybble: 0x0C = positive
-            #                  0x0D = negative
-            #                  0x0F = unsigned
-            # Note: Those values are from the internet, and match a number of
-            # documents.  I haven't strictly verified what GNUCobol does, except
-            # that I have seen 0x0D for negative numbers and I have seen 0x0C
-            # for positives.
+        # The sign nybble: 0x0C = positive
+        #                  0x0D = negative
+        #                  0x0F = unsigned
+        # Note: Those values are from the internet, and match a number of
+        # documents.  I haven't strictly verified what GNUCobol does, except
+        # that I have seen 0x0D for negative numbers and I have seen 0x0C
+        # for positives.
 
-            if self.is_negative:
-                sign_nybble = 0x0D  # Indicates negative
-            else:
-                sign_nybble = 0x0C  # Indicates positive
+        if rside.is_negative:
+            sign_nybble = 0x0D  # Indicates negative
+        else:
+            sign_nybble = 0x0C  # Indicates positive
 
-            if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0:
-                sign_nybble = 0x0F  # Indicates unsigned
+        if (self.AttrFlags & COB_FLAG_HAVE_SIGN) == 0:
+            sign_nybble = 0x0F  # Indicates unsigned
 
-            # Reverse the combined string, because we will build it up
-            # from low-order to high-order
-            rvalue = self.cleaned_rvalue[::-1]
+        digits = self.RsideToInteger(rside)
+        # Reverse the string, because we will build it up
+        # from low-order to high-order
+        digits = digits[::-1]
 
-            # We can now put together the self.data package:
-            self.data = bytearray(self.Length)
-            offset = len(self.data)-1
-            mask = 0
-            if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0:
-                self.data[offset] |= ((sign_nybble&0xF) << (mask*4))
-                #print(''.join(format(x, '02x') for x in self.data))
-                mask += 1;
-                offset -= mask//2
-                mask %= 2
+        # We can now put together the retval bytearray
+        retval = bytearray(self.Length)
+        offset = len(retval)-1
+        mask = 0
+        if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0:
+            retval[offset] |= ((sign_nybble&0xF) << (mask*4))
+            mask += 1;
+            offset -= mask//2
+            mask %= 2
 
-            for ch in rvalue:
-                nch = ord(ch) - ord('0');
-                nch &= 0x0F
-                nch <<= (mask*4)
-                self.data[offset] |= nch;
-                #print(''.join(format(x, '02x') for x in self.data))
-                mask += 1;
-                offset -= mask//2
-                mask %= 2
+        for ch in digits:
+            nch = ord(ch) - ord('0');
+            nch &= 0x0F
+            nch <<= (mask*4)
+            retval[offset] |= nch;
+            mask += 1;
+            offset -= mask//2
+            mask %= 2
+        return retval
 
     def NumericDisplayToString(self):
         # numeric digits, but with a decimal point:
@@ -3344,16 +3355,59 @@ class CobolVariable():
             pic += ") ]"
         return body , pic
 
+    def RsideToInteger(self, rside):
+        """ Returns a string of self.AttrDigits decimal digits, with the implicit
+            decimal point in the correct place"""
+        # Try to live with the idiocy of users:
+        left  = rside.left_of_decimal
+        right = rside.right_of_decimal
+        exp = rside.exponent
+        if rside.exponent_is_negative:
+            exp = -exp
+        while exp > 0:
+            exp -= 1
+            if right:
+                left += right[0]
+                right = right[1:]
+            else:
+                left += '0'
+            if len(left) == 0 and right[-self.AttrDigits:] == '0' * self.AttrDigits:
+                # This will handle absurd exponents without taking geologic time
+                break
+        while exp < 0:
+            exp += 1
+            if left:
+                right = left[-1] + right
+                left = left[0:-1]
+            else:
+                right = '0' + right
+            if len(right) == 0 and left[0:self.AttrDigits] == '0' * self.AttrDigits:
+                break
+
+        # left and right now contain the digits we need, with the decimal fraction
+        # and exponents taken into account.
+
+        # Build fences:
+        left  = '0' * (self.AttrDigits - len(left)) + left
+        right = '0' * (self.AttrDigits-len(right)) + right
+
+        # start off with the rightmost digits of left:
+        data = left[-(self.AttrDigits-self.AttrScale):]
+        # and continue with the leftmost digits of right:
+        data += right[0:self.AttrScale]
+        return data
+
     def StringToNumericDisplay(self, rside):
-        data = bytearray()
+        # Get the normalized self.AttrDigits digits:
+        digits = self.RsideToInteger(rside)
 
-        if self.CleanAndScale(rside):
-            data = bytearray(self.Length)
-            for i in range(self.Length):
-                data[i] = ord(self.cleaned_rvalue[i])
+        # Turn the string into bytes:
+        data = bytearray(digits, "utf8")
 
-            if self.is_negative:
-                data[self.Length-1] |= 0x40
+        if rside.is_negative and (self.AttrFlags & COB_FLAG_HAVE_SIGN):
+            data[self.AttrDigits-1] |= 0x40
+
+        return data
 
     def NumericBinaryToString(self):
         # Generic Binary
@@ -3479,21 +3533,23 @@ class CobolVariable():
 
     def StringToNumericBinary(self, rside):
         # Generic binary
-        self.data = bytearray()
-        if self.CleanAndScale(rside):
-            value = int(self.cleaned_rvalue, 10)
-            if self.is_negative:
-                value = -value
 
-            # Build up that value as little-endian
-            self.data = bytearray(self.Length)
-            for i in range(self.Length):
-                self.data[i] += value & 0xFF
-                value = value // 256
+        # Get self.AttrDigits decimal digits:
+        digits = self.RsideToInteger(rside)
 
-            if self.AttrFlags & COB_FLAG_BINARY_SWAP:
-                self.data.reverse()
+        value = int(digits)
+        if rside.is_negative:
+            value = -value
 
+        # Build up that value as little-endian
+        retval = bytearray(self.Length)
+        for i in range(self.Length):
+            retval[i] += value & 0xFF
+            value = value // 256
+
+        if self.AttrFlags & COB_FLAG_BINARY_SWAP:
+            retval.reverse()
+        return retval
 
     def AlphanumericToString(self):
         # ALPHANUMERIC
@@ -3516,7 +3572,6 @@ class CobolVariable():
         i = 0
         while i<self.Length and i<len(rside.original_string):
             data += rside.original_string[i]
-            print("data", data)
             i += 1
         data += ' ' * (self.Length - i)
         # convert to bytearray:
@@ -3574,235 +3629,234 @@ class CobolVariable():
         return body, pic;
 
     def StringToNumericEdited(self, rside):
-        self.data = bytearray()
-        if self.CleanAndScale(rside):
-            # We have to look for are "floating insertion" symbols
-            # A floating insertion range is indicated by duplicated '$', '+', or
-            # '-' characters.  One caveat: the floating range can have embedded
-            # commas in it.
+        retval = bytearray()
 
-            pic_without_commas = ""
-            for ch in self.expanded_picture:
-                if ch != self.comma_separator:
-                    pic_without_commas += ch
+        input = self.RsideToInteger(rside)
+        # We have to look for "floating insertion" symbols
+        # A floating insertion range is indicated by duplicated '$', '+', or
+        # '-' characters.  One caveat: the floating range can have embedded
+        # commas in it.
 
-            floating_insertion = None
-            floating_insertion_start = None
-            floating_insertion_end = None
+        pic_without_commas = ""
+        for ch in self.Picture:
+            if ch != self.comma_separator:
+                pic_without_commas += ch
 
-            currency_doubled = self.currency_symbol + self.currency_symbol
-            if pic_without_commas.find(currency_doubled) > -1:
-                floating_insertion = self.currency_symbol
-            elif pic_without_commas.find("++") > -1:
-                floating_insertion = '+'
-            elif pic_without_commas.find("--") > -1:
-                floating_insertion = '-'
+        floating_insertion = None
+        floating_insertion_start = None
+        floating_insertion_end = None
 
-            # find the start and end of the floating sequence in self.expanded_picture
-            if floating_insertion:
-                for i in range(len(self.expanded_picture)):
-                    if self.expanded_picture[i] == floating_insertion:
-                        if floating_insertion_start == None:
-                            floating_insertion_start = i
-                        floating_insertion_end = i
+        currency_doubled = self.currency_symbol + self.currency_symbol
+        if pic_without_commas.find(currency_doubled) > -1:
+            floating_insertion = self.currency_symbol
+        elif pic_without_commas.find("++") > -1:
+            floating_insertion = '+'
+        elif pic_without_commas.find("--") > -1:
+            floating_insertion = '-'
 
-            # We need to convert leading zeroes to the 'z' character:
-            input = self.cleaned_rvalue
+        # find the start and end of the floating sequence in self.Picture
+        if floating_insertion:
+            for i in range(len(self.Picture)):
+                if self.Picture[i] == floating_insertion:
+                    if floating_insertion_start == None:
+                        floating_insertion_start = i
+                    floating_insertion_end = i
 
-            # zero-flag the integer portion
-            i = 0
-            while i < self.ldigits:
-                if input[i] == '0':
-                    input = input[:i] + 'z' + input[i+1:]
-                else:
-                    break;
-                i += 1
-            if i >= self.ldigits:
-                # The entire integer part is zero.  How about the fractional part?
-                if self.rdigits > 0:
-                    if int(input[-self.rdigits:]) == 0:
-                        # The fractional part is also zero; flag them, too
-                        input = input[0:self.ldigits]
-                        for i in range(self.rdigits):
-                            input += 'z'
+        # We need to convert leading zeroes to the 'z' character:
+        # zero-flag the integer portion
+        i = 0
+        while i < self.AttrDigits - self.AttrScale:
+            if input[i] == '0':
+                input = input[:i] + 'z' + input[i+1:]
+            else:
+                break;
+            i += 1
+        if i >= self.AttrDigits - self.AttrScale:
+            # The entire integer part is zero.  How about the fractional part?
+            if self.AttrScale > 0:
+                if int(input[-self.AttrScale:]) == 0:
+                    # The fractional part is also zero; flag them, too
+                    input = input[0:self.AttrDigits - self.AttrScale]
+                    for i in range(self.AttrScale):
+                        input += 'z'
 
-            # Recap:  input is now abs(numeric input), with leading
-            # zeroes to the left of the decimal position replaced with 'z'
-            # (Or everthing is 'z' if the value was zero to begin with)
+        # Recap:  input is now abs(numeric input), with leading
+        # zeroes to the left of the decimal position replaced with 'z'
+        # (Or everthing is 'z' if the value was zero to begin with)
 
-            # We will now walk the picture and input strings from right
-            # to left, building the resulting string as we go
+        # We will now walk the picture and input strings from right
+        # to left, building the resulting string as we go
 
-            pindex = len(self.expanded_picture)-1
-            dindex = len(input)-1
+        pindex = len(self.Picture)-1
+        dindex = len(input)-1
 
-            # This is, perforce, a state machine.  At this stage of development
-            # is is mostly an ad hoc state machine.
+        # This is, perforce, a state machine.  At this stage of development
+        # is is mostly an ad hoc state machine.
 
-            body = ""
+        body = ""
 
-            rightmost = True
-            did_floating = False
+        rightmost = True
+        did_floating = False
 
-            while pindex >= 0:
-                pch = self.expanded_picture[pindex]
-                pindex -= 1
+        while pindex >= 0:
+            pch = self.Picture[pindex]
+            pindex -= 1
 
-                if rightmost:
-                    rightmost = False
+            if rightmost:
+                rightmost = False
 
-                    if pch == '+':
-                        if self.is_negative:
-                            body += '-'
-                        else:
-                            body += '+'
-                        continue
+                if pch == '+':
+                    if rside.is_negative:
+                        body += '-'
+                    else:
+                        body += '+'
+                    continue
 
-                    if pch == '-':
-                        if self.is_negative:
-                            body += '-'
-                        else:
-                            body += '+'
-                        continue
+                if pch == '-':
+                    if rside.is_negative:
+                        body += '-'
+                    else:
+                        body += '+'
+                    continue
 
-                    if pch == 'c':
-                        # This is a CR (See the Picture() function)
-                        if self.is_negative:
-                            body += 'RC'    # We are building body backwards
-                        else:
-                            body += "  "
-                        continue
+                if pch == 'c':
+                    # This is a CR (See the Picture() function)
+                    if rside.is_negative:
+                        body += 'RC'    # We are building body backwards
+                    else:
+                        body += "  "
+                    continue
 
-                    if pch == 'd':
-                        # This is a DB
-                        if self.is_negative:
-                            body += 'BD'
-                        else:
-                            body += "  "
-                        continue
+                if pch == 'd':
+                    # This is a DB
+                    if rside.is_negative:
+                        body += 'BD'
+                    else:
+                        body += "  "
+                    continue
 
-                if did_floating:
-                    # Everything to the left of the floating_insertion is
-                    # supposed to be a blank
-                    body += ' '
-                    continue;
+            if did_floating:
+                # Everything to the left of the floating_insertion is
+                # supposed to be a blank
+                body += ' '
+                continue;
 
-                if not did_floating and pindex+1 == floating_insertion_start:
-                    # The leftmost character of the floating_insertion has
-                    # to be set, even at the cost of truncating the input
+            if not did_floating and pindex+1 == floating_insertion_start:
+                # The leftmost character of the floating_insertion has
+                # to be set, even at the cost of truncating the input
+                did_floating = True
+                if floating_insertion == '-':
+                    if rside.is_negative:
+                        body += '-'
+                    else:
+                        body += ' '
+                    continue
+                if floating_insertion == '-':
+                    if rside.is_negative:
+                        body += '-'
+                    else:
+                        body += '+'
+                    continue
+                if floating_insertion == self.currency_symbol:
+                    body += self.currency_symbol
+                    continue
+
+            if "PV".find(pch) > -1:
+                # We ignore scaling P characters here, because we processed
+                # them earlier by scaling the input string
+                # We also ignore the implicate decimal point 'V'
+                continue
+
+            inside_floating = False
+            if floating_insertion_start != None:
+                inside_floating = (pindex+1 >= floating_insertion_start and pindex+1 <= floating_insertion_end)
+
+            include_literal = "B0/,."
+            if not inside_floating:
+                include_literal += self.currency_symbol
+            if include_literal.find(pch) > -1:
+                body += pch
+                continue
+
+            # After this point, we need to pull out an input character
+            dch = input[dindex]
+            dindex -= 1
+
+            if inside_floating:
+                if dch == 'z':
                     did_floating = True
-                    if floating_insertion == '-':
-                        if self.is_negative:
-                            body += '-'
-                        else:
-                            body += ' '
-                        continue
-                    if floating_insertion == '-':
-                        if self.is_negative:
-                            body += '-'
-                        else:
-                            body += '+'
-                        continue
-                    if floating_insertion == self.currency_symbol:
-                        body += self.currency_symbol
-                        continue
-
-                if "PV".find(pch) > -1:
-                    # We ignore scaling P characters here, because we processed
-                    # them earlier by scaling the input string
-                    # We also ignore the implicate decimal point 'V'
+                    body += floating_insertion
                     continue
 
-                inside_floating = False
-                if floating_insertion_start != None:
-                    inside_floating = (pindex+1 >= floating_insertion_start and pindex+1 <= floating_insertion_end)
+            if pch == '9' or inside_floating:
+                # Explicit characters are expressed explicitly
+                if dch == 'z':
+                    dch = '0'
+                body += dch
+                continue
 
-                include_literal = "B0/,."
-                if not inside_floating:
-                    include_literal += self.currency_symbol
-                if include_literal.find(pch) > -1:
-                    body += pch
-                    continue
+            if pch == 'Z':
+                # Convert leading zeroes to blanks
+                if dch == 'z':
+                    dch = ' '
+                body += dch
+                continue
 
-                # After this point, we need to pull out an input character
-                dch = input[dindex]
-                dindex -= 1
+            if pch == '*':
+                # Convert leading zeroes to asterisks
+                if dch == 'z':
+                    dch = '*'
+                body += dch
+                continue
 
-                if inside_floating:
-                    if dch == 'z':
-                        did_floating = True
-                        body += floating_insertion
-                        continue
+        # We've built body.  Flip it right-side around
+        body = body[::-1]
 
-                if pch == '9' or inside_floating:
-                    # Explicit characters are expressed explicitly
-                    if dch == 'z':
-                        dch = '0'
-                    body += dch
-                    continue
+        # Depending on the numbers, we could have some interesting
+        # entries.  Let's just power through them.
 
-                if pch == 'Z':
-                    # Convert leading zeroes to blanks
-                    if dch == 'z':
-                        dch = ' '
-                    body += dch
-                    continue
+        # Get rid of commas preceded by spaces
+        wipe_me = ' ' + self.comma_separator
+        while True:
+            i = body.find(wipe_me)
+            if i == -1:
+                break;
+            body = body[:i] + "  " + body[i+2:]
 
-                if pch == '*':
-                    # Convert leading zeroes to asterisks
-                    if dch == 'z':
-                        dch = '*'
-                    body += dch
-                    continue
+        # Get rid of commas preceded by asterisks:
+        wipe_me = '*' + self.comma_separator
+        while True:
+            i = body.find(wipe_me)
+            if i == -1:
+                break;
+            body = body[:i] + "**" + body[i+2:]
 
-            # We've built body.  Flip it right-side around
-            body = body[::-1]
+        # Get rid of commas preceded by currency symbols:
+        wipe_me = self.currency_symbol + self.comma_separator
+        while True:
+            i = body.find(wipe_me)
+            if i == -1:
+                break;
+            body = body[:i] + ' ' + self.currency_symbol + body[i+2:]
 
-            # Depending on the numbers, we could have some interesting
-            # entries.  Let's just power through them.
+        if (body[-2:] == 'CR' or body[-2:0] == 'DB') and body[-3] == ' ':
+            body = body[:-2] + "  "
 
-            # Get rid of commas preceded by spaces
-            wipe_me = ' ' + self.comma_separator
-            while True:
-                i = body.find(wipe_me)
-                if i == -1:
-                    break;
-                body = body[:i] + "  " + body[i+2:]
+        if (body[-2:] == 'CR' or body[-2:0] == 'DB') and body[-4:-2] == " .":
+            body = body[:-2] + "  "
 
-            # Get rid of commas preceded by asterisks:
-            wipe_me = '*' + self.comma_separator
-            while True:
-                i = body.find(wipe_me)
-                if i == -1:
-                    break;
-                body = body[:i] + "**" + body[i+2:]
+        if (body[-1:] == '+' or body[-1] == '-') and body[-2] == ' ':
+            body = body[:-1] + " "
 
-            # Get rid of commas preceded by currency symbols:
-            wipe_me = self.currency_symbol + self.comma_separator
-            while True:
-                i = body.find(wipe_me)
-                if i == -1:
-                    break;
-                body = body[:i] + ' ' + self.currency_symbol + body[i+2:]
+        if (body[-1:] == '-' or body[-1] == '+') and body[-3:-1] == " .":
+            body = body[:-1] + " "
 
-            if (body[-2:] == 'CR' or body[-2:0] == 'DB') and body[-3] == ' ':
-                body = body[:-2] + "  "
+        # If we ended up with just a decimal point, get rid of that:
+        if body.strip() == self.decimal_point:
+            i = body.find(self.decimal_point)
+            body = body[:i] + ' ' + body[i+1:]
 
-            if (body[-2:] == 'CR' or body[-2:0] == 'DB') and body[-4:-2] == " .":
-                body = body[:-2] + "  "
-
-            if (body[-1:] == '+' or body[-1] == '-') and body[-2] == ' ':
-                body = body[:-1] + " "
-
-            if (body[-1:] == '-' or body[-1] == '+') and body[-3:-1] == " .":
-                body = body[:-1] + " "
-
-            # If we ended up with just a decimal point, get rid of that:
-            if body.strip() == self.decimal_point:
-                i = body.find(self.decimal_point)
-                body = body[:i] + ' ' + body[i+1:]
-
-            self.data = bytearray(body.encode("utf8"))
+        retval = bytearray(body.encode("utf8"))
 
     def DataToString(self):
         noisy = False
@@ -3923,14 +3977,14 @@ class Rside():
         self.original_string = ""
         self.is_symbol = False
         self.is_negative = False
-        self.left_of_decimal  = ""   # Note that these are string
+        self.left_of_decimal  = ""   # Note that these are strings, and not integers
         self.right_of_decimal = ""
         self.exponent_is_negative = False
         self.exponent = 0           # Note that this is an integer, and not a string
+        self.has_all = False
 
     def __str__(self):
         retval = ""
-        
         retval += "original_string     : {0}\n".format('"'+self.original_string+'"')
         retval += "is_symbol           : {0}\n".format(self.is_symbol              )
         retval += "is_negative         : {0}\n".format(self.is_negative            )
@@ -3942,104 +3996,97 @@ class Rside():
 
     def FromString(self,rside):
         self.__init__()
-        # Accepts rside input.  These are *not* expressions; these are
-        # "atomic" values
-        rside = rside.strip()
-        if len(rside) > 0 and rside[0] == '\'':
-            # An apostrophe means that the text is believed to be a symbol;
-            # we see this happen when using TAB-completion.  And a user might have
-            # to disambiguate a symbol like '0XAB' or '1E00', which can be either
-            # constants or symbols unless put into single quotes.
+        if rside:
+            # Accepts rside input.  These are *not* expressions; these are
+            # "atomic" values
+            rside = rside.strip()
+            if len(rside) > 0 and rside[0] == '\'':
+                # An apostrophe means that the text is believed to be a symbol;
+                # we see this happen when using TAB-completion.  And a user might have
+                # to disambiguate a symbol like '0XAB' or '1E00', which can be either
+                # constants or symbols unless put into single quotes.
+                self.original_string = rside
+                self.is_symbol = True
+                return
+            if len(rside) > 0 and rside[0] == '\"':
+                # A double-quote has to start a string ending with a double-quote
+                if len(rside) == 1:
+                    # The string has only one character
+                    ConditionalRaise("Unterminated string")
+                    return
+                if rside[-1] != '\"':
+                    # The last character needs to be another double-quote
+                    ConditionalRaise("Unterminated string")
+                    return
+                # We have "something".
+                # Clean off the bracketing double-quotes:
+                rside = rside[1:-1]
+                #
+                # We are now going to fall through.  This is because in
+                # COBOL-land, it is possible to assign a string to, say, an integer
+                # variable.  The conversion i="123" is the same as i=123
             self.original_string = rside
-            self.is_symbol = True
-            return
-        if len(rside) > 0 and rside[0] == '\"':
-            # A double-quote has to start a string ending with a double-quote
-            if len(rside) == 1:
-                # The string has only one character
-                ConditionalRaise("Unterminated string")
-                return
-            if rside[-1] != '\"':
-                # The last character needs to be another double-quote
-                ConditionalRaise("Unterminated string")
-                return
-            # We have "something".
-            # Clean off the bracketing double-quotes:
-            rside = rside[1:-1]
             #
-            # We are now going to fall through.  This is because in
-            # COBOL-land, it is possible to assign a string to, say, an integer
-            # variable.  The conversion i="123" is the same as i=123
-        self.original_string = rside
-        #
-        # Just for completeness, it must be observed that COBOL naming allows for
-        # some unresolvable ambiguities at this point.  For example, it's perfectly
-        # possible, although (in my opinion) quite stupid, to have a variable named
-        # "1e2".  This means that the statement
-        #
-        #           cprint a = 1e2
-        #
-        # has two possible meanings.  The user can disambiguate:
-        #
-        #           a=1.e2
-        #           a='1e2'
-        #
-        # are unambiguous, the second being GDB-speak for a symbol
-        #
-        # In my opinion, interpreting 1e2 as a floating-point number is more useful, so
-        # that's what I am going to do here.  My reasoning: although "1e2 is a legitimate
-        # COBOL name, it would be unusual.  "00-SOMETHING" and 00SOMETHING are more common.
-        #
-        # If a user does use "1e2", then they'll have to live with the consequences and
-        # disambiguate with apostrophes.
-        #
-        # That concept is also true for 0x<hex digits> and 0b<binary>: The numerical
-        # interpretation supercedes the symbolic one
-        #
-        # This does make for unreasonably complicated logic for us at this point.
-        #
-        rlower = rside.lower()
-        print("RSIDE:", rside)
+            # Just for completeness, it must be observed that COBOL naming allows for
+            # some unresolvable ambiguities at this point.  For example, it's perfectly
+            # possible, although (in my opinion) quite stupid, to have a variable named
+            # "1e2".  This means that the statement
+            #
+            #           cprint a = 1e2
+            #
+            # has two possible meanings.  The user can disambiguate:
+            #
+            #           a=1.e2
+            #           a='1e2'
+            #
+            # are unambiguous, the second being GDB-speak for a symbol
+            #
+            # In my opinion, interpreting 1e2 as a floating-point number is more useful, so
+            # that's what I am going to do here.  My reasoning: although "1e2 is a legitimate
+            # COBOL name, it would be unusual.  "00-SOMETHING" and 00SOMETHING are more common.
+            #
+            # If a user does use "1e2", then they'll have to live with the consequences and
+            # disambiguate with apostrophes.
+            #
+            # That concept is also true for 0x<hex digits> and 0b<binary>: The numerical
+            # interpretation supercedes the symbolic one
+            #
+            # Hence the extended and rather convoluted logic at this point
+            #
 
-        R_HEXADECIMALCONSTANT = re.compile( r"0x([0-9a-f])+$" )
-        m = re.search(R_HEXADECIMALCONSTANT, rlower)
-        if m:
-            # This is a hexadecimal constant:
-            # Convert the hex to an integer, and then convert that to a string:
-            self.left_of_decimal = str(int(m.group(1)[2:],16))
-            return
+            # We now contend with COBOL's figurative constants: ALL ZERO BLANK
 
-        R_BINARYCONSTANT = re.compile( r"0b([01])+$" )
-        m = re.search(R_BINARYCONSTANT, rlower)
-        if m:
-            # This is a binary constant:
-            self.left_of_decimal = str(int(m.group(1)[2:],2))
-            return
+            if re.match(R_ALL, rside):
+                self.has_all = True
+                rside = rside[3:].trim()
 
-        # We are now dealing with the possibility of a decimal number.  It might or might
-        # not be negative, or have a decimal fraction, or a floating-point exponent.
-        #
-        # This is a job for regular expressions!
-        #
-        # It might lead off with '+' '-'
-        # followed by zero or more digits
-        # followed by zero or one decimal points
-        # followed by zero or more digits
-        # followed by one of "" "e" "e+" or "e-"
-        # That's followed by zero or more exponent digits
-        #
-        R_NUMERICAL = re.compile( r"^([+]|[-])?(\d*)[.]?(\d*)(e|e[+]|e[-])?(\d*)$" )
-        m = re.search(R_NUMERICAL, rside.lower())
-        if m:
-            print("We have a match!")
-            print("   Prefix:  ",m.group(1))
-            print("   LDigits: ",m.group(2))
-            print("   RDigits: ",m.group(3))
-            print("   EFlag:   ",m.group(4))
-            print("   EDigits: ",m.group(5))
+            if re.search(R_SPACE, rside):
+                self.original_string = " "
+                return
 
-            if m.group(1) == '-':
-                self.is_negative  = True
+            # We are now dealing with the possibility of a decimal number.  It might or might
+            # not be negative, or have a decimal fraction, or a floating-point exponent.
+            #
+            # This is a job for regular expressions!
+            #
+            # It might lead off with '+' '-'
+            # followed by zero or more digits
+            # followed by zero or one decimal points
+            # followed by zero or more digits
+            # followed by one of "" "e" "e+" or "e-"
+            # That's followed by zero or more exponent digits
+            #
+            m = re.search(R_NUMERICALCONSTANT, rside)
+            if m:
+                #print("We have a match!")
+                #print("   Prefix:  ",m.group(1))
+                #print("   LDigits: ",m.group(2))
+                #print("   RDigits: ",m.group(3))
+                #print("   EFlag:   ",m.group(4))
+                #print("   EDigits: ",m.group(5))
+
+                if m.group(1) == '-':
+                    self.is_negative  = True
                 self.left_of_decimal  = m.group(2)
                 self.right_of_decimal = m.group(3)
                 if m.group(4) and len(m.group(4)) > 1 and m.group(4)[1] == '-':
@@ -4048,11 +4095,11 @@ class Rside():
                     self.exponent = int(m.group(5))
                 return
 
-        # Arriving here means it doesn't start with an apostrophe, is
-        # not surrounded by double-quotes, isn't hex or binary, and
-        # fails the R_NUMERICAL regular expression
+            # Arriving here means it doesn't start with an apostrophe, is
+            # not surrounded by double-quotes, isn't hex or binary, and
+            # fails the R_NUMERICALCONSTANT regular expression
 
-        self.is_symbol
+            self.is_symbol = True
         return
 
 ####################################################################
@@ -4862,6 +4909,25 @@ def FromHexLiteralNumber(conv_str):
             except:
                 break
             retval *= 16
+            retval += nch
+            i += 1
+    return str(retval)
+
+
+def FromBinaryLiteralNumber(conv_str):
+    """Converts a binary literal string to an ordinary string"""
+    retval = 0
+    if conv_str[0:2].lower().replace('"', "'") == "h'" and conv_str[-1] in ("'", '"'):
+        # This is correctly formed
+        # Trim off the front and back:
+        conv_str = conv_str[2:-1]
+        i = 0
+        while i < len(conv_str):
+            try:
+                nch = int(conv_str[i], 2)
+            except:
+                break
+            retval *= 2
             retval += nch
             i += 1
     return str(retval)
@@ -7336,11 +7402,8 @@ CNext()
 CmdAutoStep()
 CStart()
 
-rtest = Rside()
-rtest.FromString("0")
-rtest.FromString("0.0")
-rtest.FromString("+0")
-rtest.FromString("-0.0")
-rtest.FromString("-123.456e-2")
-rtest.FromString("")
-
+#rtest = Rside()
+#rtest.FromString("12.34")
+#print(rtest)
+#rtest.FromString('"12.34"')
+#print(rtest)
