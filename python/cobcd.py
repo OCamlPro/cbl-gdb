@@ -3356,7 +3356,7 @@ class CobolVariable():
         return body , pic
 
     def RsideToInteger(self, rside):
-        """ Returns a string of self.AttrDigits decimal digits, with the implicit
+        """ Returns a string of decimal digits, with the implicit
             decimal point in the correct place"""
         # Try to live with the idiocy of users:
         left  = rside.left_of_decimal
@@ -3388,11 +3388,12 @@ class CobolVariable():
         # and exponents taken into account.
 
         # Build fences:
-        left  = '0' * (self.AttrDigits - len(left)) + left
-        right = '0' * (self.AttrDigits-len(right)) + right
+        number_of_digits = self.NumberOfDigits()
+        left  = '0' * (number_of_digits - len(left)) + left
+        right = '0' * (number_of_digits-len(right)) + right
 
         # start off with the rightmost digits of left:
-        data = left[-(self.AttrDigits-self.AttrScale):]
+        data = left[-(number_of_digits-self.AttrScale):]
         # and continue with the leftmost digits of right:
         data += right[0:self.AttrScale]
         return data
@@ -3473,23 +3474,16 @@ class CobolVariable():
             value <<= 8
             value += our_bytes[i]
 
+        length = self.NumberOfDigits()
+
         # Do an initial conversion to a string, keeping in mind that because of
         # COBOL truncation issues, value may have more digits to the left than
         # we actually want to see.
         body += str(value)
-        body = body[-self.AttrDigits:]
+        body = body[-length:]
 
         # We need to expand it by adding leading zeroes to get up
         # to the appropriate length
-
-        length = self.AttrDigits
-        if self.AttrScale == 0:
-            if self.AttrType != COB_TYPE_NUMERIC_COMP5:
-                length += 1
-            if self.Length >= 4 and not (self.AttrFlags & COB_FLAG_REAL_BINARY):
-                length -= 1
-            if self.Length >= 8 and (self.AttrFlags & COB_FLAG_REAL_BINARY):
-                length += 1
 
         while len(body) < length:
             body = '0' + body
@@ -3628,8 +3622,29 @@ class CobolVariable():
         body = '"' + body + '"'
         return body, pic;
 
+    def NumberOfDigits(self):
+        SIZE_TO_DIGITS = {1: len(str(2**(8*1))),
+                          2: len(str(2**(8*2))),
+                          3: len(str(2**(8*3))),
+                          4: len(str(2**(8*4))),
+                          5: len(str(2**(8*5))),
+                          6: len(str(2**(8*6))),
+                          7: len(str(2**(8*7))),
+                          8: len(str(2**(8*8)))
+                         }
+        retval = self.AttrDigits
+        if self.AttrFlags & (COB_FLAG_REAL_BINARY):
+            if self.Length in SIZE_TO_DIGITS:
+                retval = SIZE_TO_DIGITS[self.Length]
+            else:
+                ConditionalRaise("We don't know how to handle a REAL_BINARY with a size of {0}.".format(self.Length))
+                retval = 3
+        return retval
+
     def StringToNumericEdited(self, rside):
         retval = bytearray()
+
+        number_of_digits = self.NumberOfDigits()
 
         input = self.RsideToInteger(rside)
         # We have to look for "floating insertion" symbols
@@ -3665,18 +3680,18 @@ class CobolVariable():
         # We need to convert leading zeroes to the 'z' character:
         # zero-flag the integer portion
         i = 0
-        while i < self.AttrDigits - self.AttrScale:
+        while i < number_of_digits - self.AttrScale:
             if input[i] == '0':
                 input = input[:i] + 'z' + input[i+1:]
             else:
                 break;
             i += 1
-        if i >= self.AttrDigits - self.AttrScale:
+        if i >= number_of_digits - self.AttrScale:
             # The entire integer part is zero.  How about the fractional part?
             if self.AttrScale > 0:
                 if int(input[-self.AttrScale:]) == 0:
                     # The fractional part is also zero; flag them, too
-                    input = input[0:self.AttrDigits - self.AttrScale]
+                    input = input[0:number_of_digits - self.AttrScale]
                     for i in range(self.AttrScale):
                         input += 'z'
 
