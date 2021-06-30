@@ -25,8 +25,11 @@ T-ADR(2): Hi, mom!
 T-ADR(90): Hi, marty!      
 svalue : -123456
 MOVE 89 to svalue(2:2)
-svalue : -092416
-svalue : -092416
+svalue : +684608
+MOVE "89" to svalue(2:2)
+svalue : +684608
+MOVE h"89" to svalue(2:2)
+svalue : +224320
 I am a BASED variable                                           
 [Inferior 1 (process 99999) exited normally]
 KNOWN GOOD FINISH
@@ -57,11 +60,14 @@ T-ADR(2): Hi, mom!
 T-ADR(90): Hi, marty!      
 svalue : -123456
 MOVE 89 to svalue(2:2)
-svalue : -092416
-svalue : -092416
+svalue : +684608
+MOVE "89" to svalue(2:2)
+svalue : +684608
+MOVE h"89" to svalue(2:2)
+svalue : +224320
 I am a BASED variable                                           
 
-135	           STOP RUN.
+146	           STOP RUN.
 cprint/v3
 cprint *
  1 : 01 WS-TABLE/test [W-S] : "12ABCDEF34GHIJKL56MNOPQR"
@@ -73,7 +79,7 @@ cprint *
  7 : 05 Z-PID/Z-TABLE/test [EXT] : 87654321
  8 : 05 Z-ADR/Z-TABLE/test [EXT] : ^^
  9 : 05 T-ENTRIES/Z-TABLE/test(1) [EXT] : "Hi, bob!        ", '^' <repeats 23 times>, "subtext    ", '^' <repeats 213 times>
-10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S] : +000000001
+10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S] : +0000000001
 11 : 08 T-ADR/T-ENTRIES/Z-TABLE/test [EXT] : "Hi, bob!        "
 12 : 08 T-STAT/T-ENTRIES/Z-TABLE/test [EXT] : "^"
 13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE/test(1) [EXT] : '^' <repeats 22 times>
@@ -84,7 +90,7 @@ cprint *
 18 : 08 T-ADR-SAVE/T-ENTRIES/Z-TABLE/test [EXT] : +^^^^^^^^^^^^^^^^
 19 : 01 T_ENTRY/test [W-S] : 0013
 20 : 01 T_ADDRESSES/test(1) [W-S] : "First---11", '0' <repeats 12 times>, "11110000000000111111"
-21 : 00 TAB-ADR-IND/T_ADDRESSES/test [W-S] : +000000003
+21 : 00 TAB-ADR-IND/T_ADDRESSES/test [W-S] : +0000000003
 22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11", '0' <repeats 12 times>, "11110000000000111111"
 23 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11"
 24 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---"
@@ -118,7 +124,7 @@ cprint *
  7 : 05 Z-PID/Z-TABLE  : 87654321
  8 : 05 Z-ADR/Z-TABLE  : ^^
  9 : 05 T-ENTRIES/Z-TABLE(1)  : "Hi, bob!        ", '^' <repeats 23 times>, "subtext    ", '^' <repeats 213 times>
-10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE  : +000000001
+10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE  : +0000000001
 11 : 08 T-ADR/T-ENTRIES/Z-TABLE  : "Hi, bob!        "
 12 : 08 T-STAT/T-ENTRIES/Z-TABLE  : "^"
 13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE(1)  : '^' <repeats 22 times>
@@ -129,7 +135,7 @@ cprint *
 18 : 08 T-ADR-SAVE/T-ENTRIES/Z-TABLE  : +^^^^^^^^^^^^^^^^
 19 : 01 T_ENTRY  : 0013
 20 : 01 T_ADDRESSES(1)  : "First---11", '0' <repeats 12 times>, "11110000000000111111"
-21 : 00 TAB-ADR-IND/T_ADDRESSES  : +000000003
+21 : 00 TAB-ADR-IND/T_ADDRESSES  : +0000000003
 22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES  : "First---11", '0' <repeats 12 times>, "11110000000000111111"
 23 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES  : "First---11"
 24 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES  : "First---"
@@ -354,7 +360,7 @@ cp *
  7 : 05 Z-PID/Z-TABLE  : 87654321
  8 : 05 Z-ADR/Z-TABLE  : ^^
  9 : 05 T-ENTRIES/Z-TABLE(1)  : "Hi, bob!        ", '^' <repeats 23 times>, "subtext    ", '^' <repeats 213 times>
-10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE  : +000000001
+10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE  : +0000000001
 11 : 08 T-ADR/T-ENTRIES/Z-TABLE  : "Hi, bob!        "
 12 : 08 T-STAT/T-ENTRIES/Z-TABLE  : "^"
 13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE(1)  : '^' <repeats 22 times>
@@ -365,7 +371,7 @@ cp *
 18 : 08 T-ADR-SAVE/T-ENTRIES/Z-TABLE  : +^^^^^^^^^^^^^^^^
 19 : 01 T_ENTRY  : 0013
 20 : 01 T_ADDRESSES(1)  : "First---11", '0' <repeats 12 times>, "11110000000000111111"
-21 : 00 TAB-ADR-IND/T_ADDRESSES  : +000000003
+21 : 00 TAB-ADR-IND/T_ADDRESSES  : +0000000003
 22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES  : "First---11", '0' <repeats 12 times>, "11110000000000111111"
 23 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES  : "First---11"
 24 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES  : "First---"
@@ -415,12 +421,12 @@ cprint tab-adr-prgm(2)
 cp TAB-ADR-IND
 Multiple (2) symbols match "TAB-ADR-IND" in current context
 cp TAB-ADR-IND!
- 1 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE  : +000000001
- 2 : 00 TAB-ADR-IND/T_ADDRESSES  : +000000003
+ 1 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE  : +0000000001
+ 2 : 00 TAB-ADR-IND/T_ADDRESSES  : +0000000003
 cp TAB-ADR-IND of z-table = 1234
-00 TAB-ADR-IND/T-ENTRIES/Z-TABLE   :  +000001234
+00 TAB-ADR-IND/T-ENTRIES/Z-TABLE   :  +0000001234
 cp TAB-ADR-IND of T_ADDRESSES = 5432
-00 TAB-ADR-IND/T_ADDRESSES   :  +000005432
+00 TAB-ADR-IND/T_ADDRESSES   :  +0000005432
 cp TAB-ADR-IND of T_ENTRY = 9999
 No symbol matches "TAB-ADR-IND/T_ENTRY" in current context
 cp svalue
@@ -434,9 +440,9 @@ cp svalue(2:2) = 89
 cp svalue
 01 svalue   :  +684818
 cp svalue(2:2) = x'89'
-01 svalue(2:2)   :  [8920]
+01 svalue(2:2)   :  [8900]
 cp svalue
-01 svalue   :  +986834
+01 svalue   :  +978642
 cp svalue(2:2) = x'1234'
 01 svalue(2:2)   :  [1234]
 cp svalue

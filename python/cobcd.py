@@ -1761,31 +1761,14 @@ class CobolVariable():
             print("DataFromRside(): Unimplemented attribute type: {0}.".format(self.AttrType))
         return data
 
-    def PutDataAsString(self, rside):
+    def PutDataFromRside(self, rside):
         return_value = 1
 
         # Make sure we actually have a location
         if not self.ActualLocation:
             return 0
 
-        # Convert various figurative constants to useful forms:
-        #if R_ALLSPACE.match(rside):
-        #    attr_type = COB_TYPE_ALPHANUMERIC_ALL
-        #    rside = " "
-        #elif R_ALLZERO.match(rside):
-        #    attr_type = COB_TYPE_ALPHANUMERIC_ALL
-        #    rside = "0" * self.Length
-        #elif R_SPACE.match(rside):
-        #    attr_type = COB_TYPE_ALPHANUMERIC
-        #    rside = " "
-        #elif R_ZERO.match(rside):
-        #    attr_type = COB_TYPE_NUMERIC_DISPLAY
-        #    rside = "0"
-
-        normalized_input = Rside()
-        normalized_input.FromString(rside)
-
-        new_data = self.DataFromRside(normalized_input)
+        new_data = self.DataFromRside(rside)
 
         if new_data:
             # This next code automatically handles table offset and refmods:
@@ -3561,9 +3544,18 @@ class CobolVariable():
     def StringToAlphanumeric(self, rside):
         data = ""
         i = 0
-        while i<self.Length and i<len(rside.original_string):
-            data += rside.original_string[i]
+
+        # if has_all, then we just keep repeating the input
+        # string until the left side is filled:
+        if rside.has_all:
+            limit2 = self.Length
+        else:
+            limit2 = len(rside.original_string)
+
+        while i<self.Length and i<limit2:
+            data += rside.original_string[i % len(rside.original_string)]
             i += 1
+
         data += ' ' * (self.Length - i)
         # convert to bytearray:
         data = bytearray(data, "utf8")
@@ -4004,6 +3996,7 @@ class Rside():
         retval += "right_of_decimal    : {0}\n".format(self.right_of_decimal       )
         retval += "exponent_is_negative: {0}\n".format(self.exponent_is_negative   )
         retval += "exponent            : {0}\n".format(self.exponent               )
+        retval += "has_all             : {0}\n".format(self.has_all                )
         return retval
 
     def FromString(self,rside):
@@ -4011,8 +4004,13 @@ class Rside():
         quoted = False
         if rside:
             # Accepts rside input.  These are *not* expressions; these are
-            # "atomic" values
+            # "atomic" values, with the exception of the ALL modifier
             rside = rside.strip()
+
+            if re.match(R_ALL, rside):
+                self.has_all = True
+                rside = rside[3:].strip()
+
             if len(rside) > 0 and rside[0] == '\'':
                 # An apostrophe means that the text is believed to be a symbol;
                 # we see this happen when using TAB-completion.  And a user might have
@@ -4070,10 +4068,6 @@ class Rside():
 
             # We now contend with COBOL's figurative constants: ALL ZERO BLANK
 
-            if re.match(R_ALL, rside):
-                self.has_all = True
-                rside = rside[3:].trim()
-
             if re.search(R_SPACE, rside):
                 self.original_string = " "
                 return
@@ -4115,10 +4109,10 @@ class Rside():
                 return
 
             # Arriving here means it doesn't start with an apostrophe, might
-            # be surrounded by double-quotes, isn't hex or binary, and
-            # fails the R_NUMERICALCONSTANT regular expression
+            # be surrounded by double-quotes, isn't hex or binary,
+            # fails the R_NUMERICALCONSTANT regular expression, and doesn't have has_all
 
-            if not quoted:
+            if not quoted and not self.has_all:
                 self.is_symbol = True
         return
 
@@ -5153,6 +5147,8 @@ class CPrintWorker():
 
     @staticmethod
     def set_var_value(value):
+        # Value is an Rside() object
+
         # The left-hand-side of the assignment is found in GV_GlobalVariables.VarLeft
         # Its index in storage_list is .VarLeftIndex.  See ProcessArguments
 
@@ -5167,8 +5163,6 @@ class CPrintWorker():
         # right side, and get its printable data string, which appears here as value_
         return_value = 1
 
-        value = value[0]
-
         # This routine deals with the various cases of "cprint <this>=<that>"
         # The ability to cope with refmods complicates things considerably.  Try to keep up.
         var_left = GV_GlobalVariables.VarLeft
@@ -5177,19 +5171,16 @@ class CPrintWorker():
             # Because we are not dealing with a refmod situation, we are
             # pretty much going to let the libcob routines handle thing
             # for us
-            return_value = var_left.PutDataAsString(value)
+            return_value = var_left.PutDataFromRside(value)
         else:
             # var_left has a refmod.
 
             # There is a refmod on the left side, so arrange to replace the
             # data on the left
 
-            rvalue=Rside()
-            rvalue.FromString(value)
-
             i = 0
-            while i<var_left.ActualLength and i < len(rvalue.original_string):
-                command = "set {char}" + hex(var_left.ActualLocation+i) + "=" + hex(ord(rvalue.original_string[i]))
+            while i<var_left.ActualLength and i < len(value.original_string):
+                command = "set {char}" + hex(var_left.ActualLocation+i) + "=" + hex(ord(value.original_string[i]))
                 gdb.execute(command,False,True)
                 i += 1
 
@@ -5539,18 +5530,13 @@ class CPrintWorker():
             print('Multiple symbols match the left-hand-side "{0}" in current context.'.format('/'.join(left_side)))
             return
 
+        rside = None
         if right_side:
             # We have something on the right side.
             #
             # Let's see if it is a number:
             rside = Rside()
-            if len(right_side) == 1:
-                # It can be a number only if it is atomic:
-                rside.FromString(right_side[0])
-            else:
-                # The Rside object doesn't recognize right_side as a number
-                # Force subsequent processing to treat right_side as a symbol
-                rside.is_symbol = True
+            rside.FromString(' '.join(right_side))
 
             if rside.is_symbol:
                 rightside_possibilities, limit_reached = get_sorted_possibilities(right_side, 1)
@@ -5565,16 +5551,16 @@ class CPrintWorker():
                 payload = GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]]
                 payload.FetchVariableData(False)
                 # And now we fetch its data as a string, and use that for subsequent processing
-                right_side = [payload.DataToString()]
+                rside.FromString(payload.DataToString())
 
         if self.machine_interface_mode:
             self.ProcessArgumentsMachineMode(left_side,
-                                             right_side,
+                                             rside,
                                              leftside_possibilities,
                                              rightside_possibilities)
         else:
             self.ProcessArgumentsHumanMode(leftside_possibilities,
-                                           right_side)
+                                           rside)
 
     def HandleDoubleQuote(self, arguments):
         # We know arguments has an early double-quote
