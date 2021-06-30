@@ -133,10 +133,6 @@ TackVariablesOntoCfile(PARAMETERS &params,
     ssResult << "{cob_move(f1,f2);}" << endl;
     ssResult << endl;
 
-    ssResult << "static void *DEBUG_cob_cache_malloc_" << fname2 << "(const size_t size)" << endl;
-    ssResult << "{return cob_cache_malloc(size);}" << endl;
-    ssResult << endl;
-
     ssResult << "static int DEBUG_cob_encode_program_id_" << fname2 << "(const unsigned char * const a, unsigned char * const b, const int c, const int d)" << endl;
     ssResult << "{return cob_encode_program_id(a, b, c, d);}" << endl;
     ssResult << endl;
