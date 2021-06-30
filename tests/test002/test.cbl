@@ -224,6 +224,14 @@ DISPLAY def-COMP-X                 "   def-COMP-X                  "
 DISPLAY def-COMPUTATIONAL-X        "   def-COMPUTATIONAL-X         "
 DISPLAY def-COMP-XX                "   def-COMP-XX                 "
 DISPLAY def-DISPLAY                "   def-DISPLAY                 "
+*>GOBACK
+move 1 to def-BINARY-LONG ; display def-BINARY-LONG
+
+
+
+
+
+
 GOBACK.
 
 

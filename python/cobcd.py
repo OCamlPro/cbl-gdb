@@ -310,10 +310,9 @@ class GlobalVariables():
         self.cprint_f0 = None
         self.cprint_a0 = None
 
-        # These are used in PutDataAsVar
+        # These are used in "cprint this=that"
         self.VarLeft = None
         self.VarLeftIndex = None
-        self.VarRight = None
 
         # This flag means that every variable will need to be read again.
         # It gets set on GDB.events.stop
@@ -758,6 +757,56 @@ def AddEmUp(expression):
                 # ignore that for now.
                 pass
     return retval
+
+
+def process_left_right_args(args):
+    # We accept a string, and we return one or two lists of strings
+    # canonicalized to our internal COBOL variable name format
+
+    # Either way, the results are canonicalized to our internal COBOL name format
+    left_side = []
+    right_side = []
+
+    # This can be an assignment, so check for it.
+    leftright = args.split('=')
+
+    if len(leftright) > 0:
+        left_side = TokenizeCanonicalName(leftright[0])
+
+    if len(leftright) > 1:
+        if len(leftright[1]) == 0:
+            ConditionalRaise("Syntax error: There is nothing after the \"=\".")
+            left_side = []
+            right_side = []
+            return left_side, right_side
+        right_side = leftright[1].split()
+
+    if right_side:
+        # There is a rightside.
+        right_side = leftright[1].strip()
+
+        # Check to see if it is a quoted string
+        if right_side[0] == '"':
+            if len(right_side) < 2 or right_side[-1] != right_side[0]:
+                ConditionalRaise("Unterminated string")
+                left_side = []
+                right_side = []
+                return left_side, right_side
+            right_side = [right_side]
+        # Check for various literal integer forms:
+        elif right_side[0:2].lower().replace('"', "'") == "x'":
+            right_side = FromHexAlphaString(right_side)
+            right_side = [right_side]
+        elif right_side[0:2].lower().replace('"', "'") == "h'":
+            right_side = FromHexLiteralNumber(right_side)
+            right_side = [right_side]
+        elif right_side[0:2].lower().replace('"', "'") == "b'":
+            right_side = FromBinaryLiteralNumber(right_side)
+            right_side = [right_side]
+        else:
+            right_side = TokenizeCanonicalName(leftright[1])
+
+    return left_side, right_side
 
 
 def get_left_right_args(args):
@@ -1702,13 +1751,17 @@ class CobolVariable():
             print("DataFromRside(): Need to implement: COB_TYPE_NUMERIC_FP_BIN128")
         elif self.AttrType == COB_TYPE_ALPHANUMERIC:
             data = self.StringToAlphanumeric(rside)
+        elif self.AttrType == COB_TYPE_GROUP:
+            # This is a little bold.  But if he wants to set a group from a string,
+            # that's what is going to happen:
+            data = self.StringToAlphanumeric(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_EDITED:
             data = self.StringToNumericEdited(rside)
         else:
             print("DataFromRside(): Unimplemented attribute type: {0}.".format(self.AttrType))
         return data
 
-    def PutDataAsString(self, rside, p_startloc, p_length):
+    def PutDataAsString(self, rside):
         return_value = 1
 
         # Make sure we actually have a location
@@ -1716,18 +1769,18 @@ class CobolVariable():
             return 0
 
         # Convert various figurative constants to useful forms:
-        if R_ALLSPACE.match(rside):
-            attr_type = COB_TYPE_ALPHANUMERIC_ALL
-            rside = " "
-        elif R_ALLZERO.match(rside):
-            attr_type = COB_TYPE_ALPHANUMERIC_ALL
-            rside = "0" * self.Length
-        elif R_SPACE.match(rside):
-            attr_type = COB_TYPE_ALPHANUMERIC
-            rside = " "
-        elif R_ZERO.match(rside):
-            attr_type = COB_TYPE_NUMERIC_DISPLAY
-            rside = "0"
+        #if R_ALLSPACE.match(rside):
+        #    attr_type = COB_TYPE_ALPHANUMERIC_ALL
+        #    rside = " "
+        #elif R_ALLZERO.match(rside):
+        #    attr_type = COB_TYPE_ALPHANUMERIC_ALL
+        #    rside = "0" * self.Length
+        #elif R_SPACE.match(rside):
+        #    attr_type = COB_TYPE_ALPHANUMERIC
+        #    rside = " "
+        #elif R_ZERO.match(rside):
+        #    attr_type = COB_TYPE_NUMERIC_DISPLAY
+        #    rside = "0"
 
         normalized_input = Rside()
         normalized_input.FromString(rside)
@@ -1742,62 +1795,6 @@ class CobolVariable():
                 gdb.execute(command,False,True)
                 i += 1
             self.IsDirty = True
-
-        return return_value
-
-    @staticmethod
-    def PutDataAsVar():
-        """Sets one variable's contents to another
-
-        The use of global variables is a solution to the problem of wanting
-        to assign "table(2) = table(3)"
-
-        The lists of possibilities have only one entry for a table.  When naively
-        setting table(2) = table(3), the .Subscripts for the first value get overwritten
-        by the second one, and you end up doing "table(3) = table(3).
-
-        In this solution, I create copies of the CobolVariables when ProcessArguments
-        encounters the "cp var1=var2.  Those copies go into GV_GlobalVariables.
-
-        For now, this handles the basic user-interface case.  If more complex cases
-        crop up, this will obviously need to be changed."""
-        return_value = 1
-
-        # We use the ALLOCATE option because of the possibility that one
-        # or both of the source and destination might be, weirdly, COBOL
-        # variables that don't have valid f_xx cob_fields, but for some
-        # reason the developer wants use them as source or destination
-
-        var_left = GV_GlobalVariables.VarLeft
-        var_right = GV_GlobalVariables.VarRight
-
-        if var_left.SubscriptFailure or var_right.SubscriptFailure or var_left.RefmodFailure or var_left.RefmodFailure:
-            return 0
-
-        destination = var_left.get_verified_field_location(ALLOCATE)
-        if not destination:
-            return 0
-
-        source = var_right.get_verified_field_location(ALLOCATE)
-        if not source:
-            var_left.free_field_location(destination)
-            return 0
-
-        try:
-            cob_move(source, destination)
-            var_left.IsDirty = True
-
-            # Recall that var_left is a copy of the GlobalVariable in var_trie.storage_list.  It has the same
-            # data location as the original.  We just changed that data, so we need to flag the entry in the
-            # list as dirty.  This is why we've been maintaining .VarLeftIndex
-            GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex].IsDirty = True
-
-        except gdb.error:
-            ConditionalRaise("cob_move() failed in PutDataAsVar")
-            return_value = 0
-
-        var_left.free_field_location(source)
-        var_right.free_field_location(destination)
 
         return return_value
 
@@ -4011,6 +4008,7 @@ class Rside():
 
     def FromString(self,rside):
         self.__init__()
+        quoted = False
         if rside:
             # Accepts rside input.  These are *not* expressions; these are
             # "atomic" values
@@ -4035,6 +4033,7 @@ class Rside():
                     return
                 # We have "something".
                 # Clean off the bracketing double-quotes:
+                quoted = True
                 rside = rside[1:-1]
                 #
                 # We are now going to fall through.  This is because in
@@ -4079,6 +4078,11 @@ class Rside():
                 self.original_string = " "
                 return
 
+            if re.search(R_ZERO, rside):
+                self.original_string = "0"
+                self.left_of_decimal = "0"
+                return
+
             # We are now dealing with the possibility of a decimal number.  It might or might
             # not be negative, or have a decimal fraction, or a floating-point exponent.
             #
@@ -4110,11 +4114,12 @@ class Rside():
                     self.exponent = int(m.group(5))
                 return
 
-            # Arriving here means it doesn't start with an apostrophe, is
-            # not surrounded by double-quotes, isn't hex or binary, and
+            # Arriving here means it doesn't start with an apostrophe, might
+            # be surrounded by double-quotes, isn't hex or binary, and
             # fails the R_NUMERICALCONSTANT regular expression
 
-            self.is_symbol = True
+            if not quoted:
+                self.is_symbol = True
         return
 
 ####################################################################
@@ -4932,7 +4937,7 @@ def FromHexLiteralNumber(conv_str):
 def FromBinaryLiteralNumber(conv_str):
     """Converts a binary literal string to an ordinary string"""
     retval = 0
-    if conv_str[0:2].lower().replace('"', "'") == "h'" and conv_str[-1] in ("'", '"'):
+    if conv_str[0:2].lower().replace('"', "'") == "b'" and conv_str[-1] in ("'", '"'):
         # This is correctly formed
         # Trim off the front and back:
         conv_str = conv_str[2:-1]
@@ -5152,16 +5157,14 @@ class CPrintWorker():
         # Its index in storage_list is .VarLeftIndex.  See ProcessArguments
 
         # value_ is a list.  It should have only one element, which is a string.
-        # That string will be a literal constant, a numerical constant, or the name of
-        # a variable.  If it is a variable name, use GV_GlobalVariables.VarRight.DataToString().
+        # That string will be a literal constant, a numerical constant.
 
-        # Just a reminder:  We use .VarLeft and .VarRight to handle the situation
+        # Just a reminder:  We use .VarLeft to handle the situation
         # where the same table name is on the left and right: "cprint A(2)=A(3).  Because
         # storage_list has only one entry for A, the processing for A(3) overwrites the
         # Subscripts (and Refmod) for A(2).  We get around this by processing the left
         # side first, and making a copy of the object in .VarLeft.  Then we process the
-        # right side, and make a copy of that in .VarRight.  When we get here, we operate
-        # on those.
+        # right side, and get its printable data string, which appears here as value_
         return_value = 1
 
         value = value_[0]
@@ -5174,40 +5177,39 @@ class CPrintWorker():
         # This routine deals with the various cases of "cprint <this>=<that>"
         # The ability to cope with refmods complicates things considerably.  Try to keep up.
         var_left = GV_GlobalVariables.VarLeft
-        var_right = GV_GlobalVariables.VarRight
 
         if not var_left.Refmod:
             # Because we are not dealing with a refmod situation, we are
             # pretty much going to let the libcob routines handle thing
             # for us
-            if var_right and not var_right.Refmod:
-                # this is a straight "cprint var1 = var2
-                return_value = CobolVariable.PutDataAsVar()
-            else:
-                if var_right:  # The logic requires that var_right.Refmod exists:
-                    # Because var_right has a refmod, we will use the var_right display
-                    # body, which at this point is already trimmed to the data we need
-                    value = var_right.display_body
-                if value.startswith('"') and value.endswith('"'):
-                    # Get rid of the quotes around a string:
-                    value = value[1:-1]
-                return_value = var_left.PutDataAsString(value, 1, var_left.Length)
+            return_value = var_left.PutDataAsString(value)
         else:
-            # var_left has a refmod:
-            if var_right:
-                # Because there is a right-side variable, we will replace 'value' with
-                # the human display of that variable
-                value = var_right.display_body
+            # var_left has a refmod.
 
             # There is a refmod on the left side, so arrange to replace the
             # data on the left
-            p_startloc = var_left.RefmodOffset + 1
-            p_length = var_left.RefmodLength
 
-            # CHECKME: possibly use startswith/endswith in other places, ... or nowhere
-            if value.startswith('"') and value.endswith('"'):
-                value = value[1:-1]
-            return_value = var_left.PutDataAsString(value, p_startloc, p_length)
+            rvalue=Rside()
+            rvalue.FromString(value)
+
+            i = 0
+            while i<var_left.ActualLength and i < len(rvalue.original_string):
+                command = "set {char}" + hex(var_left.ActualLocation+i) + "=" + hex(ord(rvalue.original_string[i]))
+                gdb.execute(command,False,True)
+                i += 1
+
+            # If the left wants more than the right provided, right-fill with zeroes or
+            # spaces, as specified.
+            if var_left.IsAlphanumeric():
+                ch = ' '
+            else:
+                ch = chr(0)
+            while i<var_left.ActualLength:
+                command = "set {char}" + hex(var_left.ActualLocation+i) + "=" + hex(ord(ch))
+                gdb.execute(command,False,True)
+                i += 1
+
+            return_value = 1
 
         if return_value == 1:
             payload = GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex]
@@ -5463,12 +5465,13 @@ class CPrintWorker():
         if not args or not args[0]:
             return
 
-        if not GV_ModuleState.Stack:
-            ConditionalRaise("No stack.")
+        if args[0][0] == '"':
+            # The user is talking to himself for some reason.  Just play along.
+            self.HandleDoubleQuote(arguments)
             return
 
-        if args[0][0] == '"':
-            self.HandleDoubleQuote(arguments)
+        if not GV_ModuleState.Stack:
+            ConditionalRaise("No stack.")
             return
 
         # Initialize for subsequent processing:
@@ -5477,7 +5480,16 @@ class CPrintWorker():
         left_side = ""
         right_side = ""
 
-        left_side, right_side, condition = get_left_right_args(args)
+        # At this point, the forms
+        #   cprint VAR
+        #   cprint VAR=literal
+        #   cprint VAR=ANOTHER_VAR
+        # are allowed.
+
+        # Go split it up on the '=', if there is one, and return
+        # the canonicalized strings:
+        left_side, right_side = process_left_right_args(args)
+
         if not left_side:
             return
 
@@ -5501,7 +5513,6 @@ class CPrintWorker():
 
         GV_GlobalVariables.VarLeft = None
         GV_GlobalVariables.VarLeftIndex = None
-        GV_GlobalVariables.VarRight = None
 
         # note: if we do have a right-side then we do not need the actual data, maybe add , no_data=True here
         # ... but we do need to know if this variable is in the current context
@@ -5533,14 +5544,20 @@ class CPrintWorker():
             print('Multiple symbols match the left-hand-side "{0}" in current context.'.format('/'.join(left_side)))
             return
 
-        if right_side and right_side[0].find('"') == -1 and right_side[0].find("'") == -1 and not R_ALL_ZERO_SPACE.match(right_side[0]):
-            # We have to deal with the possibility that the right_side is a numeric constant,
-            # as in "cprint var=1234".  We can't let get_sorted_possibilities mess with it,
-            # because that routine will get confused thinking that we are looking for an
-            # short_term_index into storage_list
-            if len(right_side) != 1 or not IsNumber(right_side[0]):
-                # note: we don't need the right-side's actual data (as we use cob_move to copy it with any conversions needed), maybe
-                # add , no_data=True here ... but we do need to know if this variable is in the current context
+        if right_side:
+            # We have something on the right side.
+            #
+            # Let's see if it is a number:
+            rside = Rside()
+            if len(right_side) == 1:
+                # It can be a number only if it is atomic:
+                rside.FromString(right_side[0])
+            else:
+                # The Rside object doesn't recognize right_side as a number
+                # Force subsequent processing to treat right_side as a symbol
+                rside.is_symbol = True
+
+            if rside.is_symbol:
                 rightside_possibilities, limit_reached = get_sorted_possibilities(right_side, 1)
                 if not rightside_possibilities and not limit_reached:
                     print('No symbol matches "{0}" in current context'.format('/'.join(right_side)))
@@ -5548,12 +5565,12 @@ class CPrintWorker():
                 if limit_reached:
                     print('Multiple symbols match the right-hand-side "{0}" in current context'.format('/'.join(right_side)))
                     return
-                GV_GlobalVariables.VarRight = copy.copy(GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]])
-                if GV_GlobalVariables.VarRight.SubscriptFailure or GV_GlobalVariables.VarRight.RefmodFailure:
-                    return
-            else:
-                # This is a numeric constant; just pass it along
-                pass
+                # right_side seems to refer to one, and only one, variable.
+                # Let's fetch its data:
+                payload = GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]]
+                payload.FetchVariableData(False)
+                # And now we fetch its data as a string, and use that for subsequent processing
+                right_side = [payload.DataToString()]
 
         if self.machine_interface_mode:
             self.ProcessArgumentsMachineMode(left_side,

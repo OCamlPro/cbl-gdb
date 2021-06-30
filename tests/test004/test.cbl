@@ -121,11 +121,22 @@
            MOVE 222222   TO TAB-ADR-LAST-ADR-64(2)
 
            DISPLAY 'svalue : ' svalue
+
            DISPLAY 'MOVE 89 to svalue(2:2)'
+           MOVE 0 to svalue
            MOVE 89 to svalue(2:2)
            DISPLAY 'svalue : ' svalue
+
+           DISPLAY 'MOVE "89" to svalue(2:2)'
+           MOVE 0 to svalue
            MOVE "89" to svalue(2:2)
            DISPLAY 'svalue : ' svalue
+
+           DISPLAY 'MOVE h"89" to svalue(2:2)'
+           MOVE 0 to svalue
+           MOVE h"89" to svalue(2:2)
+           DISPLAY 'svalue : ' svalue
+
            MOVE -123456 to svalue.
 
            ALLOCATE WS-BASED.
