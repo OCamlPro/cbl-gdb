@@ -208,17 +208,15 @@ def GdbExecute(curframe, command):
 
 def cob_malloc(size):
     # This is the Python-side wrapper for cob_malloc calls.
-    # We use the C-side wrapper that cobcd-st put into the generated .C
-    expression = "(void *(*)(const size_t)){0}({1})".format(GV_ModuleState.cob_malloc, size)
+    expression = "(void *(*)(const size_t))malloc({0})".format(size)
     ret = gdb.parse_and_eval(expression)
-    # hack to work around GDB 7.6.1 issue "error: Cannot convert value to int",
-    # the real fix is to not use an int here, and the even better version to not use cob_malloc
+    # ret is a gdb.Value, and str(gdb.Value) returns an integer in 0x form:
     return int(str(ret),16) 
 
 
 def cob_free(location):
     # Wrapper for cob_free
-    command = "call (void){0}({1})".format(GV_ModuleState.cob_free, hex(location))
+    command = "call (void)free({0})".format(hex(location))
     gdb.execute(command, False, True)
 
 
