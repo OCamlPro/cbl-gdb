@@ -211,7 +211,9 @@ def cob_malloc(size):
     # We use the C-side wrapper that cobcd-st put into the generated .C
     expression = "(void *(*)(const size_t)){0}({1})".format(GV_ModuleState.cob_malloc, size)
     ret = gdb.parse_and_eval(expression)
-    return int(ret)
+    # hack to work around GDB 7.6.1 issue "error: Cannot convert value to int",
+    # the real fix is to not use an int here, and the even better version to not use cob_malloc
+    return int(str(ret),16) 
 
 
 def cob_free(location):
