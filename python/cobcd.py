@@ -299,10 +299,6 @@ class GlobalVariables():
         self.ShortTermMemory = []
         self.repeat_count = 11  # Default value for "'0' <repeats 11 times>" logic
 
-        self.cprint_buffer = None
-        self.cprint_f0 = None
-        self.cprint_a0 = None
-
         # These are used in "cprint this=that"
         self.VarLeft = None
         self.VarLeftIndex = None
@@ -312,25 +308,10 @@ class GlobalVariables():
         self.IsDirty = True
 
     def AllocateBuffers(self):
-        if not self.cprint_buffer:
-            try:
-                self.cprint_buffer = cob_malloc(PRINT_BUFFER_SIZE)
-                self.cprint_f0 = cob_malloc("sizeof(cob_field)")
-                self.cprint_a0 = cob_malloc("sizeof(cob_field_attr)")
-            except:
-                traceback.print_exc()
-                self.cprint_buffer = None
-                self.cprint_f0 = None
-
-            if not self.cprint_buffer:
-                print("Something is very wrong in GlobalVariables.AllocateBuffers()")
-                sys.exit(1)
+        pass
 
     def DestroyBuffers(self):
-        self.cprint_buffer = None
-        self.cprint_f0 = None
-        self.cprint_a0 = None
-
+        pass
 
 GV_GlobalVariables = GlobalVariables()
 
@@ -1597,77 +1578,7 @@ class CobolVariable():
         # when the variable is next accessed.
         self.IsDirty = True
 
-    def get_verified_field_location(self, allocate):
-        # When calling this routine with ALLOCATE, the caller must do
-        # free_field_location(returned_value)
-        #
-        # Sometimes self.Fname is valid.  But sometimes it's not.
-        #
-        # working-storage is the easiest; if there is a self.Fname, then
-        # everything is okay and you can just return self.location_of_field.
-        #
-        # Local storage can have self.Fname, but sometimes the data in the
-        # cob_field.data pointer isn't loaded up with the data that's actually
-        # available in the cob_local_ptr area.  We can fix that.
-        #
-        # If a variable isn't referenced in the COBOL source code, then it doesn't
-        # have self.Fname.  But the data is actually at self.location_of_data.  In
-        # that case, if the caller has allocate turned on, we can synthesize a temporary
-        # cob_field.
-        #
-        # If allocate is turned off in that last case, we return None
-        #
-        GV_GlobalVariables.AllocateBuffers()
-        try:
-            if not allocate:
-                if self.Fname and self.Section not in ('L'):
-                    # working storage or linkage, so we are safe to go simple:
-                    return self.location_of_field
-
-                if self.Fname and self.Section in ('L'):
-                    # This is the case where we update the cob_field data area
-                    # from self.location_of_data:
-                    command = "set var {0}".format(self.Fname) + " = {"
-                    command += "{0}, (char *){1}, &{2}".format(self.Length, hex(self.location_of_data), self.Aname)
-                    command += "}"
-                    gdb.execute(command, False, True)
-                    return self.location_of_field
-
-                # There is no self.Fname.  So, use the one in GlobalVariables:
-                retval = GV_GlobalVariables.cprint_f0
-                command = "set var *(cob_field *){0}".format(hex(retval)) + " = {"
-                command += "{0}, (char *){1}, &{2}".format(self.Length, hex(self.location_of_data), self.Aname)
-                command += "}"
-                gdb.execute(command, False, True)
-                return retval
-
-            # We *must* allocate, because our caller is expected us to, so they
-            # will be calling free_field_location
-            retval = cob_malloc("sizeof(cob_field)")
-
-            # Having allocated a synthetic cob_field, initialize it with the data
-            # Unlike the DONT_ALLOCATE situation, where we aren't allowed to mess with the
-            # cob_field->data pointer, we are synthesizing this cob_field.  So, we can
-            # add in any table offset:
-            command = "set var *(cob_field *){0}".format(hex(retval)) + " = {"
-            command += "{0}, (char *){1}, &{2}".format(self.Length,
-                                                       hex(self.location_of_data + self.TableOffset),
-                                                       self.Aname)
-            command += "}"
-            gdb.execute(command, False, True)
-            return retval
-
-        except gdb.error:
-            traceback.print_exc()
-            print("Command failed in get_verified_field_location:", command)
-            retval = None
-        return retval
-
-    def free_field_location(self, field_location):
-        cob_free(field_location)
-
     def DumpJustAboutEverything(self):
-        location_of_field = self.get_verified_field_location(DONT_ALLOCATE)
         print("           Name:", self.NameToStringFull())
         if self.OccursMax:
             print(" OCCURS min/max: {0}/{1}".format(self.OccursMin, self.OccursMax))
@@ -1695,7 +1606,7 @@ class CobolVariable():
         print("     AttrDigits:", self.AttrDigits)
         print("      AttrScale:", self.AttrScale)
         print("      AttrFlags:", hex(self.AttrFlags))
-        print("   loc_of_field:", hex(location_of_field))
+        print("   loc_of_field:", hex(self.location_of_field))
         print("    loc_of_data:", hex(self.location_of_data))
         print("    loc_of_attr:", hex(self.location_of_attribute))
         print("     loc_of_pic:", hex(self.location_of_pic))
