@@ -5152,11 +5152,11 @@ class CPrintWorker():
         return retval
 
     @staticmethod
-    def set_var_value(value_):
+    def set_var_value(value):
         # The left-hand-side of the assignment is found in GV_GlobalVariables.VarLeft
         # Its index in storage_list is .VarLeftIndex.  See ProcessArguments
 
-        # value_ is a list.  It should have only one element, which is a string.
+        # value is a list.  It should have only one element, which is a string.
         # That string will be a literal constant, a numerical constant.
 
         # Just a reminder:  We use .VarLeft to handle the situation
@@ -5167,12 +5167,7 @@ class CPrintWorker():
         # right side, and get its printable data string, which appears here as value_
         return_value = 1
 
-        value = value_[0]
-        if R_ALL_ZERO_SPACE.match(value_[0]):
-            if len(value_) == 2 and R_ZERO_SPACE.match(value_[1]):
-                value = "{0} {1}".format(value_[0], value_[1])
-            else:
-                value = value_[0]
+        value = value[0]
 
         # This routine deals with the various cases of "cprint <this>=<that>"
         # The ability to cope with refmods complicates things considerably.  Try to keep up.
