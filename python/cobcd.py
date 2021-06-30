@@ -233,13 +233,6 @@ def cob_move(source, destination):
     gdb.execute(command, False, True)
 
 
-def cob_put_field_str(field, buff):
-    command = "call (int){0}((cob_field *){1}, (char *){2})".format(GV_ModuleState.cob_put_field_str,
-                                                                    hex(field),
-                                                                    hex(buff))
-    gdb.execute(command, False, True)
-
-
 def cob_cmp(a, b):
     command = "call (int){0}({1}, {2})".format(GV_ModuleState.cob_cmp, a, b)
     hexback = gdb.execute(command, False, True).split()[2]
@@ -4405,7 +4398,6 @@ class ModuleState():
                             self.cob_cache_malloc           = "DEBUG_cob_cache_malloc_"            + name_root2
                             self.cob_free                   = "DEBUG_cob_free_"                    + name_root2
                             self.cob_move                   = "DEBUG_cob_move_"                    + name_root2
-                            self.cob_put_field_str          = "DEBUG_cob_put_field_str_"           + name_root2
                             self.cob_get_field_str_buffered = "DEBUG_cob_get_field_str_buffered_"  + name_root2
                             self.cob_cmp                    = "DEBUG_cob_cmp_"                     + name_root2
                             self.cob_intr_upper_case        = "DEBUG_cob_intr_upper_case_"         + name_root2
@@ -4418,7 +4410,6 @@ class ModuleState():
                             self.cob_cache_malloc           = "cob_cache_malloc"
                             self.cob_free                   = "cob_free"
                             self.cob_move                   = "cob_move"
-                            self.cob_put_field_str          = "cob_put_field_str"
                             self.cob_get_field_str_buffered = "cob_get_field_str_buffered"
                             self.cob_cmp                    = "cob_cmp"
                             self.cob_intr_upper_case        = "cob_intr_upper_case"
