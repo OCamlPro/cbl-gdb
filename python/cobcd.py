@@ -206,16 +206,20 @@ def GdbExecute(curframe, command):
     return retval
 
 
-def cob_malloc(size):
-    # This is the Python-side wrapper for cob_malloc calls.
+def crt_malloc(size):
+    # This is a wrapper for C run-time malloc() calls in the inferior.  This is not
+    # async-signal-safe, and can cause trouble when attaching to an inferior when
+    # the inferior is in a vulnerable state.  With great power comes great responsibility.
     expression = "(void *(*)(const size_t))malloc({0})".format(size)
     ret = gdb.parse_and_eval(expression)
     # ret is a gdb.Value, and str(gdb.Value) returns an integer in 0x form:
     return int(str(ret),16) 
 
 
-def cob_free(location):
-    # Wrapper for cob_free
+def crt_free(location):
+    # This is a wrapper for C run-time free() calls in the inferior.  This is not
+    # async-signal-safe, and can cause trouble when attaching to an inferior when
+    # the inferior is in a vulnerable state.
     command = "call (void)free({0})".format(hex(location))
     gdb.execute(command, False, True)
 
@@ -301,11 +305,6 @@ class GlobalVariables():
         # It gets set on GDB.events.stop
         self.IsDirty = True
 
-    def AllocateBuffers(self):
-        pass
-
-    def DestroyBuffers(self):
-        pass
 
 GV_GlobalVariables = GlobalVariables()
 
@@ -4299,8 +4298,6 @@ class ModuleState():
 
                         debugged_system = platform.system()
                         if debugged_system == 'Windows':
-                            self.cob_malloc                 = "DEBUG_cob_malloc_"                  + name_root2
-                            self.cob_free                   = "DEBUG_cob_free_"                    + name_root2
                             self.cob_move                   = "DEBUG_cob_move_"                    + name_root2
                             self.cob_get_field_str_buffered = "DEBUG_cob_get_field_str_buffered_"  + name_root2
                             self.cob_cmp                    = "DEBUG_cob_cmp_"                     + name_root2
@@ -4310,8 +4307,6 @@ class ModuleState():
                             # to avoid recompiling his source code when the wrapper solution
                             # was first deployed.  In Version4.27, this will be removed and everybody
                             # will use the wrapper solution.
-                            self.cob_malloc                 = "cob_malloc"
-                            self.cob_free                   = "cob_free"
                             self.cob_move                   = "cob_move"
                             self.cob_get_field_str_buffered = "cob_get_field_str_buffered"
                             self.cob_cmp                    = "cob_cmp"
@@ -5804,7 +5799,9 @@ class CBreakWorker():
         location_of_field = None
 
         try:
-            location_of_field = cob_malloc("sizeof(cob_field)")
+            #TODO: The following call to crt_malloc should have a companion
+            #      call to crt_free()
+            location_of_field = crt_malloc("sizeof(cob_field)")
 
             command = "set var *(cob_field *){0}".format(location_of_field) + " = {"
             command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + payload.TableOffset + pl_startloc), payload.Aname)
@@ -5943,8 +5940,10 @@ class CBreakWorker():
         location_of_field = None
 
         try:
-            location_of_field = cob_malloc("sizeof(cob_field)")
-            location_of_attribute = cob_malloc("sizeof(cob_field_attr)")
+            #TODO: The following calla to crt_malloc should have companion
+            #      calls to crt_free()
+            location_of_field = crt_malloc("sizeof(cob_field)")
+            location_of_attribute = crt_malloc("sizeof(cob_field_attr)")
 
             if R_ALLSPACE.match(value):
                 attr_type = COB_TYPE_ALPHANUMERIC_ALL
@@ -5969,7 +5968,9 @@ class CBreakWorker():
             command = "set var ((cob_field_attr *){0})->flags = {1}".format(hex(location_of_attribute), COB_FLAG_CONSTANT)
             gdb.execute(command, False, True)
 
-            buffer = cob_malloc(PRINT_BUFFER_SIZE)
+            #TODO: The following call to crt_malloc should have a companion
+            #      call to crt_free()
+            buffer = crt_malloc(PRINT_BUFFER_SIZE)
 
             if case_ins == 1:
                 value = value.upper()
@@ -7207,9 +7208,6 @@ class CobolOnlyFrameFilter():
 
 
 def exit_handler(event):
-    # With the disappearance of the inferior, we are going
-    # to need new malloc-created buffers
-    GV_GlobalVariables.DestroyBuffers()
     #
     for cb in CBLDBG_CBREAK_WORKER.cobol_breaks:
         # breakpoints included in our list may be invalid
