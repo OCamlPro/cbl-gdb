@@ -224,13 +224,6 @@ def crt_free(location):
     gdb.execute(command, False, True)
 
 
-def cob_move(source, destination):
-    command = "call (void){0}((cob_field *){1}, (cob_field *){2})".format(GV_ModuleState.cob_move,
-                                                                          hex(source),
-                                                                          hex(destination))
-    gdb.execute(command, False, True)
-
-
 def cob_cmp(a, b):
     command = "call (int){0}({1}, {2})".format(GV_ModuleState.cob_cmp, a, b)
     hexback = gdb.execute(command, False, True).split()[2]
@@ -4298,7 +4291,6 @@ class ModuleState():
 
                         debugged_system = platform.system()
                         if debugged_system == 'Windows':
-                            self.cob_move                   = "DEBUG_cob_move_"                    + name_root2
                             self.cob_get_field_str_buffered = "DEBUG_cob_get_field_str_buffered_"  + name_root2
                             self.cob_cmp                    = "DEBUG_cob_cmp_"                     + name_root2
                             self.cob_intr_upper_case        = "DEBUG_cob_intr_upper_case_"         + name_root2
@@ -4307,7 +4299,6 @@ class ModuleState():
                             # to avoid recompiling his source code when the wrapper solution
                             # was first deployed.  In Version4.27, this will be removed and everybody
                             # will use the wrapper solution.
-                            self.cob_move                   = "cob_move"
                             self.cob_get_field_str_buffered = "cob_get_field_str_buffered"
                             self.cob_cmp                    = "cob_cmp"
                             self.cob_intr_upper_case        = "cob_intr_upper_case"

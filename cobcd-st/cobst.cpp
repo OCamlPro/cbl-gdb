@@ -121,14 +121,6 @@ TackVariablesOntoCfile(PARAMETERS &params,
     // to LIBCOB routines into the generated .C here.  GDB will be able to find these
     // routines because their names are known, and global:
 
-    ssResult << "static void DEBUG_cob_move_" << fname2 << "(cob_field *f1, cob_field *f2)" << endl;
-    ssResult << "{cob_move(f1,f2);}" << endl;
-    ssResult << endl;
-
-    ssResult << "static int DEBUG_cob_encode_program_id_" << fname2 << "(const unsigned char * const a, unsigned char * const b, const int c, const int d)" << endl;
-    ssResult << "{return cob_encode_program_id(a, b, c, d);}" << endl;
-    ssResult << endl;
-
     ssResult << "static const char	*DEBUG_cob_get_field_str_buffered_" << fname2 << "(const cob_field *p)" << endl;
     ssResult << "{return cob_get_field_str_buffered(p);}" << endl;
     ssResult << endl;
