@@ -223,7 +223,7 @@ def crt_malloc(size):
     expression = "(void *(*)(const size_t))malloc({0})".format(size)
     ret = gdb.parse_and_eval(expression)
     # ret is a gdb.Value, and str(gdb.Value) returns an integer in 0x form:
-    return int(str(ret),16)
+    return int(str(ret), 16)
 
 
 def crt_free(location):
@@ -790,7 +790,7 @@ def get_left_right_args(args):
     # Pick up the left and right sides, and turn them into
     # "normalized" COBOL variable names.
     if len(leftright) > 0:
-        if re.match( r"if\b", leftright[0], re.IGNORECASE):
+        if re.match(r"if\b", leftright[0], re.IGNORECASE):
             left_side = TokenizeCanonicalName(leftright[0][2:].strip())
             left_side.insert(0, "if")
         else:
@@ -1622,7 +1622,6 @@ class CobolVariable():
             retval = True
         return retval
 
-
     def DataFromRside(self, rside):
         data = []
 
@@ -1674,8 +1673,8 @@ class CobolVariable():
             # This next code automatically handles table offset and refmods:
             i = 0
             while i < self.ActualLength:
-                command = "set {char}" + hex(self.ActualLocation+i) + "=" + hex(new_data[i])
-                gdb.execute(command,False,True)
+                command = "set {char}" + hex(self.ActualLocation + i) + "=" + hex(new_data[i])
+                gdb.execute(command, False, True)
                 i += 1
             self.IsDirty = True
 
@@ -2016,7 +2015,7 @@ class CobolVariable():
 
                         # Pick up the integer count:
                         count = GetDataAt(self.location_of_pic + offset, calcsize('i'))
-                        offset += calcsize('i');
+                        offset += calcsize('i')
 
                         while count > 0:
                             count -= 1
@@ -2186,7 +2185,7 @@ class CobolVariable():
             else:
                 print("[", end="")
                 for byte in self.data:
-                    print( hex(256+byte)[-2:] , end="")
+                    print(hex(256 + byte)[-2:], end="")
                 print("]", end="")
 
             print("")
@@ -2311,7 +2310,7 @@ class CobolVariable():
         raw_data = GetBytesAt(self.location_of_data, self.Length)
         print("Data: (HEX)   [", end=" ")
         for byte in raw_data:
-            hexout = hex(256+byte)[-2:]
+            hexout = hex(256 + byte)[-2:]
             print(hexout, end=" ")
         print("]")
 
@@ -2380,37 +2379,37 @@ class CobolVariable():
             bias = 16383
             valid_digits = 35
         # Handleing binary256 means doubling the 76-digit expansion below
-        #elif length == 32:
-        #    # binary256
-        #    exponent_bits = 19
-        #    fraction_bits = 236
-        #    bias = 262143
-        #    valid_digits = 72
+        # elif length == 32:
+        #     # binary256
+        #     exponent_bits = 19
+        #     fraction_bits = 236
+        #     bias = 262143
+        #     valid_digits = 72
         else:
             message = "Don't know how to handle IEEE 754 floating point with a length of "
             message += str(length)
             message += " bytes"
-            raise Exception (message)
+            raise Exception(message)
 
         # At one point I thought it useful to append this information
-        #type = "  [ IEEE binary"
-        #type += str(length*8)
-        #type += " ]"
+        # type = "  [ IEEE binary"
+        # type += str(length*8)
+        # type += " ]"
 
         # Now I don't
         type = ""
 
-        exponent_mask = ((1<<exponent_bits)-1)
-        unit_point = 1<<fraction_bits
+        exponent_mask = ((1 << exponent_bits) - 1)
+        unit_point = 1 << fraction_bits
         ten_point = unit_point * 10
-        fraction_mask = unit_point-1
+        fraction_mask = unit_point - 1
 
         # combine the bytes into a single value
         value = 1   # This is a guard bit; it ensure that, for example,
                     # a bunch of bytes of zeros have at least the number
                     # of bits we're going to need.
 
-        for i in range(length-1, -1, -1):
+        for i in range(length - 1, -1, -1):
             value <<= 8
             value += bytes[i]
 
@@ -2427,29 +2426,29 @@ class CobolVariable():
         if sign == 1:
             body += '-'
 
-        if ((exponent+1) & exponent_mask) == 0:
+        if ((exponent + 1) & exponent_mask) == 0:
             # exponent is the maximum possible value
             if fraction == 0:
                 body += "Inf"
                 body += type
-                return body , pic
+                return body, pic
             body = "NaN"
             body += type
-            return body , pic
+            return body, pic
 
         if exponent == 0:
             if fraction == 0:
-                body += "0" # This is how GnuCOBOL prints a floating-point zero.  I think it should be "0.0"
+                body += "0"  # This is how GnuCOBOL prints a floating-point zero.  I think it should be "0.0"
                 body += type
-                return body , pic
+                return body, pic
             else:
                 # faction is != 0, so this is a denormal number
                 # fraction stays the same, with the implied binary
                 # point fraction_bits to the left of the whole value
                 # exponent becomes -N, where N is -(bias-1)
-                exponent = -(bias-1)
+                exponent = -(bias - 1)
                 # now, adjust fraction to look like a regular number:
-                while (fraction & (1<<fraction_bits)) == 0:
+                while (fraction & (1 << fraction_bits)) == 0:
                     fraction <<= 1
                     exponent -= 1
         else:
@@ -2478,13 +2477,13 @@ class CobolVariable():
         # The power-of-two starts at 2^0, and gets divided by two each time through the loop:
         expanded = 0
         power_of_two = 1000000000000000000000000000000000000000000000000000000000000000000000000000
-        mask = 1<<fraction_bits
+        mask = 1 << fraction_bits
         while mask:
-            #print(power_of_two, end = ' ')
+            # print(power_of_two, end = ' ')
             if fraction & mask:
-                #print("***", end = '')
+                # print("***", end = '')
                 expanded += power_of_two
-            #print(" ")
+            # print(" ")
             power_of_two >>= 1
             mask >>= 1
 
@@ -2497,13 +2496,13 @@ class CobolVariable():
                 # the fraction by two.  To avoid losing bits, we're going to
                 # do that by multiplying it by 5, and dividing it by ten via
                 # the decimal exponent:
-                exponent += 1;  # increase exponent towards zero
-                expanded *= 5;  # multiply by five
-                decimal_exponent -= 1; # divide by ten
+                exponent += 1  # increase exponent towards zero
+                expanded *= 5  # multiply by five
+                decimal_exponent -= 1  # divide by ten
             else:
                 # Decrease the exponent, and multiply by two
-                exponent -= 1;
-                expanded <<= 1;
+                exponent -= 1
+                expanded <<= 1
 
             # Multiply or divide by ten to normalize fraction to be
             # between unit_point <= fraction < ten_point
@@ -2519,15 +2518,15 @@ class CobolVariable():
                 expanded *= 10
                 decimal_exponent -= 1
 
-        #print(self.Name, "expanded", expanded)
+        # print(self.Name, "expanded", expanded)
 
         # Expanded is a 76-digit decimal expansion of the final result,
         # with the implied decimal point to the right of the left-most
         # digit.
 
         # Extract all the digits we need, plus one for rounding:
-        expanded = int(str(expanded)[0:valid_digits+1])
-        #print(self.Name, "expanded", expanded)
+        expanded = int(str(expanded)[0:valid_digits + 1])
+        # print(self.Name, "expanded", expanded)
 
         # Add five to that shortened extraction, in order to round up
         expanded += 5
@@ -2551,12 +2550,12 @@ class CobolVariable():
         body += expanded[1:]
 
         # eliminate trailing zeroes:
-        while body[len(body)-1] == '0':
-            body = body[:len(body)-1]
+        while body[len(body) - 1] == '0':
+            body = body[:len(body) - 1]
 
         # Make sure there is at least one '0' to the right of the decimal point
-        if body[len(body)-1] == '.':
-            body += '0';
+        if body[len(body) - 1] == '.':
+            body += '0'
 
         # Appended the exponent part of the number:
         if decimal_exponent != 0:
@@ -2565,7 +2564,7 @@ class CobolVariable():
                 body += '+'
             body += str(decimal_exponent)
         body += type
-        return body , pic
+        return body, pic
 
     def StringToIeeeBinary(self, rside):
         retval = bytearray(self.Length)
@@ -2605,28 +2604,28 @@ class CobolVariable():
             message = "Don't know how to handle IEEE 754 floating point with a length of "
             message += str(length)
             message += " bytes"
-            raise Exception (message)
+            raise Exception(message)
 
         if rside.original_string.lower() == "inf" or rside.original_string.lower() == "+inf":
             # Positive infinity
             sign = 0
-            exponent = (1<<exponent_bits)-1
+            exponent = (1 << exponent_bits) - 1
             significand = 0
         elif rside.original_string.lower() == "-inf":
             # Negative infinity
             sign = 1
-            exponent = (1<<exponent_bits)-1
+            exponent = (1 << exponent_bits) - 1
             significand = 0
         elif rside.original_string.lower() == "nan" or rside == "snan":
             # signalling rside.original_string.lower()
             sign = 0
-            exponent = (1<<exponent_bits)-1
+            exponent = (1 << exponent_bits) - 1
             significand = 1
         elif rside.original_string.lower() == "qnan":
             # quiet NaN
             sign = 0
-            exponent = (1<<exponent_bits)-1
-            significand = (1<<(fraction_bits-1)) + 1
+            exponent = ( 1<< exponent_bits)-1
+            significand = (1 << (fraction_bits - 1)) + 1
         elif int(rside.left_of_decimal or "0") == 0 and int(rside.right_of_decimal or "0") == 0:
             # We've got us a zero
             sign = 0
@@ -2739,7 +2738,7 @@ class CobolVariable():
         # We can now build the retval bytearray:
 
         mask = 0x80
-        offset = 0;
+        offset = 0
         if sign == 1:
             retval[offset] |= mask
         mask >>= 1
@@ -2748,7 +2747,7 @@ class CobolVariable():
             offset += 1
 
         for i in range(exponent_bits):
-            if exponent & 1<<(exponent_bits-1-i) != 0:
+            if exponent & 1 << (exponent_bits - 1 - i) != 0:
                 retval[offset] |= mask
             mask >>= 1
             if mask == 0:
@@ -2756,7 +2755,7 @@ class CobolVariable():
                 offset += 1
 
         for i in range(fraction_bits):
-            if significand & 1<<(fraction_bits-1-i) != 0:
+            if significand & 1 << (fraction_bits - 1 - i) != 0:
                 retval[offset] |= mask
             mask >>= 1
             if mask == 0:
@@ -2783,7 +2782,7 @@ class CobolVariable():
 
         # strip off trailing zeroes
         while str_coefficient[-1:] == '0':
-            tr_coefficient = str_coefficient[:len(str_coefficient)-1]
+            tr_coefficient = str_coefficient[:len(str_coefficient) - 1]
 
         # when left with "3." make it "3.0"
         if len(str_coefficient) == 2:
@@ -2804,7 +2803,7 @@ class CobolVariable():
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 128-bit zero, for example
-        for i in range(self.Length-1, -1, -1):
+        for i in range(self.Length - 1, -1, -1):
             value <<= 8
             value += our_bytes[i]
 
@@ -2819,17 +2818,17 @@ class CobolVariable():
             exponent_bits = 14
             bias = 6176
 
-        sign = (value >> (128-1)) & 1
-        combination = (value >> (128-5)) & 0xF;
+        sign = (value >> (128 - 1)) & 1
+        combination = (value >> (128 - 5)) & 0xF
 
-        coefficient1 = value & ((1<<coefficient_bits1)-1)
-        coefficient2 = value & ((1<<coefficient_bits2)-1)
-        exponent1 = (value >> exponent_loc1) & ((1<<exponent_bits)-1)
-        exponent2 = (value >> exponent_loc2) & ((1<<exponent_bits)-1)
+        coefficient1 = value & ((1 << coefficient_bits1) - 1)
+        coefficient2 = value & ((1 << coefficient_bits2) - 1)
+        exponent1 = (value >> exponent_loc1) & ((1 << exponent_bits) - 1)
+        exponent2 = (value >> exponent_loc2) & ((1 << exponent_bits) - 1)
 
         body = ""
         pic = ""
-        if combination == 0b1111: # It's NaN/Inf
+        if combination == 0b1111:  # It's NaN/Inf
             body = "NaN/Inf"
         else:
             # It's a number
@@ -2838,7 +2837,7 @@ class CobolVariable():
             if combination >= 0b1100:
                 # Mode 1:
                 exponent = exponent1
-                coefficient = coefficient1 + (1<<113)
+                coefficient = coefficient1 + (1 << 113)
             else:
                 exponent = exponent2
                 coefficient = coefficient2
@@ -2869,7 +2868,7 @@ class CobolVariable():
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 64-bit zero, for example
-        for i in range(self.Length-1, -1, -1):
+        for i in range(self.Length - 1, -1, -1):
             value <<= 8
             value += our_bytes[i]
 
@@ -2884,17 +2883,17 @@ class CobolVariable():
             exponent_bits = 10
             bias = 398
 
-        sign = (value >> (64-1)) & 1
-        combination = (value >> (64-5)) & 0xF;
+        sign = (value >> (64 - 1)) & 1
+        combination = (value >> (64 - 5)) & 0xF
 
-        coefficient1 = value & ((1<<coefficient_bits1)-1)
-        coefficient2 = value & ((1<<coefficient_bits2)-1)
-        exponent1 = (value >> exponent_loc1) & ((1<<exponent_bits)-1)
-        exponent2 = (value >> exponent_loc2) & ((1<<exponent_bits)-1)
+        coefficient1 = value & ((1 << coefficient_bits1) - 1)
+        coefficient2 = value & ((1 << coefficient_bits2) - 1)
+        exponent1 = (value >> exponent_loc1) & ((1 << exponent_bits) - 1)
+        exponent2 = (value >> exponent_loc2) & ((1 << exponent_bits) - 1)
 
         body = ""
         pic = ""
-        if combination == 0b1111: # It's NaN/Inf
+        if combination == 0b1111:  # It's NaN/Inf
             body = "NaN/Inf"
         else:
             # It's a number
@@ -2903,7 +2902,7 @@ class CobolVariable():
             if combination >= 0b1100:
                 # Mode 1:
                 exponent = exponent1
-                coefficient = coefficient1 + (1<<53)
+                coefficient = coefficient1 + (1 << 53)
             else:
                 exponent = exponent2
                 coefficient = coefficient2
@@ -2938,7 +2937,7 @@ class CobolVariable():
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 64-bit zero, for example
-        for i in range(self.Length-1, -1, -1):
+        for i in range(self.Length - 1, -1, -1):
             value <<= 8
             value += our_bytes[i]
 
@@ -2951,26 +2950,26 @@ class CobolVariable():
             combination_bits = 5
             bias = 398
 
-        coefficient = value & ((1<<coefficient_bits)-1)
-        exponent = (value >> coefficient_bits) & ((1<<exponent_bits)-1)
-        combination = (value >> (coefficient_bits+exponent_bits)) \
-                              & ((1<<combination_bits)-1)
-        sign = (value >> (coefficient_bits+exponent_bits+combination_bits)) & 1
+        coefficient = value & ((1 << coefficient_bits) - 1)
+        exponent = (value >> coefficient_bits) & ((1 << exponent_bits) - 1)
+        combination = (value >> (coefficient_bits + exponent_bits)) \
+                       & ((1 << combination_bits) - 1)
+        sign = (value >> (coefficient_bits + exponent_bits + combination_bits)) & 1
 
-        print( hex(value) )
-        print( bin(combination) )
-        print( hex(exponent) )
-        print( hex(coefficient) )
+        print(hex(value))
+        print(bin(combination))
+        print(hex(exponent))
+        print(hex(coefficient))
 
         body = ""
         pic = ""
-        if combination == 0b11111: # It's NaN
-            if (exponent & (1<<(exponent_bits-1))) != 0:
+        if combination == 0b11111:  # It's NaN
+            if (exponent & (1 << (exponent_bits - 1))) != 0:
                 body += 's'
             else:
                 body += 'q'
             body += "NaN"
-        elif combination == 0b11110: # It's Infinity
+        elif combination == 0b11110:  # It's Infinity
             if sign == 1:
                 body += '-'
             else:
@@ -2981,15 +2980,15 @@ class CobolVariable():
             if sign == 1:
                 body += '-'
             if combination >= 0b11000:
-                ms_exponent = (combination>>1)&0x03
-                ms_coefficient = 8 + (combination&1)
+                ms_exponent = (combination >> 1) & 0x03
+                ms_coefficient = 8 + (combination & 1)
             else:
-                ms_exponent = (combination>>3)&0x03
+                ms_exponent = (combination >> 3) & 0x03
                 ms_coefficient = combination & 0x07
 
-            exponent = (ms_exponent<<exponent_bits) + exponent
+            exponent = (ms_exponent << exponent_bits) + exponent
             exponent -= bias
-            #coefficient = (ms_coefficient<<coefficient_bits) + coefficient
+            # coefficient = (ms_coefficient<<coefficient_bits) + coefficient
             body += str(coefficient)
 
             if exponent:
@@ -3048,10 +3047,10 @@ class CobolVariable():
         # Convert the nybbles to a string of digits:
         body = ""
         for nybble in nybbles:
-            body += chr( nybble + ord('0') )
+            body += chr(nybble + ord('0'))
 
         # Trim the string to the number of digits:
-        body = body[ len(body)-self.AttrDigits : ]
+        body = body[len(body) - self.AttrDigits:]
 
         if pscale > 0:
             # The extra zeroes are to the left of the decimal point
@@ -3061,9 +3060,9 @@ class CobolVariable():
             body = ('0' * -pscale) + body
             body = self.decimal_point + body
         elif self.AttrScale > 0:
-            body = body[:self.AttrDigits-self.AttrScale] + \
-                    self.decimal_point + \
-                    body[self.AttrDigits-self.AttrScale:]
+            body = body[:self.AttrDigits - self.AttrScale] + \
+                   self.decimal_point + \
+                   body[self.AttrDigits - self.AttrScale:]
 
         if negative:
             body = '-' + body
@@ -3109,21 +3108,21 @@ class CobolVariable():
 
         # We can now put together the retval bytearray
         retval = bytearray(self.Length)
-        offset = len(retval)-1
+        offset = len(retval) - 1
         mask = 0
         if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0:
-            retval[offset] |= ((sign_nybble&0xF) << (mask*4))
-            mask += 1;
-            offset -= mask//2
+            retval[offset] |= ((sign_nybble & 0xF) << (mask * 4))
+            mask += 1
+            offset -= mask // 2
             mask %= 2
 
         for ch in digits:
-            nch = ord(ch) - ord('0');
+            nch = ord(ch) - ord('0')
             nch &= 0x0F
-            nch <<= (mask*4)
-            retval[offset] |= nch;
-            mask += 1;
-            offset -= mask//2
+            nch <<= (mask * 4)
+            retval[offset] |= nch
+            mask += 1
+            offset -= mask // 2
             mask %= 2
         return retval
 
@@ -3135,7 +3134,7 @@ class CobolVariable():
         negative = False
         if self.Length > 0:
             # DISPLAY keeps the negative bit in an oddball place:
-            if (self.data[self.Length-1] & 0x40) != 0:
+            if (self.data[self.Length - 1] & 0x40) != 0:
                 negative = True
 
             # Convert the binary value in self.data to a string
@@ -3176,7 +3175,7 @@ class CobolVariable():
             pic += ','
             pic += str(self.AttrScale)
             pic += ") ]"
-        return body , pic
+        return body, pic
 
     def RsideToInteger(self, rside):
         """ Returns a string of decimal digits, with the implicit
@@ -3215,7 +3214,7 @@ class CobolVariable():
 
         if self.AttrType != COB_TYPE_NUMERIC_DISPLAY or self.AttrDigits <= self.Length:
             # start off with the rightmost digits of left:
-            data = left[-(number_of_digits-self.AttrScale):]
+            data = left[-(number_of_digits - self.AttrScale):]
             # and continue with the leftmost digits of right:
             data += right[0:self.AttrScale]
         else:
@@ -3224,10 +3223,10 @@ class CobolVariable():
             if self.AttrScale > 0:
                 # This is a ppp9999 scaled value.  Return the required
                 # fractional digits
-                data = right[padding:padding+self.Length]
+                data = right[padding:padding + self.Length]
             else:
                 # Return the required decimal digits
-                data = left[-self.AttrDigits : -(self.AttrDigits-self.Length)]
+                data = left[-self.AttrDigits : -(self.AttrDigits - self.Length)]
         return data
 
     def StringToNumericDisplay(self, rside):
@@ -3238,7 +3237,7 @@ class CobolVariable():
         data = bytearray(digits, "utf8")
 
         if rside.is_negative and (self.AttrFlags & COB_FLAG_HAVE_SIGN):
-            data[self.AttrDigits-1] |= 0x40
+            data[self.AttrDigits - 1] |= 0x40
 
         return data
 
@@ -3282,7 +3281,7 @@ class CobolVariable():
         if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0:
             # This is a binary number that can be signed; let's
             # see if it is.
-            if (our_bytes[self.Length-1] & 0x80) != 0:
+            if (our_bytes[self.Length - 1] & 0x80) != 0:
                 # and it is negative
                 negative = True
 
@@ -3291,9 +3290,9 @@ class CobolVariable():
 
                 carry = 1
                 for i in range(self.Length):
-                    our_bytes[i] = ~our_bytes[i];
+                    our_bytes[i] = ~our_bytes[i]
                     our_bytes[i] &= 0xFF
-                    our_bytes[i] += carry;
+                    our_bytes[i] += carry
                     carry = our_bytes[i] >> 8
                     our_bytes[i] &= 0xFF
 
@@ -3302,7 +3301,7 @@ class CobolVariable():
         # build up the little-endian value:
 
         value = 0
-        for i in range(self.Length-1, -1, -1):
+        for i in range(self.Length - 1, -1, -1):
             value <<= 8
             value += our_bytes[i]
 
@@ -3330,7 +3329,7 @@ class CobolVariable():
                 body = '.' + body
         else:
             # Let's put in a decimal point, if necessary
-            if  self.AttrScale > 0:
+            if self.AttrScale > 0:
                 breakat = len(body) - self.AttrScale
                 body = body[:breakat] + self.decimal_point + body[breakat:]
 
@@ -3345,7 +3344,7 @@ class CobolVariable():
             pic += " unsigned "
 
         pic += "binary-"
-        pic += str(self.Length*8)
+        pic += str(self.Length * 8)
         if self.AttrScale != 0:
             pic += " ("
             pic += str(self.AttrDigits - self.AttrScale)
@@ -3354,8 +3353,7 @@ class CobolVariable():
             pic += ")"
 
         pic += ' ]'
-        return body, pic;
-
+        return body, pic
 
     def StringToNumericBinary(self, rside):
         # Generic binary
@@ -3391,7 +3389,7 @@ class CobolVariable():
         pic = '[ alphanumeric-'
         pic += str(self.Length)
         pic += ' ]'
-        return body, pic;
+        return body, pic
 
     def StringToAlphanumeric(self, rside):
         data = ""
@@ -3404,7 +3402,7 @@ class CobolVariable():
         else:
             limit2 = len(rside.original_string)
 
-        while i<self.Length and i<limit2:
+        while i < self.Length and i < limit2:
             data += rside.original_string[i % len(rside.original_string)]
             i += 1
 
@@ -3455,13 +3453,13 @@ class CobolVariable():
             # of a decimal point, then we need to insert one.
 
             if self.Picture.find(self.decimal_point) == -1 and self.AttrScale > 0:
-                body = body[:len(body)-self.AttrScale] + self.decimal_point + body[-self.AttrScale:]
+                body = body[:len(body) - self.AttrScale] + self.decimal_point + body[-self.AttrScale:]
 
         pic += '[ PIC '
         pic += self.Picture
         pic += ' ]'
         body = '"' + body + '"'
-        return body, pic;
+        return body, pic
 
     def NumberOfDigits(self):
         retval = self.AttrDigits
@@ -3505,7 +3503,7 @@ class CobolVariable():
         if floating_insertion:
             for i in range(len(self.Picture)):
                 if self.Picture[i] == floating_insertion:
-                    if floating_insertion_start == None:
+                    if floating_insertion_start is None:
                         floating_insertion_start = i
                     floating_insertion_end = i
 
@@ -3514,9 +3512,9 @@ class CobolVariable():
         i = 0
         while i < number_of_digits - self.AttrScale:
             if input[i] == '0':
-                input = input[:i] + 'z' + input[i+1:]
+                input = input[:i] + 'z' + input[i + 1:]
             else:
-                break;
+                break
             i += 1
         if i >= number_of_digits - self.AttrScale:
             # The entire integer part is zero.  How about the fractional part?
@@ -3534,8 +3532,8 @@ class CobolVariable():
         # We will now walk the picture and input strings from right
         # to left, building the resulting string as we go
 
-        pindex = len(self.Picture)-1
-        dindex = len(input)-1
+        pindex = len(self.Picture) - 1
+        dindex = len(input) - 1
 
         # This is, perforce, a state machine.  At this stage of development
         # is is mostly an ad hoc state machine.
@@ -3586,9 +3584,9 @@ class CobolVariable():
                 # Everything to the left of the floating_insertion is
                 # supposed to be a blank
                 body += ' '
-                continue;
+                continue
 
-            if not did_floating and pindex+1 == floating_insertion_start:
+            if not did_floating and pindex + 1 == floating_insertion_start:
                 # The leftmost character of the floating_insertion has
                 # to be set, even at the cost of truncating the input
                 did_floating = True
@@ -3615,8 +3613,8 @@ class CobolVariable():
                 continue
 
             inside_floating = False
-            if floating_insertion_start != None:
-                inside_floating = (pindex+1 >= floating_insertion_start and pindex+1 <= floating_insertion_end)
+            if floating_insertion_start is not None:
+                inside_floating = (pindex + 1 >= floating_insertion_start and pindex + 1 <= floating_insertion_end)
 
             include_literal = "B0/,."
             if not inside_floating:
@@ -3667,24 +3665,24 @@ class CobolVariable():
         while True:
             i = body.find(wipe_me)
             if i == -1:
-                break;
-            body = body[:i] + "  " + body[i+2:]
+                break
+            body = body[:i] + "  " + body[i + 2:]
 
         # Get rid of commas preceded by asterisks:
         wipe_me = '*' + self.comma_separator
         while True:
             i = body.find(wipe_me)
             if i == -1:
-                break;
-            body = body[:i] + "**" + body[i+2:]
+                break
+            body = body[:i] + "**" + body[i + 2:]
 
         # Get rid of commas preceded by currency symbols:
         wipe_me = self.currency_symbol + self.comma_separator
         while True:
             i = body.find(wipe_me)
             if i == -1:
-                break;
-            body = body[:i] + ' ' + self.currency_symbol + body[i+2:]
+                break
+            body = body[:i] + ' ' + self.currency_symbol + body[i + 2:]
 
         if (body[-2:] == 'CR' or body[-2:0] == 'DB') and body[-3] == ' ':
             body = body[:-2] + "  "
@@ -3701,7 +3699,7 @@ class CobolVariable():
         # If we ended up with just a decimal point, get rid of that:
         if body.strip() == self.decimal_point:
             i = body.find(self.decimal_point)
-            body = body[:i] + ' ' + body[i+1:]
+            body = body[:i] + ' ' + body[i + 1:]
 
         retval = bytearray(body.encode("utf8"))
 
@@ -3775,7 +3773,7 @@ class CobolVariable():
             # We were handed an unknown type.  Let's look at the data:
             if noisy:
                 print("Unknown COB_TYPE", self.AttrType, hex(self.AttrType))
-            non_printable = 0;
+            non_printable = 0
             for i in range(len(self.data)):
                 if self.data[i] < 32:
                     non_printable += 1
@@ -3816,7 +3814,8 @@ class CobolVariable():
                     value = '0' + value
                 value = stash + self.decimal_point + value
 
-        return value;
+        return value
+
 
 class Rside():
     """Universal value extractor"""
@@ -3824,23 +3823,23 @@ class Rside():
         self.original_string = ""
         self.is_symbol = False
         self.is_negative = False
-        self.left_of_decimal  = ""   # Note that these are strings, and not integers
+        self.left_of_decimal = ""   # Note that these are strings, and not integers
         self.right_of_decimal = ""
         self.exponent = 0           # Note that this is an integer, and not a string
         self.has_all = False
 
     def __str__(self):
         retval = ""
-        retval += "original_string     : {0}\n".format('"'+self.original_string+'"')
-        retval += "is_symbol           : {0}\n".format(self.is_symbol              )
-        retval += "is_negative         : {0}\n".format(self.is_negative            )
-        retval += "left_of_decimal     : {0}\n".format(self.left_of_decimal        )
-        retval += "right_of_decimal    : {0}\n".format(self.right_of_decimal       )
-        retval += "exponent            : {0}\n".format(self.exponent               )
-        retval += "has_all             : {0}\n".format(self.has_all                )
+        retval += "original_string     : {0}\n".format('"' + self.original_string + '"')
+        retval += "is_symbol           : {0}\n".format(self.is_symbol)
+        retval += "is_negative         : {0}\n".format(self.is_negative)
+        retval += "left_of_decimal     : {0}\n".format(self.left_of_decimal)
+        retval += "right_of_decimal    : {0}\n".format(self.right_of_decimal)
+        retval += "exponent            : {0}\n".format(self.exponent)
+        retval += "has_all             : {0}\n".format(self.has_all)
         return retval
 
-    def FromString(self,rside):
+    def FromString(self, rside):
         self.__init__()
         quoted = False
         if rside:
@@ -3932,16 +3931,16 @@ class Rside():
             #
             m = re.search(R_NUMERICALCONSTANT, rside)
             if m:
-                #print("We have a match!")
-                #print("   Prefix:  ",m.group(1))
-                #print("   LDigits: ",m.group(2))
-                #print("   RDigits: ",m.group(3))
-                #print("   EFlag:   ",m.group(4))
-                #print("   EDigits: ",m.group(5))
+                # print("We have a match!")
+                # print("   Prefix:  ",m.group(1))
+                # print("   LDigits: ",m.group(2))
+                # print("   RDigits: ",m.group(3))
+                # print("   EFlag:   ",m.group(4))
+                # print("   EDigits: ",m.group(5))
 
                 if m.group(1) == '-':
-                    self.is_negative  = True
-                self.left_of_decimal  = m.group(2)
+                    self.is_negative = True
+                self.left_of_decimal = m.group(2)
                 self.right_of_decimal = m.group(3)
                 if m.group(5):
                     self.exponent = int(m.group(5))
@@ -4719,7 +4718,7 @@ def get_section_spec(arg):
     elif len(mod_sec) == 2:
         section_name = encode_program_id(mod_sec[1], 1)
         if mod_sec[0] != "":
-            module_name =  encode_program_id(mod_sec[0], 0)
+            module_name = encode_program_id(mod_sec[0], 0)
 
     if not module_name:
         return "SECTION_{0}".format(section_name)
@@ -5017,9 +5016,9 @@ class CPrintWorker():
             # data on the left
 
             i = 0
-            while i<var_left.ActualLength and i < len(value.original_string):
-                command = "set {char}" + hex(var_left.ActualLocation+i) + "=" + hex(ord(value.original_string[i]))
-                gdb.execute(command,False,True)
+            while i < var_left.ActualLength and i < len(value.original_string):
+                command = "set {char}" + hex(var_left.ActualLocation + i) + "=" + hex(ord(value.original_string[i]))
+                gdb.execute(command, False, True)
                 i += 1
 
             # If the left wants more than the right provided, right-fill with zeroes or
@@ -5028,9 +5027,9 @@ class CPrintWorker():
                 ch = ' '
             else:
                 ch = chr(0)
-            while i<var_left.ActualLength:
-                command = "set {char}" + hex(var_left.ActualLocation+i) + "=" + hex(ord(ch))
-                gdb.execute(command,False,True)
+            while i < var_left.ActualLength:
+                command = "set {char}" + hex(var_left.ActualLocation + i) + "=" + hex(ord(ch))
+                gdb.execute(command, False, True)
                 i += 1
 
             return_value = 1
@@ -5748,7 +5747,7 @@ class CBreakWorker():
         location_of_field = None
 
         try:
-            #TODO: The following call to crt_malloc should have a companion
+            # TODO: The following call to crt_malloc should have a companion
             #      call to crt_free()
             location_of_field = crt_malloc("sizeof(cob_field)")
 
@@ -5889,7 +5888,7 @@ class CBreakWorker():
         location_of_field = None
 
         try:
-            #TODO: The following calla to crt_malloc should have companion
+            # TODO: The following calla to crt_malloc should have companion
             #      calls to crt_free()
             location_of_field = crt_malloc("sizeof(cob_field)")
             location_of_attribute = crt_malloc("sizeof(cob_field_attr)")
@@ -5917,7 +5916,7 @@ class CBreakWorker():
             command = "set var ((cob_field_attr *){0})->flags = {1}".format(hex(location_of_attribute), COB_FLAG_CONSTANT)
             gdb.execute(command, False, True)
 
-            #TODO: The following call to crt_malloc should have a companion
+            # TODO: The following call to crt_malloc should have a companion
             #      call to crt_free()
             buffer = crt_malloc(PRINT_BUFFER_SIZE)
 
@@ -6882,6 +6881,7 @@ class CFinishModule(gdb.Command):
 
         gdb.execute("finish", False, False)
 
+
 class CUntilCobol(gdb.Command):
     """Execute until most current COBOL module"""
 
@@ -6908,6 +6908,7 @@ class CUntilCobol(gdb.Command):
         cob_frame.newer().select()
         gdb.execute("finish", False, False)
 
+
 class CLocalBacktrace(gdb.Command):
     """Output the "local" backtrace of the selected COBOL module."""
 
@@ -6922,9 +6923,8 @@ class CLocalBacktrace(gdb.Command):
         except:
             pass
 
-
     def get_section_for_sal(self, sal):
-        output = gdb.execute("list *" +  hex(sal.pc), False, True)
+        output = gdb.execute("list *" + hex(sal.pc), False, True)
 
         try:
             while True:
@@ -6946,7 +6946,6 @@ class CLocalBacktrace(gdb.Command):
             pass
 
         return "unknown"
-
 
     def invoke(self, argument, from_tty):
         # TODO: handle two arguments -> "- 5" -> was entered as -5
@@ -7242,8 +7241,8 @@ CNext()
 CmdAutoStep()
 CStart()
 
-#rtest = Rside()
-#rtest.FromString("12.34")
-#print(rtest)
-#rtest.FromString('"12.34"')
-#print(rtest)
+# rtest = Rside()
+# rtest.FromString("12.34")
+# print(rtest)
+# rtest.FromString('"12.34"')
+# print(rtest)
