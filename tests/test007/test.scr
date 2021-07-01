@@ -149,4 +149,17 @@ next
 cprint national-data       
 next
 
+continue
+delete
+b 122
+run
+echo KNOWN GOOD START\n
+echo cprint dispp=.123456789\n
+cprint dispp=.123456789
+echo cprint disppp= 123456789\n
+cprint disppp= 123456789
+echo KNOWN GOOD FINISH\n
+
+
+
 quit

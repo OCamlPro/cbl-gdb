@@ -114,3 +114,9 @@ thats some text                       alpha
 some numb3rs 4 n00bs l1k3 m3        thats some text                     -12.340-12.340 12.340- 12.340  alphanumeric-data
 109	           display "Numbers after this can't be fed into a 'diff' test"
 KNOWN GOOD FINISH
+KNOWN GOOD START
+cprint dispp=.123456789
++.0004567
+cprint disppp= 123456789
++3456000
+KNOWN GOOD FINISH

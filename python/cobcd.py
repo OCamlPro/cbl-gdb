@@ -191,6 +191,16 @@ READELF_BINARY = os.getenv('READELF', 'readelf')
 COBCDRW_BINARY = os.getenv('COBCDRW', 'cobcd-rw')
 COBCRUN_NAME = os.getenv('COBCRUN', 'cobcrun')  # _only_ the name, also: no extension
 
+# This table is used by the GlobalVariable.NumberOfDigits routine
+SIZE_TO_DIGITS = {1: len(str(2**(8*1))),
+                  2: len(str(2**(8*2))),
+                  3: len(str(2**(8*3))),
+                  4: len(str(2**(8*4))),
+                  5: len(str(2**(8*5))),
+                  6: len(str(2**(8*6))),
+                  7: len(str(2**(8*7))),
+                  8: len(str(2**(8*8)))
+                 }
 
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
@@ -2597,8 +2607,6 @@ class CobolVariable():
             message += " bytes"
             raise Exception (message)
 
-        print("RSIDE\n",rside)
-
         if rside.original_string.lower() == "inf" or rside.original_string.lower() == "+inf":
             # Positive infinity
             sign = 0
@@ -2619,171 +2627,114 @@ class CobolVariable():
             sign = 0
             exponent = (1<<exponent_bits)-1
             significand = (1<<(fraction_bits-1)) + 1
+        elif int(rside.left_of_decimal or "0") == 0 and int(rside.right_of_decimal or "0") == 0:
+            # We've got us a zero
+            sign = 0
+            exponent = 0
+            significand = 0
         else:
-            try:
-                fpnumber = float(rside.original_string)
-            except:
-                print("Ill-formed floating point input")
-                fpnumber = 0
+            # No way around it, now.  We're going to do the hard work of a conversion:
+            if rside.is_negative:
+                sign = 1
+            else:
+                sign = 0
+            exponent = 0
+            significand = 0
 
-            if fpnumber == 0:
+            decimal_exponent = rside.exponent
+
+            # convert rside's decimal digits to that same normalized form:
+            ilside = int(rside.left_of_decimal or "0")
+            if ilside > 0:
+                # strip off any leading zeroes:
+                decdigits = str(ilside)
+                decimal_exponent += (len(decdigits)-1)
+                decdigits += rside.right_of_decimal
+            else:
+                irside = int(rside.right_of_decimal)
+                # strip off any leading zeroes
+                decdigits = str(irside)
+                decimal_exponent -= len(rside.right_of_decimal) - len(decdigits) + 1
+            # decdigits is the combined decimal representation of rside
+            # decdigits has its implied decimal point just to the right of the biggest digit
+            # The decimal exponent is in decimal_exponent
+
+
+            # We want to scale this number so that its representation has 76 decimal digits:
+            binrep = int(decdigits)
+
+            excess = len(str(binrep)) - 76
+            while excess > 0:
+                excess -= 1
+                binrep //= 10
+            while excess < 0:
+                excess += 1
+                binrep *= 10
+
+            # binrep is now a really big binary integer whose decimal representation has
+            # 76 digits, with the implied decimal place just to the right of the leftmost digit.
+
+            # We are now going to adjust it by the decimal_exponent.  The tricky thing is we
+            # are going to keep multiplying or dividing the result by two to keep it in the
+            # the range of 76 digits:
+
+            while decimal_exponent:
+                if decimal_exponent > 0:
+                    binrep *= 10
+                    decimal_exponent -= 1
+                else:
+                    binrep //= 10
+                    decimal_exponent += 1
+
+                while len(str(binrep)) > 76:
+                    binrep //= 2
+                    exponent += 1
+                while len(str(binrep)) < 76:
+                    binrep *= 2
+                    exponent -= 1
+            # We know that at this point binrep is a value with 76 decimal digits.  The
+            # implied decimal point is to the right of the left-most digit.
+            #
+            # We will divide by two until the left-most digit is "1"
+
+            while str(binrep)[0] != '1':
+                binrep //=2
+                exponent += 1
+
+            # At this point, believe it or not, we are actually kind of done.  The
+            # 76-digit string representation of binrep will display as 100000.... through 1999999
+            # We just need to peel off the binary bits that we need in order to create the
+            # significand of the floating-point number
+
+            # Let's round, shall we?  Because that's the way we roll:
+
+            # We have a 76-digit number.  We want to add 5 to the proper place:
+            rounding_zeroes = 76 - valid_digits - 1
+            binrep += int('5' + '0' * rounding_zeroes)
+
+            # Get rid of the biggest '1', because it's hidden/implicit/implied in IEEE 754
+            big_unity = 1000000000000000000000000000000000000000000000000000000000000000000000000000
+            binrep -= big_unity
+            sigstring = ""
+
+            significand = 0
+            for i in range(fraction_bits):
+                binrep *= 2
+                significand *= 2
+                if binrep >= big_unity:
+                    binrep -= big_unity
+                    significand += 1
+            exponent += bias
+            if exponent < 0:
+                ConditionalRaise("Value is out of range; exponent too small")
                 sign = 0
                 exponent = 0
                 significand = 0
-            else:
-                # We have run out of dodges; we have to actually encode
-                # the floating point number
-                if fpnumber < 0:
-                    sign = 1
-                    fpnumber = -fpnumber
-                else:
-                    sign = 0
-
-                astring = "{0:24.18e}".format(fpnumber)
-
-                eloc = astring.find("e")
-                point10 = -1 # Just to the right of the leftmost digit
-                lside = astring[0]
-                lside += astring[2:eloc]
-
-                exp10 = int(astring[eloc+1:])
-
-                while exp10 < 0:
-                    point10 += 1
-                    if point10 > 0:
-                        lside = '0' + lside
-                    exp10 += 1
-
-                while exp10 > 0:
-                    lside = lside + '0'
-                    lside = lside
-                    point10 -= 1
-                    exp10 -= 1
-
-                if point10 < 0:
-                    intpart = lside[0:-point10]
-                    fracpart = lside[-point10:]
-                else:
-                    intpart = ""
-                    fracpart = lside
-
-                while len(fracpart) > 0:
-                    if  fracpart[-1:] != '0': # Just the last char
-                        break
-                    fracpart = fracpart[0:-1] # All but last char
-
-                # Convert the integer part to a string of bytes:
-                intba = bytearray(intpart.encode("utf8"))
-                for i in range(len(intba)):
-                    intba[i] -= 0x30    # "0"
-
-                # Convert the integer part to a string of bits:
-                intbits = ""
-                while len(intba) > 0:
-                    # divide intba by two
-                    borrow = 0
-                    for i in range(len(intba)):
-                        newborrow = intba[i] & 0x01
-                        intba[i] = (borrow*10 + intba[i]) // 2
-                        borrow = newborrow
-                    # Push the lowest order bit onto the bitstring
-                    if borrow ==  1:
-                        intbits += "1"
-                    else:
-                        intbits += "0"
-                    if intba[0] == 0x00:
-                        intba = intba[1:]
-
-                # Reverse the order of intbits:
-                intbits = intbits[::-1]
-
-                # Convert the fractional part to a string of bytes:
-                fracba = bytearray(fracpart.encode("utf8"))
-                for i in range(len(fracba)):
-                    fracba[i] -= 0x30    # "0"
-
-                # Convert the fractional part to a string of bits.  We
-                # we will create one more than we can possibly need
-
-                fracbits = ""
-                while len(fracbits) < fraction_bits+1+1:
-                    # Multiply fracbits by two:
-                    carry = 0
-                    for i in range(len(fracba)-1, -1, -1):
-                        fracba[i] = fracba[i]*2 + carry
-                        carry = fracba[i] // 10
-                        fracba[i] = fracba[i] % 10
-                    # Pick up the bit that means >= 0.5
-                    if carry == 1:
-                        fracbits += '1'
-                    else:
-                        fracbits += '0'
-
-                sigbits = intbits + fracbits
-                binary_point = len(intbits)
-
-                # Round to the actual number of places we'll need
-                carry = sigbits[fraction_bits+1]
-                sigbits = sigbits[0:fraction_bits+1]
-
-                i = len(sigbits)-1
-                while(i >= 0):
-                    if carry == '0':
-                        break;
-                    if sigbits[i] == '0':
-                        sigbits = sigbits[:i] + '1' + sigbits[i+1:]
-                        break;
-                    sigbits = sigbits[:i] + '0' + sigbits[i+1:]
-                    carry = 1
-                    i -= 1
-
-                if carry == 1:
-                    # Well, this is improbable.  Somebody must've entered
-                    # 0.999999999999999999999999999999999, but in a way
-                    # that snuck past the Python floating point input
-                    # conversion.
-                    #
-                    # What a jerk
-                    #
-                    sigbits = '1' + sigbits
-                    sigbits = sigbits[0:fraction_bits+1]
-                    binary_point += 1
-
-                # If the number is >= 1, it's already normalized.
-
-                # Otherwise, strip off leading zeroes while adjusting the
-                # binary point:
-                while sigbits[0] == '0':
-                    sigbits = sigbits[1:] + '0'
-                    binary_point -= 1;
-
-                # calculate the power_of_two from the binary_point position
-                power_of_two = binary_point - 1
-
-                # Convert the power_of_two using the bias:
-
-                exponent = power_of_two + bias
-
-                if exponent <= 0:
-                    # I am not going to mess with sub-normal numbers.  This
-                    # is, therefore, just too damned small.  Make it zero
-                    sign = 0
-                    exponent = 0
-                    significand = 0
-                elif exponent >= (1<<exponent_bits)-1:
-                    # The number is too big for this IEEE format.
-                    # Make it infinite
-                    exponent = (1<<exponent_bits)-1
-                    significand = 0
-                else:
-                    # We have the sign and exponent.  Build the signicand:
-                    significand = 0
-                    # Trim off the implicit high-order bit:
-                    sigbits = sigbits[1:]
-                    for ch in sigbits:
-                        significand <<= 1
-                        if ch == '1':
-                            significand += 1;
+            elif exponent >= (1<<exponent_bits):
+                ConditionalRaise("Value is out of range; exponent too large")
+                sign = 0
+                exponent = 0
+                significand = 0
 
         # We can now build the retval bytearray:
 
@@ -2832,7 +2783,7 @@ class CobolVariable():
 
         # strip off trailing zeroes
         while str_coefficient[-1:] == '0':
-            str_coefficient = str_coefficient[:len(str_coefficient)-1]
+            tr_coefficient = str_coefficient[:len(str_coefficient)-1]
 
         # when left with "3." make it "3.0"
         if len(str_coefficient) == 2:
@@ -3056,7 +3007,7 @@ class CobolVariable():
 
         # We might be dealing with a P-scaled number.  Unfortunately
         # GnuCOBOL's internal representation of packed-decimal numbers is
-        # incorrect (as of version 3.1.2).  So this routine isn't going to 
+        # incorrect (as of version 3.1.2).  So this routine isn't going to
         # bother with it.
         #
         # When investigating the problem, note how the bytes of a p-scaled
@@ -3150,6 +3101,8 @@ class CobolVariable():
             sign_nybble = 0x0F  # Indicates unsigned
 
         digits = self.RsideToInteger(rside)
+
+        print("digits",digits)
         # Reverse the string, because we will build it up
         # from low-order to high-order
         digits = digits[::-1]
@@ -3232,8 +3185,6 @@ class CobolVariable():
         left  = rside.left_of_decimal
         right = rside.right_of_decimal
         exp = rside.exponent
-        if rside.exponent_is_negative:
-            exp = -exp
         while exp > 0:
             exp -= 1
             if right:
@@ -3259,13 +3210,24 @@ class CobolVariable():
 
         # Build fences:
         number_of_digits = self.NumberOfDigits()
-        left  = '0' * (number_of_digits - len(left)) + left
-        right = '0' * (number_of_digits-len(right)) + right
+        left  = '0' * (number_of_digits-len(left) ) + left
+        right = right + '0' * (number_of_digits-len(right))
 
-        # start off with the rightmost digits of left:
-        data = left[-(number_of_digits-self.AttrScale):]
-        # and continue with the leftmost digits of right:
-        data += right[0:self.AttrScale]
+        if self.AttrType != COB_TYPE_NUMERIC_DISPLAY or self.AttrDigits <= self.Length:
+            # start off with the rightmost digits of left:
+            data = left[-(number_of_digits-self.AttrScale):]
+            # and continue with the leftmost digits of right:
+            data += right[0:self.AttrScale]
+        else:
+            # This is a P-scaled value:
+            padding = self.AttrDigits - self.Length
+            if self.AttrScale > 0:
+                # This is a ppp9999 scaled value.  Return the required
+                # fractional digits
+                data = right[padding:padding+self.Length]
+            else:
+                # Return the required decimal digits
+                data = left[-self.AttrDigits : -(self.AttrDigits-self.Length)]
         return data
 
     def StringToNumericDisplay(self, rside):
@@ -3502,15 +3464,6 @@ class CobolVariable():
         return body, pic;
 
     def NumberOfDigits(self):
-        SIZE_TO_DIGITS = {1: len(str(2**(8*1))),
-                          2: len(str(2**(8*2))),
-                          3: len(str(2**(8*3))),
-                          4: len(str(2**(8*4))),
-                          5: len(str(2**(8*5))),
-                          6: len(str(2**(8*6))),
-                          7: len(str(2**(8*7))),
-                          8: len(str(2**(8*8)))
-                         }
         retval = self.AttrDigits
         if self.AttrFlags & (COB_FLAG_REAL_BINARY):
             if self.Length in SIZE_TO_DIGITS:
@@ -3873,7 +3826,6 @@ class Rside():
         self.is_negative = False
         self.left_of_decimal  = ""   # Note that these are strings, and not integers
         self.right_of_decimal = ""
-        self.exponent_is_negative = False
         self.exponent = 0           # Note that this is an integer, and not a string
         self.has_all = False
 
@@ -3884,7 +3836,6 @@ class Rside():
         retval += "is_negative         : {0}\n".format(self.is_negative            )
         retval += "left_of_decimal     : {0}\n".format(self.left_of_decimal        )
         retval += "right_of_decimal    : {0}\n".format(self.right_of_decimal       )
-        retval += "exponent_is_negative: {0}\n".format(self.exponent_is_negative   )
         retval += "exponent            : {0}\n".format(self.exponent               )
         retval += "has_all             : {0}\n".format(self.has_all                )
         return retval
@@ -3992,10 +3943,17 @@ class Rside():
                     self.is_negative  = True
                 self.left_of_decimal  = m.group(2)
                 self.right_of_decimal = m.group(3)
-                if m.group(4) and len(m.group(4)) > 1 and m.group(4)[1] == '-':
-                    self.exponent_is_negative = True
                 if m.group(5):
                     self.exponent = int(m.group(5))
+                if m.group(4) and len(m.group(4)) > 1 and m.group(4)[1] == '-':
+                    self.exponent = -self.exponent
+
+                if m.group(5):
+                    # He specified an exponent
+                    if int(self.left_of_decimal or "0") == 0 and int(self.right_of_decimal or "0") == 0:
+                        # it was of the form "e6"
+                        # We know what he wants, so let's give it to him:
+                        self.left_of_decimal = '1'
                 return
 
             # Arriving here means it doesn't start with an apostrophe, might

@@ -37,6 +37,7 @@ WORKING-STORAGE SECTION.
 01 def-FLOAT-DECIMAL-34            FLOAT-DECIMAL-34        VALUE  9999999999999999999999999999999999 .  *> 6.66        .
 01 def-FLOAT-LONG                  FLOAT-LONG              VALUE  7.77        .
 01 def-FLOAT-SHORT                 FLOAT-SHORT             VALUE  8.88        .
+*>01 def-FLOAT-BINARY-128            FLOAT-BINARY-128        VALUE  9.99        .
 01 def-INDEX                       INDEX                   VALUE  123456789          .
 01 def-POINTER                     POINTER                                    .
 01 def-PROCEDURE-POINTER           PROCEDURE-POINTER                          .
@@ -93,6 +94,7 @@ WORKING-STORAGE SECTION.
 01 len-FLOAT-DECIMAL-34            CONSTANT AS LENGTH OF def-FLOAT-DECIMAL-34       .
 01 len-FLOAT-LONG                  CONSTANT AS LENGTH OF def-FLOAT-LONG             .
 01 len-FLOAT-SHORT                 CONSTANT AS LENGTH OF def-FLOAT-SHORT            .
+*>01 len-FLOAT-BINARY-128            CONSTANT AS LENGTH OF def-FLOAT-BINARY-128       .
 01 len-INDEX                       CONSTANT AS LENGTH OF def-INDEX                  .
 01 len-POINTER                     CONSTANT AS LENGTH OF def-POINTER                .
 01 len-PROCEDURE-POINTER           CONSTANT AS LENGTH OF def-PROCEDURE-POINTER      .
@@ -200,6 +202,7 @@ DISPLAY def-FLOAT-DECIMAL-16       "   def-FLOAT-DECIMAL-16        "
 DISPLAY def-FLOAT-DECIMAL-34       "   def-FLOAT-DECIMAL-34        "
 DISPLAY def-FLOAT-LONG             "   def-FLOAT-LONG              "
 DISPLAY def-FLOAT-SHORT            "   def-FLOAT-SHORT             "
+*>DISPLAY def-FLOAT-BINARY-128       "   def-FLOAT-BINARY-128        "
 DISPLAY def-INDEX                  "   def-INDEX                   "
 DISPLAY def-SIGNED-INT             "   def-SIGNED-INT              "
 DISPLAY def-SIGNED-LONG            "   def-SIGNED-LONG             "
