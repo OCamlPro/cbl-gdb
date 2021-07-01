@@ -88,4 +88,14 @@ cp WS-FIRSTNAME in WS-JIM=WS-LASTNAME of WS-JIM
 printem
 continue
 
+delete
+b 121
+run
+
+echo KNOWN GOOD START\n
+cp LS-LASTNAME/LS-JORB
+cp LS-LASTNAME/LS-JORB(3:2) = "xy"
+cp LS-LASTNAME/LS-JORB
+echo KNOWN GOOD FINISH\n
+
 quit

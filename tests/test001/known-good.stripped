@@ -1750,3 +1750,8 @@ variables=[{name="GEORGE/test",value="{_groupvalue=\"' ' <repeats 13 times>, \\\
 cprint/m ?
 variables=[{name="GEORGE/test",value="{_groupvalue=\"' ' <repeats 13 times>, \\\"GEORGE    \\\"\",FILLER=\"' ' <repeats 13 times>\",NAME-FIRST=\"\\\"GEORGE    \\\"\"}"},{name="WASHINGTON/test",value="{_groupvalue=\"' ' <repeats 23 times>, \\\"WASHINGTONDC        HOT       \\\"\",FILLER=\"' ' <repeats 23 times>\",NAME-FIRST=\"\\\"WASHINGTON\\\"\",LOCATION=\"\\\"DC        \\\"\",TEMPERATURE=\"\\\"HOT       \\\"\"}"},{name="CARVER/test",value="{_groupvalue=\"' ' <repeats 43 times>, \\\"CARVER    \\\"\",FILLER=\"' ' <repeats 43 times>\",NAME-FIRST=\"\\\"CARVER    \\\"\"}"},{name="PEANUTS/test",value="{_groupvalue=\"' ' <repeats 63 times>, \\\"123456789\\\"\",FILLER=\"' ' <repeats 63 times>\",NAME-FIRST=\"123.456789\"}"},{name="LEGUMES/test",value="{_groupvalue=\"' ' <repeats 63 times>, \\\"123456789\\\"\",FILLER=\"' ' <repeats 63 times>\",NAME-FIRST=\"123456.789\"}"}]
 KNOWN GOOD FINISH
+KNOWN GOOD START
+02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK]  :  "Ruderman  "
+02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB(3:2) [LNK]  :  "xy"
+02 LS-LASTNAME/LS-JORB/DISPLAY-JIM-OR-BOB [LNK]  :  "Ruxyrman  "
+KNOWN GOOD FINISH
