@@ -213,7 +213,7 @@ def crt_malloc(size):
     expression = "(void *(*)(const size_t))malloc({0})".format(size)
     ret = gdb.parse_and_eval(expression)
     # ret is a gdb.Value, and str(gdb.Value) returns an integer in 0x form:
-    return int(str(ret),16) 
+    return int(str(ret),16)
 
 
 def crt_free(location):
@@ -1972,6 +1972,11 @@ class CobolVariable():
                 self.AttrType   = GetDataAt(self.location_of_attribute + 0, 2)
                 self.AttrDigits = GetDataAt(self.location_of_attribute + 2, 2)
                 self.AttrScale  = GetDataAt(self.location_of_attribute + 4, 2)
+
+                # AttrScale is a two-byte number.  It might be twos complement negative:
+                if self.AttrScale > 32768:
+                    self.AttrScale -= 65536
+
                 self.AttrFlags  = GetDataAt(self.location_of_attribute + 6, 2)
                 self.location_of_pic = GetDataAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
                 self.Picture = ""
@@ -2493,8 +2498,7 @@ class CobolVariable():
             # Multiply or divide by ten to normalize fraction to be
             # between unit_point <= fraction < ten_point
 
-            #print("expanded", expanded)
-            excess = 76 - len(str(expanded))
+            excess = len(str(expanded)) - 76
 
             while excess > 0:
                 excess -= 1
@@ -2546,7 +2550,9 @@ class CobolVariable():
 
         # Appended the exponent part of the number:
         if decimal_exponent != 0:
-            body += 'e'
+            body += 'E'
+            if decimal_exponent > 0:
+                body += '+'
             body += str(decimal_exponent)
         body += type
         return body , pic
@@ -2590,6 +2596,8 @@ class CobolVariable():
             message += str(length)
             message += " bytes"
             raise Exception (message)
+
+        print("RSIDE\n",rside)
 
         if rside.original_string.lower() == "inf" or rside.original_string.lower() == "+inf":
             # Positive infinity
@@ -3042,28 +3050,18 @@ class CobolVariable():
             pics += " ]"
         return body, pic
 
-    def GetPscale(self):
-        # In case there is p-scaling:
-        pdelta = 0
-        pscale = 0
-        if self.Picture:
-            for ch in Picture(self.Picture):
-                if ch == '9':
-                    if pdelta == 0:
-                        # If there are any P's, they'll be at the end
-                        pdelta = 1
-                if ch == 'P':
-                    if pdelta == 0:
-                        # The P's are before the digits, so they are at the beginning
-                        pdelta = -1
-                    pscale += pdelta
-        return pscale
-
     def PackedDecimalToString(self):
         body = ""
         pic = ""
 
-        pscale = self.GetPscale()
+        # We might be dealing with a P-scaled number.  Unfortunately
+        # GnuCOBOL's internal representation of packed-decimal numbers is
+        # incorrect (as of version 3.1.2).  So this routine isn't going to 
+        # bother with it.
+        #
+        # When investigating the problem, note how the bytes of a p-scaled
+        # number are stored outside of the range of location_of_data + field.size
+        pscale = 0
 
         # These comments aren't consistent.  I don't actually remember
         # where they came from.  F,A,C,E traditionally means positive.  GnuCOBOL
@@ -3106,12 +3104,10 @@ class CobolVariable():
 
         if pscale > 0:
             # The extra zeroes are to the left of the decimal point
-            for i in range(pscale):
-                body += '0'
+            body += '0' * pscale
         elif pscale < 0:
             # The extra decimal points are between the decimal point and the digits
-            for i in range(-pscale):
-                body = body + '0'
+            body = ('0' * -pscale) + body
             body = self.decimal_point + body
         elif self.AttrScale > 0:
             body = body[:self.AttrDigits-self.AttrScale] + \
@@ -3183,9 +3179,6 @@ class CobolVariable():
         body = ""
         pic = ""
 
-        # Count up any P-scalers in the Picture string:
-        pscale = self.GetPscale()
-
         negative = False
         if self.Length > 0:
             # DISPLAY keeps the negative bit in an oddball place:
@@ -3200,13 +3193,20 @@ class CobolVariable():
                 else:
                     body += chr(digit)
 
+            # We might be dealing with a P-scaled number:
+            if self.AttrDigits > self.Length:
+                if self.AttrScale > 0:
+                    pscale = -(self.AttrDigits - self.Length);
+                else:
+                    pscale = +(self.AttrDigits - self.Length);
+            else:
+                pscale = 0
+
             if pscale > 0:
-                for i in range(pscale):
-                    body += '0'
+                body += '0' * pscale
             elif pscale < 0:
                 # scaling to the right of the decimal point
-                for i in range(-pscale):
-                    body = '0' + body
+                body = ('0' * -pscale) + body
                 body = self.decimal_point + body
             elif self.AttrScale > 0:
                 radix_point = self.Length - self.AttrScale
