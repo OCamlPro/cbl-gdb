@@ -153,6 +153,7 @@ continue
 delete
 b 122
 run
+echo Filler for Redhat7/GDB7\n
 echo KNOWN GOOD START\n
 echo cprint dispp=.123456789\n
 cprint dispp=.123456789
