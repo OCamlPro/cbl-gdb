@@ -321,14 +321,14 @@ def NoNulls(s):
     return ss
 
 
-def OurPrint(s):
+def OurPrint(s, end='\n'):
     # Use this routine when GDB might halt with a
     #    --Type <RET> for more, q to quit, c to continue without paging--
 
     # The following code catches the 'q' Quit option
     retval = None
     try:
-        print(s)
+        print(s, end=end)
     except KeyboardInterrupt as ki:
         retval = str(ki)
     except:
@@ -5192,7 +5192,7 @@ class CPrintWorker():
 
         root = BuildHeirarchicalTree(possibilities)
         result = BuildHumanHString(root, 0)
-        print(result, end='')
+        OurPrint(result, end='')
 
     def ProcessArgumentsHumanMode(self, leftside_possibilities, rightside):
         self.ConditionalClearSubscripts(leftside_possibilities)
