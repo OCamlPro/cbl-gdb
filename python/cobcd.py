@@ -3978,7 +3978,6 @@ class ModuleInformation():
     """
     def __init__(self):
         # These variables contain information extracted from the VARIABLE_STRING_xxx
-        self.current_variable_string = ""
         self.var_trie = VarTrie()
         self.line_list = LineList()
         self.perform_commands = {}
@@ -3996,65 +3995,31 @@ class ModuleInformation():
 
         the_address = GetAddressOf(string_name)
         if the_address:
-            command = "x/1s " + str(the_address)
             try:
-                the_data = GdbExecute(currentframe(), command)
-                index1 = the_data.find('"')
-                if index1 != -1:
-                    index2 = the_data.find('"', index1 + 1)
-                    if index2 != -1:
-                        total_length = int(the_data[index1 + 1:index1 + 1 + 9])
-                        chars_each_line = index2 - (index1 + 1)
+                len_val = gdb.parse_and_eval("*(char (*)[9]) {0}".format(the_address))
+                total_length = int(len_val.string())
+                
+                variable_string = str(gdb.selected_inferior().read_memory (the_address + 9, total_length - 9))
+                
+                # We have a new variable string
+                # Clear out the tables:
+                self.var_trie = VarTrie()
+                self.line_list = LineList()
+                self.perform_commands = {}
 
-                        # We know the total length, and we know the number of
-                        # chars we will get in each block.  So, we can calculate
-                        # the number of blocks we need to ask for, and build
-                        # that command:
-                        blocks = (total_length + chars_each_line - 1) // chars_each_line
-                        command = "x/" + str(blocks) + "s " + str(the_address)
+                # Load the new tables
+                # Pull apart the variable_string
+                variable_lines = variable_string.split("~")
+                for variable_line in variable_lines:
+                    self.line_list.LoadFromLine(variable_line)
+                    self.var_trie.LoadFromLine(variable_line)
+                    self.LoadPerformFromLine(variable_line)
 
-                        # And we can get that data
-                        the_data = GdbExecute(currentframe(), command)
+                self.var_trie.PopulateIndexOfParent()
 
-                        # And now we loop through the data, extracting each chunk
-                        is_first_line = True
-                        index2 = 0
-                        lines = []
-                        while True:
-                            index1 = the_data.find('"', index2 + 1)
-                            if index1 == -1:
-                                break
-                            index2 = the_data.find('"', index1 + 1)
-                            if index2 == -1:
-                                break
-                            if is_first_line:
-                                index1 += 9
-                                is_first_line = False
-                            lines.append(the_data[index1 + 1:index2])
-
-                        # and now that we have all the chunks, we can assemble
-                        # them into the VARIABLE_STRING_xxx
-                        self.current_variable_string = "".join(lines)
-
-                        # We have a new variable string
-                        # Clear out the tables:
-                        self.var_trie = VarTrie()
-                        self.line_list = LineList()
-                        self.perform_commands = {}
-
-                        # Load the new tables
-                        # Pull apart the variable_string
-                        variable_lines = self.current_variable_string.split("~")
-                        for variable_line in variable_lines:
-                            self.line_list.LoadFromLine(variable_line)
-                            self.var_trie.LoadFromLine(variable_line)
-                            self.LoadPerformFromLine(variable_line)
-
-                        self.var_trie.PopulateIndexOfParent()
-
-                        # Put a fencepost at the end of the line_list
-                        self.line_list.Insert(self.line_list.EndOfTheWorld, "Ragnarok")
-                        retval = True
+                # Put a fencepost at the end of the line_list
+                self.line_list.Insert(self.line_list.EndOfTheWorld, "Ragnarok")
+                retval = True
             except:
                 traceback.print_exc()
                 pass
