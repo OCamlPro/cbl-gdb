@@ -1733,7 +1733,7 @@ cprint *x
  4 : 01 def-COMP-XX  : 009887766541223345
 TESTING ASSIGNMENT:
 01 header   :  "10.31e1", ' ' <repeats 33 times>
-01 withpic   :  "$    1.23+"
+01 withpic   :  "$  103.10+"
 01 def-BINARY-CHAR   :  +103
 01 def-BINARY-CHAR   :  +103
 01 def-BINARY-CHAR-SIGNED   :  +103
@@ -1793,7 +1793,7 @@ digits 000001031000000
 01 def-COMP-XX   :  000000000000000103
 01 def-DISPLAY   :  +000000103.1000000
  1 : 01 header  : "10.31e1", ' ' <repeats 33 times>
- 2 : 01 withpic  : "$    1.23+"
+ 2 : 01 withpic  : "$  103.10+"
  3 : 01 def-BINARY-CHAR  : +103
  4 : 01 def-BINARY-CHAR-SIGNED  : +103
  5 : 01 def-BINARY-CHAR-UNSIGNED  : 103

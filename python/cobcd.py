@@ -1652,7 +1652,9 @@ class CobolVariable():
             data = self.StringToAlphanumeric(rside)
         elif self.AttrType == COB_TYPE_GROUP:
             # This is a little bold.  But if he wants to set a group from a string,
-            # that's what is going to happen:
+            # that's what is going to happen.  Of course, if the group is made up
+            # of binary values the results will be unsurprising.  Useless, but
+            # unsurprising.
             data = self.StringToAlphanumeric(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_EDITED:
             data = self.StringToNumericEdited(rside)
@@ -2401,7 +2403,6 @@ class CobolVariable():
 
         exponent_mask = ((1 << exponent_bits) - 1)
         unit_point = 1 << fraction_bits
-        ten_point = unit_point * 10
         fraction_mask = unit_point - 1
 
         # combine the bytes into a single value
@@ -2504,8 +2505,8 @@ class CobolVariable():
                 exponent -= 1
                 expanded <<= 1
 
-            # Multiply or divide by ten to normalize fraction to be
-            # between unit_point <= fraction < ten_point
+            # Multiply or divide by ten to normalize the fractional part to
+            # have 76 digits
 
             excess = len(str(expanded)) - 76
 
@@ -2782,7 +2783,7 @@ class CobolVariable():
 
         # strip off trailing zeroes
         while str_coefficient[-1:] == '0':
-            tr_coefficient = str_coefficient[:len(str_coefficient) - 1]
+            str_coefficient = str_coefficient[:len(str_coefficient) - 1]
 
         # when left with "3." make it "3.0"
         if len(str_coefficient) == 2:
@@ -2988,16 +2989,16 @@ class CobolVariable():
 
             exponent = (ms_exponent << exponent_bits) + exponent
             exponent -= bias
-            # coefficient = (ms_coefficient<<coefficient_bits) + coefficient
+            coefficient = (ms_coefficient<<coefficient_bits) + coefficient
             body += str(coefficient)
 
             if exponent:
                 body += 'e'
                 body += str(exponent)
 
-            pics += "[ IEEE "
-            pics += type
-            pics += " ]"
+            pic += "[ IEEE "
+            pic += type
+            pic += " ]"
         return body, pic
 
     def PackedDecimalToString(self):
@@ -3702,6 +3703,7 @@ class CobolVariable():
             body = body[:i] + ' ' + body[i + 1:]
 
         retval = bytearray(body.encode("utf8"))
+        return retval
 
     def DataToString(self):
         noisy = False
@@ -6950,6 +6952,7 @@ class CLocalBacktrace(gdb.Command):
     def invoke(self, argument, from_tty):
         # TODO: handle two arguments -> "- 5" -> was entered as -5
         # join(arguments).replace("- ","-")
+        # TODO: Figure out why the argument parameter isn't actually used for anything
         if argument:
             number = GetNumericArgument(argument)
         else:
