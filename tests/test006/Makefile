@@ -48,11 +48,15 @@ endif
 test:
 	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -x test.cbl
 ifeq ($(gdbmajor),7)
-	@echo "This function is suppressed in systems with GDB-7"
+	@echo "Comparison testing is suppressed in systems with GDB-7"
+else
+ifeq "$(UNAME_O)" "Msys"
+	@echo "Comparison testing is suppressed in Windows/MSYS"
 else
 	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch -x ../../python/cobcd.py -x test.scr > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
+endif
 endif
 
 dev:

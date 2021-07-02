@@ -1,0 +1,122 @@
+KNOWN GOOD START
+
+71	           display disp                "  disp             "
+-12.340
+-12.340  disp             
+72	           display disp-u              "  disp-u           "
+12.340
+12.340  disp-u           
+73	           display dispp               "  dispp            "
+-.0001230
+-.0001230  dispp            
+74	           display dispp-u             "  dispp-u          "
+.0001230
+.0001230  dispp-u          
+75	           display disppp              "  disppp           "
+-1234000
+-12340000  disppp           
+76	           display disppp-u            "  disppp-u         "
+1234000
+12340000  disppp-u         
+77	           display bin                 "  bin              "
+-12.340
+-12.340  bin              
+78	           display bin-u               "  bin-u            "
+12.340
+12.340  bin-u            
+79	           display cmp3                "  cmp3             "
+-12.340
+-12.340  cmp3             
+80	           display cmp3-u              "  cmp3-u           "
+12.340
+12.340  cmp3-u           
+81	           display cmp5                "  cmp5             "
+-0000012.340
+-0000012340  cmp5             
+82	           display cmp5-u              "  cmp5-u           "
+0000012.340
+0000012340  cmp5-u           
+83	           display cmp6                "  cmp6             "
+12.340
+12.340  cmp6             
+84	           display cmpx                "  cmpx             "
+-12.340
+-12.340  cmpx             
+85	           display cmpx-u              "  cmpx-u           "
+12.340
+12.340  cmpx-u           
+86	           display cmpn                "  cmpn             "
+-12.340
+-12.340  cmpn             
+87	           display cmpn-u              "  cmpn-u           "
+12.340
+12.340  cmpn-u           
+88	           display chr                 "  chr              "
+-128
+-128  chr              
+89	           display chr-u               "  chr-u            "
+254
+254  chr-u            
+90	           display shrt                "  shrt             "
+-32768
+-32768  shrt             
+91	           display shrt-u              "  shrt-u           "
+65535
+65535  shrt-u           
+92	           display long                "  long             "
+-2147483648
+-2147483648  long             
+93	           display long-u              "  long-u           "
+4294967295
+4294967295  long-u           
+94	           display dble                "  dble             "
+-00000000004294967295
+-00000000004294967295  dble             
+95	           display dble-u              "  dble-u           "
+00000000008294967295
+00000000008294967295  dble-u           
+96	           display dbl                 "  dbl              "
+-3.40282E+38
+-3.40282E+38  dbl              
+97	           display flt                 "  flt              "
+3.40282E+38
+3.40282E+38  flt              
+98	           display r2d2                "  r2d2             "
+"6"
+6  r2d2             
+99	           display ppoint              "  ppoint           "
+100	           display idx                 "  idx              "
++0000000001
++000000001  idx              
+101	           display hnd                 "  hnd              "
++000000000
++000000000  hnd              
+102	           display alpnum              "  alpnum           "
+"some numb3rs 4 n00bs l1k3 m3        "
+some numb3rs 4 n00bs l1k3 m3          alpnum           
+103	           display alpha               "  alpha            "
+"thats some text", ' ' <repeats 21 times>
+thats some text                       alpha            
+104	           display edit-num1           "  edit-num1        "
+"-12.340"
+-12.340  edit-num1        
+105	           display edit-num2           "  edit-num2        "
+"-12.340"
+-12.340  edit-num2        
+106	           display edit-num3           "  edit-num3        "
+" 12.340"
+ 12.340  edit-num3        
+107	           display edit-num4           "  edit-num4        "
+"- 12.340"
+- 12.340  edit-num4        
+108	           display alphanumeric-data   "  alphanumeric-data"
+"some numb3rs 4 n00bs l1k3 m3        thats some text", ' ' <repeats 21 times>, "-12.340-12.340 12.340- 12.340"
+some numb3rs 4 n00bs l1k3 m3        thats some text                     -12.340-12.340 12.340- 12.340  alphanumeric-data
+109	           display "Numbers after this can't be fed into a 'diff' test"
+KNOWN GOOD FINISH
+KNOWN GOOD START
+cprint dispp=.123456789
++.0004567
+cprint disppp= 123456789
++3456000
+KNOWN GOOD FINISH
