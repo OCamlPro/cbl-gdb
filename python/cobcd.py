@@ -654,20 +654,19 @@ def GetDataAt(address, nr_bytes):
         return None
 
 
-def GetBytesAt(address, N):
-    # Pick up N bytes from address, return them as a list of ints
-    retval = []
-    command = "x/" + str(N) + "xb " + hex(address)
-    all_the_bytes = GdbExecute(currentframe(), command)
-
-    lines = all_the_bytes.split('\n')
-    for line in lines:
-        nfound = line.find(':')
-        if nfound != -1:
-            f_bytes = line[nfound + 1:].split()
-            for byte in f_bytes:
-                retval.append(int(byte, 16))
-    return retval
+def GetBytesAt(address, length):
+    # Pick up <length> bytes from <address>, return them as a list of ints
+    
+    memlist = get_memoryview(address, length).tolist()
+    # Note: Python2 returns a list of ints here, Python3 a list of bytes,
+    #       which results in problems later - convert if necessary:
+    if type(memlist[0]) != int:
+        retval = []
+        for byte in memlist:
+            retval.append(ord(byte))
+        return retval
+    else:
+        return memlist
 
 
 def ExtractHexValueFrom(s):
