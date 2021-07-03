@@ -216,6 +216,20 @@ def GdbExecute(curframe, command):
     return retval
 
 
+def get_memoryview(address, length):
+    # GDB creates memoryview objects for Python 3, because Python 2.6 only has buffer
+    # and that is the documented API for Python 2;
+    # but as Python 2.7 (which is a dependency for cbl-gdb) has backported memoryview
+    # we can check for this type and convert the buffer if necessary, because conveniently
+    # memoryview a constructor that takes a buffer object
+
+    obj = gdb.selected_inferior().read_memory (address, length)
+    if type(obj) == memoryview:
+        return obj
+    else:
+        return memoryview(obj)
+
+
 def crt_malloc(size):
     # This is a wrapper for C run-time malloc() calls in the inferior.  This is not
     # async-signal-safe, and can cause trouble when attaching to an inferior when
@@ -3983,23 +3997,17 @@ class ModuleInformation():
         self.perform_commands = {}
 
     def ReadVariableString(self, string_name):
+        VARSTR_LEN_SIZE = 9  # as used by cobd-st
         retval = False
-
-        # We are going to use the x/ns "memory as string" command, which reads
-        # in n blocks of some number of characters.  On gdb 8.3, each block seems
-        # to be 201 characters. I can't know if that's universal, so I am going
-        # to make this code adaptive
-
-        # We are going to read a single line of the string, in order to figure
-        # how how many characters per line we're going to get:
-
         the_address = GetAddressOf(string_name)
+        
         if the_address:
             try:
-                len_val = gdb.parse_and_eval("*(char (*)[9]) {0}".format(the_address))
+                len_val = gdb.parse_and_eval("*(char (*)[{0}]) {1}".format(VARSTR_LEN_SIZE, the_address))
                 total_length = int(len_val.string())
                 
-                variable_string = str(gdb.selected_inferior().read_memory (the_address + 9, total_length - 9))
+                variable_string_memview = get_memoryview(the_address + VARSTR_LEN_SIZE, total_length - VARSTR_LEN_SIZE)
+                variable_string = variable_string_memview.tobytes().decode('ascii')  # plain string generate by cobcd
                 
                 # We have a new variable string
                 # Clear out the tables:
