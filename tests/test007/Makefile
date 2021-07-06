@@ -18,7 +18,9 @@ knowngood:=known-good
 # We need separate known-good files for MINGW32 and MINGW64, because pointer variables
 # differ in size between MINGW32 and MINGW64, and because some data types are different
 # sizes in MINGW64 vs 64-bit Linux
-knowngood := $(knowngood)$(shell uname -s | grep MINGW | sed 's/^\(MINGW..\).*/-\1/g')
+
+#If a separate file isn't needed, comment the next instruction
+#knowngood := $(knowngood)$(shell uname -s | grep MINGW | sed 's/^\(MINGW..\).*/-\1/g')
 
 # $(info known-good files: $(knowngood))
 
