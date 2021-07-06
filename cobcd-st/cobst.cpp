@@ -115,24 +115,6 @@ TackVariablesOntoCfile(PARAMETERS &params,
     }
     ssResult << ";" << endl << endl;
 
-    // cobcd.py uses GDB commands to call libcob functions.  This worked great on
-    // Linux/Solaris, but GDB couldn't "find" some LIBCOB functions by name because
-    // of the way linkage to .DLL exports is done.  So, we put "wrapper" function calls
-    // to LIBCOB routines into the generated .C here.  GDB will be able to find these
-    // routines because their names are known, and global:
-
-    ssResult << "static const char	*DEBUG_cob_get_field_str_buffered_" << fname2 << "(const cob_field *p)" << endl;
-    ssResult << "{return cob_get_field_str_buffered(p);}" << endl;
-    ssResult << endl;
-
-    ssResult << "static int DEBUG_cob_cmp_" << fname2 << "(cob_field *a, cob_field *b)" << endl;
-    ssResult << "{return cob_cmp(a, b);}" << endl;
-    ssResult << endl;
-
-    ssResult << "static cob_field *DEBUG_cob_intr_upper_case_" << fname2 << "(const int a, const int b, cob_field *c)" << endl;
-    ssResult << "{return cob_intr_upper_case(a,b,c);}" << endl;
-    ssResult << endl;
-
     if(insert_mode EQ IM_MODE_TEXT) {
         stringstream ssPython;
         ssPython.str("");

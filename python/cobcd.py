@@ -4211,19 +4211,9 @@ class ModuleState():
 
                         string_name = "VARIABLE_STRING_" + name_root2
 
-                        debugged_system = platform.system()
-                        if debugged_system == 'Windows':
-                            self.cob_get_field_str_buffered = "DEBUG_cob_get_field_str_buffered_"  + name_root2
-                            self.cob_cmp                    = "DEBUG_cob_cmp_"                     + name_root2
-                            self.cob_intr_upper_case        = "DEBUG_cob_intr_upper_case_"         + name_root2
-                        else:
-                            # This code was requested by Simon Sobisch, who wanted
-                            # to avoid recompiling his source code when the wrapper solution
-                            # was first deployed.  In Version4.27, this will be removed and everybody
-                            # will use the wrapper solution.
-                            self.cob_get_field_str_buffered = "cob_get_field_str_buffered"
-                            self.cob_cmp                    = "cob_cmp"
-                            self.cob_intr_upper_case        = "cob_intr_upper_case"
+                        self.cob_get_field_str_buffered = "cob_get_field_str_buffered"
+                        self.cob_cmp                    = "cob_cmp"
+                        self.cob_intr_upper_case        = "cob_intr_upper_case"
 
                         if GV_ModuleInformation.ReadVariableString(string_name):
                             break
