@@ -47,7 +47,7 @@ file test
 cprint/v1
 cprint/r 6
 
-b 71
+b 73
 echo KNOWN GOOD START\n
 run
 cprint disp

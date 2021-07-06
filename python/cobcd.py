@@ -613,15 +613,6 @@ class VarTrieNode():
         self.count = 0
         self.payload_index = None
 
-    def AddCanonicalName(self, name):
-        pass
-
-
-def BlankIsZero(v):
-    if len(v) == 0:
-        v = "0"
-    return int(v)
-
 
 def GetDataAt(address, nr_bytes):
     # This routine takes an address and returns the

@@ -41,12 +41,14 @@
       *
       *  --> missing:   floating point edited pictures,
       *                 those are left to the reader as excercise :-)
+      *
+      * In the following block, "sync" prevents SIGBUS errors on SOLARIS systems.
        01  special-data.
            05 r2d2       usage bit pic 111 value b'110'.
-           05 point      usage pointer.
-           05 ppoint     usage program-pointer.
-           05 idx        usage index.
-           05 hnd        usage handle.
+           05 point      usage pointer         sync.
+           05 ppoint     usage program-pointer sync.
+           05 idx        usage index           sync.
+           05 hnd        usage handle          sync.
        01  alphanumeric-data.
            05 alpnum     pic x(36) value "some numb3rs 4 n00bs l1k3 m3".
            05 alpha      pic a(36) value "thats some text".
