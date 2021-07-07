@@ -248,30 +248,6 @@ def crt_free(location):
     gdb.execute(command, False, True)
 
 
-def cob_cmp(a, b):
-    command = "call (int){0}({1}, {2})".format(GV_ModuleState.cob_cmp, a, b)
-    hexback = gdb.execute(command, False, True).split()[2]
-    retval = int(hexback, 16)
-    return retval
-
-
-def cob_intr_upper_case(a, b, c):
-    command = "call (cob_field *){0}({1}, {2}, (cob_field *){3})".format(GV_ModuleState.cob_intr_upper_case,
-                                                                         a,
-                                                                         b,
-                                                                         c)
-    hexback = gdb.execute(command, False, True).split()[2]
-    retval = int(hexback, 16)
-    return retval
-
-
-def cob_get_field_str_buffered(a):
-    command = "call (const char *){0}({1})".format(GV_ModuleState.cob_get_field_str_buffered, a)
-    hexback = gdb.execute(command, False, True).split()[2]
-    retval = int(hexback, 16)
-    return retval
-
-
 class GlobalVariables():
     def __init__(self):
         # Establish the version of GDB
@@ -4211,10 +4187,6 @@ class ModuleState():
 
                         string_name = "VARIABLE_STRING_" + name_root2
 
-                        self.cob_get_field_str_buffered = "cob_get_field_str_buffered"
-                        self.cob_cmp                    = "cob_cmp"
-                        self.cob_intr_upper_case        = "cob_intr_upper_case"
-
                         if GV_ModuleInformation.ReadVariableString(string_name):
                             break
                         stack_line += 1
@@ -5742,7 +5714,7 @@ class CBreakWorker():
                 else:
                     break_point = self.set_breakpoint(line_nr, t_flag, i_flag)
 
-            self.set_condition(break_point, "$_regex(((char *){0}({1}), \"{2}\")".format(GV_ModuleState.cob_get_field_str_buffered,
+            self.set_condition(break_point, "$_regex(((char *){0}({1}), \"{2}\")".format("cob_get_field_str_buffered",
                                                                                          hex(location_of_field),
                                                                                          diff_str))
         else:
@@ -5821,19 +5793,19 @@ class CBreakWorker():
                 break_point = self.set_breakpoint(line_nr, t_flag, i_flag)
 
         if case_ins == 1 and is_location == 1:
-            self.set_condition(break_point, "(int){0}({1}(0,0,{2}), {3}) {4} 0".format(GV_ModuleState.cob_cmp,
-                                                                                       GV_ModuleState.cob_intr_upper_case,
+            self.set_condition(break_point, "(int){0}({1}(0,0,{2}), {3}) {4} 0".format("cob_cmp",
+                                                                                       "cob_intr_upper_case",
                                                                                        hex(location_of_field),
                                                                                        hex(other_field),
                                                                                        condition_str))
         elif case_ins == 1 and is_location == 0:
-            self.set_condition(break_point, "(int){0}({1}(0,0,{2}), {1}(0,0,{3})) {4} 0".format(GV_ModuleState.cob_cmp,
-                                                                                                GV_ModuleState.cob_intr_upper_case,
+            self.set_condition(break_point, "(int){0}({1}(0,0,{2}), {1}(0,0,{3})) {4} 0".format("cob_cmp",
+                                                                                                "cob_intr_upper_case",
                                                                                                 hex(location_of_field),
                                                                                                 hex(other_field),
                                                                                                 condition_str))
         else:
-            self.set_condition(break_point, "(int){0}({1}, {2}) {3} 0".format(GV_ModuleState.cob_cmp,
+            self.set_condition(break_point, "(int){0}({1}, {2}) {3} 0".format("cob_cmp",
                                                                               hex(location_of_field),
                                                                               hex(other_field),
                                                                               condition_str))
