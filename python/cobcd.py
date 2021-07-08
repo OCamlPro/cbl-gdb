@@ -605,13 +605,25 @@ def GetBytesAt(address, length):
         return memlist
 
 
-def PutBytesAt(list_of_values, address, length):
-    # Put <length> elements of list_of_values into <address> as bytes
-    # We expect list_of_values to be bytes or ints
-    vals = bytearray(length)
-    for i in range(length):
-        vals[i] = list_of_values[i]
-    gdb.selected_inferior().write_memory (address, vals, length)
+def PutBytesAt(address, list_of_values, length):
+    # Not surprisingly, this works differently in Python2 than in Python3:
+
+    if sys.version[0] == '2':
+        # Put <length> elements of list_of_values into <address> as bytes
+        # We expect list_of_values to be bytes or ints
+        #
+        # Converting to a string is necessary for Python2
+        vals = ""
+        for i in range(length):
+            vals += chr(list_of_values[i])
+        gdb.selected_inferior().write_memory (address, vals, length)
+    else:
+        # Put <length> elements of list_of_values into <address> as bytes
+        # We expect list_of_values to be bytes or ints
+        vals = bytearray(length)
+        for i in range(length):
+            vals[i] = list_of_values[i]
+        gdb.selected_inferior().write_memory (address, vals, length)
 
 
 def GetValueAt(address, nr_bytes):
@@ -1635,7 +1647,7 @@ class CobolVariable():
         new_data = self.DataFromRside(rside)
 
         if new_data:
-            PutBytesAt(new_data, self.ActualLocation, self.ActualLength)
+            PutBytesAt(self.ActualLocation, new_data, self.ActualLength)
             self.IsDirty = True
 
         return return_value
@@ -4911,10 +4923,10 @@ class CPrintWorker():
             # There is a refmod on the left side, so arrange to replace the
             # data on the left
 
+            values = []
             i = 0
             while i < var_left.ActualLength and i < len(value.original_string):
-                command = "set {char}" + hex(var_left.ActualLocation + i) + "=" + hex(ord(value.original_string[i]))
-                gdb.execute(command, False, True)
+                values.append( ord(value.original_string[i]) )
                 i += 1
 
             # If the left wants more than the right provided, right-fill with zeroes or
@@ -4924,9 +4936,10 @@ class CPrintWorker():
             else:
                 ch = chr(0)
             while i < var_left.ActualLength:
-                command = "set {char}" + hex(var_left.ActualLocation + i) + "=" + hex(ord(ch))
-                gdb.execute(command, False, True)
+                values.append( ord(ch) )
                 i += 1
+
+            PutBytesAt(var_left.ActualLocation, values, var_left.ActualLength)
 
             return_value = 1
 
