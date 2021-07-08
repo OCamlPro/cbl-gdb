@@ -633,37 +633,26 @@ def ExtractHexValueFrom(s):
     return retval
 
 
-def GetPointerValue(pointer_name):
-    # Use this form when you know variable is the name of a pointer.  This is
-    # used when pointer_name is defined in the generated C as " char *pointer_name "
+def GetPointerTo(name):
+    # This routine returns the address of memory referred to by 'name'.  It
+    # sorts out whether the generated C declared name as "char *name" or
+    # "char name[22]" or "cob_field name"
+
     try:
-        result = gdb.parse_and_eval(pointer_name)
-        return ExtractHexValueFrom(str(result))
+        result = gdb.parse_and_eval('&' + name)
+        # If the result.type contains "**", name was defined in the
+        # generated .C as a pointer:  " char *name".  In that case,
+        # we need to pick up the contents of the pointer.
+        if str(result.type).find("**") > -1:
+            result = gdb.parse_and_eval(name)
+
+        # Otherwise, it was defined as the name of a block of some kind:
+        # " char name[22] " or "cob_field name".  In that case,
+        # the result already is the answer we need
+
+        retval = ExtractHexValueFrom(str(result))
     except:
-        traceback.print_exc()
-        return None
-
-
-def GetAddressOf(variable):
-    # Use this routine when you know variable is the name of a block.
-    retval = None
-    if variable:
-        try:
-            command = "info address " + variable
-            address_string = GdbExecute(currentframe(), command)
-            retval = ExtractHexValueFrom(address_string)
-        except gdb.error:
-            retval = None
-
-        if not retval:
-            try:
-                command = "x/1db " + variable  # Notice d for decimal, not hex, because
-                                               # a second 0x messes up ExtractHexValue
-                address_string = GdbExecute(currentframe(), command)
-                retval = ExtractHexValueFrom(address_string)
-            except:
-                retval = None
-
+        retval = None
     return retval
 
 
@@ -1876,7 +1865,7 @@ class CobolVariable():
             if self.Fname:
                 # We have a field name
                 # print("FetchVariableData Fname", self.Fname)
-                self.location_of_field = GetAddressOf(self.Fname)
+                self.location_of_field = GetPointerTo(self.Fname)
                 if self.location_of_field is None:
                     self.not_in_context = True
                     return False
@@ -1907,16 +1896,7 @@ class CobolVariable():
                 # there because we got information from the compiler.
                 if self.Bname:
                     # print("FetchVariableData Fname", self.Bname)
-                    if self.Section == 'X' or self.Section == 'WB':
-                        # EXTERNAL variable
-                        # WORKING-STORAGE BASED variable
-                        # These are declared in the generated C
-                        # as a "static int *b_13" pointer
-                        self.location_of_data = GetPointerValue(self.Bname)
-                    else:
-                        # self.Bname is the name of something like "static unsigned char b_13[24]"
-                        # So, we need to pick up the address of self.Bname
-                        self.location_of_data = GetAddressOf(self.Bname)
+                    self.location_of_data = GetPointerTo(self.Bname)
                     if self.location_of_data is None:
                         self.not_in_context = True
                         return False
@@ -1928,7 +1908,7 @@ class CobolVariable():
 
             if self.location_of_attribute == 0:
                 if self.Aname:
-                    self.location_of_attribute = GetAddressOf(self.Aname)
+                    self.location_of_attribute = GetPointerTo(self.Aname)
                     if self.location_of_attribute is None:
                         self.not_in_context = True
                         return False
@@ -2118,7 +2098,7 @@ class CobolVariable():
         return n_str
 
     def ShowFields(self):
-        bname_location = GetAddressOf(self.Bname) or 0
+        bname_location = GetPointerTo(self.Bname) or 0
         bname_text = ""
         if bname_location:
             bname_text = "( %s )" % hex(bname_location)
@@ -3950,7 +3930,7 @@ class ModuleInformation():
     def ReadVariableString(self, string_name):
         VARSTR_LEN_SIZE = 9  # as used by cobd-st
         retval = False
-        the_address = GetAddressOf(string_name)
+        the_address = GetPointerTo(string_name)
         
         if the_address:
             try:
