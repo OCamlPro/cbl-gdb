@@ -590,37 +590,6 @@ class VarTrieNode():
         self.payload_index = None
 
 
-def GetDataAt(address, nr_bytes):
-    # This routine takes an address and returns the
-    # value there.  'bytes' can be 1, 2, 4, or 8
-    try:
-        if nr_bytes == 1:
-            u = 'b'
-        elif nr_bytes == 2:
-            u = 'h'
-        elif nr_bytes == 4:
-            u = 'w'
-        elif nr_bytes == 8:
-            u = 'g'
-        else:
-            return None
-
-        # When an integer is long enough, Python appends a 'L' to the hex
-        # number.  This came up in SPARC, with addresses like 0xffffffff7b407700
-        command = "x/1" + u + "u " + hex(address).replace('L', '')
-        value_back = GdbExecute(currentframe(), command)
-
-        nfound = value_back.find(":")
-        if nfound == -1:
-            return None
-        value = int(value_back[nfound + 1:])
-        return value
-
-    except gdb.error:
-        print("gdb .execute failed in GetDataAt:", command)
-        return None
-
-
 def GetBytesAt(address, length):
     # Pick up <length> bytes from <address>, return them as a list of ints
     
@@ -634,6 +603,24 @@ def GetBytesAt(address, length):
         return retval
     else:
         return memlist
+
+
+def GetValueAt(address, nr_bytes):
+    # This routine takes a numerical address and returns the
+    # value there.  'bytes' is usually 1, 2, 4, or 8.  The returned
+    # value is adjusted for big- versus little-endian.
+    try:
+        bytes = GetBytesAt(address, nr_bytes)
+        if GV_GlobalVariables.byteorder == "little" and bytes:
+            bytes.reverse()
+        retval = 0
+        for byte in bytes:
+            retval = retval * 256 + byte
+        return retval
+
+    except gdb.error:
+        print("gdb .execute failed in GetValueAt:", command)
+        return None
 
 
 def ExtractHexValueFrom(s):
@@ -1902,14 +1889,14 @@ class CobolVariable():
                 #       unsigned char        *data;
                 #       const cob_field_attr *attr;
                 #       } cob_field;
-                self.Length = GetDataAt(self.location_of_field, GV_GlobalVariables.SizeofPointer)
+                self.Length = GetValueAt(self.location_of_field, GV_GlobalVariables.SizeofPointer)
                 if self.Length is None:
                     self.not_in_context = True
                     return False
-                possible_location_of_data = GetDataAt(self.location_of_field + GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
+                possible_location_of_data = GetValueAt(self.location_of_field + GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
                 if possible_location_of_data:
                     self.location_of_data = possible_location_of_data
-                self.location_of_attribute = GetDataAt(self.location_of_field + 2 * GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
+                self.location_of_attribute = GetValueAt(self.location_of_field + 2 * GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
             else:
                 # print("There is no self.Fname")
                 pass
@@ -1960,16 +1947,16 @@ class CobolVariable():
                 #       unsigned short       flags;      /* Field flags */
                 #       const cob_pic_symbol *pic;       /* Pointer to picture string */
                 #       } cob_field_attr;
-                self.AttrType   = GetDataAt(self.location_of_attribute + 0, 2)
-                self.AttrDigits = GetDataAt(self.location_of_attribute + 2, 2)
-                self.AttrScale  = GetDataAt(self.location_of_attribute + 4, 2)
+                self.AttrType   = GetValueAt(self.location_of_attribute + 0, 2)
+                self.AttrDigits = GetValueAt(self.location_of_attribute + 2, 2)
+                self.AttrScale  = GetValueAt(self.location_of_attribute + 4, 2)
 
                 # AttrScale is a two-byte number.  It might be twos complement negative:
                 if self.AttrScale > 32768:
                     self.AttrScale -= 65536
 
-                self.AttrFlags  = GetDataAt(self.location_of_attribute + 6, 2)
-                self.location_of_pic = GetDataAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
+                self.AttrFlags  = GetValueAt(self.location_of_attribute + 6, 2)
+                self.location_of_pic = GetValueAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
                 self.Picture = ""
                 if self.location_of_pic:
                     # There is PICTURE information; we need to build it up as a string.
@@ -1985,7 +1972,7 @@ class CobolVariable():
                     offset = 0
                     while True:
                         # Pick up the character:
-                        ch = GetDataAt(self.location_of_pic + offset, 1)
+                        ch = GetValueAt(self.location_of_pic + offset, 1)
                         if ch == 0:
                             break
                         if ch < 32:
@@ -1996,7 +1983,7 @@ class CobolVariable():
                         offset += calcsize('i')
 
                         # Pick up the integer count:
-                        count = GetDataAt(self.location_of_pic + offset, calcsize('i'))
+                        count = GetValueAt(self.location_of_pic + offset, calcsize('i'))
                         offset += calcsize('i')
 
                         while count > 0:
@@ -5763,7 +5750,7 @@ class CBreakWorker():
 
         if payload_l.Refmod:
             if is_location == 1:
-                r_length = GetDataAt(payload_r, GV_GlobalVariables.SizeofPointer)
+                r_length = GetValueAt(payload_r, GV_GlobalVariables.SizeofPointer)
                 location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, r_length, 0)
             else:
                 location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, payload_r.Length, 0)
