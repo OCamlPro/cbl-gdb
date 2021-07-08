@@ -619,7 +619,7 @@ def GetValueAt(address, nr_bytes):
         return retval
 
     except gdb.error:
-        print("gdb .execute failed in GetValueAt:", command)
+        print("Failure in GetValueAt():", command)
         return None
 
 
@@ -633,16 +633,14 @@ def ExtractHexValueFrom(s):
     return retval
 
 
-def GetPointerAt(variable):
-    # Use this form when you know variable is the name of a pointer.
-    # For example, I wrote this when I needed to pick up cobglobptr.  I
-    # didn't really care where cobglobptr was; I cared about the memory
-    # cob_global block it pointed to.
+def GetPointerValue(pointer_name):
+    # Use this form when you know variable is the name of a pointer.  This is
+    # used when pointer_name is defined in the generated C as " char *pointer_name "
     try:
-        command = "x/1db (char *) " + variable
-        result = GdbExecute(currentframe(), command)
-        return ExtractHexValueFrom(result)
+        result = gdb.parse_and_eval(pointer_name)
+        return ExtractHexValueFrom(str(result))
     except:
+        traceback.print_exc()
         return None
 
 
@@ -1914,7 +1912,7 @@ class CobolVariable():
                         # WORKING-STORAGE BASED variable
                         # These are declared in the generated C
                         # as a "static int *b_13" pointer
-                        self.location_of_data = GetPointerAt(self.Bname)
+                        self.location_of_data = GetPointerValue(self.Bname)
                     else:
                         # self.Bname is the name of something like "static unsigned char b_13[24]"
                         # So, we need to pick up the address of self.Bname
