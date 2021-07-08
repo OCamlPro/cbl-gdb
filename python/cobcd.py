@@ -605,6 +605,15 @@ def GetBytesAt(address, length):
         return memlist
 
 
+def PutBytesAt(list_of_values, address, length):
+    # Put <length> elements of list_of_values into <address> as bytes
+    # We expect list_of_values to be bytes or ints
+    vals = bytearray(length)
+    for i in range(length):
+        vals[i] = list_of_values[i]
+    gdb.selected_inferior().write_memory (address, vals, length)
+
+
 def GetValueAt(address, nr_bytes):
     # This routine takes a numerical address and returns the
     # value there.  'bytes' is usually 1, 2, 4, or 8.  The returned
@@ -1626,12 +1635,7 @@ class CobolVariable():
         new_data = self.DataFromRside(rside)
 
         if new_data:
-            # This next code automatically handles table offset and refmods:
-            i = 0
-            while i < self.ActualLength:
-                command = "set {char}" + hex(self.ActualLocation + i) + "=" + hex(new_data[i])
-                gdb.execute(command, False, True)
-                i += 1
+            PutBytesAt(new_data, self.ActualLocation, self.ActualLength)
             self.IsDirty = True
 
         return return_value
