@@ -64,7 +64,7 @@ import time
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
-COBCD_VERSION = '[Version 4.28.0]'
+COBCD_VERSION = '[Version 4.28.dev1]'
 
 #   This module implements the gdb extension commands like cprint and cwatch
 #   It is executed by GDB.
@@ -572,37 +572,6 @@ class VarTrieNode():
         self.payload_index = None
 
 
-def GetDataAt(address, nr_bytes):
-    # This routine takes an address and returns the
-    # value there.  'bytes' can be 1, 2, 4, or 8
-    try:
-        if nr_bytes == 1:
-            u = 'b'
-        elif nr_bytes == 2:
-            u = 'h'
-        elif nr_bytes == 4:
-            u = 'w'
-        elif nr_bytes == 8:
-            u = 'g'
-        else:
-            return None
-
-        # When an integer is long enough, Python appends a 'L' to the hex
-        # number.  This came up in SPARC, with addresses like 0xffffffff7b407700
-        command = "x/1" + u + "u " + hex(address).replace('L', '')
-        value_back = GdbExecute(currentframe(), command)
-
-        nfound = value_back.find(":")
-        if nfound == -1:
-            return None
-        value = int(value_back[nfound + 1:])
-        return value
-
-    except gdb.error:
-        print("gdb .execute failed in GetDataAt:", command)
-        return None
-
-
 def GetBytesAt(address, length):
     # Pick up <length> bytes from <address>, return them as a list of ints
     
@@ -618,6 +587,45 @@ def GetBytesAt(address, length):
         return memlist
 
 
+def PutBytesAt(address, list_of_values, length):
+    # Not surprisingly, this works differently in Python2 than in Python3:
+
+    if sys.version[0] == '2':
+        # Put <length> elements of list_of_values into <address> as bytes
+        # We expect list_of_values to be bytes or ints
+        #
+        # Converting to a string is necessary for Python2
+        vals = ""
+        for i in range(length):
+            vals += chr(list_of_values[i])
+        gdb.selected_inferior().write_memory (address, vals, length)
+    else:
+        # Put <length> elements of list_of_values into <address> as bytes
+        # We expect list_of_values to be bytes or ints
+        vals = bytearray(length)
+        for i in range(length):
+            vals[i] = list_of_values[i]
+        gdb.selected_inferior().write_memory (address, vals, length)
+
+
+def GetValueAt(address, nr_bytes):
+    # This routine takes a numerical address and returns the
+    # value there.  'bytes' is usually 1, 2, 4, or 8.  The returned
+    # value is adjusted for big- versus little-endian.
+    try:
+        bytes = GetBytesAt(address, nr_bytes)
+        if GV_GlobalVariables.byteorder == "little" and bytes:
+            bytes.reverse()
+        retval = 0
+        for byte in bytes:
+            retval = retval * 256 + byte
+        return retval
+
+    except gdb.error:
+        print("Failure in GetValueAt():", command)
+        return None
+
+
 def ExtractHexValueFrom(s):
     # Use this routine to extract an 0x123abc value from a string.
     # Needed because gdb returns such information in slightly different ways
@@ -628,39 +636,26 @@ def ExtractHexValueFrom(s):
     return retval
 
 
-def GetPointerAt(variable):
-    # Use this form when you know variable is the name of a pointer.
-    # For example, I wrote this when I needed to pick up cobglobptr.  I
-    # didn't really care where cobglobptr was; I cared about the memory
-    # cob_global block it pointed to.
+def GetPointerTo(name):
+    # This routine returns the address of memory referred to by 'name'.  It
+    # sorts out whether the generated C declared name as "char *name" or
+    # "char name[22]" or "cob_field name"
+
     try:
-        command = "x/1db (char *) " + variable
-        result = GdbExecute(currentframe(), command)
-        return ExtractHexValueFrom(result)
+        result = gdb.parse_and_eval('&' + name)
+        # If the result.type contains "**", name was defined in the
+        # generated .C as a pointer:  " char *name".  In that case,
+        # we need to pick up the contents of the pointer.
+        if str(result.type).find("**") > -1:
+            result = gdb.parse_and_eval(name)
+
+        # Otherwise, it was defined as the name of a block of some kind:
+        # " char name[22] " or "cob_field name".  In that case,
+        # the result already is the answer we need
+
+        retval = ExtractHexValueFrom(str(result))
     except:
-        return None
-
-
-def GetAddressOf(variable):
-    # Use this routine when you know variable is the name of a block.
-    retval = None
-    if variable:
-        try:
-            command = "info address " + variable
-            address_string = GdbExecute(currentframe(), command)
-            retval = ExtractHexValueFrom(address_string)
-        except gdb.error:
-            retval = None
-
-        if not retval:
-            try:
-                command = "x/1db " + variable  # Notice d for decimal, not hex, because
-                                               # a second 0x messes up ExtractHexValue
-                address_string = GdbExecute(currentframe(), command)
-                retval = ExtractHexValueFrom(address_string)
-            except:
-                retval = None
-
+        retval = None
     return retval
 
 
@@ -1634,12 +1629,7 @@ class CobolVariable():
         new_data = self.DataFromRside(rside)
 
         if new_data:
-            # This next code automatically handles table offset and refmods:
-            i = 0
-            while i < self.ActualLength:
-                command = "set {char}" + hex(self.ActualLocation + i) + "=" + hex(new_data[i])
-                gdb.execute(command, False, True)
-                i += 1
+            PutBytesAt(self.ActualLocation, new_data, self.ActualLength)
             self.IsDirty = True
 
         return return_value
@@ -1873,7 +1863,7 @@ class CobolVariable():
             if self.Fname:
                 # We have a field name
                 # print("FetchVariableData Fname", self.Fname)
-                self.location_of_field = GetAddressOf(self.Fname)
+                self.location_of_field = GetPointerTo(self.Fname)
                 if self.location_of_field is None:
                     self.not_in_context = True
                     return False
@@ -1884,14 +1874,14 @@ class CobolVariable():
                 #       unsigned char        *data;
                 #       const cob_field_attr *attr;
                 #       } cob_field;
-                self.Length = GetDataAt(self.location_of_field, GV_GlobalVariables.SizeofPointer)
+                self.Length = GetValueAt(self.location_of_field, GV_GlobalVariables.SizeofPointer)
                 if self.Length is None:
                     self.not_in_context = True
                     return False
-                possible_location_of_data = GetDataAt(self.location_of_field + GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
+                possible_location_of_data = GetValueAt(self.location_of_field + GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
                 if possible_location_of_data:
                     self.location_of_data = possible_location_of_data
-                self.location_of_attribute = GetDataAt(self.location_of_field + 2 * GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
+                self.location_of_attribute = GetValueAt(self.location_of_field + 2 * GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
             else:
                 # print("There is no self.Fname")
                 pass
@@ -1904,16 +1894,7 @@ class CobolVariable():
                 # there because we got information from the compiler.
                 if self.Bname:
                     # print("FetchVariableData Fname", self.Bname)
-                    if self.Section == 'X' or self.Section == 'WB':
-                        # EXTERNAL variable
-                        # WORKING-STORAGE BASED variable
-                        # These are declared in the generated C
-                        # as a "static int *b_13" pointer
-                        self.location_of_data = GetPointerAt(self.Bname)
-                    else:
-                        # self.Bname is the name of something like "static unsigned char b_13[24]"
-                        # So, we need to pick up the address of self.Bname
-                        self.location_of_data = GetAddressOf(self.Bname)
+                    self.location_of_data = GetPointerTo(self.Bname)
                     if self.location_of_data is None:
                         self.not_in_context = True
                         return False
@@ -1925,7 +1906,7 @@ class CobolVariable():
 
             if self.location_of_attribute == 0:
                 if self.Aname:
-                    self.location_of_attribute = GetAddressOf(self.Aname)
+                    self.location_of_attribute = GetPointerTo(self.Aname)
                     if self.location_of_attribute is None:
                         self.not_in_context = True
                         return False
@@ -1942,16 +1923,16 @@ class CobolVariable():
                 #       unsigned short       flags;      /* Field flags */
                 #       const cob_pic_symbol *pic;       /* Pointer to picture string */
                 #       } cob_field_attr;
-                self.AttrType   = GetDataAt(self.location_of_attribute + 0, 2)
-                self.AttrDigits = GetDataAt(self.location_of_attribute + 2, 2)
-                self.AttrScale  = GetDataAt(self.location_of_attribute + 4, 2)
+                self.AttrType   = GetValueAt(self.location_of_attribute + 0, 2)
+                self.AttrDigits = GetValueAt(self.location_of_attribute + 2, 2)
+                self.AttrScale  = GetValueAt(self.location_of_attribute + 4, 2)
 
                 # AttrScale is a two-byte number.  It might be twos complement negative:
                 if self.AttrScale > 32768:
                     self.AttrScale -= 65536
 
-                self.AttrFlags  = GetDataAt(self.location_of_attribute + 6, 2)
-                self.location_of_pic = GetDataAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
+                self.AttrFlags  = GetValueAt(self.location_of_attribute + 6, 2)
+                self.location_of_pic = GetValueAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
                 self.Picture = ""
                 if self.location_of_pic:
                     # There is PICTURE information; we need to build it up as a string.
@@ -1967,7 +1948,7 @@ class CobolVariable():
                     offset = 0
                     while True:
                         # Pick up the character:
-                        ch = GetDataAt(self.location_of_pic + offset, 1)
+                        ch = GetValueAt(self.location_of_pic + offset, 1)
                         if ch == 0:
                             break
                         if ch < 32:
@@ -1978,7 +1959,7 @@ class CobolVariable():
                         offset += calcsize('i')
 
                         # Pick up the integer count:
-                        count = GetDataAt(self.location_of_pic + offset, calcsize('i'))
+                        count = GetValueAt(self.location_of_pic + offset, calcsize('i'))
                         offset += calcsize('i')
 
                         while count > 0:
@@ -2115,7 +2096,7 @@ class CobolVariable():
         return n_str
 
     def ShowFields(self):
-        bname_location = GetAddressOf(self.Bname) or 0
+        bname_location = GetPointerTo(self.Bname) or 0
         bname_text = ""
         if bname_location:
             bname_text = "( %s )" % hex(bname_location)
@@ -3947,7 +3928,7 @@ class ModuleInformation():
     def ReadVariableString(self, string_name):
         VARSTR_LEN_SIZE = 9  # as used by cobd-st
         retval = False
-        the_address = GetAddressOf(string_name)
+        the_address = GetPointerTo(string_name)
         
         if the_address:
             try:
@@ -4924,10 +4905,10 @@ class CPrintWorker():
             # There is a refmod on the left side, so arrange to replace the
             # data on the left
 
+            values = []
             i = 0
             while i < var_left.ActualLength and i < len(value.original_string):
-                command = "set {char}" + hex(var_left.ActualLocation + i) + "=" + hex(ord(value.original_string[i]))
-                gdb.execute(command, False, True)
+                values.append( ord(value.original_string[i]) )
                 i += 1
 
             # If the left wants more than the right provided, right-fill with zeroes or
@@ -4937,9 +4918,10 @@ class CPrintWorker():
             else:
                 ch = chr(0)
             while i < var_left.ActualLength:
-                command = "set {char}" + hex(var_left.ActualLocation + i) + "=" + hex(ord(ch))
-                gdb.execute(command, False, True)
+                values.append( ord(ch) )
                 i += 1
+
+            PutBytesAt(var_left.ActualLocation, values, var_left.ActualLength)
 
             return_value = 1
 
