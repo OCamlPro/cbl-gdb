@@ -5524,16 +5524,17 @@ class CWatchWorker():
 
 class CobolBreakpoint(gdb.Breakpoint):
     def __init__(self, bp_spec, t_flag, i_flag):
-        if GV_GlobalVariables.gdb_version < 80300:
-            ConditionalRaise("pure COBOL cwatch needs GDB 8.3+")
-            return
         try:
-            super(CobolBreakpoint, self).__init__(bp_spec, type=gdb.BP_BREAKPOINT, temporary=t_flag, internal=i_flag)
+            if GV_GlobalVariables.gdb_version >= 70700:
+                super(CobolBreakpoint, self).__init__(bp_spec, type=gdb.BP_BREAKPOINT, temporary=t_flag, internal=i_flag)
+            else:
+                super(CobolBreakpoint, self).__init__(bp_spec, type=gdb.BP_BREAKPOINT, internal=i_flag)
             CBLDBG_CBREAK_WORKER.cobol_breaks.append(self)
         except Exception as ex:
             ConditionalRaise(ex)
             return
 
+        self.t_flag = t_flag
         self.comp_op = ""
         self.case_ins = False
         self.payload_f = None
@@ -5586,6 +5587,9 @@ class CobolBreakpoint(gdb.Breakpoint):
 
         if retval:
             print("\n{0}: {1}".format(self.payload_f.Name, l_value))
+
+        if GV_GlobalVariables.gdb_version >= 70700 and self.t_flag:
+            gdb.post_event(self.delete)
 
         return retval
 
