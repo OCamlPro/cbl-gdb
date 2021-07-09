@@ -5580,6 +5580,9 @@ class CobolBreakpoint(gdb.Breakpoint):
         else:
             retval = exp_result
 
+        if retval:
+            print("\n{0}: {1}".format(self.payload_f.Name, l_value))
+
         return retval
 
 
@@ -5707,7 +5710,11 @@ class CBreakWorker():
                 # note: error handling already in get_var_payload
                 return
 
-        break_point = CobolBreakpoint(line_nr, t_flag, i_flag)
+        if break_point is None:
+            break_point = CobolBreakpoint(line_nr, t_flag, i_flag)
+        else:
+            print("Set condition for breakpoint nr: {0}".format(break_point.number))
+
         break_point.payload_f = payload_f
         break_point.payload_s = payload_s
         break_point.is_lit = is_lit
@@ -5721,7 +5728,6 @@ class CBreakWorker():
         elif right_side[0].isdigit():
             break_point.r_value = right_side[0]
             break_point.is_lit = 1
-
 
     def process_break_arguments(self, arguments, t_flag, i_flag):
         is_lit = 0
@@ -5784,7 +5790,8 @@ class CBreakWorker():
     def find_breakpoint(bp_nr):
         return_breakpoint = None
 
-        for gdb_breakpoint in gdb.breakpoints():
+        #for gdb_breakpoint in gdb.breakpoints():
+        for gdb_breakpoint in CBLDBG_CBREAK_WORKER.cobol_breaks:
             if gdb_breakpoint.number == int(bp_nr):
                 return_breakpoint = gdb_breakpoint
                 break
@@ -5818,7 +5825,7 @@ class CBreakWorker():
 
         if len(left_side) == 1:
             print("Breakpoint {0} now unconditional.".format(left_side[0]))
-            self.set_condition(break_point, None)
+            break_point.comp_op = ""
         elif len(left_side) >= 2 and len(left_side) <= 4:
             self.set_cond_break(left_side, right_side, condition, break_point, is_lit, False, False)
         else:
