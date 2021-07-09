@@ -5562,11 +5562,15 @@ class CobolBreakpoint(gdb.Breakpoint):
 
         if l_value.isdigit() and r_value.isdigit():
             expression = "{0} {1} {2}".format(float(l_value), self.comp_op, float(r_value))
-        elif self.comp_op != "=~":
+        elif self.comp_op != "=~" and r_value != "ALL_SPACES":
             if self.case_ins:
-                expression = '"' + l_value[1:len(r_value) + 1].upper() + '"' + self.comp_op + '"' + r_value.upper() + '"'
+                # expression = '"' + l_value[1:len(r_value) + 1].upper() + '"' + self.comp_op + '"' + r_value.upper() + '"'
+                expression = '"' + l_value[1:-1].strip().upper() + '"' + self.comp_op + '"' + r_value.upper() + '"'
             else:
-                expression = '"' + l_value[1:len(r_value) + 1] + '"' + self.comp_op + '"' + r_value + '"'
+                # expression = '"' + l_value[1:len(r_value) + 1] + '"' + self.comp_op + '"' + r_value + '"'
+                expression = '"' + l_value[1:-1].strip() + '"' + self.comp_op + '"' + r_value + '"'
+        elif self.comp_op != "=~" and r_value == "ALL_SPACES":
+            expression = "{0}.isspace()".format(l_value)
         elif self.comp_op == "=~":
             if self.case_ins:
                 expression = "re.match('{0}', '{1}', re.IGNORECASE)".format(r_value, l_value[1:-1])
@@ -5721,8 +5725,12 @@ class CBreakWorker():
         break_point.comp_op = comp_op
         break_point.case_ins = case_ins
 
-        if R_ALL_ZERO_SPACE.match(right_side[0]):
+        if R_ALLSPACE.match(right_side[0]) or R_SPACE.match(right_side[0]):
             break_point.r_value = "ALL_SPACES"
+            break_point.is_lit = 1
+        elif R_ALLZERO.match(right_side[0]) or R_ZERO.match(right_side[0]):
+            break_point.r_value = 0
+            break_point.is_lit = 1
         elif is_lit == 1:
             break_point.r_value = right_side[0][1:-1]
         elif right_side[0].isdigit():
