@@ -640,7 +640,8 @@ def GetValueAt(address, nr_bytes):
         return retval
 
     except gdb.error:
-        print("Failure in GetValueAt():", command)
+        print("Failure in GetValueAt()")
+        traceback.print_exc()
         return None
 
 
@@ -2307,10 +2308,6 @@ class CobolVariable():
     def IeeeBinaryToString(self):
         bytes = self.data
         length = len(bytes)
-        if length == 10:
-            # This will generate an error, if it ever happens.  If
-            # it does, let me know.  I'll buy you a beer
-            return self.X86_extended_precision_from_bytes(bytes)
 
         exponent_bits = 0
         fraction_bits = 0
