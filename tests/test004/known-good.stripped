@@ -395,9 +395,9 @@ cp *
 42 : 03 var-tab/FILLER(1)  : "1"
 43 : 03 var-entry/FILLER  : " "
 cp/x ws-table(:)
-01 WS-TABLE(1:24)   :  [3132414243444546202020202020202035364d4e4f505152]
+01 WS-TABLE(1:24)   :  [0x3132414243444546202020202020202035364d4e4f505152]
 cp/x ws-table(three of nums1:four of nums1)
-01 WS-TABLE(3:4)   :  [41424344]
+01 WS-TABLE(3:4)   :  [0x41424344]
 cprint tab-adr-prgm
 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES   :  "First---"
 cprint tab-adr-prgm(2)
@@ -436,15 +436,15 @@ cp svalue = 1234
 cp svalue
 01 svalue   :  +001234
 cp svalue(2:2) = 89
-01 svalue(2:2)   :  [3839]
+01 svalue(2:2)   :  [0x3839]
 cp svalue
 01 svalue   :  +684818
 cp svalue(2:2) = x'89'
-01 svalue(2:2)   :  [8900]
+01 svalue(2:2)   :  [0x8900]
 cp svalue
 01 svalue   :  +978642
 cp svalue(2:2) = x'1234'
-01 svalue(2:2)   :  [1234]
+01 svalue(2:2)   :  [0x1234]
 cp svalue
 01 svalue   :  +193170
 cp svalue = -12345
