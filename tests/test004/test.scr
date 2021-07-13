@@ -97,6 +97,10 @@ echo cp ws-table(25:100)\n
 cp ws-table(25:100)
 echo cp ws-table(3:4)\n
 cp ws-table(3:4)
+echo cp/x ws-table(3:4)\n
+cp/x ws-table(3:4)
+echo cp/b ws-table(3:4)\n
+cp/b ws-table(3:4)
 echo cp ws-table(three of nums1:4)\n
 cp ws-table(three of nums1:4)
 echo cp ws-table(3:four of nums2)\n
