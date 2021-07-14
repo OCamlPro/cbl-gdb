@@ -622,7 +622,8 @@ def GetValueAt(address, nr_bytes):
         return retval
 
     except gdb.error:
-        print("Failure in GetValueAt():", command)
+        print("Failure in GetValueAt()")
+        traceback.print_exc()
         return None
 
 
@@ -1638,6 +1639,7 @@ class CobolVariable():
         binary_byte_limit = 16
         retval = ""
         if len(self.data) > 0:
+            retval += "0b"
             output_bytes = self.data[:]
             if GV_GlobalVariables.byteorder == "little" and not self.Refmod:
                 if (self.AttrFlags & COB_FLAG_BINARY_SWAP) == 0:  # If this is ON, then it is already in display order
@@ -2289,10 +2291,6 @@ class CobolVariable():
     def IeeeBinaryToString(self):
         bytes = self.data
         length = len(bytes)
-        if length == 10:
-            # This will generate an error, if it ever happens.  If
-            # it does, let me know.  I'll buy you a beer
-            return self.X86_extended_precision_from_bytes(bytes)
 
         exponent_bits = 0
         fraction_bits = 0
@@ -4815,11 +4813,11 @@ class CPrintWorker():
         body = ""
         if payload.Refmod:
             if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_BINARY:
-                body = self.GetDataAsBinary()
-            if not payload.display_body.startswith('"') or GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_HEX:
+                body = "[0x" + payload.GetDataAsBinary() + ']'
+            elif not payload.display_body.startswith('"') or GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_HEX:
                 # The refmod payload is not alphabetic (or the submode is x for hex) and so we are
                 # going to display the refmodded payload in hex:
-                body = '['
+                body = "[0x"
                 for i in range(len(payload.data)):
                     # This is a trick. By adding 256 to the byte, we ensure that
                     # 0, for example, becomes 0x100 instead of 0x0.  Thus we can
