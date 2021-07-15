@@ -592,7 +592,7 @@ class VarTrieNode():
 
 def GetBytesAt(address, length):
     # Pick up <length> bytes from <address>, return them as a list of ints
-    
+
     memlist = get_memoryview(address, length).tolist()
     # Note: Python2 returns a list of ints here, Python3 a list of bytes,
     #       which results in problems later - convert if necessary:
@@ -851,13 +851,19 @@ def ConditionalRaise(msg):
         print(msg)
 
 
-def GetNumericArgument(argument):
+def GetNumericArgument(argument, Negative=False, Raise=True):
     number = 1
     if argument:
-        if not argument.isdigit():
-            ConditionalRaise("argument must be a digit, not " + argument)
-            return
-        number = int(argument)
+        try:
+            number = int(argument)
+            if not Negative and number < 0:
+                ConditionalRaise("argument may not be negative")
+            return None
+        except ValueError:
+            # not int
+            if Raise:
+                ConditionalRaise("argument must be a digit, not " + argument)
+            return None
     return number
 
 
@@ -1922,7 +1928,7 @@ class CobolVariable():
                     pass
 
             if not self.attribute:
-                if self.Aname:                    
+                if self.Aname:
                     self.attribute = gdb.parse_and_eval(self.Aname)
                     # CHECKME: This should never happen - can we drop it for minor performance improve?
                     if not self.attribute:
@@ -1941,8 +1947,8 @@ class CobolVariable():
                 #       signed short         scale;      /* Field scale */
                 #       unsigned short       flags;      /* Field flags */
                 #       const cob_pic_symbol *pic;       /* Pointer to picture string */
-                #       } cob_field_attr;      
-                
+                #       } cob_field_attr;
+
                 # CHECKME: can/should we keep the GDB values here instead of the current int value?
                 self.AttrType   = int(self.attribute['type'])
                 self.AttrDigits = int(self.attribute['digits'])
@@ -1969,7 +1975,7 @@ class CobolVariable():
                             break
                         else:
                             ch = chr(ch)
-                        
+
                         # Pick up the integer count:
                         count = curr_pic['times_repeated']
 
@@ -3938,15 +3944,15 @@ class ModuleInformation():
         VARSTR_LEN_SIZE = 9  # as used by cobd-st
         retval = False
         the_address = GetPointerTo(string_name)
-        
+
         if the_address:
             try:
                 len_val = gdb.parse_and_eval("*(char (*)[{0}]) {1}".format(VARSTR_LEN_SIZE, the_address))
                 total_length = int(len_val.string())
-                
+
                 variable_string_memview = get_memoryview(the_address + VARSTR_LEN_SIZE, total_length - VARSTR_LEN_SIZE)
                 variable_string = variable_string_memview.tobytes().decode('ascii')  # plain string generate by cobcd
-                
+
                 # We have a new variable string
                 # Clear out the tables:
                 self.var_trie = VarTrie()
@@ -6820,7 +6826,8 @@ class CLocalBacktrace(gdb.Command):
         super(CLocalBacktrace, self).__init__("local-backtrace", gdb.COMMAND_STACK)
         # match everything between modern free format: "495  TESTME section." and
         # historic fixed-form with sequence number segment  "495 000495 TESTME SECTION 00 ."
-        self.section_pattern = re.compile(r"^\d*\s+\d*\s+(.*)\s+(SECTION)\s*\d*\.", re.IGNORECASE)
+        # also cater for PROCEDURE DIVISION in case we don't have a SECTION
+        self.section_pattern = re.compile(r"^\d*\s+\d*\s+(.*)\s+(SECTION|DIVISION)\s*(\d+\.|\.|USING)", re.IGNORECASE)
         # set alias, ignore errors (most likely because already defined)
         try:
             gdb.execute("alias -a lbt = local-backtrace", False, True)
@@ -6839,7 +6846,9 @@ class CLocalBacktrace(gdb.Command):
                     line = lines[0]
                 match = re.search(self.section_pattern, line)
                 if match:
-                    return match.group(1) + " " + match.group(2)
+                    retval = match.group(1) + " " + match.group(2)
+                    if retval.upper() == "PROCEDURE DIVISION": retval = "<MAIN SECTION>"
+                    return retval
                 output = gdb.execute("list -", False, True)
         # leave the loop upon request
         except KeyboardInterrupt:
@@ -6852,13 +6861,10 @@ class CLocalBacktrace(gdb.Command):
         return "unknown"
 
     def invoke(self, argument, from_tty):
-        # TODO: handle two arguments -> "- 5" -> was entered as -5
-        # join(arguments).replace("- ","-")
-        # TODO: Figure out why the argument parameter isn't actually used for anything
         if argument:
-            number = GetNumericArgument(argument)
+            number = GetNumericArgument(argument, Negative=True, Raise=False) # bt ignores bad arguments
         else:
-            number = 0
+            number = None
 
         # sanity check: Do we have any frame at all?
         try:
@@ -6882,23 +6888,39 @@ class CLocalBacktrace(gdb.Command):
                 frame_counter = frame_counter.older()
                 level = level + 1
 
-        sanitize_place = 1
+        sanitize_place = True
         sal = None
 
         listsize = gdb.parameter("listsize")
         gdb.execute("set listsize 1", False, False)
         try:
+            # if requested to only show last entries we need to know how much we have
+            if number is not None and number < 0:
+                steps_max = 0
+                while sanitize_place:
+                    steps_max += 1
+                    frame_ptr_txt = "(frame_ptr - {0})".format(steps_max)
+                    sanitize_place = gdb.parse_and_eval(frame_ptr_txt + "->perform_through")
+                steps_max += 1  # one too far
+                steps_taken = steps_max + number
+                number = None
+                sal = True
+                sanitize_place = True
+
             while sanitize_place:
+                if number is not None and number == 0:
+                    break
+
                 # the only way in GC 3.1 to get the section name is to query manually,
-                # doe below for testing pruposes (actually works quite fine)
+                # done below (actually works quite fine)
                 name = None
                 if not sal:
-                    sal = frame.find_sal()
                     steps_taken = 0
+                    sal = frame.find_sal()
                     name = self.get_section_for_sal(sal)
                 else:
                     frame_ptr_txt = "(frame_ptr - {0})".format(steps_taken)
-                    steps_taken = steps_taken + 1
+                    steps_taken += 1
                     sanitize_place = gdb.parse_and_eval(frame_ptr_txt + "->perform_through")
                     if not sanitize_place:
                         sal = gdb.decode_line(str(frame.function()))[1][0]
@@ -6907,6 +6929,11 @@ class CLocalBacktrace(gdb.Command):
                         sal = gdb.decode_line("*(" + frame_ptr_txt + "->return_address_ptr)")[1][0]
                         name = self.get_section_for_sal(sal)
                 print("#{0}.{1}  {2} at {3}:{4}".format(level, steps_taken, name, sal.symtab, sal.line))
+                if number is not None:
+                    number -= 1
+            if sanitize_place:
+                print("(More stack frames follow...)")
+
         # we just quit the loop as requested
         # pass user errors unchanged
         except (KeyboardInterrupt, gdb.GdbError):
@@ -7089,7 +7116,7 @@ An argument says how fast auto stepping is done (1-19, default 5)."""
     def invoke(self, argument, from_tty):
         number = 5  # TODO: use a parameter for the default
         if argument:
-            number = GetNumericArgument(argument)
+            number = GetNumericArgument(argument, Negative=True)  # we do the check on our own
             if number == 0 or number > 19:
                 ConditionalRaise("argument must be a digit between 1 and 19")
                 return
