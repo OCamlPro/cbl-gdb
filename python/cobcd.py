@@ -4588,6 +4588,8 @@ def break_completion(text, word, condition):
 
 
 def encode_program_id(name, fold_case):
+    if not name:
+        return None
     return_name = ""
     list_count = 0
 
@@ -5551,6 +5553,8 @@ class CBreakWorker():
 
     @staticmethod
     def set_entry_breakpoint(module_name, t_flag, i_flag):
+        if not module_name:
+            raise Exception("module name missing")  # never happens from user-code
         module_name = encode_program_id(module_name, 0)
         # Note: the following does NOT work reliable as cobc 3.0+ have a bug in generating the correct line reference for the ENTRY_prog label
         #       when DECLARATIVES are used (it always points to the PROCEDURE DIVISION, not to the first (possibly implied) "real" section)
