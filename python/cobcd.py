@@ -1525,10 +1525,9 @@ class CobolVariable():
         self.RefmodLength = 0   # This is the Length in (Offset:Length)
 
         # These values are calculated at runtime from the information up above
-        self.location_of_field     = 0  # location of Fname, when available
         self.location_of_data      = 0  # value of Fname->data, when available
-        self.location_of_attribute = 0  # value of Fname->attr
-        self.location_of_pic       = 0  # value of Fname->attr.pic
+        self.field                 = None # GDB Value of Fname, when available
+        self.attribute             = None # GDB Value of Fname->attr
         self.data                  = [] # list of Length bytes
 
         self.ActualLocation        = 0  # This is the location_of_data qualified by table
@@ -1574,14 +1573,13 @@ class CobolVariable():
             print("   RefmodLength:", self.RefmodLength)
         print("         Length:", self.Length)
         print(" len(self.data):", len(self.data))
-        print("       AttrType:", hex(self.AttrType))
+        print("       AttrType:", self.AttrType)
         print("     AttrDigits:", self.AttrDigits)
         print("      AttrScale:", self.AttrScale)
-        print("      AttrFlags:", hex(self.AttrFlags))
-        print("   loc_of_field:", hex(self.location_of_field))
+        print("      AttrFlags:", self.AttrFlags)
         print("    loc_of_data:", hex(self.location_of_data))
-        print("    loc_of_attr:", hex(self.location_of_attribute))
-        print("     loc_of_pic:", hex(self.location_of_pic))
+        print("          field:", self.field)
+        print("           attr:", self.attribute)
 
     def IsAlphanumeric(self):
         retval = False
@@ -1853,9 +1851,9 @@ class CobolVariable():
         # print("\nFetchVariableData", self.Name, self.IsDirty, self.Offset, self.Length)
         if self.IsDirty:
             # We do this work only if the IsDirty flag indicates that we have to do the work.
-            self.location_of_field = 0
             self.location_of_data = 0           # value of p_variable, or location on stack
-            self.location_of_attribute = 0
+            self.field = None
+            self.attribute = None
             self.data = []
             self.display_body = ""
             self.not_in_context = False
@@ -1883,8 +1881,9 @@ class CobolVariable():
             if self.Fname:
                 # We have a field name
                 # print("FetchVariableData Fname", self.Fname)
-                self.location_of_field = GetPointerTo(self.Fname)
-                if self.location_of_field is None:
+                try:
+                    self.field = gdb.parse_and_eval(self.Fname)
+                except gdb.error:
                     self.not_in_context = True
                     return False
                 # The cob_field structure looks like this:
@@ -1894,14 +1893,11 @@ class CobolVariable():
                 #       unsigned char        *data;
                 #       const cob_field_attr *attr;
                 #       } cob_field;
-                self.Length = GetValueAt(self.location_of_field, GV_GlobalVariables.SizeofPointer)
-                if self.Length is None:
-                    self.not_in_context = True
-                    return False
-                possible_location_of_data = GetValueAt(self.location_of_field + GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
+                self.Length = int(self.field['size'])
+                possible_location_of_data = int(self.field['data'].dereference().address)
                 if possible_location_of_data:
                     self.location_of_data = possible_location_of_data
-                self.location_of_attribute = GetValueAt(self.location_of_field + 2 * GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
+                self.attribute = self.field['attr']
             else:
                 # print("There is no self.Fname")
                 pass
@@ -1914,8 +1910,9 @@ class CobolVariable():
                 # there because we got information from the compiler.
                 if self.Bname:
                     # print("FetchVariableData Fname", self.Bname)
-                    self.location_of_data = GetPointerTo(self.Bname)
-                    if self.location_of_data is None:
+                    try:
+                        self.location_of_data = int(gdb.parse_and_eval(self.Bname).dereference().address)
+                    except gdb.error:
                         self.not_in_context = True
                         return False
                     self.location_of_data += self.Offset
@@ -1924,17 +1921,19 @@ class CobolVariable():
                     # print("There is no self.Bname")
                     pass
 
-            if self.location_of_attribute == 0:
-                if self.Aname:
-                    self.location_of_attribute = GetPointerTo(self.Aname)
-                    if self.location_of_attribute is None:
+            if not self.attribute:
+                if self.Aname:                    
+                    self.attribute = gdb.parse_and_eval(self.Aname)
+                    # CHECKME: This should never happen - can we drop it for minor performance improve?
+                    if not self.attribute:
+                        traceback.print_exc()
                         self.not_in_context = True
                         return False
                 else:
                     # print(" There is no self.Aname")
                     pass
 
-            if self.location_of_attribute != 0:
+            if self.attribute:
                 #   typedef struct __cob_field_attr
                 #       {
                 #       unsigned short       type;       /* Field type */
@@ -1942,49 +1941,45 @@ class CobolVariable():
                 #       signed short         scale;      /* Field scale */
                 #       unsigned short       flags;      /* Field flags */
                 #       const cob_pic_symbol *pic;       /* Pointer to picture string */
-                #       } cob_field_attr;
-                self.AttrType   = GetValueAt(self.location_of_attribute + 0, 2)
-                self.AttrDigits = GetValueAt(self.location_of_attribute + 2, 2)
-                self.AttrScale  = GetValueAt(self.location_of_attribute + 4, 2)
-
-                # AttrScale is a two-byte number.  It might be twos complement negative:
-                if self.AttrScale > 32768:
-                    self.AttrScale -= 65536
-
-                self.AttrFlags  = GetValueAt(self.location_of_attribute + 6, 2)
-                self.location_of_pic = GetValueAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
+                #       } cob_field_attr;      
+                
+                # CHECKME: can/should we keep the GDB values here instead of the current int value?
+                self.AttrType   = int(self.attribute['type'])
+                self.AttrDigits = int(self.attribute['digits'])
+                self.AttrScale  = int(self.attribute['scale'])
+                self.AttrFlags  = int(self.attribute['flags'])
                 self.Picture = ""
-                if self.location_of_pic:
+
+                curr_pic        = self.attribute['pic']
+
+                if curr_pic:
                     # There is PICTURE information; we need to build it up as a string.
-                    # The data are stored as described in cob_pic_symbol above.  Unfortunately,
-                    # we have real-world difficulties to live with.  In particular, the structure
-                    # in C is defined as {char, int}.  The GCC compiler for Intel is observed to compile that
-                    # structure with padding, so that char is followed by three empty bytes, and then
-                    # the count follows.
-                    #
-                    # This code, therefore, has to be red-flagged; we don't know if GCC will always do
-                    # this.  We don't know if the compiler options can be changed.  We don't know
-                    # what might happen with other compilers.  Good luck to us:
+                    # The data are stored as described in cob_pic_symbol above.
+                    # As we operate on the gdb Values we are safe in concern to compilers and padding.
                     offset = 0
                     while True:
                         # Pick up the character:
-                        ch = GetValueAt(self.location_of_pic + offset, 1)
+                        ch = curr_pic['symbol']
                         if ch == 0:
                             break
                         if ch < 32:
                             # This should never happen; we're inside a PICTURE string
-                            ch = '^'
+                            # ch = '^'
+                            traceback.print_exc()
+                            break
                         else:
                             ch = chr(ch)
-                        offset += calcsize('i')
-
+                        
                         # Pick up the integer count:
-                        count = GetValueAt(self.location_of_pic + offset, calcsize('i'))
-                        offset += calcsize('i')
+                        count = curr_pic['times_repeated']
 
                         while count > 0:
-                            count -= 1
                             self.Picture += ch
+                            count -= 1
+
+                        offset += 1
+                        curr_pic = self.attribute['pic'] + offset
+
                     # Just to make life easier down the road, replace DB and CR
                     # with something easier to work with.
                     self.Picture = self.Picture.replace("DB", "d")
@@ -2036,11 +2031,8 @@ class CobolVariable():
                     # To recap:  We are trapped in the routine of the desired
                     # LOCAL-STORAGE variable, so we can look for it in cob_local_ptr
                     # we need GDB's help finding out where cob_local_ptr + offset is:
-                    command = "x " + "cob_local_ptr + " + str(self.Offset)
-                    address_string = GdbExecute(currentframe(), command)
-                    nfound = address_string.find(':')
-                    if nfound != -1:
-                        self.location_of_data = int(address_string[:nfound], 16)
+                    loc_ptr = gdb.parse_and_eval("cob_local_ptr + " + str(self.Offset))
+                    self.location_of_data = int(loc_ptr)
 
                 except gdb.error:
                     self.not_in_context = True
@@ -2163,8 +2155,9 @@ class CobolVariable():
             # This is local-storage
             print("Field:      ", "f0")
         else:
+            # CHECKME: possibly print self.field?
             if self.Fname:
-                print("Field:      ", self.Fname, '   (', hex(self.location_of_field), ')')
+                print("Field:      ", self.Fname)
             else:
                 print("Field:      ", "<none>")
 
@@ -2183,7 +2176,7 @@ class CobolVariable():
             print("RefmodRun:  ", self.RefmodLength)
         print("DataLoc:    ", hex(self.ActualLocation))
 
-        print("Attr:       ", self.Aname, '   (', hex(self.location_of_attribute), ')')
+        print("Attr:       ", self.Aname)
         print("AttrType:   ", self.AttrType, end="")
         print(" (", hex(self.AttrType), ") ", sep='', end="")
         if self.AttrType == 0:
@@ -2265,7 +2258,7 @@ class CobolVariable():
         if (self.AttrFlags & COB_FLAG_CONSTANT) != 0:
             print(" CONSTANT ", end='')
         print()
-        if self.location_of_pic:
+        if self.Picture:
             print("Picture:    ", self.Picture)
 
         # At this point, we want to show the raw data at location_of_data.
