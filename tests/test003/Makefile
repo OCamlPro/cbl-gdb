@@ -32,7 +32,7 @@ known-good:
 	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -o test -x MAIN.cbl
 	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m A.cbl
 	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m B.cbl
-	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m C.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m C.cbl -ext cpy
 	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) --batch -x ../../python/cobcd.py -x test.scr > known-good.txt
 	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
 
