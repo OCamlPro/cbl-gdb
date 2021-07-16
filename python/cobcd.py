@@ -155,15 +155,8 @@ R_VALID_CHARS = re.compile('^[a-zA-Z0-9_]')
 
 HEXVAL = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
 
-# Buffer size for printing
-PRINT_BUFFER_SIZE = 65536
-
 # Unlike GnuCOBOL, we are going to replace characters we don't recognize
 NON_PRINTABLE_CHAR = '^'
-
-# These constants are used when calling get_verified_field_location
-ALLOCATE = True
-DONT_ALLOCATE = False
 
 #  regexp's for ALL, ZERO, SPACE and numeric handling.
 R_ALL   = re.compile(r"^ALL\b", re.IGNORECASE)
