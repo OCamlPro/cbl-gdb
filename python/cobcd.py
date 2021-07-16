@@ -5595,13 +5595,6 @@ class CBreakWorker():
         return CobolBreakpoint(module_name + "_", t_flag, i_flag)
 
     @staticmethod
-    def set_condition(break_point, condition):
-        break_point.condition = condition
-        # if break_point.number > 0 and break_point not in CBLDBG_CBREAK_WORKER.cobol_breaks:
-        if break_point not in CBLDBG_CBREAK_WORKER.cobol_breaks:
-            CBLDBG_CBREAK_WORKER.cobol_breaks.append(break_point)
-
-    @staticmethod
     def module_available(module):
         try:
             spec = "{0}_".format(module)
@@ -5816,13 +5809,17 @@ class CBreakWorker():
         if break_point is None:
             return
 
-        if len(left_side) == 1:
-            print("Breakpoint {0} now unconditional.".format(left_side[0]))
-            break_point.comp_op = ""
-        elif len(left_side) >= 2 and len(left_side) <= 4:
-            self.set_cond_break(left_side, right_side, condition, break_point, is_lit, False, False)
+        if type(break_point) is CobolBreakpoint:
+            if len(left_side) == 1:
+                    print("Breakpoint {0} now unconditional.".format(left_side[0]))
+                    break_point.comp_op = ""
+            elif len(left_side) >= 2 and len(left_side) <= 4:
+                self.set_cond_break(left_side, right_side, condition, break_point, is_lit, False, False)
+            else:
+                print('Breakpoint parameters not recognized')
+                return
         else:
-            print('Breakpoint parameters not recognized')
+            print('Breakpoint is not a Cobol breakpoint')
             return
 
 
