@@ -5552,10 +5552,10 @@ class CobolBreakpoint(gdb.Breakpoint):
         elif self.comp_op != "=~" and r_value != "ALL_SPACES":
             if self.case_ins:
                 # expression = '"' + l_value[1:len(r_value) + 1].upper() + '"' + self.comp_op + '"' + r_value.upper() + '"'
-                expression = '"' + l_value[1:-1].strip().upper() + '"' + self.comp_op + '"' + r_value.upper() + '"'
+                expression = '"' + l_value[1:-1].strip().upper() + '"' + self.comp_op + '"' + r_value.strip().upper() + '"'
             else:
                 # expression = '"' + l_value[1:len(r_value) + 1] + '"' + self.comp_op + '"' + r_value + '"'
-                expression = '"' + l_value[1:-1].strip() + '"' + self.comp_op + '"' + r_value + '"'
+                expression = '"' + l_value[1:-1].strip() + '"' + self.comp_op + '"' + r_value.strip() + '"'
         elif self.comp_op != "=~" and r_value == "ALL_SPACES":
             expression = "{0}.isspace()".format(l_value)
         elif self.comp_op == "=~":
@@ -5574,8 +5574,8 @@ class CobolBreakpoint(gdb.Breakpoint):
         if retval:
             print("\n{0}: {1}".format(self.payload_f.Name, l_value))
 
-        if GV_GlobalVariables.gdb_version >= 70700 and self.t_flag:
-            gdb.post_event(self.delete)
+        # if GV_GlobalVariables.gdb_version < 70700 and self.t_flag:
+        #     gdb.post_event(self.delete)
 
         return retval
 
@@ -5790,8 +5790,8 @@ class CBreakWorker():
     def find_breakpoint(bp_nr):
         return_breakpoint = None
 
-        #for gdb_breakpoint in gdb.breakpoints():
-        for gdb_breakpoint in CBLDBG_CBREAK_WORKER.cobol_breaks:
+        #for gdb_breakpoint in CBLDBG_CBREAK_WORKER.cobol_breaks:
+        for gdb_breakpoint in gdb.breakpoints():
             if gdb_breakpoint.number == int(bp_nr):
                 return_breakpoint = gdb_breakpoint
                 break
