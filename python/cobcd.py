@@ -1507,10 +1507,9 @@ class CobolVariable():
         self.RefmodLength = 0   # This is the Length in (Offset:Length)
 
         # These values are calculated at runtime from the information up above
-        self.location_of_field     = 0  # location of Fname, when available
         self.location_of_data      = 0  # value of Fname->data, when available
-        self.location_of_attribute = 0  # value of Fname->attr
-        self.location_of_pic       = 0  # value of Fname->attr.pic
+        self.field                 = None # GDB Value of Fname, when available
+        self.attribute             = None # GDB Value of Fname->attr
         self.data                  = [] # list of Length bytes
 
         self.ActualLocation        = 0  # This is the location_of_data qualified by table
@@ -1556,14 +1555,13 @@ class CobolVariable():
             print("   RefmodLength:", self.RefmodLength)
         print("         Length:", self.Length)
         print(" len(self.data):", len(self.data))
-        print("       AttrType:", hex(self.AttrType))
+        print("       AttrType:", self.AttrType)
         print("     AttrDigits:", self.AttrDigits)
         print("      AttrScale:", self.AttrScale)
-        print("      AttrFlags:", hex(self.AttrFlags))
-        print("   loc_of_field:", hex(self.location_of_field))
+        print("      AttrFlags:", self.AttrFlags)
         print("    loc_of_data:", hex(self.location_of_data))
-        print("    loc_of_attr:", hex(self.location_of_attribute))
-        print("     loc_of_pic:", hex(self.location_of_pic))
+        print("          field:", self.field)
+        print("           attr:", self.attribute)
 
     def IsAlphanumeric(self):
         retval = False
@@ -1835,9 +1833,9 @@ class CobolVariable():
         # print("\nFetchVariableData", self.Name, self.IsDirty, self.Offset, self.Length)
         if self.IsDirty:
             # We do this work only if the IsDirty flag indicates that we have to do the work.
-            self.location_of_field = 0
             self.location_of_data = 0           # value of p_variable, or location on stack
-            self.location_of_attribute = 0
+            self.field = None
+            self.attribute = None
             self.data = []
             self.display_body = ""
             self.not_in_context = False
@@ -1865,8 +1863,9 @@ class CobolVariable():
             if self.Fname:
                 # We have a field name
                 # print("FetchVariableData Fname", self.Fname)
-                self.location_of_field = GetPointerTo(self.Fname)
-                if self.location_of_field is None:
+                try:
+                    self.field = gdb.parse_and_eval(self.Fname)
+                except gdb.error:
                     self.not_in_context = True
                     return False
                 # The cob_field structure looks like this:
@@ -1876,14 +1875,11 @@ class CobolVariable():
                 #       unsigned char        *data;
                 #       const cob_field_attr *attr;
                 #       } cob_field;
-                self.Length = GetValueAt(self.location_of_field, GV_GlobalVariables.SizeofPointer)
-                if self.Length is None:
-                    self.not_in_context = True
-                    return False
-                possible_location_of_data = GetValueAt(self.location_of_field + GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
+                self.Length = int(self.field['size'])
+                possible_location_of_data = int(self.field['data'].dereference().address)
                 if possible_location_of_data:
                     self.location_of_data = possible_location_of_data
-                self.location_of_attribute = GetValueAt(self.location_of_field + 2 * GV_GlobalVariables.SizeofPointer, GV_GlobalVariables.SizeofPointer)
+                self.attribute = self.field['attr']
             else:
                 # print("There is no self.Fname")
                 pass
@@ -1896,8 +1892,9 @@ class CobolVariable():
                 # there because we got information from the compiler.
                 if self.Bname:
                     # print("FetchVariableData Fname", self.Bname)
-                    self.location_of_data = GetPointerTo(self.Bname)
-                    if self.location_of_data is None:
+                    try:
+                        self.location_of_data = int(gdb.parse_and_eval(self.Bname).dereference().address)
+                    except gdb.error:
                         self.not_in_context = True
                         return False
                     self.location_of_data += self.Offset
@@ -1906,17 +1903,19 @@ class CobolVariable():
                     # print("There is no self.Bname")
                     pass
 
-            if self.location_of_attribute == 0:
-                if self.Aname:
-                    self.location_of_attribute = GetPointerTo(self.Aname)
-                    if self.location_of_attribute is None:
+            if not self.attribute:
+                if self.Aname:                    
+                    self.attribute = gdb.parse_and_eval(self.Aname)
+                    # CHECKME: This should never happen - can we drop it for minor performance improve?
+                    if not self.attribute:
+                        traceback.print_exc()
                         self.not_in_context = True
                         return False
                 else:
                     # print(" There is no self.Aname")
                     pass
 
-            if self.location_of_attribute != 0:
+            if self.attribute:
                 #   typedef struct __cob_field_attr
                 #       {
                 #       unsigned short       type;       /* Field type */
@@ -1924,49 +1923,45 @@ class CobolVariable():
                 #       signed short         scale;      /* Field scale */
                 #       unsigned short       flags;      /* Field flags */
                 #       const cob_pic_symbol *pic;       /* Pointer to picture string */
-                #       } cob_field_attr;
-                self.AttrType   = GetValueAt(self.location_of_attribute + 0, 2)
-                self.AttrDigits = GetValueAt(self.location_of_attribute + 2, 2)
-                self.AttrScale  = GetValueAt(self.location_of_attribute + 4, 2)
-
-                # AttrScale is a two-byte number.  It might be twos complement negative:
-                if self.AttrScale > 32768:
-                    self.AttrScale -= 65536
-
-                self.AttrFlags  = GetValueAt(self.location_of_attribute + 6, 2)
-                self.location_of_pic = GetValueAt(self.location_of_attribute + 8, GV_GlobalVariables.SizeofPointer)
+                #       } cob_field_attr;      
+                
+                # CHECKME: can/should we keep the GDB values here instead of the current int value?
+                self.AttrType   = int(self.attribute['type'])
+                self.AttrDigits = int(self.attribute['digits'])
+                self.AttrScale  = int(self.attribute['scale'])
+                self.AttrFlags  = int(self.attribute['flags'])
                 self.Picture = ""
-                if self.location_of_pic:
+
+                curr_pic        = self.attribute['pic']
+
+                if curr_pic:
                     # There is PICTURE information; we need to build it up as a string.
-                    # The data are stored as described in cob_pic_symbol above.  Unfortunately,
-                    # we have real-world difficulties to live with.  In particular, the structure
-                    # in C is defined as {char, int}.  The GCC compiler for Intel is observed to compile that
-                    # structure with padding, so that char is followed by three empty bytes, and then
-                    # the count follows.
-                    #
-                    # This code, therefore, has to be red-flagged; we don't know if GCC will always do
-                    # this.  We don't know if the compiler options can be changed.  We don't know
-                    # what might happen with other compilers.  Good luck to us:
+                    # The data are stored as described in cob_pic_symbol above.
+                    # As we operate on the gdb Values we are safe in concern to compilers and padding.
                     offset = 0
                     while True:
                         # Pick up the character:
-                        ch = GetValueAt(self.location_of_pic + offset, 1)
+                        ch = curr_pic['symbol']
                         if ch == 0:
                             break
                         if ch < 32:
                             # This should never happen; we're inside a PICTURE string
-                            ch = '^'
+                            # ch = '^'
+                            traceback.print_exc()
+                            break
                         else:
                             ch = chr(ch)
-                        offset += calcsize('i')
-
+                        
                         # Pick up the integer count:
-                        count = GetValueAt(self.location_of_pic + offset, calcsize('i'))
-                        offset += calcsize('i')
+                        count = curr_pic['times_repeated']
 
                         while count > 0:
-                            count -= 1
                             self.Picture += ch
+                            count -= 1
+
+                        offset += 1
+                        curr_pic = self.attribute['pic'] + offset
+
                     # Just to make life easier down the road, replace DB and CR
                     # with something easier to work with.
                     self.Picture = self.Picture.replace("DB", "d")
@@ -2018,11 +2013,8 @@ class CobolVariable():
                     # To recap:  We are trapped in the routine of the desired
                     # LOCAL-STORAGE variable, so we can look for it in cob_local_ptr
                     # we need GDB's help finding out where cob_local_ptr + offset is:
-                    command = "x " + "cob_local_ptr + " + str(self.Offset)
-                    address_string = GdbExecute(currentframe(), command)
-                    nfound = address_string.find(':')
-                    if nfound != -1:
-                        self.location_of_data = int(address_string[:nfound], 16)
+                    loc_ptr = gdb.parse_and_eval("cob_local_ptr + " + str(self.Offset))
+                    self.location_of_data = int(loc_ptr)
 
                 except gdb.error:
                     self.not_in_context = True
@@ -2145,8 +2137,9 @@ class CobolVariable():
             # This is local-storage
             print("Field:      ", "f0")
         else:
+            # CHECKME: possibly print self.field?
             if self.Fname:
-                print("Field:      ", self.Fname, '   (', hex(self.location_of_field), ')')
+                print("Field:      ", self.Fname)
             else:
                 print("Field:      ", "<none>")
 
@@ -2165,7 +2158,7 @@ class CobolVariable():
             print("RefmodRun:  ", self.RefmodLength)
         print("DataLoc:    ", hex(self.ActualLocation))
 
-        print("Attr:       ", self.Aname, '   (', hex(self.location_of_attribute), ')')
+        print("Attr:       ", self.Aname)
         print("AttrType:   ", self.AttrType, end="")
         print(" (", hex(self.AttrType), ") ", sep='', end="")
         if self.AttrType == 0:
@@ -2247,7 +2240,7 @@ class CobolVariable():
         if (self.AttrFlags & COB_FLAG_CONSTANT) != 0:
             print(" CONSTANT ", end='')
         print()
-        if self.location_of_pic:
+        if self.Picture:
             print("Picture:    ", self.Picture)
 
         # At this point, we want to show the raw data at location_of_data.
@@ -3923,11 +3916,10 @@ class ModuleInformation():
         self.line_list = LineList()
         self.perform_commands = {}
 
-    def ReadVariableString(self, string_name):
+    def ReadAndParseVariableString(self, string_name):
         VARSTR_LEN_SIZE = 9  # as used by cobd-st
-        retval = False
+
         the_address = GetPointerTo(string_name)
-        
         if the_address:
             try:
                 len_val = gdb.parse_and_eval("*(char (*)[{0}]) {1}".format(VARSTR_LEN_SIZE, the_address))
@@ -3935,30 +3927,36 @@ class ModuleInformation():
                 
                 variable_string_memview = get_memoryview(the_address + VARSTR_LEN_SIZE, total_length - VARSTR_LEN_SIZE)
                 variable_string = variable_string_memview.tobytes().decode('ascii')  # plain string generate by cobcd
-                
-                # We have a new variable string
-                # Clear out the tables:
-                self.var_trie = VarTrie()
-                self.line_list = LineList()
-                self.perform_commands = {}
 
-                # Load the new tables
-                # Pull apart the variable_string
-                variable_lines = variable_string.split("~")
-                for variable_line in variable_lines:
-                    self.line_list.LoadFromLine(variable_line)
-                    self.var_trie.LoadFromLine(variable_line)
-                    self.LoadPerformFromLine(variable_line)
+                GV_ModuleInformation.ParseVariableString(variable_string)
 
-                self.var_trie.PopulateIndexOfParent()
-
-                # Put a fencepost at the end of the line_list
-                self.line_list.Insert(self.line_list.EndOfTheWorld, "Ragnarok")
-                retval = True
+                return True
             except:
                 traceback.print_exc()
                 pass
-        return retval
+        return False
+
+
+    def ParseVariableString(self, variable_string):
+
+        # We have a new variable string
+        # Clear out the tables:
+        self.var_trie = VarTrie()
+        self.line_list = LineList()
+        self.perform_commands = {}
+
+        # Load the new tables
+        # Pull apart the variable_string
+        variable_lines = variable_string.split("~")
+        for variable_line in variable_lines:
+            self.line_list.LoadFromLine(variable_line)
+            self.var_trie.LoadFromLine(variable_line)
+            self.LoadPerformFromLine(variable_line)
+
+        self.var_trie.PopulateIndexOfParent()
+
+        # Put a fencepost at the end of the line_list
+        self.line_list.Insert(self.line_list.EndOfTheWorld, "Ragnarok")
 
     def LoadPerformFromLine(self, variable_line):
         if len(variable_line) > 0 and variable_line[0] == 'p':
@@ -4104,8 +4102,8 @@ class ModuleState():
                     return False
 
                 # Unexpected and confusing things happen when the frame is set
-                # to a PROCEDURE DIVISION line. So, if an adjustment is necessary,
-                # we make it here:
+                # to a PROCEDURE DIVISION line (outer COBOL frame).
+                # So, if an adjustment is necessary, we make it here:
 
                 if frame_from_frame != frame_from_stack:
                     command = "select-frame " + str(frame_from_stack)
@@ -4134,22 +4132,20 @@ class ModuleState():
                         possibility = stack[stack_line]
                         # Pull out the file name, which is before the colon in the last token
                         possible_file = possibility.split(' ')[-1].split(':')[0]
-                        name_root = possible_file
-                        name_root = name_root.split('/')
-                        name_root = name_root[-1]
+                        name_root = possible_file.split('/')[-1]
 
-                        name_root2 = ""
+                        name_suffix = ""
                         for ch in name_root:
                             if ch.isalnum():
-                                name_root2 += ch
+                                name_suffix += ch
                             else:
                                 hh = hex(ord(ch))[-2:]
-                                name_root2 += hh.upper()
+                                name_suffix += hh.upper()
 
-                        string_name = "VARIABLE_STRING_" + name_root2
-
-                        if GV_ModuleInformation.ReadVariableString(string_name):
+                        # check if a variable with this string name can be read:
+                        if GV_ModuleInformation.ReadAndParseVariableString("VARIABLE_STRING_" + name_suffix):
                             break
+                        # otherwise go on with next frame
                         stack_line += 1
 
                     if stack_line >= len(stack):
@@ -4158,21 +4154,14 @@ class ModuleState():
                         return False
 
                     # Get the full path for the source file
-                    command = "info source"
-                    info_source = GdbExecute(currentframe(), command)
-                    info_source = info_source.split('\n')
-                    for line in info_source:
+                    info_source = GdbExecute(currentframe(), "info source")
+                    info_source_lines = info_source.split('\n')
+                    for line in info_source_lines:
                         pattern = re.compile(r"Located in (.*)$")
                         match = re.search(pattern, line)
                         if match:
                             self.current_full_path = match.group(1)
                             break
-        except gdb.error:
-            self.current_trapped_routine = ""
-            self.current_trapped_file = ""
-            self.current_trapped_frame = -1
-            self.current_trapped_line = 0
-            retval = False
         except:
             self.current_trapped_routine = ""
             self.current_trapped_file = ""
@@ -4306,17 +4295,15 @@ def BuildHumanHString(node, level):
 
         if len(node.children):
             # We have children, so we don't display anything:
-            h_str += "\n"
+            h_str += '\n'
             for child in node.children:
                 h_str += BuildHumanHString(child, level + 1)
         else:
             # We have no children, so we must be elementary, which
             # means it's time to display something:
-            h_str += " : "
-            h_str += node.display_body
-            h_str += "\n"
+            h_str += " : {0}\n".format(node.display_body)
     if not h_str:
-        h_str = '\n'
+        return '\n'  # shouldn't we return an error message or raise here?
     return h_str
 
 
@@ -4570,6 +4557,8 @@ def break_completion(text, word, condition):
 
 
 def encode_program_id(name, fold_case):
+    if not name:
+        return None
     return_name = ""
     list_count = 0
 
@@ -5352,7 +5341,6 @@ class CobolWatchpointHandler():
         self.old_value = self.payload.DataToString()
 
     def check_and_output_wp(self):
-        print("check_and_output_wp")
         if not CFrameWorker.has_cobol_frame():
             new_value = "<unreadable>"
             if self.old_value != new_value:
@@ -5605,6 +5593,8 @@ class CBreakWorker():
 
     @staticmethod
     def set_entry_breakpoint(module_name, t_flag, i_flag):
+        if not module_name:
+            raise Exception("module name missing")  # never happens from user-code
         module_name = encode_program_id(module_name, 0)
         # Note: the following does NOT work reliable as cobc 3.0+ have a bug in generating the correct line reference for the ENTRY_prog label
         #       when DECLARATIVES are used (it always points to the PROCEDURE DIVISION, not to the first (possibly implied) "real" section)
@@ -6502,15 +6492,18 @@ class CFrameWorker:
             number = number - 1
 
     @staticmethod
-    def has_cobol_frame():
+    def nearest_cobol_frame():
         try:
             frame = CFrameWorker.Frame(True, 0)
             if not frame:
                 frame = CFrameWorker.Frame(False, 0)
         except gdb.GdbError:
             frame = None
+        return frame
 
-        if frame:
+    @staticmethod
+    def has_cobol_frame():
+        if CFrameWorker.nearest_cobol_frame() != None:
             return True
         else:
             return False
@@ -6992,9 +6985,3 @@ CLoad()
 CNext()
 CmdAutoStep()
 CStart()
-
-# rtest = Rside()
-# rtest.FromString("12.34")
-# print(rtest)
-# rtest.FromString('"12.34"')
-# print(rtest)
