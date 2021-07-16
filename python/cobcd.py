@@ -3940,11 +3940,10 @@ class ModuleInformation():
         self.line_list = LineList()
         self.perform_commands = {}
 
-    def ReadVariableString(self, string_name):
+    def ReadAndParseVariableString(self, string_name):
         VARSTR_LEN_SIZE = 9  # as used by cobd-st
-        retval = False
-        the_address = GetPointerTo(string_name)
 
+        the_address = GetPointerTo(string_name)
         if the_address:
             try:
                 len_val = gdb.parse_and_eval("*(char (*)[{0}]) {1}".format(VARSTR_LEN_SIZE, the_address))
@@ -3953,29 +3952,35 @@ class ModuleInformation():
                 variable_string_memview = get_memoryview(the_address + VARSTR_LEN_SIZE, total_length - VARSTR_LEN_SIZE)
                 variable_string = variable_string_memview.tobytes().decode('ascii')  # plain string generate by cobcd
 
-                # We have a new variable string
-                # Clear out the tables:
-                self.var_trie = VarTrie()
-                self.line_list = LineList()
-                self.perform_commands = {}
+                GV_ModuleInformation.ParseVariableString(variable_string)
 
-                # Load the new tables
-                # Pull apart the variable_string
-                variable_lines = variable_string.split("~")
-                for variable_line in variable_lines:
-                    self.line_list.LoadFromLine(variable_line)
-                    self.var_trie.LoadFromLine(variable_line)
-                    self.LoadPerformFromLine(variable_line)
-
-                self.var_trie.PopulateIndexOfParent()
-
-                # Put a fencepost at the end of the line_list
-                self.line_list.Insert(self.line_list.EndOfTheWorld, "Ragnarok")
-                retval = True
+                return True
             except:
                 traceback.print_exc()
                 pass
-        return retval
+        return False
+
+
+    def ParseVariableString(self, variable_string):
+
+        # We have a new variable string
+        # Clear out the tables:
+        self.var_trie = VarTrie()
+        self.line_list = LineList()
+        self.perform_commands = {}
+
+        # Load the new tables
+        # Pull apart the variable_string
+        variable_lines = variable_string.split("~")
+        for variable_line in variable_lines:
+            self.line_list.LoadFromLine(variable_line)
+            self.var_trie.LoadFromLine(variable_line)
+            self.LoadPerformFromLine(variable_line)
+
+        self.var_trie.PopulateIndexOfParent()
+
+        # Put a fencepost at the end of the line_list
+        self.line_list.Insert(self.line_list.EndOfTheWorld, "Ragnarok")
 
     def LoadPerformFromLine(self, variable_line):
         if len(variable_line) > 0 and variable_line[0] == 'p':
@@ -4121,8 +4126,8 @@ class ModuleState():
                     return False
 
                 # Unexpected and confusing things happen when the frame is set
-                # to a PROCEDURE DIVISION line. So, if an adjustment is necessary,
-                # we make it here:
+                # to a PROCEDURE DIVISION line (outer COBOL frame).
+                # So, if an adjustment is necessary, we make it here:
 
                 if frame_from_frame != frame_from_stack:
                     command = "select-frame " + str(frame_from_stack)
@@ -4151,22 +4156,20 @@ class ModuleState():
                         possibility = stack[stack_line]
                         # Pull out the file name, which is before the colon in the last token
                         possible_file = possibility.split(' ')[-1].split(':')[0]
-                        name_root = possible_file
-                        name_root = name_root.split('/')
-                        name_root = name_root[-1]
+                        name_root = possible_file.split('/')[-1]
 
-                        name_root2 = ""
+                        name_suffix = ""
                         for ch in name_root:
                             if ch.isalnum():
-                                name_root2 += ch
+                                name_suffix += ch
                             else:
                                 hh = hex(ord(ch))[-2:]
-                                name_root2 += hh.upper()
+                                name_suffix += hh.upper()
 
-                        string_name = "VARIABLE_STRING_" + name_root2
-
-                        if GV_ModuleInformation.ReadVariableString(string_name):
+                        # check if a variable with this string name can be read:
+                        if GV_ModuleInformation.ReadAndParseVariableString("VARIABLE_STRING_" + name_suffix):
                             break
+                        # otherwise go on with next frame
                         stack_line += 1
 
                     if stack_line >= len(stack):
@@ -4175,21 +4178,14 @@ class ModuleState():
                         return False
 
                     # Get the full path for the source file
-                    command = "info source"
-                    info_source = GdbExecute(currentframe(), command)
-                    info_source = info_source.split('\n')
-                    for line in info_source:
+                    info_source = GdbExecute(currentframe(), "info source")
+                    info_source_lines = info_source.split('\n')
+                    for line in info_source_lines:
                         pattern = re.compile(r"Located in (.*)$")
                         match = re.search(pattern, line)
                         if match:
                             self.current_full_path = match.group(1)
                             break
-        except gdb.error:
-            self.current_trapped_routine = ""
-            self.current_trapped_file = ""
-            self.current_trapped_frame = -1
-            self.current_trapped_line = 0
-            retval = False
         except:
             self.current_trapped_routine = ""
             self.current_trapped_file = ""
@@ -4323,17 +4319,15 @@ def BuildHumanHString(node, level):
 
         if len(node.children):
             # We have children, so we don't display anything:
-            h_str += "\n"
+            h_str += '\n'
             for child in node.children:
                 h_str += BuildHumanHString(child, level + 1)
         else:
             # We have no children, so we must be elementary, which
             # means it's time to display something:
-            h_str += " : "
-            h_str += node.display_body
-            h_str += "\n"
+            h_str += " : {0}\n".format(node.display_body)
     if not h_str:
-        h_str = '\n'
+        return '\n'  # shouldn't we return an error message or raise here?
     return h_str
 
 
@@ -5371,7 +5365,6 @@ class CobolWatchpointHandler():
         self.old_value = self.payload.DataToString()
 
     def check_and_output_wp(self):
-        print("check_and_output_wp")
         if not CFrameWorker.has_cobol_frame():
             new_value = "<unreadable>"
             if self.old_value != new_value:
@@ -6661,15 +6654,18 @@ class CFrameWorker:
             number = number - 1
 
     @staticmethod
-    def has_cobol_frame():
+    def nearest_cobol_frame():
         try:
             frame = CFrameWorker.Frame(True, 0)
             if not frame:
                 frame = CFrameWorker.Frame(False, 0)
         except gdb.GdbError:
             frame = None
+        return frame
 
-        if frame:
+    @staticmethod
+    def has_cobol_frame():
+        if CFrameWorker.nearest_cobol_frame() != None:
             return True
         else:
             return False
@@ -7172,9 +7168,3 @@ CLoad()
 CNext()
 CmdAutoStep()
 CStart()
-
-# rtest = Rside()
-# rtest.FromString("12.34")
-# print(rtest)
-# rtest.FromString('"12.34"')
-# print(rtest)
