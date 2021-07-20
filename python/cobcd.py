@@ -5567,8 +5567,8 @@ class CobolBreakpoint(gdb.Breakpoint):
         if retval:
             print("\n{0}: {1}".format(self.payload_f.Name, l_value))
 
-        # if GV_GlobalVariables.gdb_version < 70700 and self.t_flag:
-        #     gdb.post_event(self.delete)
+        if GV_GlobalVariables.gdb_version < 70700 and self.t_flag:
+            self.enabled = False
 
         return retval
 
