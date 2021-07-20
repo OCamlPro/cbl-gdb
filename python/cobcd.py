@@ -155,15 +155,8 @@ R_VALID_CHARS = re.compile('^[a-zA-Z0-9_]')
 
 HEXVAL = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
 
-# Buffer size for printing
-PRINT_BUFFER_SIZE = 65536
-
 # Unlike GnuCOBOL, we are going to replace characters we don't recognize
 NON_PRINTABLE_CHAR = '^'
-
-# These constants are used when calling get_verified_field_location
-ALLOCATE = True
-DONT_ALLOCATE = False
 
 #  regexp's for ALL, ZERO, SPACE and numeric handling.
 R_ALL   = re.compile(r"^ALL\b", re.IGNORECASE)
@@ -228,24 +221,6 @@ def get_memoryview(address, length):
         return obj
     else:
         return memoryview(obj)
-
-
-def crt_malloc(size):
-    # This is a wrapper for C run-time malloc() calls in the inferior.  This is not
-    # async-signal-safe, and can cause trouble when attaching to an inferior when
-    # the inferior is in a vulnerable state.  With great power comes great responsibility.
-    expression = "(void *(*)(const size_t))malloc({0})".format(size)
-    ret = gdb.parse_and_eval(expression)
-    # ret is a gdb.Value, and str(gdb.Value) returns an integer in 0x form:
-    return int(str(ret), 16)
-
-
-def crt_free(location):
-    # This is a wrapper for C run-time free() calls in the inferior.  This is not
-    # async-signal-safe, and can cause trouble when attaching to an inferior when
-    # the inferior is in a vulnerable state.
-    command = "call (void)free({0})".format(hex(location))
-    gdb.execute(command, False, True)
 
 
 class GlobalVariables():
@@ -5541,6 +5516,78 @@ class CWatchWorker():
         self.set_watchpoint(payload, wp_type)
 
 
+class CobolBreakpoint(gdb.Breakpoint):
+    def __init__(self, bp_spec, t_flag, i_flag):
+        try:
+            if GV_GlobalVariables.gdb_version >= 70700:
+                super(CobolBreakpoint, self).__init__(bp_spec, type=gdb.BP_BREAKPOINT, temporary=t_flag, internal=i_flag)
+            else:
+                super(CobolBreakpoint, self).__init__(bp_spec, type=gdb.BP_BREAKPOINT, internal=i_flag)
+            CBLDBG_CBREAK_WORKER.cobol_breaks.append(self)
+        except Exception as ex:
+            ConditionalRaise(ex)
+            return
+
+        self.t_flag = t_flag
+        self.comp_op = ""
+        self.case_ins = False
+        self.payload_f = None
+        self.payload_s = None
+        self.is_lit = False
+        self.r_value = ""
+
+    def stop(self):
+        retval = True
+        r_value = ""
+        l_value = ""
+
+        if self.comp_op == "":
+            return True
+
+        self.payload_f.IsDirty = True
+        self.payload_f.FetchVariableData(False)
+        l_value = self.payload_f.DataToString()
+
+        if self.is_lit:
+            r_value = self.r_value
+        elif self.payload_s is not None:
+            self.payload_s.IsDirty = True
+            self.payload_s.FetchVariableData(False)
+            r_value = self.payload_s.DataToString()[1:-1]
+
+        if l_value.isdigit() and r_value.isdigit():
+            expression = "{0} {1} {2}".format(float(l_value), self.comp_op, float(r_value))
+        elif self.comp_op != "=~" and r_value != "ALL_SPACES":
+            if self.case_ins:
+                # expression = '"' + l_value[1:len(r_value) + 1].upper() + '"' + self.comp_op + '"' + r_value.upper() + '"'
+                expression = '"' + l_value[1:-1].strip().upper() + '"' + self.comp_op + '"' + r_value.strip().upper() + '"'
+            else:
+                # expression = '"' + l_value[1:len(r_value) + 1] + '"' + self.comp_op + '"' + r_value + '"'
+                expression = '"' + l_value[1:-1].strip() + '"' + self.comp_op + '"' + r_value.strip() + '"'
+        elif self.comp_op != "=~" and r_value == "ALL_SPACES":
+            expression = "{0}.isspace()".format(l_value)
+        elif self.comp_op == "=~":
+            if self.case_ins:
+                expression = "re.match('{0}', '{1}', re.IGNORECASE)".format(r_value, l_value[1:-1])
+            else:
+                expression = "re.match('{0}', '{1}')".format(r_value, l_value[1:-1])
+
+        exp_result = eval(expression)
+        if self.comp_op == "=~":
+            if exp_result is None:
+                retval = False
+        else:
+            retval = exp_result
+
+        if retval:
+            print("\n{0}: {1}".format(self.payload_f.Name, l_value))
+
+        if GV_GlobalVariables.gdb_version < 70700 and self.t_flag:
+            self.enabled = False
+
+        return retval
+
+
 class CBreakWorker():
     def __init__(self):
         try:
@@ -5559,43 +5606,8 @@ class CBreakWorker():
         module_name = encode_program_id(module_name, 0)
         # Note: the following does NOT work reliable as cobc 3.0+ have a bug in generating the correct line reference for the ENTRY_prog label
         #       when DECLARATIVES are used (it always points to the PROCEDURE DIVISION, not to the first (possibly implied) "real" section)
-        # return CBreakWorker.set_breakpoint("-function {0}_ -label ENTRY_{1}".format(module_name,module_name.upper()), t_flag, i_flag)
-        return CBreakWorker.set_breakpoint(module_name + "_", t_flag, i_flag)
-
-    @staticmethod
-    def set_breakpoint(spec, t_flag, i_flag):
-        # Note: temporary support in python API only with GDB 7.7+
-        if GV_GlobalVariables.gdb_version >= 70700:
-            break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, temporary=t_flag, internal=i_flag)
-        else:
-            if t_flag:
-                # note: we ignore internal here, because temporary is more important...
-                command = "tbreak {0}".format(spec)
-                gdb.execute(command, True, False)
-                bps = gdb.breakpoints()
-                if bps:
-                    # this is not fool-proof - but good enough
-                    break_point = bps[-1]
-                else:
-                    return None
-            else:
-                break_point = gdb.Breakpoint(spec, type=gdb.BP_BREAKPOINT, internal=i_flag)
-
-        # TODO Modules loaded via readelf miss different information, commands not working: "adv", "cp"
-        # if READELF_AVAILABLE and break_point.pending:
-        if False:
-            break_point.delete()
-            print("... and therefore removed")
-            return None
-        CBLDBG_CBREAK_WORKER.cobol_breaks.append(break_point)
-        return break_point
-
-    @staticmethod
-    def set_condition(break_point, condition):
-        break_point.condition = condition
-        # if break_point.number > 0 and break_point not in CBLDBG_CBREAK_WORKER.cobol_breaks:
-        if break_point not in CBLDBG_CBREAK_WORKER.cobol_breaks:
-            CBLDBG_CBREAK_WORKER.cobol_breaks.append(break_point)
+        # return CobolBreakpoint("-function {0}_ -label ENTRY_{1}".format(module_name,module_name.upper()), t_flag, i_flag)
+        return CobolBreakpoint(module_name + "_", t_flag, i_flag)
 
     @staticmethod
     def module_available(module):
@@ -5654,253 +5666,69 @@ class CBreakWorker():
 
         return payload
 
-    @staticmethod
-    def get_payload_field_location(payload, pl_startloc, cmp_len):
-        location_of_field = None
-
-        try:
-            # TODO: The following call to crt_malloc should have a companion
-            #      call to crt_free()
-            location_of_field = crt_malloc("sizeof(cob_field)")
-
-            command = "set var *(cob_field *){0}".format(location_of_field) + " = {"
-            command += "{0}, (char *){1}, &{2}".format(cmp_len, hex(payload.location_of_data + payload.TableOffset + pl_startloc), payload.Aname)
-            command += "}"
-            gdb.execute(command, False, True)
-        except gdb.error:
-            print("get_payload_field_location: Error location_of_field {0}".format(payload.Aname))
-            location_of_field = None
-
-        return location_of_field
-
-    def set_regexp_breakpoint(self, line_nr, condition, payload, diff_str, break_point, t_flag, i_flag):
-        if condition == "=~":
-            cmp_len = len(diff_str)
-            if payload.Refmod:
-                bp_startloc = payload.RefmodOffset
-                bp_length = payload.RefmodLength
-                if bp_length < cmp_len:
-                    print("Length specifier < compare string ({0} < {1})".format(str(bp_length), str(cmp_len)))
-                    return
-
-                cmp_len = bp_length
-            else:
-                bp_startloc = 0
-                bp_length = payload.Length
-
-            location_of_field = self.get_payload_field_location(payload, bp_startloc, cmp_len)
-            if not location_of_field:
-                return
-
-            bp_startloc += payload.TableOffset
-            if break_point is None:
-                if line_nr == "-1":
-                    break_point = self.set_breakpoint("", t_flag, i_flag)
-                else:
-                    break_point = self.set_breakpoint(line_nr, t_flag, i_flag)
-
-            self.set_condition(break_point, "$_regex(((char *){0}({1}), \"{2}\")".format("cob_get_field_str_buffered",
-                                                                                         hex(location_of_field),
-                                                                                         diff_str))
-        else:
-            print("Condition not implemented")
-
     def set_section_breakpoint(self, args, t_flag, i_flag):
         spec = get_section_spec(args[0])
-        break_point = self.set_breakpoint(spec, t_flag, i_flag)
+        break_point = CobolBreakpoint(spec, t_flag, i_flag)
 
-    def get_cob_cmp_refloc(self, payload, cmp_len, second):
-        bp_startloc = 1
-        location_of_field = None
+    def set_cond_break(self, left_side, right_side, condition, break_point, is_lit, t_flag, i_flag):
+        payload_s = None
+        case_ins = False
+        comp_op = ""
 
-        bp_startloc = payload.RefmodOffset
-        bp_length = payload.RefmodLength
-
-        if bp_length > cmp_len:
-            print("Length specifier > compare string ({0} > {1})".format(str(bp_length), str(cmp_len)))
-            return location_of_field, cmp_len
-
-        if bp_length < cmp_len and second == 1:
-            print("Different length specifiers {0} <> {1}".format(bp_length, cmp_len))
-            return location_of_field, cmp_len
-
-        cmp_len = bp_length
-
-        location_of_field = self.get_payload_field_location(payload, bp_startloc, cmp_len)
-
-        return location_of_field, cmp_len
-
-    def set_cob_cmp_breakpoint(self, line_nr, condition, payload_l, payload_r, break_point, is_location, t_flag, i_flag):
-        case_ins = 0
         if condition[-1:] == "i":
-            case_ins = 1
+            case_ins = True
             condition = condition[:-1]
 
         if condition in ("=", "=="):
-            condition_str = "=="
+            comp_op = "=="
         elif condition in ("<>", "!="):
-            condition_str = "!="
-        elif condition in (">=", "<=", ">", "<"):
-            condition_str = condition
+            comp_op = "!="
+        elif condition in (">=", "<=", ">", "<", "=~"):
+            comp_op = condition
         else:
             print("Condition {0} not implemented".format(condition))
             return
 
-        if payload_l.Refmod:
-            if is_location == 1:
-                r_length = GetValueAt(payload_r, GV_GlobalVariables.SizeofPointer)
-                location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, r_length, 0)
-            else:
-                location_of_field, cmp_len = self.get_cob_cmp_refloc(payload_l, payload_r.Length, 0)
-        else:
-            cmp_len = payload_l.Length
-            location_of_field = self.get_payload_field_location(payload_l, 0, cmp_len)
-
-        if not location_of_field:
-            return
-
-        if is_location == 1:
-            other_field = payload_r
-        else:
-            if payload_r.Refmod:
-                other_field, cmp_len = self.get_cob_cmp_refloc(payload_r, cmp_len, 1)
-            else:
-                cmp_len = payload_r.Length
-                other_field = self.get_payload_field_location(payload_r, 0, cmp_len)
-
-        if not other_field:
-            return
-
-        if break_point is None:
-            if line_nr == "-1":
-                break_point = self.set_breakpoint("", t_flag, i_flag)
-            else:
-                break_point = self.set_breakpoint(line_nr, t_flag, i_flag)
-
-        if case_ins == 1 and is_location == 1:
-            self.set_condition(break_point, "(int){0}({1}(0,0,{2}), {3}) {4} 0".format("cob_cmp",
-                                                                                       "cob_intr_upper_case",
-                                                                                       hex(location_of_field),
-                                                                                       hex(other_field),
-                                                                                       condition_str))
-        elif case_ins == 1 and is_location == 0:
-            self.set_condition(break_point, "(int){0}({1}(0,0,{2}), {1}(0,0,{3})) {4} 0".format("cob_cmp",
-                                                                                                "cob_intr_upper_case",
-                                                                                                hex(location_of_field),
-                                                                                                hex(other_field),
-                                                                                                condition_str))
-        else:
-            self.set_condition(break_point, "(int){0}({1}, {2}) {3} 0".format("cob_cmp",
-                                                                              hex(location_of_field),
-                                                                              hex(other_field),
-                                                                              condition_str))
-
-    @staticmethod
-    def create_cob_field(value, payload_l, case_ins):
-        location_of_field = None
-
-        try:
-            # TODO: The following calla to crt_malloc should have companion
-            #      calls to crt_free()
-            location_of_field = crt_malloc("sizeof(cob_field)")
-            location_of_attribute = crt_malloc("sizeof(cob_field_attr)")
-
-            if R_ALLSPACE.match(value):
-                attr_type = COB_TYPE_ALPHANUMERIC_ALL
-                value = " "
-            elif R_ALLZERO.match(value):
-                attr_type = COB_TYPE_ALPHANUMERIC_ALL
-                value = "0"
-            elif R_SPACE.match(value):
-                attr_type = COB_TYPE_ALPHANUMERIC
-                value = " "
-            elif R_ZERO.match(value):
-                attr_type = COB_TYPE_NUMERIC_DISPLAY
-                value = "0"
-            elif value.isdigit():
-                attr_type = COB_TYPE_NUMERIC_DISPLAY
-            else:
-                attr_type = COB_TYPE_ALPHANUMERIC
-
-            command = "set var ((cob_field_attr *){0})->type = {1}".format(hex(location_of_attribute), attr_type)
-            gdb.execute(command, False, True)
-
-            command = "set var ((cob_field_attr *){0})->flags = {1}".format(hex(location_of_attribute), COB_FLAG_CONSTANT)
-            gdb.execute(command, False, True)
-
-            # TODO: The following call to crt_malloc should have a companion
-            #      call to crt_free()
-            buffer = crt_malloc(PRINT_BUFFER_SIZE)
-
-            if case_ins == 1:
-                value = value.upper()
-
-            buf_ptr = buffer
-            for index in range(len(value)):
-                n = value[index]
-                command = "set *(char *){0} = {1}".format(hex(buf_ptr), hex(ord(n)))
-                gdb.execute(command, False, True)
-                buf_ptr += 1
-            command = "set *(char *){0} = '\\0'".format(hex(buf_ptr))
-            gdb.execute(command, False, True)
-
-            command = "set var *(cob_field *){0}".format(location_of_field) + " = {"
-            command += "{0}, (char *){1}, {2}".format(len(value), hex(buffer), hex(location_of_attribute))
-            command += "}"
-            gdb.execute(command, False, True)
-        except gdb.error:
-            print("create_cob_field: Error creating cob_field for {0}".format(value))
-            return location_of_field
-
-        return location_of_field
-
-    def set_cond_break(self, left_side, right_side, condition, break_point, is_lit, t_flag, i_flag):
-        payload_s = None
-        is_location = 0
-        case_ins = 0
-
         line_nr = left_side[0]
         del left_side[0]
-
-        if condition[-1:] == "i":
-            case_ins = 1
 
         payload_f = self.get_var_payload(left_side)
         if payload_f is None:
             # note: error handling already in get_var_payload
             return
 
-        payload_l = copy.copy(payload_f)
+        if comp_op == "=~" and payload_f.AttrType not in (1, 33, 34, 35):
+            print("Not yet implemented (Attribute type", payload_f.AttrType, ")")
+            return
 
-        if R_ALL_ZERO_SPACE.match(right_side[0]):
-            if len(right_side) == 2 and R_ZERO_SPACE.match(right_side[1]):
-                value = "{0} {1}".format(right_side[0], right_side[1])
-            else:
-                value = right_side[0]
-            payload_r = self.create_cob_field(value, payload_l, case_ins)
-            is_location = 1
-        elif is_lit == 0 and not right_side[0].isdigit():
+        if is_lit == 0 and not right_side[0].isdigit():
             payload_s = self.get_var_payload(right_side)
             if payload_s is None:
                 # note: error handling already in get_var_payload
                 return
 
-            payload_r = copy.copy(payload_s)
-        elif is_lit == 1 and condition != "=~":
-            payload_r = self.create_cob_field(right_side[0][1:-1], payload_l, case_ins)
-            is_location = 1
-        elif right_side[0].isdigit():
-            payload_r = self.create_cob_field(right_side[0], payload_l, case_ins)
-            is_location = 1
-
-        if payload_r is not None and condition != "=~":
-            self.set_cob_cmp_breakpoint(line_nr, condition, payload_l, payload_r, break_point, is_location, t_flag, i_flag)
+        if break_point is None:
+            break_point = CobolBreakpoint(line_nr, t_flag, i_flag)
         else:
-            if payload_l.AttrType in (1, 33, 34, 35):
-                self.set_regexp_breakpoint(line_nr, condition, payload_l, right_side[0][1:-1], break_point, t_flag, i_flag)
-            else:
-                print("Not yet implemented (Attribute type", payload_l.AttrType, ")")
-                return
+            print("Set condition for breakpoint nr: {0}".format(break_point.number))
+
+        break_point.payload_f = payload_f
+        break_point.payload_s = payload_s
+        break_point.is_lit = is_lit
+        break_point.comp_op = comp_op
+        break_point.case_ins = case_ins
+
+        if R_ALLSPACE.match(right_side[0]) or R_SPACE.match(right_side[0]):
+            break_point.r_value = "ALL_SPACES"
+            break_point.is_lit = 1
+        elif R_ALLZERO.match(right_side[0]) or R_ZERO.match(right_side[0]):
+            break_point.r_value = 0
+            break_point.is_lit = 1
+        elif is_lit == 1:
+            break_point.r_value = right_side[0][1:-1]
+        elif right_side[0].isdigit():
+            break_point.r_value = right_side[0]
+            break_point.is_lit = 1
 
     def process_break_arguments(self, arguments, t_flag, i_flag):
         is_lit = 0
@@ -5916,14 +5744,15 @@ class CBreakWorker():
             if not left_side:
                 return
         else:
-            break_point = self.set_breakpoint("", t_flag, i_flag)
+            break_point = CobolBreakpoint("", t_flag, i_flag)
             return
 
         if not right_side:
             if len(left_side) >= 1 and isinstance(left_side[0], self.strtype) and (left_side[0].upper() == "SECTION" or left_side[0].upper() == "SEC"):
                 left_side[0] = "SECTION"
+
             if len(left_side) == 1 and left_side[0].isdigit():
-                break_point = self.set_breakpoint(left_side[0], t_flag, i_flag)
+                CobolBreakpoint(left_side[0], t_flag, i_flag)
             elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and left_side[0].find(':') != -1:
                 self.set_section_breakpoint(left_side, t_flag, i_flag)
             elif len(left_side) == 1 and left_side[0] != "SECTION":
@@ -5931,7 +5760,7 @@ class CBreakWorker():
                 if module_name is None:
                     print("Module not found: {0}".format(left_side[0]))
                 else:
-                    break_point = self.set_entry_breakpoint(module_name, t_flag, i_flag)
+                    self.set_entry_breakpoint(module_name, t_flag, i_flag)
             elif len(left_side) == 2 and left_side[0] == "SECTION" and isinstance(left_side[1], self.strtype):
                 del left_side[0]
                 self.set_section_breakpoint(left_side, t_flag, i_flag)
@@ -5962,6 +5791,7 @@ class CBreakWorker():
     def find_breakpoint(bp_nr):
         return_breakpoint = None
 
+        #for gdb_breakpoint in CBLDBG_CBREAK_WORKER.cobol_breaks:
         for gdb_breakpoint in gdb.breakpoints():
             if gdb_breakpoint.number == int(bp_nr):
                 return_breakpoint = gdb_breakpoint
@@ -5994,13 +5824,17 @@ class CBreakWorker():
         if break_point is None:
             return
 
-        if len(left_side) == 1:
-            print("Breakpoint {0} now unconditional.".format(left_side[0]))
-            self.set_condition(break_point, None)
-        elif len(left_side) >= 2 and len(left_side) <= 4:
-            self.set_cond_break(left_side, right_side, condition, break_point, is_lit, False, False)
+        if type(break_point) is CobolBreakpoint:
+            if len(left_side) == 1:
+                    print("Breakpoint {0} now unconditional.".format(left_side[0]))
+                    break_point.comp_op = ""
+            elif len(left_side) >= 2 and len(left_side) <= 4:
+                self.set_cond_break(left_side, right_side, condition, break_point, is_lit, False, False)
+            else:
+                print('Breakpoint parameters not recognized')
+                return
         else:
-            print('Breakpoint parameters not recognized')
+            print('Breakpoint is not a Cobol breakpoint')
             return
 
 
