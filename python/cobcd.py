@@ -6568,7 +6568,7 @@ class CFrameWorker:
     """Does all of the gdb work related to frames, especially for CUp() and CDown()"""
 
     def __init__(self):
-        print('Registering commands cup, cdown, cup-silently, cdown-silently, until-cobol, finish-module, finish-out-of-line-perform, local-backtrace')
+        print('Registering commands cup, cdown, cup-silently, cdown-silently, until-cobol, finish-module, finish-out-of-line-perform, local-backtrace, list-section')
         CUp()
         CDown()
         CUpS()
@@ -6577,6 +6577,7 @@ class CFrameWorker:
         CFinishModule()
         CFinishOutOfLinePerform()
         CLocalBacktrace()
+        CListSection()
         # Note: frame filter support in python API only with GDB 7.7+
         if GV_GlobalVariables.gdb_version > 70700:
             print('Registering frame-filters COBOL-FrameFilter (disabled), COBOL-Only-FrameFilter (disabled)')
@@ -6822,6 +6823,40 @@ class CUntilCobol(gdb.Command):
 
         cob_frame.newer().select()
         gdb.execute("finish", False, False)
+
+
+class CListSection(gdb.Command):
+    """Lists a COBOL section."""
+
+    def __init__(self):
+        super(CListSection, self).__init__("list-section", gdb.COMMAND_FILES)
+
+    def invoke(self, argument, from_tty):
+        # TODO: the command should repeat, and _only in this case_:
+        # if re-executed:
+        #    gdb.execute("list", False, False)
+        #    return
+
+        self.dont_repeat()
+        if not argument:
+            ConditionalRaise('Argument required.')
+            return
+
+        try:
+            gdb.execute("list " + get_section_spec(argument), False, False)
+        except gdb.error:
+            args = argument.split(':')
+            if len(args) > 1:
+                module = args[0]  # may also be empty
+                section = args[1].upper()
+            else:
+                module = ""
+                section = args[0].upper()
+            if not module:
+                ConditionalRaise('Section {0} not found in current frame.'.format(section))
+            else:
+                ConditionalRaise('Section {0} not found in module {1}.'.format(section, module))
+            return
 
 
 class CLocalBacktrace(gdb.Command):
