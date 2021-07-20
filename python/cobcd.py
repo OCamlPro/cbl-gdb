@@ -1866,6 +1866,9 @@ class CobolVariable():
             self.ActualLocation = 0
             self.ActualLength = 0
 
+            # explicit conversion by cast for GDB 7.7 - FIXME: move to get type only once
+            PTR_CONV_TYPE = gdb.lookup_type('unsigned long')
+
             # Let's update everything we might need:
             # Calculate the additional table offsets
             self.CalculateTableOffset()
@@ -1900,9 +1903,9 @@ class CobolVariable():
                 #       const cob_field_attr *attr;
                 #       } cob_field;
                 self.Length = int(self.field['size'])
-                possible_location_of_data = int(self.field['data'].dereference().address)
-                if possible_location_of_data:
-                    self.location_of_data = possible_location_of_data
+                data = self.field['data']
+                if data:
+                    self.location_of_data = int(data.dereference().address.cast(PTR_CONV_TYPE))
                 self.attribute = self.field['attr']
             else:
                 # print("There is no self.Fname")
@@ -1917,7 +1920,9 @@ class CobolVariable():
                 if self.Bname:
                     # print("FetchVariableData Fname", self.Bname)
                     try:
-                        self.location_of_data = int(gdb.parse_and_eval(self.Bname).dereference().address)
+                        data = gdb.parse_and_eval(self.Bname)
+                        if data:
+                            self.location_of_data = int(data.dereference().address.cast(PTR_CONV_TYPE))
                     except gdb.error:
                         self.not_in_context = True
                         return False
