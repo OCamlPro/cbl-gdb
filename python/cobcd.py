@@ -62,6 +62,10 @@ import copy
 import gdb
 import time
 
+GV_reads = 0
+GV_bytes_read = 0
+
+
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
 COBCD_VERSION = '[Version 4.28.dev1]'
@@ -268,10 +272,6 @@ class GlobalVariables():
         # These are used in "cprint this=that"
         self.VarLeft = None
         self.VarLeftIndex = None
-
-        # This flag means that every variable will need to be read again.
-        # It gets set on GDB.events.stop
-        self.IsDirty = True
 
 
 GV_GlobalVariables = GlobalVariables()
@@ -1034,48 +1034,87 @@ class VarTrie():
             our_node = our_node.parent
         # and we are done
 
+
     def PopulateIndexOfParent(self):
-        # For variables with levels 2-49, we need to populate the
-        # CobolVariable.index_of_parent member
+        # This routine walks the self.storage_list[] and establishes the index_of_parent and
+        # index_of_granddaddy for each CobolVariable element.
+
+        # Top-level variables have no parent.  Every variable has a granddaddy; a top-level variable'
+        # granddaddy is itself.
+
+        # Variables of LEVEL 01-49, 66, 77, 78 are what you expect.
+        # LEVEL 00 variables are odd ducks; they are INDEXED BY variables and need special
+        # processing, because we want them to appear heirarchically within their LEVEL 01 tree,
+        # but their storage isn't part of the LEVEL 01 UNION.  Their parent lies within the tree,
+        # but they are their own granddaddy, because their data isn't in the UNION.
+
+        # At the present time, there is no information in VARIABLE_STRING about FD and SD records;
+        # there simply isn't anything available in a sensible way from the generatec .c and .h
+        # files.
+
+        # TODO: It is permitted for LEVEL 01 variables subordinate to an FD record to have the REDEFINES
+        # characteristic.  At the present time, I have no idea what will happen with code like that.
+
+        if len(self.storage_list) > 0:
+            # We know the very first element has to be his own granddaddy:
+            payload = self.storage_list[0]
+            payload.index_of_granddaddy = 0
 
         for payload_index in range(1, len(self.storage_list)):
             payload = self.storage_list[payload_index]
 
+            # By default, a variable is its own granddaddy.  (A LEVEL 00, 01 or >49 variable
+            # doesn't have a parent.  Even so, it is its own granddaddy; that's so it can easily find
+            # its own grand_data[] and grand_dirty flag
+            payload.index_of_granddaddy = payload_index
+
             if payload.Level == 0:
                 # Level 00 is an INDEXED BY variable whose parent is
                 # the immediate preceding entry.  See self.LoadFromLine
-                self.storage_list[payload_index].index_of_parent = payload_index - 1
+                payload.index_of_parent = payload_index - 1
 
-            if payload.Level > 1 and payload.Level <= 49:
-                # LEVELs 01-49 obviously have parents.  Find ours:
+            elif payload.Level >= 2 and payload.Level <= 49:
+                # LEVELs 02-49 obviously have parents.  LEVEL 01 usually doesn't have a parent, but
+                # might when there is, for example, a parent FD record.  Find our parent:
                 i = payload_index - 1
                 while i >= 0:
-                    candidate_level = self.storage_list[i].Level
+                    ancestor = self.storage_list[i]
+                    candidate_level = ancestor.Level
                     if candidate_level == payload.Level:
                         # Our older relative has the same level we do.  That means we
                         # share a parent.  That value might be None, but that's okay.
-                        self.storage_list[payload_index].index_of_parent = self.storage_list[i].index_of_parent
+                        payload.index_of_parent = ancestor.index_of_parent
+                        payload.index_of_granddaddy = ancestor.index_of_granddaddy
                         break
-                    if candidate_level > 0 and candidate_level < payload.Level:
-                        # Because it is non-zero and smaller than we are, this has to be our parent.
-                        self.storage_list[payload_index].index_of_parent = i
+                    if candidate_level != 0 and candidate_level < payload.Level:
+                        # Because it is non-zero and smaller than we are, [i] has to be our parent.
+                        payload.index_of_parent = i
+                        # And our parent's granddaddy is also our granddaddy
+                        payload.index_of_granddaddy = ancestor.index_of_granddaddy
                         break
                     # Arriving here means that candidate_level is either zero, making it
                     # an INDEXED BY variable who is nobody's parent, or else candidate_level
                     # bigger than we are, making it an uncle who isn't our parent.  So,
                     # we keep looking:
                     i -= 1
+            #else:
+            # LEVEL 01 and anything over 49 has no parent, and is its own granddaddy, which
+            # we already set by default up above.
+
+            # Since this is a new variable, whose data has never been read, flag it as dirty:
+            payload.SetIsDirty()
 
         if False:
             # Dump the list
             for payload_index in range(len(self.storage_list)):
                 payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
-                parent = None
+                parent = "No parent"
+                granddaddy = "No grandparent"
                 if payload.index_of_parent is not None:
-                    parent = GV_ModuleInformation.var_trie.storage_list[payload.index_of_parent]
-                    print("DEBUG   ", payload.Level, payload.Name, "parent is", parent.Level, parent.Name)
-                else:
-                    print("DEBUG   ", payload.Level, payload.Name, "(No parent)")
+                    parent = GV_ModuleInformation.var_trie.storage_list[payload.index_of_parent].Name
+                if payload.index_of_granddaddy is not None:
+                    granddaddy = GV_ModuleInformation.var_trie.storage_list[payload.index_of_granddaddy].Name
+                print("DEBUG   ", payload.Level, payload.Name, parent, granddaddy)
 
     def LoadFromLine(self, variable_line):
         tokens = variable_line.split("|")
@@ -1127,7 +1166,6 @@ class VarTrie():
                     #
                     # I am going to do this by stashing the LEVEL 00 line and not processing
                     # it until right after the OCCURS line
-                    #
 
                     if our_level == 0 and self.stashed_line is None:
                         # This is a LEVEL 00 indexed variable, and we aren't processing it yet.
@@ -1144,17 +1182,17 @@ class VarTrie():
                     reversed.reverse()
 
                     payload = CobolVariable()
-                    payload.Program   = self.StackOfNames[0]
-                    payload.Section   = tokens[self.IndexType]
-                    payload.Level     = int(tokens[self.IndexLevel])
-                    payload.Name      = '/'.join(reversed)
-                    payload.Fname     = tokens[self.IndexFname]
-                    payload.Bname     = tokens[self.IndexBname]
-                    payload.Aname     = tokens[self.IndexAname]
-                    payload.Offset    = AddEmUp(tokens[self.IndexOffset])
-                    payload.Length    = AddEmUp(tokens[self.IndexLength])
-                    payload.OccursMin = int(tokens[self.IndexOccursMin] or "0")
-                    payload.OccursMax = int(tokens[self.IndexOccursMax] or "0")
+                    payload.Program         = self.StackOfNames[0]
+                    payload.Section         = tokens[self.IndexType]
+                    payload.Level           = int(tokens[self.IndexLevel])
+                    payload.Name            = '/'.join(reversed)
+                    payload.Fname           = tokens[self.IndexFname]
+                    payload.Bname           = tokens[self.IndexBname]
+                    payload.Aname           = tokens[self.IndexAname]
+                    payload.ReferenceOffset = AddEmUp(tokens[self.IndexOffset])
+                    payload.Length          = AddEmUp(tokens[self.IndexLength])
+                    payload.OccursMin       = int(tokens[self.IndexOccursMin] or "0")
+                    payload.OccursMax       = int(tokens[self.IndexOccursMax] or "0")
 
                     # print("Loading", payload.Level, payload.Name, payload.index_of_parent)
                     payload.payload_index = len(self.storage_list)
@@ -1398,30 +1436,33 @@ class VarTrie():
             paths = list(set1)
 
         # If, and only if, the length of paths is 1, then
-        # we append any modifiers back onto the variable:
+        # we append any modifiers back onto the variable.
 
-        # Although this might be wasteful in doing unnecessary fetches,
-        # we have to flag the variable as IsDirty if there is a subscript
-        # or a refmod.  That's because it's possible for the
-        # the subscript or refmod to include variables, and if any of
-        # those elements have changed, we need to re-fetch:
+        # Also: If this variable has subscripts or refmods, those refmods might
+        # be variables themselves.  Since at this point we can't know if
+        # those subscript variables might be dirty (or have been changed through
+        # a cprint a=b assignment), we have to assume we need to read our data
 
         if len(paths) == 1:
-            if subscripts or self.storage_list[paths[0]].Subscripts:
-                self.storage_list[paths[0]].IsDirty = True
-            self.storage_list[paths[0]].Subscripts = subscripts
+            payload = self.storage_list[paths[0]]
+            if subscripts or payload.Subscripts:
+                payload.SetIsDirty()
+            payload.Subscripts = subscripts
 
-            if refmod or self.storage_list[paths[0]].Refmod:
-                self.storage_list[paths[0]].IsDirty = True
-            self.storage_list[paths[0]].Refmod = refmod
+            if refmod or payload.Refmod:
+                payload.SetIsDirty()
+            payload.Refmod = refmod
         return paths
 
     def FlagAllAsDirty(self):
+        # We need to flag every variables as "needs to be read".  This typically
+        # happens after execution stops because of a trap, when we can't possibly
+        # know which variables have had their inferior data change:
+
         i = 0
         while i < len(self.storage_list):
-            self.storage_list[i].IsDirty = True
+            self.storage_list[i].SetIsDirty()
             i += 1
-
 
 class LineList():
     """List of starting lines of ProgramNames"""
@@ -1478,7 +1519,6 @@ class CobolVariable():
     """Manages the field, attributes, flags, and pointers of a GnuCOBOL COBOL variable"""
     def __init__(self):
         # This block of data comes from the VariableString
-        self.index_of_parent = None
         self.Program    = ""
         self.Section    = ""
         self.Level      = -1
@@ -1486,7 +1526,7 @@ class CobolVariable():
         self.Fname      = ""
         self.Bname      = ""
         self.Aname      = ""
-        self.Offset     = 0
+        self.ReferenceOffset = 0 # This offset is the one reported in VariableString
         self.Length     = 0
         self.OccursMin  = 0
         self.OccursMax  = 0
@@ -1496,47 +1536,105 @@ class CobolVariable():
         self.AttrFlags  = 0
         self.Picture    = None
 
-        # These are established at the run-time executable instance level.
-        # Eventually we'll have to pay attention to what the run-time libcob
-        # says about them, and change them accordingly.
-        self.decimal_point = '.'
-        self.comma_separator = ','
-        self.currency_symbol = '$'
+        # These values are calculated at runtime from the information up above
+        #
+        # location_of_data is the numerical address in the inferior of our grand_data
+        # For working-storage and linkage, it is the value of self.Bname
+        # For local-storage, it is the value of cob_local_ptr + self.ReferenceOffset
+        # In some circumstances -- I don't remember which -- it can't be determined
+        # from symbolic information, in which case we try to get it from Fname.data
+        #
+        # For working-storage and linkage, self.data_offset is equal to self.ReferenceOffset
+        #
+        # Local-storage variables are all based on cob_local_ptr.  Top-level granddaddy
+        # variables (which happen to be declared on 16-byte boundaries, but that's
+        # handled by cobcd-st) are found at different ReferenceOffsets from *cob_local_ptr.
+        # We normalize here by setting location_of_data to each variable's grand_data, and
+        # adjusting self.data_offset so that it is zero for grand_data.
+        #
+        # There is a huge exception when there is a table_offset.  The problem we have to address
+        # is that a top-level variable can itself be a table, or it can have sub-levels that are
+        # themselves tables, and those tables can contain other tables.  So, we simply calculate
+        # one single table_offset that takes all potential offsets into account, and that's the
+        # offset to our desired table element from the given base address.  So, we treat subscripted
+        # elements as unique items rather than something which is sub-portion of grand_data, because
+        # we don't want to be reading in huge tables just to access individual elements of them.
+
+        self.location_of_data   = 0    # value of Fname->data, when available
+        self.data_offset        = 0    # offset from location_of_data to our portion of the union.
+        self.field              = None # Inferior numerical location Fname, when available
+        self.attribute          = None # Inferiror numerical location of Fname->attr, when available
 
         # These elements are based on parenthesized subscripts after the
         # name:  name(array_index1 , array_index2 , ...)(refmod start : refmod run)
         # Note the commas and colons, which determine which is which
-        self.Subscripts         = None  # This is the user's requested subscripts, integers or variables
-        self.ResolvedSubscripts = None  # These are the resolved values (offset is one-based)
-        self.TableOffset  = 0    # These are additional offset bytes based on the table Subscripts
-        self.Refmod       = None
-        self.RefmodOffset = 0   # This is the zero-based Offset in (Offset:Length)
-        self.RefmodLength = 0   # This is the Length in (Offset:Length)
+        self.Subscripts         = None # This is the user's requested subscripts, integers or variables
+        self.ResolvedSubscripts = None # These are the resolved values (offset is one-based)
+        self.table_offset       = 0    # These are additional offset bytes based on the table Subscripts
 
-        # These values are calculated at runtime from the information up above
-        self.location_of_data      = 0  # value of Fname->data, when available
-        self.field                 = None # GDB Value of Fname, when available
-        self.attribute             = None # GDB Value of Fname->attr
-        self.data                  = [] # list of Length bytes
+        self.Refmod             = None # This is the user's requested refmod
+        self.RefmodOffset       = 0    # This is the zero-based Offset from (Offset:Length)
+        self.RefmodLength       = 0    # This is the Length from (Offset:Length)
 
-        self.ActualLocation        = 0  # This is the location_of_data qualified by table
-                                        # subscripts and refmod offset
-        self.ActualLength          = 0  # This is the length after applying refmod
+        self.ActualLocation     = 0    # This is location_of_data qualified by data_offset, table_offset
+                                       # and table_offset
+        self.ActualLength       = 0    # This is the length after applying refmod
 
         # Here is the string information decoded from the attributes and
         # the data we get from gdb:
         self.not_in_context = False
         self.display_body = ""
 
+        # This flags are mostly to allow meaningful error messages when the user inputs of
+        # table subscripts and/or refmods don't make sense
         self.SubscriptFailure = False  # Set to True when subscripts don't match the number of tables
         self.RefmodFailure    = False  # Set to True when something is wrong with the refmod length
 
-        # When a variable is accessed for the first time, or when the Subscript changes,
-        # or when the refmod changes, or when a previously-read variable is displayed through
-        # through a "cprint <short_term_index>, or when the value is changed through a
-        # "cprint var=<something>, we flag it as IsDirty so that FetchVariableValue is executed
-        # when the variable is next accessed.
-        self.IsDirty = True
+        # In COBOL, variables are frequently elements of a UNION.  The top member of the UNION is
+        # a LEVEL 01 variable.  We call that one the granddaddy.  When we access the granddaddy, we
+        # read a copy of the granddaddy's bytes from the inferior into self.grand_data.  When
+        # we access a subordinate member of the union, we don't read in the bytes again; we instead
+        # access the bytes in the granddaddy CobolVariable.  In this way, we minimize the number of
+        # times we transfer the data from the inferior to here.
+
+        # Direct access of grand_data should be minimized, mainly because it is meaningless for
+        # any but the top-level variable.  Instead, use the CobolVarible.GetDataBytes() function.
+
+        # Likewise, when it is known that a variable's data needs to be re-read, the
+        # granddaddy's self.grand_dirty flag is set True.  Don't access it directly; use the
+        # various IsDirty functions:
+
+        self.grand_dirty = None
+        self.grand_data  = [] # list of Length bytes
+
+        # When the VARIABLE_STRING from the generated C code is read and parsed, the variables
+        # are placed, in order, in GV_ModuleInformation.var_trie.storage_list[].  Every variable
+        # of LEVEL 02-49 has a parent.  Every variable has a granddaddy; top level variables
+        # are their own grandpa.
+
+        self.index_of_parent = None
+        self.index_of_granddaddy = None  # Our ultimate ancestor (a LEVEL 01 variable, or ourself)
+
+        # These are established at the run-time executable instance level.
+        # Eventually we might need some way of changing them to match the GnuCOBOL generated C.
+        # The problem is that they are established in libcob program object, and we have
+        # no easy way of accessing the object the get them.
+
+        self.decimal_point = '.'
+        self.comma_separator = ','
+        self.currency_symbol = '$'
+
+    def IsDirty(self):
+        return GV_ModuleInformation.var_trie.storage_list[self.index_of_granddaddy].grand_dirty
+
+    def SetIsDirtyTo(self, tf):
+        GV_ModuleInformation.var_trie.storage_list[self.index_of_granddaddy].grand_dirty = tf
+
+    def SetIsDirty(self):
+        self.SetIsDirtyTo(True)
+
+    def ClearIsDirty(self):
+        self.SetIsDirtyTo(False)
 
     def DumpJustAboutEverything(self):
         print("           Name:", self.NameToStringFull())
@@ -1554,19 +1652,20 @@ class CobolVariable():
         print("          Fname:", self.Fname or "f0")
         print("          Bname:", self.Bname)
         print("          Aname:", self.Aname)
-        print("         Offset:", self.Offset)
-        if self.TableOffset:
-            print("    TableOffset:", self.TableOffset)
+        print("ReferenceOffset:", self.ReferenceOffset)
+        if self.table_offset:
+            print("    TableOffset:", self.table_offset)
         if self.Refmod:
             print("   RefmodOffset:", self.RefmodOffset)
             print("   RefmodLength:", self.RefmodLength)
         print("         Length:", self.Length)
-        print(" len(self.data):", len(self.data))
+        print(" len(self.data):", len(self.Data()))
         print("       AttrType:", self.AttrType)
         print("     AttrDigits:", self.AttrDigits)
         print("      AttrScale:", self.AttrScale)
         print("      AttrFlags:", self.AttrFlags)
         print("    loc_of_data:", hex(self.location_of_data))
+        print("    data_offset:", self.data_offset)
         print("          field:", self.field)
         print("           attr:", self.attribute)
 
@@ -1635,17 +1734,18 @@ class CobolVariable():
         new_data = self.DataFromRside(rside)
 
         if new_data:
+            # Send the new data to the inferior
             PutBytesAt(self.ActualLocation, new_data, self.ActualLength)
-            self.IsDirty = True
+            self.SetIsDirty()
 
         return return_value
 
     def GetDataAsBinary(self):
         binary_byte_limit = 16
         retval = ""
-        if len(self.data) > 0:
+        if self.ActualLength > 0:
             retval += "0b"
-            output_bytes = self.data[:]
+            output_bytes = self.Data()
             if GV_GlobalVariables.byteorder == "little" and not self.Refmod:
                 if (self.AttrFlags & COB_FLAG_BINARY_SWAP) == 0:  # If this is ON, then it is already in display order
                     if (self.AttrFlags & (COB_FLAG_REAL_BINARY | COB_FLAG_IS_POINTER | COB_FLAG_IS_FP)) != 0:
@@ -1670,9 +1770,9 @@ class CobolVariable():
     def GetDataAsHex(self):
         hex_byte_limit = 16
         retval = ""
-        if len(self.data) > 0:
+        output_bytes = self.Data()
+        if self.ActualLength > 0:
             retval = "0x"
-            output_bytes = self.data[:]
             if GV_GlobalVariables.byteorder == "little" and not self.Refmod:
                 if (self.AttrFlags & COB_FLAG_BINARY_SWAP) == 0:  # If this is ON, then it is already in display order
                     if (self.AttrFlags & (COB_FLAG_REAL_BINARY | COB_FLAG_IS_POINTER | COB_FLAG_IS_FP)) != 0:
@@ -1692,8 +1792,8 @@ class CobolVariable():
         return retval
 
     def CalculateTableOffset(self):
-        self.ResolvedSubscripts = []
-        self.TableOffset = 0
+        ResolvedSubscripts = []
+        TableOffset = 0
         self.SubscriptFailure = False
         if self.Subscripts:
             # Strip off the leading parenthesis (we know it is there
@@ -1739,7 +1839,7 @@ class CobolVariable():
                             print("No symbol matches \"{0}\"".format(list_of_subscripts[-1].strip()))
                             self.SubscriptFailure = True
                             break
-                    self.ResolvedSubscripts = [subscript] + self.ResolvedSubscripts
+                    ResolvedSubscripts = [subscript] + ResolvedSubscripts
                     list_of_subscripts = list_of_subscripts[0:-1]
                     if subscript < 1 or subscript > variable.OccursMax:
                         print("The subscript '{0}({1})' is out of range (1 through {2})".format(variable.Name,
@@ -1749,7 +1849,7 @@ class CobolVariable():
                         needed = 0
                         self.SubscriptFailure = True
                         break
-                    self.TableOffset += (subscript - 1) * variable.Length
+                    TableOffset += (subscript - 1) * variable.Length
                 if not variable.index_of_parent:
                     break
                 variable = GV_ModuleInformation.var_trie.storage_list[variable.index_of_parent]
@@ -1762,8 +1862,13 @@ class CobolVariable():
                     print("{0} needs {1} subscripts".format(self.Name, needed))
                 self.SubscriptFailure = True
         if self.SubscriptFailure:
-            self.ResolvedSubscripts = []
-            self.TableOffset = 0
+            ResolvedSubscripts = []
+            TableOffset = 0
+        if TableOffset != self.table_offset:
+            # The subscript has changed
+            self.SetIsDirty()
+        self.ResolvedSubscripts = ResolvedSubscripts
+        self.table_offset = TableOffset
         return
 
     def CalculateRefmodValues(self):
@@ -1836,45 +1941,123 @@ class CobolVariable():
         return
 
     def FetchVariableData(self, show_failure):
-        # print("FetchVariableData:", self.Name, self.Section)
-        # print("\nFetchVariableData", self.Name, self.IsDirty, self.Offset, self.Length)
-        if self.IsDirty:
-            # We do this work only if the IsDirty flag indicates that we have to do the work.
-            self.location_of_data = 0           # value of p_variable, or location on stack
-            self.field = None
-            self.attribute = None
-            self.data = []
-            self.display_body = ""
-            self.not_in_context = False
-            self.ActualLocation = 0
-            self.ActualLength = 0
+        #print("FetchVariableData:", self.Name, self.Section)
+        print("\nFetchVariableData", self.Name, self.IsDirty(), self.ReferenceOffset, self.Length)
 
-            # explicit conversion by cast for GDB 7.7 - FIXME: move to get type only once
-            PTR_CONV_TYPE = gdb.lookup_type('unsigned long')
+        # We have to do this work every time.  This might be the first time
+        # through, or something might have changed underneath us, like a table subscript
+        # or refmod parameter.  Most significantly, the IsDirty flag might have been on,
+        # and turned off by somebody else accessing another of a union we might be part
+        # of and causing a re-read of the data.
 
-            # Let's update everything we might need:
-            # Calculate the additional table offsets
-            self.CalculateTableOffset()
+        self.location_of_data = 0 # value of p_variable, or location on stack
+        self.data_offset = 0
+        self.field = None
+        self.attribute = None
+        self.display_body = ""
+        self.not_in_context = False
+        self.ActualLocation = 0
+        self.ActualLength = 0
 
-            # Calculate refmod offset:length
-            self.CalculateRefmodValues()
+        # explicit conversion by cast for GDB 7.7 - FIXME: move to get type only once
+        PTR_CONV_TYPE = gdb.lookup_type('unsigned long')
 
-            if self.SubscriptFailure or self.RefmodFailure:
-                # One of the Calculate... routines ran into trouble.  They
-                # displayed an error message.  It's at this point we bail out.
-                self.Subscripts = None
-                self.Refmod = None
+        # Let's update everything we might need:
+        # Calculate the additional table offsets
+        self.CalculateTableOffset()
+
+        # In spite of our desire to avoid unnecessary reads, we are treating table-subscripted
+        # variables as atomic.  Said another way, even in the case of
+        #   01 TOP OCCURS <something>
+        #      02 MIDDLE OCCURS <something>
+        #         03 BOTTOM OCCURS <something>
+        # asking for BOTTOM(2) will cause the data for BOTTOM(2) to be read as if it
+        # were a top-level variable.  This tradeoff comes about because we don't want to
+        # be reading in possibly huge tables when we just want to see one element.
+        self.standalone = False
+
+        if self.table_offset:
+            self.SetIsDirty()
+            self.standalone = True
+
+        # Calculate refmod offset:length
+        self.CalculateRefmodValues()
+
+        if self.SubscriptFailure or self.RefmodFailure:
+            # One of the Calculate... routines ran into trouble.  They
+            # displayed an error message.  It's at this point we bail out.
+            self.Subscripts = None
+            self.Refmod = None
+            return False
+
+        # Before proceeding, we need to make sure our granddaddy (who might be us!)
+        # has been processed.  If we are our own grandpa, then index_of_parent will be None,
+        # and we shouldn't recurse, because that would lead to infinite regression.
+        granddaddy = GV_ModuleInformation.var_trie.storage_list[self.index_of_granddaddy]
+        if granddaddy.location_of_data == 0 and self.index_of_parent is not None and self.Level != 0:
+            self.SetIsDirty()
+            if not granddaddy.FetchVariableData(False):
+                # If granddad can't be found, neither can we:
+                self.not_in_context = True
                 return False
 
-            # First, check to see if the compiler provided us with the
-            # the name of the field.  If so, use the run-time values in that named
-            # field to override anything we might have gotten from compile-time
+        if self.Section in ('F'):
+            # Annoyingly, it has been empirically determined that sorting can result in
+            # subordinate b_ locations that aren't the same as the top-level b_ locations
+            self.SetIsDirty()
 
-            if self.Fname:
-                # We have a field name
-                # print("FetchVariableData Fname", self.Fname)
+        # First, check to see if the compiler provided us with the
+        # the name of the field.  If so, use the run-time values in that named
+        # field to override anything we might have gotten from compile-time
+
+        if True and self.Fname and self.Level==0:
+            # We have a field name
+            print("FetchVariableData Fname", self.Fname)
+            try:
+                self.field = gdb.parse_and_eval(self.Fname)
+            except gdb.error:
+                self.not_in_context = True
+                return False
+            # The cob_field structure looks like this:
+            #   typedef struct __cob_field
+            #       {
+            #       size_t                size;
+            #       unsigned char        *data;
+            #       const cob_field_attr *attr;
+            #       } cob_field;
+            self.Length = int(self.field['size'])
+            possible_location_of_data = int(self.field['data'].dereference().address)
+            #print("possible_location_of_data", hex(possible_location_of_data))
+            if possible_location_of_data:
+                self.location_of_data = possible_location_of_data
+                self.data_offset = self.ReferenceOffset
+            self.attribute = self.field['attr']
+        else:
+            # This is normal when a variable is defined but never referenced.
+            # print("There is no self.Fname")
+            pass
+
+        if self.location_of_data == 0:
+            # When the COBOL code doesn't reference a variable, there is no f_ cob_field.  But
+            # often the cobcd-st routine was able to determine the b_ + offset reference.  Likewise, sometimes
+            # there is an f_value, but at this point in the code the cob_field->data value hasn't yet
+            # been set up.  But, again, sometimes we have advance knowledge of what is going to be
+            # there because we got information from the compiler.
+
+            # We have seen situations where the granddaddy.Bname isn't the same as self.Bname
+            # See test005, and compare b_8 and b_32 from
+            #       01  SortedQtrlyPyrlDataRec.
+            #         05  QPRDREmpKey
+            # When that happens, we switch gears and use self.Bname
+
+            if granddaddy.Bname != self.Bname:
+                self.standalone = True
+
+            if self.Bname:
+                # print("FetchVariableData Fname", self.Bname)
                 try:
-                    self.field = gdb.parse_and_eval(self.Fname)
+                    self.location_of_data = int(gdb.parse_and_eval(self.Bname).dereference().address)
+                    #print("(222)self.location_of_data", hex(self.location_of_data))
                 except gdb.error:
                     self.not_in_context = True
                     return False
@@ -1890,164 +2073,185 @@ class CobolVariable():
                 if data:
                     self.location_of_data = int(data.dereference().address.cast(PTR_CONV_TYPE))
                 self.attribute = self.field['attr']
+                self.data_offset = self.ReferenceOffset
+
             else:
-                # print("There is no self.Fname")
                 pass
 
-            if self.location_of_data == 0:
-                # When the COBOL code doesn't reference a variable, there is no f_ cob_field.  But
-                # often the cobcd-st routine was able to determine the b_ + offset reference.  Likewise, sometimes
-                # there is an f_value, but at this point in the code the cob_field->data value hasn't yet
-                # been set up.  But, again, sometimes we have advance knowledge of what is going to be
-                # there because we got information from the compiler.
-                if self.Bname:
-                    # print("FetchVariableData Fname", self.Bname)
-                    try:
-                        data = gdb.parse_and_eval(self.Bname)
-                        if data:
-                            self.location_of_data = int(data.dereference().address.cast(PTR_CONV_TYPE))
-                    except gdb.error:
-                        self.not_in_context = True
-                        return False
-                    self.location_of_data += self.Offset
-                    # print("  self.location_of_data + offset", hex(self.location_of_data), self.Offset)
-                else:
-                    # print("There is no self.Bname")
-                    pass
-
-            if not self.attribute:
-                if self.Aname:
-                    self.attribute = gdb.parse_and_eval(self.Aname)
-                    # CHECKME: This should never happen - can we drop it for minor performance improve?
-                    if not self.attribute:
-                        traceback.print_exc()
-                        self.not_in_context = True
-                        return False
-                else:
-                    # print(" There is no self.Aname")
-                    pass
-
-            if self.attribute:
-                #   typedef struct __cob_field_attr
-                #       {
-                #       unsigned short       type;       /* Field type */
-                #       unsigned short       digits;     /* Digit count */
-                #       signed short         scale;      /* Field scale */
-                #       unsigned short       flags;      /* Field flags */
-                #       const cob_pic_symbol *pic;       /* Pointer to picture string */
-                #       } cob_field_attr;
-
-                # CHECKME: can/should we keep the GDB values here instead of the current int value?
-                self.AttrType   = int(self.attribute['type'])
-                self.AttrDigits = int(self.attribute['digits'])
-                self.AttrScale  = int(self.attribute['scale'])
-                self.AttrFlags  = int(self.attribute['flags'])
-                self.Picture = ""
-
-                curr_pic        = self.attribute['pic']
-
-                if curr_pic:
-                    # There is PICTURE information; we need to build it up as a string.
-                    # The data are stored as described in cob_pic_symbol above.
-                    # As we operate on the gdb Values we are safe in concern to compilers and padding.
-                    offset = 0
-                    while True:
-                        # Pick up the character:
-                        ch = curr_pic['symbol']
-                        if ch == 0:
-                            break
-                        if ch < 32:
-                            # This should never happen; we're inside a PICTURE string
-                            # ch = '^'
-                            traceback.print_exc()
-                            break
-                        else:
-                            ch = chr(ch)
-
-                        # Pick up the integer count:
-                        count = curr_pic['times_repeated']
-
-                        while count > 0:
-                            self.Picture += ch
-                            count -= 1
-
-                        offset += 1
-                        curr_pic = self.attribute['pic'] + offset
-
-                    # Just to make life easier down the road, replace DB and CR
-                    # with something easier to work with.
-                    self.Picture = self.Picture.replace("DB", "d")
-                    self.Picture = self.Picture.replace("CR", "c")
-
-            if self.Section in ('F', 'X', 'W', "WB", 'I'):
-                pass
-            elif self.Section == 'L':
-                try:
-                    # We are looking for something in LOCAL-STORAGE.  Local
-                    # storage is kept in a calloc-ed memory location named
-                    # cob_local_ptr.  The complication is that if we have
-                    # several program-ids that each have their own cob_local_ptr
-                    # we have to make sure we know which one we are dealing
-                    # with.
-
-                    # Pick up the decimal line number where we are trapped
-                    line_number = -1
-                    command = "frame"
-                    frame_string = GdbExecute(currentframe(), command)
-                    # Look for a number after a colon
-                    nfound = frame_string.find(':')
-                    if nfound > -1:
-                        frame_string = frame_string[nfound + 1:]
-                        frame_string = frame_string.split()
-                        try:
-                            line_number = int(frame_string[0])
-                        except:
-                            line_number = -1
-
-                    # print("Trapped at ", line_number)
-                    # We know we are trapped at line_number
-
-                    # Look up the program-id of that line_number
-                    program_id = GV_ModuleInformation.line_list.Find(line_number)
-                    # print("in :", program_id)
-
-                    #
-                    # program-id is where the program-under-test is
-                    # trapped.  Let's see if that program-id matches
-                    # the final place of the desired variable:
-                    #
-                    # print( self.Name )
-                    split_name = self.Name.split('/')
-                    if split_name[-1] != program_id:
-                        self.not_in_context = True
-                        return False
-
-                    # To recap:  We are trapped in the routine of the desired
-                    # LOCAL-STORAGE variable, so we can look for it in cob_local_ptr
-                    # we need GDB's help finding out where cob_local_ptr + offset is:
-                    self.location_of_data = GetPointerTo("cob_local_ptr") + self.Offset
-
-                except gdb.error:
+        if not self.attribute:
+            if self.Aname:
+                self.attribute = gdb.parse_and_eval(self.Aname)
+                if not self.attribute:
+                    traceback.print_exc()
                     self.not_in_context = True
                     return False
             else:
-                print("We don't know how to handle", self.Section, self.Name)
+                # print(" There is no self.Aname")
+                pass
+
+        if self.attribute:
+            #   typedef struct __cob_field_attr
+            #       {
+            #       unsigned short       type;       /* Field type */
+            #       unsigned short       digits;     /* Digit count */
+            #       signed short         scale;      /* Field scale */
+            #       unsigned short       flags;      /* Field flags */
+            #       const cob_pic_symbol *pic;       /* Pointer to picture string */
+            #       } cob_field_attr;
+
+            # CHECKME: can/should we keep the GDB values here instead of the current int value?
+            self.AttrType   = int(self.attribute['type'])
+            self.AttrDigits = int(self.attribute['digits'])
+            self.AttrScale  = int(self.attribute['scale'])
+            self.AttrFlags  = int(self.attribute['flags'])
+            self.Picture = ""
+
+            curr_pic        = self.attribute['pic']
+
+            if curr_pic:
+                # There is PICTURE information; we need to build it up as a string.
+                # The data are stored as described in cob_pic_symbol above.
+                # As we operate on the gdb Values we are safe in concern to compilers and padding.
+                offset = 0
+                while True:
+                    # Pick up the character:
+                    ch = curr_pic['symbol']
+                    if ch == 0:
+                        break
+                    if ch < 32:
+                        # This should never happen; we're inside a PICTURE string
+                        # ch = '^'
+                        traceback.print_exc()
+                        break
+                    else:
+                        ch = chr(ch)
+
+                    # Pick up the integer count:
+                    count = curr_pic['times_repeated']
+
+                    while count > 0:
+                        self.Picture += ch
+                        count -= 1
+
+                    offset += 1
+                    curr_pic = self.attribute['pic'] + offset
+
+                # Just to make life easier down the road, replace DB and CR
+                # with something easier to work with.
+                self.Picture = self.Picture.replace("DB", "d")
+                self.Picture = self.Picture.replace("CR", "c")
+
+        if self.Section in ('F', 'X', 'W', "WB", 'I'):
+            pass
+        elif self.Section == 'L':
+            try:
+                # We are looking for something in LOCAL-STORAGE.  Local
+                # storage is kept in a calloc-ed memory location named
+                # cob_local_ptr.  The complication is that if we have
+                # several program-ids that each have their own cob_local_ptr
+                # we have to make sure we know which one we are dealing
+                # with.
+
+                # Pick up the decimal line number where we are trapped
+                line_number = -1
+                command = "frame"
+                frame_string = GdbExecute(currentframe(), command)
+                # Look for a number after a colon
+                nfound = frame_string.find(':')
+                if nfound > -1:
+                    frame_string = frame_string[nfound + 1:]
+                    frame_string = frame_string.split()
+                    try:
+                        line_number = int(frame_string[0])
+                    except:
+                        line_number = -1
+
+                # print("Trapped at ", line_number)
+                # We know we are trapped at line_number
+
+                # Look up the program-id of that line_number
+                program_id = GV_ModuleInformation.line_list.Find(line_number)
+                # print("in :", program_id)
+
+                #
+                # program-id is where the program-under-test is
+                # trapped.  Let's see if that program-id matches
+                # the final place of the desired variable:
+                #
+                # print( self.Name )
+                split_name = self.Name.split('/')
+                if split_name[-1] != program_id:
+                    self.not_in_context = True
+                    return False
+
+                # To recap:  We are trapped in the routine of the desired
+                # LOCAL-STORAGE variable, so we can look for it in cob_local_ptr
+                # we need GDB's help finding out where cob_local_ptr + offset is:
+                self.location_of_data = GetPointerTo("cob_local_ptr") + self.ReferenceOffset
+                self.data_offset = self.ReferenceOffset - granddaddy.ReferenceOffset
+
+            except gdb.error:
                 self.not_in_context = True
                 return False
+        else:
+            print("We don't know how to handle", self.Section, self.Name)
+            self.not_in_context = True
+            return False
 
-            if self.location_of_data != 0:
-                # With those calculations in hand, we can calculate the actual location and length:
-                self.ActualLocation = self.location_of_data + self.TableOffset + self.RefmodOffset
-                self.ActualLength = self.RefmodLength or self.Length
+        if self.location_of_data != 0:
+            # With those calculations in hand, we can calculate the actual location and length:
+            self.ActualLocation = self.location_of_data + self.table_offset + self.data_offset + self.RefmodOffset
+            self.ActualLength = self.RefmodLength or self.Length
 
-                # Unlikely as it seems, arriving here means having successfully
-                # run the gauntlet of all the reasons up above as to why you
-                # can't read this data.  So, get the data:
+            # Unlikely as it seems, arriving here means having successfully
+            # run the gauntlet of all the reasons up above as to why you
+            # can't read this data.  So, if the dirty flag is on, read the data
+            # from the inferior.  (If the dirty flag isn't on, then we know our
+            # granddaddy's grand_data is believed still to be valid.)
 
-                self.data = GetBytesAt(self.ActualLocation, self.ActualLength)
-                self.display_body = self.DataToString()
-                self.IsDirty = False
+            if self.IsDirty():
+                global GV_reads
+                global GV_bytes_read
+                GV_reads += 1
+
+                if self.Section in ('F') and not self.standalone:
+                    GV_bytes_read += self.Length
+                    granddaddy.grand_data = GetBytesAt(self.location_of_data, self.Length)
+                    #print("We just read {0} bytes from {1}".format(self.Length, hex(self.location_of_data)))
+                elif self.table_offset == 0 and not self.standalone:
+                    GV_bytes_read += granddaddy.Length
+                    granddaddy.grand_data = GetBytesAt(granddaddy.location_of_data, granddaddy.Length)
+                    #print("We just read {0} bytes from {1}".format(granddaddy.Length, hex(granddaddy.location_of_data)))
+                else:
+                    # Variables with table_offset are treated as atomic, and not part of a union:
+                    GV_bytes_read += self.Length
+                    granddaddy.grand_data = GetBytesAt(self.ActualLocation, self.ActualLength)
+                    #print("We just read {0} bytes from {1}".format(self.ActualLength, hex(self.ActualLocation)))
+
+                # At this point we clear the IsDirty bit...unless there is a table offset.
+                #
+                # Consider:
+                #   01 TOP occurs 3
+                # if we ask for CPRINT TOP(3) and then CPRINT TOP, we expect to see TOP(1)  The only way to
+                # make that happen is to leave the IsDirty bit on at this point
+                if self.table_offset:
+                    self.SetIsDirty()
+                else:
+                    self.ClearIsDirty()
+
+            self.display_body = self.DataToString()
         return True
+
+    def Data(self):
+        granddaddy = GV_ModuleInformation.var_trie.storage_list[self.index_of_granddaddy]
+
+        if self.standalone:
+            # Table elements with non-zero subscripts have their data starting at grand_data
+            n1 = 0
+        else:
+            n1 = self.data_offset + self.RefmodOffset
+        n2 = n1 + self.ActualLength
+        return granddaddy.grand_data[n1: n2]
 
     def NameWithSubscripts(self):
         # Start with full name.
@@ -2127,14 +2331,16 @@ class CobolVariable():
         if self.Refmod:
             print("Display:     ", end="")
             if self.IsAlphanumeric():
-                for byte in self.data:
+                data = self.Data()
+                for byte in data:
                     if 32 <= byte:   # valid ASCII characters
                         print(chr(byte), end="")
                     else:
                         print('^', end="")
             else:
                 print("[", end="")
-                for byte in self.data:
+                data = self.Data()
+                for byte in data:
                     print(hex(256 + byte)[-2:], end="")
                 print("]", end="")
 
@@ -2160,9 +2366,10 @@ class CobolVariable():
         else:
             print("Base:       ", self.Bname, '  ', bname_text)
 
-        print("Offset:     ", self.Offset)
+        print("RefOffset:  ", self.ReferenceOffset)
+        print("data_offset:", self.data_offset)
         if self.Subscripts:
-            print("TableOffset:", self.TableOffset)
+            print("TableOffset:", self.table_offset)
         print("Length:     ", self.Length)
         if self.Refmod:
             print("RefmodOff:  ", self.RefmodOffset)
@@ -2255,8 +2462,7 @@ class CobolVariable():
             print("Picture:    ", self.Picture)
 
         # At this point, we want to show the raw data at location_of_data.
-        # But if .Refmod or .Subscripts is active, self.data is the modified
-        # information, not the "raw" data.  So, we need the raw data:
+        # We fetch the data from the inferior, in case subscripts or refmod is active
 
         raw_data = GetBytesAt(self.location_of_data, self.Length)
         print("Data: (HEX)   [", end=" ")
@@ -2293,7 +2499,7 @@ class CobolVariable():
 ### The code in this section was recovered from Version 3.23
 
     def IeeeBinaryToString(self):
-        bytes = self.data
+        bytes = self.Data()
         length = len(bytes)
 
         exponent_bits = 0
@@ -2744,7 +2950,7 @@ class CobolVariable():
         # follow along to see how it works:
 
         # Convert the bytes of data to a single 128-bit value:
-        our_bytes = self.data
+        our_bytes = self.Data()
         if self.AttrFlags & COB_FLAG_BINARY_SWAP:
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
@@ -2809,7 +3015,7 @@ class CobolVariable():
         # follow along to see how it works:
 
         # Convert the bytes of data to a single 64-bit value:
-        our_bytes = self.data
+        our_bytes = self.Data()
         if self.AttrFlags & COB_FLAG_BINARY_SWAP:
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
@@ -2878,7 +3084,7 @@ class CobolVariable():
         # the Densely Packed Decimal option.
 
         # Convert the bytes of data to a single 64-bit value:
-        our_bytes = self.data
+        our_bytes = self.Data()
         if self.AttrFlags & COB_FLAG_BINARY_SWAP:
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
@@ -2974,9 +3180,10 @@ class CobolVariable():
 
         # Extract all the nybbles.  The actual value is right-justified in the binary stream:
         nybbles = []
+        data = self.Data()
         for i in range(self.Length):
-            nybbles.append(self.data[i] >> 4)
-            nybbles.append(self.data[i] & 0x0F)
+            nybbles.append(data[i] >> 4)
+            nybbles.append(data[i] & 0x0F)
 
         negative = False
         if has_sign_nybble:
@@ -3078,25 +3285,26 @@ class CobolVariable():
         pic = ""
 
         negative = False
-        if self.Length > 0:
+        data = self.Data()
+        if len(data) > 0:
             # DISPLAY keeps the negative bit in an oddball place:
-            if (self.data[self.Length - 1] & 0x40) != 0:
+            if (data[len(data) - 1] & 0x40) != 0:
                 negative = True
 
-            # Convert the binary value in self.data to a string
-            for i in range(self.Length):
-                digit = self.data[i] & 0x3F
+            # Convert the binary value in self.Data() to a string
+            for i in range(len(data)):
+                digit = data[i] & 0x3F
                 if digit < 32:
                     body += '^'
                 else:
                     body += chr(digit)
 
             # We might be dealing with a P-scaled number:
-            if self.AttrDigits > self.Length:
+            if self.AttrDigits > len(data):
                 if self.AttrScale > 0:
-                    pscale = -(self.AttrDigits - self.Length);
+                    pscale = -(self.AttrDigits - len(data));
                 else:
-                    pscale = +(self.AttrDigits - self.Length);
+                    pscale = +(self.AttrDigits - len(data));
             else:
                 pscale = 0
 
@@ -3107,7 +3315,7 @@ class CobolVariable():
                 body = ('0' * -pscale) + body
                 body = self.decimal_point + body
             elif self.AttrScale > 0:
-                radix_point = self.Length - self.AttrScale
+                radix_point = len(data) - self.AttrScale
                 body = body[:radix_point] + self.decimal_point + body[radix_point:]
 
             if negative:
@@ -3201,10 +3409,7 @@ class CobolVariable():
         # we can be handed binary data in either little-endian
         # or big-endian.  We will operated little-endian:
 
-        # And, as our first bout of doing battle with Python and its
-        # never-to-be-sufficiently damned "references to objects" idiocy,
-        # we are going to make a copy by using slice:
-        our_bytes = self.data[:]
+        our_bytes = self.Data()
 
         if (self.AttrFlags & COB_FLAG_BINARY_SWAP) != 0:
             # Unless told otherwise
@@ -3219,8 +3424,9 @@ class CobolVariable():
         if self.Refmod:
             # Special case of refmod.  Just dump the desired bytes in in hex
             i = self.RefmodOffset
+            data = self.Data()
             for j in range(self.RefmodLength):
-                body += hex(256 + self.data[i])[-2:]    # Add 0x100 to get leading zeroes
+                body += hex(256 + data[i])[-2:]    # Add 0x100 to get leading zeroes
             return body, pic
 
         negative = False
@@ -3326,11 +3532,12 @@ class CobolVariable():
         body = ""
         pic = ""
         body += '"'
-        for i in range(len(self.data)):
-            if self.data[i] < 32:
+        data = self.Data()
+        for i in range(len(data)):
+            if data[i] < 32:
                 body += '^'
             else:
-                body += chr(self.data[i])
+                body += chr(data[i])
         body += '"'
         pic = '[ alphanumeric-'
         pic += str(self.Length)
@@ -3361,12 +3568,12 @@ class CobolVariable():
         # NUMERIC(EDITED)
         body = ""
         pic = ""
-
-        for i in range(self.Length):
-            if self.data[i] < 32 or self.data[i] >= 128:
+        data = self.Data()
+        for i in range(len(data)):
+            if data[i] < 32 or data[i] >= 128:
                 body += '.'
             else:
-                body += chr(self.data[i])
+                body += chr(data[i])
 
         if False:  # False means "Match observed GnuCOBOL v3.00rc1 behavior"
 
@@ -3721,13 +3928,14 @@ class CobolVariable():
             if noisy:
                 print("Unknown COB_TYPE", self.AttrType, hex(self.AttrType))
             non_printable = 0
-            for i in range(len(self.data)):
-                if self.data[i] < 32:
+            data = self.Data()
+            for i in range(len(data)):
+                if data[i] < 32:
                     non_printable += 1
 
             if non_printable >= 1:
                 value = "["
-                for byte in self.data:
+                for byte in data:
                     hexout = hex(byte)[-2:]
                     if hexout[0:1] == 'x':
                         hexout = '0' + hexout[-1:]
@@ -3735,7 +3943,7 @@ class CobolVariable():
                 value += "]"
             else:
                 value = '"'
-                for byte in self.data:
+                for byte in data:
                     if 32 <= byte:   # valid extended ASCII characters
                         value += chr(byte)
                     else:
@@ -3928,7 +4136,7 @@ class ModuleInformation():
         self.perform_commands = {}
 
     def ReadAndParseVariableString(self, string_name):
-        VARSTR_LEN_SIZE = 9  # as used by cobd-st
+        VARSTR_LEN_SIZE = 9  # as used by cobcd-st
 
         the_address = GetPointerTo(string_name)
         if the_address:
@@ -4183,13 +4391,7 @@ class ModuleState():
         return retval
 
     def EstablishModuleState(self, announce):
-        #
-        if GV_GlobalVariables.IsDirty:
-            # There was a events.stop.
-            GV_ModuleInformation.FlagAllAsDirty()
-            GV_GlobalVariables.IsDirty = False
-
-        # Go read the frame and stack, and, if necessary, fetch the VariableStringData
+        # Go read the frame and stack, and, if necessary, fetch the VARIABLE_STRING
         try:
             self.Stack = self.ProcessStack()
         except gdb.GdbError:
@@ -4801,6 +5003,11 @@ class CPrintWorker():
             elif mode in "xbq":
                 GV_ModuleState.current_display_submode = mode
                 args.pop(0)
+            elif mode == 'h':
+                global GV_reads
+                global GV_bytes_read
+                print("There were {0} reads of {1} bytes".format(GV_reads,GV_bytes_read))
+                args.pop(0)
             else:
                 ConditionalRaise("Undefined output format \"{0}\"".format(args[0][1:]))
                 args = []
@@ -4811,6 +5018,7 @@ class CPrintWorker():
 
     def GetDisplayBody(self, payload):
         body = ""
+        data = payload.Data()
         if payload.Refmod:
             if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_BINARY:
                 body = "[0x" + payload.GetDataAsBinary() + ']'
@@ -4818,19 +5026,19 @@ class CPrintWorker():
                 # The refmod payload is not alphabetic (or the submode is x for hex) and so we are
                 # going to display the refmodded payload in hex:
                 body = "[0x"
-                for i in range(len(payload.data)):
+                for i in range(len(data)):
                     # This is a trick. By adding 256 to the byte, we ensure that
                     # 0, for example, becomes 0x100 instead of 0x0.  Thus we can
                     # strip off the final two characters for our hexadecimal string
-                    body += hex(256 + payload.data[i])[-2:]
+                    body += hex(256 + data[i])[-2:]
                 body += ']'
             else:
                 # We are dealing with something that libcob thinks is alphabetic, so
                 # we are going to extract the refmodded characters from the data buffer
                 # and display them as ASCII
                 body = '"'
-                for i in range(len(payload.data)):
-                    nch = payload.data[i]
+                for i in range(len(data)):
+                    nch = data[i]
                     if nch < 32:
                         nch = ord(NON_PRINTABLE_CHAR)
                     body += chr(nch)
@@ -4932,48 +5140,7 @@ class CPrintWorker():
             payload.Refmod = var_left.Refmod
 
             # Flag the element in storage_list as IsDirty so that the next fetch reflects the change
-            payload.IsDirty = True
-
-            #######################################################
-            #
-            # POOR DESIGN ALERT!
-            #
-            # What I am about to describe badly needs fixing.
-            #
-            # As of this writing, FetchVariableData separately reads data for each element
-            # of a COBOL variable.  So, if you have this:
-            #
-            #     01 PERSON
-            #       02 LastName  PIC X(10)
-            #       02 FirstName PIC X(10)
-            #
-            # there are CobolVariables for LastName and FirstName.  But
-            # There is also one for PERSON.  So, when PERSON.FetchVariableData
-            # is called, a 20-byte copy of PERSON's data is stored in that variable.
-            # When LastName.FetchVariableData and FirstName.FetchVariableData are
-            # called, second copies are made of those 20 bytes of data.
-            #
-            # Said another way, embarrasingly:  We are O(n^squared) with regard to storage.
-            #
-            # This is not just wasteful -- it's screwed up.  When set_var_value
-            # is called to change LastName, that IsDirty bit gets set.  But the
-            # IsDirty for PERSON is still False -- and so, even though LastName was
-            # changed, displaying PERSON will show the stale data from the fetch
-            # before the set_var_value.
-            #
-            # There really should be just one copy of data for the level-01 variable, with
-            # changes to the lower level variables propogating up to the level-01 IsDirty
-            # bit.
-            #
-            # As a purely temporary expedient, I am setting the global dirty
-            # flag, which will prevent the display of stale data, but at the
-            # cost of a bunch of unnecessary data reads.  So be it, until I
-            # get a chance to fix the fundamental design flaw by not reading
-            # multiple copies of the data.  Dubner, 2021-04-02
-            #
-            #######################################################
-            GV_GlobalVariables.IsDirty = True
-            #######################################################
+            payload.SetIsDirty()
 
         return return_value
 
@@ -4986,7 +5153,6 @@ class CPrintWorker():
                 if GV_ModuleInformation.var_trie.storage_list[index].Subscripts or GV_ModuleInformation.var_trie.storage_list[index].Refmod:
                     GV_ModuleInformation.var_trie.storage_list[index].Subscripts = None
                     GV_ModuleInformation.var_trie.storage_list[index].Refmod = None
-                    GV_ModuleInformation.var_trie.storage_list[index].IsDirty = True
 
     def ProcessArgumentsMachineMode(self, leftside, rightside, leftside_possibilities, rightside_possibilities):
         """We arrive here when processing a cprint/m"""
@@ -5021,7 +5187,6 @@ class CPrintWorker():
             if payload.Subscripts or payload.Refmod:
                 payload.Subscripts = None
                 payload.Refmod = None
-                payload.IsDirty = True
 
             return
 
@@ -5134,12 +5299,18 @@ class CPrintWorker():
             if payload.FetchVariableData(True):
                 self.FormattedDisplay(payload)
 
+            if rightside and payload.table_offset:
+                # We just did an assignment to a table element, and then we displayed it.
+                # This means that the self.grand_data for the parent element is stale, but
+                # because we just did FetchVariableData the IsDirty bit is False.  We need
+                # it to be True:
+                payload.SetIsDirty()
+
             # And having displayed it, let's reset subscripts and refmods (if necessary) so that
             # subsequent displays don't carry around the stale modifiers
             if payload.Subscripts or payload.Refmod:
                 payload.Subscripts = None
                 payload.Refmod = None
-                payload.IsDirty = True
 
     def ProcessArguments(self, arguments):
         if not arguments or len(arguments) == 0:
@@ -5217,7 +5388,7 @@ class CPrintWorker():
         # but one that can happen.
         #
         # We handle array/table entries by creating a CobolVariable using its base symbol,
-        # but also carrying along the Subscripts and the TableOffset created by those subscripts.
+        # but also carrying along the Subscripts and the table_offset created by those subscripts.
         #
         # The rare case is when the operator specifies an assignment: "cp table(2) = table(4)", because
         # The second evaluation stomps on the first one. So, we are going to save copies of both of them
@@ -5373,7 +5544,7 @@ class CobolWatchpointHandler():
         payload = self.payload
         if bp_type in (gdb.BP_HARDWARE_WATCHPOINT, gdb.BP_ACCESS_WATCHPOINT):
             # Set IsDirty and refetch:
-            self.payload.IsDirty = True;
+            self.payload.SetIsDirty()
             self.payload.FetchVariableData(False)
             new_value = self.payload.DataToString()
         else:
@@ -5450,10 +5621,10 @@ class CWatchWorker():
     @staticmethod
     def set_watchpoint(payload, wp_type):
         if payload.Refmod:
-            wp_startloc = payload.location_of_data + payload.TableOffset + payload.RefmodOffset
+            wp_startloc = payload.location_of_data + payload.table_offset + payload.RefmodOffset
             wp_length = payload.RefmodLength
         else:
-            wp_startloc = payload.location_of_data + payload.TableOffset
+            wp_startloc = payload.location_of_data + payload.table_offset
             wp_length = payload.Length
 
         spec = "*(char(*)"
@@ -5925,7 +6096,7 @@ class CPrint(gdb.Command):
                 GV_GlobalVariables.repeat_count = int(tokens[2])
                 if GV_GlobalVariables.repeat_count < 1:
                     GV_GlobalVariables.repeat_count = 1000000
-                GV_GlobalVariables.IsDirty = True  # To force reformatting
+                GV_ModuleInformation.FlagAllAsDirty()  # To force reformatting
                 return
 
             GV_ModuleState.EstablishModuleState(False)
@@ -6983,7 +7154,7 @@ def exit_handler(event):
 def stop_handler(event):
     # When the inferior has been running, and is now stopped, we
     # need to flag all COBOL variables as IsDirty
-    GV_GlobalVariables.IsDirty = True
+    GV_ModuleInformation.FlagAllAsDirty()
 
 
 class CmdAutoStep (gdb.Command):

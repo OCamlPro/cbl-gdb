@@ -585,4 +585,5 @@
                  QtrlyPyrlReg.
            Display '*** Program QtrlyPyrlReg '
                    'Has Finished ***'.
+           DISPLAY "QPRDRDeptNum "  QPRDRDeptNum.
            Stop Run.
