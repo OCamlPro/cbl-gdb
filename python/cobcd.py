@@ -5342,10 +5342,14 @@ class CobolAfterWatchBreakpoint(gdb.Breakpoint):
 
         # copy commands as necessary ("real watchpoint" never halts and therefore commands are never executed)
         # note: we do need to place "cup 0" here as the stop method is not allowed to adjust the current frame
+        # to not raise strange "could not go up" messages we check the current state and store this in a
+        # convenience variable (GDB 8.2+ only, but we're guaranteed to be on 8.3+ in this method) before executing it
+        up_cmd = "py gdb.set_convenience_variable(\"CupNeeded\",CFrameWorker.is_cobol_frame(gdb.selected_frame())[0] == False)"
+        up_cmd += "\nif $CupNeeded\ncup0\nend"
         if creating_wp.commands:
-            self.commands = "cup 0" + "\n" + creating_wp.commands
+            self.commands = up_cmd + "\n" + creating_wp.commands
         else:
-            self.commands = "cup 0"
+            self.commands = up_cmd
 
     def stop(self):
         return_value = self.creating_wp.handler.check_and_output_wp()
