@@ -5501,6 +5501,14 @@ class CWatchWorker():
         self.set_watchpoint(payload, wp_type)
 
 
+class BPRemover():
+    def __init__(self, break_point):
+        self.bp = break_point
+
+    def __call__(self):
+        self.bp.delete()
+
+
 class CobolBreakpoint(gdb.Breakpoint):
     def __init__(self, bp_spec, t_flag, i_flag):
         try:
@@ -5568,7 +5576,8 @@ class CobolBreakpoint(gdb.Breakpoint):
             print("\n{0}: {1}".format(self.payload_f.Name, l_value))
 
         if GV_GlobalVariables.gdb_version < 70700 and self.t_flag:
-            self.enabled = False
+            gdb.post_event(BPRemover(self))
+            # self.enabled = False
 
         return retval
 
