@@ -5501,14 +5501,6 @@ class CWatchWorker():
         self.set_watchpoint(payload, wp_type)
 
 
-class BPRemover():
-    def __init__(self, break_point):
-        self.bp = break_point
-
-    def __call__(self):
-        self.bp.delete()
-
-
 class CobolBreakpoint(gdb.Breakpoint):
     def __init__(self, bp_spec, t_flag, i_flag):
         try:
@@ -5535,6 +5527,8 @@ class CobolBreakpoint(gdb.Breakpoint):
         l_value = ""
 
         if self.comp_op == "":
+            if GV_GlobalVariables.gdb_version < 70700 and self.t_flag:
+                gdb.post_event(BPRemover(self))
             return True
 
         self.payload_f.IsDirty = True
@@ -5575,9 +5569,8 @@ class CobolBreakpoint(gdb.Breakpoint):
         if retval:
             print("\n{0}: {1}".format(self.payload_f.Name, l_value))
 
-        if GV_GlobalVariables.gdb_version < 70700 and self.t_flag:
+        if retval and GV_GlobalVariables.gdb_version < 70700 and self.t_flag:
             gdb.post_event(BPRemover(self))
-            # self.enabled = False
 
         return retval
 
@@ -5830,6 +5823,14 @@ class CBreakWorker():
         else:
             print('Breakpoint is not a Cobol breakpoint')
             return
+
+
+class BPRemover():
+    def __init__(self, break_point):
+        self.bp = break_point
+
+    def __call__(self):
+        self.bp.delete()
 
 
 CBLDBG_CBREAK_WORKER = CBreakWorker()
