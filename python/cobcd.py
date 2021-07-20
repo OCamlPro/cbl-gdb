@@ -2025,8 +2025,7 @@ class CobolVariable():
                     # To recap:  We are trapped in the routine of the desired
                     # LOCAL-STORAGE variable, so we can look for it in cob_local_ptr
                     # we need GDB's help finding out where cob_local_ptr + offset is:
-                    loc_ptr = gdb.parse_and_eval("cob_local_ptr + " + str(self.Offset))
-                    self.location_of_data = int(loc_ptr)
+                    self.location_of_data = GetPointerTo("cob_local_ptr") + self.Offset
 
                 except gdb.error:
                     self.not_in_context = True
