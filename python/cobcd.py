@@ -1942,7 +1942,7 @@ class CobolVariable():
 
     def FetchVariableData(self, show_failure):
         #print("FetchVariableData:", self.Name, self.Section)
-        print("\nFetchVariableData", self.Name, self.IsDirty(), self.ReferenceOffset, self.Length)
+        #print("\nFetchVariableData", self.Name, self.IsDirty(), self.ReferenceOffset, self.Length)
 
         # We have to do this work every time.  This might be the first time
         # through, or something might have changed underneath us, like a table subscript
@@ -2012,9 +2012,21 @@ class CobolVariable():
 
         if True and self.Fname and self.Level==0:
             # We have a field name
-            print("FetchVariableData Fname", self.Fname)
+            # print("FetchVariableData Fname", self.Fname)
             try:
                 self.field = gdb.parse_and_eval(self.Fname)
+                # The cob_field structure looks like this:
+                #   typedef struct __cob_field
+                #       {
+                #       size_t                size;
+                #       unsigned char        *data;
+                #       const cob_field_attr *attr;
+                #       } cob_field;
+                self.Length = int(self.field['size'])
+                data = self.field['data']
+                #if data:
+                #    self.location_of_data = int(data.dereference().address.cast(PTR_CONV_TYPE))
+                self.attribute = self.field['attr']
             except gdb.error:
                 self.not_in_context = True
                 return False
@@ -2061,20 +2073,7 @@ class CobolVariable():
                 except gdb.error:
                     self.not_in_context = True
                     return False
-                # The cob_field structure looks like this:
-                #   typedef struct __cob_field
-                #       {
-                #       size_t                size;
-                #       unsigned char        *data;
-                #       const cob_field_attr *attr;
-                #       } cob_field;
-                self.Length = int(self.field['size'])
-                data = self.field['data']
-                if data:
-                    self.location_of_data = int(data.dereference().address.cast(PTR_CONV_TYPE))
-                self.attribute = self.field['attr']
                 self.data_offset = self.ReferenceOffset
-
             else:
                 pass
 
@@ -5722,14 +5721,14 @@ class CobolBreakpoint(gdb.Breakpoint):
         if self.comp_op == "":
             return True
 
-        self.payload_f.IsDirty = True
+        self.payload_f.SetIsDirty()
         self.payload_f.FetchVariableData(False)
         l_value = self.payload_f.DataToString()
 
         if self.is_lit:
             r_value = self.r_value
         elif self.payload_s is not None:
-            self.payload_s.IsDirty = True
+            self.payload_s.SetIsDirty()
             self.payload_s.FetchVariableData(False)
             r_value = self.payload_s.DataToString()[1:-1]
 
