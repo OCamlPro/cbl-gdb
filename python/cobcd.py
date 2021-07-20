@@ -68,7 +68,7 @@ GV_bytes_read = 0
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
-COBCD_VERSION = '[Version 4.28.dev1]'
+COBCD_VERSION = '[Version 4.28.dev2]'
 
 #   This module implements the gdb extension commands like cprint and cwatch
 #   It is executed by GDB.
@@ -575,7 +575,7 @@ def GetBytesAt(address, length):
     # zero length literal or variable - no data here
     if not length:
         return []
-    
+
     memlist = get_memoryview(address, length).tolist()
     # Note: Python2 returns a list of ints here, Python3 a list of bytes,
     #       which results in problems later - convert if necessary:
@@ -643,21 +643,21 @@ def GetPointerTo(name):
     # sorts out whether the generated C declared name as "char *name" or
     # "char name[22]" or "cob_field name"
 
-    try:
-        result = gdb.parse_and_eval('&' + name)
-        # If the result.type contains "**", name was defined in the
-        # generated .C as a pointer:  " char *name".  In that case,
-        # we need to pick up the contents of the pointer.
-        if str(result.type).find("**") > -1:
-            result = gdb.parse_and_eval(name)
+    # when name is not in context, this throws an error; it's up to our
+    # caller to take care of it.
 
-        # Otherwise, it was defined as the name of a block of some kind:
-        # " char name[22] " or "cob_field name".  In that case,
-        # the result already is the answer we need
+    result = gdb.parse_and_eval('&' + name)
+    # If the result.type contains "**", name was defined in the
+    # generated .C as a pointer:  " char *name".  In that case,
+    # we need to pick up the contents of the pointer.
+    if str(result.type).find("**") > -1:
+        result = gdb.parse_and_eval(name)
 
-        retval = ExtractHexValueFrom(str(result))
-    except:
-        retval = None
+    # Otherwise, it was defined as the name of a block of some kind:
+    # " char name[22] " or "cob_field name".  In that case,
+    # the result already is the answer we need
+
+    retval = ExtractHexValueFrom(str(result))
     return retval
 
 
@@ -1942,7 +1942,7 @@ class CobolVariable():
 
     def FetchVariableData(self, show_failure):
         #print("FetchVariableData:", self.Name, self.Section)
-        #print("\nFetchVariableData", self.Name, self.IsDirty(), self.ReferenceOffset, self.Length)
+        #print("FetchVariableData", self.Name, self.IsDirty(), self.ReferenceOffset, self.Length)
 
         # We have to do this work every time.  This might be the first time
         # through, or something might have changed underneath us, like a table subscript
@@ -1976,7 +1976,7 @@ class CobolVariable():
         # be reading in possibly huge tables when we just want to see one element.
         self.standalone = False
 
-        if self.table_offset:
+        if self.table_offset or self.Level == 0:
             self.SetIsDirty()
             self.standalone = True
 
@@ -2006,49 +2006,6 @@ class CobolVariable():
             # subordinate b_ locations that aren't the same as the top-level b_ locations
             self.SetIsDirty()
 
-        # First, check to see if the compiler provided us with the
-        # the name of the field.  If so, use the run-time values in that named
-        # field to override anything we might have gotten from compile-time
-
-        if True and self.Fname and self.Level==0:
-            # We have a field name
-            # print("FetchVariableData Fname", self.Fname)
-            try:
-                self.field = gdb.parse_and_eval(self.Fname)
-                # The cob_field structure looks like this:
-                #   typedef struct __cob_field
-                #       {
-                #       size_t                size;
-                #       unsigned char        *data;
-                #       const cob_field_attr *attr;
-                #       } cob_field;
-                self.Length = int(self.field['size'])
-                data = self.field['data']
-                #if data:
-                #    self.location_of_data = int(data.dereference().address.cast(PTR_CONV_TYPE))
-                self.attribute = self.field['attr']
-            except gdb.error:
-                self.not_in_context = True
-                return False
-            # The cob_field structure looks like this:
-            #   typedef struct __cob_field
-            #       {
-            #       size_t                size;
-            #       unsigned char        *data;
-            #       const cob_field_attr *attr;
-            #       } cob_field;
-            self.Length = int(self.field['size'])
-            possible_location_of_data = int(self.field['data'].dereference().address)
-            #print("possible_location_of_data", hex(possible_location_of_data))
-            if possible_location_of_data:
-                self.location_of_data = possible_location_of_data
-                self.data_offset = self.ReferenceOffset
-            self.attribute = self.field['attr']
-        else:
-            # This is normal when a variable is defined but never referenced.
-            # print("There is no self.Fname")
-            pass
-
         if self.location_of_data == 0:
             # When the COBOL code doesn't reference a variable, there is no f_ cob_field.  But
             # often the cobcd-st routine was able to determine the b_ + offset reference.  Likewise, sometimes
@@ -2066,10 +2023,10 @@ class CobolVariable():
                 self.standalone = True
 
             if self.Bname:
-                # print("FetchVariableData Fname", self.Bname)
+                #print("FetchVariableData Bname", self.Bname)
                 try:
-                    self.location_of_data = int(gdb.parse_and_eval(self.Bname).dereference().address)
-                    #print("(222)self.location_of_data", hex(self.location_of_data))
+                    self.location_of_data = GetPointerTo(self.Bname)
+                    #print("(from Bname) self.location_of_data", hex(self.location_of_data))
                 except gdb.error:
                     self.not_in_context = True
                     return False
@@ -2077,16 +2034,15 @@ class CobolVariable():
             else:
                 pass
 
-        if not self.attribute:
-            if self.Aname:
-                self.attribute = gdb.parse_and_eval(self.Aname)
-                if not self.attribute:
-                    traceback.print_exc()
-                    self.not_in_context = True
-                    return False
-            else:
-                # print(" There is no self.Aname")
-                pass
+        if self.Aname:
+            self.attribute = gdb.parse_and_eval(self.Aname)
+            if not self.attribute:
+                traceback.print_exc()
+                self.not_in_context = True
+                return False
+        else:
+            # print(" There is no self.Aname")
+            pass
 
         if self.attribute:
             #   typedef struct __cob_field_attr
@@ -2199,6 +2155,13 @@ class CobolVariable():
 
         if self.location_of_data != 0:
             # With those calculations in hand, we can calculate the actual location and length:
+
+            # print("self.Name            ", self.Name)
+            # print("self.location_of_data", self.location_of_data)
+            # print("self.table_offset    ", self.table_offset)
+            # print("self.data_offset     ", self.data_offset)
+            # print("self.RefmodOffset    ", self.RefmodOffset)
+
             self.ActualLocation = self.location_of_data + self.table_offset + self.data_offset + self.RefmodOffset
             self.ActualLength = self.RefmodLength or self.Length
 
@@ -2304,7 +2267,10 @@ class CobolVariable():
         return n_str
 
     def ShowFields(self):
-        bname_location = GetPointerTo(self.Bname) or 0
+        try:
+            bname_location = GetPointerTo(self.Bname)
+        except:
+            bname_location = 0
         bname_text = ""
         if bname_location:
             bname_text = "( %s )" % hex(bname_location)
@@ -4137,7 +4103,11 @@ class ModuleInformation():
     def ReadAndParseVariableString(self, string_name):
         VARSTR_LEN_SIZE = 9  # as used by cobcd-st
 
-        the_address = GetPointerTo(string_name)
+        try:
+            the_address = GetPointerTo(string_name)
+        except:
+            the_address = None
+
         if the_address:
             try:
                 len_val = gdb.parse_and_eval("*(char (*)[{0}]) {1}".format(VARSTR_LEN_SIZE, the_address))
