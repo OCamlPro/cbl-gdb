@@ -592,6 +592,14 @@ class VarTrieNode():
 
 def GetBytesAt(address, length):
     # Pick up <length> bytes from <address>, return them as a list of ints
+
+    # TODO should actually raise an error, remove and handle the issue in the caller
+    if not address:
+        return []
+        # length = 1
+    # zero length literal or variable - no data here
+    if not length:
+        return []
     
     memlist = get_memoryview(address, length).tolist()
     # Note: Python2 returns a list of ints here, Python3 a list of bytes,
@@ -1674,8 +1682,8 @@ class CobolVariable():
                 binary_byte += 1
                 if binary_byte >= binary_byte_limit:
                     break
-        if len(output_bytes) > binary_byte_limit:
-            retval += "...({0} total bytes)".format(len(output_bytes))
+            if len(output_bytes) > binary_byte_limit:
+                retval += "...({0} total bytes)".format(len(output_bytes))
         return retval
 
     def GetDataAsHex(self):
@@ -1698,8 +1706,8 @@ class CobolVariable():
                 hex_byte += 1
                 if hex_byte >= hex_byte_limit:
                     break
-        if len(output_bytes) > hex_byte_limit:
-            retval += "...({0} total bytes)".format(len(output_bytes))
+            if len(output_bytes) > hex_byte_limit:
+                retval += "...({0} total bytes)".format(len(output_bytes))
         return retval
 
     def CalculateTableOffset(self):
