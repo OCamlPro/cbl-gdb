@@ -2002,7 +2002,7 @@ class CobolVariable():
                 return False
 
         if self.Section in ('F'):
-            # Annoyingly, it has been empirically determined that sorting can result in
+            # Annoyingly, it has been empirically determined that SORT and FILE records can result in
             # subordinate b_ locations that aren't the same as the top-level b_ locations
             self.SetIsDirty()
 
