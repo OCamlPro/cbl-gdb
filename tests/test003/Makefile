@@ -30,17 +30,17 @@ all:
 
 known-good:
 	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -o test -x MAIN.cbl
-	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m A.cbl
-	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m B.cbl
-	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m C.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m -ext cpy A.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m -ext cpy B.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m -ext cpy C.cbl
 	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) --batch -x ../../python/cobcd.py -x test.scr > known-good.txt
 	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
 
 test:
 	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -o test -x MAIN.cbl
-	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m A.cbl
-	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m B.cbl
-	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -m C.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -ext cpy -m A.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -ext cpy -m B.cbl
+	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -ext cpy -m C.cbl
 	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) --batch -x ../../python/cobcd.py -x test.scr > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
@@ -52,9 +52,9 @@ dev:
 
 testprod:
 	cobcd -o test -x MAIN.cbl
-	cobcd -m A.cbl
-	cobcd -m B.cbl
-	cobcd -m C.cbl
+	cobcd -ext cpy -m A.cbl
+	cobcd -ext cpy -m B.cbl
+	cobcd -ext cpy -m C.cbl
 	CPRINT_RAISE=0 CPRINT_V=3 $(GDB) --batch -x test.scr > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
