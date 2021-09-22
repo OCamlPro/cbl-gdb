@@ -2427,10 +2427,10 @@ class CobolVariable():
         if self.Picture:
             print("Picture:    ", self.Picture)
 
-        # At this point, we want to show the raw data at location_of_data.
-        # We fetch the data from the inferior, in case subscripts or refmod is active
-
-        raw_data = GetBytesAt(self.location_of_data, self.Length)
+        # At this point, we want to show the raw data in byte order.  Note that
+        # the hex representation isn't necessarily the same as the Hex: up above;
+        # that one is corrected for little-endian, and this one isn't
+        raw_data = self.Data()
         print("Data: (HEX)   [", end=" ")
         for byte in raw_data:
             hexout = hex(256 + byte)[-2:]

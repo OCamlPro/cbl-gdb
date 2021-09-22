@@ -21,14 +21,18 @@ def main() :
         whole_file_x = f.read()
         f.close()
 
+        # The output of this program will be run through diff(1).  To prevent
+        # problems on different systems, we are going to allow tabs, newlines,
+        # and characters in the decimal 32 through 126 printable character set.
+
         whole_file = ""
         if sys.version[0] == '2' :
             for ch in whole_file_x :
-                if ord(ch) < 128 :
+                if (ord(ch) >= 32 and ord(ch) < 127) or ord(ch) == 9 or ord(ch) == 10 :
                     whole_file += ch
         else :
             for ch in whole_file_x :
-                if ch < 128 :
+                if ( ch >= 32 and ch < 127) or ch == 9 or ch == 10:
                     whole_file += chr(ch)
 
         whole_file.replace('\r','') # Windows.  Always Windows
