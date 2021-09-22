@@ -52,6 +52,7 @@ echo KNOWN GOOD START\n
 run
 cp *
 cp/x *
+cp/p *
 echo KNOWN GOOD FINISH\n
 
 quit

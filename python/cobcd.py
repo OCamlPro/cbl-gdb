@@ -365,7 +365,7 @@ def MachineInterfaceBody(s):
     #  This sequence:
     #  variables=[{name="L00L",value="{_groupvalue=\"Sn\\\"ap!\",fullname=\"Robert\\\"Dubner\",L02={_groupvalue=\"Crackle!\",firstname = \"Robert\", lastname = \"\\\"Dubner\\\"\",L03={_groupvalue=\"Pop!\",firstname = \"Judy\", lastname = \"Ruderman\"}}}"}]
     #
-    #  Results in a heirarchical display:
+    #  Results in a hierarchical display:
     #
     #  L00L: Sn"ap!
     #     fullname : Robert"Dubner
@@ -1008,7 +1008,7 @@ class VarTrie():
 
         # When processing a line like "05 T-ENTRIES OCCURS 90 INDEXED BY TAB-ADR-IND."
         # it turns out that TAB-ADR-IND shows up the line *before* the 05 T-ENTRIES line
-        # in the generated C code.  In order to make the name heirachy work properly,
+        # in the generated C code.  In order to make the name hierarchy work properly,
         # I am stashing that line here until the OCCURS line (presumably the next line)
         # is seen.
         self.stashed_line = None
@@ -1044,7 +1044,7 @@ class VarTrie():
 
         # Variables of LEVEL 01-49, 66, 77, 78 are what you expect.
         # LEVEL 00 variables are odd ducks; they are INDEXED BY variables and need special
-        # processing, because we want them to appear heirarchically within their LEVEL 01 tree,
+        # processing, because we want them to appear hierarchically within their LEVEL 01 tree,
         # but their storage isn't part of the LEVEL 01 UNION.  Their parent lies within the tree,
         # but they are their own granddaddy, because their data isn't in the UNION.
 
@@ -1074,24 +1074,41 @@ class VarTrie():
                 # the immediate preceding entry.  See self.LoadFromLine
                 payload.index_of_parent = payload_index - 1
 
-            elif payload.Level >= 2 and payload.Level <= 49:
-                # LEVELs 02-49 obviously have parents.  LEVEL 01 usually doesn't have a parent, but
-                # might when there is, for example, a parent FD record.  Find our parent:
+            elif payload.Level >= 1 and payload.Level <= 49:
+                # LEVELs 02-49 obviously have parents.  LEVEL 01 usually doesn't have a parent
+
+                # We will, however, run this code in part because we are piggybacking the
+                # search for REDEFINES here.  We'll filter out payload.Level == 1 down below
+
                 i = payload_index - 1
+
+                # Find our parent:
+
+                # TODO:  Note that this following code has, inherently, O(N-squared) time complexity.
+                # In practice it may not be much of a problem, because in general you will never
+                # have to look very far back before finding your parent.  But O(N-squared) always
+                # makes me nervous.
                 while i >= 0:
                     ancestor = self.storage_list[i]
                     candidate_level = ancestor.Level
                     if candidate_level == payload.Level:
-                        # Our older relative has the same level we do.  That means we
-                        # share a parent.  That value might be None, but that's okay.
-                        payload.index_of_parent = ancestor.index_of_parent
-                        payload.index_of_granddaddy = ancestor.index_of_granddaddy
+                        if payload.Level > 1:
+                            # Our older relative has the same level we do.  That means we
+                            # share a parent.  That value might be None, but that's okay.
+                            payload.index_of_parent = ancestor.index_of_parent
+                            payload.index_of_granddaddy = ancestor.index_of_granddaddy
+
+                        # If the ancestor and payload have the same base and offset,
+                        # then this is a REDEFINES.
+                        if ancestor.Bname == payload.Bname and ancestor.ReferenceOffset == payload.ReferenceOffset:
+                            payload.IsRedefines = True
                         break
                     if candidate_level != 0 and candidate_level < payload.Level:
                         # Because it is non-zero and smaller than we are, [i] has to be our parent.
-                        payload.index_of_parent = i
                         # And our parent's granddaddy is also our granddaddy
-                        payload.index_of_granddaddy = ancestor.index_of_granddaddy
+                        if payload.Level > 1:
+                            payload.index_of_parent = i
+                            payload.index_of_granddaddy = ancestor.index_of_granddaddy
                         break
                     # Arriving here means that candidate_level is either zero, making it
                     # an INDEXED BY variable who is nobody's parent, or else candidate_level
@@ -1535,6 +1552,7 @@ class CobolVariable():
         self.AttrDigits = 0
         self.AttrScale  = 0
         self.AttrFlags  = 0
+        self.IsRedefines= False
         self.Picture    = None
 
         # These values are calculated at runtime from the information up above
@@ -1812,10 +1830,10 @@ class CobolVariable():
 
             # The list of subscripts is just that: a list of subscripts.
 
-            # With that list in hand, we are going to walk the heirarchical tree
+            # With that list in hand, we are going to walk the hierarchical tree
             # of this variable back to the root.  Everywhere we hit an OCCURS, we
             # will apply the current list_of_subscripts[-1] to that portion of the
-            # heirarchy.
+            # hierarchy.
 
             # We'll keep track along the way, to make sure the number of subscripts
             # is the same as the number of subscripted variables:
@@ -2332,7 +2350,10 @@ class CobolVariable():
         else:
             print("Base:       ", self.Bname, '  ', bname_text)
 
-        print("RefOffset:  ", self.ReferenceOffset)
+        if self.IsRedefines:
+            print("RefOffset:   {0} [REDEFINES]".format(self.ReferenceOffset))
+        else:
+            print("RefOffset:  ", self.ReferenceOffset)
         print("data_offset:", self.data_offset)
         if self.Subscripts:
             print("TableOffset:", self.table_offset)
@@ -4490,7 +4511,7 @@ def BuildHumanHString(node, level):
     return h_str
 
 
-def BuildHeirarchicalTree(possibilities):
+def BuildHierarchicalTree(possibilities, is_machine_mode):
     # We will use a stack to build a tree from the ordered variables
     root = HNode()
     stack = [root]
@@ -4522,6 +4543,8 @@ def BuildHeirarchicalTree(possibilities):
                 # Just use the lowest level.  When necessary, the VSC code will
                 # be able to walk up through the containers to get the full name
                 new_node.BaseName = split_name[0]
+            if payload.IsRedefines and not is_machine_mode:
+                new_node.BaseName += " [R]"
 
             new_node.display_body = WithRepeatCount(payload.display_body)
 
@@ -4544,7 +4567,7 @@ def BuildHeirarchicalTree(possibilities):
     return root
 
 
-def MachineInterfaceHeirarchical(possibilities):
+def MachineInterfaceHierarchical(possibilities):
     # This is the machine interface mode for returning the
     # the variables in a flat manner.
     # Our mission is to emulate
@@ -4552,7 +4575,7 @@ def MachineInterfaceHeirarchical(possibilities):
     # e.g.,
     # variables=[{name="L00",value="\"Standalone\""},{name="L01",value="{fullname = \"RobertDubner\", L02 = {firstname = \"Robert\", lastname = \"Dubner\"}}"},{name="L01_2",value="{fullname = \"JudyRuderman\", L02 = {firstname = \"Judy\", lastname = \"Ruderman\"}}"}]
 
-    root = BuildHeirarchicalTree(possibilities)
+    root = BuildHierarchicalTree(possibilities, True)
 
     # We now have a tree that can be used to create the variables string
     retval = "variables=["
@@ -4945,7 +4968,7 @@ class CPrintWorker():
                     param = args[1]
 
             if mode in "mvdxbq":
-                # Any of these switches suppress the heirarchical pretty printing
+                # Any of these switches suppress the hierarchical pretty printing
                 GV_ModuleState.current_pretty_mode = ''
 
             if mode == 'm':
@@ -5161,7 +5184,7 @@ class CPrintWorker():
             return
 
         # In machine_interface mode, we just return the possibility(ies).
-        # Because we are going to be showing the data in a heirarchical way,
+        # Because we are going to be showing the data in a hierarchical way,
         # we want to be sure every sub-level of a 01 Level variable is visible:
         ppp = set(leftside_possibilities)
         for i in leftside_possibilities:
@@ -5186,11 +5209,11 @@ class CPrintWorker():
         leftside_possibilities = list(ppp)
         leftside_possibilities.sort()
 
-        disp_str = MachineInterfaceHeirarchical(leftside_possibilities)
+        disp_str = MachineInterfaceHierarchical(leftside_possibilities)
         print(disp_str)
 
-    def ProcessArgumentsHumanHeirarchical(self, possibilities_1):
-        # Because we are doing a heirarchical display, we need to
+    def ProcessArgumentsHumanHierarchical(self, possibilities_1):
+        # Because we are doing a hierarchical display, we need to
         # expand possibilities_1 to include all its children
 
         all_parents = set(possibilities_1)
@@ -5213,21 +5236,21 @@ class CPrintWorker():
                 if GV_ModuleInformation.var_trie.storage_list[index].AttrType == COB_TYPE_GROUP:
                     all_parents.add(index)
 
-        root = BuildHeirarchicalTree(possibilities)
+        root = BuildHierarchicalTree(possibilities, False)
         result = BuildHumanHString(root, 0)
         OurPrint(result, end='')
 
     def ProcessArgumentsHumanMode(self, leftside_possibilities, rightside):
         self.ConditionalClearSubscripts(leftside_possibilities)
         # If it happens that there is only one leftside_possibility, and it
-        # happens to have a Refmod, then we can't do heirarchical:
+        # happens to have a Refmod, then we can't do hierarchical:
         payload_okay = True
         if len(leftside_possibilities) == 1:
             payload = GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]]
             if payload.Refmod:
                 payload_okay = False
         if payload_okay and GV_ModuleState.current_pretty_mode == 'p':
-            return self.ProcessArgumentsHumanHeirarchical(leftside_possibilities)
+            return self.ProcessArgumentsHumanHierarchical(leftside_possibilities)
         if len(leftside_possibilities) > 1:
             GV_GlobalVariables.ShortTermMemory = []
 
