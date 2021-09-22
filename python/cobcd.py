@@ -1039,7 +1039,7 @@ class VarTrie():
         # This routine walks the self.storage_list[] and establishes the index_of_parent and
         # index_of_granddaddy for each CobolVariable element.
 
-        # Top-level variables have no parent.  Every variable has a granddaddy; a top-level variable'
+        # Top-level variables have no parent.  Every variable has a granddaddy; a top-level variable's
         # granddaddy is itself.
 
         # Variables of LEVEL 01-49, 66, 77, 78 are what you expect.
@@ -1049,7 +1049,7 @@ class VarTrie():
         # but they are their own granddaddy, because their data isn't in the UNION.
 
         # At the present time, there is no information in VARIABLE_STRING about FD and SD records;
-        # there simply isn't anything available in a sensible way from the generatec .c and .h
+        # there simply isn't anything available in a sensible way from the generated .c and .h
         # files.
 
         # TODO: It is permitted for LEVEL 01 variables subordinate to an FD record to have the REDEFINES
@@ -1059,6 +1059,7 @@ class VarTrie():
             # We know the very first element has to be his own granddaddy:
             payload = self.storage_list[0]
             payload.index_of_granddaddy = 0
+            payload.SetIsDirty()
 
         for payload_index in range(1, len(self.storage_list)):
             payload = self.storage_list[payload_index]
@@ -1114,7 +1115,7 @@ class VarTrie():
                     parent = GV_ModuleInformation.var_trie.storage_list[payload.index_of_parent].Name
                 if payload.index_of_granddaddy is not None:
                     granddaddy = GV_ModuleInformation.var_trie.storage_list[payload.index_of_granddaddy].Name
-                print("DEBUG   ", payload.Level, payload.Name, parent, granddaddy)
+                print("DEBUGDUMP   ", payload.Level, payload.Name, parent, granddaddy, payload.IsDirty())
 
     def LoadFromLine(self, variable_line):
         tokens = variable_line.split("|")
