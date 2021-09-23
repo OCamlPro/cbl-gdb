@@ -59,8 +59,8 @@ import subprocess
 from inspect import currentframe, getframeinfo
 from struct import calcsize
 import copy
-import gdb
 import time
+import gdb
 
 GV_reads = 0
 GV_bytes_read = 0
@@ -223,8 +223,8 @@ def get_memoryview(address, length):
     obj = gdb.selected_inferior().read_memory (address, length)
     if type(obj) == memoryview:
         return obj
-    else:
-        return memoryview(obj)
+
+    return memoryview(obj)
 
 
 class GlobalVariables():
@@ -579,13 +579,13 @@ def GetBytesAt(address, length):
     memlist = get_memoryview(address, length).tolist()
     # Note: Python2 returns a list of ints here, Python3 a list of bytes,
     #       which results in problems later - convert if necessary:
-    if type(memlist[0]) != int:
+    if not isinstance(type(memlist[0]), int):
         retval = []
         for byte in memlist:
             retval.append(ord(byte))
         return retval
-    else:
-        return memlist
+
+    return memlist
 
 
 def PutBytesAt(address, list_of_values, length):
@@ -614,11 +614,11 @@ def GetValueAt(address, nr_bytes):
     # value there.  'bytes' is usually 1, 2, 4, or 8.  The returned
     # value is adjusted for big- versus little-endian.
     try:
-        bytes = GetBytesAt(address, nr_bytes)
+        data_bytes = GetBytesAt(address, nr_bytes)
         if GV_GlobalVariables.byteorder == "little" and bytes:
-            bytes.reverse()
+            data_bytes.reverse()
         retval = 0
-        for byte in bytes:
+        for byte in data_bytes:
             retval = retval * 256 + byte
         return retval
 
@@ -830,8 +830,8 @@ def ConditionalRaise(msg):
     # collect all raises here, so I can do something about it.
     if GV_GlobalVariables.raise_error:
         raise gdb.GdbError(msg)
-    else:
-        print(msg)
+
+    print(msg)
 
 
 def GetNumericArgument(argument, Negative=False, Raise=True):
@@ -873,7 +873,7 @@ def TokenizeCanonicalName(desired):
         ConditionalRaise("Unmatched parentheses")
         return None
 
-    if nparen2 > -1 and nparen > nparen2:
+    if -1 < nparen2 < nparen:
         ConditionalRaise("Unmatched parentheses")
         return None
 
@@ -899,8 +899,8 @@ def TokenizeCanonicalName(desired):
             match = re.search(pattern, desired)
             if not match:
                 break
-            else:
-                desired = match.group(1) + " " + match.group(3)
+
+            desired = match.group(1) + " " + match.group(3)
 
         desired = desired.replace("/", " ").strip()
         desired += suffix
@@ -1196,14 +1196,14 @@ class VarTrie():
                     self.StackOfNames.append(name_element)
                     self.StackOfLevels.append(our_level)
 
-                    reversed = self.StackOfNames[:]
-                    reversed.reverse()
+                    rev_StackOfNames = self.StackOfNames[:]
+                    rev_StackOfNames.reverse()
 
                     payload = CobolVariable()
                     payload.Program         = self.StackOfNames[0]
                     payload.Section         = tokens[self.IndexType]
                     payload.Level           = int(tokens[self.IndexLevel])
-                    payload.Name            = '/'.join(reversed)
+                    payload.Name            = '/'.join(rev_StackOfNames)
                     payload.Fname           = tokens[self.IndexFname]
                     payload.Bname           = tokens[self.IndexBname]
                     payload.Aname           = tokens[self.IndexAname]
@@ -1216,7 +1216,7 @@ class VarTrie():
                     payload.payload_index = len(self.storage_list)
                     self.storage_list.append(payload)
                     self.AddToTrie(self.storage_trie,
-                                   reversed,
+                                   rev_StackOfNames,
                                    payload.payload_index)
                     self.program_ids.add(payload.Program)
 
@@ -1283,14 +1283,14 @@ class VarTrie():
                 self.NameMatcher(boys, boy_index, next_trie, paths)
                 # and terminate.
                 return
-            else:
-                # We can't leave that boy at this node.  So, we have to
-                # check for that boy on all possible paths from here:
-                child_tries = list(trie.children.values())
-                for next_trie in child_tries:
-                    self.NameMatcher(boys, boy_index, next_trie, paths)
-                # and terminate.
-                return
+
+            # We can't leave that boy at this node.  So, we have to
+            # check for that boy on all possible paths from here:
+            child_tries = list(trie.children.values())
+            for next_trie in child_tries:
+                self.NameMatcher(boys, boy_index, next_trie, paths)
+            # and terminate.
+            return
         else:
             # we have dropped off the whole string of boys.  Now it's a
             # question of finding every possible path to the edge of the
@@ -1302,15 +1302,15 @@ class VarTrie():
                     self.NameMatcher(boys, boy_index, next_trie, paths)
                 # and terminate.
                 return
-            else:
-                # This node has no children, which means we have reached the
-                # edge of the forest.
 
-                # Log it:
-                paths.append(trie.payload_index)
-                #
-                # and terminate
-                return
+            # This node has no children, which means we have reached the
+            # edge of the forest.
+
+            # Log it:
+            paths.append(trie.payload_index)
+            #
+            # and terminate
+            return
 
     def GetAllPossibilities(self):
         paths = []
@@ -1514,8 +1514,7 @@ class LineList():
 
         while True:
             middle = (right + left) // 2
-            if self.line_list[middle][0] <= line_number \
-                    and line_number < self.line_list[middle + 1][0]:
+            if self.line_list[middle][0] <= line_number < self.line_list[middle + 1][0]:
                 break
             if self.line_list[middle][0] > line_number:
                 right = middle
@@ -2020,7 +2019,7 @@ class CobolVariable():
                 self.not_in_context = True
                 return False
 
-        if self.Section in ('F'):
+        if self.Section in 'F':
             # Annoyingly, it has been empirically determined that SORT and FILE records can result in
             # subordinate b_ locations that aren't the same as the top-level b_ locations
             self.SetIsDirty()
@@ -2097,8 +2096,8 @@ class CobolVariable():
                         # ch = '^'
                         traceback.print_exc()
                         break
-                    else:
-                        ch = chr(ch)
+
+                    ch = chr(ch)
 
                     # Pick up the integer count:
                     count = curr_pic['times_repeated']
@@ -2317,7 +2316,7 @@ class CobolVariable():
             if self.IsAlphanumeric():
                 data = self.Data()
                 for byte in data:
-                    if 32 <= byte:   # valid ASCII characters
+                    if byte >= 32:   # valid ASCII characters
                         print(chr(byte), end="")
                     else:
                         print('^', end="")
@@ -2460,7 +2459,7 @@ class CobolVariable():
 
         print("Data: (ASCII) \"", end="")
         for byte in raw_data:
-            if 32 <= byte:   # valid ASCII characters
+            if byte >= 32:   # valid ASCII characters
                 print(chr(byte), end="")
             else:
                 print('.', end="")
@@ -2486,8 +2485,8 @@ class CobolVariable():
 ### The code in this section was recovered from Version 3.23
 
     def IeeeBinaryToString(self):
-        bytes = self.Data()
-        length = len(bytes)
+        data_bytes = self.Data()
+        length = len(data_bytes)
 
         exponent_bits = 0
         fraction_bits = 0
@@ -2537,7 +2536,7 @@ class CobolVariable():
         # type += " ]"
 
         # Now I don't
-        type = ""
+        data_type = ""
 
         exponent_mask = ((1 << exponent_bits) - 1)
         unit_point = 1 << fraction_bits
@@ -2550,7 +2549,7 @@ class CobolVariable():
 
         for i in range(length - 1, -1, -1):
             value <<= 8
-            value += bytes[i]
+            value += data_bytes[i]
 
         # extract the various IEEE 754 fields:
         sign = (value >> exponent_bits + fraction_bits) & 1
@@ -2569,27 +2568,27 @@ class CobolVariable():
             # exponent is the maximum possible value
             if fraction == 0:
                 body += "Inf"
-                body += type
+                body += data_type
                 return body, pic
             body = "NaN"
-            body += type
+            body += data_type
             return body, pic
 
         if exponent == 0:
             if fraction == 0:
                 body += "0"  # This is how GnuCOBOL prints a floating-point zero.  I think it should be "0.0"
-                body += type
+                body += data_type
                 return body, pic
-            else:
-                # faction is != 0, so this is a denormal number
-                # fraction stays the same, with the implied binary
-                # point fraction_bits to the left of the whole value
-                # exponent becomes -N, where N is -(bias-1)
-                exponent = -(bias - 1)
-                # now, adjust fraction to look like a regular number:
-                while (fraction & (1 << fraction_bits)) == 0:
-                    fraction <<= 1
-                    exponent -= 1
+
+            # faction is != 0, so this is a denormal number
+            # fraction stays the same, with the implied binary
+            # point fraction_bits to the left of the whole value
+            # exponent becomes -N, where N is -(bias-1)
+            exponent = -(bias - 1)
+            # now, adjust fraction to look like a regular number:
+            while (fraction & (1 << fraction_bits)) == 0:
+                fraction <<= 1
+                exponent -= 1
         else:
             # At this point, the exponent is in the range of 1 - exponent_mask-1,
             # meaning that this is an ordinary floating point number.
@@ -2949,7 +2948,7 @@ class CobolVariable():
         if self.Length == 16:
             # decimal128
             # The format is 1 S, 4 combination,  14 exponent, 110 coefficient
-            type = "decimal64"
+            data_type = "decimal64"
             coefficient_bits1 = 111  # Top 4 are 100x
             coefficient_bits2 = 113  # Top 4 are 0xxx
             exponent_loc1 = 128 - 1 - 2 - 14
@@ -2990,7 +2989,7 @@ class CobolVariable():
                 body += str(exponent)
 
             pic += "  [ GnuCOBOL "
-            pic += type
+            pic += data_type
             pic += " ]"
         return body, pic
 
@@ -3014,7 +3013,7 @@ class CobolVariable():
         if self.Length == 8:
             # decimal64
             # The format is 1 S, 4 combination, 8 exponent, 50 coefficient
-            type = "decimal64"
+            data_type = "decimal64"
             coefficient_bits1 = 51  # Top 4 are 100x
             coefficient_bits2 = 53  # Top 4 are 0xxx
             exponent_loc1 = 64 - 1 - 2 - 10
@@ -3055,7 +3054,7 @@ class CobolVariable():
                 body += str(exponent)
 
             pic += "[ GnuCOBOL "
-            pic += type
+            pic += data_type
             pic += " ]"
         return body, pic
 
@@ -3083,7 +3082,7 @@ class CobolVariable():
         if self.Length == 8:
             # decimal64
             # The format is 1 S, 5 combination, 8 exponent, 50 coefficient
-            type = "binary64"
+            data_type = "binary64"
             coefficient_bits = 50
             exponent_bits = 8
             combination_bits = 5
@@ -3135,7 +3134,7 @@ class CobolVariable():
                 body += str(exponent)
 
             pic += "[ IEEE "
-            pic += type
+            pic += data_type
             pic += " ]"
         return body, pic
 
@@ -3289,9 +3288,9 @@ class CobolVariable():
             # We might be dealing with a P-scaled number:
             if self.AttrDigits > len(data):
                 if self.AttrScale > 0:
-                    pscale = -(self.AttrDigits - len(data));
+                    pscale = -(self.AttrDigits - len(data))
                 else:
-                    pscale = +(self.AttrDigits - len(data));
+                    pscale = +(self.AttrDigits - len(data))
             else:
                 pscale = 0
 
@@ -3616,7 +3615,7 @@ class CobolVariable():
 
         number_of_digits = self.NumberOfDigits()
 
-        input = self.RsideToInteger(rside)
+        data_input = self.RsideToInteger(rside)
         # We have to look for "floating insertion" symbols
         # A floating insertion range is indicated by duplicated '$', '+', or
         # '-' characters.  One caveat: the floating range can have embedded
@@ -3651,19 +3650,19 @@ class CobolVariable():
         # zero-flag the integer portion
         i = 0
         while i < number_of_digits - self.AttrScale:
-            if input[i] == '0':
-                input = input[:i] + 'z' + input[i + 1:]
+            if data_input[i] == '0':
+                data_input = data_input[:i] + 'z' + data_input[i + 1:]
             else:
                 break
             i += 1
         if i >= number_of_digits - self.AttrScale:
             # The entire integer part is zero.  How about the fractional part?
             if self.AttrScale > 0:
-                if int(input[-self.AttrScale:]) == 0:
+                if int(data_input[-self.AttrScale:]) == 0:
                     # The fractional part is also zero; flag them, too
-                    input = input[0:number_of_digits - self.AttrScale]
+                    data_input = data_input[0:number_of_digits - self.AttrScale]
                     for i in range(self.AttrScale):
-                        input += 'z'
+                        data_input += 'z'
 
         # Recap:  input is now abs(numeric input), with leading
         # zeroes to the left of the decimal position replaced with 'z'
@@ -3673,7 +3672,7 @@ class CobolVariable():
         # to left, building the resulting string as we go
 
         pindex = len(self.Picture) - 1
-        dindex = len(input) - 1
+        dindex = len(data_input) - 1
 
         # This is, perforce, a state machine.  At this stage of development
         # is is mostly an ad hoc state machine.
@@ -3764,7 +3763,7 @@ class CobolVariable():
                 continue
 
             # After this point, we need to pull out an input character
-            dch = input[dindex]
+            dch = data_input[dindex]
             dindex -= 1
 
             if inside_floating:
@@ -3931,7 +3930,7 @@ class CobolVariable():
             else:
                 value = '"'
                 for byte in data:
-                    if 32 <= byte:   # valid extended ASCII characters
+                    if byte >= 32:   # valid extended ASCII characters
                         value += chr(byte)
                     else:
                         value += '^'
@@ -4650,7 +4649,7 @@ def get_sorted_possibilities(args, limit, no_data=False):
 
             # Pick up the 1-based value indexed by the argument:
             index = int(args[0]) - 1
-            if index >= 0 and index < len(GV_GlobalVariables.ShortTermMemory):
+            if 0 <= index < len(GV_GlobalVariables.ShortTermMemory):
                 # If index is valid, pick up the short-term memory entry
                 possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
             else:
@@ -4687,10 +4686,9 @@ def get_sorted_possibilities(args, limit, no_data=False):
             # work if A and B are unambiguous (we actually return 2 if there are too much to distinguish
             # between "not found" and "too much")
 
-            if limit > 0 and target_limit > limit:
+            if 0 < limit < target_limit:
                 possibilities = []
                 return possibilities, True  # True means there was a 'limit' overflow
-                break
 
     # Sorting them makes the display much more sensible:
     possibilities.sort()
@@ -4805,8 +4803,8 @@ def get_section_spec(arg):
 
     if not module_name:
         return "SECTION_{0}".format(section_name)
-    else:
-        return "{0}_:SECTION_{1}".format(module_name, section_name)
+
+    return "{0}_:SECTION_{1}".format(module_name, section_name)
 
 
 def FromHexAlphaString(conv_str):
@@ -6002,10 +6000,10 @@ class CBreakWorker():
         if break_point is None:
             return
 
-        if type(break_point) is CobolBreakpoint:
+        if isinstance(break_point, CobolBreakpoint):
             if len(left_side) == 1:
-                    print("Breakpoint {0} now unconditional.".format(left_side[0]))
-                    break_point.comp_op = ""
+                print("Breakpoint {0} now unconditional.".format(left_side[0]))
+                break_point.comp_op = ""
             elif len(left_side) >= 2 and len(left_side) <= 4:
                 self.set_cond_break(left_side, right_side, condition, break_point, is_lit, False, False)
             else:
@@ -6695,7 +6693,7 @@ class CFrameWorker:
 
     @staticmethod
     def has_cobol_frame():
-        if CFrameWorker.nearest_cobol_frame() != None:
+        if CFrameWorker.nearest_cobol_frame() is not None:
             return True
         else:
             return False
@@ -6907,7 +6905,8 @@ class CLocalBacktrace(gdb.Command):
                 match = re.search(self.section_pattern, line)
                 if match:
                     retval = match.group(1) + " " + match.group(2)
-                    if retval.upper() == "PROCEDURE DIVISION": retval = "<MAIN SECTION>"
+                    if retval.upper() == "PROCEDURE DIVISION":
+                        retval = "<MAIN SECTION>"
                     return retval
                 output = gdb.execute("list -", False, True)
         # leave the loop upon request
