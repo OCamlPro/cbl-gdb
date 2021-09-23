@@ -3603,7 +3603,7 @@ class CobolVariable():
 
     def NumberOfDigits(self):
         retval = self.AttrDigits
-        if self.AttrFlags & (COB_FLAG_REAL_BINARY):
+        if not (self.AttrFlags & COB_FLAG_BINARY_TRUNC) and ((self.AttrFlags & COB_FLAG_REAL_BINARY) or (self.AttrType == COB_TYPE_NUMERIC_BINARY)) :
             if self.Length in SIZE_TO_DIGITS:
                 retval = SIZE_TO_DIGITS[self.Length]
             else:
@@ -5251,6 +5251,7 @@ class CPrintWorker():
                 payload_okay = False
         if payload_okay and GV_ModuleState.current_pretty_mode == 'p':
             return self.ProcessArgumentsHumanHierarchical(leftside_possibilities)
+
         if len(leftside_possibilities) > 1:
             GV_GlobalVariables.ShortTermMemory = []
 
@@ -5258,25 +5259,29 @@ class CPrintWorker():
             for payload_index in leftside_possibilities:
                 payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
                 if not payload.not_in_context:
-                    if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_Q:
-                        print_str = payload.NameWithSubscripts()
+                    if GV_ModuleState.current_display_mode == 'd':
+                        if payload.FetchVariableData(True):
+                            self.FormattedDisplay(payload)
                     else:
-                        GV_GlobalVariables.ShortTermMemory.append(payload_index)
-                        print_str = "{0:2} : ".format(line_counter)
-                        line_counter += 1
-                        print_str += payload.NameToString()
-                        print_str += " : "
-
-                        if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_HEX:
-                            body = payload.GetDataAsHex()
+                        if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_Q:
+                            print_str = payload.NameWithSubscripts()
                         else:
-                            body = WithRepeatCount(payload.display_body)
+                            GV_GlobalVariables.ShortTermMemory.append(payload_index)
+                            print_str = "{0:2} : ".format(line_counter)
+                            line_counter += 1
+                            print_str += payload.NameToString()
+                            print_str += " : "
 
-                        print_str += body
-                    retval = OurPrint(NoNulls(print_str))
-                    if retval:
-                        print(retval)
-                        break
+                            if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_HEX:
+                                body = payload.GetDataAsHex()
+                            else:
+                                body = WithRepeatCount(payload.display_body)
+
+                            print_str += body
+                        retval = OurPrint(NoNulls(print_str))
+                        if retval:
+                            print(retval)
+                            break
         elif len(leftside_possibilities) == 1:
             # There is but one possibility
             # Pick up the payload from the list
