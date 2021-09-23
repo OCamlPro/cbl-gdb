@@ -221,7 +221,7 @@ def get_memoryview(address, length):
     # memoryview a constructor that takes a buffer object
 
     obj = gdb.selected_inferior().read_memory (address, length)
-    if type(obj) == memoryview:
+    if isinstance(obj, memoryview):
         return obj
 
     return memoryview(obj)
@@ -250,7 +250,7 @@ class GlobalVariables():
 
         # Establish what we do on ConditionalRaise:
         conraise = int(os.environ.get('CPRINT_RAISE', '1'))
-        if conraise == '1' or conraise == 1:
+        if conraise in ('1', 1):
             self.raise_error = True
         else:
             self.raise_error = False
@@ -579,7 +579,7 @@ def GetBytesAt(address, length):
     memlist = get_memoryview(address, length).tolist()
     # Note: Python2 returns a list of ints here, Python3 a list of bytes,
     #       which results in problems later - convert if necessary:
-    if not isinstance(type(memlist[0]), int):
+    if not isinstance(memlist[0], int):
         retval = []
         for byte in memlist:
             retval.append(ord(byte))
@@ -1291,26 +1291,26 @@ class VarTrie():
                 self.NameMatcher(boys, boy_index, next_trie, paths)
             # and terminate.
             return
-        else:
-            # we have dropped off the whole string of boys.  Now it's a
-            # question of finding every possible path to the edge of the
-            # forest from that point.
-            if len(trie.children) > 0:
-                # We have not yet reached the edge of the forest:
-                child_tries = list(trie.children.values())
-                for next_trie in child_tries:
-                    self.NameMatcher(boys, boy_index, next_trie, paths)
-                # and terminate.
-                return
 
-            # This node has no children, which means we have reached the
-            # edge of the forest.
-
-            # Log it:
-            paths.append(trie.payload_index)
-            #
-            # and terminate
+        # we have dropped off the whole string of boys.  Now it's a
+        # question of finding every possible path to the edge of the
+        # forest from that point.
+        if len(trie.children) > 0:
+            # We have not yet reached the edge of the forest:
+            child_tries = list(trie.children.values())
+            for next_trie in child_tries:
+                self.NameMatcher(boys, boy_index, next_trie, paths)
+            # and terminate.
             return
+
+        # This node has no children, which means we have reached the
+        # edge of the forest.
+
+        # Log it:
+        paths.append(trie.payload_index)
+        #
+        # and terminate
+        return
 
     def GetAllPossibilities(self):
         paths = []
@@ -6712,7 +6712,7 @@ class CFrameWorker:
             return
 
         frame.select()
-        gdb.execute("frame", (silent == False), silent)
+        gdb.execute("frame", (silent is False), silent)
 
 
 class CUp (gdb.Command):
@@ -7195,7 +7195,7 @@ An argument says how fast auto stepping is done (1-19, default 5)."""
             gdb.execute("set pagination off", False, False)
 
         try:
-            while (last_stop_was_simple):
+            while last_stop_was_simple:
                 gdb.execute("step")
                 time.sleep(sleep_time)
         # we just quit the loop as requested
