@@ -40,16 +40,16 @@ KNOWN GOOD START
 12.340
 12.340  cmp6             
 86	           display cmpx                "  cmpx             "
--12.340
+-00012.340
 -12.340  cmpx             
 87	           display cmpx-u              "  cmpx-u           "
-12.340
+00012.340
 12.340  cmpx-u           
 88	           display cmpn                "  cmpn             "
--12.340
+-00012.340
 -12.340  cmpn             
 89	           display cmpn-u              "  cmpn-u           "
-12.340
+00012.340
 12.340  cmpn-u           
 90	           display chr                 "  chr              "
 -128
@@ -89,7 +89,7 @@ KNOWN GOOD START
 +0000000001
 +000000001  idx              
 103	           display hnd                 "  hnd              "
-+000000000
++0000000000
 +000000000  hnd              
 104	           display alpnum              "  alpnum           "
 "some numb3rs 4 n00bs l1k3 m3        "

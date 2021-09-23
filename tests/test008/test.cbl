@@ -2,7 +2,7 @@
        PROGRAM-ID.      test.
        DATA             DIVISION.
        WORKING-STORAGE  SECTION.
-        01  XTEST PIC XXXX COMP-X.
+        01  XTEST PIC X COMP-X.
         01  FCD-MAP.
             05  FCD-FILE-STATUS.
                 10  FCD-STATUS-KEY-1 PIC X.
@@ -33,7 +33,7 @@
               78 fcd--open-max                 value 3.
               78 fcd--open-closed              value 128.
        PROCEDURE DIVISION.
-       MOVE 258 to XTEST
+       MOVE 7 to XTEST
        DISPLAY XTEST
        MOVE FCD--open-closed to FCD-OPEN-MODE
        DISPLAY FCD-OPEN-MODE
