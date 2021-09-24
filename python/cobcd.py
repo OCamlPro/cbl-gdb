@@ -240,7 +240,6 @@ class GlobalVariables():
                 # Sanity check with expected stack trace - as everything will be broken in this case
                 raise("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.6+ is required)!".format(
                       self.gdb_version / 10000, self.gdb_version % 10000))
-                return
             if self.gdb_version < 70700:
                 print(" !! Warning: frame-filters and cbacktrace are not available with GDB-{0}.{1} (GDB 7.7+ is required)\n{2}".format(
                       self.gdb_version / 10000, self.gdb_version % 10000,
@@ -1553,6 +1552,8 @@ class CobolVariable():
         self.AttrFlags  = 0
         self.IsRedefines= False
         self.Picture    = None
+        self.payload_index = -1
+        self.standalone = False
 
         # These values are calculated at runtime from the information up above
         #
@@ -1771,6 +1772,7 @@ class CobolVariable():
                         output_bytes.reverse()
             binary_byte = 0
             for byte in output_bytes:
+                # pylint: disable=unused-variable
                 for bit in range(8):
                     if byte >= 128:
                         retval += '1'
@@ -2701,7 +2703,7 @@ class CobolVariable():
             if decimal_exponent > 0:
                 body += '+'
             body += str(decimal_exponent)
-        body += type
+        body += data_type
         return body, pic
 
     def StringToIeeeBinary(self, rside):
@@ -3278,8 +3280,9 @@ class CobolVariable():
                 negative = True
 
             # Convert the binary value in self.Data() to a string
-            for i in range(len(data)):
-                digit = data[i] & 0x3F
+            # pylint: disable=unused-variable
+            for i, d in enumerate(data):
+                digit = d & 0x3F
                 if digit < 32:
                     body += '^'
                 else:
@@ -3411,6 +3414,7 @@ class CobolVariable():
             # Special case of refmod.  Just dump the desired bytes in in hex
             i = self.RefmodOffset
             data = self.Data()
+            # pylint: disable=unused-variable
             for j in range(self.RefmodLength):
                 body += hex(256 + data[i])[-2:]    # Add 0x100 to get leading zeroes
             return body, pic
@@ -3519,11 +3523,12 @@ class CobolVariable():
         pic = ""
         body += '"'
         data = self.Data()
-        for i in range(len(data)):
-            if data[i] < 32:
+        # pylint: disable=unused-variable
+        for i, d in enumerate(data):
+            if d < 32:
                 body += '^'
             else:
-                body += chr(data[i])
+                body += chr(d)
         body += '"'
         pic = '[ alphanumeric-'
         pic += str(self.Length)
@@ -3555,11 +3560,12 @@ class CobolVariable():
         body = ""
         pic = ""
         data = self.Data()
-        for i in range(len(data)):
-            if data[i] < 32 or data[i] >= 128:
+        # pylint: disable=unused-variable
+        for i, d in enumerate(data):
+            if d < 32 or d >= 128:
                 body += '.'
             else:
-                body += chr(data[i])
+                body += chr(d)
 
         if False:  # False means "Match observed GnuCOBOL v3.00rc1 behavior"
 
@@ -3915,8 +3921,9 @@ class CobolVariable():
                 print("Unknown COB_TYPE", self.AttrType, hex(self.AttrType))
             non_printable = 0
             data = self.Data()
-            for i in range(len(data)):
-                if data[i] < 32:
+            # pylint: disable=unused-variable
+            for i, d in enumerate(data):
+                if d < 32:
                     non_printable += 1
 
             if non_printable >= 1:
@@ -4142,7 +4149,6 @@ class ModuleInformation():
                 return True
             except:
                 traceback.print_exc()
-                pass
         return False
 
 
@@ -4702,6 +4708,7 @@ def get_completion_possibilities(word):
 
     word = word.upper()
     if word == '*':
+        # pylint: disable=unused-variable
         possibilities_1, limit_reached = get_sorted_possibilities(['*'], 0, no_data=True)
         for index in possibilities_1:
             name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
@@ -5028,8 +5035,9 @@ class CPrintWorker():
                 # we are going to extract the refmodded characters from the data buffer
                 # and display them as ASCII
                 body = '"'
-                for i in range(len(data)):
-                    nch = data[i]
+                # pylint: disable=unused-variable
+                for i, d in enumerate(data):
+                    nch = d
                     if nch < 32:
                         nch = ord(NON_PRINTABLE_CHAR)
                     body += chr(nch)
@@ -6695,8 +6703,8 @@ class CFrameWorker:
     def has_cobol_frame():
         if CFrameWorker.nearest_cobol_frame() is not None:
             return True
-        else:
-            return False
+
+        return False
 
     @staticmethod
     def Go(argument, up, silent):
