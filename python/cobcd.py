@@ -1771,6 +1771,15 @@ class CobolVariable():
                         # These three types are little-endian; flip them so they display with the big byte to the left
                         output_bytes.reverse()
             binary_byte = 0
+            # The decimal value 65 would be converted to 0b01000001
+            # 
+            # 'bit' is a loop counter; there are eight generated bits per input byte.
+            # 
+            # The "if byte >= 128" statement is equivalent to "if byte & 0x80"  So, it's
+            # just a test to see if the high-order bit of byte is on.  If so, the string
+            # grows by "1", otherwise it grows by "0".  At that point, byte is
+            # left-shifted by one (byte *= 2), and then I trim off any bits to the left
+            # (with byte %= 256).
             for byte in output_bytes:
                 for bit in range(8):
                     if byte >= 128:
@@ -3412,6 +3421,15 @@ class CobolVariable():
             # Special case of refmod.  Just dump the desired bytes in in hex
             i = self.RefmodOffset
             data = self.Data()
+            # Converts the array of bytes returned by self.Data() to
+            # a stream of ASCII hexadecimal values.  j is a loop counter so that
+            # the conversion code is executed once for every byte in the list.
+            # 
+            # The python hex() function returns a variable number of characters, for
+            # example, hex(1) returns 0x1.  Need two hex digits no matter what.  
+            # 0x100 is added to every byte, which means that I know the output will be in the
+            # range 0x100 through 0x1FF.  And then strip off the final two characters of
+            # that with [-2:], and append them to the growing string named 'body'.
             for j in range(self.RefmodLength):
                 body += hex(256 + data[i])[-2:]    # Add 0x100 to get leading zeroes
             return body, pic
