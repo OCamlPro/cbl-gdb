@@ -199,6 +199,8 @@ SIZE_TO_DIGITS = {1: len(str(2**(8*1))),
                   8: len(str(2**(8*8)))
                  }
 
+last_stop_was_simple = False
+
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
     limiting_debug_level = 1
@@ -1012,7 +1014,8 @@ class VarTrie():
         # is seen.
         self.stashed_line = None
 
-    def AddToTrie(self, trie, name_tokens, payload_index):
+    @staticmethod
+    def AddToTrie(trie, name_tokens, payload_index):
         our_node = trie
 
         for name in name_tokens:
@@ -1889,7 +1892,6 @@ class CobolVariable():
             self.SetIsDirty()
         self.ResolvedSubscripts = ResolvedSubscripts
         self.table_offset = TableOffset
-        return
 
     def CalculateRefmodValues(self):
         self.RefmodOffset = 0
@@ -4128,7 +4130,8 @@ class ModuleInformation():
         self.line_list = LineList()
         self.perform_commands = {}
 
-    def ReadAndParseVariableString(self, string_name):
+    @staticmethod
+    def ReadAndParseVariableString(string_name):
         VARSTR_LEN_SIZE = 9  # as used by cobcd-st
 
         try:
@@ -4486,7 +4489,7 @@ def BuildHumanHString(node, level):
             h_str += BuildHumanHString(child, 0)
     else:
         # Prefix with some number of spaces per level:
-        for i in range(level):
+        for i in range(level): # pylint: disable=unused-variable
             h_str += "  "
         if GV_ModuleState.sticky_display_mode in ('0', '1', '2', '3', '4', '5'):
             # We are in a mode that wants the level displayed:
@@ -4883,7 +4886,8 @@ class CPrintWorker():
         GV_ModuleState.sticky_pretty_mode = os.environ.get("CPRINT_P", '')
         self.machine_interface_mode = False
 
-    def ProcessSlashV(self, args):
+    @staticmethod
+    def ProcessSlashV(args):
         # We know the first two characters of args[0] are "/v"
         v_code = None
         if len(args[0]) == 3:
@@ -4901,7 +4905,8 @@ class CPrintWorker():
             args = []
         return args
 
-    def ProcessSlashR(self, args):
+    @staticmethod
+    def ProcessSlashR(args):
         # We know the first two characters of args[0] are "/r"
         #
         # We want "/rxxx" to be the same as "/r xxx":
@@ -5024,11 +5029,12 @@ class CPrintWorker():
                 # The refmod payload is not alphabetic (or the submode is x for hex) and so we are
                 # going to display the refmodded payload in hex:
                 body = "[0x"
-                for i in range(len(data)):
+                # pylint: disable=unused-variable
+                for i, d in enumerate(data):
                     # This is a trick. By adding 256 to the byte, we ensure that
                     # 0, for example, becomes 0x100 instead of 0x0.  Thus we can
                     # strip off the final two characters for our hexadecimal string
-                    body += hex(256 + data[i])[-2:]
+                    body += hex(256 + d)[-2:]
                 body += ']'
             else:
                 # We are dealing with something that libcob thinks is alphabetic, so
@@ -5463,7 +5469,8 @@ class CPrintWorker():
             self.ProcessArgumentsHumanMode(leftside_possibilities,
                                            rside)
 
-    def HandleDoubleQuote(self, arguments):
+    @staticmethod
+    def HandleDoubleQuote(arguments):
         # We know arguments has an early double-quote
         nfound = arguments.find('"')
         if nfound > -1:
@@ -5850,7 +5857,8 @@ class CBreakWorker():
 
         return payload
 
-    def set_section_breakpoint(self, args, t_flag, i_flag):
+    @staticmethod
+    def set_section_breakpoint(args, t_flag, i_flag):
         spec = get_section_spec(args[0])
         break_point = CobolBreakpoint(spec, t_flag, i_flag)
 
