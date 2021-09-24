@@ -201,6 +201,7 @@ SIZE_TO_DIGITS = {1: len(str(2**(8*1))),
 
 last_stop_was_simple = False
 
+
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
     limiting_debug_level = 1
@@ -222,7 +223,7 @@ def get_memoryview(address, length):
     # we can check for this type and convert the buffer if necessary, because conveniently
     # memoryview a constructor that takes a buffer object
 
-    obj = gdb.selected_inferior().read_memory (address, length)
+    obj = gdb.selected_inferior().read_memory(address, length)
     if isinstance(obj, memoryview):
         return obj
 
@@ -600,14 +601,14 @@ def PutBytesAt(address, list_of_values, length):
         vals = ""
         for i in range(length):
             vals += chr(list_of_values[i])
-        gdb.selected_inferior().write_memory (address, vals, length)
+        gdb.selected_inferior().write_memory(address, vals, length)
     else:
         # Put <length> elements of list_of_values into <address> as bytes
         # We expect list_of_values to be bytes or ints
         vals = bytearray(length)
         for i in range(length):
             vals[i] = list_of_values[i]
-        gdb.selected_inferior().write_memory (address, vals, length)
+        gdb.selected_inferior().write_memory(address, vals, length)
 
 
 def GetValueAt(address, nr_bytes):
@@ -1972,7 +1973,7 @@ class CobolVariable():
         # and turned off by somebody else accessing another of a union we might be part
         # of and causing a re-read of the data.
 
-        self.location_of_data = 0 # value of p_variable, or location on stack
+        self.location_of_data = 0  # value of p_variable, or location on stack
         self.data_offset = 0
         self.field = None
         self.attribute = None
@@ -2048,7 +2049,7 @@ class CobolVariable():
                 #print("FetchVariableData Bname", self.Bname)
                 try:
                     self.location_of_data = GetPointerTo(self.Bname)
-                    #print("(from Bname) self.location_of_data", hex(self.location_of_data))
+                    # print("(from Bname) self.location_of_data", hex(self.location_of_data))
                 except gdb.error:
                     self.not_in_context = True
                     return False
@@ -2201,16 +2202,16 @@ class CobolVariable():
                 if self.Section in ('F') and not self.standalone:
                     GV_bytes_read += self.Length
                     granddaddy.grand_data = GetBytesAt(self.location_of_data, self.Length)
-                    #print("We just read {0} bytes from {1}".format(self.Length, hex(self.location_of_data)))
+                    # print("We just read {0} bytes from {1}".format(self.Length, hex(self.location_of_data)))
                 elif self.table_offset == 0 and not self.standalone:
                     GV_bytes_read += granddaddy.Length
                     granddaddy.grand_data = GetBytesAt(granddaddy.location_of_data, granddaddy.Length)
-                    #print("We just read {0} bytes from {1}".format(granddaddy.Length, hex(granddaddy.location_of_data)))
+                    # print("We just read {0} bytes from {1}".format(granddaddy.Length, hex(granddaddy.location_of_data)))
                 else:
                     # Variables with table_offset are treated as atomic, and not part of a union:
                     GV_bytes_read += self.Length
                     granddaddy.grand_data = GetBytesAt(self.ActualLocation, self.ActualLength)
-                    #print("We just read {0} bytes from {1}".format(self.ActualLength, hex(self.ActualLocation)))
+                    # print("We just read {0} bytes from {1}".format(self.ActualLength, hex(self.ActualLocation)))
 
                 # At this point we clear the IsDirty bit...unless there is a table offset.
                 #
@@ -2766,7 +2767,7 @@ class CobolVariable():
         elif rside.original_string.lower() == "qnan":
             # quiet NaN
             sign = 0
-            exponent = ( 1<< exponent_bits)-1
+            exponent = (1 << exponent_bits) - 1
             significand = (1 << (fraction_bits - 1)) + 1
         elif int(rside.left_of_decimal or "0") == 0 and int(rside.right_of_decimal or "0") == 0:
             # We've got us a zero
@@ -2789,7 +2790,7 @@ class CobolVariable():
             if ilside > 0:
                 # strip off any leading zeroes:
                 decdigits = str(ilside)
-                decimal_exponent += (len(decdigits)-1)
+                decimal_exponent += (len(decdigits) - 1)
                 decdigits += rside.right_of_decimal
             else:
                 irside = int(rside.right_of_decimal)
@@ -2839,7 +2840,7 @@ class CobolVariable():
             # We will divide by two until the left-most digit is "1"
 
             while str(binrep)[0] != '1':
-                binrep //=2
+                binrep //= 2
                 exponent += 1
 
             # At this point, believe it or not, we are actually kind of done.  The
@@ -2871,7 +2872,7 @@ class CobolVariable():
                 sign = 0
                 exponent = 0
                 significand = 0
-            elif exponent >= (1<<exponent_bits):
+            elif exponent >= (1 << exponent_bits):
                 ConditionalRaise("Value is out of range; exponent too large")
                 sign = 0
                 exponent = 0
@@ -3130,7 +3131,7 @@ class CobolVariable():
 
             exponent = (ms_exponent << exponent_bits) + exponent
             exponent -= bias
-            coefficient = (ms_coefficient<<coefficient_bits) + coefficient
+            coefficient = (ms_coefficient << coefficient_bits) + coefficient
             body += str(coefficient)
 
             if exponent:
@@ -3244,7 +3245,7 @@ class CobolVariable():
 
         digits = self.RsideToInteger(rside)
 
-        print("digits",digits)
+        print("digits", digits)
         # Reverse the string, because we will build it up
         # from low-order to high-order
         digits = digits[::-1]
@@ -3354,8 +3355,8 @@ class CobolVariable():
 
         # Build fences:
         number_of_digits = self.NumberOfDigits()
-        left  = '0' * (number_of_digits-len(left) ) + left
-        right = right + '0' * (number_of_digits-len(right))
+        left  = '0' * (number_of_digits - len(left) ) + left
+        right = right + '0' * (number_of_digits - len(right))
 
         if self.AttrType != COB_TYPE_NUMERIC_DISPLAY or self.AttrDigits <= self.Length:
             # start off with the rightmost digits of left:
@@ -3610,7 +3611,7 @@ class CobolVariable():
 
     def NumberOfDigits(self):
         retval = self.AttrDigits
-        if not (self.AttrFlags & COB_FLAG_BINARY_TRUNC) and ((self.AttrFlags & COB_FLAG_REAL_BINARY) or (self.AttrType == COB_TYPE_NUMERIC_BINARY)) :
+        if not (self.AttrFlags & COB_FLAG_BINARY_TRUNC) and ((self.AttrFlags & COB_FLAG_REAL_BINARY) or (self.AttrType == COB_TYPE_NUMERIC_BINARY)):
             if self.Length in SIZE_TO_DIGITS:
                 retval = SIZE_TO_DIGITS[self.Length]
             else:
@@ -4154,7 +4155,6 @@ class ModuleInformation():
                 traceback.print_exc()
         return False
 
-
     def ParseVariableString(self, variable_string):
 
         # We have a new variable string
@@ -4489,7 +4489,7 @@ def BuildHumanHString(node, level):
             h_str += BuildHumanHString(child, 0)
     else:
         # Prefix with some number of spaces per level:
-        for i in range(level): # pylint: disable=unused-variable
+        for i in range(level):  # pylint: disable=unused-variable
             h_str += "  "
         if GV_ModuleState.sticky_display_mode in ('0', '1', '2', '3', '4', '5'):
             # We are in a mode that wants the level displayed:
@@ -5129,7 +5129,7 @@ class CPrintWorker():
             else:
                 ch = chr(0)
             while i < var_left.ActualLength:
-                values.append( ord(ch) )
+                values.append(ord(ch))
                 i += 1
 
             PutBytesAt(var_left.ActualLocation, values, var_left.ActualLength)
