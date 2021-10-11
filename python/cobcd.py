@@ -269,7 +269,6 @@ class GlobalVariables():
             print("#### byteorder", self.byteorder)
 
         self.ShortTermMemory = []
-        self.repeat_count = 11  # Default value for "'0' <repeats 11 times>" logic
 
         # These are used in "cprint this=that"
         self.VarLeft = None
@@ -422,7 +421,7 @@ def ReplaceWithRepeatCountQuoted(s):
     fox = 0
     prior_contraction = False
     in_a_quoted_run = False
-    number_of_repeated_runs = 0
+    repeat_count = gdb.parameter("print repeats") or 1000000
     while rabbit < len(s):
         # Arriving here means:
         # We're here for the first time, or we just finished a run
@@ -439,9 +438,7 @@ def ReplaceWithRepeatCountQuoted(s):
 
         # We have either run out of characters, or else
         # rabbit points to a character other than char
-        if rabbit - fox >= GV_GlobalVariables.repeat_count:  # This is a magic number
-            # At 29, the <repeats> clause will be shorter than the replaced text
-            # At 11, the string will be longer.  But 11 matches what gdb does
+        if rabbit - fox > repeat_count:  # This duplicates GDB behavior
             if in_a_quoted_run:
                 # We have to end the current ongoing string
                 # and start this contraction with a prelude
@@ -454,7 +451,6 @@ def ReplaceWithRepeatCountQuoted(s):
             retval += ' times>, '
             prior_contraction = True
             in_a_quoted_run = False
-            number_of_repeated_runs += 1
         else:
             # The run is short enough that we just put the characters
             # into place
@@ -494,7 +490,7 @@ def ReplaceWithRepeatCountBracketed(s):
     fox = 0
     prior_contraction = False
     in_a_quoted_run = False
-    number_of_repeated_runs = 0
+    repeat_count = gdb.parameter("print repeats") or 1000000
     while rabbit < len(s):
         # Arriving here means:
         # We're here for the first time, or we just finished a run
@@ -511,8 +507,7 @@ def ReplaceWithRepeatCountBracketed(s):
 
         # We have either run out of characters, or else
         # rabbit points to a character other than char
-        if (rabbit - fox) // 2 >= GV_GlobalVariables.repeat_count:  # This is a magic number.  See the
-                                                                    # comment in ReplaceWithRepeatCountQuoted()
+        if (rabbit - fox) // 2 > repeat_count:  # See the comment in ReplaceWithRepeatCountQuoted()
             if in_a_quoted_run:
                 # We have to end the current ongoing string
                 # and start this contraction with a prelude
@@ -524,7 +519,6 @@ def ReplaceWithRepeatCountBracketed(s):
             retval += ' times>, '
             prior_contraction = True
             in_a_quoted_run = False
-            number_of_repeated_runs += 1
         else:
             # The run is short enough that we just put the characters
             # into place
@@ -6128,16 +6122,6 @@ class CPrint(gdb.Command):
 
     def invoke(self, arguments, from_tty):
         try:
-            # Check if this is a special case.  (Enough of these will
-            # mean putting this in a separate function.)
-            tokens = arguments.split()
-            if len(tokens) == 3 and tokens[0] == "set" and tokens[1] == "repeat" and IsNumber(tokens[2]):
-                GV_GlobalVariables.repeat_count = int(tokens[2])
-                if GV_GlobalVariables.repeat_count < 1:
-                    GV_GlobalVariables.repeat_count = 1000000
-                GV_ModuleInformation.FlagAllAsDirty()  # To force reformatting
-                return
-
             GV_ModuleState.EstablishModuleState(False)
             self.worker.ProcessArguments(arguments)
         # pass user errors unchanged
