@@ -1759,20 +1759,21 @@ class CobolVariable():
         return return_value
 
     def GetDataAsBinary(self):
-        binary_byte_limit = 16
         retval = ""
+        elements = (gdb.parameter("print elements") or 1000000000) // 4
+        # Because "0b00000000" is so much longer than 0x00, we divide the
+        # number of elements down to keep output length under control
         if self.ActualLength > 0:
             retval += "0b"
-            output_bytes = self.Data()
+            output_bytes = self.Data()[0:elements]
             if GV_GlobalVariables.byteorder == "little" and not self.Refmod:
                 if (self.AttrFlags & COB_FLAG_BINARY_SWAP) == 0:  # If this is ON, then it is already in display order
                     if (self.AttrFlags & (COB_FLAG_REAL_BINARY | COB_FLAG_IS_POINTER | COB_FLAG_IS_FP)) != 0:
                         # These three types are little-endian; flip them so they display with the big byte to the left
                         output_bytes.reverse()
-            binary_byte = 0
             # The decimal value 65 gets converted to "0b01000001"
             #
-            # 'bit' is a loop counter; there are eight generated bits per input byte.
+            # '_bit' is a loop counter; there are eight generated bits per input byte.
             #
             # The "if byte >= 128" statement is equivalent to "if byte & 0x80"  So, it's
             # just a test to see if the high-order bit of byte is on.  If so, the string
@@ -1787,17 +1788,14 @@ class CobolVariable():
                         retval += '0'
                     byte *= 2
                     byte %= 256
-                binary_byte += 1
-                if binary_byte >= binary_byte_limit:
-                    break
-            if len(output_bytes) > binary_byte_limit:
-                retval += "...({0} total bytes)".format(len(output_bytes))
+            if len(output_bytes) < len(self.Data()):
+                retval += "...({0} total bytes)".format(len(self.Data()))
         return retval
 
     def GetDataAsHex(self):
-        hex_byte_limit = 16
         retval = ""
-        output_bytes = self.Data()
+        elements = gdb.parameter("print elements")
+        output_bytes = self.Data()[0:elements]
         if self.ActualLength > 0:
             retval = "0x"
             if GV_GlobalVariables.byteorder == "little" and not self.Refmod:
@@ -1805,17 +1803,13 @@ class CobolVariable():
                     if (self.AttrFlags & (COB_FLAG_REAL_BINARY | COB_FLAG_IS_POINTER | COB_FLAG_IS_FP)) != 0:
                         # These three types are little-endian; flip them so they display with the big byte to the left
                         output_bytes.reverse()
-            hex_byte = 0
             for byte in output_bytes:
                 hexout = hex(byte)[-2:]
                 if hexout[0:1] == 'x':
                     hexout = '0' + hexout[-1:]
                 retval += hexout
-                hex_byte += 1
-                if hex_byte >= hex_byte_limit:
-                    break
-            if len(output_bytes) > hex_byte_limit:
-                retval += "...({0} total bytes)".format(len(output_bytes))
+            if len(output_bytes) < len(self.Data()):
+                retval += "...({0} total bytes)".format(len(self.Data()))
         return retval
 
     def CalculateTableOffset(self):
@@ -2322,7 +2316,8 @@ class CobolVariable():
         if self.Refmod:
             print("Display:     ", end="")
             if self.IsAlphanumeric():
-                data = self.Data()
+                elements = gdb.parameter("print elements")
+                data = self.Data()[0:elements]
                 for byte in data:
                     if byte >= 32:   # valid ASCII characters
                         print(chr(byte), end="")
@@ -2330,7 +2325,8 @@ class CobolVariable():
                         print('^', end="")
             else:
                 print("[", end="")
-                data = self.Data()
+                elements = gdb.parameter("print elements")
+                data = self.Data()[0:elements]
                 for byte in data:
                     print(hex(256 + byte)[-2:], end="")
                 print("]", end="")
@@ -2450,7 +2446,8 @@ class CobolVariable():
         # At this point, we want to show the raw data in byte order.  Note that
         # the hex representation isn't necessarily the same as the Hex: up above;
         # that one is corrected for little-endian, and this one isn't
-        raw_data = self.Data()
+        elements = gdb.parameter("print elements")
+        raw_data = self.Data()[0:elements]
         print("Data: (HEX)   [", end=" ")
         for byte in raw_data:
             hexout = hex(256 + byte)[-2:]
@@ -3527,7 +3524,8 @@ class CobolVariable():
         body = ""
         pic = ""
         body += '"'
-        data = self.Data()
+        elements = gdb.parameter("print elements")
+        data = self.Data()[0:elements]
         for _i, d in enumerate(data):
             if d < 32:
                 body += '^'
@@ -5078,7 +5076,8 @@ class CPrintWorker():
 
     def GetDisplayBody(self, payload):
         body = ""
-        data = payload.Data()
+        elements = gdb.parameter("print elements")
+        data = payload.Data()[0:elements]
         if payload.Refmod:
             if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_BINARY:
                 body = "[0x" + payload.GetDataAsBinary() + ']'
