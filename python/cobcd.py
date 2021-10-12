@@ -4531,9 +4531,17 @@ def BuildHumanHString(node, level):
             pass
         else:
             # This mode doesn't want the program name, if it is there
+
+            # There might be a "(xx)" suffix, indicating OCCURS.  Make sure
+            # we keep it:
+            paren_args = name.split('(')
+            name = paren_args[0]
             nfound = name.find('/')
             if nfound > -1:
                 name = name[0:nfound]
+            if len(paren_args) > 1:
+                paren_args[0] = name
+                name = '('.join(paren_args)
         h_str += name
 
         if len(node.children):
@@ -4563,7 +4571,6 @@ def BuildHierarchicalTree(possibilities, is_machine_mode):
             # doesn't have enough information because the COBC compiler didn't pass
             # along enough information.
             continue
-
         parent_index = payload.index_of_parent
         # payload_index and parent_index are indices into storage_list
         payload.FetchVariableData(False)
@@ -4582,7 +4589,17 @@ def BuildHierarchicalTree(possibilities, is_machine_mode):
                 # Just use the lowest level.  When necessary, the VSC code will
                 # be able to walk up through the containers to get the full name
                 new_node.BaseName = split_name[0]
+
+            # When an element is a table, indicate that
+            if payload.OccursMin != payload.OccursMax and not is_machine_mode:
+                # When the VSC extension is changed to permit parentheses,
+                # get rid of the "not is_machine_mode"
+                new_node.BaseName += "(1)"
+
+            # Flag that a variable is a redefines
             if payload.IsRedefines and not is_machine_mode:
+                # When the VSC extension is changed to permit brackets,
+                # get rid of the "not is_machine_mode"
                 new_node.BaseName += " [R]"
 
             new_node.display_body = WithRepeatCount(payload.display_body)

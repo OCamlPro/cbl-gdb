@@ -14,6 +14,8 @@ define printem
     echo cprint/x 1\n
     cprint/x 1
     echo cprint/m *\n
+    cprint/p *
+    echo cprint/m ?\n
     cprint/m *
     echo cprint/m ?\n
     cprint/m ?
@@ -48,6 +50,14 @@ echo cprint/v0\n
 cprint/v0
 echo cprint *\n
 cprint *
+echo cprint/p *\n
+cprint/p *
+echo cprint/v1\n
+cprint/v1
+echo cprint/p *\n
+cprint/p *
+echo cprint/v3\n
+cprint/v3
 
 echo cp ws-table\n
 cp ws-table
