@@ -4967,64 +4967,86 @@ class CPrintWorker():
         # Generalized parsing of /<mode><param> or /<mode> <param>
         mode = None
         param = None
-        if len(args) > 0 and len(args[0]) > 0 and args[0][0] == '/':
-            # The first character of the first argument is a slash
+        if len(args) > 0:
+            if len(args[0]) > 0 and args[0][0] == '/':
+                # The first character of the first argument is a slash
 
-            # The immediately following character is the mode:
-            if len(args[0]) > 1:
-                mode = args[0][1]
+                # The immediately following character is the mode:
+                if len(args[0]) > 1:
+                    mode = args[0][1]
 
-            # We now have a choice.  We allow things like "/r6" and "/r 6"
-            # We don't allow "/v 6", so we have to keep that in mind
-            # Note: At the present time, param isn't used; I am keeping this code
-            # around because I have it in the back of my head to re-write the
-            # parameter processing.
-            if len(args[0]) > 2:
-                # Anything after the /<mode><param> is a parameter
-                param = args[0][2:]
+                # We now have a choice.  We allow things like "/r6" and "/r 6"
+                # We don't allow "/v 6", so we have to keep that in mind
+                # Note: At the present time, param isn't used; I am keeping this code
+                # around because I have it in the back of my head to re-write the
+                # parameter processing.
+                if len(args[0]) > 2:
+                    # Anything after the /<mode><param> is a parameter
+                    param = args[0][2:]
+                else:
+                    if len(args) > 1:
+                        # We are dealing with /v<mode> <something>
+                        # <something> might be a parameter:
+                        param = args[1]
+
+                if mode in "mvdxbq":
+                    # Any of these switches suppress the hierarchical pretty printing
+                    GV_ModuleState.current_pretty_mode = ''
+
+                if mode == 'm':
+                    self.machine_interface_mode = True
+                    args.pop(0)
+                elif mode == 'r':
+                    args = self.ProcessSlashR(args)
+                elif mode == 'v':
+                    args = self.ProcessSlashV(args)
+                elif mode == 'p':
+                    GV_ModuleState.current_pretty_mode = 'p'
+                    args.pop(0)
+                    if len(args) == 0:
+                        # There are no additional arguments, so also make it the session mode
+                        GV_ModuleState.sticky_pretty_mode = GV_ModuleState.current_pretty_mode
+                elif mode == 'P':
+                    GV_ModuleState.current_pretty_mode = ''
+                    args.pop(0)
+                    if len(args) == 0:
+                        # There are no additional arguments, so also make it the session mode
+                        GV_ModuleState.sticky_pretty_mode = GV_ModuleState.current_pretty_mode
+                elif mode == 'd':
+                    GV_ModuleState.current_display_mode = 'd'
+                    args.pop(0)
+                elif mode in "xbq":
+                    GV_ModuleState.current_display_submode = mode
+                    args.pop(0)
+                elif mode == 'h':
+                    global GV_reads
+                    global GV_bytes_read
+                    print("There were {0} reads of {1} bytes".format(GV_reads,GV_bytes_read))
+                    args.pop(0)
+                else:
+                    ConditionalRaise("Undefined output format \"{0}\"".format(args[0][1:]))
+                    args = []
             else:
-                if len(args) > 1:
-                    # We are dealing with /v<mode> <something>
-                    # <something> might be a parameter:
-                    param = args[1]
-
-            if mode in "mvdxbq":
-                # Any of these switches suppress the hierarchical pretty printing
-                GV_ModuleState.current_pretty_mode = ''
-
-            if mode == 'm':
-                self.machine_interface_mode = True
-                args.pop(0)
-            elif mode == 'r':
-                args = self.ProcessSlashR(args)
-            elif mode == 'v':
-                args = self.ProcessSlashV(args)
-            elif mode == 'p':
-                GV_ModuleState.current_pretty_mode = 'p'
-                args.pop(0)
-                if len(args) == 0:
-                    # There are no additional arguments, so also make it the session mode
-                    GV_ModuleState.sticky_pretty_mode = GV_ModuleState.current_pretty_mode
-            elif mode == 'P':
-                GV_ModuleState.current_pretty_mode = ''
-                args.pop(0)
-                if len(args) == 0:
-                    # There are no additional arguments, so also make it the session mode
-                    GV_ModuleState.sticky_pretty_mode = GV_ModuleState.current_pretty_mode
-            elif mode == 'd':
-                GV_ModuleState.current_display_mode = 'd'
-                args.pop(0)
-            elif mode in "xbq":
-                GV_ModuleState.current_display_submode = mode
-                args.pop(0)
-            elif mode == 'h':
-                global GV_reads
-                global GV_bytes_read
-                print("There were {0} reads of {1} bytes".format(GV_reads,GV_bytes_read))
-                args.pop(0)
-            else:
-                ConditionalRaise("Undefined output format \"{0}\"".format(args[0][1:]))
-                args = []
+                # The first parameter doesn't start with a slash character
+                #
+                # usually, this means that the first argument is a variable.  However, it has
+                # been deemed desirable to handle COBOL's LENGTH OF and ADDRESS OF "registers".
+                #
+                # We are going to cram -- that's the only possible word for it -- that capability
+                # in here.  We're going to do it by identifying them, flagging the need for them
+                # as display_modes, and eliminating the resulting extraneous text before the variable name,
+                # and proceed.  Downstream processing will recognize the "address" and "length" display_mode, and
+                # output the appropriate value
+                if len(args) > 2:
+                    if args[1].lower() == "of":
+                        if args[0].lower() == "address":
+                            GV_ModuleState.current_display_mode = "address"
+                            # Trim away the leading "ADDRESS OF"
+                            args = args[2:]
+                        elif args[0].lower() == "length":
+                            # Trim away the leading "LENGTH OF"
+                            GV_ModuleState.current_display_mode = "length"
+                            args = args[2:]
 
         if args:
             args = ' '.join(args)
@@ -5084,6 +5106,10 @@ class CPrintWorker():
             elif GV_ModuleState.current_display_mode in ('2', '5', '8'):
                 print(payload.NameToString())
                 print(body)
+            elif GV_ModuleState.current_display_mode == "length":
+                print("length in bytes is {0} and {1}".format(hex(payload.ActualLength), payload.ActualLength))
+            elif GV_ModuleState.current_display_mode == "address":
+                print("address is {0}".format( hex(payload.ActualLocation) ))
             else:  # GV_ModuleState.current_display_mode ==  'd':
                 payload.ShowFields()
         except KeyboardInterrupt as ki:
