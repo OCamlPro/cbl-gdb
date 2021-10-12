@@ -1780,8 +1780,7 @@ class CobolVariable():
             # left-shifted by one (byte *= 2), and then bits to the left of 0x80
             # trimmed away (with byte %= 256).
             for byte in output_bytes:
-                # pylint: disable=unused-variable
-                for bit in range(8):
+                for _bit in range(8):
                     if byte >= 128:
                         retval += '1'
                     else:
@@ -3279,8 +3278,7 @@ class CobolVariable():
                 negative = True
 
             # Convert the binary value in self.Data() to a string
-            # pylint: disable=unused-variable
-            for i, d in enumerate(data):
+            for _i, d in enumerate(data):
                 digit = d & 0x3F
                 if digit < 32:
                     body += '^'
@@ -3530,8 +3528,7 @@ class CobolVariable():
         pic = ""
         body += '"'
         data = self.Data()
-        # pylint: disable=unused-variable
-        for i, d in enumerate(data):
+        for _i, d in enumerate(data):
             if d < 32:
                 body += '^'
             else:
@@ -3567,8 +3564,7 @@ class CobolVariable():
         body = ""
         pic = ""
         data = self.Data()
-        # pylint: disable=unused-variable
-        for i, d in enumerate(data):
+        for _i, d in enumerate(data):
             if d < 32 or d >= 128:
                 body += '.'
             else:
@@ -3928,8 +3924,7 @@ class CobolVariable():
                 print("Unknown COB_TYPE", self.AttrType, hex(self.AttrType))
             non_printable = 0
             data = self.Data()
-            # pylint: disable=unused-variable
-            for i, d in enumerate(data):
+            for _i, d in enumerate(data):
                 if d < 32:
                     non_printable += 1
 
@@ -4513,7 +4508,7 @@ def BuildHumanHString(node, level):
             h_str += BuildHumanHString(child, 0)
     else:
         # Prefix with some number of spaces per level:
-        for i in range(level):  # pylint: disable=unused-variable
+        for _i in range(level):
             h_str += "  "
         if GV_ModuleState.sticky_display_mode in ('0', '1', '2', '3', '4', '5'):
             # We are in a mode that wants the level displayed:
@@ -4752,8 +4747,7 @@ def get_completion_possibilities(word):
 
     word = word.upper()
     if word == '*':
-        # pylint: disable=unused-variable
-        possibilities_1, limit_reached = get_sorted_possibilities(['*'], 0, no_data=True)
+        possibilities_1, _limit_reached = get_sorted_possibilities(['*'], 0, no_data=True)
         for index in possibilities_1:
             name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
             possibilities.append(name)
@@ -5092,8 +5086,7 @@ class CPrintWorker():
                 # The refmod payload is not alphabetic (or the submode is x for hex) and so we are
                 # going to display the refmodded payload in hex:
                 body = "[0x"
-                # pylint: disable=unused-variable
-                for i, d in enumerate(data):
+                for _i, d in enumerate(data):
                     # This is a trick. By adding 256 to the byte, we ensure that
                     # 0, for example, becomes 0x100 instead of 0x0.  Thus we can
                     # strip off the final two characters for our hexadecimal string
@@ -5104,8 +5097,7 @@ class CPrintWorker():
                 # we are going to extract the refmodded characters from the data buffer
                 # and display them as ASCII
                 body = '"'
-                # pylint: disable=unused-variable
-                for i, d in enumerate(data):
+                for _i, d in enumerate(data):
                     nch = d
                     if nch < 32:
                         nch = ord(NON_PRINTABLE_CHAR)
