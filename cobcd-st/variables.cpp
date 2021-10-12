@@ -748,6 +748,15 @@ VARIABLES::FormatVariablesInfo(stringstream &ss) const
             continue;
         }
 
+        if( variable->record_type == "L" AND variable->level == 66) {
+            // GnuCOBOL 3.1.2 is not providing enough information for CBL-GDB
+            // to find 66 RENAMES variables in LOCAL-STORAGE.  So, until that's
+            // fixed, we just skip them here.  The fix will be when the
+            // cob_dump_field_ext field provides the offset and length from
+            // cob_local_ptr
+            continue;
+        }
+
         string name = variable->name;
         if( name.empty() ) {
             name = "FILLER";

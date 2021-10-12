@@ -1061,7 +1061,7 @@ class VarTrie():
         for payload_index in range(1, len(self.storage_list)):
             payload = self.storage_list[payload_index]
 
-            # By default, a variable is its own granddaddy.  (A LEVEL 00, 01 or >49 variable
+            # By default, a variable is its own granddaddy.  (A LEVEL 00, 01 or >66 variable
             # doesn't have a parent.  Even so, it is its own granddaddy; that's so it can easily find
             # its own grand_data[] and grand_dirty flag
             payload.index_of_granddaddy = payload_index
@@ -1071,7 +1071,7 @@ class VarTrie():
                 # the immediate preceding entry.  See self.LoadFromLine
                 payload.index_of_parent = payload_index - 1
 
-            elif payload.Level >= 1 and payload.Level <= 49:
+            elif payload.Level >= 1 and payload.Level <= 49 or payload.Level == 66 or payload.Level == 88:
                 # LEVELs 02-49 obviously have parents.  LEVEL 01 usually doesn't have a parent
 
                 # We will, however, run this code in part because we are piggybacking the
@@ -1081,7 +1081,8 @@ class VarTrie():
 
                 # Find our parent:
 
-                # TODO:  Note that this following code has, inherently, O(N-squared) time complexity.
+                # TODO:  A better way of finding our parent.
+                # Note that this following code has, inherently, O(N-squared) time complexity.
                 # In practice it may not be much of a problem, because in general you will never
                 # have to look very far back before finding your parent.  But O(N-squared) always
                 # makes me nervous.
@@ -1131,7 +1132,7 @@ class VarTrie():
                     granddaddy = GV_ModuleInformation.var_trie.storage_list[payload.index_of_granddaddy].Name
                 print("DEBUGDUMP   ", payload.Level, payload.Name, parent, granddaddy, payload.IsDirty())
 
-    def LoadFromLine(self, variable_line):
+    def LoadTrieFromLine(self, variable_line):
         tokens = variable_line.split("|")
         try:
             if len(tokens) == 11:
@@ -1224,7 +1225,7 @@ class VarTrie():
                         if self.stashed_line:
                             # We do.  It's time to process it:
                             # (Recursion is a beautiful thing)
-                            self.LoadFromLine(self.stashed_line)
+                            self.LoadTrieFromLine(self.stashed_line)
                             self.stashed_line = None
         except:
             traceback.print_exc()
@@ -2341,15 +2342,7 @@ class CobolVariable():
 
         print("Hex:        ", self.GetDataAsHex())
 
-        if self.Section == 'L':
-            # This is local-storage
-            print("Field:      ", "f0")
-        else:
-            # CHECKME: possibly print self.field?
-            if self.Fname:
-                print("Field:      ", self.Fname)
-            else:
-                print("Field:      ", "<none>")
+        print("Field:      ", self.Fname or "<none>")
 
         if self.Section == 'L':
             # This is local-storage
@@ -4199,7 +4192,7 @@ class ModuleInformation():
         variable_lines = variable_string.split("~")
         for variable_line in variable_lines:
             self.line_list.LoadFromLine(variable_line)
-            self.var_trie.LoadFromLine(variable_line)
+            self.var_trie.LoadTrieFromLine(variable_line)
             self.LoadPerformFromLine(variable_line)
 
         self.var_trie.PopulateIndexOfParent()

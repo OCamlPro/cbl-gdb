@@ -11,39 +11,37 @@ cprint/v0 *
  6 : 02 NAME-FIRST/WASHINGTON  : "WASHINGTON"
  7 : 02 LOCATION/WASHINGTON  : "DC        "
  8 : 02 TEMPERATURE/WASHINGTON  : "HOT       "
- 9 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
-10 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
-11 : 02 FILLER/CARVER  : ' ' <repeats 43 times>
-12 : 02 NAME-FIRST/CARVER  : "CARVER    "
-13 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
-14 : 02 FILLER/PEANUTS  : ' ' <repeats 63 times>
-15 : 02 NAME-FIRST/PEANUTS  : 123.456789
-16 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
-17 : 02 FILLER/LEGUMES  : ' ' <repeats 63 times>
-18 : 02 NAME-FIRST/LEGUMES  : 123456.789
-19 : 01 WS-JIM  : '^' <repeats 22 times>
-20 : 02 WS-FIRSTNAME/WS-JIM  : "^^^^^^^^^^"
-21 : 02 WS-MIDDLE-INITIAL/WS-JIM  : "^"
-22 : 02 FILLER/WS-JIM  : "^"
-23 : 02 WS-LASTNAME/WS-JIM  : "^^^^^^^^^^"
-24 : 01 WS-BOB  : '^' <repeats 22 times>
-25 : 02 WS-FIRSTNAME/WS-BOB  : "^^^^^^^^^^"
-26 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "^"
-27 : 02 FILLER/WS-BOB  : "^"
-28 : 02 WS-LASTNAME/WS-BOB  : "^^^^^^^^^^"
-29 : 01 WS-FLOATTEST  : 0
+ 9 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+10 : 02 FILLER/CARVER  : ' ' <repeats 43 times>
+11 : 02 NAME-FIRST/CARVER  : "CARVER    "
+12 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+13 : 02 FILLER/PEANUTS  : ' ' <repeats 63 times>
+14 : 02 NAME-FIRST/PEANUTS  : 123.456789
+15 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+16 : 02 FILLER/LEGUMES  : ' ' <repeats 63 times>
+17 : 02 NAME-FIRST/LEGUMES  : 123456.789
+18 : 01 WS-JIM  : '^' <repeats 22 times>
+19 : 02 WS-FIRSTNAME/WS-JIM  : "^^^^^^^^^^"
+20 : 02 WS-MIDDLE-INITIAL/WS-JIM  : "^"
+21 : 02 FILLER/WS-JIM  : "^"
+22 : 02 WS-LASTNAME/WS-JIM  : "^^^^^^^^^^"
+23 : 01 WS-BOB  : '^' <repeats 22 times>
+24 : 02 WS-FIRSTNAME/WS-BOB  : "^^^^^^^^^^"
+25 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "^"
+26 : 02 FILLER/WS-BOB  : "^"
+27 : 02 WS-LASTNAME/WS-BOB  : "^^^^^^^^^^"
+28 : 01 WS-FLOATTEST  : 0
 cprint/v0 ?
  1 : 01 GEORGE  : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 NAME-FIRST/GEORGE  : "GEORGE    "
  3 : 01 WASHINGTON  : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
  4 : 02 NAME-FIRST/WASHINGTON  : "WASHINGTON"
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
- 6 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
- 7 : 02 NAME-FIRST/CARVER  : "CARVER    "
- 8 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
- 9 : 02 NAME-FIRST/PEANUTS  : 123.456789
-10 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
-11 : 02 NAME-FIRST/LEGUMES  : 123456.789
+ 5 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+ 6 : 02 NAME-FIRST/CARVER  : "CARVER    "
+ 7 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+ 8 : 02 NAME-FIRST/PEANUTS  : 123.456789
+ 9 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+10 : 02 NAME-FIRST/LEGUMES  : 123456.789
 cprint/v3 *
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 FILLER/GEORGE/test [L-S] : ' ' <repeats 13 times>
@@ -53,39 +51,37 @@ cprint/v3 *
  6 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
  7 : 02 LOCATION/WASHINGTON/test [L-S] : "DC        "
  8 : 02 TEMPERATURE/WASHINGTON/test [L-S] : "HOT       "
- 9 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
-10 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
-11 : 02 FILLER/CARVER/test [L-S] : ' ' <repeats 43 times>
-12 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
-13 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
-14 : 02 FILLER/PEANUTS/test [L-S] : ' ' <repeats 63 times>
-15 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-16 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
-17 : 02 FILLER/LEGUMES/test [L-S] : ' ' <repeats 63 times>
-18 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-19 : 01 WS-JIM/JIMBOB [W-S] : '^' <repeats 22 times>
-20 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "^^^^^^^^^^"
-21 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : "^"
-22 : 02 FILLER/WS-JIM/JIMBOB [W-S] : "^"
-23 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "^^^^^^^^^^"
-24 : 01 WS-BOB/JIMBOB [W-S] : '^' <repeats 22 times>
-25 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "^^^^^^^^^^"
-26 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "^"
-27 : 02 FILLER/WS-BOB/JIMBOB [W-S] : "^"
-28 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "^^^^^^^^^^"
-29 : 01 WS-FLOATTEST/JIMBOB [W-S] : 0
+ 9 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+10 : 02 FILLER/CARVER/test [L-S] : ' ' <repeats 43 times>
+11 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+12 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
+13 : 02 FILLER/PEANUTS/test [L-S] : ' ' <repeats 63 times>
+14 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+15 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
+16 : 02 FILLER/LEGUMES/test [L-S] : ' ' <repeats 63 times>
+17 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
+18 : 01 WS-JIM/JIMBOB [W-S] : '^' <repeats 22 times>
+19 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "^^^^^^^^^^"
+20 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : "^"
+21 : 02 FILLER/WS-JIM/JIMBOB [W-S] : "^"
+22 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "^^^^^^^^^^"
+23 : 01 WS-BOB/JIMBOB [W-S] : '^' <repeats 22 times>
+24 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "^^^^^^^^^^"
+25 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "^"
+26 : 02 FILLER/WS-BOB/JIMBOB [W-S] : "^"
+27 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "^^^^^^^^^^"
+28 : 01 WS-FLOATTEST/JIMBOB [W-S] : 0
 cprint/v3 ?
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
  3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
- 6 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
- 8 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
- 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
-11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
+ 5 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 6 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+ 7 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
+ 8 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+ 9 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
+10 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 cprint/v6 *
  1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
  2 : FILLER/GEORGE : ' ' <repeats 13 times>
@@ -95,39 +91,37 @@ cprint/v6 *
  6 : NAME-FIRST/WASHINGTON : "WASHINGTON"
  7 : LOCATION/WASHINGTON : "DC        "
  8 : TEMPERATURE/WASHINGTON : "HOT       "
- 9 : WABASH/TEMPERATURE/WASHINGTON : "          "
-10 : CARVER : ' ' <repeats 43 times>, "CARVER    "
-11 : FILLER/CARVER : ' ' <repeats 43 times>
-12 : NAME-FIRST/CARVER : "CARVER    "
-13 : PEANUTS : ' ' <repeats 63 times>, "123456789"
-14 : FILLER/PEANUTS : ' ' <repeats 63 times>
-15 : NAME-FIRST/PEANUTS : 123.456789
-16 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-17 : FILLER/LEGUMES : ' ' <repeats 63 times>
-18 : NAME-FIRST/LEGUMES : 123456.789
-19 : WS-JIM : '^' <repeats 22 times>
-20 : WS-FIRSTNAME/WS-JIM : "^^^^^^^^^^"
-21 : WS-MIDDLE-INITIAL/WS-JIM : "^"
-22 : FILLER/WS-JIM : "^"
-23 : WS-LASTNAME/WS-JIM : "^^^^^^^^^^"
-24 : WS-BOB : '^' <repeats 22 times>
-25 : WS-FIRSTNAME/WS-BOB : "^^^^^^^^^^"
-26 : WS-MIDDLE-INITIAL/WS-BOB : "^"
-27 : FILLER/WS-BOB : "^"
-28 : WS-LASTNAME/WS-BOB : "^^^^^^^^^^"
-29 : WS-FLOATTEST : 0
+ 9 : CARVER : ' ' <repeats 43 times>, "CARVER    "
+10 : FILLER/CARVER : ' ' <repeats 43 times>
+11 : NAME-FIRST/CARVER : "CARVER    "
+12 : PEANUTS : ' ' <repeats 63 times>, "123456789"
+13 : FILLER/PEANUTS : ' ' <repeats 63 times>
+14 : NAME-FIRST/PEANUTS : 123.456789
+15 : LEGUMES : ' ' <repeats 63 times>, "123456789"
+16 : FILLER/LEGUMES : ' ' <repeats 63 times>
+17 : NAME-FIRST/LEGUMES : 123456.789
+18 : WS-JIM : '^' <repeats 22 times>
+19 : WS-FIRSTNAME/WS-JIM : "^^^^^^^^^^"
+20 : WS-MIDDLE-INITIAL/WS-JIM : "^"
+21 : FILLER/WS-JIM : "^"
+22 : WS-LASTNAME/WS-JIM : "^^^^^^^^^^"
+23 : WS-BOB : '^' <repeats 22 times>
+24 : WS-FIRSTNAME/WS-BOB : "^^^^^^^^^^"
+25 : WS-MIDDLE-INITIAL/WS-BOB : "^"
+26 : FILLER/WS-BOB : "^"
+27 : WS-LASTNAME/WS-BOB : "^^^^^^^^^^"
+28 : WS-FLOATTEST : 0
 cprint/v6 ?
  1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
  2 : NAME-FIRST/GEORGE : "GEORGE    "
  3 : WASHINGTON : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
  4 : NAME-FIRST/WASHINGTON : "WASHINGTON"
- 5 : WABASH/TEMPERATURE/WASHINGTON : "          "
- 6 : CARVER : ' ' <repeats 43 times>, "CARVER    "
- 7 : NAME-FIRST/CARVER : "CARVER    "
- 8 : PEANUTS : ' ' <repeats 63 times>, "123456789"
- 9 : NAME-FIRST/PEANUTS : 123.456789
-10 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-11 : NAME-FIRST/LEGUMES : 123456.789
+ 5 : CARVER : ' ' <repeats 43 times>, "CARVER    "
+ 6 : NAME-FIRST/CARVER : "CARVER    "
+ 7 : PEANUTS : ' ' <repeats 63 times>, "123456789"
+ 8 : NAME-FIRST/PEANUTS : 123.456789
+ 9 : LEGUMES : ' ' <repeats 63 times>, "123456789"
+10 : NAME-FIRST/LEGUMES : 123456.789
 cprint/m *
 variables=[{name="GEORGE/test",value="{_groupvalue=\"' ' <repeats 13 times>, \\\"GEORGE    \\\"\",FILLER=\"' ' <repeats 13 times>\",NAME-FIRST=\"\\\"GEORGE    \\\"\"}"},{name="WASHINGTON/test",value="{_groupvalue=\"' ' <repeats 23 times>, \\\"WASHINGTONDC        HOT       \\\"\",FILLER=\"' ' <repeats 23 times>\",NAME-FIRST=\"\\\"WASHINGTON\\\"\",LOCATION=\"\\\"DC        \\\"\",TEMPERATURE=\"\\\"HOT       \\\"\"}"},{name="CARVER/test",value="{_groupvalue=\"' ' <repeats 43 times>, \\\"CARVER    \\\"\",FILLER=\"' ' <repeats 43 times>\",NAME-FIRST=\"\\\"CARVER    \\\"\"}"},{name="PEANUTS/test",value="{_groupvalue=\"' ' <repeats 63 times>, \\\"123456789\\\"\",FILLER=\"' ' <repeats 63 times>\",NAME-FIRST=\"123.456789\"}"},{name="LEGUMES/test",value="{_groupvalue=\"' ' <repeats 63 times>, \\\"123456789\\\"\",FILLER=\"' ' <repeats 63 times>\",NAME-FIRST=\"123456.789\"}"},{name="WS-JIM/JIMBOB",value="{_groupvalue=\"'^' <repeats 22 times>\",WS-FIRSTNAME=\"\\\"^^^^^^^^^^\\\"\",WS-MIDDLE-INITIAL=\"\\\"^\\\"\",FILLER=\"\\\"^\\\"\",WS-LASTNAME=\"\\\"^^^^^^^^^^\\\"\"}"},{name="WS-BOB/JIMBOB",value="{_groupvalue=\"'^' <repeats 22 times>\",WS-FIRSTNAME=\"\\\"^^^^^^^^^^\\\"\",WS-MIDDLE-INITIAL=\"\\\"^\\\"\",FILLER=\"\\\"^\\\"\",WS-LASTNAME=\"\\\"^^^^^^^^^^\\\"\"}"},{name="WS-FLOATTEST/JIMBOB",value="\"0\""}]
 cprint/m ?
@@ -1318,41 +1312,39 @@ cprint/v0 *
  6 : 02 NAME-FIRST/WASHINGTON  : "WASHINGTON"
  7 : 02 LOCATION/WASHINGTON  : "DC        "
  8 : 02 TEMPERATURE/WASHINGTON  : "HOT       "
- 9 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
-10 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
-11 : 02 FILLER/CARVER  : ' ' <repeats 43 times>
-12 : 02 NAME-FIRST/CARVER  : "CARVER    "
-13 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
-14 : 02 FILLER/PEANUTS  : ' ' <repeats 63 times>
-15 : 02 NAME-FIRST/PEANUTS  : 123.456789
-16 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
-17 : 02 FILLER/LEGUMES  : ' ' <repeats 63 times>
-18 : 02 NAME-FIRST/LEGUMES  : 123456.789
-19 : 01 WS-JIM  : "James     " Lowden    "
-20 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
-21 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
-22 : 02 FILLER/WS-JIM  : " "
-23 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
-24 : 01 WS-BOB  : "Robert    J Dubner    "
-25 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
-26 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
-27 : 02 FILLER/WS-BOB  : " "
-28 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
-29 : 01 WS-FLOATTEST  : 4.3210001
+ 9 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+10 : 02 FILLER/CARVER  : ' ' <repeats 43 times>
+11 : 02 NAME-FIRST/CARVER  : "CARVER    "
+12 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+13 : 02 FILLER/PEANUTS  : ' ' <repeats 63 times>
+14 : 02 NAME-FIRST/PEANUTS  : 123.456789
+15 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+16 : 02 FILLER/LEGUMES  : ' ' <repeats 63 times>
+17 : 02 NAME-FIRST/LEGUMES  : 123456.789
+18 : 01 WS-JIM  : "James     " Lowden    "
+19 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+20 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+21 : 02 FILLER/WS-JIM  : " "
+22 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+23 : 01 WS-BOB  : "Robert    J Dubner    "
+24 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+25 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+26 : 02 FILLER/WS-BOB  : " "
+27 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+28 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v0 ?
  1 : 01 GEORGE  : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 NAME-FIRST/GEORGE  : "GEORGE    "
  3 : 01 WASHINGTON  : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
  4 : 02 NAME-FIRST/WASHINGTON  : "WASHINGTON"
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
- 6 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
- 7 : 02 NAME-FIRST/CARVER  : "CARVER    "
- 8 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
- 9 : 02 NAME-FIRST/PEANUTS  : 123.456789
-10 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
-11 : 02 NAME-FIRST/LEGUMES  : 123456.789
-12 : 01 WS-JIM  : "James     " Lowden    "
-13 : 01 WS-FLOATTEST  : 4.3210001
+ 5 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+ 6 : 02 NAME-FIRST/CARVER  : "CARVER    "
+ 7 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+ 8 : 02 NAME-FIRST/PEANUTS  : 123.456789
+ 9 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+10 : 02 NAME-FIRST/LEGUMES  : 123456.789
+11 : 01 WS-JIM  : "James     " Lowden    "
+12 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v3 *
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 FILLER/GEORGE/test [L-S] : ' ' <repeats 13 times>
@@ -1362,39 +1354,37 @@ cprint/v3 *
  6 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
  7 : 02 LOCATION/WASHINGTON/test [L-S] : "DC        "
  8 : 02 TEMPERATURE/WASHINGTON/test [L-S] : "HOT       "
- 9 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
-10 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
-11 : 02 FILLER/CARVER/test [L-S] : ' ' <repeats 43 times>
-12 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
-13 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
-14 : 02 FILLER/PEANUTS/test [L-S] : ' ' <repeats 63 times>
-15 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-16 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
-17 : 02 FILLER/LEGUMES/test [L-S] : ' ' <repeats 63 times>
-18 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-19 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
-20 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
-21 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
-22 : 02 FILLER/WS-JIM/JIMBOB [W-S] : " "
-23 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
-24 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
-25 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
-26 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
-27 : 02 FILLER/WS-BOB/JIMBOB [W-S] : " "
-28 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
-29 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
+ 9 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+10 : 02 FILLER/CARVER/test [L-S] : ' ' <repeats 43 times>
+11 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+12 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
+13 : 02 FILLER/PEANUTS/test [L-S] : ' ' <repeats 63 times>
+14 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+15 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
+16 : 02 FILLER/LEGUMES/test [L-S] : ' ' <repeats 63 times>
+17 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
+18 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+19 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+20 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+21 : 02 FILLER/WS-JIM/JIMBOB [W-S] : " "
+22 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+23 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+24 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+25 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+26 : 02 FILLER/WS-BOB/JIMBOB [W-S] : " "
+27 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+28 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 cprint/v3 ?
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
  3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
- 6 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
- 8 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
- 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
-11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
+ 5 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 6 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+ 7 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
+ 8 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+ 9 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
+10 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 cprint/v6 *
  1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
  2 : FILLER/GEORGE : ' ' <repeats 13 times>
@@ -1404,39 +1394,37 @@ cprint/v6 *
  6 : NAME-FIRST/WASHINGTON : "WASHINGTON"
  7 : LOCATION/WASHINGTON : "DC        "
  8 : TEMPERATURE/WASHINGTON : "HOT       "
- 9 : WABASH/TEMPERATURE/WASHINGTON : "          "
-10 : CARVER : ' ' <repeats 43 times>, "CARVER    "
-11 : FILLER/CARVER : ' ' <repeats 43 times>
-12 : NAME-FIRST/CARVER : "CARVER    "
-13 : PEANUTS : ' ' <repeats 63 times>, "123456789"
-14 : FILLER/PEANUTS : ' ' <repeats 63 times>
-15 : NAME-FIRST/PEANUTS : 123.456789
-16 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-17 : FILLER/LEGUMES : ' ' <repeats 63 times>
-18 : NAME-FIRST/LEGUMES : 123456.789
-19 : WS-JIM : "James     " Lowden    "
-20 : WS-FIRSTNAME/WS-JIM : "James     "
-21 : WS-MIDDLE-INITIAL/WS-JIM : """
-22 : FILLER/WS-JIM : " "
-23 : WS-LASTNAME/WS-JIM : "Lowden    "
-24 : WS-BOB : "Robert    J Dubner    "
-25 : WS-FIRSTNAME/WS-BOB : "Robert    "
-26 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-27 : FILLER/WS-BOB : " "
-28 : WS-LASTNAME/WS-BOB : "Dubner    "
-29 : WS-FLOATTEST : 4.3210001
+ 9 : CARVER : ' ' <repeats 43 times>, "CARVER    "
+10 : FILLER/CARVER : ' ' <repeats 43 times>
+11 : NAME-FIRST/CARVER : "CARVER    "
+12 : PEANUTS : ' ' <repeats 63 times>, "123456789"
+13 : FILLER/PEANUTS : ' ' <repeats 63 times>
+14 : NAME-FIRST/PEANUTS : 123.456789
+15 : LEGUMES : ' ' <repeats 63 times>, "123456789"
+16 : FILLER/LEGUMES : ' ' <repeats 63 times>
+17 : NAME-FIRST/LEGUMES : 123456.789
+18 : WS-JIM : "James     " Lowden    "
+19 : WS-FIRSTNAME/WS-JIM : "James     "
+20 : WS-MIDDLE-INITIAL/WS-JIM : """
+21 : FILLER/WS-JIM : " "
+22 : WS-LASTNAME/WS-JIM : "Lowden    "
+23 : WS-BOB : "Robert    J Dubner    "
+24 : WS-FIRSTNAME/WS-BOB : "Robert    "
+25 : WS-MIDDLE-INITIAL/WS-BOB : "J"
+26 : FILLER/WS-BOB : " "
+27 : WS-LASTNAME/WS-BOB : "Dubner    "
+28 : WS-FLOATTEST : 4.3210001
 cprint/v6 ?
  1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
  2 : NAME-FIRST/GEORGE : "GEORGE    "
  3 : WASHINGTON : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
  4 : NAME-FIRST/WASHINGTON : "WASHINGTON"
- 5 : WABASH/TEMPERATURE/WASHINGTON : "          "
- 6 : CARVER : ' ' <repeats 43 times>, "CARVER    "
- 7 : NAME-FIRST/CARVER : "CARVER    "
- 8 : PEANUTS : ' ' <repeats 63 times>, "123456789"
- 9 : NAME-FIRST/PEANUTS : 123.456789
-10 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-11 : NAME-FIRST/LEGUMES : 123456.789
+ 5 : CARVER : ' ' <repeats 43 times>, "CARVER    "
+ 6 : NAME-FIRST/CARVER : "CARVER    "
+ 7 : PEANUTS : ' ' <repeats 63 times>, "123456789"
+ 8 : NAME-FIRST/PEANUTS : 123.456789
+ 9 : LEGUMES : ' ' <repeats 63 times>, "123456789"
+10 : NAME-FIRST/LEGUMES : 123456.789
 cprint/m *
 variables=[{name="GEORGE/test",value="{_groupvalue=\"' ' <repeats 13 times>, \\\"GEORGE    \\\"\",FILLER=\"' ' <repeats 13 times>\",NAME-FIRST=\"\\\"GEORGE    \\\"\"}"},{name="WASHINGTON/test",value="{_groupvalue=\"' ' <repeats 23 times>, \\\"WASHINGTONDC        HOT       \\\"\",FILLER=\"' ' <repeats 23 times>\",NAME-FIRST=\"\\\"WASHINGTON\\\"\",LOCATION=\"\\\"DC        \\\"\",TEMPERATURE=\"\\\"HOT       \\\"\"}"},{name="CARVER/test",value="{_groupvalue=\"' ' <repeats 43 times>, \\\"CARVER    \\\"\",FILLER=\"' ' <repeats 43 times>\",NAME-FIRST=\"\\\"CARVER    \\\"\"}"},{name="PEANUTS/test",value="{_groupvalue=\"' ' <repeats 63 times>, \\\"123456789\\\"\",FILLER=\"' ' <repeats 63 times>\",NAME-FIRST=\"123.456789\"}"},{name="LEGUMES/test",value="{_groupvalue=\"' ' <repeats 63 times>, \\\"123456789\\\"\",FILLER=\"' ' <repeats 63 times>\",NAME-FIRST=\"123456.789\"}"},{name="WS-JIM/JIMBOB",value="{_groupvalue=\"\\\"James     \\\" Lowden    \\\"\",WS-FIRSTNAME=\"\\\"James     \\\"\",WS-MIDDLE-INITIAL=\"\\\"\\\"\\\"\",FILLER=\"\\\" \\\"\",WS-LASTNAME=\"\\\"Lowden    \\\"\"}"},{name="WS-BOB/JIMBOB",value="{_groupvalue=\"\\\"Robert    J Dubner    \\\"\",WS-FIRSTNAME=\"\\\"Robert    \\\"\",WS-MIDDLE-INITIAL=\"\\\"J\\\"\",FILLER=\"\\\" \\\"\",WS-LASTNAME=\"\\\"Dubner    \\\"\"}"},{name="WS-FLOATTEST/JIMBOB",value="\"4.3210001\""}]
 cprint/m ?
@@ -1452,50 +1440,48 @@ cprint/v0 *
  6 : 02 NAME-FIRST/WASHINGTON  : "Wabash    "
  7 : 02 LOCATION/WASHINGTON  : "DC        "
  8 : 02 TEMPERATURE/WASHINGTON  : "HOT       "
- 9 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
-10 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
-11 : 02 FILLER/CARVER  : ' ' <repeats 43 times>
-12 : 02 NAME-FIRST/CARVER  : "CARVER    "
-13 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
-14 : 02 FILLER/PEANUTS  : ' ' <repeats 63 times>
-15 : 02 NAME-FIRST/PEANUTS  : 123.456789
-16 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
-17 : 02 FILLER/LEGUMES  : ' ' <repeats 63 times>
-18 : 02 NAME-FIRST/LEGUMES  : 123456.789
-19 : 01 WS-JIM  : "James     " Lowden    "
-20 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
-21 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
-22 : 02 FILLER/WS-JIM  : " "
-23 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
-24 : 01 WS-BOB  : "Robert    J Dubner    "
-25 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
-26 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
-27 : 02 FILLER/WS-BOB  : " "
-28 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
-29 : 01 WS-FLOATTEST  : 4.3210001
+ 9 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+10 : 02 FILLER/CARVER  : ' ' <repeats 43 times>
+11 : 02 NAME-FIRST/CARVER  : "CARVER    "
+12 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+13 : 02 FILLER/PEANUTS  : ' ' <repeats 63 times>
+14 : 02 NAME-FIRST/PEANUTS  : 123.456789
+15 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+16 : 02 FILLER/LEGUMES  : ' ' <repeats 63 times>
+17 : 02 NAME-FIRST/LEGUMES  : 123456.789
+18 : 01 WS-JIM  : "James     " Lowden    "
+19 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+20 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+21 : 02 FILLER/WS-JIM  : " "
+22 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+23 : 01 WS-BOB  : "Robert    J Dubner    "
+24 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+25 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+26 : 02 FILLER/WS-BOB  : " "
+27 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+28 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v0 ?
  1 : 01 GEORGE  : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 NAME-FIRST/GEORGE  : "GEORGE    "
  3 : 01 WASHINGTON  : ' ' <repeats 23 times>, "Wabash    DC        HOT       "
  4 : 02 NAME-FIRST/WASHINGTON  : "Wabash    "
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
- 6 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
- 7 : 02 NAME-FIRST/CARVER  : "CARVER    "
- 8 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
- 9 : 02 NAME-FIRST/PEANUTS  : 123.456789
-10 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
-11 : 02 NAME-FIRST/LEGUMES  : 123456.789
-12 : 01 WS-JIM  : "James     " Lowden    "
-13 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
-14 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
-15 : 02 FILLER/WS-JIM  : " "
-16 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
-17 : 01 WS-BOB  : "Robert    J Dubner    "
-18 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
-19 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
-20 : 02 FILLER/WS-BOB  : " "
-21 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
-22 : 01 WS-FLOATTEST  : 4.3210001
+ 5 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+ 6 : 02 NAME-FIRST/CARVER  : "CARVER    "
+ 7 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+ 8 : 02 NAME-FIRST/PEANUTS  : 123.456789
+ 9 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+10 : 02 NAME-FIRST/LEGUMES  : 123456.789
+11 : 01 WS-JIM  : "James     " Lowden    "
+12 : 02 WS-FIRSTNAME/WS-JIM  : "James     "
+13 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+14 : 02 FILLER/WS-JIM  : " "
+15 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+16 : 01 WS-BOB  : "Robert    J Dubner    "
+17 : 02 WS-FIRSTNAME/WS-BOB  : "Robert    "
+18 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+19 : 02 FILLER/WS-BOB  : " "
+20 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+21 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v3 *
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 FILLER/GEORGE/test [L-S] : ' ' <repeats 13 times>
@@ -1505,50 +1491,48 @@ cprint/v3 *
  6 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "Wabash    "
  7 : 02 LOCATION/WASHINGTON/test [L-S] : "DC        "
  8 : 02 TEMPERATURE/WASHINGTON/test [L-S] : "HOT       "
- 9 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
-10 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
-11 : 02 FILLER/CARVER/test [L-S] : ' ' <repeats 43 times>
-12 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
-13 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
-14 : 02 FILLER/PEANUTS/test [L-S] : ' ' <repeats 63 times>
-15 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-16 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
-17 : 02 FILLER/LEGUMES/test [L-S] : ' ' <repeats 63 times>
-18 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-19 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
-20 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
-21 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
-22 : 02 FILLER/WS-JIM/JIMBOB [W-S] : " "
-23 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
-24 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
-25 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
-26 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
-27 : 02 FILLER/WS-BOB/JIMBOB [W-S] : " "
-28 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
-29 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
+ 9 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+10 : 02 FILLER/CARVER/test [L-S] : ' ' <repeats 43 times>
+11 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+12 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
+13 : 02 FILLER/PEANUTS/test [L-S] : ' ' <repeats 63 times>
+14 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+15 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
+16 : 02 FILLER/LEGUMES/test [L-S] : ' ' <repeats 63 times>
+17 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
+18 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+19 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+20 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+21 : 02 FILLER/WS-JIM/JIMBOB [W-S] : " "
+22 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+23 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+24 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+25 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+26 : 02 FILLER/WS-BOB/JIMBOB [W-S] : " "
+27 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+28 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 cprint/v3 ?
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
  3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "Wabash    DC        HOT       "
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "Wabash    "
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
- 6 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
- 8 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
- 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
-11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-12 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
-13 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
-14 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
-15 : 02 FILLER/WS-JIM/JIMBOB [W-S] : " "
-16 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
-17 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
-18 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
-19 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
-20 : 02 FILLER/WS-BOB/JIMBOB [W-S] : " "
-21 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
-22 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
+ 5 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 6 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+ 7 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
+ 8 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+ 9 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
+10 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
+11 : 01 WS-JIM/JIMBOB [W-S] : "James     " Lowden    "
+12 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "James     "
+13 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+14 : 02 FILLER/WS-JIM/JIMBOB [W-S] : " "
+15 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+16 : 01 WS-BOB/JIMBOB [W-S] : "Robert    J Dubner    "
+17 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "Robert    "
+18 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+19 : 02 FILLER/WS-BOB/JIMBOB [W-S] : " "
+20 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+21 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 cprint/v6 *
  1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
  2 : FILLER/GEORGE : ' ' <repeats 13 times>
@@ -1558,50 +1542,48 @@ cprint/v6 *
  6 : NAME-FIRST/WASHINGTON : "Wabash    "
  7 : LOCATION/WASHINGTON : "DC        "
  8 : TEMPERATURE/WASHINGTON : "HOT       "
- 9 : WABASH/TEMPERATURE/WASHINGTON : "          "
-10 : CARVER : ' ' <repeats 43 times>, "CARVER    "
-11 : FILLER/CARVER : ' ' <repeats 43 times>
-12 : NAME-FIRST/CARVER : "CARVER    "
-13 : PEANUTS : ' ' <repeats 63 times>, "123456789"
-14 : FILLER/PEANUTS : ' ' <repeats 63 times>
-15 : NAME-FIRST/PEANUTS : 123.456789
-16 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-17 : FILLER/LEGUMES : ' ' <repeats 63 times>
-18 : NAME-FIRST/LEGUMES : 123456.789
-19 : WS-JIM : "James     " Lowden    "
-20 : WS-FIRSTNAME/WS-JIM : "James     "
-21 : WS-MIDDLE-INITIAL/WS-JIM : """
-22 : FILLER/WS-JIM : " "
-23 : WS-LASTNAME/WS-JIM : "Lowden    "
-24 : WS-BOB : "Robert    J Dubner    "
-25 : WS-FIRSTNAME/WS-BOB : "Robert    "
-26 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-27 : FILLER/WS-BOB : " "
-28 : WS-LASTNAME/WS-BOB : "Dubner    "
-29 : WS-FLOATTEST : 4.3210001
+ 9 : CARVER : ' ' <repeats 43 times>, "CARVER    "
+10 : FILLER/CARVER : ' ' <repeats 43 times>
+11 : NAME-FIRST/CARVER : "CARVER    "
+12 : PEANUTS : ' ' <repeats 63 times>, "123456789"
+13 : FILLER/PEANUTS : ' ' <repeats 63 times>
+14 : NAME-FIRST/PEANUTS : 123.456789
+15 : LEGUMES : ' ' <repeats 63 times>, "123456789"
+16 : FILLER/LEGUMES : ' ' <repeats 63 times>
+17 : NAME-FIRST/LEGUMES : 123456.789
+18 : WS-JIM : "James     " Lowden    "
+19 : WS-FIRSTNAME/WS-JIM : "James     "
+20 : WS-MIDDLE-INITIAL/WS-JIM : """
+21 : FILLER/WS-JIM : " "
+22 : WS-LASTNAME/WS-JIM : "Lowden    "
+23 : WS-BOB : "Robert    J Dubner    "
+24 : WS-FIRSTNAME/WS-BOB : "Robert    "
+25 : WS-MIDDLE-INITIAL/WS-BOB : "J"
+26 : FILLER/WS-BOB : " "
+27 : WS-LASTNAME/WS-BOB : "Dubner    "
+28 : WS-FLOATTEST : 4.3210001
 cprint/v6 ?
  1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
  2 : NAME-FIRST/GEORGE : "GEORGE    "
  3 : WASHINGTON : ' ' <repeats 23 times>, "Wabash    DC        HOT       "
  4 : NAME-FIRST/WASHINGTON : "Wabash    "
- 5 : WABASH/TEMPERATURE/WASHINGTON : "          "
- 6 : CARVER : ' ' <repeats 43 times>, "CARVER    "
- 7 : NAME-FIRST/CARVER : "CARVER    "
- 8 : PEANUTS : ' ' <repeats 63 times>, "123456789"
- 9 : NAME-FIRST/PEANUTS : 123.456789
-10 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-11 : NAME-FIRST/LEGUMES : 123456.789
-12 : WS-JIM : "James     " Lowden    "
-13 : WS-FIRSTNAME/WS-JIM : "James     "
-14 : WS-MIDDLE-INITIAL/WS-JIM : """
-15 : FILLER/WS-JIM : " "
-16 : WS-LASTNAME/WS-JIM : "Lowden    "
-17 : WS-BOB : "Robert    J Dubner    "
-18 : WS-FIRSTNAME/WS-BOB : "Robert    "
-19 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-20 : FILLER/WS-BOB : " "
-21 : WS-LASTNAME/WS-BOB : "Dubner    "
-22 : WS-FLOATTEST : 4.3210001
+ 5 : CARVER : ' ' <repeats 43 times>, "CARVER    "
+ 6 : NAME-FIRST/CARVER : "CARVER    "
+ 7 : PEANUTS : ' ' <repeats 63 times>, "123456789"
+ 8 : NAME-FIRST/PEANUTS : 123.456789
+ 9 : LEGUMES : ' ' <repeats 63 times>, "123456789"
+10 : NAME-FIRST/LEGUMES : 123456.789
+11 : WS-JIM : "James     " Lowden    "
+12 : WS-FIRSTNAME/WS-JIM : "James     "
+13 : WS-MIDDLE-INITIAL/WS-JIM : """
+14 : FILLER/WS-JIM : " "
+15 : WS-LASTNAME/WS-JIM : "Lowden    "
+16 : WS-BOB : "Robert    J Dubner    "
+17 : WS-FIRSTNAME/WS-BOB : "Robert    "
+18 : WS-MIDDLE-INITIAL/WS-BOB : "J"
+19 : FILLER/WS-BOB : " "
+20 : WS-LASTNAME/WS-BOB : "Dubner    "
+21 : WS-FLOATTEST : 4.3210001
 cprint/m *
 variables=[{name="GEORGE/test",value="{_groupvalue=\"' ' <repeats 13 times>, \\\"GEORGE    \\\"\",FILLER=\"' ' <repeats 13 times>\",NAME-FIRST=\"\\\"GEORGE    \\\"\"}"},{name="WASHINGTON/test",value="{_groupvalue=\"' ' <repeats 23 times>, \\\"Wabash    DC        HOT       \\\"\",FILLER=\"' ' <repeats 23 times>\",NAME-FIRST=\"\\\"Wabash    \\\"\",LOCATION=\"\\\"DC        \\\"\",TEMPERATURE=\"\\\"HOT       \\\"\"}"},{name="CARVER/test",value="{_groupvalue=\"' ' <repeats 43 times>, \\\"CARVER    \\\"\",FILLER=\"' ' <repeats 43 times>\",NAME-FIRST=\"\\\"CARVER    \\\"\"}"},{name="PEANUTS/test",value="{_groupvalue=\"' ' <repeats 63 times>, \\\"123456789\\\"\",FILLER=\"' ' <repeats 63 times>\",NAME-FIRST=\"123.456789\"}"},{name="LEGUMES/test",value="{_groupvalue=\"' ' <repeats 63 times>, \\\"123456789\\\"\",FILLER=\"' ' <repeats 63 times>\",NAME-FIRST=\"123456.789\"}"},{name="WS-JIM/JIMBOB",value="{_groupvalue=\"\\\"James     \\\" Lowden    \\\"\",WS-FIRSTNAME=\"\\\"James     \\\"\",WS-MIDDLE-INITIAL=\"\\\"\\\"\\\"\",FILLER=\"\\\" \\\"\",WS-LASTNAME=\"\\\"Lowden    \\\"\"}"},{name="WS-BOB/JIMBOB",value="{_groupvalue=\"\\\"Robert    J Dubner    \\\"\",WS-FIRSTNAME=\"\\\"Robert    \\\"\",WS-MIDDLE-INITIAL=\"\\\"J\\\"\",FILLER=\"\\\" \\\"\",WS-LASTNAME=\"\\\"Dubner    \\\"\"}"},{name="WS-FLOATTEST/JIMBOB",value="\"4.3210001\""}]
 cprint/m ?
@@ -1617,50 +1599,48 @@ cprint/v0 *
  6 : 02 NAME-FIRST/WASHINGTON  : "WASHINGTON"
  7 : 02 LOCATION/WASHINGTON  : "DC        "
  8 : 02 TEMPERATURE/WASHINGTON  : "HOT       "
- 9 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
-10 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
-11 : 02 FILLER/CARVER  : ' ' <repeats 43 times>
-12 : 02 NAME-FIRST/CARVER  : "CARVER    "
-13 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
-14 : 02 FILLER/PEANUTS  : ' ' <repeats 63 times>
-15 : 02 NAME-FIRST/PEANUTS  : 123.456789
-16 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
-17 : 02 FILLER/LEGUMES  : ' ' <repeats 63 times>
-18 : 02 NAME-FIRST/LEGUMES  : 123456.789
-19 : 01 WS-JIM  : "Lowden    " Lowden    "
-20 : 02 WS-FIRSTNAME/WS-JIM  : "Lowden    "
-21 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
-22 : 02 FILLER/WS-JIM  : " "
-23 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
-24 : 01 WS-BOB  : "bobby     J Dubner    "
-25 : 02 WS-FIRSTNAME/WS-BOB  : "bobby     "
-26 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
-27 : 02 FILLER/WS-BOB  : " "
-28 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
-29 : 01 WS-FLOATTEST  : 4.3210001
+ 9 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+10 : 02 FILLER/CARVER  : ' ' <repeats 43 times>
+11 : 02 NAME-FIRST/CARVER  : "CARVER    "
+12 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+13 : 02 FILLER/PEANUTS  : ' ' <repeats 63 times>
+14 : 02 NAME-FIRST/PEANUTS  : 123.456789
+15 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+16 : 02 FILLER/LEGUMES  : ' ' <repeats 63 times>
+17 : 02 NAME-FIRST/LEGUMES  : 123456.789
+18 : 01 WS-JIM  : "Lowden    " Lowden    "
+19 : 02 WS-FIRSTNAME/WS-JIM  : "Lowden    "
+20 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+21 : 02 FILLER/WS-JIM  : " "
+22 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+23 : 01 WS-BOB  : "bobby     J Dubner    "
+24 : 02 WS-FIRSTNAME/WS-BOB  : "bobby     "
+25 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+26 : 02 FILLER/WS-BOB  : " "
+27 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+28 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v0 ?
  1 : 01 GEORGE  : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 NAME-FIRST/GEORGE  : "GEORGE    "
  3 : 01 WASHINGTON  : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
  4 : 02 NAME-FIRST/WASHINGTON  : "WASHINGTON"
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON  : "          "
- 6 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
- 7 : 02 NAME-FIRST/CARVER  : "CARVER    "
- 8 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
- 9 : 02 NAME-FIRST/PEANUTS  : 123.456789
-10 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
-11 : 02 NAME-FIRST/LEGUMES  : 123456.789
-12 : 01 WS-JIM  : "Lowden    " Lowden    "
-13 : 02 WS-FIRSTNAME/WS-JIM  : "Lowden    "
-14 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
-15 : 02 FILLER/WS-JIM  : " "
-16 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
-17 : 01 WS-BOB  : "bobby     J Dubner    "
-18 : 02 WS-FIRSTNAME/WS-BOB  : "bobby     "
-19 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
-20 : 02 FILLER/WS-BOB  : " "
-21 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
-22 : 01 WS-FLOATTEST  : 4.3210001
+ 5 : 01 CARVER  : ' ' <repeats 43 times>, "CARVER    "
+ 6 : 02 NAME-FIRST/CARVER  : "CARVER    "
+ 7 : 01 PEANUTS  : ' ' <repeats 63 times>, "123456789"
+ 8 : 02 NAME-FIRST/PEANUTS  : 123.456789
+ 9 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
+10 : 02 NAME-FIRST/LEGUMES  : 123456.789
+11 : 01 WS-JIM  : "Lowden    " Lowden    "
+12 : 02 WS-FIRSTNAME/WS-JIM  : "Lowden    "
+13 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
+14 : 02 FILLER/WS-JIM  : " "
+15 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
+16 : 01 WS-BOB  : "bobby     J Dubner    "
+17 : 02 WS-FIRSTNAME/WS-BOB  : "bobby     "
+18 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
+19 : 02 FILLER/WS-BOB  : " "
+20 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
+21 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v3 *
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 FILLER/GEORGE/test [L-S] : ' ' <repeats 13 times>
@@ -1670,39 +1650,37 @@ cprint/v3 *
  6 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
  7 : 02 LOCATION/WASHINGTON/test [L-S] : "DC        "
  8 : 02 TEMPERATURE/WASHINGTON/test [L-S] : "HOT       "
- 9 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
-10 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
-11 : 02 FILLER/CARVER/test [L-S] : ' ' <repeats 43 times>
-12 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
-13 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
-14 : 02 FILLER/PEANUTS/test [L-S] : ' ' <repeats 63 times>
-15 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-16 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
-17 : 02 FILLER/LEGUMES/test [L-S] : ' ' <repeats 63 times>
-18 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
-19 : 01 WS-JIM/JIMBOB [W-S] : "Lowden    " Lowden    "
-20 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
-21 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
-22 : 02 FILLER/WS-JIM/JIMBOB [W-S] : " "
-23 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
-24 : 01 WS-BOB/JIMBOB [W-S] : "bobby     J Dubner    "
-25 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "bobby     "
-26 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
-27 : 02 FILLER/WS-BOB/JIMBOB [W-S] : " "
-28 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
-29 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
+ 9 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+10 : 02 FILLER/CARVER/test [L-S] : ' ' <repeats 43 times>
+11 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+12 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
+13 : 02 FILLER/PEANUTS/test [L-S] : ' ' <repeats 63 times>
+14 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+15 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
+16 : 02 FILLER/LEGUMES/test [L-S] : ' ' <repeats 63 times>
+17 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
+18 : 01 WS-JIM/JIMBOB [W-S] : "Lowden    " Lowden    "
+19 : 02 WS-FIRSTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+20 : 02 WS-MIDDLE-INITIAL/WS-JIM/JIMBOB [W-S] : """
+21 : 02 FILLER/WS-JIM/JIMBOB [W-S] : " "
+22 : 02 WS-LASTNAME/WS-JIM/JIMBOB [W-S] : "Lowden    "
+23 : 01 WS-BOB/JIMBOB [W-S] : "bobby     J Dubner    "
+24 : 02 WS-FIRSTNAME/WS-BOB/JIMBOB [W-S] : "bobby     "
+25 : 02 WS-MIDDLE-INITIAL/WS-BOB/JIMBOB [W-S] : "J"
+26 : 02 FILLER/WS-BOB/JIMBOB [W-S] : " "
+27 : 02 WS-LASTNAME/WS-BOB/JIMBOB [W-S] : "Dubner    "
+28 : 01 WS-FLOATTEST/JIMBOB [W-S] : 4.3210001
 cprint/v3 ?
  1 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
  2 : 02 NAME-FIRST/GEORGE/test [L-S] : "GEORGE    "
  3 : 01 WASHINGTON/test [L-S] : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
  4 : 02 NAME-FIRST/WASHINGTON/test [L-S] : "WASHINGTON"
- 5 : 66 WABASH/TEMPERATURE/WASHINGTON/test [L-S] : "          "
- 6 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
- 7 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
- 8 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
- 9 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
-10 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
-11 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
+ 5 : 01 CARVER/test [L-S] : ' ' <repeats 43 times>, "CARVER    "
+ 6 : 02 NAME-FIRST/CARVER/test [L-S] : "CARVER    "
+ 7 : 01 PEANUTS/test [L-S] : ' ' <repeats 63 times>, "123456789"
+ 8 : 02 NAME-FIRST/PEANUTS/test [L-S] : 123.456789
+ 9 : 01 LEGUMES/test [L-S] : ' ' <repeats 63 times>, "123456789"
+10 : 02 NAME-FIRST/LEGUMES/test [L-S] : 123456.789
 cprint/v6 *
  1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
  2 : FILLER/GEORGE : ' ' <repeats 13 times>
@@ -1712,39 +1690,37 @@ cprint/v6 *
  6 : NAME-FIRST/WASHINGTON : "WASHINGTON"
  7 : LOCATION/WASHINGTON : "DC        "
  8 : TEMPERATURE/WASHINGTON : "HOT       "
- 9 : WABASH/TEMPERATURE/WASHINGTON : "          "
-10 : CARVER : ' ' <repeats 43 times>, "CARVER    "
-11 : FILLER/CARVER : ' ' <repeats 43 times>
-12 : NAME-FIRST/CARVER : "CARVER    "
-13 : PEANUTS : ' ' <repeats 63 times>, "123456789"
-14 : FILLER/PEANUTS : ' ' <repeats 63 times>
-15 : NAME-FIRST/PEANUTS : 123.456789
-16 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-17 : FILLER/LEGUMES : ' ' <repeats 63 times>
-18 : NAME-FIRST/LEGUMES : 123456.789
-19 : WS-JIM : "Lowden    " Lowden    "
-20 : WS-FIRSTNAME/WS-JIM : "Lowden    "
-21 : WS-MIDDLE-INITIAL/WS-JIM : """
-22 : FILLER/WS-JIM : " "
-23 : WS-LASTNAME/WS-JIM : "Lowden    "
-24 : WS-BOB : "bobby     J Dubner    "
-25 : WS-FIRSTNAME/WS-BOB : "bobby     "
-26 : WS-MIDDLE-INITIAL/WS-BOB : "J"
-27 : FILLER/WS-BOB : " "
-28 : WS-LASTNAME/WS-BOB : "Dubner    "
-29 : WS-FLOATTEST : 4.3210001
+ 9 : CARVER : ' ' <repeats 43 times>, "CARVER    "
+10 : FILLER/CARVER : ' ' <repeats 43 times>
+11 : NAME-FIRST/CARVER : "CARVER    "
+12 : PEANUTS : ' ' <repeats 63 times>, "123456789"
+13 : FILLER/PEANUTS : ' ' <repeats 63 times>
+14 : NAME-FIRST/PEANUTS : 123.456789
+15 : LEGUMES : ' ' <repeats 63 times>, "123456789"
+16 : FILLER/LEGUMES : ' ' <repeats 63 times>
+17 : NAME-FIRST/LEGUMES : 123456.789
+18 : WS-JIM : "Lowden    " Lowden    "
+19 : WS-FIRSTNAME/WS-JIM : "Lowden    "
+20 : WS-MIDDLE-INITIAL/WS-JIM : """
+21 : FILLER/WS-JIM : " "
+22 : WS-LASTNAME/WS-JIM : "Lowden    "
+23 : WS-BOB : "bobby     J Dubner    "
+24 : WS-FIRSTNAME/WS-BOB : "bobby     "
+25 : WS-MIDDLE-INITIAL/WS-BOB : "J"
+26 : FILLER/WS-BOB : " "
+27 : WS-LASTNAME/WS-BOB : "Dubner    "
+28 : WS-FLOATTEST : 4.3210001
 cprint/v6 ?
  1 : GEORGE : ' ' <repeats 13 times>, "GEORGE    "
  2 : NAME-FIRST/GEORGE : "GEORGE    "
  3 : WASHINGTON : ' ' <repeats 23 times>, "WASHINGTONDC        HOT       "
  4 : NAME-FIRST/WASHINGTON : "WASHINGTON"
- 5 : WABASH/TEMPERATURE/WASHINGTON : "          "
- 6 : CARVER : ' ' <repeats 43 times>, "CARVER    "
- 7 : NAME-FIRST/CARVER : "CARVER    "
- 8 : PEANUTS : ' ' <repeats 63 times>, "123456789"
- 9 : NAME-FIRST/PEANUTS : 123.456789
-10 : LEGUMES : ' ' <repeats 63 times>, "123456789"
-11 : NAME-FIRST/LEGUMES : 123456.789
+ 5 : CARVER : ' ' <repeats 43 times>, "CARVER    "
+ 6 : NAME-FIRST/CARVER : "CARVER    "
+ 7 : PEANUTS : ' ' <repeats 63 times>, "123456789"
+ 8 : NAME-FIRST/PEANUTS : 123.456789
+ 9 : LEGUMES : ' ' <repeats 63 times>, "123456789"
+10 : NAME-FIRST/LEGUMES : 123456.789
 cprint/m *
 variables=[{name="GEORGE/test",value="{_groupvalue=\"' ' <repeats 13 times>, \\\"GEORGE    \\\"\",FILLER=\"' ' <repeats 13 times>\",NAME-FIRST=\"\\\"GEORGE    \\\"\"}"},{name="WASHINGTON/test",value="{_groupvalue=\"' ' <repeats 23 times>, \\\"WASHINGTONDC        HOT       \\\"\",FILLER=\"' ' <repeats 23 times>\",NAME-FIRST=\"\\\"WASHINGTON\\\"\",LOCATION=\"\\\"DC        \\\"\",TEMPERATURE=\"\\\"HOT       \\\"\"}"},{name="CARVER/test",value="{_groupvalue=\"' ' <repeats 43 times>, \\\"CARVER    \\\"\",FILLER=\"' ' <repeats 43 times>\",NAME-FIRST=\"\\\"CARVER    \\\"\"}"},{name="PEANUTS/test",value="{_groupvalue=\"' ' <repeats 63 times>, \\\"123456789\\\"\",FILLER=\"' ' <repeats 63 times>\",NAME-FIRST=\"123.456789\"}"},{name="LEGUMES/test",value="{_groupvalue=\"' ' <repeats 63 times>, \\\"123456789\\\"\",FILLER=\"' ' <repeats 63 times>\",NAME-FIRST=\"123456.789\"}"},{name="WS-JIM/JIMBOB",value="{_groupvalue=\"\\\"Lowden    \\\" Lowden    \\\"\",WS-FIRSTNAME=\"\\\"Lowden    \\\"\",WS-MIDDLE-INITIAL=\"\\\"\\\"\\\"\",FILLER=\"\\\" \\\"\",WS-LASTNAME=\"\\\"Lowden    \\\"\"}"},{name="WS-BOB/JIMBOB",value="{_groupvalue=\"\\\"bobby     J Dubner    \\\"\",WS-FIRSTNAME=\"\\\"bobby     \\\"\",WS-MIDDLE-INITIAL=\"\\\"J\\\"\",FILLER=\"\\\" \\\"\",WS-LASTNAME=\"\\\"Dubner    \\\"\"}"},{name="WS-FLOATTEST/JIMBOB",value="\"4.3210001\""}]
 cprint/m ?
