@@ -1769,15 +1769,15 @@ class CobolVariable():
                         # These three types are little-endian; flip them so they display with the big byte to the left
                         output_bytes.reverse()
             binary_byte = 0
-            # The decimal value 65 would be converted to 0b01000001
+            # The decimal value 65 gets converted to "0b01000001"
             #
             # 'bit' is a loop counter; there are eight generated bits per input byte.
             #
             # The "if byte >= 128" statement is equivalent to "if byte & 0x80"  So, it's
             # just a test to see if the high-order bit of byte is on.  If so, the string
-            # grows by "1", otherwise it grows by "0".  At that point, byte is
-            # left-shifted by one (byte *= 2), and then I trim off any bits to the left
-            # (with byte %= 256).
+            # grows by "1", otherwise it grows by "0".  At that point, 'byte' is
+            # left-shifted by one (byte *= 2), and then bits to the left of 0x80
+            # trimmed away (with byte %= 256).
             for byte in output_bytes:
                 # pylint: disable=unused-variable
                 for bit in range(8):
@@ -3989,6 +3989,8 @@ class Rside():
         self.right_of_decimal = ""
         self.exponent = 0           # Note that this is an integer, and not a string
         self.has_all = False
+        self.is_address_of = False
+        self.is_length_of = False
 
     def __str__(self):
         retval = ""
@@ -3999,6 +4001,8 @@ class Rside():
         retval += "right_of_decimal    : {0}\n".format(self.right_of_decimal)
         retval += "exponent            : {0}\n".format(self.exponent)
         retval += "has_all             : {0}\n".format(self.has_all)
+        retval += "is_address_of       : {0}\n".format(self.is_address_of)
+        retval += "is_length_of        : {0}\n".format(self.is_length_of)
         return retval
 
     def FromString(self, rside):
@@ -4122,6 +4126,22 @@ class Rside():
             # fails the R_NUMERICALCONSTANT regular expression, and doesn't have has_all
 
             if not quoted and not self.has_all:
+                args = rside.split()
+                if len(args) > 1:
+                    # At this point, if the user entered LENGTH OF <var> or
+                    # ADDRESS OF <var>, the "OF" has been stripped off.
+                    # So, we just check for leading ADDRESS or LENGTH
+                    if args[0].lower() == "address":
+                        self.is_address_of = True
+                        # Trim away the leading "ADDRESS OF"
+                        args = args[1:]
+                        rside = ' '.join(args)
+                    elif args[0].lower() == "length":
+                        # Trim away the leading "LENGTH OF"
+                        self.is_length_of = True
+                        args = args[1:]
+                        rside = ' '.join(args)
+                self.original_string = rside
                 self.is_symbol = True
         return
 
@@ -5481,6 +5501,8 @@ class CPrintWorker():
             # Let's see if it is a number:
             rside = Rside()
             rside.FromString(' '.join(right_side))
+            if rside.is_address_of or rside.is_length_of:
+                right_side = rside.original_string.split()
 
             if rside.is_symbol:
                 rightside_possibilities, limit_reached = get_sorted_possibilities(right_side, 1)
@@ -5494,8 +5516,15 @@ class CPrintWorker():
                 # Let's fetch its data:
                 payload = GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]]
                 payload.FetchVariableData(False)
-                # And now we fetch its data as a string, and use that for subsequent processing
-                rside.FromString(payload.DataToString())
+                if rside.is_length_of:
+                    # The length of the data is desired as a RHS variable
+                    rside.FromString(str( payload.ActualLength))
+                elif rside.is_address_of:
+                    # The address of the data is desired as a RHS variable
+                    rside.FromString(str( payload.ActualLocation))
+                else:
+                    # And now we fetch its data as a string, and use that for subsequent processing
+                    rside.FromString(payload.DataToString())
 
         if self.machine_interface_mode:
             self.ProcessArgumentsMachineMode(left_side,
