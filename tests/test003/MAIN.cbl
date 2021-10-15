@@ -3,11 +3,11 @@
         DATA DIVISION.
         WORKING-STORAGE SECTION.
         01 CALL-BLOCK.
-            05 WE-ARE PIC X(4) VALUE "MAIN".
+            05 WE-ARE-MAIN PIC X(4) VALUE "MAIN".
             05 WS-INDENT PIC 9 VALUE 2.
         PROCEDURE DIVISION.
-        DISPLAY "I am MAIN; I call A, B, and C"
+        DISPLAY "I am " WE-ARE-MAIN "; I call A, B, and C"
         CALL "A" USING CALL-BLOCK
-        CAll "B" USING CALL-BLOCK
+        CALL "B" USING CALL-BLOCK
         CALL "C" USING CALL-BLOCK
         STOP RUN.

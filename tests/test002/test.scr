@@ -160,4 +160,121 @@ cp *
 
 echo KNOWN GOOD FINISH\n
 
-quit
+echo Checking the debugger CPRINT LENGTH OF feature\n
+delete
+b 134
+b 135
+b 136
+b 137
+b 138
+b 139
+b 140
+b 141
+b 142
+b 143
+b 144
+b 145
+b 146
+b 147
+b 148
+b 149
+b 150
+b 151
+b 152
+b 153
+b 154
+b 155
+b 156
+b 157
+b 158
+b 159
+b 160
+b 161
+b 162
+b 163
+b 164
+b 165
+b 166
+b 167
+b 168
+b 170
+
+echo KNOWN GOOD START\n
+r
+cprint LENGTH OF def-BINARY-CHAR
+c
+cprint LENGTH OF def-BINARY-CHAR-SIGNED
+c
+cprint LENGTH OF def-BINARY-CHAR-UNSIGNED
+c
+cprint LENGTH OF def-BINARY-C-LONG
+c
+cprint LENGTH OF def-BINARY-C-LONG-SIGNED
+c
+cprint LENGTH OF def-BINARY-C-LONG-UNSIGNED
+c
+cprint LENGTH OF def-BINARY-DOUBLE
+c
+cprint LENGTH OF def-BINARY-DOUBLE-SIGNED
+c
+cprint LENGTH OF def-BINARY-DOUBLE-UNSIGNED
+c
+cprint LENGTH OF def-BINARY-INT
+c
+cprint LENGTH OF def-BINARY-LONG
+c
+cprint LENGTH OF def-BINARY-LONG-SIGNED
+c
+cprint LENGTH OF def-BINARY-LONG-UNSIGNED
+c
+cprint LENGTH OF def-BINARY-LONG-LONG
+c
+cprint LENGTH OF def-BINARY-SHORT
+c
+cprint LENGTH OF def-BINARY-SHORT-SIGNED
+c
+cprint LENGTH OF def-BINARY-SHORT-UNSIGNED
+c
+cprint LENGTH OF def-COMPUTATIONAL
+c
+cprint LENGTH OF def-COMP-1
+c
+cprint LENGTH OF def-COMP-2
+c
+cprint LENGTH OF def-COMPUTATIONAL-1
+c
+cprint LENGTH OF def-COMPUTATIONAL-2
+c
+cprint LENGTH OF def-FLOAT-DECIMAL-16
+c
+cprint LENGTH OF def-FLOAT-DECIMAL-34
+c
+cprint LENGTH OF def-FLOAT-LONG
+c
+cprint LENGTH OF def-FLOAT-SHORT
+c
+cprint LENGTH OF def-INDEX
+c
+cprint LENGTH OF def-POINTER
+c
+cprint LENGTH OF def-PROCEDURE-POINTER
+c
+cprint LENGTH OF def-PROGRAM-POINTER
+c
+cprint LENGTH OF def-SIGNED-INT
+c
+cprint LENGTH OF def-SIGNED-LONG
+c
+cprint LENGTH OF def-SIGNED-SHORT
+c
+cprint LENGTH OF def-UNSIGNED-INT
+c
+cprint LENGTH OF def-UNSIGNED-LONG
+c
+cprint LENGTH OF def-UNSIGNED-SHORT
+echo KNOWN GOOD FINISH\n
+
+c
+q
+
+

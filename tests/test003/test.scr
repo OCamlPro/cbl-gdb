@@ -106,4 +106,54 @@ printem
 c
 echo KNOWN GOOD FINISH\n
 
+### Let's check the reloading of PICTURE_STRING when switching from module
+### to module
+
+echo Testing module switching...\n
+delete
+b MAIN.cbl:10
+b MAIN.cbl:11
+b MAIN.cbl:12
+b MAIN.cbl:13
+b A.cbl:18
+b A.cbl:19
+b A.cbl:20
+b B.cbl:18
+b B.cbl:19
+b C.cbl:16
+echo KNOWN GOOD START\n
+
+r
+cprint *
+c
+cprint *
+c
+cprint *
+c
+cprint *
+c
+cprint *
+c
+cprint *
+c
+cprint *
+c
+cprint *
+c
+cprint *
+c
+cprint *
+c
+cprint *
+c
+cprint *
+c
+cprint *
+c
+cprint *
+c
+cprint *
+
+echo KNOWN GOOD FINISH\n
+
 q

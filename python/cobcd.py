@@ -65,7 +65,6 @@ import gdb
 GV_reads = 0
 GV_bytes_read = 0
 
-
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
 COBCD_VERSION = '[Version 4.28.dev2]'
@@ -980,7 +979,6 @@ def IntegerOrVariable(s):
     # We know that there is but one possibility:
     payload = GV_ModuleInformation.var_trie.storage_list[possibilities[0]]
     return payload.NumericValue(), False  # False means no limit overrun
-
 
 class VarTrie():
     def __init__(self):
@@ -4148,6 +4146,25 @@ class ModuleInformation():
         self.line_list = LineList()
         self.perform_commands = {}
 
+        # These three dictionaries stash those elements, indexed by
+        # VARIABLE_STRING_xxx.  For small programs running locally, the time
+        # saved by doing this is not relevant.  But when debugging large programs
+        # remotely, the time spent reading the lengthy VARIABLE_STRING_xxx and
+        # then parsing it can grow significant and annoying when moving back and
+        # forth between large modules.
+        #
+        # A test program with 30,000 variables produced this debugging output:
+        #
+        #  The time to get_memory_view of VARIABLE_STRING is: 0.0022429270000000057
+        #  The time to convert the string tobytes:            0.002386868000000042
+        #  The time to parse 1778932 bytes of VARIABLE_STRING_vtest2Ecbl was: 1.07074325
+        #
+        # by stashing the results of the parsing in these maps, we avoid unnecessary
+        # processing.  At the time of this writing, the costs in memory are unknown
+        self.stashed_var_trie  = {}
+        self.stashed_line_list = {}
+        self.stashed_commands  = {}
+
     @staticmethod
     def ReadAndParseVariableString(string_name):
         VARSTR_LEN_SIZE = 9  # as used by cobcd-st
@@ -4159,14 +4176,36 @@ class ModuleInformation():
 
         if the_address:
             try:
-                len_val = gdb.parse_and_eval("*(char (*)[{0}]) {1}".format(VARSTR_LEN_SIZE, the_address))
-                total_length = int(len_val.string())
+                if string_name in GV_ModuleInformation.stashed_var_trie:
+                    # We have seen and parsed this string before
+                    #print("RELOAD", string_name)
+                    GV_ModuleInformation.var_trie         = GV_ModuleInformation.stashed_var_trie[string_name]
+                    GV_ModuleInformation.line_list        = GV_ModuleInformation.stashed_line_list[string_name]
+                    GV_ModuleInformation.stashed_commands = GV_ModuleInformation.stashed_commands[string_name]
+                else:
+                    # We haven't seen these before, so we need to get the
+                    # VARIABLE_STRING and parse it:
+                    len_val = gdb.parse_and_eval("*(char (*)[{0}]) {1}".format(VARSTR_LEN_SIZE, the_address))
+                    total_length = int(len_val.string())
 
-                variable_string_memview = get_memoryview(the_address + VARSTR_LEN_SIZE, total_length - VARSTR_LEN_SIZE)
-                variable_string = variable_string_memview.tobytes().decode('ascii')  # plain string generate by cobcd
+                    time1 = time.process_time()
+                    variable_string_memview = get_memoryview(the_address + VARSTR_LEN_SIZE, total_length - VARSTR_LEN_SIZE)
+                    time2 = time.process_time()
+                    #print("The time to get_memory_view of VARIABLE_STRING is: {0}".format(time2-time1))
 
-                GV_ModuleInformation.ParseVariableString(variable_string)
+                    time1 = time.process_time()
+                    variable_string = variable_string_memview.tobytes().decode('ascii')  # plain string generate by cobcd
+                    time2 = time.process_time()
+                    #print("The time to convert the string tobytes:            {0}".format(time2-time1))
 
+                    time1 = time.process_time()
+                    GV_ModuleInformation.ParseVariableString(variable_string)
+                    time2 = time.process_time()
+                    #print("The time to parse {0} bytes of {1} was: {2}".format(total_length, string_name, time2-time1))
+
+                    GV_ModuleInformation.stashed_var_trie[string_name]  = GV_ModuleInformation.var_trie
+                    GV_ModuleInformation.stashed_line_list[string_name] = GV_ModuleInformation.line_list
+                    GV_ModuleInformation.stashed_commands[string_name]  = GV_ModuleInformation.stashed_commands
                 return True
             except:
                 traceback.print_exc()
@@ -6589,6 +6628,7 @@ they override any that might have been passed to GDB with --args."""
             # If there is no cobol program, just run
             if cobol_program:
                 # set temporary maintenance breakpoint
+
                 bp = CBreakWorker.set_entry_breakpoint(cobol_program, True, True)
                 # CHECKME: Do we still want to run if breakpoint was not set?
                 command = "run " + arguments
@@ -7284,7 +7324,6 @@ An argument says how fast auto stepping is done (1-19, default 5)."""
         finally:
             if pagination:
                 gdb.execute("set pagination on", False, False)
-
 
 def stop_handler_auto_step(event):
     # check the type of stop, the following is the common one after step/next,

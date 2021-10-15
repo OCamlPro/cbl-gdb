@@ -1847,3 +1847,152 @@ digits 000001031000000
 53 : 01 def-COMP-XX  : 00000000000000000103
 54 : 01 def-DISPLAY  : +000000103.1000000
 KNOWN GOOD FINISH
+KNOWN GOOD START
+On this system, with this build of GnuCOBOL, the
+PICTURE-less USAGE's have these lengths (in bytes):
+ 
+BINARY-CHAR             1
+
+134	DISPLAY "BINARY-CHAR SIGNED      " len-BINARY-CHAR-SIGNED
+length in bytes is 0x1 and 1
+BINARY-CHAR SIGNED      1
+
+135	DISPLAY "BINARY-CHAR UNSIGNED    " len-BINARY-CHAR-UNSIGNED
+length in bytes is 0x1 and 1
+BINARY-CHAR UNSIGNED    1
+
+136	DISPLAY "BINARY-C-LONG           " len-BINARY-C-LONG
+length in bytes is 0x1 and 1
+BINARY-C-LONG           8
+
+137	DISPLAY "BINARY-C-LONG SIGNED    " len-BINARY-C-LONG-SIGNED
+length in bytes is 0x8 and 8
+BINARY-C-LONG SIGNED    8
+
+138	DISPLAY "BINARY-C-LONG UNSIGNED  " len-BINARY-C-LONG-UNSIGNED
+length in bytes is 0x8 and 8
+BINARY-C-LONG UNSIGNED  8
+
+139	DISPLAY "BINARY-DOUBLE           " len-BINARY-DOUBLE
+length in bytes is 0x8 and 8
+BINARY-DOUBLE           8
+
+140	DISPLAY "BINARY-DOUBLE SIGNED    " len-BINARY-DOUBLE-SIGNED
+length in bytes is 0x8 and 8
+BINARY-DOUBLE SIGNED    8
+
+141	DISPLAY "BINARY-DOUBLE UNSIGNED  " len-BINARY-DOUBLE-UNSIGNED
+length in bytes is 0x8 and 8
+BINARY-DOUBLE UNSIGNED  8
+
+142	DISPLAY "BINARY-INT              " len-BINARY-INT
+length in bytes is 0x8 and 8
+BINARY-INT              4
+
+143	DISPLAY "BINARY-LONG             " len-BINARY-LONG
+length in bytes is 0x4 and 4
+BINARY-LONG             4
+
+144	DISPLAY "BINARY-LONG SIGNED      " len-BINARY-LONG-SIGNED
+length in bytes is 0x4 and 4
+BINARY-LONG SIGNED      4
+
+145	DISPLAY "BINARY-LONG UNSIGNED    " len-BINARY-LONG-UNSIGNED
+length in bytes is 0x4 and 4
+BINARY-LONG UNSIGNED    4
+
+146	DISPLAY "BINARY-LONG-LONG        " len-BINARY-LONG-LONG
+length in bytes is 0x4 and 4
+BINARY-LONG-LONG        8
+
+147	DISPLAY "BINARY-SHORT            " len-BINARY-SHORT
+length in bytes is 0x8 and 8
+BINARY-SHORT            2
+
+148	DISPLAY "BINARY-SHORT SIGNED     " len-BINARY-SHORT-SIGNED
+length in bytes is 0x2 and 2
+BINARY-SHORT SIGNED     2
+
+149	DISPLAY "BINARY-SHORT UNSIGNED   " len-BINARY-SHORT-UNSIGNED
+length in bytes is 0x2 and 2
+BINARY-SHORT UNSIGNED   2
+
+150	DISPLAY "COMPUTATIONAL           " len-COMPUTATIONAL
+length in bytes is 0x2 and 2
+COMPUTATIONAL           8
+
+151	DISPLAY "COMP-1                  " len-COMP-1
+length in bytes is 0x8 and 8
+COMP-1                  4
+
+152	DISPLAY "COMP-2                  " len-COMP-2
+length in bytes is 0x4 and 4
+COMP-2                  8
+
+153	DISPLAY "COMPUTATIONAL-1         " len-COMPUTATIONAL-1
+length in bytes is 0x8 and 8
+COMPUTATIONAL-1         4
+
+154	DISPLAY "COMPUTATIONAL-2         " len-COMPUTATIONAL-2
+length in bytes is 0x4 and 4
+COMPUTATIONAL-2         8
+
+155	DISPLAY "FLOAT-DECIMAL-16        " len-FLOAT-DECIMAL-16
+length in bytes is 0x8 and 8
+FLOAT-DECIMAL-16        8
+
+156	DISPLAY "FLOAT-DECIMAL-34        " len-FLOAT-DECIMAL-34
+length in bytes is 0x8 and 8
+FLOAT-DECIMAL-34        16
+
+157	DISPLAY "FLOAT-LONG              " len-FLOAT-LONG
+length in bytes is 0x10 and 16
+FLOAT-LONG              8
+
+158	DISPLAY "FLOAT-SHORT             " len-FLOAT-SHORT
+length in bytes is 0x8 and 8
+FLOAT-SHORT             4
+
+159	DISPLAY "INDEX                   " len-INDEX
+length in bytes is 0x4 and 4
+INDEX                   4
+
+160	DISPLAY "POINTER                 " len-POINTER
+length in bytes is 0x4 and 4
+POINTER                 8
+
+161	DISPLAY "PROCEDURE-POINTER       " len-PROCEDURE-POINTER
+length in bytes is 0x8 and 8
+PROCEDURE-POINTER       8
+
+162	DISPLAY "PROGRAM-POINTER         " len-PROGRAM-POINTER
+length in bytes is 0x8 and 8
+PROGRAM-POINTER         8
+
+163	DISPLAY "SIGNED-INT              " len-SIGNED-INT
+length in bytes is 0x8 and 8
+SIGNED-INT              4
+
+164	DISPLAY "SIGNED-LONG             " len-SIGNED-LONG
+length in bytes is 0x4 and 4
+SIGNED-LONG             8
+
+165	DISPLAY "SIGNED-SHORT            " len-SIGNED-SHORT
+length in bytes is 0x8 and 8
+SIGNED-SHORT            2
+
+166	DISPLAY "UNSIGNED-INT            " len-UNSIGNED-INT
+length in bytes is 0x2 and 2
+UNSIGNED-INT            4
+
+167	DISPLAY "UNSIGNED-LONG           " len-UNSIGNED-LONG
+length in bytes is 0x4 and 4
+UNSIGNED-LONG           8
+
+168	DISPLAY "UNSIGNED-SHORT          " len-UNSIGNED-SHORT
+length in bytes is 0x8 and 8
+UNSIGNED-SHORT          2
+
+170	DISPLAY " "
+length in bytes is 0x2 and 2
+KNOWN GOOD FINISH

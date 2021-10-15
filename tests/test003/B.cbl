@@ -3,7 +3,7 @@
         DATA DIVISION.
         WORKING-STORAGE SECTION.
         01 CALL-BLOCK.
-            05 WE-ARE PIC X(4) VALUE "B".
+            05 WE-ARE-B PIC X(4) VALUE "B".
             05 WS-INDENT PIC 9.
         LINKAGE SECTION.
         COPY LINK.
@@ -12,7 +12,7 @@
         PERFORM INDENT TIMES
             DISPLAY ' ' WITH NO ADVANCING
             END-PERFORM
-        DISPLAY "I am '" WE-ARE "', called from '" CALLED-FROM "'"
+        DISPLAY "I am '" WE-ARE-B "', called from '" CALLED-FROM "'"
             WITH NO ADVANCING
         DISPLAY "; I call C"
         CALL "C" USING CALL-BLOCK
