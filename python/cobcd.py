@@ -6354,6 +6354,12 @@ A breakpoint stops execution of your program whenever the expression matches
         CTBreak()
         CCondition()
 
+        if GV_GlobalVariables.gdb_version >= 70700:
+            print('Registering silent maintanance breakpoint for showing note about ACCEPT')
+            bp = CobolBreakpoint("cob_accept", False, True)
+            if bp:
+                bp.commands = "silent \n cup \n continue"
+
     def invoke(self, arguments, from_tty):
         self.dont_repeat()
         self.worker.process_break_arguments(arguments, False, False)
