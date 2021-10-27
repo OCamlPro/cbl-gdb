@@ -1368,7 +1368,7 @@ class VarTrie():
                 break
             if n1 != -1 and n2 < n1 or n1 == -1 and n1 != -1:
                 # The parentheses are either mismatched, or in the wrong order
-                print("A syntax error in >>{0}<<".format('/'.join(cobol_variable_name)))
+                ConditionalRaise("A syntax error in >>{0}<<".format('/'.join(cobol_variable_name)))
                 return paths
 
             # We have a pair of parenthesis.  Extract them and their contents:
@@ -1381,14 +1381,14 @@ class VarTrie():
                 # This must be a refmod.
                 if refmod:
                     # There can be only one refmod
-                    print("Too many 'refmods' in >>{0}<<".format('/'.join(cobol_variable_name)))
+                    ConditionalRaise("Too many 'refmods' in >>{0}<<".format('/'.join(cobol_variable_name)))
                     return paths
                 refmod = parenthesized
             else:
                 # This must be a subscripts specification.
                 if subscripts:
                     # There can be only one subscripts specification
-                    print("Too many table references in >>{0}<<".format('/'.join(cobol_variable_name)))
+                    ConditionalRaise("Too many table references in >>{0}<<".format('/'.join(cobol_variable_name)))
                     return paths
                 subscripts = parenthesized
 
@@ -5513,13 +5513,13 @@ class CPrintWorker():
                 # When '*' or '?' match nothing, then just return nothing
                 return
             if left_side[0].find('*') == -1:
-                print('No symbol matches "{0}" in current context'.format('/'.join(left_side)))
+                ConditionalRaise('No symbol matches "{0}" in current context'.format('/'.join(left_side)))
             else:
-                print('No symbols match "{0}" in current context'.format('/'.join(left_side)))
+                ConditionalRaise('No symbols match "{0}" in current context'.format('/'.join(left_side)))
             return
 
         if len(leftside_possibilities) > 1 and left_side[0].find('*') == -1 and left_side[0][0] != '?' and just_count_ambiguities:
-            print('Multiple ({0}) symbols match "{1}" in current context'.format(len(leftside_possibilities), '/'.join(left_side)))
+            ConditionalRaise('Multiple ({0}) symbols match "{1}" in current context'.format(len(leftside_possibilities), '/'.join(left_side)))
             return
 
         if len(leftside_possibilities) == 1:
@@ -5531,7 +5531,7 @@ class CPrintWorker():
         elif right_side:
             # Our user wants to do an assignment: "cprint leftside=rightside"
             # Alas, we cannot accommodate that request:
-            print('Multiple symbols match the left-hand-side "{0}" in current context.'.format('/'.join(left_side)))
+            ConditionalRaise('Multiple symbols match the left-hand-side "{0}" in current context.'.format('/'.join(left_side)))
             return
 
         rside = None
@@ -5547,10 +5547,10 @@ class CPrintWorker():
             if rside.is_symbol:
                 rightside_possibilities, limit_reached = get_sorted_possibilities(right_side, 1)
                 if not rightside_possibilities and not limit_reached:
-                    print('No symbol matches "{0}" in current context'.format('/'.join(right_side)))
+                    ConditionalRaise('No symbol matches "{0}" in current context'.format('/'.join(right_side)))
                     return
                 if limit_reached:
-                    print('Multiple symbols match the right-hand-side "{0}" in current context'.format('/'.join(right_side)))
+                    ConditionalRaise('Multiple symbols match the right-hand-side "{0}" in current context'.format('/'.join(right_side)))
                     return
                 # right_side seems to refer to one, and only one, variable.
                 # Let's fetch its data:
@@ -5779,11 +5779,11 @@ class CWatchWorker():
             wp_type = gdb.WP_ACCESS
             del args[0]
         elif args[0].startswith('/'):
-            print("Option not recognized\n")
+            ConditionalRaise("Option not recognized\n")
             return
 
         if len(args) > 3:
-            print("Too many arguments")
+            ConditionalRaise("Too many arguments")
             return
 
         left_side, right_side, condition = get_left_right_args(''.join(args))
@@ -5791,16 +5791,16 @@ class CWatchWorker():
             return
 
         if right_side:
-            print('No rightside arguments implemented')
+            ConditionalRaise('No rightside arguments implemented')
             return
 
         possibilities, limit_reached = get_sorted_possibilities(left_side, 1)
         if not possibilities and not limit_reached:
-            print('No symbol matching "{0}" in current context'.format(''.join(left_side)))
+            ConditionalRaise('No symbol matching "{0}" in current context'.format(''.join(left_side)))
             return
 
         if limit_reached:
-            print('More than one symbol matching "{0}" in current context.'.format(''.join(left_side)))
+            ConditionalRaise('More than one symbol matching "{0}" in current context.'.format(''.join(left_side)))
             return
 
         # Pick up the payload from the list
@@ -5952,7 +5952,7 @@ class CBreakWorker():
             return payload
 
         if not possibilities and not limit_reached:
-            print('No symbol matching "{0}" in current context'.format(" ".join(search_args)))
+            ConditionalRaise('No symbol matching "{0}" in current context'.format(" ".join(search_args)))
             return payload
 
         payload_number = possibilities[0]
