@@ -11,12 +11,12 @@
 
         PROCEDURE DIVISION.
         MOVE "XYZ" to THREE_CHARS
-        IF JX DISPLAY "True" ELSE DISPLAY "Falue" END-IF
+        IF JX DISPLAY "True" ELSE DISPLAY "False" END-IF
         MOVE "JJJ" to THREE_CHARS
-        IF JX DISPLAY "True" ELSE DISPLAY "Falue" END-IF
+        IF JX DISPLAY "True" ELSE DISPLAY "False" END-IF
         MOVE "XXX" to THREE_CHARS
-        IF JX DISPLAY "True" ELSE DISPLAY "Falue" END-IF
+        IF JX DISPLAY "True" ELSE DISPLAY "False" END-IF
         MOVE "ABC" to THREE_CHARS
-        IF JX DISPLAY "True" ELSE DISPLAY "Falue" END-IF
+        IF JX DISPLAY "True" ELSE DISPLAY "False" END-IF
         DISPLAY "We're done"
         GOBACK.
