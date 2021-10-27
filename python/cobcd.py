@@ -4188,19 +4188,19 @@ class ModuleInformation():
                     len_val = gdb.parse_and_eval("*(char (*)[{0}]) {1}".format(VARSTR_LEN_SIZE, the_address))
                     total_length = int(len_val.string())
 
-                    time1 = time.process_time()
+                    #time1 = time.process_time()
                     variable_string_memview = get_memoryview(the_address + VARSTR_LEN_SIZE, total_length - VARSTR_LEN_SIZE)
-                    time2 = time.process_time()
+                    #time2 = time.process_time()
                     #print("The time to get_memory_view of VARIABLE_STRING is: {0}".format(time2-time1))
 
-                    time1 = time.process_time()
+                    #time1 = time.process_time()
                     variable_string = variable_string_memview.tobytes().decode('ascii')  # plain string generate by cobcd
-                    time2 = time.process_time()
+                    #time2 = time.process_time()
                     #print("The time to convert the string tobytes:            {0}".format(time2-time1))
 
-                    time1 = time.process_time()
+                    #time1 = time.process_time()
                     GV_ModuleInformation.ParseVariableString(variable_string)
-                    time2 = time.process_time()
+                    #time2 = time.process_time()
                     #print("The time to parse {0} bytes of {1} was: {2}".format(total_length, string_name, time2-time1))
 
                     GV_ModuleInformation.stashed_var_trie[string_name]  = GV_ModuleInformation.var_trie
