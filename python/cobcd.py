@@ -1977,9 +1977,6 @@ class CobolVariable():
         self.ActualLocation = 0
         self.ActualLength = 0
 
-        # explicit conversion by cast for GDB 7.7 - FIXME: move to get type only once
-        PTR_CONV_TYPE = gdb.lookup_type('unsigned long')
-
         # Let's update everything we might need:
         # Calculate the additional table offsets
         self.CalculateTableOffset()
@@ -2847,7 +2844,6 @@ class CobolVariable():
             # Get rid of the biggest '1', because it's hidden/implicit/implied in IEEE 754
             big_unity = 1000000000000000000000000000000000000000000000000000000000000000000000000000
             binrep -= big_unity
-            sigstring = ""
 
             significand = 0
             for i in range(fraction_bits):
@@ -3415,7 +3411,7 @@ class CobolVariable():
             # 0x100 is added to every byte, which means that I know the output will be in the
             # range 0x100 through 0x1FF.  And then strip off the final two characters of
             # that with [-2:], and append them to the growing string named 'body'.
-            for j in range(self.RefmodLength):
+            for _i in range(self.RefmodLength):
                 body += hex(256 + data[i])[-2:]    # Add 0x100 to get leading zeroes
             return body, pic
 
@@ -3949,14 +3945,14 @@ class CobolVariable():
 
         if pcount > 0:
             if self.AttrScale < 0:
-                for i in range(pcount):
+                for _i in range(pcount):
                     value += '0'
             else:
                 stash = ''
                 if value[0] == '+' or value[0] == '-':
                     stash = value[0]
                     value = value[1:]
-                for i in range(pcount):
+                for _i in range(pcount):
                     value = '0' + value
                 value = stash + self.decimal_point + value
 
@@ -4381,7 +4377,7 @@ class ModuleState():
 
                 if frame_from_frame != frame_from_stack:
                     command = "select-frame " + str(frame_from_stack)
-                    result = GdbExecute(currentframe(), command)
+                    GdbExecute(currentframe(), command)
 
                 # At this point, file_and_line[0] matches the file name from "frame"
                 self.current_trapped_line = int(file_and_line[1])
@@ -5027,7 +5023,6 @@ class CPrintWorker():
 
         # Generalized parsing of /<mode><param> or /<mode> <param>
         mode = None
-        param = None
         if len(args) > 0:
             if len(args[0]) > 0 and args[0][0] == '/':
                 # The first character of the first argument is a slash
@@ -5044,11 +5039,12 @@ class CPrintWorker():
                 if len(args[0]) > 2:
                     # Anything after the /<mode><param> is a parameter
                     param = args[0][2:]
+                elif len(args) > 1:
+                    # We are dealing with /v<mode> <something>
+                    # <something> might be a parameter:
+                    param = args[1]
                 else:
-                    if len(args) > 1:
-                        # We are dealing with /v<mode> <something>
-                        # <something> might be a parameter:
-                        param = args[1]
+                    param = None
 
                 if mode in "mvdxbq":
                     # Any of these switches suppress the hierarchical pretty printing
@@ -5911,6 +5907,7 @@ class CBreakWorker():
         try:
             spec = "{0}_".format(module)
             spec_ref = gdb.parse_and_eval(spec)
+            # TODO: come back here later, we did check for the module here but there was an issue with that.
             return True
         except gdb.error:
             return False
@@ -5966,7 +5963,7 @@ class CBreakWorker():
     @staticmethod
     def set_section_breakpoint(args, t_flag, i_flag):
         spec = get_section_spec(args[0])
-        break_point = CobolBreakpoint(spec, t_flag, i_flag)
+        CobolBreakpoint(spec, t_flag, i_flag)
 
     def set_cond_break(self, left_side, right_side, condition, break_point, is_lit, t_flag, i_flag):
         payload_s = None
@@ -6037,12 +6034,13 @@ class CBreakWorker():
         if arguments and arguments[-1] in ('"', '\''):
             is_lit = 1
 
-        if arguments:
-            left_side, right_side, condition = get_left_right_args(arguments)
-            if not left_side:
-                return
-        else:
-            break_point = CobolBreakpoint("", t_flag, i_flag)
+        if not arguments:
+            # no position specified - create simple one at "" -> current place
+            CobolBreakpoint("", t_flag, i_flag)
+            return
+
+        left_side, right_side, condition = get_left_right_args(arguments)
+        if not left_side:
             return
 
         if not right_side:
@@ -7301,7 +7299,7 @@ An argument says how fast auto stepping is done (1-19, default 5)."""
 
         sleep_time = 3.0 / (number * 1.4)
         try:
-            frame = gdb.newest_frame()
+            gdb.newest_frame()
         except gdb.error:
             ConditionalRaise("No stack.")
             return
@@ -7318,7 +7316,7 @@ An argument says how fast auto stepping is done (1-19, default 5)."""
                 gdb.execute("step")
                 time.sleep(sleep_time)
         # we just quit the loop as requested
-        except KeyboardInterrupt as ki:
+        except KeyboardInterrupt:
             pass
         # pass user errors unchanged
         except gdb.GdbError:
