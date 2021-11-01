@@ -299,7 +299,7 @@ cp ws-table(3:4)
 cp/x ws-table(3:4)
 01 WS-TABLE/test(3:4) [W-S]  :  [0x41424344]
 cp/b ws-table(3:4)
-01 WS-TABLE/test(3:4) [W-S]  :  [0x0b01000001010000100100001101000100]
+01 WS-TABLE/test(3:4) [W-S]  :  0b0b01000001010000100100001101000100]
 cp ws-table(three of nums1:4)
 01 WS-TABLE/test(3:4) [W-S]  :  "ABCD"
 cp ws-table(3:four of nums2)
