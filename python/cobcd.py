@@ -5109,7 +5109,7 @@ class CPrintWorker():
         data = payload.Data()[0:elements]
         if payload.Refmod:
             if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_BINARY:
-                body = "0b" + payload.GetDataAsBinary() + ']'
+                body = "0b" + payload.GetDataAsBinary()
             elif not payload.display_body.startswith('"') or GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_HEX:
                 # The refmod payload is not alphabetic (or the submode is x for hex) and so we are
                 # going to display the refmodded payload in hex:
@@ -6240,7 +6240,7 @@ class CPrint(gdb.Command):
             possibilities = get_completion_possibilities(word)
 
             return possibilities
-        except::   # TODO: use appropriate exception
+        except:   # TODO: use appropriate exception
             traceback.print_exc()
 
 
