@@ -652,8 +652,7 @@ def GetPointerTo(name):
     # " char name[22] " or "cob_field name".  In that case,
     # the result already is the answer we need
 
-    retval = ExtractHexValueFrom(str(result))
-    return retval
+    return ExtractHexValueFrom(str(result))
 
 
 def AddEmUp(expression):
@@ -662,18 +661,25 @@ def AddEmUp(expression):
     # For now I am simply punting when when confronted with something
     # that isn't an integer or a simple addition of integers
     #
-    # Processing of arrays can involve 123*b_37 + 456, and I've been warned
-    # that there might even be parentheses involved.  We'll burn those bridges
-    # in times to come.
+    # Processing of arrays can involve 123*b_37 + 456 (offset) or 30*b_454 (length),
+    # and I've been warned that there might even be parentheses involved.
+    # We'll burn those bridges in times to come.
     expression = expression or "0"
     retval = 0
     tokens = expression.split('+')
     for token in tokens:
-        if token[0:1] in "0123456789":  # Python2/3 ecumenical
-            retval += int(token)
-        else:
-            # as described above, just ignore that for now.
-            pass
+        #if token[0:1] in "0123456789":  # Python2/3 ecumenical
+            try:
+                retval += int(token)
+            except ValueError:
+                # as described above, just ignore that for now,
+                # otherwise we'd have to get the integer value of the matching field
+                # f_37 / f_454 and use this with the possible handling of multiplication
+                # TODO: check if returning -1 may be the better option
+                pass
+        # else:
+        #     # as described above, just ignore that for now.
+        #     pass
     return retval
 
 
@@ -830,11 +836,11 @@ def GetNumericArgument(argument, Negative=False, Raise=True):
             number = int(argument)
             if not Negative and number < 0:
                 ConditionalRaise("argument may not be negative")
-            return None
+                return None
         except ValueError:
             # not int
             if Raise:
-                ConditionalRaise("argument must be a digit, not " + argument)
+                ConditionalRaise("argument must be an integer, not " + argument)
             return None
     return number
 
@@ -1845,22 +1851,31 @@ class CobolVariable():
                     else:
                         subscript, limit_reached = IntegerOrVariable(list_of_subscripts[-1].strip())
                         if subscript is None and limit_reached:
-                            print("Multiple symbols match \"{0}\"".format(list_of_subscripts[-1].strip()))
                             self.SubscriptFailure = True
+                            ConditionalRaise("Multiple symbols match \"{0}\"".format(list_of_subscripts[-1].strip()))
                             break
                         if subscript is None:
-                            print("No symbol matches \"{0}\"".format(list_of_subscripts[-1].strip()))
                             self.SubscriptFailure = True
+                            ConditionalRaise("No symbol matches \"{0}\"".format(list_of_subscripts[-1].strip()))
                             break
                     ResolvedSubscripts = [subscript] + ResolvedSubscripts
                     list_of_subscripts = list_of_subscripts[0:-1]
                     if subscript < 1 or subscript > variable.OccursMax:
-                        print("The subscript '{0}({1})' is out of range (1 through {2})".format(variable.Name,
+                        msg = "The subscript '{0}({1})' is out of range (1 through {2})".format(variable.Name,
                                                                                                 subscript,
-                                                                                                variable.OccursMax))
+                                                                                                variable.OccursMax)
+                        # TODO: make the result depending on gdb.parameter("check range")
+                        # check = gdb.parameter("check range")
+                        # if check == "on" or check == "auto":
+                        #    ConditionalRaise - and setup
+                        # elif check == "warn":
+                        #    print ("warning: " + msg) - and setup
+                        # else
+                        #    pass
                         available = 0  # This will prevent an additional superfluous "too many subscripts" message
                         needed = 0
                         self.SubscriptFailure = True
+                        ConditionalRaise(msg)
                         break
                     TableOffset += (subscript - 1) * variable.Length
                 if not variable.index_of_parent:
@@ -1869,11 +1884,11 @@ class CobolVariable():
 
             available -= needed
             if available:
-                if needed == 1:
-                    print("{0} needs {1} subscript".format(self.Name, needed))
-                else:
-                    print("{0} needs {1} subscripts".format(self.Name, needed))
                 self.SubscriptFailure = True
+                if needed == 1:
+                    ConditionalRaise("{0} needs {1} subscript".format(self.Name, needed))
+                else:
+                    ConditionalRaise("{0} needs {1} subscripts".format(self.Name, needed))
         if self.SubscriptFailure:
             ResolvedSubscripts = []
             TableOffset = 0
@@ -1895,19 +1910,19 @@ class CobolVariable():
             refmod = refmod.split(':')
             if len(refmod) != 2:
                 # There have to be two, and only two elements:
-                print("The refmod {0} has to have two elements".format(self.Refmod))
                 self.RefmodFailure = True
+                ConditionalRaise("The refmod {0} has to have two elements".format(self.Refmod))
                 return
 
             if refmod[0]:
                 offset, limit_reached = IntegerOrVariable(refmod[0].strip())
                 if offset is None and limit_reached:
-                    print("Multiple symbols match \"{0}\"".format(refmod[0].strip()))
                     self.RefmodFailure = True
+                    ConditionalRaise("Multiple symbols match \"{0}\"".format(refmod[0].strip()))
                     return
                 if offset is None:
-                    print("No symbol matches \"{0}\"".format(refmod[0].strip()))
                     self.RefmodFailure = True
+                    ConditionalRaise("No symbol matches \"{0}\"".format(refmod[0].strip()))
                     return
             else:
                 offset = 1
@@ -1915,37 +1930,47 @@ class CobolVariable():
             if offset is None:
                 offset = 1
 
+            # TODO: make the result depending on gdb.parameter("check range")
+            # for "warn" and "off": use "bad" refmod as-is
+
             if offset < 1:
-                print("The refmod {0} offset has to be greater than zero".format(self.Refmod))
                 self.RefmodFailure = True
+                msg = "The refmod {0} offset has to be greater than zero".format(self.Refmod)
+                ConditionalRaise(msg)
                 return
 
             if refmod[1]:
                 length, limit_reached = IntegerOrVariable(refmod[1].strip())
                 if length is None and limit_reached:
-                    print("Multiple symbols match \"{0}\"".format(refmod[1].strip()))
                     self.RefmodFailure = True
+                    ConditionalRaise("Multiple symbols match \"{0}\"".format(refmod[1].strip()))
                     return
                 if length is None:
-                    print("No symbol matches \"{0}\"".format(refmod[1].strip()))
                     self.RefmodFailure = True
+                    ConditionalRaise("No symbol matches \"{0}\"".format(refmod[1].strip()))
                     return
             else:
                 # No value was specified, so make it the maximum
                 length = self.Length - offset + 1
 
             if length < 1 or length > self.Length:
-                print("The refmod {0} length has to be between 1 and {1}".format(self.Refmod, self.Length))
                 self.RefmodFailure = True
+                msg = "The refmod {0} length has to be between 1 and {1}".format(self.Refmod, self.Length)
+                # msg = "The length {0} has to be between 0 and {1}".format(length, self.Length)
+                ConditionalRaise(msg)
                 return
 
             if offset - 1 >= self.Length:
-                print("The refmod {0} offset has to be less than {1}".format(self.Refmod, self.Length))
                 self.RefmodFailure = True
+                msg = "The refmod {0} offset has to be less than {1}".format(self.Refmod, self.Length)
+                # msg = "The refmod {0} length has to be between 1 and {1}".format(self.Refmod, self.Length)
+                ConditionalRaise(msg)
                 return
             if offset - 1 + length > self.Length:
                 # The requested refmod would overrun the end of the variable.
                 # Silently trim it for the user:
+                # FIXME: this should never be done, either "ok"/"warn" and use as-is, or ConditionalRaise
+                # msg = "The refmod {0} exceeds the field size {1}".format(self.Refmod, self.Length)
                 length = self.Length - (offset - 1)
 
             self.RefmodOffset = offset - 1  # Note that RefmodOffset is zero-based
@@ -4721,11 +4746,12 @@ def get_sorted_possibilities(args, limit, no_data=False):
 
             # Pick up the 1-based value indexed by the argument:
             index = int(args[0]) - 1
-            if 0 <= index < len(GV_GlobalVariables.ShortTermMemory):
+            maxIndex = len(GV_GlobalVariables.ShortTermMemory)
+            if 0 <= index < maxIndex:
                 # If index is valid, pick up the short-term memory entry
                 possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
             else:
-                ConditionalRaise("The specified stored variable index ({0}) is out of range (1 to {1})".format(index + 1, len(GV_GlobalVariables.ShortTermMemory)))
+                ConditionalRaise("The specified stored variable index ({0}) is out of range (1 to {1})".format(index + 1, maxIndex))
                 return possibilities, False  # False means there was no 'limit' overflow
         else:
             # There are one or more arguments.  Use our clever routine
@@ -4806,15 +4832,16 @@ def break_completion(text, word, condition):
                     possibilities.append(str(gdb_breakpoint.number))
                 return possibilities
 
+        word_cnt = len(text_split)
         if condition == 0:
             # gdb only completes this with "i" typed, disabled for now
-            # if len(text.split()) == 1:
+            # if word_cnt == 1:
             #     return ["if"]
 
-            if len(text.split()) in (3, 4) and word == "":
+            if word_cnt in (3, 4) and word == "":
                 return ["=", "!=", "<", "=<", ">", ">=", "<>", "=~"]
         else:
-            if len(text.split()) in (2, 3) and word == "":
+            if word_cnt in (2, 3) and word == "":
                 return ["=", "!=", "<", "=<", ">", ">=", "<>", "=~"]
 
         # note: modifier / slash is no word, so in this case word is None
@@ -5605,7 +5632,7 @@ class CobolAfterWatchBreakpoint(gdb.Breakpoint):
         # to not raise strange "could not go up" messages we check the current state and store this in a
         # convenience variable (GDB 8.2+ only, but we're guaranteed to be on 8.3+ in this method) before executing it
         up_cmd = "py gdb.set_convenience_variable(\"CupNeeded\",CFrameWorker.is_cobol_frame(gdb.selected_frame())[0] == False)"
-        up_cmd += "\nif $CupNeeded\ncup0\nend"
+        up_cmd += "\nif $CupNeeded\ncup 0\nend"
         if creating_wp.commands:
             self.commands = up_cmd + "\n" + creating_wp.commands
         else:
@@ -5939,7 +5966,7 @@ class CBreakWorker():
         possibilities, limit_reached = get_sorted_possibilities(search_args, 1)
 
         if limit_reached:
-            print('More than one symbol matching "{0}" in current context.'.format(''.join(search_args)))
+            ConditionalRaise('More than one symbol matching "{0}" in current context.'.format(''.join(search_args)))
             return payload
 
         if not possibilities and not limit_reached:
@@ -5975,7 +6002,7 @@ class CBreakWorker():
         elif condition in (">=", "<=", ">", "<", "=~"):
             comp_op = condition
         else:
-            print("Condition {0} not implemented".format(condition))
+            ConditionalRaise("Condition {0} not implemented".format(condition))
             return
 
         line_nr = left_side[0]
@@ -5987,7 +6014,7 @@ class CBreakWorker():
             return
 
         if comp_op == "=~" and payload_f.AttrType not in (1, 33, 34, 35):
-            print("Not yet implemented (Attribute type", payload_f.AttrType, ")")
+            ConditionalRaise("Not yet implemented (Attribute type " + payload_f.AttrType + ")")
             return
 
         if is_lit == 0 and not right_side[0].isdigit():
@@ -6055,11 +6082,11 @@ class CBreakWorker():
                 del left_side[0]
                 self.set_section_breakpoint(left_side, t_flag, i_flag)
             else:
-                print('Breakpoint parameters not recognized')
+                ConditionalRaise('Breakpoint parameters not recognized')
                 return
         elif right_side and condition != "":
             if len(left_side) < 2:
-                print('Breakpoint parameters not recognized')
+                ConditionalRaise('Breakpoint parameters not recognized')
                 return
 
             if len(left_side) >= 2 and not left_side[0].isdigit():
@@ -6067,14 +6094,14 @@ class CBreakWorker():
                 left_side.insert(0, '-1')
 
             if left_side[1] != "if":
-                print('Second argument should be "if"')
+                ConditionalRaise('Second argument should be "if"')
                 return
 
             del left_side[1]
 
             self.set_cond_break(left_side, right_side, condition, None, is_lit, t_flag, i_flag)
         else:
-            print('Breakpoint parameters not recognized')
+            ConditionalRaise('Breakpoint parameters not recognized')
             return
 
     @staticmethod
@@ -6107,7 +6134,7 @@ class CBreakWorker():
                 return
 
         if not left_side[0].isdigit():
-            print('First argument is not a breakpoint number')
+            ConditionalRaise('First argument is not a breakpoint number')
             return
 
         break_point = self.find_breakpoint(left_side[0])
@@ -6121,10 +6148,10 @@ class CBreakWorker():
             elif len(left_side) >= 2 and len(left_side) <= 4:
                 self.set_cond_break(left_side, right_side, condition, break_point, is_lit, False, False)
             else:
-                print('Breakpoint parameters not recognized')
+                ConditionalRaise('Breakpoint parameters not recognized')
                 return
         else:
-            print('Breakpoint is not a Cobol breakpoint')
+            ConditionalRaise('Breakpoint is not a COBOL breakpoint')
             return
 
 
@@ -6192,7 +6219,7 @@ class CPrint(gdb.Command):
                 COBCDRW_AVAILABLE = False
         # note: specific errors were only added with Python 3.3, so we catch everything...
         # except subprocess.CalledProcessError:
-        except:   # TODO: use appropriate exceptio
+        except:   # TODO: use appropriate exception
             print("WARNING: \"cprint ?\" not available: {0} not available, consider setting COBCDRW".format(COBCDRW_BINARY))
             COBCDRW_AVAILABLE = False
 
@@ -6358,6 +6385,10 @@ A breakpoint stops execution of your program whenever the expression matches
 
     @staticmethod
     def complete(text, word):
+        # TODO: if we are behind "section" or the current word is "section",
+        #       then complete section names
+        # TODO: if we are behind "if" or the current word is "if",
+        #       then issue break_completion (text, word, 1)
         possibilities = break_completion(text, word, 0)
         return possibilities
 
@@ -6380,6 +6411,10 @@ Do "help cbreak" for info on COBOL expressions."""
 
     @staticmethod
     def complete(text, word):
+        # TODO: if we are behind "section" or the current word is "section",
+        #       then complete section names
+        # TODO: if we are behind "if" or the current word is "if",
+        #       then issue break_completion (text, word, 1)
         possibilities = break_completion(text, word, 0)
         return possibilities
 
@@ -6626,7 +6661,6 @@ they override any that might have been passed to GDB with --args."""
             # If there is no cobol program, just run
             if cobol_program:
                 # set temporary maintenance breakpoint
-
                 bp = CBreakWorker.set_entry_breakpoint(cobol_program, True, True)
                 # CHECKME: Do we still want to run if breakpoint was not set?
                 command = "run " + arguments
@@ -6796,7 +6830,7 @@ class CFrameWorker:
     def nearest_cobol_frame():
         try:
             frame = CFrameWorker.Frame(True, 0)
-            if not frame:
+            if frame is None:
                 frame = CFrameWorker.Frame(False, 0)
         except gdb.GdbError:
             frame = None
@@ -6814,7 +6848,7 @@ class CFrameWorker:
 
         number = GetNumericArgument(argument)
         frame = CFrameWorker.Frame(up, number)
-        if not frame:
+        if frame is None:
             # note: we raise here to prevent hookpost-defines to be triggered
             if up:
                 ConditionalRaise("Initial COBOL frame selected; you cannot go up.")
@@ -6937,7 +6971,8 @@ class CUntilCobol(gdb.Command):
         if argument:
             ConditionalRaise('The "until-cobol" command does not take any arguments.')
             return
-        # sanity check: Do we have any frame at all? (need to be here because of ConditioalRaise in CFrameWorker)
+        # sanity check: "Do we have any frame at all?" is already done in CFrameWorker)
+        #               the only reason also done here is the use of ConditionalRaise
         try:
             frame = gdb.selected_frame()
         except gdb.error:
@@ -6959,17 +6994,24 @@ class CListSection(gdb.Command):
 
     def __init__(self):
         super(CListSection, self).__init__("list-section", gdb.COMMAND_FILES)
+        self.last_arg = None
+
+    def complete(self, text, word):
+        # TODO: complete section names
+        return gdb.COMPLETE_NONE
 
     def invoke(self, argument, from_tty):
-        # TODO: the command should repeat, and _only in this case_:
-        # if re-executed:
-        #    gdb.execute("list", False, False)
-        #    return
 
-        self.dont_repeat()
         if not argument:
             ConditionalRaise('Argument required.')
             return
+
+        # Check for re-execution by last argument and just go on "list"'ing as with other commands:
+        if self.last_arg == argument:
+            self.last_arg = None
+            gdb.execute("list", True, False)
+            return
+        self.last_arg = argument
 
         try:
             gdb.execute("list " + get_section_spec(argument), False, False)
@@ -7288,7 +7330,7 @@ An argument says how fast auto stepping is done (1-19, default 5)."""
         if argument:
             number = GetNumericArgument(argument, Negative=True)  # we do the check on our own
             if number == 0 or number > 19:
-                ConditionalRaise("argument must be a digit between 1 and 19")
+                ConditionalRaise("argument must be an integer between 1 and 19")
                 return
 
         sleep_time = 3.0 / (number * 1.4)
