@@ -109,29 +109,29 @@ COBCD_VERSION = '[Version 4.28.dev3]'
 #
 #   /* Field types */
 #
-COB_TYPE_UNKNOWN             =  0x00    # 0
-COB_TYPE_GROUP               =  0x01    # 1
-COB_TYPE_BOOLEAN             =  0x02    # 2
-COB_TYPE_NUMERIC             =  0x10    # 16
-COB_TYPE_NUMERIC_DISPLAY     =  0x10    # 16
-COB_TYPE_NUMERIC_BINARY      =  0x11    # 17
-COB_TYPE_NUMERIC_PACKED      =  0x12    # 18
-COB_TYPE_NUMERIC_FLOAT       =  0x13    # 19
-COB_TYPE_NUMERIC_DOUBLE      =  0x14    # 20
-COB_TYPE_NUMERIC_L_DOUBLE    =  0x15    # 21
-COB_TYPE_NUMERIC_FP_DEC64    =  0x16    # 22
-COB_TYPE_NUMERIC_FP_DEC128   =  0x17    # 23
-COB_TYPE_NUMERIC_FP_BIN32    =  0x18    # 24
-COB_TYPE_NUMERIC_FP_BIN64    =  0x19    # 25
-COB_TYPE_NUMERIC_FP_BIN128   =  0x1A    # 26
-COB_TYPE_NUMERIC_COMP5       =  0x1B    # 27
-COB_TYPE_ALNUM               =  0x20    # 32
-COB_TYPE_ALPHANUMERIC        =  0x21    # 33
-COB_TYPE_ALPHANUMERIC_ALL    =  0x22    # 34
-COB_TYPE_ALPHANUMERIC_EDITED =  0x23    # 35
-COB_TYPE_NUMERIC_EDITED      =  0x24    # 36
-COB_TYPE_NATIONAL            =  0x40    # 48
-COB_TYPE_NATIONAL_EDITED     =  0x41    # 49
+COB_TYPE_UNKNOWN             = 0x00    # 0
+COB_TYPE_GROUP               = 0x01    # 1
+COB_TYPE_BOOLEAN             = 0x02    # 2
+COB_TYPE_NUMERIC             = 0x10    # 16
+COB_TYPE_NUMERIC_DISPLAY     = 0x10    # 16
+COB_TYPE_NUMERIC_BINARY      = 0x11    # 17
+COB_TYPE_NUMERIC_PACKED      = 0x12    # 18
+COB_TYPE_NUMERIC_FLOAT       = 0x13    # 19
+COB_TYPE_NUMERIC_DOUBLE      = 0x14    # 20
+COB_TYPE_NUMERIC_L_DOUBLE    = 0x15    # 21
+COB_TYPE_NUMERIC_FP_DEC64    = 0x16    # 22
+COB_TYPE_NUMERIC_FP_DEC128   = 0x17    # 23
+COB_TYPE_NUMERIC_FP_BIN32    = 0x18    # 24
+COB_TYPE_NUMERIC_FP_BIN64    = 0x19    # 25
+COB_TYPE_NUMERIC_FP_BIN128   = 0x1A    # 26
+COB_TYPE_NUMERIC_COMP5       = 0x1B    # 27
+COB_TYPE_ALNUM               = 0x20    # 32
+COB_TYPE_ALPHANUMERIC        = 0x21    # 33
+COB_TYPE_ALPHANUMERIC_ALL    = 0x22    # 34
+COB_TYPE_ALPHANUMERIC_EDITED = 0x23    # 35
+COB_TYPE_NUMERIC_EDITED      = 0x24    # 36
+COB_TYPE_NATIONAL            = 0x40    # 48
+COB_TYPE_NATIONAL_EDITED     = 0x41    # 49
 
 #
 #   /* Field flags */
@@ -240,12 +240,12 @@ class GlobalVariables():
         if self.gdb_version < 80300:
             if self.gdb_version < 70600:
                 # Sanity check with expected stack trace - as everything will be broken in this case
-                raise("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.6+ is required)!".format(
-                      self.gdb_version / 10000, self.gdb_version % 10000))
+                raise Exception("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.6+ is required)!".format(
+                    self.gdb_version / 10000, self.gdb_version % 10000))
             if self.gdb_version < 70700:
                 print(" !! Warning: frame-filters and cbacktrace are not available with GDB-{0}.{1} (GDB 7.7+ is required)\n{2}".format(
-                      self.gdb_version / 10000, self.gdb_version % 10000,
-                      "cwatch handling will be severely limited"))
+                    self.gdb_version / 10000, self.gdb_version % 10000,
+                    "cwatch handling will be severely limited"))
             if self.gdb_version >= 80000:
                 print(" !! Warning: there are known problems with GDB-8.1 and GDB-8.2")
 
@@ -296,7 +296,7 @@ def OurPrint(s, end='\n'):
         print(s, end=end)
     except KeyboardInterrupt as ki:
         retval = str(ki)
-    except:
+    except Exception:
         traceback.print_exc()
     return retval
 
@@ -546,7 +546,7 @@ def WithRepeatCount(s):
         if s and s[0] == '[':
             return ReplaceWithRepeatCountBracketed(s)
         return s
-    except:
+    except Exception:
         traceback.print_exc()
         sys.exit(1)
 
@@ -670,16 +670,10 @@ def AddEmUp(expression):
     tokens = expression.split('+')
     for token in tokens:
         if token[0:1] in "0123456789":  # Python2/3 ecumenical
-            try:
-                if sys.version[0] == '2':
-                    # This is Python2
-                    token = token.decode("latin1")
-                retval += int(token)
-            except:
-                # if the latin decode fails, or if token isn't an integer,
-                # an exception will be thrown.  As described above, just
-                # ignore that for now.
-                pass
+            retval += int(token)
+        else:
+            # as described above, just ignore that for now.
+            pass
     return retval
 
 
@@ -1225,7 +1219,7 @@ class VarTrie():
                             # (Recursion is a beautiful thing)
                             self.LoadTrieFromLine(self.stashed_line)
                             self.stashed_line = None
-        except:
+        except Exception:
             traceback.print_exc()
             sys.exit(1)
 
@@ -2133,7 +2127,7 @@ class CobolVariable():
                     frame_string = frame_string.split()
                     try:
                         line_number = int(frame_string[0])
-                    except:
+                    except:   # TODO: use appropriate exception
                         line_number = -1
 
                 # print("Trapped at ", line_number)
@@ -2284,7 +2278,7 @@ class CobolVariable():
     def ShowFields(self):
         try:
             bname_location = GetPointerTo(self.Bname)
-        except:
+        except:   # TODO: use appropriate exception
             bname_location = 0
         bname_text = ""
         if bname_location:
@@ -4167,7 +4161,7 @@ class ModuleInformation():
 
         try:
             the_address = GetPointerTo(string_name)
-        except:
+        except:   # TODO: use appropriate exception
             the_address = None
 
         if the_address:
@@ -4203,7 +4197,7 @@ class ModuleInformation():
                     GV_ModuleInformation.stashed_line_list[string_name] = GV_ModuleInformation.line_list
                     GV_ModuleInformation.stashed_commands[string_name]  = GV_ModuleInformation.stashed_commands
                 return True
-            except:
+            except Exception:
                 traceback.print_exc()
         return False
 
@@ -4432,7 +4426,7 @@ class ModuleState():
                         if match:
                             self.current_full_path = match.group(1)
                             break
-        except:
+        except:   # TODO: use appropriate exception
             self.current_trapped_routine = ""
             self.current_trapped_file = ""
             self.current_trapped_frame = -1
@@ -4834,7 +4828,7 @@ def break_completion(text, word, condition):
 
         possibilities = get_completion_possibilities(word)
         return possibilities
-    except:
+    except Exception:
         traceback.print_exc()
 
 
@@ -4897,7 +4891,7 @@ def FromHexAlphaString(conv_str):
         while i < len(conv_str):
             try:
                 conv_char = int(conv_str[i:i + 2], 16)
-            except:
+            except:   # TODO: use appropriate exception
                 break
             retval += chr(conv_char)
             i += 2
@@ -4916,7 +4910,7 @@ def FromHexLiteralNumber(conv_str):
         while i < len(conv_str):
             try:
                 nch = int(conv_str[i], 16)
-            except:
+            except:   # TODO: use appropriate exception
                 break
             retval *= 16
             retval += nch
@@ -4935,7 +4929,7 @@ def FromBinaryLiteralNumber(conv_str):
         while i < len(conv_str):
             try:
                 nch = int(conv_str[i], 2)
-            except:
+            except:   # TODO: use appropriate exception
                 break
             retval *= 2
             retval += nch
@@ -5115,7 +5109,7 @@ class CPrintWorker():
         data = payload.Data()[0:elements]
         if payload.Refmod:
             if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_BINARY:
-                body = "[0x" + payload.GetDataAsBinary() + ']'
+                body = "0b" + payload.GetDataAsBinary()
             elif not payload.display_body.startswith('"') or GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_HEX:
                 # The refmod payload is not alphabetic (or the submode is x for hex) and so we are
                 # going to display the refmodded payload in hex:
@@ -5172,7 +5166,7 @@ class CPrintWorker():
             retval = str(ki)
             # print("Quit")
             print(retval)  # is there a caller that does not like the print?
-        except:
+        except Exception:
             traceback.print_exc()
         return retval
 
@@ -6203,7 +6197,7 @@ class CPrint(gdb.Command):
                 COBCDRW_AVAILABLE = False
         # note: specific errors were only added with Python 3.3, so we catch everything...
         # except subprocess.CalledProcessError:
-        except:
+        except:   # TODO: use appropriate exceptio
             print("WARNING: \"cprint ?\" not available: {0} not available, consider setting COBCDRW".format(COBCDRW_BINARY))
             COBCDRW_AVAILABLE = False
 
@@ -6215,7 +6209,7 @@ class CPrint(gdb.Command):
         # set alias, ignore errors (most likely because already defined)
         try:
             gdb.execute("alias -a cp = cprint", False, True)
-        except:
+        except gdb.error:
             pass
 
     def invoke(self, arguments, from_tty):
@@ -6225,7 +6219,7 @@ class CPrint(gdb.Command):
         # pass user errors unchanged
         except gdb.GdbError:
             raise
-        except:
+        except:   # TODO: use appropriate exception
             traceback.print_exc()
 
     def complete(self, text, word):
@@ -6251,7 +6245,7 @@ class CPrint(gdb.Command):
             possibilities = get_completion_possibilities(word)
 
             return possibilities
-        except:
+        except:   # TODO: use appropriate exception
             traceback.print_exc()
 
 
@@ -6274,7 +6268,7 @@ A watchpoint stops execution of your program whenever the value of an expression
         # set alias, ignore errors (most likely because already defined)
         try:
             gdb.execute("alias -a cw = cwatch", False, True)
-        except:
+        except gdb.error:
             pass
         self.worker = CWatchWorker()
 
@@ -6352,7 +6346,7 @@ A breakpoint stops execution of your program whenever the expression matches
         # set alias, ignore errors (most likely because already defined)
         try:
             gdb.execute("alias -a cb = cbreak", False, True)
-        except:
+        except gdb.error:
             pass
         CTBreak()
         CCondition()
@@ -6728,11 +6722,11 @@ class CFrameWorker:
             # set aliases, ignore errors (most likely because already defined)
             try:
                 gdb.execute("alias -a cbt = cbacktrace", False, True)
-            except:
+            except gdb.error:
                 pass
             try:
                 gdb.execute("alias cwhere = cbacktrace", False, True)
-            except:
+            except gdb.error:
                 pass
 
     @staticmethod
@@ -7011,7 +7005,7 @@ class CLocalBacktrace(gdb.Command):
         # set alias, ignore errors (most likely because already defined)
         try:
             gdb.execute("alias -a lbt = local-backtrace", False, True)
-        except:
+        except gdb.error:
             pass
 
     def get_section_for_sal(self, sal):
@@ -7120,7 +7114,7 @@ class CLocalBacktrace(gdb.Command):
         except (KeyboardInterrupt, gdb.GdbError):
             raise
         # that exception is unexpected, but we never know...
-        except:
+        except Exception:
             traceback.print_exc()
         # don't leave without cleanup...
         finally:
@@ -7327,7 +7321,7 @@ An argument says how fast auto stepping is done (1-19, default 5)."""
         except gdb.GdbError:
             raise
         # that exception is unexpected, but we never know...
-        except:
+        except Exception:
             traceback.print_exc()
         # don't leave without cleanup...
         finally:
