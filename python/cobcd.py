@@ -960,8 +960,24 @@ def IntegerOrVariable(s):
     if IsInteger(s):
         return atoi(s), False  # False means no limit overrun
 
-    # It is not.  Let's see if it represents a unique in-context COBOL variable
+    # It is not.  Let's see if it represents a gdb history/convenience variable
+    if s[0] == '$':
+        id = s[1:]
+        # Pick up the history index:
+        if IsInteger(id):
+            val = gdb.history (atoi(id)) # may raise a gdb.Error (if not yet reached) which we just pass
+        else:
+            val = gdb.convenience_variable (id)
+            if not val:
+                raise gdb.GdbError("unknown convenience variable " + s)
+        pyval = str(val)
+        if pyval and len(pyval) > 2 and pyval[0] == '"' and pyval[-1] == '"':
+            pyval = pyval[1:-1]
+        if IsInteger(pyval):
+            return atoi(pyval), False  # False means no limit overrun
+        raise gdb.GdbError("only numeric gdb variables may be used with cprint, {0} is: {1}".format(s, pyval))
 
+    # It is not.  Let's see if it represents a unique in-context COBOL variable
     possible_name = TokenizeCanonicalName(s)
     possibilities, limit_reached = get_sorted_possibilities(possible_name, 1)
     if not possibilities:
@@ -970,7 +986,7 @@ def IntegerOrVariable(s):
         # to take appropriate action.
         return None, limit_reached
 
-    # We know that there is but one possibility:
+    # We know that there is but one possibility because of the limit specified above:
     payload = GV_ModuleInformation.var_trie.storage_list[possibilities[0]]
     return payload.NumericValue(), False  # False means no limit overrun
 
@@ -4715,17 +4731,25 @@ def get_sorted_possibilities(args, limit, no_data=False):
                     new_dogs = new_dogs.union(set(GV_ModuleInformation.var_trie.GetListOfExactPossibilities(token)))
                 possibilities_1 = list(GV_ModuleState.old_dogs.union(new_dogs))
                 GV_ModuleState.old_dogs = new_dogs
-        elif args[0].isdigit():
-            # if the first, presumably single, argument is a number, then he is looking
+        elif args[0][0] == '#':
+            # if the first, presumably single, argument after # is a number, then we are looking
             # for a short-term memory entry.
 
             # Pick up the 1-based value indexed by the argument:
-            index = int(args[0]) - 1
-            if 0 <= index < len(GV_GlobalVariables.ShortTermMemory):
+            try:
+                index = int(args[0][1:]) - 1
+            except ValueError:
+                ConditionalRaise("A stored variable index must be in format #nnn but is {0}".format(args[0]))
+                return possibilities, False  # False means there was no 'limit' overflow
+            maxIndex = len(GV_GlobalVariables.ShortTermMemory)
+            if maxIndex == 0:
+                ConditionalRaise("No stored variables so far")
+                return possibilities, False  # False means there was no 'limit' overflow
+            if 0 <= index < maxIndex:
                 # If index is valid, pick up the short-term memory entry
                 possibilities_1 = [GV_GlobalVariables.ShortTermMemory[index]]
             else:
-                ConditionalRaise("The specified stored variable index ({0}) is out of range (1 to {1})".format(index + 1, len(GV_GlobalVariables.ShortTermMemory)))
+                ConditionalRaise("The specified stored variable index ({0}) is out of range (1 to {1})".format(index + 1, len(maxIndex)))
                 return possibilities, False  # False means there was no 'limit' overflow
         else:
             # There are one or more arguments.  Use our clever routine
@@ -5449,9 +5473,14 @@ class CPrintWorker():
             # The user is talking to himself for some reason.  Just play along.
             self.HandleDoubleQuote(arguments)
             return
+        if IsInteger(args) or args[0][0] == '$':
+            # The user is talking to himself for some reason.  Just play along.
+            num, _ret = IntegerOrVariable(args)
+            print (num)
+            return
 
         if not GV_ModuleState.Stack:
-            ConditionalRaise("No stack.")
+            ConditionalRaise("Internal stack state broken.")
             return
 
         # Initialize for subsequent processing:
