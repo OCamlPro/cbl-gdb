@@ -6996,7 +6996,8 @@ class CLocalBacktrace(gdb.Command):
         # match everything between modern free format: "495  TESTME section." and
         # historic fixed-form with sequence number segment  "495 000495 TESTME SECTION 00 ."
         # also cater for PROCEDURE DIVISION in case we don't have a SECTION
-        self.section_pattern = re.compile(r"^\d*\s+\d*\s+(.*)\s+(SECTION|DIVISION)\s*(\d+\.|\.|USING)", re.IGNORECASE)
+        self.section_pattern = re.compile(r"^\d*\s+\d*\s+(.*)\s+(SECTION|DIVISION)\s*(\d*\.|USING)", re.IGNORECASE)
+        self.section_pattern_gdb = r"^\d*\s\+.*\s\+\([sS][eE][cC][tT][iI][oO][nN]\s*\d*\.\|\[dD][iI][vV][iI][sS][iI][oO][nN]\s*\(\.\|[uU][sS][iI][nN][gG]\)\)"
         # set alias, ignore errors (most likely because already defined)
         try:
             gdb.execute("alias -a lbt = local-backtrace", False, True)
@@ -7004,22 +7005,44 @@ class CLocalBacktrace(gdb.Command):
             pass
 
     def get_section_for_sal(self, sal):
-        output = gdb.execute("list *" + hex(sal.pc), False, True)
+        # note: the listsize was temporarily set to 1, so we only get one source line here,
+        # possibly with an additional "header" line
+
+        # set the list position to the specified address (may already be a section header)
+        try:
+            output = gdb.execute("list *" + hex(sal.pc), False, True)
+            lines = output.split('\n', 2)
+            if len(lines) > 2:
+                line = lines[1]
+            else:
+                line = lines[0]
+        except gdb.error:
+            # depending on GDB version may error if no match found
+            return "unknown"
+        except UnicodeDecodeError as ex:
+            # the former may raise an UTF8 error but if this is the case then hopyfully in an inline comment - get content before:
+            line = ex.object[:ex.start]
 
         try:
             while True:
-                lines = output.split('\n')
-                if len(lines) > 2:
-                    line = lines[1]
-                else:
-                    line = lines[0]
+                
+                if line == "Expression not found":
+                    break
                 match = re.search(self.section_pattern, line)
                 if match:
                     retval = match.group(1) + " " + match.group(2)
                     if retval.upper() == "PROCEDURE DIVISION":
                         retval = "<MAIN SECTION>"
                     return retval
-                output = gdb.execute("list -", False, True)
+
+                try:
+                    line = gdb.execute("reverse-search " + self.section_pattern_gdb, False, True).split('\n', 1)[0]
+                except gdb.error:
+                    # depending on GDB version may error if no match found
+                    return "unknown"
+                except UnicodeDecodeError as ex:
+                    # the former may raise an UTF8 error but if this is the case then hopyfully in an inline comment - get content before:
+                    line = ex.object[:ex.start]
         # leave the loop upon request
         except KeyboardInterrupt:
             raise
@@ -7027,6 +7050,8 @@ class CLocalBacktrace(gdb.Command):
         # ... or we did not catched it
         except gdb.error:
             pass
+        except Exception:
+            traceback.print_exc()
 
         return "unknown"
 
