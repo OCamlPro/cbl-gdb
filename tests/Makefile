@@ -6,10 +6,18 @@ all:
 # note: this is a direct copy from https://stackoverflow.com/a/33437808/5027456
 #       by https://stackoverflow.com/users/4658481/klsdjfhsalkjfhl
 
+UNAME_O := $(shell uname -o)
+
+ifeq "$(UNAME_O)" "Solaris"
+	FIND := gfind
+else
+	FIND := find
+endif
+
+DIRS=$(shell ${FIND} . -maxdepth 1 -mindepth 1 -type d -not -name ".*" -printf '%P\n')
 
 
 # all direct directories of this dir. uses "-printf" to get rid of the "./"
-DIRS=$(shell find . -maxdepth 1 -mindepth 1 -type d -not -name ".*" -printf '%P\n')
 
 $(DIRS):
 	$(MAKE) -C $@

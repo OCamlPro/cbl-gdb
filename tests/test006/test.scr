@@ -44,9 +44,9 @@ continue
 
 # cbreak variable test
 cstart
-cbreak  31 if b == 3
-ctbreak 33 if d == 5
-cbreak  35 if f == 7
+cbreak  37 if b == 3
+ctbreak 39 if d == 5
+cbreak  41 if f == 7
 
 continue 
 printem
@@ -59,7 +59,7 @@ continue
 
 # ccondition variable test
 cstart
-cbreak  35 if f == 3
+cbreak  41 if f == 3
 continue
 printem
 
@@ -71,7 +71,7 @@ continue
 
 # cbreak string test
 cstart
-cbreak 40 if TSTR = "TESTSTRING"
+cbreak 47 if TSTR = "TESTSTRING"
 continue
 printem
 delete
@@ -79,7 +79,7 @@ continue
 
 # cbreak substring test
 cstart
-cbreak 40 if TSTR (2:3) = "EST"
+cbreak 47 if TSTR (2:3) = "EST"
 continue
 printem
 delete
@@ -87,7 +87,7 @@ continue
 
 # cbreak substring + string test
 cstart
-cbreak 40 if TSTR (3:3) = TSUBSTR
+cbreak 47 if TSTR (3:3) = TSUBSTR
 continue
 printem
 delete
@@ -95,7 +95,7 @@ continue
 
 # cbreak string + occurs
 cstart
-cbreak 30 if TOSTR(3) = "TESTSTRING"
+cbreak 37 if TOSTR(3) = "TESTSTRING"
 continue
 printem
 delete
@@ -103,7 +103,7 @@ continue
 
 # cbreak string + occurs + substring
 cstart
-cbreak 30 if TOSTR(3)(3:3) = TSUBSTR
+cbreak 37 if TOSTR(3)(3:3) = TSUBSTR
 continue
 printem
 delete
@@ -120,6 +120,16 @@ continue
 # cbreak file:section test
 cstart
 cbreak test:P-CALC
+continue
+printem
+delete
+continue
+
+# cwatch IN
+cstart
+cwatch TRECGRPVAL IN TRECGRP IN TREC
+continue
+printem
 continue
 printem
 delete
