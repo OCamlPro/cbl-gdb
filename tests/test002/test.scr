@@ -9,7 +9,7 @@ define stutter_step
         echo 
         cprint *
         cprint ?
-        cprint/x 1
+        cprint/x #1
         step
         end
     end
@@ -24,16 +24,16 @@ define printem
     cprint/v3 *
     echo cprint/v3 ?\n
     cprint/v3 ?
-    echo cprint/x 1\n
-    cprint/x 1
+    echo cprint/x #1\n
+    cprint/x #1
     echo cprint/m *\n
     cprint/m *
     echo cprint/m ?\n
     cprint/m ?
-	echo cprint/x 1\n
-	cprint/x 1
-	echo cprint/b 1\n
-	cprint/b 1
+	echo cprint/x #1\n
+	cprint/x #1
+	echo cprint/b #1\n
+	cprint/b #1
     echo KNOWN GOOD FINISH\n
     end
 
@@ -49,23 +49,24 @@ file test
 cprint/v3
 cprint/r 6
 
-break 127
-break 137
-break 147
-break 157
-break 168
-break 175
-break 185
-break 195
-break 205
-break 215
-break 225
+break 129
+break 139
+break 149
+break 159
+break 170
+break 177
+break 187
+break 197
+break 206
+break 216
+break 226
+break 230
 
 run
 printloop
 
 delete
-break 227
+break 230
 run
 
 echo KNOWN GOOD START\n

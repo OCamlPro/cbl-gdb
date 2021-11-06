@@ -10,7 +10,7 @@ define stutter_step
         echo 
         cprint *
         cprint ?
-        cprint/x 1
+        cprint/x #1
         step
         end
     end
@@ -25,8 +25,8 @@ define printem
     cprint/v3 *
     echo cprint/v3 ?\n
     cprint/v3 ?
-    echo cprint/x 1\n
-    cprint/x 1
+    echo cprint/x #1\n
+    cprint/x #1
     echo cprint/m *\n
     cprint/m *
     echo cprint/m ?\n
