@@ -167,7 +167,7 @@ R_SPACE = re.compile(r'\bSPACE(S)?\b', re.IGNORECASE)
 R_ZERO  = re.compile(r'\bZERO(S|ES)?\b', re.IGNORECASE)
 # The following works for signed or unsigned integer or floating=point numbers
 # See Rside.FromString()
-R_NUMERICALCONSTANT = re.compile(r"^([+]|[-])?(\d*)[.]?(\d*)(e|e[+]|e[-])?(\d*)$", re.IGNORECASE)
+R_NUMERICALCONSTANT = re.compile(r"^([+]|[-])?(\d*)[.,]?(\d*)(e|e[+]|e[-])?(\d*)$", re.IGNORECASE)
 
 R_ALL_ZERO_SPACE = re.compile(r'ALL|ZERO(S|ES)?|SPACE(S)?', re.IGNORECASE)
 R_ZERO_SPACE = re.compile(r'ZERO(S|ES)?|SPACE(S)?', re.IGNORECASE)
@@ -1626,13 +1626,17 @@ class CobolVariable():
         self.index_of_granddaddy = None  # Our ultimate ancestor (a LEVEL 01 variable, or ourself)
 
         # These are established at the run-time executable instance level.
-        # Eventually we might need some way of changing them to match the GnuCOBOL generated C.
-        # The problem is that they are established in libcob program object, and we have
-        # no easy way of accessing the object the get them.
-
-        self.decimal_point = '.'
-        self.comma_separator = ','
-        self.currency_symbol = '$'
+        # on creating a new CobolVariable we are in the matching frame so can directly access its setup
+        try:
+            cob_module = gdb.parse_and_eval("*module")
+            # CHECKME: There is likely a better way than this split...
+            self.decimal_point = str(cob_module['decimal_point']).split("'")[1]
+            self.comma_separator = str(cob_module['numeric_separator']).split("'")[1]
+            self.currency_symbol = str(cob_module['currency_symbol']).split("'")[1]
+        except gdb.error:
+            self.decimal_point = '.'
+            self.comma_separator = ','
+            self.currency_symbol = '$'
 
     def IsDirty(self):
         return GV_ModuleInformation.var_trie.storage_list[self.index_of_granddaddy].grand_dirty
