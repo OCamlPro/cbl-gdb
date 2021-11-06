@@ -6304,8 +6304,7 @@ A watchpoint stops execution of your program whenever the value of an expression
         except:
             traceback.print_exc()
 
-    @staticmethod
-    def complete(text, word):
+    def complete(self, text, word):
         try:
             # note: modifier / slash is no word, so in this case word is None
             if word and (word[0] in ('*', '?', '"', '\'') or word[0].isdigit()):
@@ -6382,12 +6381,7 @@ A breakpoint stops execution of your program whenever the expression matches
         self.dont_repeat()
         self.worker.process_break_arguments(arguments, False, False)
 
-    @staticmethod
-    def complete(text, word):
-        # TODO: if we are behind "section" or the current word is "section",
-        #       then complete section names
-        # TODO: if we are behind "if" or the current word is "if",
-        #       then issue break_completion (text, word, 1)
+    def complete(self, text, word):
         possibilities = break_completion(text, word, 0)
         return possibilities
 
@@ -6408,12 +6402,7 @@ Do "help cbreak" for info on COBOL expressions."""
         self.dont_repeat()
         self.worker.process_break_arguments(arguments, True, False)
 
-    @staticmethod
-    def complete(text, word):
-        # TODO: if we are behind "section" or the current word is "section",
-        #       then complete section names
-        # TODO: if we are behind "if" or the current word is "if",
-        #       then issue break_completion (text, word, 1)
+    def complete(self, text, word):
         possibilities = break_completion(text, word, 0)
         return possibilities
 
@@ -6434,8 +6423,7 @@ Do "help cbreak" for info on COBOL expressions."""
         self.dont_repeat()
         self.worker.process_condition_arguments(arguments)
 
-    @staticmethod
-    def complete(text, word):
+    def complete(self, text, word):
         possibilities = break_completion(text, word, 1)
         return possibilities
 
