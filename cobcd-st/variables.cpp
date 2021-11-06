@@ -1,4 +1,5 @@
 /* #######################################################################
+/* #######################################################################
 # Copyright (c) 2019-2020 COBOLworx Corporation
 # All rights reserved.
 #
@@ -211,6 +212,10 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
 
     string current_record_type = "-" ;
     int line_number = 1;
+
+    bool looking_for_cstart = false;
+    bool found_cstart = false;
+
     while( fgets(ach,sizeof(ach),f) ) {
         extern bool GV_echo_line;
         if( GV_echo_line ) {
@@ -260,8 +265,27 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
                 variable.record_type = "PROGRAM-ID";
                 Insert(variable);
             }
+
+            looking_for_cstart = true;
             continue;
         }
+
+        if( looking_for_cstart AND !found_cstart ) {
+            // Our assumption is that the first return after the first
+            // PROGRAM-ID is where we want CSTART to break:
+            string input = ach;
+            VSTRING tokens = Split(input," \t");
+
+            if( tokens.size() >= 3 && tokens[0] == "return") {
+                // We have found that first return
+                VARIABLE variable;
+                variable.record_type = "C";
+                variable.name = tokens[1];
+                Insert(variable);
+                found_cstart = true;
+            }
+        }
+
 
 check_for_another_perform:
         switch(perform_return) {
