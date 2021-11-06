@@ -176,7 +176,6 @@ R_ALLSPACE = re.compile(r'ALL[ ]*SPACE(S)?', re.IGNORECASE)
 R_ALLZERO = re.compile(r'ALL[ ]*ZERO(S|ES)?', re.IGNORECASE)
 
 R_INTEGER = re.compile(r'^[-]?[0-9]+$')
-R_NUMBER = re.compile(r'^[-]?[0-9]+$|^([-]?[0-9]+)[.][0-9]*$|^([-]?[0-9]*)[.][0-9]+$')
 
 # executable available flags
 READELF_AVAILABLE = True
@@ -954,11 +953,6 @@ def IsInteger(s):
     # COBOL identifier.
 
     return R_INTEGER.match(s)
-
-
-def IsNumber(s):
-    # positive or negative number, with or without decimal point
-    return R_NUMBER.match(s)
 
 
 def IntegerOrVariable(s):
@@ -4714,7 +4708,7 @@ def get_sorted_possibilities(args, limit, no_data=False):
             # rather than NEXT.  By keeping one level of stickiness, the display of '?' variables
             # will be a bit more like what the user probably expects.
             if len(GV_ModuleState.current_full_path) > 0:
-                if len(args) > 1 and IsNumber(args[1]):
+                if len(args) > 1 and IsInteger(args[1]):
                     # an explicit, one-time range has been requested
                     qmrange = int(args[1])
                     # Clear out the old_dogs, because the parameter was
@@ -5021,7 +5015,7 @@ class CPrintWorker():
             r_code = args[0]
             args.pop(0)
 
-        if IsNumber(r_code):
+        if IsInteger(r_code):
             # This is a request to change the question_mark_range.  We will make
             # the change and reset the display by deleting the old_dogs, even
             # if the value hasn't actually changed:
