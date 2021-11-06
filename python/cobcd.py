@@ -5820,7 +5820,7 @@ class CWatchWorker():
     def process_watch_arguments(self, arguments):
         left_side = []
         right_side = []
-        condition = ""
+        _condition = ""
 
         args = arguments.split()
         if not args:
@@ -5840,11 +5840,16 @@ class CWatchWorker():
             ConditionalRaise("Option not recognized\n")
             return
 
+        while len(args) >= 3 and args[1].upper() in ('OF','IN'):
+            args[0] = args[0] + "/" + args[2]
+            del args[2]
+            del args[1]
+
         if len(args) > 3:
             ConditionalRaise("Too many arguments")
             return
 
-        left_side, right_side, condition = get_left_right_args(''.join(args))
+        left_side, right_side, _condition = get_left_right_args(''.join(args))
         if not left_side:
             return
 

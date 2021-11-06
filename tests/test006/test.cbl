@@ -17,6 +17,10 @@
        01 TOCCUR.
            03 TOSTR Pic X(10) Value SPACE OCCURS 10.
 
+       01 TREC.
+           03 TRECGRP.
+               05 TRECGRPVAL   PIC X VALUE SPACE.
+
        Procedure Division.
 
        TEST-START SECTION.
@@ -24,6 +28,8 @@
        DISPLAY "Start debug test".
 
        P-CALC SECTION.
+
+       MOVE 'A' TO TRECGRPVAL.
 
        Perform 10 Times
            MOVE 'TESTSTRING' TO TOSTR(A)
@@ -38,5 +44,7 @@
        End-Perform.
 
        DISPLAY TSTR.
+
+       MOVE 'B' TO TRECGRPVAL.
        
        GOBACK.
