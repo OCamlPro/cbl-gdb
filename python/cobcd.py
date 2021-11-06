@@ -5498,6 +5498,13 @@ class CPrintWorker():
         if not args or not args[0]:
             return
 
+        # Since there are additional arguments, we're going to need a stack
+        # to work with.  We do the test here so that instructions like
+        #   cprint/v3
+        # get processed even though no debugging has started.
+
+        GV_ModuleState.EstablishModuleState(True)   
+
         if args[0][0] == '"':
             # The user is talking to himself for some reason.  Just play along.
             self.HandleDoubleQuote(arguments)
@@ -6270,7 +6277,6 @@ class CPrint(gdb.Command):
 
     def invoke(self, arguments, from_tty):
         try:
-            GV_ModuleState.EstablishModuleState(True)   # we want errors seen early
             self.worker.ProcessArguments(arguments)
         # pass user errors unchanged
         except gdb.GdbError:
@@ -6407,7 +6413,7 @@ A breakpoint stops execution of your program whenever the expression matches
         CCondition()
 
         if GV_GlobalVariables.gdb_version >= 70700:
-            print('Registering silent maintanance breakpoint for showing note about ACCEPT')
+            print('Registering silent maintenance breakpoint for showing note about ACCEPT')
             bp = CobolBreakpoint("cob_accept", False, True)
             if bp:
                 bp.commands = "silent \n cup \n continue"
