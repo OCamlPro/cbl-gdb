@@ -4372,122 +4372,113 @@ class ModuleState():
         # have debugging.  That's not what you want, but I don't see how to avoid the problem
         # if you also want to be able to handle code in COPYBOOKs.
 
-        retval = False
         try:
-            command = "frame"
-            info_frame = GdbExecute(currentframe(), command)
-            command = "info stack"
-            info_stack = GdbExecute(currentframe(), command)
-            if len(info_stack) > 0 and info_stack[0] == '#':
-                retval = True
+            current_frame = gdb.selected_frame()
 
-                # Get the frame number from info_frame:
-                frame_from_frame = int(info_frame.split(' ')[0][1:])
+            # Get the frame number and filename from current frame:
+            frame_from_frame = CFrameWorker.get_frame_level(current_frame)
+            st = current_frame.find_sal().symtab
+            if st is None:
+                # current frame has no debugging info - we can't do anything here
+                return False
 
-                # Get the file name from the first line of the "frame" information:
-                m = info_frame.find('\n')
-                if m > -1:
-                    info_frame = info_frame[:m]
-                tokens = info_frame.rstrip().split(' ')
-                filename = tokens[-1].split(':')[0]
+            filename_frame = st.filename
+            filename_frame_full = st.fullname()
 
-                # We now march through the info_stack lines, looking for the
-                # first line whose filename matches filename:
+            # We now march through stack, looking for the
+            # first entry whose filename matches filename:
 
-                stack = info_stack.split('\n')
-                stack_line = 0
-                while stack_line < len(stack):
-                    tokens = stack[stack_line].split(' ')
+            # TODO: wouldn't it make more sense to use the current frame or one above for the start?
+            frame = gdb.newest_frame()
+            while frame:
+                st = frame.find_sal().symtab
+                if st is None:
+                    # don't screw parsing with missing debug info, just skip to next frame
+                    continue
+                if st.filename == filename_frame:
+                    break
+                frame = frame.older()
 
-                    frame_from_stack = int(tokens[0][1:])
+            if frame is None:
+                print("Bad things are happening.  Save this program for Dubner, and tell him")
+                print("that \"frame\" and \"info stack\" don't match in ProcessStack()")
+                return False
 
-                    # That line looks like this:
-                    #
-                    # #0  optfde01_ (entry=0) at optfde01.cbl:59
-                    #
-                    # We need the information from the final token:
+            self.current_full_path = filename_frame_full
+            frame_from_stack = CFrameWorker.get_frame_level(frame)
+            # Unexpected and confusing things happen when the frame is set
+            # to a PROCEDURE DIVISION line (outer COBOL frame).
+            # So, if an adjustment is necessary, we make it here:
+            if frame != current_frame:
+                frame.select()
 
-                    file_and_line = tokens[-1].split(':')
-                    if file_and_line[0] == filename:
+            # TODO: CFrameWorker.Go(0, False, True) = "cdown-silently 0" seems more robust than the above code
+
+            # At this point, file_and_line[0] matches the file name from "frame"
+            self.current_trapped_line = frame.find_sal().line
+
+            if filename_frame != self.current_trapped_file or frame_from_frame != frame_from_stack:
+                # We are in a new file, or perhaps a new frame
+                self.current_trapped_file = filename_frame
+                self.current_trapped_frame = frame_from_stack
+
+                # clear out the persistent 'p ?' memory; it has suddenly
+                # become obsolete
+                self.old_dogs = set()
+
+                # Because it's possible that we are trapped in a copybook,
+                # we can't assume that VARIABLE_STRING has the name
+                # of the current_trapped_file.  We need to work our
+                # way through the stack:
+
+                # Find the address of the VARIABLE_STRING for this trap point
+
+                # Note: it definitely makes more sense to use the now selected frame for the start...
+                # frame = gdb.newest_frame()   --> no adjustment means we still have the current one
+                while frame:
+                    st = frame.find_sal().symtab
+                    if st is None:
+                        # don't screw parsing with missing debug info, just skip to next frame
+                        continue
+                    possible_file = st.filename
+                    name_root = possible_file.split('/')[-1]
+
+                    name_suffix = ""
+                    for ch in name_root:
+                        if ch.isalnum():
+                            name_suffix += ch
+                        else:
+                            hh = hex(ord(ch))[-2:]
+                            name_suffix += hh.upper()
+
+                    # check if a variable with this string name can be read:
+                    if GV_ModuleInformation.ReadAndParseVariableString("VARIABLE_STRING_" + name_suffix):
                         break
-                    stack_line += 1
+                    # otherwise go on with next frame
+                    frame = frame.older()
 
-                if stack_line >= len(stack):
-                    print("Bad things are happening.  Save this program for Dubner, and tell him")
-                    print("that \"frame\" and \"info stack\" don't match in ProcessStack()")
+                if frame is None:
+                    # For whatever reasons, we couldn't find any information in
+                    # the stack above the "frame" point
                     return False
 
-                # Unexpected and confusing things happen when the frame is set
-                # to a PROCEDURE DIVISION line (outer COBOL frame).
-                # So, if an adjustment is necessary, we make it here:
-
-                if frame_from_frame != frame_from_stack:
-                    command = "select-frame " + str(frame_from_stack)
-                    GdbExecute(currentframe(), command)
-
-                # At this point, file_and_line[0] matches the file name from "frame"
-                self.current_trapped_line = int(file_and_line[1])
-
-                if file_and_line[0] != self.current_trapped_file or frame_from_frame != frame_from_stack:
-                    # We are in a new file, or perhaps a new frame
-                    self.current_trapped_file = file_and_line[0]
-                    self.current_trapped_frame = frame_from_stack
-
-                    # clear out the persistent 'p ?' memory; it has suddenly
-                    # become obsolete
-                    self.old_dogs = set()
-
-                    # Because it's possible that we are trapped in a copybook,
-                    # we can't assume that VARIABLE_STRING has the name
-                    # of the current_trapped_file.  We need to work our
-                    # way through the stack:
-
-                    # Find the address of the VARIABLE_STRING for this trap point
-
-                    while stack_line < len(stack):
-                        possibility = stack[stack_line]
-                        # Pull out the file name, which is before the colon in the last token
-                        possible_file = possibility.split(' ')[-1].split(':')[0]
-                        name_root = possible_file.split('/')[-1]
-
-                        name_suffix = ""
-                        for ch in name_root:
-                            if ch.isalnum():
-                                name_suffix += ch
-                            else:
-                                hh = hex(ord(ch))[-2:]
-                                name_suffix += hh.upper()
-
-                        # check if a variable with this string name can be read:
-                        if GV_ModuleInformation.ReadAndParseVariableString("VARIABLE_STRING_" + name_suffix):
-                            break
-                        # otherwise go on with next frame
-                        stack_line += 1
-
-                    if stack_line >= len(stack):
-                        # For whatever reasons, we couldn't find any information in
-                        # the stack above the "frame" point
-                        return False
-
-                    # Get the full path for the source file
-                    info_source = GdbExecute(currentframe(), "info source")
-                    info_source_lines = info_source.split('\n')
-                    for line in info_source_lines:
-                        pattern = re.compile(r"Located in (.*)$")
-                        match = re.search(pattern, line)
-                        if match:
-                            self.current_full_path = match.group(1)
-                            break
         except:   # TODO: use appropriate exception
             self.current_trapped_routine = ""
             self.current_trapped_file = ""
             self.current_trapped_frame = -1
             self.current_trapped_line = 0
-            retval = False
+            return False
 
-        return retval
+        return True
 
     def EstablishModuleState(self, announce):
+        # sanity check first
+        try:
+            gdb.selected_frame()
+        except gdb.error:
+            ConditionalRaise("No stack.")
+            return
+
         # Go read the frame and stack, and, if necessary, fetch the VARIABLE_STRING
         try:
             self.Stack = self.ProcessStack()
@@ -4507,9 +4498,10 @@ class ModuleState():
                     break
                 # Keep looking
                 self.current_trapped_routine = line[1]
-        else:
-            if announce:
-                ConditionalRaise("No stack.")
+        # Simon: looks wrong
+        # else:
+        #     if announce:
+        #         ConditionalRaise("No stack.")
 
 
 GV_ModuleState = ModuleState()
@@ -6278,7 +6270,7 @@ class CPrint(gdb.Command):
 
     def invoke(self, arguments, from_tty):
         try:
-            GV_ModuleState.EstablishModuleState(False)
+            GV_ModuleState.EstablishModuleState(True)   # we want errors seen early
             self.worker.ProcessArguments(arguments)
         # pass user errors unchanged
         except gdb.GdbError:
@@ -6889,6 +6881,18 @@ class CFrameWorker:
         frame.select()
         gdb.execute("frame", (silent is False), silent)
 
+    @staticmethod
+    def get_frame_level(frame):
+        if GV_GlobalVariables.gdb_version >= 110000:
+            return frame.level()
+        
+        level = 0
+        frame_counter = gdb.newest_frame()
+        while frame_counter != frame:
+            frame_counter = frame_counter.older()
+            level = level + 1
+        return level
+
 
 class CUp (gdb.Command):
     """Select and print COBOL stack frame that called this one.
@@ -7145,15 +7149,7 @@ class CLocalBacktrace(gdb.Command):
             return
 
         frame_ptr_txt = None
-
-        if GV_GlobalVariables.gdb_version >= 110000:
-            level = frame.level()
-        else:
-            level = 0
-            frame_counter = gdb.newest_frame()
-            while frame_counter != frame:
-                frame_counter = frame_counter.older()
-                level = level + 1
+        level = CFrameWorker.get_frame_level(frame)
 
         sanitize_place = True
         sal = None
