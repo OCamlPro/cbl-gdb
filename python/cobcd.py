@@ -911,18 +911,19 @@ def atoi(s):
     retval = 0
     sign = 1
     i = 0
-    while i < len(s):
+    if s[0] == '"':       # skip leading quote
+        s = s[1:]
+    max_pos = s.find('"') # An embedded quote ends the conversion
+    if max_pos == -1:
+        max_pos = len(s)
+    while i < max_pos:
         ch = s[i]
         i += 1
-        if ch == '"':
-            if i > 1:
-                # An embedded quote ends the conversion
-                break
-            # The first character is a double-quote.  Ignore it
-            continue
+        # CHECKME: COBOL SIGN LEADING --> "+123"
         if ch == '-':
             if retval or sign == -1:
                 # An embedded hyphen ends the conversion
+                # CHECKME: COBOL SIGN TRAILING --> "123-"
                 break
             # A minus sign while retval is zero is legitimate.
             # Yes, this means "000-0003" will be interpreted as minus 3.
