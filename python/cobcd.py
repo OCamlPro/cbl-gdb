@@ -199,6 +199,7 @@ SIZE_TO_DIGITS = {1: len(str(2**(8*1))),
 
 last_stop_was_simple = False
 
+VARSTR_LEN_SIZE = 9  # as used by cobcd-st
 
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
@@ -1549,7 +1550,10 @@ class LineList():
                 program_id = tokens[2]
                 line_number = int(tokens[6])
                 self.Insert(line_number, program_id)
-
+        elif len(variable_line) > 0 and variable_line[0] == 'C':
+            tokens = variable_line.split("|")
+            if len(tokens) > 2:
+                GV_ModuleState.cstart_entry_name = tokens[2]
 
 class CobolVariable():
     """Manages the field, attributes, flags, and pointers of a GnuCOBOL COBOL variable"""
@@ -4209,8 +4213,6 @@ class ModuleInformation():
 
     @staticmethod
     def ReadAndParseVariableString(string_name):
-        VARSTR_LEN_SIZE = 9  # as used by cobcd-st
-
         try:
             the_address = GetPointerTo(string_name)
         except:   # TODO: use appropriate exception
@@ -4310,6 +4312,7 @@ class ModuleState():
         self.current_display_submode = DISPLAY_SUBMODE_NONE
         self.sticky_pretty_mode = ''
         self.current_pretty_mode = ''
+        self.cstart_entry_name = None
 
     def ProcessStack(self):
         """ Figures out which routine we are currently trapped in"""
@@ -5503,7 +5506,7 @@ class CPrintWorker():
         #   cprint/v3
         # get processed even though no debugging has started.
 
-        GV_ModuleState.EstablishModuleState(True)   
+        GV_ModuleState.EstablishModuleState(True)
 
         if args[0][0] == '"':
             # The user is talking to himself for some reason.  Just play along.
@@ -6238,6 +6241,7 @@ class CPrint(gdb.Command):
     cprint/v<n>         with no arguments sets the session formatting
     cprint/m            generate output compatible with '-stack-list-variables --simple-values
     cprint *            display all variables that are currently in context
+    cprint #N           display the Nth variable in the context list
     cprint/r N          set the range for 'cprint ?' to plus/minus N (default 6; -1 means 'all'; -2 'none')
     cprint/r            show the current value of N
     cprint ?            display in-context variables within +/- N lines of current line
@@ -6671,6 +6675,36 @@ they override any that might have been passed to GDB with --args."""
             if len(obj_files) < 1:
                 ConditionalRaise("No symbol table loaded.  Use the \"file\" command.")
                 return
+
+            cstart_entry_name = None
+
+            # I tried for two hours to figure out some way of listing the variables
+            # in this inferior's global symbols block without using "info variables".
+            # I was unsuccessful.  We risk this next part taking a while when
+            # there are many variables.
+
+            # Get all the variables that this block knows about
+            variables = gdb.execute("info variables", False, True)
+
+            # Extract VARIABLE_STRING_xxx
+            match = re.match(".*(VARIABLE_STRING_[^[]*).*", variables, re.DOTALL)
+            if match:
+                string_name = match.group(1)
+                try:
+                    # Read the first 200 characters of VARIABLE_STRING_xxx
+                    the_address = GetPointerTo(string_name)
+                    len_val = gdb.parse_and_eval("*(char (*)[{0}]) {1}".format(VARSTR_LEN_SIZE, the_address))
+                    total_length = int(len_val.string())
+                    total_length = min(200, total_length)
+                    variable_string_memview = get_memoryview(the_address + VARSTR_LEN_SIZE, total_length)
+                    variable_string = variable_string_memview.tobytes().decode('ascii')
+                    match = re.match(".*~C[|][|]([^|]*).*", variable_string, re.DOTALL)
+                    if match:
+                        # Strip off final underscore; it'll be replaced later
+                        cstart_entry_name = match.group(1)[:-1]
+                except:   # TODO: use appropriate exception
+                    pass
+
             line1 = gdb.objfiles()[0].filename
             line1 = line1.replace('\\', '/').replace(".exe", "")    # This is a hack for Windows
             main_program = line1.split('/')[-1].split('"')[0]
@@ -6689,7 +6723,9 @@ they override any that might have been passed to GDB with --args."""
                     args = arguments.split()
                     cobol_program = args[0]
             else:
-                cobol_program = main_program
+                # Use the entry point from VARIABLE_STRING, assuming we got one
+                print("CSTART ", cstart_entry_name)
+                cobol_program = cstart_entry_name or main_program
 
             # If there is no cobol program, just run
             if cobol_program:
@@ -6896,7 +6932,7 @@ class CFrameWorker:
     def get_frame_level(frame):
         if GV_GlobalVariables.gdb_version >= 110000:
             return frame.level()
-        
+
         level = 0
         frame_counter = gdb.newest_frame()
         while frame_counter != frame:
@@ -7112,7 +7148,7 @@ class CLocalBacktrace(gdb.Command):
 
         try:
             while True:
-                
+
                 if line == "Expression not found":
                     break
                 match = re.search(self.section_pattern, line)
