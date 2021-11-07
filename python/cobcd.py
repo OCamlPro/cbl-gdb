@@ -6684,7 +6684,7 @@ they override any that might have been passed to GDB with --args."""
             # there are many variables.
 
             # Get all the variables that this block knows about
-            variables = gdb.execute("info variables", False, True)
+            variables = gdb.execute("info variables ^VARIABLE_STRING_", False, True)
 
             # Extract VARIABLE_STRING_xxx
             match = re.match(".*(VARIABLE_STRING_[^[]*).*", variables, re.DOTALL)
