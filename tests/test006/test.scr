@@ -125,9 +125,19 @@ printem
 delete
 continue
 
-# cwatch IN
+# cwatch IN (FULL)
 cstart
 cwatch TRECGRPVAL IN TRECGRP IN TREC
+continue
+printem
+continue
+printem
+delete
+continue
+
+# cwatch IN (QUICK)
+cstart
+cwatch TRECGRPVAL IN TREC
 continue
 printem
 continue
