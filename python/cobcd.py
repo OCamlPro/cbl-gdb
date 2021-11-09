@@ -1739,6 +1739,12 @@ class CobolVariable():
         data = []
 
         # The following routines return self.Length bytes in a bytearray
+        if self.Refmod:
+            # This is a little bold.  But if he wants to set a group from a string,
+            # that's what is going to happen.  Of course, if the group is made up
+            # of binary values the results will be unsurprising.  Useless, but
+            # unsurprising.
+            data = self.StringToAlphanumeric(rside)
         if self.AttrType == COB_TYPE_NUMERIC_DISPLAY:
             data = self.StringToNumericDisplay(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_BINARY:
@@ -3905,8 +3911,12 @@ class CobolVariable():
 
         value = ""
         pic = "Unknown"
-        if False:  # dummy code that can be followed by elifs
-            pass
+        if self.Refmod:
+            if noisy:
+                print("COB_TYPE_GROUP (REFMOD)")
+                # note: cp /d packed(1:) still show the "wrong" type and attributes
+                #       but the normal cp and cp/x _seem_ to work fine
+            value, pic = self.AlphanumericToString()
         elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY:
             if noisy:
                 print("COB_TYPE_NUMERIC_DISPLAY")
