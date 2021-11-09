@@ -2363,9 +2363,9 @@ class CobolVariable():
             print("")
 
         if self.Refmod:
+            elements = gdb.parameter("print elements")
             print("Display:     ", end="")
             if self.IsAlphanumeric():
-                elements = gdb.parameter("print elements")
                 data = self.Data()[0:elements]
                 for byte in data:
                     if byte >= 32:   # valid ASCII characters
@@ -2374,7 +2374,6 @@ class CobolVariable():
                         print('^', end="")
             else:
                 print("[", end="")
-                elements = gdb.parameter("print elements")
                 data = self.Data()[0:elements]
                 for byte in data:
                     print(hex(256 + byte)[-2:], end="")
@@ -5525,7 +5524,8 @@ class CPrintWorker():
 
         if not GV_ModuleState.Stack:
             # "No stack." is the message GDB reports when debugging statements
-            # are issued when the program hasn't been run.
+            # are issued when the program hasn't been run, which is checked in the
+            # caller, we get here for "internal" reasons during resolve.
             ConditionalRaise("No stack.")
             return
 
@@ -5827,7 +5827,6 @@ class CWatchWorker():
     def process_watch_arguments(self, arguments):
         left_side = []
         right_side = []
-        _condition = ""
 
         args = arguments.split()
         if not args:
@@ -6168,7 +6167,7 @@ class CBreakWorker():
                 break
 
         if return_breakpoint is None:
-            print("No breakpoint number {0}.format(bp_nr)")
+            ConditionalRaise("No breakpoint number {0}.format(bp_nr)")
 
         return return_breakpoint
 
@@ -6436,6 +6435,10 @@ A breakpoint stops execution of your program whenever the expression matches
         self.worker.process_break_arguments(arguments, False, False)
 
     def complete(self, text, word):
+        # TODO: if we are behind "section" or the current word is "section",
+        #       then complete section names
+        # TODO: if we are behind "if" or the current word is "if",
+        #       then issue break_completion (text, word, 1)
         possibilities = break_completion(text, word, 0)
         return possibilities
 
@@ -6457,6 +6460,10 @@ Do "help cbreak" for info on COBOL expressions."""
         self.worker.process_break_arguments(arguments, True, False)
 
     def complete(self, text, word):
+        # TODO: if we are behind "section" or the current word is "section",
+        #       then complete section names
+        # TODO: if we are behind "if" or the current word is "if",
+        #       then issue break_completion (text, word, 1)
         possibilities = break_completion(text, word, 0)
         return possibilities
 
