@@ -530,15 +530,15 @@ cp svalue = 1234
 cp svalue
 01 svalue/test [W-S]  :  +001234
 cp svalue(2:2) = 89
-01 svalue/test(2:2) [W-S]  :  [0x3839]
+01 svalue/test(2:2) [W-S]  :  "89"
 cp svalue
 01 svalue/test [W-S]  :  +684818
 cp svalue(2:2) = x'89'
-01 svalue/test(2:2) [W-S]  :  [0x8900]
+01 svalue/test(2:2) [W-S]  :  "^"
 cp svalue
 01 svalue/test [W-S]  :  +978642
 cp svalue(2:2) = x'1234'
-01 svalue/test(2:2) [W-S]  :  [0x1234]
+01 svalue/test(2:2) [W-S]  :  "^4"
 cp svalue
 01 svalue/test [W-S]  :  +193170
 cp svalue = -12345
