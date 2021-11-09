@@ -3423,8 +3423,8 @@ class CobolVariable():
         # Get the normalized self.AttrDigits digits:
         digits = self.RsideToInteger(rside)
 
-        # Turn the string into bytes:
-        data = bytearray(digits, "utf8")
+        # Turn the string (+-0-9 only) into bytes:
+        data = bytearray(digits, "ascii")
 
         if rside.is_negative and (self.AttrFlags & COB_FLAG_HAVE_SIGN):
             data[self.AttrDigits - 1] |= 0x40
@@ -3606,9 +3606,12 @@ class CobolVariable():
             i += 1
 
         data += ' ' * (self.Length - i)
-        # convert to bytearray:
-        data = bytearray(data, "utf8")
-        return data
+        # convert to bytearray, encoding hack for now:
+        try:
+            array = bytearray(data, "utf8")
+        except UnicodeError:
+            array = bytearray(data, "ISO-8859-1")
+        return array
 
     def NumericEditedToString(self):
         # NUMERIC(EDITED)
@@ -3900,6 +3903,7 @@ class CobolVariable():
             i = body.find(self.decimal_point)
             body = body[:i] + ' ' + body[i + 1:]
 
+        # CHECKME: What happens with invalid data here or above?
         retval = bytearray(body.encode("utf8"))
         return retval
 
