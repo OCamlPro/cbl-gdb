@@ -910,7 +910,7 @@ def atoi(s):
     # something that isn't a digit
     #
     retval = 0
-    sign = 1
+    sign = 0
     i = 0
     if s[0] == '"':       # skip leading quote
         s = s[1:]
@@ -920,16 +920,18 @@ def atoi(s):
     while i < max_pos:
         ch = s[i]
         i += 1
-        # CHECKME: COBOL SIGN LEADING --> "+123"
-        if ch == '-':
-            if retval or sign == -1:
-                # An embedded hyphen ends the conversion
-                # CHECKME: COBOL SIGN TRAILING --> "123-"
+        if ch in ('-','+'):
+            if sign:
+                # a consecutive sign ends the conversion
                 break
-            # A minus sign while retval is zero is legitimate.
-            # Yes, this means "000-0003" will be interpreted as minus 3.
-            # I don't care.
-            sign = -1
+            # A sign even with retval is legitimate
+            # COBOL SIGN TRAILING --> "123-"
+            # For this code it means "000-0003" will be interpreted as minus 3,
+            # for now we don't care.
+            if ch == '-':
+                sign = -1
+            else:
+                sign = +1
             continue
         n = ord(ch) - ord('0')
         if n < 0 or n > 9:
@@ -938,7 +940,9 @@ def atoi(s):
         # This is a digit 0 through 9, so accumulate it into the result
         retval *= 10
         retval += n
-    return retval * sign
+    if sign:
+        return retval * sign
+    return retval
 
 
 def IsInteger(s):
@@ -1735,6 +1739,12 @@ class CobolVariable():
         data = []
 
         # The following routines return self.Length bytes in a bytearray
+        if self.Refmod:
+            # This is a little bold.  But if he wants to set a group from a string,
+            # that's what is going to happen.  Of course, if the group is made up
+            # of binary values the results will be unsurprising.  Useless, but
+            # unsurprising.
+            data = self.StringToAlphanumeric(rside)
         if self.AttrType == COB_TYPE_NUMERIC_DISPLAY:
             data = self.StringToNumericDisplay(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_BINARY:
@@ -2359,9 +2369,9 @@ class CobolVariable():
             print("")
 
         if self.Refmod:
+            elements = gdb.parameter("print elements")
             print("Display:     ", end="")
             if self.IsAlphanumeric():
-                elements = gdb.parameter("print elements")
                 data = self.Data()[0:elements]
                 for byte in data:
                     if byte >= 32:   # valid ASCII characters
@@ -2370,7 +2380,6 @@ class CobolVariable():
                         print('^', end="")
             else:
                 print("[", end="")
-                elements = gdb.parameter("print elements")
                 data = self.Data()[0:elements]
                 for byte in data:
                     print(hex(256 + byte)[-2:], end="")
@@ -3414,8 +3423,8 @@ class CobolVariable():
         # Get the normalized self.AttrDigits digits:
         digits = self.RsideToInteger(rside)
 
-        # Turn the string into bytes:
-        data = bytearray(digits, "utf8")
+        # Turn the string (+-0-9 only) into bytes:
+        data = bytearray(digits, "ascii")
 
         if rside.is_negative and (self.AttrFlags & COB_FLAG_HAVE_SIGN):
             data[self.AttrDigits - 1] |= 0x40
@@ -3597,9 +3606,12 @@ class CobolVariable():
             i += 1
 
         data += ' ' * (self.Length - i)
-        # convert to bytearray:
-        data = bytearray(data, "utf8")
-        return data
+        # convert to bytearray, encoding hack for now:
+        try:
+            array = bytearray(data, "utf8")
+        except UnicodeError:
+            array = bytearray(data, "ISO-8859-1")
+        return array
 
     def NumericEditedToString(self):
         # NUMERIC(EDITED)
@@ -3891,6 +3903,7 @@ class CobolVariable():
             i = body.find(self.decimal_point)
             body = body[:i] + ' ' + body[i + 1:]
 
+        # CHECKME: What happens with invalid data here or above?
         retval = bytearray(body.encode("utf8"))
         return retval
 
@@ -3902,8 +3915,12 @@ class CobolVariable():
 
         value = ""
         pic = "Unknown"
-        if False:  # dummy code that can be followed by elifs
-            pass
+        if self.Refmod:
+            if noisy:
+                print("COB_TYPE_GROUP (REFMOD)")
+                # note: cp /d packed(1:) still show the "wrong" type and attributes
+                #       but the normal cp and cp/x _seem_ to work fine
+            value, pic = self.AlphanumericToString()
         elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY:
             if noisy:
                 print("COB_TYPE_NUMERIC_DISPLAY")
@@ -5521,7 +5538,8 @@ class CPrintWorker():
 
         if not GV_ModuleState.Stack:
             # "No stack." is the message GDB reports when debugging statements
-            # are issued when the program hasn't been run.
+            # are issued when the program hasn't been run, which is checked in the
+            # caller, we get here for "internal" reasons during resolve.
             ConditionalRaise("No stack.")
             return
 
@@ -5823,7 +5841,6 @@ class CWatchWorker():
     def process_watch_arguments(self, arguments):
         left_side = []
         right_side = []
-        _condition = ""
 
         args = arguments.split()
         if not args:
@@ -6164,7 +6181,7 @@ class CBreakWorker():
                 break
 
         if return_breakpoint is None:
-            print("No breakpoint number {0}.format(bp_nr)")
+            ConditionalRaise("No breakpoint number {0}.format(bp_nr)")
 
         return return_breakpoint
 
@@ -6432,6 +6449,10 @@ A breakpoint stops execution of your program whenever the expression matches
         self.worker.process_break_arguments(arguments, False, False)
 
     def complete(self, text, word):
+        # TODO: if we are behind "section" or the current word is "section",
+        #       then complete section names
+        # TODO: if we are behind "if" or the current word is "if",
+        #       then issue break_completion (text, word, 1)
         possibilities = break_completion(text, word, 0)
         return possibilities
 
@@ -6453,6 +6474,10 @@ Do "help cbreak" for info on COBOL expressions."""
         self.worker.process_break_arguments(arguments, True, False)
 
     def complete(self, text, word):
+        # TODO: if we are behind "section" or the current word is "section",
+        #       then complete section names
+        # TODO: if we are behind "if" or the current word is "if",
+        #       then issue break_completion (text, word, 1)
         possibilities = break_completion(text, word, 0)
         return possibilities
 
@@ -6684,7 +6709,7 @@ they override any that might have been passed to GDB with --args."""
             # there are many variables.
 
             # Get all the variables that this block knows about
-            variables = gdb.execute("info variables", False, True)
+            variables = gdb.execute("info variables ^VARIABLE_STRING_", False, True)
 
             # Extract VARIABLE_STRING_xxx
             match = re.match(".*(VARIABLE_STRING_[^[]*).*", variables, re.DOTALL)
