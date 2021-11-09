@@ -910,7 +910,7 @@ def atoi(s):
     # something that isn't a digit
     #
     retval = 0
-    sign = 1
+    sign = 0
     i = 0
     if s[0] == '"':       # skip leading quote
         s = s[1:]
@@ -920,16 +920,18 @@ def atoi(s):
     while i < max_pos:
         ch = s[i]
         i += 1
-        # CHECKME: COBOL SIGN LEADING --> "+123"
-        if ch == '-':
-            if retval or sign == -1:
-                # An embedded hyphen ends the conversion
-                # CHECKME: COBOL SIGN TRAILING --> "123-"
+        if ch in ('-','+'):
+            if sign:
+                # a consecutive sign ends the conversion
                 break
-            # A minus sign while retval is zero is legitimate.
-            # Yes, this means "000-0003" will be interpreted as minus 3.
-            # I don't care.
-            sign = -1
+            # A sign even with retval is legitimate
+            # COBOL SIGN TRAILING --> "123-"
+            # For this code it means "000-0003" will be interpreted as minus 3,
+            # for now we don't care.
+            if ch == '-':
+                sign = -1
+            else:
+                sign = +1
             continue
         n = ord(ch) - ord('0')
         if n < 0 or n > 9:
@@ -938,7 +940,9 @@ def atoi(s):
         # This is a digit 0 through 9, so accumulate it into the result
         retval *= 10
         retval += n
-    return retval * sign
+    if sign:
+        return retval * sign
+    return retval
 
 
 def IsInteger(s):
