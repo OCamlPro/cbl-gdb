@@ -968,32 +968,30 @@ def IntegerOrVariable(s):
 
     # It is not.  Let's see if it represents a gdb history/convenience variable
     if s[0] == '$':
-        try:
-            gdb.execute( "print " + s, True, False )
-        except gdb.error as e:
-            print(e)
-        except:
-            pass
-
-        return None, 0
-
-# The following code was merged in by Simon.  It didn't work.  The above
-# code seems to implement what I think Simon was trying to do.  R.J.Dubner
-#        id = s[1:]
-#        # Pick up the history index:
-#        if IsInteger(id):
-#            p = gdb.history (atoi(id)) # may raise a gdb.Error (if not yet reached) which we just pass
-#        else:
-#            val = gdb.convenience_variable (id)
-#            if not val:
-#                raise gdb.GdbError("unknown convenience variable " + s)
-#        pyval = str(val)
-#        if pyval and len(pyval) > 2 and pyval[0] == '"' and pyval[-1] == '"':
-#            pyval = pyval[1:-1]
-#        if IsInteger(pyval):
-#            return atoi(pyval), False  # False means no limit overrun
-#        raise gdb.GdbError("only numeric gdb variables may be used with cprint, {0} is: {1}".format(s, pyval))
-
+        id = s[1:]
+        # Pick up the history index:
+        if IsInteger(id):
+            try:
+                val = gdb.history (atoi(id)) # may raise a gdb.Error (if not yet reached) which we just pass
+            except gdb.error as ex:
+                raise gdb.GdbError(ex)
+        else:
+            if GV_GlobalVariables.gdb_version >= 80200:
+                val = gdb.convenience_variable (id)
+            else:
+                try:
+                    val = str(gdb.parse_and_eval ("$"+id))
+                    if val == "void": val = None
+                except gdb.error:
+                    val = None
+            if not val:
+                raise gdb.GdbError("unknown convenience variable " + s)
+        pyval = str(val)
+        if pyval and len(pyval) > 2 and pyval[0] == '"' and pyval[-1] == '"':
+            pyval = pyval[1:-1]
+        if IsInteger(pyval):
+            return atoi(pyval), False  # False means no limit overrun
+        raise gdb.GdbError("only numeric gdb variables may be used with cprint, {0} is: {1}".format(s, pyval))
 
     # It is not.  Let's see if it represents a unique in-context COBOL variable
     possible_name = TokenizeCanonicalName(s)
