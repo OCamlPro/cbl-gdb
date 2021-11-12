@@ -5345,8 +5345,11 @@ class CPrintWorker():
                 # The assignment failed
                 return
 
-            disp_str = payload.NameToString() + " set to " + WithRepeatCount(payload.display_body)
-            print(disp_str)
+            if payload.FetchVariableData(True):
+                disp_str = 'value="' + MachineInterfaceBodyAlt(WithRepeatCount(payload.display_body)) + '"'
+                print(disp_str)
+
+            payload.SetIsDirty()
 
             # Eliminate stale modifiers, if necessary
             if payload.Subscripts or payload.Refmod:
