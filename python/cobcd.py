@@ -1158,8 +1158,7 @@ class VarTrie():
                     granddaddy = GV_ModuleInformation.var_trie.storage_list[payload.index_of_granddaddy].Name
                 print("DEBUGDUMP   ", payload.Level, payload.Name, parent, granddaddy, payload.IsDirty())
 
-    def LoadTrieFromLine(self, variable_line):
-        tokens = variable_line.split("|")
+    def LoadTrieFromLine(self, tokens):
         try:
             if len(tokens) == 11:
                 # We have enough in the way of tokens, so proceed
@@ -1211,7 +1210,7 @@ class VarTrie():
 
                     if our_level == 0 and self.stashed_line is None:
                         # This is a LEVEL 00 indexed variable, and we aren't processing it yet.
-                        self.stashed_line = variable_line
+                        self.stashed_line = tokens[:]
                         return
 
                     # and now we put ourselves into the position of
@@ -1547,15 +1546,13 @@ class LineList():
 
         return self.line_list[middle][1]
 
-    def LoadFromLine(self, variable_line):
-        if len(variable_line) > 0 and variable_line[0] == 'P':
-            tokens = variable_line.split("|")
+    def LoadFromLine(self, tokens):
+        if len(tokens) > 0 and tokens[0] == "P":
             if len(tokens) >= 3:
                 program_id = tokens[2]
                 line_number = int(tokens[6])
                 self.Insert(line_number, program_id)
-        elif len(variable_line) > 0 and variable_line[0] == 'C':
-            tokens = variable_line.split("|")
+        elif len(tokens) > 0 and tokens[0] == "C":
             if len(tokens) > 2:
                 GV_ModuleState.cstart_entry_name = tokens[2]
 
@@ -4282,20 +4279,22 @@ class ModuleInformation():
 
         # Load the new tables
         # Pull apart the variable_string
-        variable_lines = variable_string.split("~")
+
+        variable_lines = variable_string.split('~');
+
         for variable_line in variable_lines:
-            self.line_list.LoadFromLine(variable_line)
-            self.var_trie.LoadTrieFromLine(variable_line)
-            self.LoadPerformFromLine(variable_line)
+            tokens = variable_line.split('|')
+            self.line_list.LoadFromLine(tokens)
+            self.var_trie.LoadTrieFromLine(tokens)
+            self.LoadPerformFromLine(tokens)
 
         self.var_trie.PopulateIndexOfParent()
 
         # Put a fencepost at the end of the line_list
         self.line_list.Insert(self.line_list.EndOfTheWorld, "Ragnarok")
 
-    def LoadPerformFromLine(self, variable_line):
-        if len(variable_line) > 0 and variable_line[0] == 'p':
-            tokens = variable_line.split("|")
+    def LoadPerformFromLine(self, tokens):
+        if len(tokens) > 0 and tokens[0] == "p":
             if len(tokens) > 3:
                 self.perform_commands[tokens[3]] = tokens[2]
 
