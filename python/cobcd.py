@@ -65,6 +65,8 @@ import gdb
 GV_reads = 0
 GV_bytes_read = 0
 
+GV_noisy_registration = False
+
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
 COBCD_VERSION = '[Version 4.28.dev4]'
@@ -6293,7 +6295,8 @@ class CPrint(gdb.Command):
 
         self.worker = CPrintWorker()
 
-        print('Registering CPrint ' + COBCD_VERSION)
+        if GV_noisy_registration:
+            print('Registering CPrint ' + COBCD_VERSION)
         super(CPrint, self).__init__("cprint", gdb.COMMAND_DATA)
 
         # set alias, ignore errors (most likely because already defined)
@@ -6429,7 +6432,8 @@ A breakpoint stops execution of your program whenever the expression matches
     def __init__(self):
         self.worker = CBLDBG_CBREAK_WORKER
 
-        print('Registering commands cwatch, cbreak, ctbreak, ccondition')
+        if GV_noisy_registration:
+            print('Registering commands cwatch, cbreak, ctbreak, ccondition')
         super(CBreak, self).__init__("cbreak", gdb.COMMAND_BREAKPOINTS)
         # set alias, ignore errors (most likely because already defined)
         try:
@@ -6440,7 +6444,8 @@ A breakpoint stops execution of your program whenever the expression matches
         CCondition()
 
         if GV_GlobalVariables.gdb_version >= 70700:
-            print('Registering silent maintenance breakpoint for showing note about ACCEPT')
+            if GV_noisy_registration:
+                print('Registering silent maintenance breakpoint for showing note about ACCEPT')
             bp = CobolBreakpoint("cob_accept", False, True)
             if bp:
                 bp.commands = "silent \n cup \n continue"
@@ -6652,7 +6657,8 @@ Usage: add-symbol-file-cobol MODULE           try to load given COBOL module int
             print("WARNING: {0} not found on path, not registering add-symbol-file-cobol, consider setting READELF".format(READELF_BINARY))
             return
 
-        print('Registering add-symbol-file-cobol')
+        if GV_noisy_registration:
+            print('Registering add-symbol-file-cobol')
         super(CLoad, self).__init__("add-symbol-file-cobol", gdb.COMMAND_FILES)
         self.search = ''
 
@@ -6690,7 +6696,8 @@ Any arguments after the cstart command are passed to the executable.  If present
 they override any that might have been passed to GDB with --args."""
 
     def __init__(self):
-        print('Registering CStart')
+        if GV_noisy_registration:
+            print('Registering CStart')
         super(CStart, self).__init__("cstart", gdb.COMMAND_RUNNING)
 
     def invoke(self, arguments, from_tty):
@@ -6789,7 +6796,8 @@ logic and simply puts the paragraph in-line, which CNEXT doesn't detect."""
 
     def __init__(self):
         super(CNext, self).__init__("cnext", gdb.COMMAND_RUNNING)
-        print('Registering CNext')
+        if GV_noisy_registration:
+            print('Registering CNext')
 
     def invoke(self, argument, from_tty):
         ncount = GetNumericArgument(argument)
@@ -6826,7 +6834,8 @@ class CFrameWorker:
     """Does all of the gdb work related to frames, especially for CUp() and CDown()"""
 
     def __init__(self):
-        print('Registering commands cup, cdown, cup-silently, cdown-silently, until-cobol, finish-module, finish-out-of-line-perform, local-backtrace, list-section')
+        if GV_noisy_registration:
+            print('Registering commands cup, cdown, cup-silently, cdown-silently, until-cobol, finish-module, finish-out-of-line-perform, local-backtrace, list-section')
         CUp()
         CDown()
         CUpS()
@@ -6838,10 +6847,12 @@ class CFrameWorker:
         CListSection()
         # Note: frame filter support in python API only with GDB 7.7+
         if GV_GlobalVariables.gdb_version > 70700:
-            print('Registering frame-filters COBOL-FrameFilter (disabled), COBOL-Only-FrameFilter (disabled)')
+            if GV_noisy_registration:
+                print('Registering frame-filters COBOL-FrameFilter (disabled), COBOL-Only-FrameFilter (disabled)')
             CobolOnlyFrameFilter()
             CobolFrameFilter()
-            print('Registering command cbacktrace')
+            if GV_noisy_registration:
+                print('Registering command cbacktrace')
             CBacktrace()
             # set aliases, ignore errors (most likely because already defined)
             try:
@@ -7445,7 +7456,8 @@ class CmdAutoStep (gdb.Command):
     """Auto-Step through the code until something happens or manually interrupted.
 An argument says how fast auto stepping is done (1-19, default 5)."""
     def __init__(self):
-        print('Registering command auto-step')
+        if GV_noisy_registration:
+            print('Registering command auto-step')
         super(CmdAutoStep, self).__init__("auto-step", gdb.COMMAND_RUNNING)
         gdb.events.stop.connect(stop_handler_auto_step)
 
@@ -7507,3 +7519,8 @@ CLoad()
 CNext()
 CmdAutoStep()
 CStart()
+
+print("Registering the CBL-GDB debugger {0}.  Help is available for".format(COBCD_VERSION))
+print("   cprint cwatch cbreak ctbreak ccondition add-symbol-file-cobol cstart cnext")
+print("   cup cup-silently cdown cdown-silently finish-out-of-line-perform")
+print("   finish-module until-cobol list-section local-backtrace cbacktrace auto-step")
