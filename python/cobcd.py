@@ -5229,9 +5229,9 @@ class CPrintWorker():
                 print(payload.NameToString())
                 print(body)
             elif GV_ModuleState.current_display_mode == "length":
-                print("length in bytes is {0} and {1}".format(hex(payload.ActualLength), payload.ActualLength))
+                print(payload.ActualLength)
             elif GV_ModuleState.current_display_mode == "address":
-                print("address is {0}".format( hex(payload.ActualLocation) ))
+                print(hex(payload.ActualLocation))
             else:  # GV_ModuleState.current_display_mode ==  'd':
                 payload.ShowFields()
         except KeyboardInterrupt as ki:
