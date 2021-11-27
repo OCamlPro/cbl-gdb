@@ -231,6 +231,23 @@ def get_memoryview(address, length):
     return memoryview(obj)
 
 
+def get_element_size():
+    # GDB reasonably limits the output used for strings(=char arrays) and (common) arrays
+    # so the user can actually see reasonable output instead of scrolling to nirvana
+    # We try to follow GDBs rules here using the same parameter, but need to care to do
+    # something reasonable when the setting is "unlimited", where a "None" is returned
+    # Note: GC max for a single field is 2 GiB
+    return gdb.parameter("print elements") or 1000000000 # 1 GB - happy scrolling
+
+
+def get_repeats_size():
+    # GDB reasonably combines the output for repeating characters, allowing both to "see more"
+    # and to "better corelate" the data
+    # We try to follow GDBs rules here using the same parameter, but need to care to do
+    # something reasonable when the setting is "unlimited", where a "None" is returned
+    return gdb.parameter("print repeats") or 1000000 # happy scrolling
+
+
 class GlobalVariables():
     def __init__(self):
         # Establish the version of GDB
@@ -422,7 +439,7 @@ def ReplaceWithRepeatCountQuoted(s):
     fox = 0
     prior_contraction = False
     in_a_quoted_run = False
-    repeat_count = gdb.parameter("print repeats") or 1000000
+    repeat_count = get_repeats_size()
     while rabbit < len(s):
         # Arriving here means:
         # We're here for the first time, or we just finished a run
@@ -491,7 +508,7 @@ def ReplaceWithRepeatCountBracketed(s):
     fox = 0
     prior_contraction = False
     in_a_quoted_run = False
-    repeat_count = gdb.parameter("print repeats") or 1000000
+    repeat_count = get_repeats_size()
     while rabbit < len(s):
         # Arriving here means:
         # We're here for the first time, or we just finished a run
@@ -1796,7 +1813,7 @@ class CobolVariable():
 
     def GetDataAsBinary(self):
         retval = ""
-        elements = (gdb.parameter("print elements") or 1000000000) // 4
+        elements = get_element_size() // 4
         # Because "0b00000000" is so much longer than 0x00, we divide the
         # number of elements down to keep output length under control
         if self.ActualLength > 0:
@@ -1830,7 +1847,7 @@ class CobolVariable():
 
     def GetDataAsHex(self):
         retval = ""
-        elements = gdb.parameter("print elements")
+        elements = get_element_size()
         output_bytes = self.Data()[0:elements]
         if self.ActualLength > 0:
             retval = "0x"
@@ -2339,6 +2356,7 @@ class CobolVariable():
         return n_str
 
     def ShowFields(self):
+        elements = get_element_size()
         try:
             bname_location = GetPointerTo(self.Bname)
         except:   # TODO: use appropriate exception
@@ -2497,7 +2515,6 @@ class CobolVariable():
         # At this point, we want to show the raw data in byte order.  Note that
         # the hex representation isn't necessarily the same as the Hex: up above;
         # that one is corrected for little-endian, and this one isn't
-        elements = gdb.parameter("print elements")
         raw_data = self.Data()[0:elements]
         print("Data: (HEX)   [", end=" ")
         for byte in raw_data:
@@ -3571,11 +3588,9 @@ class CobolVariable():
 
     def AlphanumericToString(self):
         # ALPHANUMERIC
-        body = ""
-        pic = ""
-        body += '"'
-        elements = gdb.parameter("print elements")
+        elements = get_element_size()
         data = self.Data()[0:elements]
+        body = '"'
         for _i, d in enumerate(data):
             if d < 32:
                 body += '^'
@@ -5176,8 +5191,8 @@ class CPrintWorker():
         return args
 
     def GetDisplayBody(self, payload):
+        elements = get_element_size()
         body = ""
-        elements = gdb.parameter("print elements")
         data = payload.Data()[0:elements]
         if payload.Refmod:
             if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_BINARY:
