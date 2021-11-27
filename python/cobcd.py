@@ -7503,52 +7503,87 @@ def stop_handler(event):
 
 class CmdAutoStep (gdb.Command):
     """Auto-Step through the code until something happens or manually interrupted.
-An argument says how fast auto stepping is done (1-19, default 5)."""
+An argument says how fast auto stepping is done (see parameter "auto-step")."""
     def __init__(self):
         if GV_noisy_registration:
-            print('Registering command auto-step')
+            print('Registering command and parameter auto-step')
         super(CmdAutoStep, self).__init__("auto-step", gdb.COMMAND_RUNNING)
+        self.defaultSpeed = ParameterAutoStep()
         gdb.events.stop.connect(stop_handler_auto_step)
 
     def invoke(self, argument, from_tty):
-        number = 5  # TODO: use a parameter for the default
-        if argument:
-            number = GetNumericArgument(argument, Negative=True)  # we do the check on our own
-            if number == 0 or number > 19:
-                ConditionalRaise("argument must be an integer between 1 and 19")
-                return
-
-        sleep_time = 3.0 / (number * 1.4)
+        # sanity check - are we even active, prevents a spurious "no registers" exception
         try:
             gdb.newest_frame()
         except gdb.error:
-            ConditionalRaise("No stack.")
-            return
+            raise gdb.GdbError("The program is not being run.")
 
-        global last_stop_was_simple
-        last_stop_was_simple = True
+        # calculate sleep time
+        if argument:
+            number = ParameterAutoStep.validate(argument) # raises an error if not valid
+        else:
+            number = self.defaultSpeed.value
+        if number:
+            sleep_time = 3.0 / (1.4 ** number)
+        else:
+            sleep_time = 0
 
+        # activate GDB scrolling, otherwise we'd auto-step only one page
         pagination = gdb.parameter("pagination")
         if pagination:
             gdb.execute("set pagination off", False, False)
 
+        # recognize the kind of stop via stop_handler_auto_step
+        global last_stop_was_simple
+        last_stop_was_simple = True
+
+        # actual auto-stepping
         try:
             while last_stop_was_simple:
                 gdb.execute("step")
                 time.sleep(sleep_time)
         # we just quit the loop as requested
-        except KeyboardInterrupt:
-            pass
-        # pass user errors unchanged
-        except gdb.GdbError:
+        # pass keyboard and user errors unchanged
+        except (KeyboardInterrupt, gdb.GdbError):
             raise
         # that exception is unexpected, but we never know...
         except Exception:
             traceback.print_exc()
-        # don't leave without cleanup...
+        # never leave without cleanup...
         finally:
             if pagination:
                 gdb.execute("set pagination on", False, False)
+
+
+class ParameterAutoStep (gdb.Parameter):
+    """auto-step default speed (0-19, default 5)"""
+    def __init__(self):
+        self.set_doc = """Set speed for "auto-step", internally used to calculate sleep time between "step"s.
+set "auto-step 0" causes there to be no sleeping."""
+        self.show_doc = "Speed value for auto-step."
+        super(ParameterAutoStep, self).__init__("auto-step", gdb.COMMAND_RUNNING, gdb.PARAM_UINTEGER)
+        self.value = 5
+        self.backup = self.value
+
+    def get_set_string (self):
+        try:
+            self.value = int(ParameterAutoStep.validate(self.value))
+        except gdb.GdbError:
+            self.value = int (self.backup)
+            raise
+        self.backup = self.value
+        return ""
+
+    @staticmethod
+    def validate (argument):
+        """validation for auto-step speed"""
+        try:
+            speed = int(argument)
+            if speed < 0 or speed > 19:
+                raise ValueError()
+        except (TypeError, ValueError):
+            raise gdb.GdbError("speed-argument must be an integer between 1 and 19, or 0")
+        return speed
 
 def stop_handler_auto_step(event):
     # check the type of stop, the following is the common one after step/next,
