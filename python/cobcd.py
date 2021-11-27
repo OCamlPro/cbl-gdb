@@ -6849,12 +6849,13 @@ class CFrameWorker:
 
     def __init__(self):
         if GV_noisy_registration:
-            print('Registering commands cup, cdown, cup-silently, cdown-silently, until-cobol, finish-module, finish-out-of-line-perform, local-backtrace, list-section')
+            print('Registering commands cup, cdown, cup-silently, cdown-silently, cfinish, until-cobol, finish-module, finish-out-of-line-perform, local-backtrace, list-section')
         CUp()
         CDown()
         CUpS()
         CDownS()
         CUntilCobol()
+        CFinish()
         CFinishModule()
         CFinishOutOfLinePerform()
         CLocalBacktrace()
@@ -7036,6 +7037,40 @@ may be used to also stop if the current frame is a COBOL frame."""
         CFrameWorker.Go(argument, False, True)
 
 
+class CFinish(gdb.Command):
+    """Execute until selected stack frame's current "logical" COBOL frame is finished.
+Effectively a combination of commands "finish-out-of-line-perform" and "finish-module"."""
+
+    def __init__(self):
+        super(CFinish, self).__init__("cfinish", gdb.COMMAND_RUNNING)
+
+    def invoke(self, argument, from_tty):
+        if argument:
+            ConditionalRaise('The "cfinish" command does not take any arguments.')
+            return
+        # sanity check: Do we have any frame at all?
+        try:
+            frame = gdb.selected_frame()
+        except gdb.error:
+            ConditionalRaise("No stack.")
+            return
+
+        cobol, inner = CFrameWorker.is_cobol_frame(frame)
+        if not cobol:
+            ConditionalRaise("cfinish only applies to COBOL")
+            return
+
+        if inner:
+            out_of_line_perform = gdb.parse_and_eval("frame_ptr->perform_through")
+            if out_of_line_perform:
+                gdb.execute("until *frame_ptr->return_address_ptr", False, False)
+                return
+            frame = frame.older()
+            frame.select()
+
+        gdb.execute("finish", False, False)
+
+
 class CFinishOutOfLinePerform(gdb.Command):
     """Execute until selected stack frame's current internal PERFORM returns.
 Applies to any out-of-line PERFORM."""
@@ -7058,9 +7093,9 @@ Applies to any out-of-line PERFORM."""
             ConditionalRaise("finish-out-of-line-perform only applies to COBOL")
             return
 
-        sanitize_place = gdb.parse_and_eval("frame_ptr->perform_through")
-        if not sanitize_place:
-            ConditionalRaise("Initial COBOL program, no out-of-line PERFORM to finish.")
+        out_of_line_perform = gdb.parse_and_eval("frame_ptr->perform_through")
+        if not out_of_line_perform:
+            ConditionalRaise("Already in the initial part of the COBOL module, no out-of-line PERFORM to finish.")
             return
         gdb.execute("until *frame_ptr->return_address_ptr", False, False)
 
@@ -7536,5 +7571,5 @@ CStart()
 
 print("Registering the CBL-GDB debugger {0}.  Help is available for".format(COBCD_VERSION))
 print("   cprint cwatch cbreak ctbreak ccondition add-symbol-file-cobol cstart cnext")
-print("   cup cup-silently cdown cdown-silently finish-out-of-line-perform")
-print("   finish-module until-cobol list-section local-backtrace cbacktrace auto-step")
+print("   cup cup-silently cdown cdown-silently cfinish")
+print("   finish-out-of-line-perform finish-module until-cobol list-section local-backtrace cbacktrace auto-step")
