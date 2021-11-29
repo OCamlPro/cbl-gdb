@@ -4408,12 +4408,13 @@ class ModuleState():
             # We now march through stack, looking for the
             # first entry whose filename matches filename:
 
-            # TODO: wouldn't it make more sense to use the current frame or one above for the start?
+            # CHECKME: likely more reasonable to start with gdb.selected_frame() or one above
             frame = gdb.newest_frame()
             while frame:
                 st = frame.find_sal().symtab
                 if st is None:
                     # don't screw parsing with missing debug info, just skip to next frame
+                    frame = frame.older()
                     continue
                 if st.filename == filename_frame:
                     break
