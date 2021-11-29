@@ -1759,7 +1759,7 @@ class CobolVariable():
             # of binary values the results will be unsurprising.  Useless, but
             # unsurprising.
             data = self.StringToAlphanumeric(rside)
-        if self.AttrType == COB_TYPE_NUMERIC_DISPLAY:
+        elif self.AttrType == COB_TYPE_NUMERIC_DISPLAY:
             data = self.StringToNumericDisplay(rside)
         elif self.AttrType == COB_TYPE_NUMERIC_BINARY:
             data = self.StringToNumericBinary(rside)
@@ -2383,8 +2383,6 @@ class CobolVariable():
                 print("; resolves to {0}".format(resolved), end='')
             print("")
 
-        if self.Refmod:
-            elements = gdb.parameter("print elements")
             print("Display:     ", end="")
             if self.IsAlphanumeric():
                 data = self.Data()[0:elements]
@@ -2528,7 +2526,11 @@ class CobolVariable():
                 print(chr(byte), end="")
             else:
                 print('.', end="")
-        print('"')
+
+        if elements < len(self.Data()):
+            print('"...')
+        else:
+            print('"')
 
     def NumericValue(self):
         return atoi(self.display_body)
@@ -3597,6 +3599,8 @@ class CobolVariable():
             else:
                 body += chr(d)
         body += '"'
+        if elements < len(self.Data()):
+            body += '...'
         pic = '[ alphanumeric-'
         pic += str(self.Length)
         pic += ' ]'
@@ -4295,7 +4299,7 @@ class ModuleInformation():
         # Load the new tables
         # Pull apart the variable_string
 
-        variable_lines = variable_string.split('~');
+        variable_lines = variable_string.split('~')
 
         for variable_line in variable_lines:
             tokens = variable_line.split('|')
@@ -5219,6 +5223,8 @@ class CPrintWorker():
                     body += chr(nch)
                 body += '"'
             body = WithRepeatCount(body)
+            if elements < len(payload.Data()):
+                body += '...'
         else:
             # There is no refmod involved:
             if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_HEX:
@@ -5227,6 +5233,8 @@ class CPrintWorker():
                 body = payload.GetDataAsBinary()
             else:
                 body = WithRepeatCount(payload.display_body)
+                if elements < len(payload.Data()):
+                    body += '...'
 
         return body
 
@@ -7569,7 +7577,7 @@ set "auto-step 0" causes there to be no sleeping."""
         try:
             self.value = int(ParameterAutoStep.validate(self.value))
         except gdb.GdbError:
-            self.value = int (self.backup)
+            self.value = int(self.backup)
             raise
         self.backup = self.value
         return ""
