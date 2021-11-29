@@ -7517,6 +7517,7 @@ An argument says how fast auto stepping is done (see parameter "auto-step")."""
         super(CmdAutoStep, self).__init__("auto-step", gdb.COMMAND_RUNNING)
         self.defaultSpeed = ParameterAutoStep()
         gdb.events.stop.connect(stop_handler_auto_step)
+        gdb.events.exited.connect(stop_handler_auto_step)
 
     def invoke(self, argument, from_tty):
         # sanity check - are we even active, prevents a spurious "no registers" exception
