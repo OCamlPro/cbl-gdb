@@ -188,6 +188,9 @@ READELF_BINARY = os.getenv('READELF', 'readelf')
 COBCDRW_BINARY = os.getenv('COBCDRW', 'cobcd-rw')
 COBCRUN_NAME = os.getenv('COBCRUN', 'cobcrun')  # _only_ the name, also: no extension
 
+WATCHPOINT_NOTE = "echo note: watchpoint for "
+WATCHPOINT_NOTE_PATTERN = WATCHPOINT_NOTE + r'(.*)(\\n)?'
+
 # This table is used by the GlobalVariable.NumberOfDigits routine
 SIZE_TO_DIGITS = {1: len(str(2**(8*1))),
                   2: len(str(2**(8*2))),
@@ -5708,14 +5711,16 @@ class CobolAfterWatchBreakpoint(gdb.Breakpoint):
 
         # copy commands as necessary ("real watchpoint" never halts and therefore commands are never executed)
         # note: we do need to place "cup 0" here as the stop method is not allowed to adjust the current frame
-        # to not raise strange "could not go up" messages we check the current state and store this in a
-        # convenience variable (GDB 8.2+ only, but we're guaranteed to be on 8.3+ in this method) before executing it
-        up_cmd = "py gdb.set_convenience_variable(\"CupNeeded\",CFrameWorker.is_cobol_frame(gdb.selected_frame())[0] == False)"
-        up_cmd += "\nif $CupNeeded\ncup 0\nend"
         if creating_wp.commands:
-            self.commands = up_cmd + "\n" + creating_wp.commands
+            # remove notice we've previously added
+            more_commands = re.sub(WATCHPOINT_NOTE_PATTERN, "", creating_wp.commands)
         else:
-            self.commands = up_cmd
+            more_commands = None
+
+        if more_commands:
+            self.commands = "cup 0" + "\n" + more_commands
+        else:
+            self.commands = "cup 0"
 
     def stop(self):
         return_value = self.creating_wp.handler.check_and_output_wp()
@@ -5797,6 +5802,8 @@ class CobolWatchBreakpoint(gdb.Breakpoint):
             return
         self.handler = CobolWatchpointHandler(self, payload)
         self.after_done = 0
+        # we can drop a note here (for "info breakpoints") as we remove it later in the afterwatch
+        self.commands = WATCHPOINT_NOTE + payload.NameWithSubscripts() + "\\n"
         self.after_watch = None
 
     def stop(self):
