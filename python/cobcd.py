@@ -4064,6 +4064,29 @@ class CobolVariable():
 
         return value
 
+    # special method to "fake" a constant - out of the common tree
+    def set_constant_attributes (self, name, value):
+        self.isConstant = True
+        self.constantValue = value
+        self.Name = name
+
+    # method that GDB would call to get the value, for example in the backtrace and "frame" command
+    def value(self):
+        # can return a gdb.Value...
+        if self.isConstant:
+            return self.constantValue
+
+        # ... or a python value (TODO in general, this code is not executed yet)
+        # TODO: for numeric and pointer COBOL types return the value as appropriate python type
+        #     or, possibly better as a self-created gdb.Value
+        if self.FetchVariableData(True):
+            return CPrintWorker().GetDisplayBody(self)
+        return None
+
+    # method that GDB would call to get the name
+    def symbol(self):
+        return self.Name
+
 
 class Rside():
     """Universal value extractor"""
@@ -7393,8 +7416,8 @@ For detailed usage see 'help backtrace'."""
         try:
             command = "backtrace " + ' '.join(arguments).replace("- ", "-")
             gdb.execute(command)
-        except gdb.error as error:
-            raise gdb.GdbError("cbacktrace failed: " + str(error))
+        except gdb.error as ex:
+            raise gdb.GdbError(ex)
         finally:
             remove_filter.enabled = old_enable
 
@@ -7460,21 +7483,73 @@ class CobolFrameFilter():
         return ElideNonCobolIterator(frame_iter)
 
 
-class CobolOnlyDecoration(gdb.FrameDecorator.FrameDecorator):
-    def __init__(self, filter_frame, frame):
-        super(CobolOnlyDecoration, self).__init__(filter_frame)
-        self.cob_module = frame.read_var("module")
+class CobolDecoration(gdb.FrameDecorator.FrameDecorator):
+    """Decorades the name and address (both optional, the later currently removed isntead of decorated),
+the frame args (currently unfinished and therefore replaced by NUMBER-OF-CALL-PARAMETERS register)
+and the local args (currently removed)"""
+    def __init__(self, filter_frame, frame, decorate_name_and_address=True):
+        super(CobolDecoration, self).__init__(filter_frame)
+        self.frame = frame
+        self.decorate_name_and_address = decorate_name_and_address
 
     def function(self):
-        return self.cob_module['module_name'].string()
+        # actual function name of the stack frame
+        if not self.decorate_name_and_address:
+            return str(self.frame.function())
+        # or the COBOL module name
+        cob_module = self.frame.read_var("module")
+        return cob_module['module_name'].string()
 
     def address(self):
-        # nearly never useful for a COBOL programmer
+        # actual address value of the stack frame
+        if not self.decorate_name_and_address:
+            return str(self.frame.pc())
+        # the ADDRESS OF ENTRY "prog" which is 'meant' here is the address of the wrapper,
+        # which is the calling frame's address
+        # TODO: check how that is done for nested programs
+        # return self.frame.older().pc()
+        # Nearly never useful for a COBOL programmer, so until we know we want that: just remove it from the frame decoration
         return None
 
-    # def frame_args(self):
-    #     # possibly print the COBOL name and start of the values here
-    #     return None
+    def frame_args(self):
+        amount_args_passed = self.frame.read_var("cob_call_params")
+        amount_args_left = int(amount_args_passed)
+        if amount_args_left == 0:
+            return None
+        args = []
+        # TODO: get the COBOL name and start of the values here
+        #       that are in current active USING
+        # GV_ModuleState.EstablishModuleState(True)
+        # # Iterate over all symbols in a block.  Only add
+        #  # symbols that are arguments and also drop the "entry one".
+        #  # --> coming from   "const int entry, cob_u8_t *b_903, cob_u8_t *b_10225"
+        #  try:
+        #      block = self.frame.block()
+        #  except:
+        #      return None
+        #  for sym in block:
+        #     if not sym.is_argument or sym.name == "entry":
+        #         continue
+        #     if not amount_args_left:
+        #         break
+        #     amount_args_left -= 1
+        #     # check internal list of LINKAGE items, which is not a redefine
+        #     # and has that base address b_903 / b_10225
+        #     value = self.frame.read_var(sym).dereference().address
+        #     payload = GV_ModuleState.get_payload_from_base_address(value)
+        #     args.append(CobolVariable)
+        # ... until that work is done create a synthetic variable passing the number of arguments
+        payload = CobolVariable()
+        payload.set_constant_attributes("NUMBER-OF-CALL-PARAMETERS", amount_args_passed)
+        args.append(payload)
+        return args
+
+    def frame_locals(self):
+         # even simple COBOL programs consist of a huge amount of data
+         # in theory we could issue internally a "cprint *"" (reduced to the level 01 / 77 entries)
+         # here and return the list, but this definitely should only be done depending on a parameter
+         # that is only related to cobcd.py
+         return None
 
 
 class RemoveNonCobolIterator():
@@ -7495,7 +7570,7 @@ class RemoveNonCobolIterator():
         if inner:
             self.first_iteration = False
             # yay, an inner COBOL frame...
-            return CobolOnlyDecoration(frame, real_frame)
+            return CobolDecoration(frame, real_frame)
         if cobol and self.first_iteration:
             # we have nothing returned yet, but an outer frame --> return as-is
             return frame
