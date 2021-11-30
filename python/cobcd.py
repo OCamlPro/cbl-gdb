@@ -5373,19 +5373,32 @@ class CPrintWorker():
             # confuses Visual Studio Code
             return
 
-        if len(leftside_possibilities) == 1 and not rightside and leftside[0] != '*' and leftside[0] != '?':
+        if len(leftside_possibilities) == 1 and not rightside and leftside[0] != '*' and leftside[0] != '?' :
             # Very special case.  This was a `cprint/m something`, which is what happens when
             # the -data-evaluate-expression command is issued by Visual Studio Code.  I considered creating
             # a unique 'print/e ' command, but then I realized that VSC never issues a 'cprint/m something' unless there
             # is also an 'rside'.  So, this code is in response to a `-data-evalute-expression` equivalent command
             payload_index = leftside_possibilities[0]
+            flag = 0
+            if payload_index < 0:
+                flag = abs(payload_index)          // LENADDR_FLAG_BIAS
+                payload_index = abs(payload_index)  % LENADDR_FLAG_BIAS
+
             payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
-            disp_str = 'value="' + MachineInterfaceBodyAlt(WithRepeatCount(payload.display_body)) + '"'
+            if flag == 0:
+                disp_str = 'value="' + MachineInterfaceBodyAlt(WithRepeatCount(payload.display_body)) + '"'
+            elif flag == LENADDR_FLAG_ADDRESS:
+                disp_str = 'value="' + MachineInterfaceBodyAlt(hex(payload.ActualLocation)) + '"'
+            else: # flag == LENADDR_FLAG_LENGTH:
+                disp_str = 'value="' + MachineInterfaceBodyAlt(str(payload.ActualLength)) + '"'
+
             print(disp_str)
             return
 
         if len(leftside_possibilities) == 1 and rightside and leftside[0] != '*' and leftside[0] != '?':
             payload_index = leftside_possibilities[0]
+            if payload_index < 0:
+                return
             payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
             if self.set_var_value(rightside) == 0:
                 # The assignment failed
