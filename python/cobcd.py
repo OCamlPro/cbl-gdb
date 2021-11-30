@@ -64,7 +64,6 @@ import gdb
 
 GV_reads = 0
 GV_bytes_read = 0
-
 GV_noisy_registration = False
 
 # Version to be printed upon request - Don't mess with it!
@@ -205,6 +204,10 @@ SIZE_TO_DIGITS = {1: len(str(2**(8*1))),
 last_stop_was_simple = False
 
 VARSTR_LEN_SIZE = 9  # as used by cobcd-st
+
+LENADDR_FLAG_BIAS = 10000000
+LENADDR_FLAG_ADDRESS = 1
+LENADDR_FLAG_LENGTH = 2
 
 def GdbExecute(curframe, command):
     # It is up to the caller to handle exceptions
@@ -1046,8 +1049,23 @@ def IntegerOrVariable(s):
         return None, limit_reached
 
     # We know that there is but one possibility because of the limit specified above:
-    payload = GV_ModuleInformation.var_trie.storage_list[possibilities[0]]
-    return payload.NumericValue(), False  # False means no limit overrun
+    index = possibilities[0]
+    flag = 0
+    if index < 0:
+        flag  = (-index) // LENADDR_FLAG_BIAS
+        index = (-index) %  LENADDR_FLAG_BIAS
+
+    payload = GV_ModuleInformation.var_trie.storage_list[index]
+
+    if flag == 0:
+        return payload.NumericValue(), False  # False means no limit overrun
+    elif flag == LENADDR_FLAG_ADDRESS:
+        return payload.ActualLocation, False  # False means no limit overrun
+    elif flag == LENADDR_FLAG_LENGTH:
+        return payload.ActualLength, False  # False means no limit overrun
+    else:
+        traceback.print_exc()
+        raise gdb.error("Unknown LENADDR_FLAG")
 
 class VarTrie():
     def __init__(self):
@@ -2561,10 +2579,6 @@ class CobolVariable():
     def NumericValue(self):
         return atoi(self.display_body)
 
-####################################################################
-###  Start of recovered data formatting code #######################
-####################################################################
-
 ### In June of 2021, a decision was made to undo a set of changes made
 ### in September of 2020.  Specifically, it was back in 2020 that the
 ### Python routines for outputting COBOL variables were replaced with
@@ -2574,8 +2588,6 @@ class CobolVariable():
 ### inferior to call routines that are not async-signal-safe.  This
 ### problem actually cropped up when Simon was debugging some complex
 ### code.
-
-### The code in this section was recovered from Version 3.23
 
     def IeeeBinaryToString(self):
         data_bytes = self.Data()
@@ -4212,29 +4224,9 @@ class Rside():
             # fails the R_NUMERICALCONSTANT regular expression, and doesn't have has_all
 
             if not quoted and not self.has_all:
-                args = rside.split()
-                if len(args) > 1:
-                    # At this point, if the user entered LENGTH OF <var> or
-                    # ADDRESS OF <var>, the "OF" has been stripped off.
-                    # So, we just check for leading ADDRESS or LENGTH
-                    if args[0].lower() == "address":
-                        self.is_address_of = True
-                        # Trim away the leading "ADDRESS OF"
-                        args = args[1:]
-                        rside = ' '.join(args)
-                    elif args[0].lower() == "length":
-                        # Trim away the leading "LENGTH OF"
-                        self.is_length_of = True
-                        args = args[1:]
-                        rside = ' '.join(args)
                 self.original_string = rside
                 self.is_symbol = True
         return
-
-####################################################################
-###  End of recovered data formatting code #########################
-####################################################################
-
 
 class ModuleInformation():
     """Information about the source code module being debugged.
@@ -4771,6 +4763,14 @@ def get_sorted_possibilities(args, limit, no_data=False):
     # We take a list of strings as args
     possibilities_1 = []
     possibilities = []
+    prefix = None
+
+    # It's possible that the user is asking for LENGTH OF or ADDRESS OF
+
+    # This is one of the places we handle that:
+    if len(args) > 0 and args[0].lower() in ("length", "address" ):
+        prefix = args[0].lower()
+        args = args[1:]
 
     if len(args) >= 1 and GV_ModuleState.current_trapped_line > 0:
         if args[0] == '*':
@@ -4846,6 +4846,13 @@ def get_sorted_possibilities(args, limit, no_data=False):
             # There are one or more arguments.  Use our clever routine
             # to come up with the possibilities_1:
             possibilities_1 = GV_ModuleInformation.var_trie.GetListOfPossibilities(args)
+            # If, and only if, there is exactly one result, then modify the
+            # that single result
+            if len(possibilities_1) == 1:
+                if prefix and prefix == "address":
+                    possibilities_1[0] = -(possibilities_1[0] + LENADDR_FLAG_BIAS*LENADDR_FLAG_ADDRESS)
+                elif prefix and prefix == "length":
+                    possibilities_1[0] = -(possibilities_1[0] + LENADDR_FLAG_BIAS*LENADDR_FLAG_LENGTH)
 
     if no_data and not limit:
         return possibilities_1, False  # False means there was no 'limit' overflow
@@ -4860,7 +4867,7 @@ def get_sorted_possibilities(args, limit, no_data=False):
             # The only way of knowing which variables are in context
             # is to try to read them.  If we can't read them,
             # then we don't add them to our list:
-            payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+            payload = GV_ModuleInformation.var_trie.storage_list[abs(payload_index)%LENADDR_FLAG_BIAS]
             payload.FetchVariableData(False)
             add_to_list = not payload.not_in_context
         if add_to_list:
@@ -4891,7 +4898,7 @@ def get_completion_possibilities(word):
     if word == '*':
         possibilities_1, _limit_reached = get_sorted_possibilities(['*'], 0, no_data=True)
         for index in possibilities_1:
-            name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
+            name = GV_ModuleInformation.var_trie.storage_list[abs(index)%LENADDR_FLAG_BIAS].Name.upper()
             possibilities.append(name)
     else:
         for index in range(len(GV_ModuleInformation.var_trie.storage_list)):
@@ -5193,7 +5200,7 @@ class CPrintWorker():
                 else:
                     ConditionalRaise("Undefined output format \"{0}\"".format(args[0][1:]))
                     args = []
-            else:
+#            else:
                 # The first parameter doesn't start with a slash character
                 #
                 # usually, this means that the first argument is a variable.  However, it has
@@ -5204,16 +5211,16 @@ class CPrintWorker():
                 # as display_modes, and eliminating the resulting extraneous text before the variable name,
                 # and proceed.  Downstream processing will recognize the "address" and "length" display_mode, and
                 # output the appropriate value
-                if len(args) > 2:
-                    if args[1].lower() == "of":
-                        if args[0].lower() == "address":
-                            GV_ModuleState.current_display_mode = "address"
-                            # Trim away the leading "ADDRESS OF"
-                            args = args[2:]
-                        elif args[0].lower() == "length":
-                            # Trim away the leading "LENGTH OF"
-                            GV_ModuleState.current_display_mode = "length"
-                            args = args[2:]
+#                if len(args) > 2:
+#                    if args[1].lower() == "of":
+#                        if args[0].lower() == "address":
+#                            GV_ModuleState.current_display_mode = "address"
+#                            # Trim away the leading "ADDRESS OF"
+#                            args = args[2:]
+#                        elif args[0].lower() == "length":
+#                            # Trim away the leading "LENGTH OF"
+#                            GV_ModuleState.current_display_mode = "length"
+#                            args = args[2:]
 
         if args:
             args = ' '.join(args)
@@ -5272,10 +5279,6 @@ class CPrintWorker():
             elif GV_ModuleState.current_display_mode in ('2', '5', '8'):
                 print(payload.NameToString())
                 print(body)
-            elif GV_ModuleState.current_display_mode == "length":
-                print(payload.ActualLength)
-            elif GV_ModuleState.current_display_mode == "address":
-                print(hex(payload.ActualLocation))
             else:  # GV_ModuleState.current_display_mode ==  'd':
                 payload.ShowFields()
         except KeyboardInterrupt as ki:
@@ -5464,7 +5467,7 @@ class CPrintWorker():
         # happens to have a Refmod, then we can't do hierarchical:
         payload_okay = True
         if len(leftside_possibilities) == 1:
-            payload = GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]]
+            payload = GV_ModuleInformation.var_trie.storage_list[abs(leftside_possibilities[0])%LENADDR_FLAG_BIAS]
             if payload.Refmod:
                 payload_okay = False
         if payload_okay and GV_ModuleState.current_pretty_mode == 'p':
@@ -5503,7 +5506,13 @@ class CPrintWorker():
         elif len(leftside_possibilities) == 1:
             # There is but one possibility
             # Pick up the payload from the list
-            payload = GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]]
+            index = leftside_possibilities[0];
+            flag  = 0;
+            if index < 0:
+                flag  = abs(index) // LENADDR_FLAG_BIAS
+                index = abs(index)  % LENADDR_FLAG_BIAS
+
+            payload = GV_ModuleInformation.var_trie.storage_list[index]
 
             if rightside:
                 if self.set_var_value(rightside) == 0:
@@ -5513,7 +5522,12 @@ class CPrintWorker():
             # Having done the assignment, if any,
             # now display the left-side data that was changed or requested to be printed:
             if payload.FetchVariableData(True):
-                self.FormattedDisplay(payload)
+                if flag == 0:
+                    self.FormattedDisplay(payload)
+                elif flag == LENADDR_FLAG_ADDRESS:
+                    print( hex(payload.ActualLocation) )
+                elif flag == LENADDR_FLAG_LENGTH:
+                    print( payload.ActualLength)
 
             if rightside and payload.table_offset:
                 # We just did an assignment to a table element, and then we displayed it.
@@ -5642,8 +5656,11 @@ class CPrintWorker():
 
         if len(leftside_possibilities) == 1:
             # because there is but a single leftside possibility, we might be in a "cprint var1=var2" situation
-            GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]])
-            GV_GlobalVariables.VarLeftIndex = leftside_possibilities[0]
+            if leftside_possibilities[0]<0 and right_side:
+                ConditionalRaise("Invalid assignment")
+                return
+            GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[abs(leftside_possibilities[0])%LENADDR_FLAG_BIAS])
+            GV_GlobalVariables.VarLeftIndex = abs(leftside_possibilities[0])%LENADDR_FLAG_BIAS
             if GV_GlobalVariables.VarLeft.SubscriptFailure or GV_GlobalVariables.VarLeft.RefmodFailure:
                 return
         elif right_side:
@@ -5659,8 +5676,8 @@ class CPrintWorker():
             # Let's see if it is a number:
             rside = Rside()
             rside.FromString(' '.join(right_side))
-            if rside.is_address_of or rside.is_length_of:
-                right_side = rside.original_string.split()
+            #if rside.is_address_of or rside.is_length_of:
+            #    right_side = rside.original_string.split()
 
             if rside.is_symbol:
                 rightside_possibilities, limit_reached = get_sorted_possibilities(right_side, 1)
@@ -5672,12 +5689,17 @@ class CPrintWorker():
                     return
                 # right_side seems to refer to one, and only one, variable.
                 # Let's fetch its data:
-                payload = GV_ModuleInformation.var_trie.storage_list[rightside_possibilities[0]]
+                index = rightside_possibilities[0];
+                flag = 0
+                if index < 0:
+                    flag  = (-index) // LENADDR_FLAG_BIAS
+                    index = (-index)  % LENADDR_FLAG_BIAS
+                payload = GV_ModuleInformation.var_trie.storage_list[index]
                 payload.FetchVariableData(False)
-                if rside.is_length_of:
+                if flag == LENADDR_FLAG_LENGTH:
                     # The length of the data is desired as a RHS variable
                     rside.FromString(str( payload.ActualLength))
-                elif rside.is_address_of:
+                elif flag == LENADDR_FLAG_ADDRESS:
                     # The address of the data is desired as a RHS variable
                     rside.FromString(str( payload.ActualLocation))
                 else:
@@ -5930,12 +5952,14 @@ class CWatchWorker():
             return
 
         # Pick up the payload from the list
+        if possibilities[0] < 0:
+            ConditionalRaise("Invalid syntax")
+            return
         payload = GV_ModuleInformation.var_trie.storage_list[possibilities[0]]
         payload.FetchVariableData(False)
 
         # And go set the Watchpoint
         self.set_watchpoint(payload, wp_type)
-
 
 class CobolBreakpoint(gdb.Breakpoint):
     def __init__(self, bp_spec, t_flag, i_flag):
@@ -6086,6 +6110,8 @@ class CBreakWorker():
             return payload
 
         payload_number = possibilities[0]
+        if payload_number < 0:
+            payload_number = (-payload_number) % LENADDR_FLAG_BIAS
 
         # Pick up the payload from the list
         payload = GV_ModuleInformation.var_trie.storage_list[payload_number]
