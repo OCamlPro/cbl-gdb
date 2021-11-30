@@ -702,31 +702,7 @@ def GetPointerTo(name):
 
 
 def AddEmUp(expression):
-    # Originally written when I thought only integers would appear
-    # here, I have since learned that expressions can be more complex.
-    # For now I am simply punting when when confronted with something
-    # that isn't an integer or a simple addition of integers
-    #
-    # Processing of arrays can involve 123*b_37 + 456 (offset) or 30*b_454 (length),
-    # and I've been warned that there might even be parentheses involved.
-    # We'll burn those bridges in times to come.
-    expression = expression or "0"
-    retval = 0
-    tokens = expression.split('+')
-    for token in tokens:
-        #if token[0:1] in "0123456789":  # Python2/3 ecumenical
-            try:
-                retval += int(token)
-            except ValueError:
-                # as described above, just ignore that for now,
-                # otherwise we'd have to get the integer value of the matching field
-                # f_37 / f_454 and use this with the possible handling of multiplication
-                # TODO: check if returning -1 may be the better option
-                pass
-        # else:
-        #     # as described above, just ignore that for now.
-        #     pass
-    return retval
+    return int(gdb.parse_and_eval(expression or "0"))
 
 
 def process_left_right_args(args):
