@@ -227,7 +227,7 @@ def get_memoryview(address, length):
     # we can check for this type and convert the buffer if necessary, because conveniently
     # memoryview a constructor that takes a buffer object
 
-    if !address:
+    if address == 0:
         ConditionalRaise("We're not going to try to access memory with a NULL pointer")
         return;
 
