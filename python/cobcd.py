@@ -432,6 +432,7 @@ def MachineInterfaceBodyAlt(s):
 def ReplaceWithRepeatCountQuoted(s):
     # We know this guy has a leading quote, and presumably a trailing one
     # print("ReplaceWithRepeatCountQuoted(1)", s)
+    elements = get_element_size();
     retval = ""
     # Strip off the leading and trailing quotes
     s = s[1:-1]
@@ -439,12 +440,14 @@ def ReplaceWithRepeatCountQuoted(s):
     fox = 0
     prior_contraction = False
     in_a_quoted_run = False
+    early_termination = False
     repeat_count = get_repeats_size()
     while rabbit < len(s):
         # Arriving here means:
         # We're here for the first time, or we just finished a run
         # So, we are going to pick up 'char', which is a candidate
         # for the start of a new run
+        chunk = ""
 
         fox = rabbit
         char = s[rabbit]
@@ -460,34 +463,46 @@ def ReplaceWithRepeatCountQuoted(s):
             if in_a_quoted_run:
                 # We have to end the current ongoing string
                 # and start this contraction with a prelude
-                retval += "\", "
+                chunk += "\", "
             # and now we can start the contraction:
-            retval += "\'"
-            retval += char
-            retval += "\' <repeats "
-            retval += str(rabbit - fox)
-            retval += ' times>, '
+            chunk += "\'"
+            chunk += char
+            chunk += "\' <repeats "
+            chunk += str(rabbit - fox)
+            chunk += ' times>, '
             prior_contraction = True
             in_a_quoted_run = False
         else:
             # The run is short enough that we just put the characters
             # into place
+            prior_contraction = False
             if not in_a_quoted_run:
                 # We have to start the quote:
-                retval += "\""
+                chunk += '"'
                 in_a_quoted_run = True
             # Copy over characters until the fox catches up with the rabbit
             while fox < rabbit:
                 fox += 1
-                retval += char
-            prior_contraction = False
+                chunk += char
+                if len(retval) + len(chunk) > elements:
+                    # We have run out of GDB-allowed room for this string:
+                    early_termination = True
+                    break
+        retval += chunk
+        if len(retval) > elements:
+            # We have run out of GDB-allowed room for this string:
+            early_termination = True
+            break
 
     # We have reached the end
     if prior_contraction:
         # strip off the unnecessary ', '
         retval = retval[:-2]
     if in_a_quoted_run:
-        retval += "\""
+        retval += '"'
+
+    if early_termination and rabbit < len(s):
+        retval += '...'
 
     # print("ReplaceWithRepeatCountQuoted(2)", retval)
     return retval
@@ -2518,6 +2533,8 @@ class CobolVariable():
         for byte in raw_data:
             hexout = hex(256 + byte)[-2:]
             print(hexout, end=" ")
+        if elements < len(self.Data()):
+            print('...', end="")
         print("]")
 
         print("Data: (ASCII) \"", end="")
@@ -2527,10 +2544,10 @@ class CobolVariable():
             else:
                 print('.', end="")
 
+        print('"', end="")
         if elements < len(self.Data()):
-            print('"...')
-        else:
-            print('"')
+            print('...', end="")
+        print("")
 
     def NumericValue(self):
         return atoi(self.display_body)
@@ -3590,8 +3607,7 @@ class CobolVariable():
 
     def AlphanumericToString(self):
         # ALPHANUMERIC
-        elements = get_element_size()
-        data = self.Data()[0:elements]
+        data = self.Data()
         body = '"'
         for _i, d in enumerate(data):
             if d < 32:
@@ -3599,8 +3615,6 @@ class CobolVariable():
             else:
                 body += chr(d)
         body += '"'
-        if elements < len(self.Data()):
-            body += '...'
         pic = '[ alphanumeric-'
         pic += str(self.Length)
         pic += ' ]'
@@ -5225,8 +5239,6 @@ class CPrintWorker():
                     body += chr(nch)
                 body += '"'
             body = WithRepeatCount(body)
-            if elements < len(payload.Data()):
-                body += '...'
         else:
             # There is no refmod involved:
             if GV_ModuleState.current_display_submode == DISPLAY_SUBMODE_HEX:
@@ -5235,8 +5247,6 @@ class CPrintWorker():
                 body = payload.GetDataAsBinary()
             else:
                 body = WithRepeatCount(payload.display_body)
-                if elements < len(payload.Data()):
-                    body += '...'
 
         return body
 
