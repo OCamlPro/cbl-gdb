@@ -4422,12 +4422,13 @@ class ModuleState():
             # We now march through stack, looking for the
             # first entry whose filename matches filename:
 
-            # TODO: wouldn't it make more sense to use the current frame or one above for the start?
+            # CHECKME: likely more reasonable to start with gdb.selected_frame() or one above
             frame = gdb.newest_frame()
             while frame:
                 st = frame.find_sal().symtab
                 if st is None:
                     # don't screw parsing with missing debug info, just skip to next frame
+                    frame = frame.older()
                     continue
                 if st.filename == filename_frame:
                     break
@@ -4509,8 +4510,9 @@ class ModuleState():
         # sanity check first
         try:
             gdb.selected_frame()
-        except gdb.error:
-            ConditionalRaise("No stack.")
+        except gdb.error as ex:
+            # Depending on the scenario commonly raises one of "No stack.", "No frame currently selected." or others
+            ConditionalRaise(str(ex))
             return
 
         # Go read the frame and stack, and, if necessary, fetch the VARIABLE_STRING
@@ -5535,13 +5537,6 @@ class CPrintWorker():
         if not args or not args[0]:
             return
 
-        # Since there are additional arguments, we're going to need a stack
-        # to work with.  We do the test here so that instructions like
-        #   cprint/v3
-        # get processed even though no debugging has started.
-
-        GV_ModuleState.EstablishModuleState(True)
-
         if args[0][0] == '"':
             # The user is talking to himself for some reason.  Just play along.
             self.HandleDoubleQuote(arguments)
@@ -5557,7 +5552,7 @@ class CPrintWorker():
             # "No stack." is the message GDB reports when debugging statements
             # are issued when the program hasn't been run, which is checked in the
             # caller, we get here for "internal" reasons during resolve.
-            ConditionalRaise("No stack.")
+            ConditionalRaise("This doesn't look like a COBOL frame.")
             return
 
         # Initialize for subsequent processing:
@@ -5688,8 +5683,8 @@ class CPrintWorker():
 class CobolAfterWatchBreakpoint(gdb.Breakpoint):
     def __init__(self, creating_wp):
         if GV_GlobalVariables.gdb_version < 80300:
-            ConditionalRaise("pure COBOL cwatch needs GDB 8.3+")
-            return
+            # sanity check, this code is only executed on manual function call
+            raise gdb.GdbError("pure COBOL cwatch needs GDB 8.3+")
 
         frame = gdb.newest_frame()
         cob_frame = CFrameWorker.Frame(True, 0)
@@ -5783,8 +5778,8 @@ class CobolWatchpointHandler():
 class CobolWatchBreakpoint(gdb.Breakpoint):
     def __init__(self, payload, bp_spec, bp_action):
         if GV_GlobalVariables.gdb_version < 80300:
-            ConditionalRaise("pure COBOL cwatch needs GDB 8.3+")
-            return
+            # sanity check, this code is only executed on manual function call
+            raise gdb.GdbError("pure COBOL cwatch needs GDB 8.3+")
         try:
             super(CobolWatchBreakpoint, self).__init__(bp_spec, gdb.BP_WATCHPOINT, bp_action)
             CBLDBG_CBREAK_WORKER.cobol_breaks.append(self)
@@ -5919,6 +5914,9 @@ class CobolBreakpoint(gdb.Breakpoint):
             else:
                 super(CobolBreakpoint, self).__init__(bp_spec, type=gdb.BP_BREAKPOINT, internal=i_flag)
             CBLDBG_CBREAK_WORKER.cobol_breaks.append(self)
+        except gdb.error:
+            # pass errors as is, most likely: malformed bp_spec
+            raise
         except Exception as ex:
             ConditionalRaise(ex)
             return
@@ -6321,6 +6319,7 @@ class CPrint(gdb.Command):
 
     def invoke(self, arguments, from_tty):
         try:
+            GV_ModuleState.EstablishModuleState(True)   # we want errors seen early
             self.worker.ProcessArguments(arguments)
         # pass user errors unchanged
         except gdb.GdbError:
@@ -6917,8 +6916,9 @@ class CFrameWorker:
 
         try:
             frame = gdb.selected_frame()
-        except gdb.error:
-            ConditionalRaise("No stack.")
+        except gdb.error as ex:
+            # Depending on the scenario commonly raises one of "No stack.", "No frame currently selected." or others
+            ConditionalRaise(str(ex))
             return
 
         while True:
@@ -7085,8 +7085,9 @@ Applies to any out-of-line PERFORM."""
         # sanity check: Do we have any frame at all?
         try:
             frame = gdb.selected_frame()
-        except gdb.error:
-            ConditionalRaise("No stack.")
+        except gdb.error as ex:
+            # Depending on the scenario commonly raises one of "No stack.", "No frame currently selected." or others
+            ConditionalRaise(str(ex))
             return
 
         if not CFrameWorker.is_cobol_inner_frame(frame):
@@ -7112,8 +7113,9 @@ class CFinishModule(gdb.Command):
         # sanity check: Do we have any frame at all?
         try:
             frame = gdb.selected_frame()
-        except gdb.error:
-            ConditionalRaise("No stack.")
+        except gdb.error as ex:
+            # Depending on the scenario commonly raises one of "No stack.", "No frame currently selected." or others
+            ConditionalRaise(str(ex))
             return
 
         cobol, inner = CFrameWorker.is_cobol_frame(frame)
@@ -7142,8 +7144,9 @@ class CUntilCobol(gdb.Command):
         #               the only reason also done here is the use of ConditionalRaise
         try:
             frame = gdb.selected_frame()
-        except gdb.error:
-            ConditionalRaise("No stack.")
+        except gdb.error as ex:
+            # Depending on the scenario commonly raises one of "No stack.", "No frame currently selected." or others
+            ConditionalRaise(str(ex))
             return
 
         cob_frame = CFrameWorker.Frame(True, 0)
@@ -7273,8 +7276,9 @@ class CLocalBacktrace(gdb.Command):
         # sanity check: Do we have any frame at all?
         try:
             frame = gdb.selected_frame()
-        except gdb.error:
-            ConditionalRaise("No stack.")
+        except gdb.error as ex:
+            # Depending on the scenario commonly raises one of "No stack.", "No frame currently selected." or others
+            ConditionalRaise(str(ex))
             return
 
         if not CFrameWorker.is_cobol_inner_frame(frame):
