@@ -227,12 +227,18 @@ def get_memoryview(address, length):
     # we can check for this type and convert the buffer if necessary, because conveniently
     # memoryview a constructor that takes a buffer object
 
-    obj = gdb.selected_inferior().read_memory(address, length)
-    if isinstance(obj, memoryview):
-        return obj
+    if !address:
+        ConditionalRaise("We're not going to try to access memory with a NULL pointer")
+        return;
+
+    try:
+        obj = gdb.selected_inferior().read_memory(address, length)
+        if isinstance(obj, memoryview):
+            return obj
+    except:
+        ConditionalRaise("MemoryError: Cannot access memory at address {0}".format(hex(address)))
 
     return memoryview(obj)
-
 
 def get_element_size():
     # GDB reasonably limits the output used for strings(=char arrays) and (common) arrays
