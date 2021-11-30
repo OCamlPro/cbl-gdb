@@ -502,7 +502,7 @@ def ReplaceWithRepeatCountQuoted(s):
         retval += '"'
 
     if early_termination and rabbit < len(s):
-        retval += '...'
+        retval += "..."
 
     # print("ReplaceWithRepeatCountQuoted(2)", retval)
     return retval
@@ -2534,7 +2534,7 @@ class CobolVariable():
             hexout = hex(256 + byte)[-2:]
             print(hexout, end=" ")
         if elements < len(self.Data()):
-            print('...', end="")
+            print("...", end="")
         print("]")
 
         print("Data: (ASCII) \"", end="")
@@ -2546,7 +2546,7 @@ class CobolVariable():
 
         print('"', end="")
         if elements < len(self.Data()):
-            print('...', end="")
+            print("...", end="")
         print("")
 
     def NumericValue(self):
