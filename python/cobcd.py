@@ -201,7 +201,7 @@ SIZE_TO_DIGITS = {1: len(str(2**(8*1))),
                   8: len(str(2**(8*8)))
                  }
 
-last_stop_was_simple = False
+got_complex_stop_event = True
 
 VARSTR_LEN_SIZE = 9  # as used by cobcd-st
 
@@ -7561,6 +7561,10 @@ An argument says how fast auto stepping is done (see parameter "auto-step")."""
         self.defaultSpeed = ParameterAutoStep()
         gdb.events.stop.connect(stop_handler_auto_step)
         gdb.events.exited.connect(stop_handler_auto_step)
+        try:
+            gdb.events.inferior_deleted.connect(stop_handler_auto_step)
+        except AttributeError:
+            pass # that's a GDB 11+ event registry, no problem if not available
 
     def invoke(self, argument, from_tty):
         # sanity check - are we even active, prevents a spurious "no registers" exception
@@ -7585,12 +7589,14 @@ An argument says how fast auto stepping is done (see parameter "auto-step")."""
             gdb.execute("set pagination off", False, False)
 
         # recognize the kind of stop via stop_handler_auto_step
-        global last_stop_was_simple
-        last_stop_was_simple = True
+        global got_complex_stop_event
+        got_complex_stop_event = False
 
         # actual auto-stepping
         try:
-            while last_stop_was_simple:
+            # note: the end condition may get in "late" as it is handled via asynchronous events,
+            #       especially when running at a high rate
+            while not got_complex_stop_event:
                 gdb.execute("step")
                 time.sleep(sleep_time)
         # we just quit the loop as requested
@@ -7637,14 +7643,23 @@ set "auto-step 0" causes there to be no sleeping."""
         return speed
 
 def stop_handler_auto_step(event):
-    # check the type of stop, the following is the common one after step/next,
-    # a more complex one would be a subclass (for example breakpoint or signal)
-    global last_stop_was_simple
-    last_stop_was_simple = type(event) is gdb.StopEvent
+    # check the _type_ of stop, _not_ the instance:
+    # the following is the common one after step/next, a more complex one would be a subclass
+    # (for example breakpoint or signal) which we say "that is complex" -> stop auto step
+    # Note that we can't set the value directly because we never should set it to False here
+    # when it is already True, as we may get flooded by a lot of events, so we otherwise
+    # ending with scenarios like  False, False, False, True, False  otherwise
+    global got_complex_stop_event
+    if not type(event) is gdb.StopEvent:
+        got_complex_stop_event = True
 
 
 gdb.events.exited.connect(exit_handler)
 gdb.events.stop.connect(stop_handler)
+try:
+    gdb.events.inferior_deleted.connect(stop_handler)
+except AttributeError:
+    pass # that's a GDB 11+ event registry, no problem if not available
 
 CFrameWorker()
 CPrint()
