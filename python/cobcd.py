@@ -232,7 +232,7 @@ def get_memoryview(address, length):
 
     if address == 0:
         ConditionalRaise("We're not going to try to access memory with a NULL pointer")
-        return;
+        return None
 
     try:
         obj = gdb.selected_inferior().read_memory(address, length)
