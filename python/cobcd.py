@@ -190,6 +190,13 @@ COBCRUN_NAME = os.getenv('COBCRUN', 'cobcrun')  # _only_ the name, also: no exte
 WATCHPOINT_NOTE = "echo note: watchpoint for "
 WATCHPOINT_NOTE_PATTERN = WATCHPOINT_NOTE + r'(.*)(\\n)?'
 
+# optional start unix path / or windows path x:\ or unc path start \\server
+# any amount of folders
+# filename . extension    [#2]
+# optional line number    [#3]
+FILE_PATTERN = r'((?:/|[a-zA-Z]:\\|\\\\)?(?:(?:\w+|\.|\.\.)[/\\])*(\w+\.\w+)(:\d+)?)'
+FILE_AND_REST = r'^' + FILE_PATTERN + r'\s*(.*)$'
+
 # This table is used by the GlobalVariable.NumberOfDigits routine
 SIZE_TO_DIGITS = {1: len(str(2**(8*1))),
                   2: len(str(2**(8*2))),
@@ -6210,18 +6217,39 @@ class CBreakWorker():
             CobolBreakpoint("", t_flag, i_flag)
             return
 
-        left_side, right_side, condition = get_left_right_args(arguments)
+        # ensure that a file path /path/to/file.cob is not broken in get_left_right_args
+        # because it looks like a var path A/B/C
+        mat = re.match(FILE_AND_REST, arguments)
+        if mat:
+            source_reference = mat.group(1)
+            left_side, right_side, condition = get_left_right_args(mat.group(4))
+        else:
+            source_reference = None
+            left_side, right_side, condition = get_left_right_args(arguments)
+
         if not left_side:
-            return
+            if source_reference:
+                left_side = [source_reference]
+            else:
+                return
+        else:
+            if source_reference:
+                left_side = [source_reference] + left_side
 
         if not right_side:
             if len(left_side) >= 1 and isinstance(left_side[0], self.strtype) and (left_side[0].upper() == "SECTION" or left_side[0].upper() == "SEC"):
                 left_side[0] = "SECTION"
 
             if len(left_side) == 1 and left_side[0].isdigit():
+                # assume line number   --> cbreak 15
                 CobolBreakpoint(left_side[0], t_flag, i_flag)
             elif len(left_side) == 1 and isinstance(left_side[0], self.strtype) and left_side[0].find(':') != -1:
-                self.set_section_breakpoint(left_side, t_flag, i_flag)
+                if source_reference:
+                    # assume file source    --> cbreak prog.cob:42
+                    CobolBreakpoint(left_side[0], t_flag, i_flag)
+                else:
+                    # assume MODULE:SECTION
+                    self.set_section_breakpoint(left_side, t_flag, i_flag)
             elif len(left_side) == 1 and left_side[0] != "SECTION":
                 module_name = self.get_module_name(left_side[0])
                 if module_name is None:
@@ -6240,7 +6268,7 @@ class CBreakWorker():
                 return
 
             if len(left_side) >= 2 and not left_side[0].isdigit():
-                print("No line specifier, using current location")
+                #print("No line specifier, using current location")
                 left_side.insert(0, '-1')
 
             if left_side[1] != "if":
