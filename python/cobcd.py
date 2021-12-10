@@ -2056,7 +2056,15 @@ class CobolVariable():
             self.RefmodLength = length
         return
 
-    def FetchVariableData(self, show_failure):
+    def FetchVariableData(self, raise_error):
+        try:
+            return self.FetchVariableDataInternal()
+        except:
+            if raise_error:
+                raise
+            return False
+
+    def FetchVariableDataInternal(self):
         #print("FetchVariableData:", self.Name, self.Section)
         #print("FetchVariableData", self.Name, self.IsDirty(), self.ReferenceOffset, self.Length)
 
