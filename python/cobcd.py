@@ -246,11 +246,18 @@ def get_memoryview(address, length):
         obj = gdb.selected_inferior().read_memory(address, length)
         if isinstance(obj, memoryview):
             return obj
-    except:
-        ConditionalRaise("MemoryError: Cannot access memory at address {0}".format(hex(address)))
+    except gdb.MemoryError as ex:
+        # pass on as user error to make it visible without a stacktrace
+        ConditionalRaise("MemoryError: " + str(ex))
+        return None
 
     return memoryview(obj)
 
+
+def get_max_completions():
+    # GDB reasonably limits the number of entries listed in the completions.
+    # we want to return 1 entry more to let GDB indicate there is a limit overflow.
+    return gdb.parameter("max-completion") or 9999999      # happy scrolling
 
 def get_element_size():
     # GDB reasonably limits the output used for strings(=char arrays) and (common) arrays
@@ -1834,8 +1841,6 @@ class CobolVariable():
         return data
 
     def PutDataFromRside(self, rside):
-        return_value = 1
-
         # Make sure we actually have a location
         if not self.ActualLocation:
             return 0
@@ -1847,7 +1852,7 @@ class CobolVariable():
             PutBytesAt(self.ActualLocation, new_data, self.ActualLength)
             self.SetIsDirty()
 
-        return return_value
+        return 1
 
     def GetDataAsBinary(self):
         retval = ""
@@ -2070,7 +2075,15 @@ class CobolVariable():
             self.RefmodLength = length
         return
 
-    def FetchVariableData(self, show_failure):
+    def FetchVariableData(self, raise_error):
+        try:
+            return self.FetchVariableDataInternal()
+        except:
+            if raise_error:
+                raise
+            return False
+
+    def FetchVariableDataInternal(self):
         #print("FetchVariableData:", self.Name, self.Section)
         #print("FetchVariableData", self.Name, self.IsDirty(), self.ReferenceOffset, self.Length)
 
@@ -4909,26 +4922,35 @@ def get_sorted_possibilities(args, limit, no_data=False):
 
 def get_completion_possibilities(word):
     GV_ModuleState.EstablishModuleState(False)
+    pending_completions = get_max_completions()
     possibilities = []
 
-    word = word.upper()
     if word == '*':
         possibilities_1, _limit_reached = get_sorted_possibilities(['*'], 0, no_data=True)
         for index in possibilities_1:
             name = GV_ModuleInformation.var_trie.storage_list[abs(index)%LENADDR_FLAG_BIAS].Name.upper()
             possibilities.append(name)
+            pending_completions -= 1
+            if pending_completions < 0:
+                break
     else:
+        word = word.upper()
         for index in range(len(GV_ModuleInformation.var_trie.storage_list)):
             name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
             if name.startswith(word):
                 possibilities.append("'" + name + "'")
+                pending_completions -= 1
+                if pending_completions < 0:
+                    break
     return possibilities
 
 
-def get_cobol_breakpoints(bp_filter):
+def get_cobol_breakpoints(bp_filter, internal=False):
     possibilities = []
     # for gdb_breakpoint in gdb.breakpoints():
     for gdb_breakpoint in CBLDBG_CBREAK_WORKER.cobol_breaks:
+        if gdb_breakpoint.number < 0 and not internal:
+            continue
         bp_number = str(gdb_breakpoint.number)
         if bp_filter and not bp_number.startswith(bp_filter):
             continue
@@ -4938,13 +4960,15 @@ def get_cobol_breakpoints(bp_filter):
 
 def break_completion(text, word, condition):
     try:
-        if text == "" and word == "":
-            if condition == 1:
-                possibilities = []
-                for gdb_breakpoint in gdb.breakpoints():
-                    possibilities.append(str(gdb_breakpoint.number))
-                return possibilities
+        if condition == 1:
+            # no input so far: provide list of COBOL breakpoints
+            if text == "":
+                return get_cobol_breakpoints(None)
+            # input at number: provide list of matching COBOL breakpoints
+            if text == word and IsInteger(word):
+                return get_cobol_breakpoints(word)
 
+        text_split = text.split()
         word_cnt = len(text_split)
         if condition == 0:
             # gdb only completes this with "i" typed, disabled for now
@@ -5309,17 +5333,24 @@ class CPrintWorker():
         # Subscripts (and Refmod) for A(2).  We get around this by processing the left
         # side first, and making a copy of the object in .VarLeft.  Then we process the
         # right side, and get its printable data string, which appears here as value_
-        return_value = 1
 
         # This routine deals with the various cases of "cprint <this>=<that>"
         # The ability to cope with refmods complicates things considerably.  Try to keep up.
         var_left = GV_GlobalVariables.VarLeft
 
         if not var_left.Refmod:
-            # Because we are not dealing with a refmod situation, we are
-            # pretty much going to let the libcob routines handle thing
-            # for us
-            return_value = var_left.PutDataFromRside(value)
+            # Because we are not dealing with a refmod situation, we put the complete
+            # data to the inferior
+            try:
+                # in rare cases we may operate on read-only memory (coredump, rr, ...)
+                return_value = var_left.PutDataFromRside(value)
+            except gdb.MemoryError as ex:
+                # pass on as user error to make it visible without a stacktrace
+                ConditionalRaise("MemoryError: " + str(ex))
+                return 0
+
+            if return_value == 0:
+                return 0
         else:
             # var_left has a refmod.
 
@@ -5329,7 +5360,7 @@ class CPrintWorker():
             values = []
             i = 0
             while i < var_left.ActualLength and i < len(value.original_string):
-                values.append( ord(value.original_string[i]) )
+                values.append(ord(value.original_string[i]))
                 i += 1
 
             # If the left wants more than the right provided, right-fill with zeroes or
@@ -5342,22 +5373,25 @@ class CPrintWorker():
                 values.append(ord(ch))
                 i += 1
 
-            PutBytesAt(var_left.ActualLocation, values, var_left.ActualLength)
+            try:
+                # in rare cases we may operate on read-only memory (coredump, rr, ...)
+                PutBytesAt(var_left.ActualLocation, values, var_left.ActualLength)
+            except gdb.MemoryError as ex:
+                # pass on as user error to make it visible without a stacktrace
+                ConditionalRaise("MemoryError: " + str(ex))
+                return 0
 
-            return_value = 1
+        payload = GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex]
 
-        if return_value == 1:
-            payload = GV_ModuleInformation.var_trie.storage_list[GV_GlobalVariables.VarLeftIndex]
+        # Adjust the modifiers in the storage_list to match var_left, so that subsequent
+        # fetch/display shows what we just changed:
+        payload.Subscripts = var_left.Subscripts
+        payload.Refmod = var_left.Refmod
 
-            # Adjust the modifiers in the storage_list to match var_left, so that subsequent
-            # fetch/display shows what we just changed:
-            payload.Subscripts = var_left.Subscripts
-            payload.Refmod = var_left.Refmod
+        # Flag the element in storage_list as IsDirty so that the next fetch reflects the change
+        payload.SetIsDirty()
 
-            # Flag the element in storage_list as IsDirty so that the next fetch reflects the change
-            payload.SetIsDirty()
-
-        return return_value
+        return 1
 
     def ConditionalClearSubscripts(self, leftside_possibilities):
         if len(leftside_possibilities) > 1:
@@ -6683,18 +6717,24 @@ class CLoadWorker():
         if not filters:
             filters = {""}
         result_entries = []
-        max_entries = 200  # TODO get configured maximum from GDB (may-completions?)
+        # that's a query, tab completions don't apply here (neither in max entries nor in formatting)
+        # and it is too less important to add an own parameter
+        # max_entries = get_max_completions()
+        # pending_entries = max_entries
         for filter_entry in filters:
             pattern = re.compile(filter_entry, re.IGNORECASE)
             for module in self.modules:
                 if pattern.match(module) is not None:
                     result_entries.append(module)
-                    if len(result_entries) == max_entries:
-                        result_entries = set(result_entries)  # removing duplicates
-                        if len(result_entries) == max_entries:
-                            # FIXME GDB asks: Display all 200 possibilities? (y or n)
-                            return "  ".join(result_entries) + "\n*** List may be truncated, max-completions reached. ***"
-        # FIXME: GDB returns a nice table
+                    # pending_entries -= 1
+                    # if pending_entries < 0:
+                    #     result_entries = set(result_entries)  # removing duplicates
+                    #     number_of_entries = len(result_entries)
+                    #     if number_of_entries > max_entries:
+                    #         return "  ".join(result_entries) + "\n*** List may be truncated, max-completions reached. ***"
+                    #     else:
+                    #         pending_entries = max_entries - number_of_entries
+        # Note: in the case of completions GDB returns a nice table, we may add that someday
         return "  ".join(set(result_entries))  # removing duplicates and order
 
     def load_modules(self, module_names):
