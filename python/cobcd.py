@@ -5754,12 +5754,17 @@ class CobolAfterWatchBreakpoint(gdb.Breakpoint):
             # sanity check, this code is only executed on manual function call
             raise gdb.GdbError("pure COBOL cwatch needs GDB 8.3+")
 
-        frame = gdb.newest_frame()
-        cob_frame = CFrameWorker.Frame(True, 0)
-        if cob_frame and cob_frame != frame:
-            frame = cob_frame
+        # frame we are currently in, to get the resume address
+        frame = CFrameWorker.Frame(True, 0)
+        if not frame:
+            frame = gdb.selected_frame()
 
-        resume_address = '*' + str(hex(frame.pc()))
+        # the "actual correct" address would be the following, but we'd need to until there, not break
+        # resume_address = '*' + str(hex(frame.find_sal().last)) # last instruction of the current statement,
+        # so we use the return address of the current function which often will lead to a twice reached BP,
+        # "seemingly" at the end of the same COBOL line, worked around by "one more"
+        #resume_address = '*' + str(hex(frame.pc)    # current return instruction
+        resume_address = '*' + str(hex(frame.pc() + 1))    # current return instruction + 1 _seems_ to always work
 
         super(CobolAfterWatchBreakpoint, self).__init__(resume_address, temporary=True, internal=True)
 
@@ -5805,7 +5810,7 @@ class CobolWatchpointHandler():
         self.old_value = self.payload.DataToString()
 
     def check_and_output_wp(self):
-        if not CFrameWorker.has_cobol_frame():
+        if not (self.creating_wp.frame.is_valid() and CFrameWorker.has_cobol_frame()):
             new_value = "<unreadable>"
             if self.old_value != new_value:
                 self.old_value = new_value
@@ -5821,10 +5826,15 @@ class CobolWatchpointHandler():
         title_string = title.get(bp_type, "Unknown watchpoint " + str(bp_type))
         payload = self.payload
         if bp_type in (gdb.BP_HARDWARE_WATCHPOINT, gdb.BP_ACCESS_WATCHPOINT):
-            # Set IsDirty and refetch:
-            self.payload.SetIsDirty()
-            self.payload.FetchVariableData(False)
-            new_value = self.payload.DataToString()
+            # Set IsDirty and refetch, with a temporary selection of the originating frame:
+            current_frame = gdb.selected_frame()
+            try:
+                self.creating_wp.frame.select()
+                self.payload.SetIsDirty()
+                self.payload.FetchVariableData(False)
+                new_value = self.payload.DataToString()
+            finally:
+                current_frame.select()
         else:
             new_value = self.old_value
 
@@ -5862,6 +5872,7 @@ class CobolWatchBreakpoint(gdb.Breakpoint):
             return
         self.handler = CobolWatchpointHandler(self, payload)
         self.after_done = 0
+        self.frame = gdb.selected_frame()
         # we can drop a note here (for "info breakpoints") as we remove it later in the afterwatch
         self.commands = WATCHPOINT_NOTE + payload.NameWithSubscripts() + "\\n"
         self.after_watch = None
