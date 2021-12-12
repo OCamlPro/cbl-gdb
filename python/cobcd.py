@@ -7081,8 +7081,15 @@ class CFrameWorker:
                 ConditionalRaise("Bottom (innermost) COBOL frame selected; you cannot go down.")
             return
 
-        frame.select()
-        gdb.execute("frame", (silent is False), silent)
+        if silent:
+            # we need to mimic up-silently / down-silently here:
+            # so only want the frame to be selected without being user-visible in the console
+            # and without letting GDB sending out a mi-event for a frame-selection
+            frame.select()
+        else:
+            # let GDB do whatever it does for frame switching / showing [case: cup 0]
+            level = str(CFrameWorker.get_frame_level(frame))
+            gdb.execute("frame " + level, True, False)
 
     @staticmethod
     def get_frame_level(frame):
