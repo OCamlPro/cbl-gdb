@@ -64,6 +64,7 @@ import gdb
 
 GV_reads = 0
 GV_bytes_read = 0
+
 GV_noisy_registration = False
 
 # Version to be printed upon request - Don't mess with it!
@@ -250,13 +251,14 @@ def get_memoryview(address, length):
 
     return memoryview(obj)
 
+
 def get_element_size():
     # GDB reasonably limits the output used for strings(=char arrays) and (common) arrays
     # so the user can actually see reasonable output instead of scrolling to nirvana
     # We try to follow GDBs rules here using the same parameter, but need to care to do
     # something reasonable when the setting is "unlimited", where a "None" is returned
     # Note: GC max for a single field is 2 GiB
-    return gdb.parameter("print elements") or 1000000000 # 1 GB - happy scrolling
+    return gdb.parameter("print elements") or 1000000000  # 1 GB - happy scrolling
 
 
 def get_repeats_size():
@@ -264,7 +266,7 @@ def get_repeats_size():
     # and to "better corelate" the data
     # We try to follow GDBs rules here using the same parameter, but need to care to do
     # something reasonable when the setting is "unlimited", where a "None" is returned
-    return gdb.parameter("print repeats") or 1000000 # happy scrolling
+    return gdb.parameter("print repeats") or 1000000      # happy scrolling
 
 
 class GlobalVariables():
@@ -334,7 +336,7 @@ def OurPrint(s, end='\n'):
         print(s, end=end)
     except KeyboardInterrupt as ki:
         retval = str(ki)
-    except Exception:
+    except:   # TODO: use appropriate exception
         traceback.print_exc()
     return retval
 
@@ -451,7 +453,7 @@ def MachineInterfaceBodyAlt(s):
 def ReplaceWithRepeatCountQuoted(s):
     # We know this guy has a leading quote, and presumably a trailing one
     # print("ReplaceWithRepeatCountQuoted(1)", s)
-    elements = get_element_size();
+    elements = get_element_size()
     retval = ""
     # Strip off the leading and trailing quotes
     s = s[1:-1]
@@ -599,7 +601,7 @@ def WithRepeatCount(s):
         if s and s[0] == '[':
             return ReplaceWithRepeatCountBracketed(s)
         return s
-    except Exception:
+    except:   # TODO: use appropriate exception
         traceback.print_exc()
         sys.exit(1)
 
@@ -708,8 +710,17 @@ def GetPointerTo(name):
     return ExtractHexValueFrom(str(result))
 
 
-def AddEmUp(expression):
-    return int(gdb.parse_and_eval(expression or "0"))
+def AddEmUp(tokens, index):
+    expression = tokens[index]
+    try:
+        # FIXME: This won't work at all for OCCURS DEPENDING ON and needs adjustments both
+        #        here and in cobcd-st, see https://gitlab.cobolworx.com/COBOLworx/cbl-gdb/-/issues/78
+        return int(gdb.parse_and_eval(expression or "0"))
+    except gdb.error as ex:
+        print("error in parsing the expression \'{0}\' from index {1} in {2}:".format(expression, index, tokens))
+        print(str(ex))
+        # at least don't break the complete parsing
+        return 0
 
 
 def process_left_right_args(args):
@@ -941,15 +952,15 @@ def atoi(s):
     retval = 0
     sign = 0
     i = 0
-    if s[0] == '"':       # skip leading quote
+    if s[0] == '"':        # skip leading quote
         s = s[1:]
-    max_pos = s.find('"') # An embedded quote ends the conversion
+    max_pos = s.find('"')  # An embedded quote ends the conversion
     if max_pos == -1:
         max_pos = len(s)
     while i < max_pos:
         ch = s[i]
         i += 1
-        if ch in ('-','+'):
+        if ch in ('-', '+'):
             if sign:
                 # a consecutive sign ends the conversion
                 break
@@ -997,20 +1008,21 @@ def IntegerOrVariable(s):
 
     # It is not.  Let's see if it represents a gdb history/convenience variable
     if s[0] == '$':
-        id = s[1:]
+        conv_id = s[1:]
         # Pick up the history index:
-        if IsInteger(id):
+        if IsInteger(conv_id):
             try:
-                val = gdb.history (atoi(id)) # may raise a gdb.Error (if not yet reached) which we just pass
+                val = gdb.history(atoi(conv_id))  # may raise a gdb.Error (if not yet reached) which we just pass
             except gdb.error as ex:
                 raise gdb.GdbError(ex)
         else:
             if GV_GlobalVariables.gdb_version >= 80200:
-                val = gdb.convenience_variable (id)
+                val = gdb.convenience_variable(conv_id)
             else:
                 try:
-                    val = str(gdb.parse_and_eval ("$"+id))
-                    if val == "void": val = None
+                    val = str(gdb.parse_and_eval("$"+conv_id))
+                    if val == "void":
+                        val = None
                 except gdb.error:
                     val = None
             if not val:
@@ -1272,8 +1284,8 @@ class VarTrie():
                     payload.Fname           = tokens[self.IndexFname]
                     payload.Bname           = tokens[self.IndexBname]
                     payload.Aname           = tokens[self.IndexAname]
-                    payload.ReferenceOffset = AddEmUp(tokens[self.IndexOffset])
-                    payload.Length          = AddEmUp(tokens[self.IndexLength])
+                    payload.ReferenceOffset = AddEmUp(tokens, self.IndexOffset)
+                    payload.Length          = AddEmUp(tokens, self.IndexLength)
                     payload.OccursMin       = int(tokens[self.IndexOccursMin] or "0")
                     payload.OccursMax       = int(tokens[self.IndexOccursMax] or "0")
 
@@ -1294,7 +1306,7 @@ class VarTrie():
                             # (Recursion is a beautiful thing)
                             self.LoadTrieFromLine(self.stashed_line)
                             self.stashed_line = None
-        except Exception:
+        except:   # TODO: use appropriate exception
             traceback.print_exc()
             sys.exit(1)
 
@@ -1646,25 +1658,25 @@ class CobolVariable():
         # elements as unique items rather than something which is sub-portion of grand_data, because
         # we don't want to be reading in huge tables just to access individual elements of them.
 
-        self.location_of_data   = 0    # value of Fname->data, when available
-        self.data_offset        = 0    # offset from location_of_data to our portion of the union.
-        self.field              = None # Inferior numerical location Fname, when available
-        self.attribute          = None # Inferiror numerical location of Fname->attr, when available
+        self.location_of_data   = 0     # value of Fname->data, when available
+        self.data_offset        = 0     # offset from location_of_data to our portion of the union.
+        self.field              = None  # Inferior numerical location Fname, when available
+        self.attribute          = None  # Inferior numerical location of Fname->attr, when available
 
         # These elements are based on parenthesized subscripts after the
         # name:  name(array_index1 , array_index2 , ...)(refmod start : refmod run)
         # Note the commas and colons, which determine which is which
-        self.Subscripts         = None # This is the user's requested subscripts, integers or variables
-        self.ResolvedSubscripts = None # These are the resolved values (offset is one-based)
-        self.table_offset       = 0    # These are additional offset bytes based on the table Subscripts
+        self.Subscripts         = ""    # This is the user's requested subscripts, integers or variables
+        self.ResolvedSubscripts = []    # These are the resolved values (offset is one-based)
+        self.table_offset       = 0     # These are additional offset bytes based on the table Subscripts
 
-        self.Refmod             = None # This is the user's requested refmod
-        self.RefmodOffset       = 0    # This is the zero-based Offset from (Offset:Length)
-        self.RefmodLength       = 0    # This is the Length from (Offset:Length)
+        self.Refmod             = ""    # This is the user's requested refmod
+        self.RefmodOffset       = 0     # This is the zero-based Offset from (Offset:Length)
+        self.RefmodLength       = 0     # This is the Length from (Offset:Length)
 
-        self.ActualLocation     = 0    # This is location_of_data qualified by data_offset, table_offset
-                                       # and table_offset
-        self.ActualLength       = 0    # This is the length after applying refmod
+        self.ActualLocation     = 0     # This is location_of_data qualified by data_offset, table_offset
+                                        # and table_offset
+        self.ActualLength       = 0     # This is the length after applying refmod
 
         # Here is the string information decoded from the attributes and
         # the data we get from gdb:
@@ -1732,9 +1744,9 @@ class CobolVariable():
             print(" OCCURS min/max: {0}/{1}".format(self.OccursMin, self.OccursMax))
         if self.Subscripts:
             print("     Subscripts:", self.Subscripts)
-        resolved = "(" + ",".join(self.ResolvedSubscripts) + ")"
-        if resolved != self.Subscripts:
-            print("     (resolved):", resolved)
+            resolved = "(" + ",".join(self.ResolvedSubscripts) + ")"
+            if resolved != self.Subscripts:
+                print("     (resolved):", resolved)
         if self.Refmod:
             print("         refmod:", self.Refmod)
         print("        Section:", self.Section)
@@ -1749,7 +1761,8 @@ class CobolVariable():
             print("   RefmodOffset:", self.RefmodOffset)
             print("   RefmodLength:", self.RefmodLength)
         print("         Length:", self.Length)
-        print(" len(self.data):", len(self.Data()))
+        if self.index_of_granddaddy is not None:
+            print(" len(self.data):", len(self.Data()))
         print("       AttrType:", self.AttrType)
         print("     AttrDigits:", self.AttrDigits)
         print("      AttrScale:", self.AttrScale)
@@ -4317,11 +4330,12 @@ class ModuleInformation():
         self.line_list = LineList()
         self.perform_commands = {}
 
+        # ensure GDB can resolve dynamic field references
+        gdb.execute("macro define COB_SET_DATA(x, z) (x.data = z, &x)", True, False)
+
         # Load the new tables
         # Pull apart the variable_string
-
         variable_lines = variable_string.split('~')
-
         for variable_line in variable_lines:
             tokens = variable_line.split('|')
             self.line_list.LoadFromLine(tokens)
@@ -4447,7 +4461,8 @@ class ModuleState():
             # We now march through stack, looking for the
             # first entry whose filename matches filename:
 
-            # CHECKME: likely more reasonable to start with gdb.selected_frame() or one above
+            # TODO: wouldn't it make more sense to use the current frame or one above for the start?
+            # frame = current_frame
             frame = gdb.newest_frame()
             while frame:
                 st = frame.find_sal().symtab
@@ -4474,7 +4489,6 @@ class ModuleState():
 
             # TODO: CFrameWorker.Go(0, False, True) = "cdown-silently 0" seems more robust than the above code
 
-            # At this point, file_and_line[0] matches the file name from "frame"
             self.current_trapped_line = frame.find_sal().line
 
             if filename_frame != self.current_trapped_file or frame_from_frame != frame_from_stack:
@@ -4563,9 +4577,6 @@ class ModuleState():
         # else:
         #     if announce:
         #         ConditionalRaise("No stack.")
-
-
-GV_ModuleState = ModuleState()
 
 
 class HNode():
@@ -5154,20 +5165,20 @@ class CPrintWorker():
                 if len(args[0]) > 1:
                     mode = args[0][1]
 
-                # We now have a choice.  We allow things like "/r6" and "/r 6"
-                # We don't allow "/v 6", so we have to keep that in mind
                 # Note: At the present time, param isn't used; I am keeping this code
                 # around because I have it in the back of my head to re-write the
                 # parameter processing.
-                if len(args[0]) > 2:
-                    # Anything after the /<mode><param> is a parameter
-                    param = args[0][2:]
-                elif len(args) > 1:
-                    # We are dealing with /v<mode> <something>
-                    # <something> might be a parameter:
-                    param = args[1]
-                else:
-                    param = None
+                # We now have a choice.  We allow things like "/r6" and "/r 6"
+                # We don't allow "/v 6", so we have to keep that in mind
+                # if len(args[0]) > 2:
+                #     # Anything after the /<mode><param> is a parameter
+                #     param = args[0][2:]
+                # elif len(args) > 1:
+                #     # We are dealing with /v<mode> <something>
+                #     # <something> might be a parameter:
+                #     param = args[1]
+                # else:
+                #     param = None
 
                 if mode in "mvdxbq":
                     # Any of these switches suppress the hierarchical pretty printing
@@ -5206,27 +5217,14 @@ class CPrintWorker():
                 else:
                     ConditionalRaise("Undefined output format \"{0}\"".format(args[0][1:]))
                     args = []
-#            else:
-                # The first parameter doesn't start with a slash character
-                #
-                # usually, this means that the first argument is a variable.  However, it has
-                # been deemed desirable to handle COBOL's LENGTH OF and ADDRESS OF "registers".
-                #
-                # We are going to cram -- that's the only possible word for it -- that capability
-                # in here.  We're going to do it by identifying them, flagging the need for them
-                # as display_modes, and eliminating the resulting extraneous text before the variable name,
-                # and proceed.  Downstream processing will recognize the "address" and "length" display_mode, and
-                # output the appropriate value
-#                if len(args) > 2:
-#                    if args[1].lower() == "of":
-#                        if args[0].lower() == "address":
-#                            GV_ModuleState.current_display_mode = "address"
-#                            # Trim away the leading "ADDRESS OF"
-#                            args = args[2:]
-#                        elif args[0].lower() == "length":
-#                            # Trim away the leading "LENGTH OF"
-#                            GV_ModuleState.current_display_mode = "length"
-#                            args = args[2:]
+
+            # else:
+            # The first parameter doesn't start with a slash character
+            #
+            # usually, this means that the first argument is a variable.  However, it has
+            # been deemed desirable to handle COBOL's LENGTH OF and ADDRESS OF "registers".
+            #
+            # We are going to let that through to be handled in a different place.
 
         if args:
             args = ' '.join(args)
@@ -5379,7 +5377,7 @@ class CPrintWorker():
             # confuses Visual Studio Code
             return
 
-        if len(leftside_possibilities) == 1 and not rightside and leftside[0] != '*' and leftside[0] != '?' :
+        if len(leftside_possibilities) == 1 and not rightside and leftside[0] != '*' and leftside[0] != '?':
             # Very special case.  This was a `cprint/m something`, which is what happens when
             # the -data-evaluate-expression command is issued by Visual Studio Code.  I considered creating
             # a unique 'print/e ' command, but then I realized that VSC never issues a 'cprint/m something' unless there
@@ -5525,8 +5523,8 @@ class CPrintWorker():
         elif len(leftside_possibilities) == 1:
             # There is but one possibility
             # Pick up the payload from the list
-            index = leftside_possibilities[0];
-            flag  = 0;
+            index = leftside_possibilities[0]
+            flag  = 0
             if index < 0:
                 flag  = abs(index) // LENADDR_FLAG_BIAS
                 index = abs(index)  % LENADDR_FLAG_BIAS
@@ -5544,9 +5542,9 @@ class CPrintWorker():
                 if flag == 0:
                     self.FormattedDisplay(payload)
                 elif flag == LENADDR_FLAG_ADDRESS:
-                    print( hex(payload.ActualLocation) )
+                    print(hex(payload.ActualLocation))
                 elif flag == LENADDR_FLAG_LENGTH:
-                    print( payload.ActualLength)
+                    print(payload.ActualLength)
 
             if rightside and payload.table_offset:
                 # We just did an assignment to a table element, and then we displayed it.
@@ -5708,7 +5706,7 @@ class CPrintWorker():
                     return
                 # right_side seems to refer to one, and only one, variable.
                 # Let's fetch its data:
-                index = rightside_possibilities[0];
+                index = rightside_possibilities[0]
                 flag = 0
                 if index < 0:
                     flag  = (-index) // LENADDR_FLAG_BIAS
@@ -5990,6 +5988,7 @@ class CWatchWorker():
 
         # And go set the Watchpoint
         self.set_watchpoint(payload, wp_type)
+
 
 class CobolBreakpoint(gdb.Breakpoint):
     def __init__(self, bp_spec, t_flag, i_flag):
@@ -6352,11 +6351,8 @@ class BPRemover():
         self.bp.delete()
 
 
-CBLDBG_CBREAK_WORKER = CBreakWorker()
-
-
 class CPrint(gdb.Command):
-    """Prints COBOL-NAMED variables when debugging cobst processed object files.
+    """Prints COBOL-NAMED variables when debugging cobcd (via cobst) processed object files.
 
     COBOL cprint command usage:
     cprint VAR          displays VAR using session-default formatting
@@ -7320,7 +7316,7 @@ class CLocalBacktrace(gdb.Command):
         self.section_pattern_gdb = r"^\d*\s\+.*\s\+\([sS][eE][cC][tT][iI][oO][nN]\s*\d*\.\|\[dD][iI][vV][iI][sS][iI][oO][nN]\s*\(\.\|[uU][sS][iI][nN][gG]\)\)"
         # set alias, ignore errors (most likely because already defined)
         try:
-            gdb.execute("alias -a lbt = local-backtrace", False, True)
+            gdb.execute("alias -a clbt = local-backtrace", False, True)
         except gdb.error:
             pass
 
@@ -7599,11 +7595,11 @@ and the local args (currently removed)"""
         return args
 
     def frame_locals(self):
-         # even simple COBOL programs consist of a huge amount of data
-         # in theory we could issue internally a "cprint *"" (reduced to the level 01 / 77 entries)
-         # here and return the list, but this definitely should only be done depending on a parameter
-         # that is only related to cobcd.py
-         return None
+        # even simple COBOL programs consist of a huge amount of data
+        # in theory we could issue internally a "cprint *"" (reduced to the level 01 / 77 entries)
+        # here and return the list, but this definitely should only be done depending on a parameter
+        # that is only related to cobcd.py
+        return None
 
 
 class RemoveNonCobolIterator():
@@ -7775,7 +7771,9 @@ try:
 except AttributeError:
     pass # that's a GDB 11+ event registry, no problem if not available
 
+GV_ModuleState = ModuleState()
 CFrameWorker()
+CBLDBG_CBREAK_WORKER = CBreakWorker()
 CPrint()
 CWatch()
 CBreak()
@@ -7784,7 +7782,8 @@ CNext()
 CmdAutoStep()
 CStart()
 
-print("Registering the CBL-GDB debugger {0}.  Help is available for".format(COBCD_VERSION))
-print("   cprint cwatch cbreak ctbreak ccondition add-symbol-file-cobol cstart cnext")
-print("   cup cup-silently cdown cdown-silently cfinish")
-print("   finish-out-of-line-perform finish-module until-cobol list-section local-backtrace cbacktrace auto-step")
+if not GV_noisy_registration:
+    print("Registering the CBL-GDB debugger {0}.  Help is available for".format(COBCD_VERSION))
+    print("   cprint cwatch cbreak ctbreak ccondition add-symbol-file-cobol cstart cnext")
+    print("   cup cup-silently cdown cdown-silently cfinish")
+    print("   finish-out-of-line-perform finish-module until-cobol list-section local-backtrace cbacktrace auto-step")
