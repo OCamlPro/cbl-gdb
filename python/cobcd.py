@@ -179,6 +179,8 @@ R_ALLZERO = re.compile(r'ALL[ ]*ZERO(S|ES)?', re.IGNORECASE)
 
 R_INTEGER = re.compile(r'^[-]?[0-9]+$')
 
+R_HEXADECIMAL = re.compile(r'.*(0x[0-9a-fA-F]+).*')
+
 # executable available flags
 READELF_AVAILABLE = True
 COBCDRW_AVAILABLE = True
@@ -686,12 +688,11 @@ def GetValueAt(address, nr_bytes):
         traceback.print_exc()
         return None
 
-
 def ExtractHexValueFrom(s):
     # Use this routine to extract an 0x123abc value from a string.
     # Needed because gdb returns such information in slightly different ways
     retval = None
-    match = re.match(".*(0x[0-9a-fA-F]+).*", s)
+    match = R_HEXADECIMAL.match(s);
     if match:
         retval = int(match.group(1), 16)
     return retval
@@ -716,20 +717,20 @@ def GetPointerTo(name):
     # that result points to:
 
     result = gdb.parse_and_eval('&' + name)
+    pointer = ExtractHexValueFrom(str(result))
 
     # If the result.type contains "**", name was defined in the
     # generated .C as a pointer:  " char *name".  In that case,
     # we need to pick up the contents of the pointer.
     if str(result.type).find("**") > -1:
-        pointer = ExtractHexValueFrom(str(result))
-        result = GetValueAt(pointer, GV_GlobalVariables.SizeofPointer)
-        return result
+        # In this case, result.address is None
+        pointer = GetValueAt(pointer, GV_GlobalVariables.SizeofPointer)
 
     # Otherwise, it was defined as the name of a block of some kind:
     # " char name[22] " or "cob_field name".  In that case,
     # the result already is the answer we need
 
-    return ExtractHexValueFrom(str(result))
+    return pointer
 
 def AddEmUp(tokens, index):
     expression = tokens[index]
