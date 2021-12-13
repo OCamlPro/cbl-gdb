@@ -688,15 +688,6 @@ def GetValueAt(address, nr_bytes):
         traceback.print_exc()
         return None
 
-def ExtractHexValueFrom(s):
-    # Use this routine to extract an 0x123abc value from a string.
-    # Needed because gdb returns such information in slightly different ways
-    retval = None
-    match = R_HEXADECIMAL.match(s);
-    if match:
-        retval = int(match.group(1), 16)
-    return retval
-
 def GetPointerTo(name):
     # This routine returns the address of memory referred to by 'name'.  It
     # sorts out whether the generated C declared name as "char *name" or
@@ -717,18 +708,21 @@ def GetPointerTo(name):
     # that result points to:
 
     result = gdb.parse_and_eval('&' + name)
-    pointer = ExtractHexValueFrom(str(result))
 
-    # If the result.type contains "**", name was defined in the
-    # generated .C as a pointer:  " char *name".  In that case,
-    # we need to pick up the contents of the pointer.
-    if str(result.type).find("**") > -1:
-        # In this case, result.address is None
-        pointer = GetValueAt(pointer, GV_GlobalVariables.SizeofPointer)
+    pointer = None
+    # If 'result' is a pointer to a pointer, we need to pick up
+    # the value of the pointer:
+    if result.type.code == gdb.TYPE_CODE_PTR:
+        deref = result.dereference();
+        if deref.type.code == gdb.TYPE_CODE_PTR:
+            # It is a pointer to a pointer
+            pointer = int(gdb.parse_and_eval(name))
 
-    # Otherwise, it was defined as the name of a block of some kind:
-    # " char name[22] " or "cob_field name".  In that case,
-    # the result already is the answer we need
+    if not pointer:
+        # Otherwise, it was defined as the name of a block of some kind:
+        # " char name[22] " or "cob_field name", or "int".  In that case,
+        # 'result' already is the answer we need
+        pointer = int(result)
 
     return pointer
 
