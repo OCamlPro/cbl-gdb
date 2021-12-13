@@ -47,8 +47,11 @@ test:
 
 dev:
 	# For development: launch test under GDB.
-	COBCDEVEL=1 COBCDFMODE=0 $(COBCD) -x test.cbl
-	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) -x ../../python/cobcd.py test
+	COBCDEVEL=1 $(COBCD) -o test -x MAIN.cbl -save
+	COBCDEVEL=1 $(COBCD) -m -ext cpy A.cbl -save
+	COBCDEVEL=1 $(COBCD) -m -ext cpy B.cbl -save
+	COBCDEVEL=1 $(COBCD) -m -ext cpy C.cbl -save
+	CPRINT_RAISE=0 CPRINT_V=3 COBCDRW=$(COBCDRW) $(GDB) test
 
 testprod:
 	cobcd -o test -x MAIN.cbl

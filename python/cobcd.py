@@ -687,34 +687,49 @@ def GetValueAt(address, nr_bytes):
         return None
 
 
+def ExtractHexValueFrom(s):
+    # Use this routine to extract an 0x123abc value from a string.
+    # Needed because gdb returns such information in slightly different ways
+    retval = None
+    match = re.match(".*(0x[0-9a-fA-F]+).*", s)
+    if match:
+        retval = int(match.group(1), 16)
+    return retval
+
 def GetPointerTo(name):
-    """"Returns the address of memory referred to by 'name'.
+    # This routine returns the address of memory referred to by 'name'.  It
+    # sorts out whether the generated C declared name as "char *name" or
+    # "char name[22]" or "cob_field name"
 
-    It sorts out whether the generated C declared name as "char *name" or
-    "char name[22]" or "cob_field name"
+    # when name is not in context, this throws an error; it's up to our
+    # caller to take care of it.
 
-    When name is not in context, this throws an error; it's up to our
-    caller to take care of it."""
+    # It turns out that we can't actually afford to parse_and_eval(name),
+    # if name is a string, along with the address of the string (which is what
+    # we want), it also returns the entire string.  This is bad for at least
+    # two reasons: it is potentially a lot of data we don't want at this point,
+    # and errors can be thrown when the string is Unicode.
 
-    # check if the name is addressable; in this case the name was defined in the
-    # generated .C as a pointer:  " char *name"
-    result = gdb.parse_and_eval(name)
-    if result.address is None:
-        # Otherwise, it was very likely defined as the name of a block of some kind:
-        # " char name[22] " or "cob_field name".
-        # In this case we need to return the pointer to the name.
-        name = '&' + name
-        result = gdb.parse_and_eval(name)
-        if result.address is None:
-            ConditionalRaise("cannot resolve the address for " + name [1:])
-            return 0
+    # So, we just ask for the address of name.  Sometimes that's what we want.
+    # If the type is a pointer to a pointer, we have to dive down that one
+    # level of indirection; we do that by directly picking up the pointer
+    # that result points to:
 
-    # we verified that "name" is addressable -> pointer; cast that to ensure
-    # we don't get an integer overflow - then get its python integer value
-    # CHECKME why this doesn't work (please drop a note to Simon):
-    # return int(result.address.cast(gdb.lookup_type('unsigned long')))
-    return int(gdb.parse_and_eval("(unsigned long) " + name))
+    result = gdb.parse_and_eval('&' + name)
 
+    # If the result.type contains "**", name was defined in the
+    # generated .C as a pointer:  " char *name".  In that case,
+    # we need to pick up the contents of the pointer.
+    if str(result.type).find("**") > -1:
+        pointer = ExtractHexValueFrom(str(result))
+        result = GetValueAt(pointer, GV_GlobalVariables.SizeofPointer)
+        return result
+
+    # Otherwise, it was defined as the name of a block of some kind:
+    # " char name[22] " or "cob_field name".  In that case,
+    # the result already is the answer we need
+
+    return ExtractHexValueFrom(str(result))
 
 def AddEmUp(tokens, index):
     expression = tokens[index]
