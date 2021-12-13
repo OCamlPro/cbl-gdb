@@ -709,16 +709,12 @@ def GetPointerTo(name):
 
     result = gdb.parse_and_eval('&' + name)
 
-    pointer = None
-    # If 'result' is a pointer to a pointer, we need to pick up
-    # the value of the pointer:
-    if result.type.code == gdb.TYPE_CODE_PTR:
-        deref = result.dereference();
-        if deref.type.code == gdb.TYPE_CODE_PTR:
-            # It is a pointer to a pointer
-            pointer = int(gdb.parse_and_eval(name))
-
-    if not pointer:
+    if result.type.code == gdb.TYPE_CODE_PTR \
+                    and result.dereference().type.code == gdb.TYPE_CODE_PTR:
+        # 'result' is a pointer to a pointer, so we need to pick up
+        # the value of the pointer:
+        pointer = int(gdb.parse_and_eval(name))
+    else:
         # Otherwise, it was defined as the name of a block of some kind:
         # " char name[22] " or "cob_field name", or "int".  In that case,
         # 'result' already is the answer we need
