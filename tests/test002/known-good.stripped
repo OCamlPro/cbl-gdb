@@ -61,76 +61,76 @@ cprint/v0 ?
  4 : 01 def-COMP-XX  : 00009887766541223345
  5 : 01 def-DISPLAY  : +988776654.1223345
 cprint/v3 *
- 1 : 01 header/R-test [W-S] : ' ' <repeats 40 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 6 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 8 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 9 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
-10 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
-11 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
-12 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
-13 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-14 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-15 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-16 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-17 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
-18 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
-19 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
-20 : 01 def-COMP-1/R-test [W-S] : 1.11
-21 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
-22 : 01 def-COMP-2/R-test [W-S] : 2.22
-23 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
-24 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
-25 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
-26 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
-27 : 01 def-FLOAT-SHORT/R-test [W-S] : 8.8800001
-28 : 01 def-INDEX/R-test [W-S] : +0123456789
-29 : 01 def-POINTER/R-test [W-S] : 0x0000000000000000
-30 : 01 def-PROCEDURE-POINTER/R-test [W-S] : 0x0000000000000000
-31 : 01 def-PROGRAM-POINTER/R-test [W-S] : 0x0000000000000000
-32 : 01 def-SIGNED-INT/R-test [W-S] : +0000000023
-33 : 01 def-SIGNED-LONG/R-test [W-S] : +00000000000000000024
-34 : 01 def-SIGNED-SHORT/R-test [W-S] : +00025
-35 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
-36 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
-37 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
-38 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
-39 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
-40 : 01 def-PACKED-DECIMAL/R-test [W-S] : +988776654.1223345
-41 : 01 def-PACKED-DECIMAL-S/R-test [W-S] : -88776654.1223345
-42 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
-43 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
-44 : 01 def-COMP/R-test [W-S] : +988776654.1223345
-45 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
-46 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-47 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-48 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-49 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-50 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-51 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-52 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-53 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
-54 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 header/test [W-S] : ' ' <repeats 40 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 6 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 8 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 9 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+10 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+11 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+12 : 01 def-BINARY-INT/test [W-S] : +0000000010
+13 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+14 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+15 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+16 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+17 : 01 def-BINARY-SHORT/test [W-S] : +00015
+18 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+19 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+20 : 01 def-COMP-1/test [W-S] : 1.11
+21 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+22 : 01 def-COMP-2/test [W-S] : 2.22
+23 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+24 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+25 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+26 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+27 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
+28 : 01 def-INDEX/test [W-S] : +0123456789
+29 : 01 def-POINTER/test [W-S] : 0x0000000000000000
+30 : 01 def-PROCEDURE-POINTER/test [W-S] : 0x0000000000000000
+31 : 01 def-PROGRAM-POINTER/test [W-S] : 0x0000000000000000
+32 : 01 def-SIGNED-INT/test [W-S] : +0000000023
+33 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
+34 : 01 def-SIGNED-SHORT/test [W-S] : +00025
+35 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+36 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+37 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
+38 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+39 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+40 : 01 def-PACKED-DECIMAL/test [W-S] : +988776654.1223345
+41 : 01 def-PACKED-DECIMAL-S/test [W-S] : -88776654.1223345
+42 : 01 def-BINARY/test [W-S] : +000000001.0000000
+43 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
+44 : 01 def-COMP/test [W-S] : +988776654.1223345
+45 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+46 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+47 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+48 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+49 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+50 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+51 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+52 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+53 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/v3 ?
- 1 : 01 header/R-test [W-S] : ' ' <repeats 40 times>
- 2 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
- 3 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
- 4 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
- 5 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 header/test [W-S] : ' ' <repeats 40 times>
+ 2 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+ 3 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+ 4 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+ 5 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/x #1
-01 header/R-test [W-S]  :  0x20202020202020202020202020202020202020202020202020202020202020202020202020202020
+01 header/test [W-S]  :  0x20202020202020202020202020202020202020202020202020202020202020202020202020202020
 cprint/m *
-variables=[{name="header/R-test",value="\"' ' <repeats 40 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/R-test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/R-test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/R-test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/R-test",value="\"00000000000000000009\""},{name="def-BINARY-INT/R-test",value="\"+0000000010\""},{name="def-BINARY-LONG/R-test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/R-test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/R-test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/R-test",value="\"00017\""},{name="def-COMP-1/R-test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMP-2/R-test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-FLOAT-SHORT/R-test",value="\"8.8800001\""},{name="def-INDEX/R-test",value="\"+0123456789\""},{name="def-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/R-test",value="\"+0000000023\""},{name="def-SIGNED-LONG/R-test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/R-test",value="\"+00025\""},{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""},{name="def-COMP-3/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/R-test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/R-test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/R-test",value="\"-88776654.1223345\""},{name="def-BINARY/R-test",value="\"+000000001.0000000\""},{name="def-BINARY-S/R-test",value="\"-988776654.1223345\""},{name="def-COMP/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""},{name="def-COMP-5/R-test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="header/test",value="\"' ' <repeats 40 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/test",value="\"00000000000000000009\""},{name="def-BINARY-INT/test",value="\"+0000000010\""},{name="def-BINARY-LONG/test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/test",value="\"00017\""},{name="def-COMP-1/test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMP-2/test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-FLOAT-SHORT/test",value="\"8.8800001\""},{name="def-INDEX/test",value="\"+0123456789\""},{name="def-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/test",value="\"+0000000023\""},{name="def-SIGNED-LONG/test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/test",value="\"+00025\""},{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""},{name="def-COMP-3/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/test",value="\"-88776654.1223345\""},{name="def-BINARY/test",value="\"+000000001.0000000\""},{name="def-BINARY-S/test",value="\"-988776654.1223345\""},{name="def-COMP/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{name="def-COMP-5/test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/m ?
-variables=[{name="header/R-test",value="\"' ' <repeats 40 times>\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="header/test",value="\"' ' <repeats 40 times>\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/x #1
-01 header/R-test [W-S]  :  0x20202020202020202020202020202020202020202020202020202020202020202020202020202020
+01 header/test [W-S]  :  0x20202020202020202020202020202020202020202020202020202020202020202020202020202020
 cprint/b #1
-01 header/R-test [W-S]  :  0b00100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000
+01 header/test [W-S]  :  0b00100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -195,70 +195,70 @@ cprint/v0 ?
  4 : 01 def-COMP-XX  : 00009887766541223345
  5 : 01 def-DISPLAY  : +988776654.1223345
 cprint/v3 *
- 1 : 01 header/R-test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 6 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 8 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 9 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
-10 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
-11 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
-12 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
-13 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-14 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-15 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-16 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-17 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
-18 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
-19 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
-20 : 01 def-COMP-1/R-test [W-S] : 1.11
-21 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
-22 : 01 def-COMP-2/R-test [W-S] : 2.22
-23 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
-24 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
-25 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
-26 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
-27 : 01 def-FLOAT-SHORT/R-test [W-S] : 8.8800001
-28 : 01 def-INDEX/R-test [W-S] : +0123456789
-29 : 01 def-POINTER/R-test [W-S] : 0x0000000000000000
-30 : 01 def-PROCEDURE-POINTER/R-test [W-S] : 0x0000000000000000
-31 : 01 def-PROGRAM-POINTER/R-test [W-S] : 0x0000000000000000
-32 : 01 def-SIGNED-INT/R-test [W-S] : +0000000023
-33 : 01 def-SIGNED-LONG/R-test [W-S] : +00000000000000000024
-34 : 01 def-SIGNED-SHORT/R-test [W-S] : +00025
-35 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
-36 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
-37 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
-38 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
-39 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
-40 : 01 def-PACKED-DECIMAL/R-test [W-S] : +988776654.1223345
-41 : 01 def-PACKED-DECIMAL-S/R-test [W-S] : -88776654.1223345
-42 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
-43 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
-44 : 01 def-COMP/R-test [W-S] : +988776654.1223345
-45 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
-46 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-47 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-48 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-49 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-50 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-51 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-52 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-53 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
-54 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 6 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 8 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 9 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+10 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+11 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+12 : 01 def-BINARY-INT/test [W-S] : +0000000010
+13 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+14 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+15 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+16 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+17 : 01 def-BINARY-SHORT/test [W-S] : +00015
+18 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+19 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+20 : 01 def-COMP-1/test [W-S] : 1.11
+21 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+22 : 01 def-COMP-2/test [W-S] : 2.22
+23 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+24 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+25 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+26 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+27 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
+28 : 01 def-INDEX/test [W-S] : +0123456789
+29 : 01 def-POINTER/test [W-S] : 0x0000000000000000
+30 : 01 def-PROCEDURE-POINTER/test [W-S] : 0x0000000000000000
+31 : 01 def-PROGRAM-POINTER/test [W-S] : 0x0000000000000000
+32 : 01 def-SIGNED-INT/test [W-S] : +0000000023
+33 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
+34 : 01 def-SIGNED-SHORT/test [W-S] : +00025
+35 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+36 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+37 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
+38 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+39 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+40 : 01 def-PACKED-DECIMAL/test [W-S] : +988776654.1223345
+41 : 01 def-PACKED-DECIMAL-S/test [W-S] : -88776654.1223345
+42 : 01 def-BINARY/test [W-S] : +000000001.0000000
+43 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
+44 : 01 def-COMP/test [W-S] : +988776654.1223345
+45 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+46 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+47 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+48 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+49 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+50 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+51 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+52 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+53 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/v3 ?
 cprint/x #1
-01 header/R-test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
+01 header/test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
 cprint/m *
-variables=[{name="header/R-test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/R-test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/R-test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/R-test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/R-test",value="\"00000000000000000009\""},{name="def-BINARY-INT/R-test",value="\"+0000000010\""},{name="def-BINARY-LONG/R-test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/R-test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/R-test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/R-test",value="\"00017\""},{name="def-COMP-1/R-test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMP-2/R-test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-FLOAT-SHORT/R-test",value="\"8.8800001\""},{name="def-INDEX/R-test",value="\"+0123456789\""},{name="def-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/R-test",value="\"+0000000023\""},{name="def-SIGNED-LONG/R-test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/R-test",value="\"+00025\""},{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""},{name="def-COMP-3/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/R-test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/R-test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/R-test",value="\"-88776654.1223345\""},{name="def-BINARY/R-test",value="\"+000000001.0000000\""},{name="def-BINARY-S/R-test",value="\"-988776654.1223345\""},{name="def-COMP/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""},{name="def-COMP-5/R-test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="header/test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/test",value="\"00000000000000000009\""},{name="def-BINARY-INT/test",value="\"+0000000010\""},{name="def-BINARY-LONG/test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/test",value="\"00017\""},{name="def-COMP-1/test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMP-2/test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-FLOAT-SHORT/test",value="\"8.8800001\""},{name="def-INDEX/test",value="\"+0123456789\""},{name="def-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/test",value="\"+0000000023\""},{name="def-SIGNED-LONG/test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/test",value="\"+00025\""},{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""},{name="def-COMP-3/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/test",value="\"-88776654.1223345\""},{name="def-BINARY/test",value="\"+000000001.0000000\""},{name="def-BINARY-S/test",value="\"-988776654.1223345\""},{name="def-COMP/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{name="def-COMP-5/test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/m ?
 cprint/x #1
-01 header/R-test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
+01 header/test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
 cprint/b #1
-01 header/R-test [W-S]  :  0b01000001011011100010000001100101011110000111010001110010011000010111011001100001011001110110000101101110011110100110000100100000011011110110011000100000011101100110000101110010011010010110000101100010011011000110010101110011001000010010000000100000001000000010000000100000001000000010000000100000001000000010000000100000
+01 header/test [W-S]  :  0b01000001011011100010000001100101011110000111010001110010011000010111011001100001011001110110000101101110011110100110000100100000011011110110011000100000011101100110000101110010011010010110000101100010011011000110010101110011001000010010000000100000001000000010000000100000001000000010000000100000001000000010000000100000
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -318,70 +318,70 @@ cprint/v0 *
 54 : 01 def-DISPLAY  : +988776654.1223345
 cprint/v0 ?
 cprint/v3 *
- 1 : 01 header/R-test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 6 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 8 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 9 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
-10 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
-11 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
-12 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
-13 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-14 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-15 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-16 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-17 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
-18 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
-19 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
-20 : 01 def-COMP-1/R-test [W-S] : 1.11
-21 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
-22 : 01 def-COMP-2/R-test [W-S] : 2.22
-23 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
-24 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
-25 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
-26 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
-27 : 01 def-FLOAT-SHORT/R-test [W-S] : 8.8800001
-28 : 01 def-INDEX/R-test [W-S] : +0123456789
-29 : 01 def-POINTER/R-test [W-S] : 0x0000000000000000
-30 : 01 def-PROCEDURE-POINTER/R-test [W-S] : 0x0000000000000000
-31 : 01 def-PROGRAM-POINTER/R-test [W-S] : 0x0000000000000000
-32 : 01 def-SIGNED-INT/R-test [W-S] : +0000000023
-33 : 01 def-SIGNED-LONG/R-test [W-S] : +00000000000000000024
-34 : 01 def-SIGNED-SHORT/R-test [W-S] : +00025
-35 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
-36 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
-37 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
-38 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
-39 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
-40 : 01 def-PACKED-DECIMAL/R-test [W-S] : +988776654.1223345
-41 : 01 def-PACKED-DECIMAL-S/R-test [W-S] : -88776654.1223345
-42 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
-43 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
-44 : 01 def-COMP/R-test [W-S] : +988776654.1223345
-45 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
-46 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-47 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-48 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-49 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-50 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-51 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-52 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-53 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
-54 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 6 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 8 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 9 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+10 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+11 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+12 : 01 def-BINARY-INT/test [W-S] : +0000000010
+13 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+14 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+15 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+16 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+17 : 01 def-BINARY-SHORT/test [W-S] : +00015
+18 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+19 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+20 : 01 def-COMP-1/test [W-S] : 1.11
+21 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+22 : 01 def-COMP-2/test [W-S] : 2.22
+23 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+24 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+25 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+26 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+27 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
+28 : 01 def-INDEX/test [W-S] : +0123456789
+29 : 01 def-POINTER/test [W-S] : 0x0000000000000000
+30 : 01 def-PROCEDURE-POINTER/test [W-S] : 0x0000000000000000
+31 : 01 def-PROGRAM-POINTER/test [W-S] : 0x0000000000000000
+32 : 01 def-SIGNED-INT/test [W-S] : +0000000023
+33 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
+34 : 01 def-SIGNED-SHORT/test [W-S] : +00025
+35 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+36 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+37 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
+38 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+39 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+40 : 01 def-PACKED-DECIMAL/test [W-S] : +988776654.1223345
+41 : 01 def-PACKED-DECIMAL-S/test [W-S] : -88776654.1223345
+42 : 01 def-BINARY/test [W-S] : +000000001.0000000
+43 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
+44 : 01 def-COMP/test [W-S] : +988776654.1223345
+45 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+46 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+47 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+48 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+49 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+50 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+51 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+52 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+53 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/v3 ?
 cprint/x #1
-01 header/R-test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
+01 header/test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
 cprint/m *
-variables=[{name="header/R-test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/R-test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/R-test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/R-test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/R-test",value="\"00000000000000000009\""},{name="def-BINARY-INT/R-test",value="\"+0000000010\""},{name="def-BINARY-LONG/R-test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/R-test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/R-test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/R-test",value="\"00017\""},{name="def-COMP-1/R-test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMP-2/R-test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-FLOAT-SHORT/R-test",value="\"8.8800001\""},{name="def-INDEX/R-test",value="\"+0123456789\""},{name="def-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/R-test",value="\"+0000000023\""},{name="def-SIGNED-LONG/R-test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/R-test",value="\"+00025\""},{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""},{name="def-COMP-3/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/R-test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/R-test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/R-test",value="\"-88776654.1223345\""},{name="def-BINARY/R-test",value="\"+000000001.0000000\""},{name="def-BINARY-S/R-test",value="\"-988776654.1223345\""},{name="def-COMP/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""},{name="def-COMP-5/R-test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="header/test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/test",value="\"00000000000000000009\""},{name="def-BINARY-INT/test",value="\"+0000000010\""},{name="def-BINARY-LONG/test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/test",value="\"00017\""},{name="def-COMP-1/test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMP-2/test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-FLOAT-SHORT/test",value="\"8.8800001\""},{name="def-INDEX/test",value="\"+0123456789\""},{name="def-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/test",value="\"+0000000023\""},{name="def-SIGNED-LONG/test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/test",value="\"+00025\""},{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""},{name="def-COMP-3/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/test",value="\"-88776654.1223345\""},{name="def-BINARY/test",value="\"+000000001.0000000\""},{name="def-BINARY-S/test",value="\"-988776654.1223345\""},{name="def-COMP/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{name="def-COMP-5/test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/m ?
 cprint/x #1
-01 header/R-test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
+01 header/test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
 cprint/b #1
-01 header/R-test [W-S]  :  0b01000001011011100010000001100101011110000111010001110010011000010111011001100001011001110110000101101110011110100110000100100000011011110110011000100000011101100110000101110010011010010110000101100010011011000110010101110011001000010010000000100000001000000010000000100000001000000010000000100000001000000010000000100000
+01 header/test [W-S]  :  0b01000001011011100010000001100101011110000111010001110010011000010111011001100001011001110110000101101110011110100110000100100000011011110110011000100000011101100110000101110010011010010110000101100010011011000110010101110011001000010010000000100000001000000010000000100000001000000010000000100000001000000010000000100000
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -441,202 +441,70 @@ cprint/v0 *
 54 : 01 def-DISPLAY  : +988776654.1223345
 cprint/v0 ?
 cprint/v3 *
- 1 : 01 header/R-test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 6 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 8 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 9 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
-10 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
-11 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
-12 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
-13 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-14 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-15 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-16 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-17 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
-18 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
-19 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
-20 : 01 def-COMP-1/R-test [W-S] : 1.11
-21 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
-22 : 01 def-COMP-2/R-test [W-S] : 2.22
-23 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
-24 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
-25 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
-26 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
-27 : 01 def-FLOAT-SHORT/R-test [W-S] : 8.8800001
-28 : 01 def-INDEX/R-test [W-S] : +0123456789
-29 : 01 def-POINTER/R-test [W-S] : 0x0000000000000000
-30 : 01 def-PROCEDURE-POINTER/R-test [W-S] : 0x0000000000000000
-31 : 01 def-PROGRAM-POINTER/R-test [W-S] : 0x0000000000000000
-32 : 01 def-SIGNED-INT/R-test [W-S] : +0000000023
-33 : 01 def-SIGNED-LONG/R-test [W-S] : +00000000000000000024
-34 : 01 def-SIGNED-SHORT/R-test [W-S] : +00025
-35 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
-36 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
-37 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
-38 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
-39 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
-40 : 01 def-PACKED-DECIMAL/R-test [W-S] : +988776654.1223345
-41 : 01 def-PACKED-DECIMAL-S/R-test [W-S] : -88776654.1223345
-42 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
-43 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
-44 : 01 def-COMP/R-test [W-S] : +988776654.1223345
-45 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
-46 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-47 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-48 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-49 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-50 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-51 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-52 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-53 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
-54 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 6 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 8 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 9 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+10 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+11 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+12 : 01 def-BINARY-INT/test [W-S] : +0000000010
+13 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+14 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+15 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+16 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+17 : 01 def-BINARY-SHORT/test [W-S] : +00015
+18 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+19 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+20 : 01 def-COMP-1/test [W-S] : 1.11
+21 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+22 : 01 def-COMP-2/test [W-S] : 2.22
+23 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+24 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+25 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+26 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+27 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
+28 : 01 def-INDEX/test [W-S] : +0123456789
+29 : 01 def-POINTER/test [W-S] : 0x0000000000000000
+30 : 01 def-PROCEDURE-POINTER/test [W-S] : 0x0000000000000000
+31 : 01 def-PROGRAM-POINTER/test [W-S] : 0x0000000000000000
+32 : 01 def-SIGNED-INT/test [W-S] : +0000000023
+33 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
+34 : 01 def-SIGNED-SHORT/test [W-S] : +00025
+35 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+36 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+37 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
+38 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+39 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+40 : 01 def-PACKED-DECIMAL/test [W-S] : +988776654.1223345
+41 : 01 def-PACKED-DECIMAL-S/test [W-S] : -88776654.1223345
+42 : 01 def-BINARY/test [W-S] : +000000001.0000000
+43 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
+44 : 01 def-COMP/test [W-S] : +988776654.1223345
+45 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+46 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+47 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+48 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+49 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+50 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+51 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+52 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+53 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/v3 ?
 cprint/x #1
-01 header/R-test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
+01 header/test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
 cprint/m *
-variables=[{name="header/R-test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/R-test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/R-test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/R-test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/R-test",value="\"00000000000000000009\""},{name="def-BINARY-INT/R-test",value="\"+0000000010\""},{name="def-BINARY-LONG/R-test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/R-test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/R-test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/R-test",value="\"00017\""},{name="def-COMP-1/R-test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMP-2/R-test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-FLOAT-SHORT/R-test",value="\"8.8800001\""},{name="def-INDEX/R-test",value="\"+0123456789\""},{name="def-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/R-test",value="\"+0000000023\""},{name="def-SIGNED-LONG/R-test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/R-test",value="\"+00025\""},{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""},{name="def-COMP-3/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/R-test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/R-test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/R-test",value="\"-88776654.1223345\""},{name="def-BINARY/R-test",value="\"+000000001.0000000\""},{name="def-BINARY-S/R-test",value="\"-988776654.1223345\""},{name="def-COMP/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""},{name="def-COMP-5/R-test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="header/test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/test",value="\"00000000000000000009\""},{name="def-BINARY-INT/test",value="\"+0000000010\""},{name="def-BINARY-LONG/test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/test",value="\"00017\""},{name="def-COMP-1/test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMP-2/test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-FLOAT-SHORT/test",value="\"8.8800001\""},{name="def-INDEX/test",value="\"+0123456789\""},{name="def-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/test",value="\"+0000000023\""},{name="def-SIGNED-LONG/test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/test",value="\"+00025\""},{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""},{name="def-COMP-3/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/test",value="\"-88776654.1223345\""},{name="def-BINARY/test",value="\"+000000001.0000000\""},{name="def-BINARY-S/test",value="\"-988776654.1223345\""},{name="def-COMP/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{name="def-COMP-5/test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/m ?
 cprint/x #1
-01 header/R-test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
+01 header/test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
 cprint/b #1
-01 header/R-test [W-S]  :  0b01000001011011100010000001100101011110000111010001110010011000010111011001100001011001110110000101101110011110100110000100100000011011110110011000100000011101100110000101110010011010010110000101100010011011000110010101110011001000010010000000100000001000000010000000100000001000000010000000100000001000000010000000100000
-KNOWN GOOD FINISH
-KNOWN GOOD START
-cprint/v0 *
- 1 : 01 header  : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic  : "$    1.23+"
- 3 : 01 def-BINARY-CHAR  : +123
- 4 : 01 def-BINARY-CHAR-SIGNED  : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED  : 003
- 6 : 01 def-BINARY-C-LONG  : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED  : -00000000000000000005
- 8 : 01 def-BINARY-C-LONG-UNSIGNED  : 00000000000000000006
- 9 : 01 def-BINARY-DOUBLE  : +00000000000000000007
-10 : 01 def-BINARY-DOUBLE-SIGNED  : -00000000000000000008
-11 : 01 def-BINARY-DOUBLE-UNSIGNED  : 00000000000000000009
-12 : 01 def-BINARY-INT  : +0000000010
-13 : 01 def-BINARY-LONG  : +0000000011
-14 : 01 def-BINARY-LONG-SIGNED  : -0000000012
-15 : 01 def-BINARY-LONG-UNSIGNED  : 0000000013
-16 : 01 def-BINARY-LONG-LONG  : +00000000000000000014
-17 : 01 def-BINARY-SHORT  : +00015
-18 : 01 def-BINARY-SHORT-SIGNED  : -00016
-19 : 01 def-BINARY-SHORT-UNSIGNED  : 00017
-20 : 01 def-COMP-1  : 1.11
-21 : 01 def-COMPUTATIONAL-1  : 3.3299999
-22 : 01 def-COMP-2  : 2.22
-23 : 01 def-COMPUTATIONAL-2  : 4.44
-24 : 01 def-FLOAT-DECIMAL-16  : 5.55
-25 : 01 def-FLOAT-DECIMAL-34  : 9.999999999999999999999999999999999e33
-26 : 01 def-FLOAT-LONG  : 7.77
-27 : 01 def-FLOAT-SHORT  : 8.8800001
-28 : 01 def-INDEX  : +0123456789
-29 : 01 def-POINTER  : 0x0000000000000000
-30 : 01 def-PROCEDURE-POINTER  : 0x0000000000000000
-31 : 01 def-PROGRAM-POINTER  : 0x0000000000000000
-32 : 01 def-SIGNED-INT  : +0000000023
-33 : 01 def-SIGNED-LONG  : +00000000000000000024
-34 : 01 def-SIGNED-SHORT  : +00025
-35 : 01 def-UNSIGNED-INT  : 0000000026
-36 : 01 def-UNSIGNED-LONG  : 00000000000000000027
-37 : 01 def-UNSIGNED-SHORT  : 00028
-38 : 01 def-COMP-3  : +988776654.1223345
-39 : 01 def-COMPUTATIONAL-3  : -988776654.1223345
-40 : 01 def-PACKED-DECIMAL  : +988776654.1223345
-41 : 01 def-PACKED-DECIMAL-S  : -88776654.1223345
-42 : 01 def-BINARY  : +000000001.0000000
-43 : 01 def-BINARY-S  : -988776654.1223345
-44 : 01 def-COMP  : +988776654.1223345
-45 : 01 def-COMPUTATIONAL  : -988776654.1223345
-46 : 01 def-COMP-4  : +988776654.1223345
-47 : 01 def-COMPUTATIONAL-4  : -988776654.1223345
-48 : 01 def-COMP-5  : +0000988776654.1223345
-49 : 01 def-COMPUTATIONAL-5  : -0000988776654.1223345
-50 : 01 def-COMP-6  : 88776654.1223345
-51 : 01 def-COMP-X  : +0988776654.1223345
-52 : 01 def-COMPUTATIONAL-X  : +0988776654.1223345
-53 : 01 def-COMP-XX  : 00009887766541223345
-54 : 01 def-DISPLAY  : +988776654.1223345
-cprint/v0 ?
- 1 : 01 header  : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic  : "$    1.23+"
- 3 : 01 def-BINARY-CHAR  : +123
- 4 : 01 def-BINARY-CHAR-SIGNED  : -002
-cprint/v3 *
- 1 : 01 header/R-test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 6 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 8 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 9 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
-10 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
-11 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
-12 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
-13 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-14 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-15 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-16 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-17 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
-18 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
-19 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
-20 : 01 def-COMP-1/R-test [W-S] : 1.11
-21 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
-22 : 01 def-COMP-2/R-test [W-S] : 2.22
-23 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
-24 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
-25 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
-26 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
-27 : 01 def-FLOAT-SHORT/R-test [W-S] : 8.8800001
-28 : 01 def-INDEX/R-test [W-S] : +0123456789
-29 : 01 def-POINTER/R-test [W-S] : 0x0000000000000000
-30 : 01 def-PROCEDURE-POINTER/R-test [W-S] : 0x0000000000000000
-31 : 01 def-PROGRAM-POINTER/R-test [W-S] : 0x0000000000000000
-32 : 01 def-SIGNED-INT/R-test [W-S] : +0000000023
-33 : 01 def-SIGNED-LONG/R-test [W-S] : +00000000000000000024
-34 : 01 def-SIGNED-SHORT/R-test [W-S] : +00025
-35 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
-36 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
-37 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
-38 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
-39 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
-40 : 01 def-PACKED-DECIMAL/R-test [W-S] : +988776654.1223345
-41 : 01 def-PACKED-DECIMAL-S/R-test [W-S] : -88776654.1223345
-42 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
-43 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
-44 : 01 def-COMP/R-test [W-S] : +988776654.1223345
-45 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
-46 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-47 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-48 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-49 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-50 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-51 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-52 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-53 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
-54 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
-cprint/v3 ?
- 1 : 01 header/R-test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
-cprint/x #1
-01 header/R-test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
-cprint/m *
-variables=[{name="header/R-test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/R-test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/R-test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/R-test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/R-test",value="\"00000000000000000009\""},{name="def-BINARY-INT/R-test",value="\"+0000000010\""},{name="def-BINARY-LONG/R-test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/R-test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/R-test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/R-test",value="\"00017\""},{name="def-COMP-1/R-test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMP-2/R-test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-FLOAT-SHORT/R-test",value="\"8.8800001\""},{name="def-INDEX/R-test",value="\"+0123456789\""},{name="def-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/R-test",value="\"+0000000023\""},{name="def-SIGNED-LONG/R-test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/R-test",value="\"+00025\""},{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""},{name="def-COMP-3/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/R-test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/R-test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/R-test",value="\"-88776654.1223345\""},{name="def-BINARY/R-test",value="\"+000000001.0000000\""},{name="def-BINARY-S/R-test",value="\"-988776654.1223345\""},{name="def-COMP/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""},{name="def-COMP-5/R-test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
-cprint/m ?
-variables=[{name="header/R-test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""}]
-cprint/x #1
-01 header/R-test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
-cprint/b #1
-01 header/R-test [W-S]  :  0b01000001011011100010000001100101011110000111010001110010011000010111011001100001011001110110000101101110011110100110000100100000011011110110011000100000011101100110000101110010011010010110000101100010011011000110010101110011001000010010000000100000001000000010000000100000001000000010000000100000001000000010000000100000
+01 header/test [W-S]  :  0b01000001011011100010000001100101011110000111010001110010011000010111011001100001011001110110000101101110011110100110000100100000011011110110011000100000011101100110000101110010011010010110000101100010011011000110010101110011001000010010000000100000001000000010000000100000001000000010000000100000001000000010000000100000
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -699,82 +567,76 @@ cprint/v0 ?
  2 : 01 withpic  : "$    1.23+"
  3 : 01 def-BINARY-CHAR  : +123
  4 : 01 def-BINARY-CHAR-SIGNED  : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED  : 003
- 6 : 01 def-BINARY-C-LONG  : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED  : -00000000000000000005
 cprint/v3 *
- 1 : 01 header/R-test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 6 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 8 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 9 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
-10 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
-11 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
-12 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
-13 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-14 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-15 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-16 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-17 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
-18 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
-19 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
-20 : 01 def-COMP-1/R-test [W-S] : 1.11
-21 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
-22 : 01 def-COMP-2/R-test [W-S] : 2.22
-23 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
-24 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
-25 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
-26 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
-27 : 01 def-FLOAT-SHORT/R-test [W-S] : 8.8800001
-28 : 01 def-INDEX/R-test [W-S] : +0123456789
-29 : 01 def-POINTER/R-test [W-S] : 0x0000000000000000
-30 : 01 def-PROCEDURE-POINTER/R-test [W-S] : 0x0000000000000000
-31 : 01 def-PROGRAM-POINTER/R-test [W-S] : 0x0000000000000000
-32 : 01 def-SIGNED-INT/R-test [W-S] : +0000000023
-33 : 01 def-SIGNED-LONG/R-test [W-S] : +00000000000000000024
-34 : 01 def-SIGNED-SHORT/R-test [W-S] : +00025
-35 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
-36 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
-37 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
-38 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
-39 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
-40 : 01 def-PACKED-DECIMAL/R-test [W-S] : +988776654.1223345
-41 : 01 def-PACKED-DECIMAL-S/R-test [W-S] : -88776654.1223345
-42 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
-43 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
-44 : 01 def-COMP/R-test [W-S] : +988776654.1223345
-45 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
-46 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-47 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-48 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-49 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-50 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-51 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-52 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-53 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
-54 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 6 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 8 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 9 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+10 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+11 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+12 : 01 def-BINARY-INT/test [W-S] : +0000000010
+13 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+14 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+15 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+16 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+17 : 01 def-BINARY-SHORT/test [W-S] : +00015
+18 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+19 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+20 : 01 def-COMP-1/test [W-S] : 1.11
+21 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+22 : 01 def-COMP-2/test [W-S] : 2.22
+23 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+24 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+25 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+26 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+27 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
+28 : 01 def-INDEX/test [W-S] : +0123456789
+29 : 01 def-POINTER/test [W-S] : 0x0000000000000000
+30 : 01 def-PROCEDURE-POINTER/test [W-S] : 0x0000000000000000
+31 : 01 def-PROGRAM-POINTER/test [W-S] : 0x0000000000000000
+32 : 01 def-SIGNED-INT/test [W-S] : +0000000023
+33 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
+34 : 01 def-SIGNED-SHORT/test [W-S] : +00025
+35 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+36 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+37 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
+38 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+39 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+40 : 01 def-PACKED-DECIMAL/test [W-S] : +988776654.1223345
+41 : 01 def-PACKED-DECIMAL-S/test [W-S] : -88776654.1223345
+42 : 01 def-BINARY/test [W-S] : +000000001.0000000
+43 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
+44 : 01 def-COMP/test [W-S] : +988776654.1223345
+45 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+46 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+47 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+48 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+49 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+50 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+51 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+52 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+53 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/v3 ?
- 1 : 01 header/R-test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 6 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
+ 1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
 cprint/x #1
-01 header/R-test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
+01 header/test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
 cprint/m *
-variables=[{name="header/R-test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/R-test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/R-test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/R-test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/R-test",value="\"00000000000000000009\""},{name="def-BINARY-INT/R-test",value="\"+0000000010\""},{name="def-BINARY-LONG/R-test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/R-test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/R-test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/R-test",value="\"00017\""},{name="def-COMP-1/R-test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMP-2/R-test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-FLOAT-SHORT/R-test",value="\"8.8800001\""},{name="def-INDEX/R-test",value="\"+0123456789\""},{name="def-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/R-test",value="\"+0000000023\""},{name="def-SIGNED-LONG/R-test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/R-test",value="\"+00025\""},{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""},{name="def-COMP-3/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/R-test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/R-test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/R-test",value="\"-88776654.1223345\""},{name="def-BINARY/R-test",value="\"+000000001.0000000\""},{name="def-BINARY-S/R-test",value="\"-988776654.1223345\""},{name="def-COMP/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""},{name="def-COMP-5/R-test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="header/test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/test",value="\"00000000000000000009\""},{name="def-BINARY-INT/test",value="\"+0000000010\""},{name="def-BINARY-LONG/test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/test",value="\"00017\""},{name="def-COMP-1/test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMP-2/test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-FLOAT-SHORT/test",value="\"8.8800001\""},{name="def-INDEX/test",value="\"+0123456789\""},{name="def-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/test",value="\"+0000000023\""},{name="def-SIGNED-LONG/test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/test",value="\"+00025\""},{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""},{name="def-COMP-3/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/test",value="\"-88776654.1223345\""},{name="def-BINARY/test",value="\"+000000001.0000000\""},{name="def-BINARY-S/test",value="\"-988776654.1223345\""},{name="def-COMP/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{name="def-COMP-5/test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/m ?
-variables=[{name="header/R-test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""}]
+variables=[{name="header/test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""}]
 cprint/x #1
-01 header/R-test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
+01 header/test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
 cprint/b #1
-01 header/R-test [W-S]  :  0b01000001011011100010000001100101011110000111010001110010011000010111011001100001011001110110000101101110011110100110000100100000011011110110011000100000011101100110000101110010011010010110000101100010011011000110010101110011001000010010000000100000001000000010000000100000001000000010000000100000001000000010000000100000
+01 header/test [W-S]  :  0b01000001011011100010000001100101011110000111010001110010011000010111011001100001011001110110000101101110011110100110000100100000011011110110011000100000011101100110000101110010011010010110000101100010011011000110010101110011001000010010000000100000001000000010000000100000001000000010000000100000001000000010000000100000
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -840,6 +702,144 @@ cprint/v0 ?
  5 : 01 def-BINARY-CHAR-UNSIGNED  : 003
  6 : 01 def-BINARY-C-LONG  : +00000000000000000004
  7 : 01 def-BINARY-C-LONG-SIGNED  : -00000000000000000005
+cprint/v3 *
+ 1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 6 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 8 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 9 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+10 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+11 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+12 : 01 def-BINARY-INT/test [W-S] : +0000000010
+13 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+14 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+15 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+16 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+17 : 01 def-BINARY-SHORT/test [W-S] : +00015
+18 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+19 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+20 : 01 def-COMP-1/test [W-S] : 1.11
+21 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+22 : 01 def-COMP-2/test [W-S] : 2.22
+23 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+24 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+25 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+26 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+27 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
+28 : 01 def-INDEX/test [W-S] : +0123456789
+29 : 01 def-POINTER/test [W-S] : 0x0000000000000000
+30 : 01 def-PROCEDURE-POINTER/test [W-S] : 0x0000000000000000
+31 : 01 def-PROGRAM-POINTER/test [W-S] : 0x0000000000000000
+32 : 01 def-SIGNED-INT/test [W-S] : +0000000023
+33 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
+34 : 01 def-SIGNED-SHORT/test [W-S] : +00025
+35 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+36 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+37 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
+38 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+39 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+40 : 01 def-PACKED-DECIMAL/test [W-S] : +988776654.1223345
+41 : 01 def-PACKED-DECIMAL-S/test [W-S] : -88776654.1223345
+42 : 01 def-BINARY/test [W-S] : +000000001.0000000
+43 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
+44 : 01 def-COMP/test [W-S] : +988776654.1223345
+45 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+46 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+47 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+48 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+49 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+50 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+51 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+52 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+53 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
+cprint/v3 ?
+ 1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 6 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+cprint/x #1
+01 header/test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
+cprint/m *
+variables=[{name="header/test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/test",value="\"00000000000000000009\""},{name="def-BINARY-INT/test",value="\"+0000000010\""},{name="def-BINARY-LONG/test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/test",value="\"00017\""},{name="def-COMP-1/test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMP-2/test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-FLOAT-SHORT/test",value="\"8.8800001\""},{name="def-INDEX/test",value="\"+0123456789\""},{name="def-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/test",value="\"+0000000023\""},{name="def-SIGNED-LONG/test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/test",value="\"+00025\""},{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""},{name="def-COMP-3/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/test",value="\"-88776654.1223345\""},{name="def-BINARY/test",value="\"+000000001.0000000\""},{name="def-BINARY-S/test",value="\"-988776654.1223345\""},{name="def-COMP/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{name="def-COMP-5/test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
+cprint/m ?
+variables=[{name="header/test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""}]
+cprint/x #1
+01 header/test [W-S]  :  0x416e206578747261766167616e7a61206f66207661726961626c6573212020202020202020202020
+cprint/b #1
+01 header/test [W-S]  :  0b01000001011011100010000001100101011110000111010001110010011000010111011001100001011001110110000101101110011110100110000100100000011011110110011000100000011101100110000101110010011010010110000101100010011011000110010101110011001000010010000000100000001000000010000000100000001000000010000000100000001000000010000000100000
+KNOWN GOOD FINISH
+KNOWN GOOD START
+cprint/v0 *
+ 1 : 01 header  : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic  : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR  : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED  : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED  : 003
+ 6 : 01 def-BINARY-C-LONG  : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED  : -00000000000000000005
+ 8 : 01 def-BINARY-C-LONG-UNSIGNED  : 00000000000000000006
+ 9 : 01 def-BINARY-DOUBLE  : +00000000000000000007
+10 : 01 def-BINARY-DOUBLE-SIGNED  : -00000000000000000008
+11 : 01 def-BINARY-DOUBLE-UNSIGNED  : 00000000000000000009
+12 : 01 def-BINARY-INT  : +0000000010
+13 : 01 def-BINARY-LONG  : +0000000011
+14 : 01 def-BINARY-LONG-SIGNED  : -0000000012
+15 : 01 def-BINARY-LONG-UNSIGNED  : 0000000013
+16 : 01 def-BINARY-LONG-LONG  : +00000000000000000014
+17 : 01 def-BINARY-SHORT  : +00015
+18 : 01 def-BINARY-SHORT-SIGNED  : -00016
+19 : 01 def-BINARY-SHORT-UNSIGNED  : 00017
+20 : 01 def-COMP-1  : 1.11
+21 : 01 def-COMPUTATIONAL-1  : 3.3299999
+22 : 01 def-COMP-2  : 2.22
+23 : 01 def-COMPUTATIONAL-2  : 4.44
+24 : 01 def-FLOAT-DECIMAL-16  : 5.55
+25 : 01 def-FLOAT-DECIMAL-34  : 9.999999999999999999999999999999999e33
+26 : 01 def-FLOAT-LONG  : 7.77
+27 : 01 def-FLOAT-SHORT  : 8.8800001
+28 : 01 def-INDEX  : +0123456789
+29 : 01 def-POINTER  : 0x0000000000000000
+30 : 01 def-PROCEDURE-POINTER  : 0x0000000000000000
+31 : 01 def-PROGRAM-POINTER  : 0x0000000000000000
+32 : 01 def-SIGNED-INT  : +0000000023
+33 : 01 def-SIGNED-LONG  : +00000000000000000024
+34 : 01 def-SIGNED-SHORT  : +00025
+35 : 01 def-UNSIGNED-INT  : 0000000026
+36 : 01 def-UNSIGNED-LONG  : 00000000000000000027
+37 : 01 def-UNSIGNED-SHORT  : 00028
+38 : 01 def-COMP-3  : +988776654.1223345
+39 : 01 def-COMPUTATIONAL-3  : -988776654.1223345
+40 : 01 def-PACKED-DECIMAL  : +988776654.1223345
+41 : 01 def-PACKED-DECIMAL-S  : -88776654.1223345
+42 : 01 def-BINARY  : +000000001.0000000
+43 : 01 def-BINARY-S  : -988776654.1223345
+44 : 01 def-COMP  : +988776654.1223345
+45 : 01 def-COMPUTATIONAL  : -988776654.1223345
+46 : 01 def-COMP-4  : +988776654.1223345
+47 : 01 def-COMPUTATIONAL-4  : -988776654.1223345
+48 : 01 def-COMP-5  : +0000988776654.1223345
+49 : 01 def-COMPUTATIONAL-5  : -0000988776654.1223345
+50 : 01 def-COMP-6  : 88776654.1223345
+51 : 01 def-COMP-X  : +0988776654.1223345
+52 : 01 def-COMPUTATIONAL-X  : +0988776654.1223345
+53 : 01 def-COMP-XX  : 00009887766541223345
+54 : 01 def-DISPLAY  : +988776654.1223345
+cprint/v0 ?
+ 1 : 01 header  : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic  : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR  : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED  : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED  : 003
+ 6 : 01 def-BINARY-C-LONG  : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED  : -00000000000000000005
  8 : 01 def-BINARY-C-LONG-UNSIGNED  : 00000000000000000006
  9 : 01 def-BINARY-DOUBLE  : +00000000000000000007
 10 : 01 def-BINARY-DOUBLE-SIGNED  : -00000000000000000008
@@ -851,84 +851,84 @@ cprint/v0 ?
 16 : 01 def-BINARY-LONG-LONG  : +00000000000000000014
 17 : 01 def-BINARY-SHORT  : +00015
 cprint/v3 *
- 1 : 01 header/R-test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 6 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 8 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 9 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
-10 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
-11 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
-12 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
-13 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-14 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-15 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-16 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-17 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
-18 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
-19 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
-20 : 01 def-COMP-1/R-test [W-S] : 1.11
-21 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
-22 : 01 def-COMP-2/R-test [W-S] : 2.22
-23 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
-24 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
-25 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
-26 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
-27 : 01 def-FLOAT-SHORT/R-test [W-S] : 8.8800001
-28 : 01 def-INDEX/R-test [W-S] : +0123456789
-29 : 01 def-POINTER/R-test [W-S] : 0x0000000000000000
-30 : 01 def-PROCEDURE-POINTER/R-test [W-S] : 0x0000000000000000
-31 : 01 def-PROGRAM-POINTER/R-test [W-S] : 0x0000000000000000
-32 : 01 def-SIGNED-INT/R-test [W-S] : +0000000023
-33 : 01 def-SIGNED-LONG/R-test [W-S] : +00000000000000000024
-34 : 01 def-SIGNED-SHORT/R-test [W-S] : +00025
-35 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
-36 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
-37 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
-38 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
-39 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
-40 : 01 def-PACKED-DECIMAL/R-test [W-S] : +988776654.1223345
-41 : 01 def-PACKED-DECIMAL-S/R-test [W-S] : -88776654.1223345
-42 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
-43 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
-44 : 01 def-COMP/R-test [W-S] : +988776654.1223345
-45 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
-46 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-47 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-48 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-49 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-50 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-51 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-52 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-53 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
-54 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 6 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 8 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 9 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+10 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+11 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+12 : 01 def-BINARY-INT/test [W-S] : +0000000010
+13 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+14 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+15 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+16 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+17 : 01 def-BINARY-SHORT/test [W-S] : +00015
+18 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+19 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+20 : 01 def-COMP-1/test [W-S] : 1.11
+21 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+22 : 01 def-COMP-2/test [W-S] : 2.22
+23 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+24 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+25 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+26 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+27 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
+28 : 01 def-INDEX/test [W-S] : +0123456789
+29 : 01 def-POINTER/test [W-S] : 0x0000000000000000
+30 : 01 def-PROCEDURE-POINTER/test [W-S] : 0x0000000000000000
+31 : 01 def-PROGRAM-POINTER/test [W-S] : 0x0000000000000000
+32 : 01 def-SIGNED-INT/test [W-S] : +0000000023
+33 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
+34 : 01 def-SIGNED-SHORT/test [W-S] : +00025
+35 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+36 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+37 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
+38 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+39 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+40 : 01 def-PACKED-DECIMAL/test [W-S] : +988776654.1223345
+41 : 01 def-PACKED-DECIMAL-S/test [W-S] : -88776654.1223345
+42 : 01 def-BINARY/test [W-S] : +000000001.0000000
+43 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
+44 : 01 def-COMP/test [W-S] : +988776654.1223345
+45 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+46 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+47 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+48 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+49 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+50 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+51 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+52 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+53 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/v3 ?
- 1 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 2 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 3 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 4 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 5 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
- 6 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
- 7 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
- 8 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
- 9 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-10 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-11 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-12 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-13 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
+ 1 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 2 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 3 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 4 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 5 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+ 6 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+ 7 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+ 8 : 01 def-BINARY-INT/test [W-S] : +0000000010
+ 9 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+10 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+11 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+12 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+13 : 01 def-BINARY-SHORT/test [W-S] : +00015
 cprint/x #1
-01 def-BINARY-CHAR-UNSIGNED/R-test [W-S]  :  0x03
+01 def-BINARY-CHAR-UNSIGNED/test [W-S]  :  0x03
 cprint/m *
-variables=[{name="header/R-test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/R-test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/R-test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/R-test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/R-test",value="\"00000000000000000009\""},{name="def-BINARY-INT/R-test",value="\"+0000000010\""},{name="def-BINARY-LONG/R-test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/R-test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/R-test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/R-test",value="\"00017\""},{name="def-COMP-1/R-test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMP-2/R-test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-FLOAT-SHORT/R-test",value="\"8.8800001\""},{name="def-INDEX/R-test",value="\"+0123456789\""},{name="def-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/R-test",value="\"+0000000023\""},{name="def-SIGNED-LONG/R-test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/R-test",value="\"+00025\""},{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""},{name="def-COMP-3/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/R-test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/R-test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/R-test",value="\"-88776654.1223345\""},{name="def-BINARY/R-test",value="\"+000000001.0000000\""},{name="def-BINARY-S/R-test",value="\"-988776654.1223345\""},{name="def-COMP/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""},{name="def-COMP-5/R-test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="header/test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/test",value="\"00000000000000000009\""},{name="def-BINARY-INT/test",value="\"+0000000010\""},{name="def-BINARY-LONG/test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/test",value="\"00017\""},{name="def-COMP-1/test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMP-2/test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-FLOAT-SHORT/test",value="\"8.8800001\""},{name="def-INDEX/test",value="\"+0123456789\""},{name="def-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/test",value="\"+0000000023\""},{name="def-SIGNED-LONG/test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/test",value="\"+00025\""},{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""},{name="def-COMP-3/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/test",value="\"-88776654.1223345\""},{name="def-BINARY/test",value="\"+000000001.0000000\""},{name="def-BINARY-S/test",value="\"-988776654.1223345\""},{name="def-COMP/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{name="def-COMP-5/test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/m ?
-variables=[{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/R-test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/R-test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/R-test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/R-test",value="\"00000000000000000009\""},{name="def-BINARY-INT/R-test",value="\"+0000000010\""},{name="def-BINARY-LONG/R-test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/R-test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""}]
+variables=[{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/test",value="\"00000000000000000009\""},{name="def-BINARY-INT/test",value="\"+0000000010\""},{name="def-BINARY-LONG/test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""}]
 cprint/x #1
-01 def-BINARY-CHAR-UNSIGNED/R-test [W-S]  :  0x03
+01 def-BINARY-CHAR-UNSIGNED/test [W-S]  :  0x03
 cprint/b #1
-01 def-BINARY-CHAR-UNSIGNED/R-test [W-S]  :  0b00000011
+01 def-BINARY-CHAR-UNSIGNED/test [W-S]  :  0b00000011
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -1011,84 +1011,84 @@ cprint/v0 ?
 22 : 01 def-FLOAT-LONG  : 7.77
 23 : 01 def-COMPUTATIONAL  : -988776654.1223345
 cprint/v3 *
- 1 : 01 header/R-test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 6 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 8 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 9 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
-10 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
-11 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
-12 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
-13 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-14 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-15 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-16 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-17 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
-18 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
-19 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
-20 : 01 def-COMP-1/R-test [W-S] : 1.11
-21 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
-22 : 01 def-COMP-2/R-test [W-S] : 2.22
-23 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
-24 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
-25 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
-26 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
-27 : 01 def-FLOAT-SHORT/R-test [W-S] : 8.8800001
-28 : 01 def-INDEX/R-test [W-S] : +0123456789
-29 : 01 def-POINTER/R-test [W-S] : 0x0000000000000000
-30 : 01 def-PROCEDURE-POINTER/R-test [W-S] : 0x0000000000000000
-31 : 01 def-PROGRAM-POINTER/R-test [W-S] : 0x0000000000000000
-32 : 01 def-SIGNED-INT/R-test [W-S] : +0000000023
-33 : 01 def-SIGNED-LONG/R-test [W-S] : +00000000000000000024
-34 : 01 def-SIGNED-SHORT/R-test [W-S] : +00025
-35 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
-36 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
-37 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
-38 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
-39 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
-40 : 01 def-PACKED-DECIMAL/R-test [W-S] : +988776654.1223345
-41 : 01 def-PACKED-DECIMAL-S/R-test [W-S] : -88776654.1223345
-42 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
-43 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
-44 : 01 def-COMP/R-test [W-S] : +988776654.1223345
-45 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
-46 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-47 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-48 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-49 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-50 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-51 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-52 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-53 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
-54 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 6 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 8 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 9 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+10 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+11 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+12 : 01 def-BINARY-INT/test [W-S] : +0000000010
+13 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+14 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+15 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+16 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+17 : 01 def-BINARY-SHORT/test [W-S] : +00015
+18 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+19 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+20 : 01 def-COMP-1/test [W-S] : 1.11
+21 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+22 : 01 def-COMP-2/test [W-S] : 2.22
+23 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+24 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+25 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+26 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+27 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
+28 : 01 def-INDEX/test [W-S] : +0123456789
+29 : 01 def-POINTER/test [W-S] : 0x0000000000000000
+30 : 01 def-PROCEDURE-POINTER/test [W-S] : 0x0000000000000000
+31 : 01 def-PROGRAM-POINTER/test [W-S] : 0x0000000000000000
+32 : 01 def-SIGNED-INT/test [W-S] : +0000000023
+33 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
+34 : 01 def-SIGNED-SHORT/test [W-S] : +00025
+35 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+36 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+37 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
+38 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+39 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+40 : 01 def-PACKED-DECIMAL/test [W-S] : +988776654.1223345
+41 : 01 def-PACKED-DECIMAL-S/test [W-S] : -88776654.1223345
+42 : 01 def-BINARY/test [W-S] : +000000001.0000000
+43 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
+44 : 01 def-COMP/test [W-S] : +988776654.1223345
+45 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+46 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+47 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+48 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+49 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+50 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+51 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+52 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+53 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/v3 ?
- 1 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
- 2 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
- 3 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
- 4 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
- 5 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
- 6 : 01 def-COMP-1/R-test [W-S] : 1.11
- 7 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
- 8 : 01 def-COMP-2/R-test [W-S] : 2.22
- 9 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
-10 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
-11 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
-12 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
-13 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
+ 1 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+ 2 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+ 3 : 01 def-BINARY-SHORT/test [W-S] : +00015
+ 4 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+ 5 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+ 6 : 01 def-COMP-1/test [W-S] : 1.11
+ 7 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+ 8 : 01 def-COMP-2/test [W-S] : 2.22
+ 9 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+10 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+11 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+12 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+13 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
 cprint/x #1
-01 def-BINARY-LONG-UNSIGNED/R-test [W-S]  :  0x0000000d
+01 def-BINARY-LONG-UNSIGNED/test [W-S]  :  0x0000000d
 cprint/m *
-variables=[{name="header/R-test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/R-test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/R-test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/R-test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/R-test",value="\"00000000000000000009\""},{name="def-BINARY-INT/R-test",value="\"+0000000010\""},{name="def-BINARY-LONG/R-test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/R-test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/R-test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/R-test",value="\"00017\""},{name="def-COMP-1/R-test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMP-2/R-test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-FLOAT-SHORT/R-test",value="\"8.8800001\""},{name="def-INDEX/R-test",value="\"+0123456789\""},{name="def-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/R-test",value="\"+0000000023\""},{name="def-SIGNED-LONG/R-test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/R-test",value="\"+00025\""},{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""},{name="def-COMP-3/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/R-test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/R-test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/R-test",value="\"-88776654.1223345\""},{name="def-BINARY/R-test",value="\"+000000001.0000000\""},{name="def-BINARY-S/R-test",value="\"-988776654.1223345\""},{name="def-COMP/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""},{name="def-COMP-5/R-test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="header/test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/test",value="\"00000000000000000009\""},{name="def-BINARY-INT/test",value="\"+0000000010\""},{name="def-BINARY-LONG/test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/test",value="\"00017\""},{name="def-COMP-1/test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMP-2/test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-FLOAT-SHORT/test",value="\"8.8800001\""},{name="def-INDEX/test",value="\"+0123456789\""},{name="def-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/test",value="\"+0000000023\""},{name="def-SIGNED-LONG/test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/test",value="\"+00025\""},{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""},{name="def-COMP-3/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/test",value="\"-88776654.1223345\""},{name="def-BINARY/test",value="\"+000000001.0000000\""},{name="def-BINARY-S/test",value="\"-988776654.1223345\""},{name="def-COMP/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{name="def-COMP-5/test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/m ?
-variables=[{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/R-test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/R-test",value="\"00017\""},{name="def-COMP-1/R-test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMP-2/R-test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""}]
+variables=[{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/test",value="\"00017\""},{name="def-COMP-1/test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMP-2/test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""}]
 cprint/x #1
-01 def-BINARY-LONG-UNSIGNED/R-test [W-S]  :  0x0000000d
+01 def-BINARY-LONG-UNSIGNED/test [W-S]  :  0x0000000d
 cprint/b #1
-01 def-BINARY-LONG-UNSIGNED/R-test [W-S]  :  0b00000000000000000000000000001101
+01 def-BINARY-LONG-UNSIGNED/test [W-S]  :  0b00000000000000000000000000001101
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -1169,84 +1169,84 @@ cprint/v0 ?
 20 : 01 def-UNSIGNED-SHORT  : 00028
 21 : 01 def-COMPUTATIONAL  : -988776654.1223345
 cprint/v3 *
- 1 : 01 header/R-test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 6 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 8 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 9 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
-10 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
-11 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
-12 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
-13 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-14 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-15 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-16 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-17 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
-18 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
-19 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
-20 : 01 def-COMP-1/R-test [W-S] : 1.11
-21 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
-22 : 01 def-COMP-2/R-test [W-S] : 2.22
-23 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
-24 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
-25 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
-26 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
-27 : 01 def-FLOAT-SHORT/R-test [W-S] : 8.8800001
-28 : 01 def-INDEX/R-test [W-S] : +0123456789
-29 : 01 def-POINTER/R-test [W-S] : 0x0000000000000000
-30 : 01 def-PROCEDURE-POINTER/R-test [W-S] : 0x0000000000000000
-31 : 01 def-PROGRAM-POINTER/R-test [W-S] : 0x0000000000000000
-32 : 01 def-SIGNED-INT/R-test [W-S] : +0000000023
-33 : 01 def-SIGNED-LONG/R-test [W-S] : +00000000000000000024
-34 : 01 def-SIGNED-SHORT/R-test [W-S] : +00025
-35 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
-36 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
-37 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
-38 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
-39 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
-40 : 01 def-PACKED-DECIMAL/R-test [W-S] : +988776654.1223345
-41 : 01 def-PACKED-DECIMAL-S/R-test [W-S] : -88776654.1223345
-42 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
-43 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
-44 : 01 def-COMP/R-test [W-S] : +988776654.1223345
-45 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
-46 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-47 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-48 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-49 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-50 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-51 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-52 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-53 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
-54 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 6 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 8 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 9 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+10 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+11 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+12 : 01 def-BINARY-INT/test [W-S] : +0000000010
+13 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+14 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+15 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+16 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+17 : 01 def-BINARY-SHORT/test [W-S] : +00015
+18 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+19 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+20 : 01 def-COMP-1/test [W-S] : 1.11
+21 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+22 : 01 def-COMP-2/test [W-S] : 2.22
+23 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+24 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+25 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+26 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+27 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
+28 : 01 def-INDEX/test [W-S] : +0123456789
+29 : 01 def-POINTER/test [W-S] : 0x0000000000000000
+30 : 01 def-PROCEDURE-POINTER/test [W-S] : 0x0000000000000000
+31 : 01 def-PROGRAM-POINTER/test [W-S] : 0x0000000000000000
+32 : 01 def-SIGNED-INT/test [W-S] : +0000000023
+33 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
+34 : 01 def-SIGNED-SHORT/test [W-S] : +00025
+35 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+36 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+37 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
+38 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+39 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+40 : 01 def-PACKED-DECIMAL/test [W-S] : +988776654.1223345
+41 : 01 def-PACKED-DECIMAL-S/test [W-S] : -88776654.1223345
+42 : 01 def-BINARY/test [W-S] : +000000001.0000000
+43 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
+44 : 01 def-COMP/test [W-S] : +988776654.1223345
+45 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+46 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+47 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+48 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+49 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+50 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+51 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+52 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+53 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/v3 ?
- 1 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
- 2 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
- 3 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
- 4 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
- 5 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
- 6 : 01 def-FLOAT-SHORT/R-test [W-S] : 8.8800001
- 7 : 01 def-INDEX/R-test [W-S] : +0123456789
- 8 : 01 def-SIGNED-INT/R-test [W-S] : +0000000023
- 9 : 01 def-SIGNED-LONG/R-test [W-S] : +00000000000000000024
-10 : 01 def-SIGNED-SHORT/R-test [W-S] : +00025
-11 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
-12 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
-13 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
+ 1 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+ 2 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+ 3 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+ 4 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+ 5 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+ 6 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
+ 7 : 01 def-INDEX/test [W-S] : +0123456789
+ 8 : 01 def-SIGNED-INT/test [W-S] : +0000000023
+ 9 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
+10 : 01 def-SIGNED-SHORT/test [W-S] : +00025
+11 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+12 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+13 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
 cprint/x #1
-01 def-COMPUTATIONAL-1/R-test [W-S]  :  0x40551eb8
+01 def-COMPUTATIONAL-1/test [W-S]  :  0x40551eb8
 cprint/m *
-variables=[{name="header/R-test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/R-test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/R-test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/R-test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/R-test",value="\"00000000000000000009\""},{name="def-BINARY-INT/R-test",value="\"+0000000010\""},{name="def-BINARY-LONG/R-test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/R-test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/R-test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/R-test",value="\"00017\""},{name="def-COMP-1/R-test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMP-2/R-test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-FLOAT-SHORT/R-test",value="\"8.8800001\""},{name="def-INDEX/R-test",value="\"+0123456789\""},{name="def-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/R-test",value="\"+0000000023\""},{name="def-SIGNED-LONG/R-test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/R-test",value="\"+00025\""},{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""},{name="def-COMP-3/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/R-test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/R-test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/R-test",value="\"-88776654.1223345\""},{name="def-BINARY/R-test",value="\"+000000001.0000000\""},{name="def-BINARY-S/R-test",value="\"-988776654.1223345\""},{name="def-COMP/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""},{name="def-COMP-5/R-test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="header/test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/test",value="\"00000000000000000009\""},{name="def-BINARY-INT/test",value="\"+0000000010\""},{name="def-BINARY-LONG/test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/test",value="\"00017\""},{name="def-COMP-1/test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMP-2/test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-FLOAT-SHORT/test",value="\"8.8800001\""},{name="def-INDEX/test",value="\"+0123456789\""},{name="def-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/test",value="\"+0000000023\""},{name="def-SIGNED-LONG/test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/test",value="\"+00025\""},{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""},{name="def-COMP-3/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/test",value="\"-88776654.1223345\""},{name="def-BINARY/test",value="\"+000000001.0000000\""},{name="def-BINARY-S/test",value="\"-988776654.1223345\""},{name="def-COMP/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{name="def-COMP-5/test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/m ?
-variables=[{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-FLOAT-SHORT/R-test",value="\"8.8800001\""},{name="def-INDEX/R-test",value="\"+0123456789\""},{name="def-SIGNED-INT/R-test",value="\"+0000000023\""},{name="def-SIGNED-LONG/R-test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/R-test",value="\"+00025\""},{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""}]
+variables=[{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-FLOAT-SHORT/test",value="\"8.8800001\""},{name="def-INDEX/test",value="\"+0123456789\""},{name="def-SIGNED-INT/test",value="\"+0000000023\""},{name="def-SIGNED-LONG/test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/test",value="\"+00025\""},{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""}]
 cprint/x #1
-01 def-COMPUTATIONAL-1/R-test [W-S]  :  0x40551eb8
+01 def-COMPUTATIONAL-1/test [W-S]  :  0x40551eb8
 cprint/b #1
-01 def-COMPUTATIONAL-1/R-test [W-S]  :  0b01000000010101010001111010111000
+01 def-COMPUTATIONAL-1/test [W-S]  :  0b01000000010101010001111010111000
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -1329,84 +1329,84 @@ cprint/v0 ?
 22 : 01 def-COMP-4  : +988776654.1223345
 23 : 01 def-COMPUTATIONAL-4  : -988776654.1223345
 cprint/v3 *
- 1 : 01 header/R-test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 6 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 8 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 9 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
-10 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
-11 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
-12 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
-13 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-14 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-15 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-16 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-17 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
-18 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
-19 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
-20 : 01 def-COMP-1/R-test [W-S] : 1.11
-21 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
-22 : 01 def-COMP-2/R-test [W-S] : 2.22
-23 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
-24 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
-25 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
-26 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
-27 : 01 def-FLOAT-SHORT/R-test [W-S] : 8.8800001
-28 : 01 def-INDEX/R-test [W-S] : +0123456789
-29 : 01 def-POINTER/R-test [W-S] : 0x0000000000000000
-30 : 01 def-PROCEDURE-POINTER/R-test [W-S] : 0x0000000000000000
-31 : 01 def-PROGRAM-POINTER/R-test [W-S] : 0x0000000000000000
-32 : 01 def-SIGNED-INT/R-test [W-S] : +0000000023
-33 : 01 def-SIGNED-LONG/R-test [W-S] : +00000000000000000024
-34 : 01 def-SIGNED-SHORT/R-test [W-S] : +00025
-35 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
-36 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
-37 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
-38 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
-39 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
-40 : 01 def-PACKED-DECIMAL/R-test [W-S] : +988776654.1223345
-41 : 01 def-PACKED-DECIMAL-S/R-test [W-S] : -88776654.1223345
-42 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
-43 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
-44 : 01 def-COMP/R-test [W-S] : +988776654.1223345
-45 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
-46 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-47 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-48 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-49 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-50 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-51 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-52 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-53 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
-54 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 6 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 8 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 9 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+10 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+11 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+12 : 01 def-BINARY-INT/test [W-S] : +0000000010
+13 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+14 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+15 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+16 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+17 : 01 def-BINARY-SHORT/test [W-S] : +00015
+18 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+19 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+20 : 01 def-COMP-1/test [W-S] : 1.11
+21 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+22 : 01 def-COMP-2/test [W-S] : 2.22
+23 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+24 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+25 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+26 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+27 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
+28 : 01 def-INDEX/test [W-S] : +0123456789
+29 : 01 def-POINTER/test [W-S] : 0x0000000000000000
+30 : 01 def-PROCEDURE-POINTER/test [W-S] : 0x0000000000000000
+31 : 01 def-PROGRAM-POINTER/test [W-S] : 0x0000000000000000
+32 : 01 def-SIGNED-INT/test [W-S] : +0000000023
+33 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
+34 : 01 def-SIGNED-SHORT/test [W-S] : +00025
+35 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+36 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+37 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
+38 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+39 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+40 : 01 def-PACKED-DECIMAL/test [W-S] : +988776654.1223345
+41 : 01 def-PACKED-DECIMAL-S/test [W-S] : -88776654.1223345
+42 : 01 def-BINARY/test [W-S] : +000000001.0000000
+43 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
+44 : 01 def-COMP/test [W-S] : +988776654.1223345
+45 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+46 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+47 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+48 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+49 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+50 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+51 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+52 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+53 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/v3 ?
- 1 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
- 2 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
- 3 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
- 4 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
- 5 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
- 6 : 01 def-PACKED-DECIMAL/R-test [W-S] : +988776654.1223345
- 7 : 01 def-PACKED-DECIMAL-S/R-test [W-S] : -88776654.1223345
- 8 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
- 9 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
-10 : 01 def-COMP/R-test [W-S] : +988776654.1223345
-11 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
-12 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-13 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
+ 1 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+ 2 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+ 3 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
+ 4 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+ 5 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+ 6 : 01 def-PACKED-DECIMAL/test [W-S] : +988776654.1223345
+ 7 : 01 def-PACKED-DECIMAL-S/test [W-S] : -88776654.1223345
+ 8 : 01 def-BINARY/test [W-S] : +000000001.0000000
+ 9 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
+10 : 01 def-COMP/test [W-S] : +988776654.1223345
+11 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+12 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+13 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
 cprint/x #1
-01 def-UNSIGNED-INT/R-test [W-S]  :  0x0000001a
+01 def-UNSIGNED-INT/test [W-S]  :  0x0000001a
 cprint/m *
-variables=[{name="header/R-test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/R-test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/R-test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/R-test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/R-test",value="\"00000000000000000009\""},{name="def-BINARY-INT/R-test",value="\"+0000000010\""},{name="def-BINARY-LONG/R-test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/R-test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/R-test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/R-test",value="\"00017\""},{name="def-COMP-1/R-test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMP-2/R-test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-FLOAT-SHORT/R-test",value="\"8.8800001\""},{name="def-INDEX/R-test",value="\"+0123456789\""},{name="def-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/R-test",value="\"+0000000023\""},{name="def-SIGNED-LONG/R-test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/R-test",value="\"+00025\""},{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""},{name="def-COMP-3/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/R-test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/R-test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/R-test",value="\"-88776654.1223345\""},{name="def-BINARY/R-test",value="\"+000000001.0000000\""},{name="def-BINARY-S/R-test",value="\"-988776654.1223345\""},{name="def-COMP/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""},{name="def-COMP-5/R-test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="header/test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/test",value="\"00000000000000000009\""},{name="def-BINARY-INT/test",value="\"+0000000010\""},{name="def-BINARY-LONG/test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/test",value="\"00017\""},{name="def-COMP-1/test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMP-2/test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-FLOAT-SHORT/test",value="\"8.8800001\""},{name="def-INDEX/test",value="\"+0123456789\""},{name="def-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/test",value="\"+0000000023\""},{name="def-SIGNED-LONG/test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/test",value="\"+00025\""},{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""},{name="def-COMP-3/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/test",value="\"-88776654.1223345\""},{name="def-BINARY/test",value="\"+000000001.0000000\""},{name="def-BINARY-S/test",value="\"-988776654.1223345\""},{name="def-COMP/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{name="def-COMP-5/test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/m ?
-variables=[{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""},{name="def-COMP-3/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/R-test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/R-test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/R-test",value="\"-88776654.1223345\""},{name="def-BINARY/R-test",value="\"+000000001.0000000\""},{name="def-BINARY-S/R-test",value="\"-988776654.1223345\""},{name="def-COMP/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""}]
+variables=[{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""},{name="def-COMP-3/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/test",value="\"-88776654.1223345\""},{name="def-BINARY/test",value="\"+000000001.0000000\""},{name="def-BINARY-S/test",value="\"-988776654.1223345\""},{name="def-COMP/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""}]
 cprint/x #1
-01 def-UNSIGNED-INT/R-test [W-S]  :  0x0000001a
+01 def-UNSIGNED-INT/test [W-S]  :  0x0000001a
 cprint/b #1
-01 def-UNSIGNED-INT/R-test [W-S]  :  0b00000000000000000000000000011010
+01 def-UNSIGNED-INT/test [W-S]  :  0b00000000000000000000000000011010
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -1486,81 +1486,81 @@ cprint/v0 ?
 19 : 01 def-COMP-XX  : 00009887766541223345
 20 : 01 def-DISPLAY  : +988776654.1223345
 cprint/v3 *
- 1 : 01 header/R-test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 6 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 8 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 9 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
-10 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
-11 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
-12 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
-13 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-14 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-15 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-16 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-17 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
-18 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
-19 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
-20 : 01 def-COMP-1/R-test [W-S] : 1.11
-21 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
-22 : 01 def-COMP-2/R-test [W-S] : 2.22
-23 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
-24 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
-25 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
-26 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
-27 : 01 def-FLOAT-SHORT/R-test [W-S] : 8.8800001
-28 : 01 def-INDEX/R-test [W-S] : +0123456789
-29 : 01 def-POINTER/R-test [W-S] : 0x0000000000000000
-30 : 01 def-PROCEDURE-POINTER/R-test [W-S] : 0x0000000000000000
-31 : 01 def-PROGRAM-POINTER/R-test [W-S] : 0x0000000000000000
-32 : 01 def-SIGNED-INT/R-test [W-S] : +0000000023
-33 : 01 def-SIGNED-LONG/R-test [W-S] : +00000000000000000024
-34 : 01 def-SIGNED-SHORT/R-test [W-S] : +00025
-35 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
-36 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
-37 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
-38 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
-39 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
-40 : 01 def-PACKED-DECIMAL/R-test [W-S] : +988776654.1223345
-41 : 01 def-PACKED-DECIMAL-S/R-test [W-S] : -88776654.1223345
-42 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
-43 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
-44 : 01 def-COMP/R-test [W-S] : +988776654.1223345
-45 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
-46 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-47 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-48 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-49 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-50 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-51 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-52 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-53 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
-54 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 6 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 8 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 9 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+10 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+11 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+12 : 01 def-BINARY-INT/test [W-S] : +0000000010
+13 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+14 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+15 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+16 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+17 : 01 def-BINARY-SHORT/test [W-S] : +00015
+18 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+19 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+20 : 01 def-COMP-1/test [W-S] : 1.11
+21 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+22 : 01 def-COMP-2/test [W-S] : 2.22
+23 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+24 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+25 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+26 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+27 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
+28 : 01 def-INDEX/test [W-S] : +0123456789
+29 : 01 def-POINTER/test [W-S] : 0x0000000000000000
+30 : 01 def-PROCEDURE-POINTER/test [W-S] : 0x0000000000000000
+31 : 01 def-PROGRAM-POINTER/test [W-S] : 0x0000000000000000
+32 : 01 def-SIGNED-INT/test [W-S] : +0000000023
+33 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
+34 : 01 def-SIGNED-SHORT/test [W-S] : +00025
+35 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+36 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+37 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
+38 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+39 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+40 : 01 def-PACKED-DECIMAL/test [W-S] : +988776654.1223345
+41 : 01 def-PACKED-DECIMAL-S/test [W-S] : -88776654.1223345
+42 : 01 def-BINARY/test [W-S] : +000000001.0000000
+43 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
+44 : 01 def-COMP/test [W-S] : +988776654.1223345
+45 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+46 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+47 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+48 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+49 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+50 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+51 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+52 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+53 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/v3 ?
- 1 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
- 2 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
- 3 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
- 4 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
- 5 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
- 6 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
- 7 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
- 8 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
- 9 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
-10 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+ 2 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+ 3 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+ 4 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+ 5 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+ 6 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+ 7 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+ 8 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+ 9 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+10 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/x #1
-01 def-COMPUTATIONAL/R-test [W-S]  :  0xffdcdf20f3b03a4f
+01 def-COMPUTATIONAL/test [W-S]  :  0xffdcdf20f3b03a4f
 cprint/m *
-variables=[{name="header/R-test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/R-test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/R-test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/R-test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/R-test",value="\"00000000000000000009\""},{name="def-BINARY-INT/R-test",value="\"+0000000010\""},{name="def-BINARY-LONG/R-test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/R-test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/R-test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/R-test",value="\"00017\""},{name="def-COMP-1/R-test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMP-2/R-test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-FLOAT-SHORT/R-test",value="\"8.8800001\""},{name="def-INDEX/R-test",value="\"+0123456789\""},{name="def-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/R-test",value="\"+0000000023\""},{name="def-SIGNED-LONG/R-test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/R-test",value="\"+00025\""},{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""},{name="def-COMP-3/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/R-test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/R-test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/R-test",value="\"-88776654.1223345\""},{name="def-BINARY/R-test",value="\"+000000001.0000000\""},{name="def-BINARY-S/R-test",value="\"-988776654.1223345\""},{name="def-COMP/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""},{name="def-COMP-5/R-test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="header/test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/test",value="\"00000000000000000009\""},{name="def-BINARY-INT/test",value="\"+0000000010\""},{name="def-BINARY-LONG/test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/test",value="\"00017\""},{name="def-COMP-1/test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMP-2/test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-FLOAT-SHORT/test",value="\"8.8800001\""},{name="def-INDEX/test",value="\"+0123456789\""},{name="def-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/test",value="\"+0000000023\""},{name="def-SIGNED-LONG/test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/test",value="\"+00025\""},{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""},{name="def-COMP-3/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/test",value="\"-88776654.1223345\""},{name="def-BINARY/test",value="\"+000000001.0000000\""},{name="def-BINARY-S/test",value="\"-988776654.1223345\""},{name="def-COMP/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{name="def-COMP-5/test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/m ?
-variables=[{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""},{name="def-COMP-5/R-test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{name="def-COMP-5/test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/x #1
-01 def-COMPUTATIONAL/R-test [W-S]  :  0xffdcdf20f3b03a4f
+01 def-COMPUTATIONAL/test [W-S]  :  0xffdcdf20f3b03a4f
 cprint/b #1
-01 def-COMPUTATIONAL/R-test [W-S]  :  0b1111111111011100110111110010000011110011101100000011101001001111
+01 def-COMPUTATIONAL/test [W-S]  :  0b1111111111011100110111110010000011110011101100000011101001001111
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -1630,144 +1630,144 @@ cprint/v0 ?
  9 : 01 def-COMP-XX  : 00009887766541223345
 10 : 01 def-DISPLAY  : +988776654.1223345
 cprint/v3 *
- 1 : 01 header/R-test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
- 2 : 01 withpic/R-test [W-S] : "$    1.23+"
- 3 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 4 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 5 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 6 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 7 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 8 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 9 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
-10 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
-11 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
-12 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
-13 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-14 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-15 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-16 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-17 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
-18 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
-19 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
-20 : 01 def-COMP-1/R-test [W-S] : 1.11
-21 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
-22 : 01 def-COMP-2/R-test [W-S] : 2.22
-23 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
-24 : 01 def-FLOAT-DECIMAL-16/R-test [W-S] : 5.55
-25 : 01 def-FLOAT-DECIMAL-34/R-test [W-S] : 9.999999999999999999999999999999999e33
-26 : 01 def-FLOAT-LONG/R-test [W-S] : 7.77
-27 : 01 def-FLOAT-SHORT/R-test [W-S] : 8.8800001
-28 : 01 def-INDEX/R-test [W-S] : +0123456789
-29 : 01 def-POINTER/R-test [W-S] : 0x0000000000000000
-30 : 01 def-PROCEDURE-POINTER/R-test [W-S] : 0x0000000000000000
-31 : 01 def-PROGRAM-POINTER/R-test [W-S] : 0x0000000000000000
-32 : 01 def-SIGNED-INT/R-test [W-S] : +0000000023
-33 : 01 def-SIGNED-LONG/R-test [W-S] : +00000000000000000024
-34 : 01 def-SIGNED-SHORT/R-test [W-S] : +00025
-35 : 01 def-UNSIGNED-INT/R-test [W-S] : 0000000026
-36 : 01 def-UNSIGNED-LONG/R-test [W-S] : 00000000000000000027
-37 : 01 def-UNSIGNED-SHORT/R-test [W-S] : 00028
-38 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
-39 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
-40 : 01 def-PACKED-DECIMAL/R-test [W-S] : +988776654.1223345
-41 : 01 def-PACKED-DECIMAL-S/R-test [W-S] : -88776654.1223345
-42 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
-43 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
-44 : 01 def-COMP/R-test [W-S] : +988776654.1223345
-45 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
-46 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-47 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-48 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-49 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-50 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-51 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-52 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-53 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
-54 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 header/test [W-S] : "An extravaganza of variables!", ' ' <repeats 11 times>
+ 2 : 01 withpic/test [W-S] : "$    1.23+"
+ 3 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 4 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 5 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 6 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 7 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 8 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 9 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+10 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+11 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+12 : 01 def-BINARY-INT/test [W-S] : +0000000010
+13 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+14 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+15 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+16 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+17 : 01 def-BINARY-SHORT/test [W-S] : +00015
+18 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+19 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+20 : 01 def-COMP-1/test [W-S] : 1.11
+21 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+22 : 01 def-COMP-2/test [W-S] : 2.22
+23 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+24 : 01 def-FLOAT-DECIMAL-16/test [W-S] : 5.55
+25 : 01 def-FLOAT-DECIMAL-34/test [W-S] : 9.999999999999999999999999999999999e33
+26 : 01 def-FLOAT-LONG/test [W-S] : 7.77
+27 : 01 def-FLOAT-SHORT/test [W-S] : 8.8800001
+28 : 01 def-INDEX/test [W-S] : +0123456789
+29 : 01 def-POINTER/test [W-S] : 0x0000000000000000
+30 : 01 def-PROCEDURE-POINTER/test [W-S] : 0x0000000000000000
+31 : 01 def-PROGRAM-POINTER/test [W-S] : 0x0000000000000000
+32 : 01 def-SIGNED-INT/test [W-S] : +0000000023
+33 : 01 def-SIGNED-LONG/test [W-S] : +00000000000000000024
+34 : 01 def-SIGNED-SHORT/test [W-S] : +00025
+35 : 01 def-UNSIGNED-INT/test [W-S] : 0000000026
+36 : 01 def-UNSIGNED-LONG/test [W-S] : 00000000000000000027
+37 : 01 def-UNSIGNED-SHORT/test [W-S] : 00028
+38 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+39 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+40 : 01 def-PACKED-DECIMAL/test [W-S] : +988776654.1223345
+41 : 01 def-PACKED-DECIMAL-S/test [W-S] : -88776654.1223345
+42 : 01 def-BINARY/test [W-S] : +000000001.0000000
+43 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
+44 : 01 def-COMP/test [W-S] : +988776654.1223345
+45 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+46 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+47 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+48 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+49 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+50 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+51 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+52 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+53 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+54 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/v3 ?
- 1 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
- 2 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
- 3 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
- 4 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
- 5 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
- 6 : 01 def-DISPLAY/R-test [W-S] : +988776654.1223345
+ 1 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+ 2 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+ 3 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+ 4 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+ 5 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
+ 6 : 01 def-DISPLAY/test [W-S] : +988776654.1223345
 cprint/x #1
-01 def-COMPUTATIONAL-5/R-test [W-S]  :  0xffdcdf20f3b03a4f
+01 def-COMPUTATIONAL-5/test [W-S]  :  0xffdcdf20f3b03a4f
 cprint/m *
-variables=[{name="header/R-test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/R-test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/R-test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/R-test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/R-test",value="\"003\""},{name="def-BINARY-C-LONG/R-test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/R-test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/R-test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/R-test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/R-test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/R-test",value="\"00000000000000000009\""},{name="def-BINARY-INT/R-test",value="\"+0000000010\""},{name="def-BINARY-LONG/R-test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/R-test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/R-test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/R-test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/R-test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/R-test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/R-test",value="\"00017\""},{name="def-COMP-1/R-test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/R-test",value="\"3.3299999\""},{name="def-COMP-2/R-test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/R-test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/R-test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/R-test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/R-test",value="\"7.77\""},{name="def-FLOAT-SHORT/R-test",value="\"8.8800001\""},{name="def-INDEX/R-test",value="\"+0123456789\""},{name="def-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/R-test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/R-test",value="\"+0000000023\""},{name="def-SIGNED-LONG/R-test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/R-test",value="\"+00025\""},{name="def-UNSIGNED-INT/R-test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/R-test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/R-test",value="\"00028\""},{name="def-COMP-3/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/R-test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/R-test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/R-test",value="\"-88776654.1223345\""},{name="def-BINARY/R-test",value="\"+000000001.0000000\""},{name="def-BINARY-S/R-test",value="\"-988776654.1223345\""},{name="def-COMP/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/R-test",value="\"-988776654.1223345\""},{name="def-COMP-4/R-test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/R-test",value="\"-988776654.1223345\""},{name="def-COMP-5/R-test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="header/test",value="\"\\\"An extravaganza of variables!\\\", ' ' <repeats 11 times>\""},{name="withpic/test",value="\"\\\"$    1.23+\\\"\""},{name="def-BINARY-CHAR/test",value="\"+123\""},{name="def-BINARY-CHAR-SIGNED/test",value="\"-002\""},{name="def-BINARY-CHAR-UNSIGNED/test",value="\"003\""},{name="def-BINARY-C-LONG/test",value="\"+00000000000000000004\""},{name="def-BINARY-C-LONG-SIGNED/test",value="\"-00000000000000000005\""},{name="def-BINARY-C-LONG-UNSIGNED/test",value="\"00000000000000000006\""},{name="def-BINARY-DOUBLE/test",value="\"+00000000000000000007\""},{name="def-BINARY-DOUBLE-SIGNED/test",value="\"-00000000000000000008\""},{name="def-BINARY-DOUBLE-UNSIGNED/test",value="\"00000000000000000009\""},{name="def-BINARY-INT/test",value="\"+0000000010\""},{name="def-BINARY-LONG/test",value="\"+0000000011\""},{name="def-BINARY-LONG-SIGNED/test",value="\"-0000000012\""},{name="def-BINARY-LONG-UNSIGNED/test",value="\"0000000013\""},{name="def-BINARY-LONG-LONG/test",value="\"+00000000000000000014\""},{name="def-BINARY-SHORT/test",value="\"+00015\""},{name="def-BINARY-SHORT-SIGNED/test",value="\"-00016\""},{name="def-BINARY-SHORT-UNSIGNED/test",value="\"00017\""},{name="def-COMP-1/test",value="\"1.11\""},{name="def-COMPUTATIONAL-1/test",value="\"3.3299999\""},{name="def-COMP-2/test",value="\"2.22\""},{name="def-COMPUTATIONAL-2/test",value="\"4.44\""},{name="def-FLOAT-DECIMAL-16/test",value="\"5.55\""},{name="def-FLOAT-DECIMAL-34/test",value="\"9.999999999999999999999999999999999e33\""},{name="def-FLOAT-LONG/test",value="\"7.77\""},{name="def-FLOAT-SHORT/test",value="\"8.8800001\""},{name="def-INDEX/test",value="\"+0123456789\""},{name="def-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROCEDURE-POINTER/test",value="\"0x0000000000000000\""},{name="def-PROGRAM-POINTER/test",value="\"0x0000000000000000\""},{name="def-SIGNED-INT/test",value="\"+0000000023\""},{name="def-SIGNED-LONG/test",value="\"+00000000000000000024\""},{name="def-SIGNED-SHORT/test",value="\"+00025\""},{name="def-UNSIGNED-INT/test",value="\"0000000026\""},{name="def-UNSIGNED-LONG/test",value="\"00000000000000000027\""},{name="def-UNSIGNED-SHORT/test",value="\"00028\""},{name="def-COMP-3/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-3/test",value="\"-988776654.1223345\""},{name="def-PACKED-DECIMAL/test",value="\"+988776654.1223345\""},{name="def-PACKED-DECIMAL-S/test",value="\"-88776654.1223345\""},{name="def-BINARY/test",value="\"+000000001.0000000\""},{name="def-BINARY-S/test",value="\"-988776654.1223345\""},{name="def-COMP/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL/test",value="\"-988776654.1223345\""},{name="def-COMP-4/test",value="\"+988776654.1223345\""},{name="def-COMPUTATIONAL-4/test",value="\"-988776654.1223345\""},{name="def-COMP-5/test",value="\"+0000988776654.1223345\""},{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/m ?
-variables=[{name="def-COMPUTATIONAL-5/R-test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/R-test",value="\"88776654.1223345\""},{name="def-COMP-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/R-test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/R-test",value="\"00009887766541223345\""},{name="def-DISPLAY/R-test",value="\"+988776654.1223345\""}]
+variables=[{name="def-COMPUTATIONAL-5/test",value="\"-0000988776654.1223345\""},{name="def-COMP-6/test",value="\"88776654.1223345\""},{name="def-COMP-X/test",value="\"+0988776654.1223345\""},{name="def-COMPUTATIONAL-X/test",value="\"+0988776654.1223345\""},{name="def-COMP-XX/test",value="\"00009887766541223345\""},{name="def-DISPLAY/test",value="\"+988776654.1223345\""}]
 cprint/x #1
-01 def-COMPUTATIONAL-5/R-test [W-S]  :  0xffdcdf20f3b03a4f
+01 def-COMPUTATIONAL-5/test [W-S]  :  0xffdcdf20f3b03a4f
 cprint/b #1
-01 def-COMPUTATIONAL-5/R-test [W-S]  :  0b1111111111011100110111110010000011110011101100000011101001001111
+01 def-COMPUTATIONAL-5/test [W-S]  :  0b1111111111011100110111110010000011110011101100000011101001001111
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint com
 Multiple (16) symbols match "com" in current context
 cprint com!
- 1 : 01 def-COMP-1/R-test [W-S] : 1.11
- 2 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
- 3 : 01 def-COMP-2/R-test [W-S] : 2.22
- 4 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
- 5 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
- 6 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
- 7 : 01 def-COMP/R-test [W-S] : +988776654.1223345
- 8 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
- 9 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-10 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-11 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-12 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-13 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-14 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-15 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-16 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
+ 1 : 01 def-COMP-1/test [W-S] : 1.11
+ 2 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+ 3 : 01 def-COMP-2/test [W-S] : 2.22
+ 4 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+ 5 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+ 6 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+ 7 : 01 def-COMP/test [W-S] : +988776654.1223345
+ 8 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+ 9 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+10 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+11 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+12 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+13 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+14 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+15 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+16 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
 cprint *com
 No symbols match "*com" in current context
 cprint com*
 No symbols match "com*" in current context
 cprint *com*
- 1 : 01 def-COMP-1/R-test [W-S] : 1.11
- 2 : 01 def-COMPUTATIONAL-1/R-test [W-S] : 3.3299999
- 3 : 01 def-COMP-2/R-test [W-S] : 2.22
- 4 : 01 def-COMPUTATIONAL-2/R-test [W-S] : 4.44
- 5 : 01 def-COMP-3/R-test [W-S] : +988776654.1223345
- 6 : 01 def-COMPUTATIONAL-3/R-test [W-S] : -988776654.1223345
- 7 : 01 def-COMP/R-test [W-S] : +988776654.1223345
- 8 : 01 def-COMPUTATIONAL/R-test [W-S] : -988776654.1223345
- 9 : 01 def-COMP-4/R-test [W-S] : +988776654.1223345
-10 : 01 def-COMPUTATIONAL-4/R-test [W-S] : -988776654.1223345
-11 : 01 def-COMP-5/R-test [W-S] : +0000988776654.1223345
-12 : 01 def-COMPUTATIONAL-5/R-test [W-S] : -0000988776654.1223345
-13 : 01 def-COMP-6/R-test [W-S] : 88776654.1223345
-14 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
-15 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
-16 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
+ 1 : 01 def-COMP-1/test [W-S] : 1.11
+ 2 : 01 def-COMPUTATIONAL-1/test [W-S] : 3.3299999
+ 3 : 01 def-COMP-2/test [W-S] : 2.22
+ 4 : 01 def-COMPUTATIONAL-2/test [W-S] : 4.44
+ 5 : 01 def-COMP-3/test [W-S] : +988776654.1223345
+ 6 : 01 def-COMPUTATIONAL-3/test [W-S] : -988776654.1223345
+ 7 : 01 def-COMP/test [W-S] : +988776654.1223345
+ 8 : 01 def-COMPUTATIONAL/test [W-S] : -988776654.1223345
+ 9 : 01 def-COMP-4/test [W-S] : +988776654.1223345
+10 : 01 def-COMPUTATIONAL-4/test [W-S] : -988776654.1223345
+11 : 01 def-COMP-5/test [W-S] : +0000988776654.1223345
+12 : 01 def-COMPUTATIONAL-5/test [W-S] : -0000988776654.1223345
+13 : 01 def-COMP-6/test [W-S] : 88776654.1223345
+14 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+15 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+16 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
 cprint def-b*
- 1 : 01 def-BINARY-CHAR/R-test [W-S] : +123
- 2 : 01 def-BINARY-CHAR-SIGNED/R-test [W-S] : -002
- 3 : 01 def-BINARY-CHAR-UNSIGNED/R-test [W-S] : 003
- 4 : 01 def-BINARY-C-LONG/R-test [W-S] : +00000000000000000004
- 5 : 01 def-BINARY-C-LONG-SIGNED/R-test [W-S] : -00000000000000000005
- 6 : 01 def-BINARY-C-LONG-UNSIGNED/R-test [W-S] : 00000000000000000006
- 7 : 01 def-BINARY-DOUBLE/R-test [W-S] : +00000000000000000007
- 8 : 01 def-BINARY-DOUBLE-SIGNED/R-test [W-S] : -00000000000000000008
- 9 : 01 def-BINARY-DOUBLE-UNSIGNED/R-test [W-S] : 00000000000000000009
-10 : 01 def-BINARY-INT/R-test [W-S] : +0000000010
-11 : 01 def-BINARY-LONG/R-test [W-S] : +0000000011
-12 : 01 def-BINARY-LONG-SIGNED/R-test [W-S] : -0000000012
-13 : 01 def-BINARY-LONG-UNSIGNED/R-test [W-S] : 0000000013
-14 : 01 def-BINARY-LONG-LONG/R-test [W-S] : +00000000000000000014
-15 : 01 def-BINARY-SHORT/R-test [W-S] : +00015
-16 : 01 def-BINARY-SHORT-SIGNED/R-test [W-S] : -00016
-17 : 01 def-BINARY-SHORT-UNSIGNED/R-test [W-S] : 00017
-18 : 01 def-BINARY/R-test [W-S] : +000000001.0000000
-19 : 01 def-BINARY-S/R-test [W-S] : -988776654.1223345
+ 1 : 01 def-BINARY-CHAR/test [W-S] : +123
+ 2 : 01 def-BINARY-CHAR-SIGNED/test [W-S] : -002
+ 3 : 01 def-BINARY-CHAR-UNSIGNED/test [W-S] : 003
+ 4 : 01 def-BINARY-C-LONG/test [W-S] : +00000000000000000004
+ 5 : 01 def-BINARY-C-LONG-SIGNED/test [W-S] : -00000000000000000005
+ 6 : 01 def-BINARY-C-LONG-UNSIGNED/test [W-S] : 00000000000000000006
+ 7 : 01 def-BINARY-DOUBLE/test [W-S] : +00000000000000000007
+ 8 : 01 def-BINARY-DOUBLE-SIGNED/test [W-S] : -00000000000000000008
+ 9 : 01 def-BINARY-DOUBLE-UNSIGNED/test [W-S] : 00000000000000000009
+10 : 01 def-BINARY-INT/test [W-S] : +0000000010
+11 : 01 def-BINARY-LONG/test [W-S] : +0000000011
+12 : 01 def-BINARY-LONG-SIGNED/test [W-S] : -0000000012
+13 : 01 def-BINARY-LONG-UNSIGNED/test [W-S] : 0000000013
+14 : 01 def-BINARY-LONG-LONG/test [W-S] : +00000000000000000014
+15 : 01 def-BINARY-SHORT/test [W-S] : +00015
+16 : 01 def-BINARY-SHORT-SIGNED/test [W-S] : -00016
+17 : 01 def-BINARY-SHORT-UNSIGNED/test [W-S] : 00017
+18 : 01 def-BINARY/test [W-S] : +000000001.0000000
+19 : 01 def-BINARY-S/test [W-S] : -988776654.1223345
 cprint *x
- 1 : 01 def-INDEX/R-test [W-S] : +0123456789
- 2 : 01 def-COMP-X/R-test [W-S] : +0988776654.1223345
- 3 : 01 def-COMPUTATIONAL-X/R-test [W-S] : +0988776654.1223345
- 4 : 01 def-COMP-XX/R-test [W-S] : 00009887766541223345
+ 1 : 01 def-INDEX/test [W-S] : +0123456789
+ 2 : 01 def-COMP-X/test [W-S] : +0988776654.1223345
+ 3 : 01 def-COMPUTATIONAL-X/test [W-S] : +0988776654.1223345
+ 4 : 01 def-COMP-XX/test [W-S] : 00009887766541223345
 cprint com
 Multiple (16) symbols match "com" in current context
 cprint com!
