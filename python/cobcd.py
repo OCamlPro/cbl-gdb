@@ -713,12 +713,19 @@ def GetPointerTo(name):
                     and result.dereference().type.code == gdb.TYPE_CODE_PTR:
         # 'result' is a pointer to a pointer, so we need to pick up
         # the value of the pointer:
-        pointer = int(gdb.parse_and_eval(name))
+        if sys.version[0] == '2':
+            result = result.referenced_value()
+            pointer  = int(str(result).split()[0], 16)
+        else:
+            pointer = int(gdb.parse_and_eval(name))
     else:
         # Otherwise, it was defined as the name of a block of some kind:
         # " char name[22] " or "cob_field name", or "int".  In that case,
         # 'result' already is the answer we need
-        pointer = int(result)
+        if sys.version[0] == '2':
+            pointer  = int(str(result).split()[0], 16)
+        else:
+            pointer = int(result)
 
     return pointer
 
