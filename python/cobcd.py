@@ -2252,25 +2252,7 @@ class CobolVariable():
                 # we have to make sure we know which one we are dealing
                 # with.
 
-                # Pick up the decimal line number where we are trapped
-                line_number = -1
-                command = "frame"
-                frame_string = GdbExecute(currentframe(), command)
-                # Look for a number after a colon
-                nfound = frame_string.find(':')
-                if nfound > -1:
-                    frame_string = frame_string[nfound + 1:]
-                    frame_string = frame_string.split()
-                    try:
-                        line_number = int(frame_string[0])
-                    except:   # TODO: use appropriate exception
-                        line_number = -1
-
-                # print("Trapped at ", line_number)
-                # We know we are trapped at line_number
-
-                # Look up the program-id of that line_number
-                program_id = GV_ModuleInformation.line_list.Find(line_number)
+                program_id = GV_ModuleInformation.line_list.Find(GV_ModuleState.current_trapped_line)
                 # print("in :", program_id)
 
                 #
