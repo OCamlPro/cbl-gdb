@@ -4455,7 +4455,20 @@ class ModuleState():
         # if you also want to be able to handle code in COPYBOOKs.
 
         try:
+            # When working with RHEL8/GDB-8.2, test004 of CWATCH D caused a
+            # trap inside libcob, which happens not to have debugging information.
+            # This code is an empirical attempt at getting past that.
+
+            # It's possible for us to trap in a frame without debugging information.
+            # If necessary, walk up the stack looking for a frame with debugging information
             current_frame = gdb.selected_frame()
+            while True:
+                st = current_frame.find_sal().symtab
+                if st:
+                    # We have found a frame with debugging information
+                    break
+                current_frame = current_frame.older()
+                current_frame.select()
 
             # Get the frame number and filename from current frame:
             frame_from_frame = CFrameWorker.get_frame_level(current_frame)
@@ -4546,6 +4559,8 @@ class ModuleState():
                     return False
 
         except:   # TODO: use appropriate exception
+            print("ProcessStack exception")
+            traceback.print_exc()
             self.current_trapped_routine = ""
             self.current_trapped_file = ""
             self.current_trapped_frame = -1
