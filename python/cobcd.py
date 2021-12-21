@@ -4338,7 +4338,9 @@ class ModuleInformation():
         self.perform_commands = {}
 
         # ensure GDB can resolve dynamic field references
-        gdb.execute("macro define COB_SET_DATA(x, z) (x.data = z, &x)", True, False)
+        if GV_GlobalVariables.gdb_version < 80000 or GV_GlobalVariables.gdb_version > 80200:
+            # With RedHat 7 and GDB-8.2, this next statement throws an error
+            gdb.execute("macro define COB_SET_DATA(x, z) (x.data = z, &x)", True, False)
 
         # Load the new tables
         # Pull apart the variable_string
