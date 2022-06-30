@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 ################################################################################
-# Copyright (c) 2019-2021 COBOLworx and contributors
+# Copyright (c) 2019-2022 COBOLworx and contributors
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -118,6 +118,11 @@ def SubprocessCall(command,suppress_error) :
         resultcode = subprocess.call(command)
     except subprocess.CalledProcessError as err:
         resultcode = err.returncode
+    except KeyboardInterrupt:
+        if not suppress_error :
+            print("The following command was interrupted:")
+            print("   ", ' '.join(command))
+        resultcode = 1
     except OSError as err:
         if not suppress_error :
             print("(1) Something went wrong with the command:")
