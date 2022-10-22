@@ -314,6 +314,29 @@ build(PARAMETERS &params,
     while(fgets(ach,sizeof(ach),fd)) {
         i += 1;
 
+        // With the advent of GnuCOBOL 3.2, the problem of #line information
+        // not finding its way into the .debug_line section reared its ugly head
+        // again.  Empirically, I discovered that
+        //
+        //     .loc 2 125 25 is_stmt 0 discriminator 1
+        //
+        // didn't work, while
+        //
+        //     .loc 2 125 25 is_stmt 1 discriminator 1
+        //
+        // apparently did.
+        //
+        // So, here we are:
+
+        if( strstr(ach, "\t.loc ") EQ ach )
+            {
+            char *p = strstr(ach, "is_stmt 0");
+            if( p )
+                {
+                p[8] = '1';
+                }
+            }
+
         // Simon Sobisch, in order to facilitate file number mappings back to
         // the program.cob text, has inserted cob_nop() calls before the
         // beginning of the generated C for each COBOL statement.
