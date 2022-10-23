@@ -244,6 +244,108 @@ ExtractLOCData(char *s, int &fileno, char **ppRemainder )
     *ppRemainder = p;
 }
 
+static bool
+pseudo_strstr( const char *data, const char *find_me )
+    {
+    bool retval = false;
+    int index = 0;
+    char ch;
+    char ch2;
+    for(;;)
+        {
+        ch = *data++;
+        if( ch == '\n' )
+            {
+            break;
+            }
+        ch2 = find_me[index++];
+        if( ch2 == '\0' )
+            {
+            break;
+            }
+
+        if( ch != ch2 )
+            {
+            index = 0;
+            retval = false;
+            }
+        else
+            {
+            retval = true;
+            }
+        }
+    return retval;
+    }
+
+
+static
+void purge_cob_nop(WHOLEFILE &fd)
+    {
+    // With the advent of GNUCobol 3.2, this construction became ubiquitous in 
+    // the .s file:
+    /*
+          movq	module.116(%rip), %rax
+          testq	%rax, %rax
+          jne	.L85
+          .loc 2 196 3 is_stmt 0 discriminator 1
+          call	cob_nop@PLT
+      .L85:
+    */
+    // That was done in order to keep GCC from optimizing away code necessary
+    // for sensible GDB/COBCD debugging.  But in that form, GDB still couldn't
+    // work with it, and, besides, it left a lot of unnecessary cruft in the
+    // the executable file.
+
+    // This code finds the five lines prior to the .Lxx: label, and comments
+    // them out by replacing the first character with '#'
+
+    char ach[OVERSIZED];
+
+    size_t stack[5] = {0,0,0,0,0};
+    fd.current_index = 0;
+    for(;;)
+      {
+      stack[0] = stack[1];
+      stack[1] = stack[2];
+      stack[2] = stack[3];
+      stack[3] = stack[4];
+      stack[4] = fd.current_index;
+
+      if( !fgets(ach,sizeof(ach),fd)) 
+          {
+          break;
+          }
+      char *p = strstr(ach, "cob_nop");
+      if( !p )
+          {
+          continue;
+          }
+
+      if( !pseudo_strstr(fd.data+stack[0], "movq") )
+          {
+          continue;
+          } 
+      if( !pseudo_strstr(fd.data+stack[1], "testq") )
+          {
+          continue;
+          } 
+      if( !pseudo_strstr(fd.data+stack[2], "jne") )
+          {
+          continue;
+          } 
+      if( !pseudo_strstr(fd.data+stack[3], "loc") )
+          {
+          continue;
+          } 
+
+      fd.data[stack[0]] = '#';
+      fd.data[stack[1]] = '#';
+      fd.data[stack[2]] = '#';
+      fd.data[stack[3]] = '#';
+      fd.data[stack[4]] = '#';
+      }
+    }
+
 void
 build(PARAMETERS &params,
       map<string,int> &input_file_mappings,
@@ -252,6 +354,8 @@ build(PARAMETERS &params,
       VINT &function_references)
 {
     //PROFILER;
+
+    purge_cob_nop(fd);
 
     string name = params.s_output_filename.WholePath();
     FILE *f = fopen(name.c_str(),"w");
@@ -357,7 +461,7 @@ build(PARAMETERS &params,
         // traps at line 123
         // But if I turn the cob_nop into an actual nop, then it works
 
-        if( strstr(ach,"call\tcob_nop") ) {
+        if( ach[0] != '#' AND strstr(ach,"call\tcob_nop") ) {
             continue;
         }
 
@@ -388,7 +492,7 @@ build(PARAMETERS &params,
             }
 
             while( fgets(ach2,sizeof(ach2),fd) ) {
-                if( strstr(ach2,".loc") AND (strstr(ach2,".loc ") OR strstr(ach2,".loc\t")) ) {
+                if( ach2[0] != '#' AND strstr(ach2,".loc") AND (strstr(ach2,".loc ") OR strstr(ach2,".loc\t")) ) {
                     int old_num;
                     char *premainder;
                     ExtractLOCData(ach2,old_num,&premainder);
@@ -417,7 +521,7 @@ build(PARAMETERS &params,
         }
 #endif
 
-        if( strstr(ach,".loc") AND (strstr(ach,".loc ") OR strstr(ach,".loc\t")) ) {
+        if( ach[0] != '#' AND strstr(ach,".loc") AND (strstr(ach,".loc ") OR strstr(ach,".loc\t")) ) {
             int oldnum;
             char *premainder;
             ExtractLOCData(ach,oldnum,&premainder);
