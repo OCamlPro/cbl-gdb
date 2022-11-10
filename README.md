@@ -6,7 +6,8 @@ These are the source files for building the tools that make up the COBOLworx deb
 
 You'll need to have GnuCOBOL Version 3.1 (or later) installed.  3.1 has features needed by these extensions.
 
-These tools are known to compile with GCC-4.8.5 and later.  They have been demonstrated to work on Centos7/RHEL7, Centos8/RHEL8, and Ubuntu18.4
+These tools are known to compile with GCC-4.8.5 and later.  They have been demonstrated to work on Centos7/RHEL7, Centos8/RHEL8, and Ubuntu18.4.
+During building the binaries `xxd` and possibly `sed` are necessary, too.
 
 Actual debugging requires that your version of GDB was compiled with Python2 or Python3 support.  The default installations of GDB in the above-mentioned operating systems are known to have Python support.
 
