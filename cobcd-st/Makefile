@@ -19,11 +19,12 @@ $(project) : $(obj)
 cobst.cpp : cobcd_py.h
 	
 cobcd_py.h : ../python/cobcd.py
-	xxd -i ../python/cobcd.py >cobcd_py.h
+	xxd -i ../python/cobcd.py >cobcd_py.new.h
+	mv cobcd_py.new.h cobcd_py.h
 
 .PHONY: clean
 clean:
-	@rm -f $(obj) $(project) $(dep) cobcd_py.h
+	@rm -f $(obj) $(project) $(dep) cobcd_py*.h
 
 .PHONY: pregit
 pregit:
