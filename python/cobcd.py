@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 ################################################################################
-# Copyright (c) 2019-2021 COBOLworx and contributors
+# Copyright (c) 2019-2022 COBOLworx and contributors
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -734,13 +734,16 @@ def AddEmUp(tokens, index):
     try:
         # FIXME: This won't work at all for OCCURS DEPENDING ON and needs adjustments both
         #        here and in cobcd-st, see https://gitlab.cobolworx.com/COBOLworx/cbl-gdb/-/issues/78
+        #        but it resolves nearly all cases *if* full symbol information is there
         return int(gdb.parse_and_eval(expression or "0"))
     except gdb.error as ex:
-        print("error in parsing the expression \'{0}\' from index {1} in {2}:".format(expression, index, tokens))
-        print(str(ex))
+        if GV_GlobalVariables.debug_level.value >= 1:
+            print("error in parsing the expression \'{0}\' from index {1} in {2}:".format(expression, index, tokens))
+            print(str(ex))
+        else:
+            print("WARNING: Can't completely parse VARIABLE_STRING for", tokens[2],"- not all access to sub-fields will work")
         # at least don't break the complete parsing
         return 0
-
 
 def process_left_right_args(args):
     # We accept a string, and we return one or two lists of strings
@@ -5122,6 +5125,13 @@ class CPrintWorker():
         GV_ModuleState.sticky_display_mode = os.environ.get("CPRINT_V", '0')
         GV_ModuleState.sticky_pretty_mode = os.environ.get("CPRINT_P", '')
         self.machine_interface_mode = False
+
+        # ensure GDB can resolve dynamic field references in parse_and_eval
+        try:
+           gdb.execute("macro define COB_SET_DATA(x, z) (x.data = z, &x)", True, False)
+        except:
+            pass   # failed in some cases (GDB version and/or already defined?) - ignore
+
 
     @staticmethod
     def ProcessSlashV(args):
