@@ -69,7 +69,7 @@ GV_noisy_registration = False
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
-COBCD_VERSION = '[Version 4.30.0]'
+COBCD_VERSION = '[Version 4.28.4]'
 
 #   This module implements the gdb extension commands like cprint and cwatch
 #   It is executed by GDB.
@@ -757,21 +757,40 @@ def ExpressionEvaluate(expression):
         #
         #       10*(*(cob_u8_ptr)(b_8))
         #
-        print("The expression is", expression)
+        #print("The expression is", expression)
         #
-        # The rirst order of business is to eliminate the "(*(cob_u8_ptr)",
-        # which for our purposes is irrelevant
+        # The first order of business is to eliminate the "(*(cob_u8_ptr)",
+        # which for our purposes is irrelevant.
         #
+        # It turns out there are other things we need to get rid of:
         expr = re.sub("[*][()]cob.*_ptr[)]", "", expression)
-        print("The expr is", expr)
+        expr = re.sub("[(]unsignedint[)]COB_BSWAP_32", "", expr)
+        expr = re.sub("[(]unsignedshort[)]COB_BSWAP_16", "", expr)
+        expr = re.sub(r"[*][(]short[*][)]", "", expr)
+        expr = re.sub(r"[(]short[)]COB_BSWAP_16", "", expr)
+        expr = re.sub(r"[(]int[)]COB_BSWAP_32", "", expr)
+        #print("The final expr is", expr)
 
+        # We are going to walk expr, replacing each b_xxx with its current
+        # numerical value:
         while True:
+            match = re.search(r"^(.*)(b_[0-9])(.*)$", expr)
+            if not match:
+                break
+
+            the_name = None
+            for payload in GV_ModuleInformation.var_trie.storage_list:
+                if payload.Bname == match.group(2):
+                    the_name = payload.Name
+                    break;
+            if the_name:
+                the_value, limit_reached = IntegerOrVariable(the_name)
+                # We now reassemble the expr using the integer:
+                expr = match.group(1) + str(the_value) + match.group(3)
             break
+        retval = AddEmUp(expr)
 
     return retval
-
-def GetLengthFromExpression(expression):
-    return ExpressionEvaluate(expression)
 
 def process_left_right_args(args):
     # We accept a string, and we return one or two lists of strings
@@ -1812,7 +1831,7 @@ class CobolVariable():
         if self.Refmod:
             print("   RefmodOffset:", self.RefmodOffset)
             print("   RefmodLength:", self.RefmodLength)
-        print("         Length:", GetLengthFromExpression(self.LengthExpression))
+        print("         Length:", ExpressionEvaluate(self.LengthExpression))
         if self.index_of_granddaddy is not None:
             print(" len(self.data):", len(self.Data()))
         print("       AttrType:", self.AttrType)
@@ -2020,7 +2039,7 @@ class CobolVariable():
                         self.SubscriptFailure = True
                         ConditionalRaise(msg)
                         break
-                    TableOffset += (subscript - 1) * GetLengthFromExpression(variable.LengthExpression)
+                    TableOffset += (subscript - 1) * ExpressionEvaluate(variable.LengthExpression)
                 if not variable.index_of_parent:
                     break
                 variable = GV_ModuleInformation.var_trie.storage_list[variable.index_of_parent]
@@ -2094,27 +2113,27 @@ class CobolVariable():
                     return
             else:
                 # No value was specified, so make it the maximum
-                length = GetLengthFromExpression(self.LengthExpression) - offset + 1
+                length = ExpressionEvaluate(self.LengthExpression) - offset + 1
 
-            if length < 1 or length > GetLengthFromExpression(self.LengthExpression):
+            if length < 1 or length > ExpressionEvaluate(self.LengthExpression):
                 self.RefmodFailure = True
-                msg = "The refmod {0} length has to be between 1 and {1}".format(self.Refmod, GetLengthFromExpression(self.LengthExpression))
-                # msg = "The length {0} has to be between 0 and {1}".format(length, GetLengthFromExpression(self.LengthExpression))
+                msg = "The refmod {0} length has to be between 1 and {1}".format(self.Refmod, ExpressionEvaluate(self.LengthExpression))
+                # msg = "The length {0} has to be between 0 and {1}".format(length, ExpressionEvaluate(self.LengthExpression))
                 ConditionalRaise(msg)
                 return
 
-            if offset - 1 >= GetLengthFromExpression(self.LengthExpression):
+            if offset - 1 >= ExpressionEvaluate(self.LengthExpression):
                 self.RefmodFailure = True
-                msg = "The refmod {0} offset has to be less than {1}".format(self.Refmod, GetLengthFromExpression(self.LengthExpression))
-                # msg = "The refmod {0} length has to be between 1 and {1}".format(self.Refmod, GetLengthFromExpression(self.LengthExpression))
+                msg = "The refmod {0} offset has to be less than {1}".format(self.Refmod, ExpressionEvaluate(self.LengthExpression))
+                # msg = "The refmod {0} length has to be between 1 and {1}".format(self.Refmod, ExpressionEvaluate(self.LengthExpression))
                 ConditionalRaise(msg)
                 return
-            if offset - 1 + length > GetLengthFromExpression(self.LengthExpression):
+            if offset - 1 + length > ExpressionEvaluate(self.LengthExpression):
                 # The requested refmod would overrun the end of the variable.
                 # Silently trim it for the user:
                 # FIXME: this should never be done, either "ok"/"warn" and use as-is, or ConditionalRaise
-                # msg = "The refmod {0} exceeds the field size {1}".format(self.Refmod, GetLengthFromExpression(self.LengthExpression))
-                length = GetLengthFromExpression(self.LengthExpression) - (offset - 1)
+                # msg = "The refmod {0} exceeds the field size {1}".format(self.Refmod, ExpressionEvaluate(self.LengthExpression))
+                length = ExpressionEvaluate(self.LengthExpression) - (offset - 1)
 
             self.RefmodOffset = offset - 1  # Note that RefmodOffset is zero-based
             self.RefmodLength = length
@@ -2130,7 +2149,7 @@ class CobolVariable():
 
     def FetchVariableDataInternal(self):
         #print("FetchVariableData:", self.Name, self.Section)
-        #print("FetchVariableData", self.Name, self.IsDirty(), self.ReferenceOffset, GetLengthFromExpression(self.LengthExpression))
+        #print("FetchVariableData", self.Name, self.IsDirty(), self.ReferenceOffset, ExpressionEvaluate(self.LengthExpression))
 
         # We have to do this work every time.  This might be the first time
         # through, or something might have changed underneath us, like a table subscript
@@ -2330,7 +2349,7 @@ class CobolVariable():
             # print("self.RefmodOffset    ", self.RefmodOffset)
 
             self.ActualLocation = self.location_of_data + self.table_offset + self.data_offset + self.RefmodOffset
-            self.ActualLength = self.RefmodLength or GetLengthFromExpression(self.LengthExpression)
+            self.ActualLength = self.RefmodLength or ExpressionEvaluate(self.LengthExpression)
 
             # Unlikely as it seems, arriving here means having successfully
             # run the gauntlet of all the reasons up above as to why you
@@ -2344,16 +2363,16 @@ class CobolVariable():
                 GV_reads += 1
 
                 if self.Section in ('F') and not self.standalone:
-                    GV_bytes_read += GetLengthFromExpression(self.LengthExpression)
-                    granddaddy.grand_data = GetBytesAt(self.location_of_data, GetLengthFromExpression(self.LengthExpression))
-                    # print("We just read {0} bytes from {1}".format(GetLengthFromExpression(self.LengthExpression), hex(self.location_of_data)))
+                    GV_bytes_read += ExpressionEvaluate(self.LengthExpression)
+                    granddaddy.grand_data = GetBytesAt(self.location_of_data, ExpressionEvaluate(self.LengthExpression))
+                    # print("We just read {0} bytes from {1}".format(ExpressionEvaluate(self.LengthExpression), hex(self.location_of_data)))
                 elif self.table_offset == 0 and not self.standalone:
-                    GV_bytes_read += GetLengthFromExpression(granddaddy.LengthExpression)
-                    granddaddy.grand_data = GetBytesAt(granddaddy.location_of_data, GetLengthFromExpression(granddaddy.LengthExpression))
-                    # print("We just read {0} bytes from {1}".format(GetLengthFromExpression(granddaddy.LengthExpression), hex(granddaddy.location_of_data)))
+                    GV_bytes_read += ExpressionEvaluate(granddaddy.LengthExpression)
+                    granddaddy.grand_data = GetBytesAt(granddaddy.location_of_data, ExpressionEvaluate(granddaddy.LengthExpression))
+                    # print("We just read {0} bytes from {1}".format(ExpressionEvaluate(granddaddy.LengthExpression), hex(granddaddy.location_of_data)))
                 else:
                     # Variables with table_offset are treated as atomic, and not part of a union:
-                    GV_bytes_read += GetLengthFromExpression(self.LengthExpression)
+                    GV_bytes_read += ExpressionEvaluate(self.LengthExpression)
                     granddaddy.grand_data = GetBytesAt(self.ActualLocation, self.ActualLength)
                     # print("We just read {0} bytes from {1}".format(self.ActualLength, hex(self.ActualLocation)))
 
@@ -2497,7 +2516,7 @@ class CobolVariable():
         print("data_offset:", self.data_offset)
         if self.Subscripts:
             print("TableOffset:", self.table_offset)
-        print("Length:     ", GetLengthFromExpression(self.LengthExpression))
+        print("Length:     ", ExpressionEvaluate(self.LengthExpression))
         if self.Refmod:
             print("RefmodOff:  ", self.RefmodOffset)
             print("RefmodRun:  ", self.RefmodLength)
@@ -2846,8 +2865,8 @@ class CobolVariable():
         return body, pic
 
     def StringToIeeeBinary(self, rside):
-        retval = bytearray(GetLengthFromExpression(self.LengthExpression))
-        length = GetLengthFromExpression(self.LengthExpression)
+        retval = bytearray(ExpressionEvaluate(self.LengthExpression))
+        length = ExpressionEvaluate(self.LengthExpression)
 
         if length == 2:
             # binary16
@@ -3081,11 +3100,11 @@ class CobolVariable():
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 128-bit zero, for example
-        for i in range(GetLengthFromExpression(self.LengthExpression) - 1, -1, -1):
+        for i in range(ExpressionEvaluate(self.LengthExpression) - 1, -1, -1):
             value <<= 8
             value += our_bytes[i]
 
-        if GetLengthFromExpression(self.LengthExpression) == 16:
+        if ExpressionEvaluate(self.LengthExpression) == 16:
             # decimal128
             # The format is 1 S, 4 combination,  14 exponent, 110 coefficient
             data_type = "decimal64"
@@ -3146,11 +3165,11 @@ class CobolVariable():
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 64-bit zero, for example
-        for i in range(GetLengthFromExpression(self.LengthExpression) - 1, -1, -1):
+        for i in range(ExpressionEvaluate(self.LengthExpression) - 1, -1, -1):
             value <<= 8
             value += our_bytes[i]
 
-        if GetLengthFromExpression(self.LengthExpression) == 8:
+        if ExpressionEvaluate(self.LengthExpression) == 8:
             # decimal64
             # The format is 1 S, 4 combination, 8 exponent, 50 coefficient
             data_type = "decimal64"
@@ -3215,11 +3234,11 @@ class CobolVariable():
             our_bytes.reverse()
         value = 1   # This is a guard bit.  Without it, we wouldn't get a
                     # 64-bit zero, for example
-        for i in range(GetLengthFromExpression(self.LengthExpression) - 1, -1, -1):
+        for i in range(ExpressionEvaluate(self.LengthExpression) - 1, -1, -1):
             value <<= 8
             value += our_bytes[i]
 
-        if GetLengthFromExpression(self.LengthExpression) == 8:
+        if ExpressionEvaluate(self.LengthExpression) == 8:
             # decimal64
             # The format is 1 S, 5 combination, 8 exponent, 50 coefficient
             data_type = "binary64"
@@ -3307,7 +3326,7 @@ class CobolVariable():
         # Extract all the nybbles.  The actual value is right-justified in the binary stream:
         nybbles = []
         data = self.Data()
-        for i in range(GetLengthFromExpression(self.LengthExpression)):
+        for i in range(ExpressionEvaluate(self.LengthExpression)):
             nybbles.append(data[i] >> 4)
             nybbles.append(data[i] & 0x0F)
 
@@ -3386,7 +3405,7 @@ class CobolVariable():
         digits = digits[::-1]
 
         # We can now put together the retval bytearray
-        retval = bytearray(GetLengthFromExpression(self.LengthExpression))
+        retval = bytearray(ExpressionEvaluate(self.LengthExpression))
         offset = len(retval) - 1
         mask = 0
         if (self.AttrFlags & COB_FLAG_NO_SIGN_NIBBLE) == 0:
@@ -3492,21 +3511,21 @@ class CobolVariable():
         left  = '0' * (number_of_digits - len(left) ) + left
         right = right + '0' * (number_of_digits - len(right))
 
-        if self.AttrType != COB_TYPE_NUMERIC_DISPLAY or self.AttrDigits <= GetLengthFromExpression(self.LengthExpression):
+        if self.AttrType != COB_TYPE_NUMERIC_DISPLAY or self.AttrDigits <= ExpressionEvaluate(self.LengthExpression):
             # start off with the rightmost digits of left:
             data = left[-(number_of_digits - self.AttrScale):]
             # and continue with the leftmost digits of right:
             data += right[0:self.AttrScale]
         else:
             # This is a P-scaled value:
-            padding = self.AttrDigits - GetLengthFromExpression(self.LengthExpression)
+            padding = self.AttrDigits - ExpressionEvaluate(self.LengthExpression)
             if self.AttrScale > 0:
                 # This is a ppp9999 scaled value.  Return the required
                 # fractional digits
-                data = right[padding:padding + GetLengthFromExpression(self.LengthExpression)]
+                data = right[padding:padding + ExpressionEvaluate(self.LengthExpression)]
             else:
                 # Return the required decimal digits
-                data = left[-self.AttrDigits : -(self.AttrDigits - GetLengthFromExpression(self.LengthExpression))]
+                data = left[-self.AttrDigits : -(self.AttrDigits - ExpressionEvaluate(self.LengthExpression))]
         return data
 
     def StringToNumericDisplay(self, rside):
@@ -3568,7 +3587,7 @@ class CobolVariable():
         if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0:
             # This is a binary number that can be signed; let's
             # see if it is.
-            if (our_bytes[GetLengthFromExpression(self.LengthExpression) - 1] & 0x80) != 0:
+            if (our_bytes[ExpressionEvaluate(self.LengthExpression) - 1] & 0x80) != 0:
                 # and it is negative
                 negative = True
 
@@ -3576,7 +3595,7 @@ class CobolVariable():
                 # be fighting Python the whole way:
 
                 carry = 1
-                for i in range(GetLengthFromExpression(self.LengthExpression)):
+                for i in range(ExpressionEvaluate(self.LengthExpression)):
                     our_bytes[i] = ~our_bytes[i]
                     our_bytes[i] &= 0xFF
                     our_bytes[i] += carry
@@ -3588,7 +3607,7 @@ class CobolVariable():
         # build up the little-endian value:
 
         value = 0
-        for i in range(GetLengthFromExpression(self.LengthExpression) - 1, -1, -1):
+        for i in range(ExpressionEvaluate(self.LengthExpression) - 1, -1, -1):
             value <<= 8
             value += our_bytes[i]
 
@@ -3631,7 +3650,7 @@ class CobolVariable():
             pic += " unsigned "
 
         pic += "binary-"
-        pic += str(GetLengthFromExpression(self.LengthExpression) * 8)
+        pic += str(ExpressionEvaluate(self.LengthExpression) * 8)
         if self.AttrScale != 0:
             pic += " ("
             pic += str(self.AttrDigits - self.AttrScale)
@@ -3653,8 +3672,8 @@ class CobolVariable():
             value = -value
 
         # Build up that value as little-endian
-        retval = bytearray(GetLengthFromExpression(self.LengthExpression))
-        for i in range(GetLengthFromExpression(self.LengthExpression)):
+        retval = bytearray(ExpressionEvaluate(self.LengthExpression))
+        for i in range(ExpressionEvaluate(self.LengthExpression)):
             retval[i] += value & 0xFF
             value = value // 256
 
@@ -3673,7 +3692,7 @@ class CobolVariable():
                 body += chr(d)
         body += '"'
         pic = '[ alphanumeric-'
-        pic += str(GetLengthFromExpression(self.LengthExpression))
+        pic += str(ExpressionEvaluate(self.LengthExpression))
         pic += ' ]'
         return body, pic
 
@@ -3684,15 +3703,15 @@ class CobolVariable():
         # if has_all, then we just keep repeating the input
         # string until the left side is filled:
         if rside.has_all:
-            limit2 = GetLengthFromExpression(self.LengthExpression)
+            limit2 = ExpressionEvaluate(self.LengthExpression)
         else:
             limit2 = len(rside.original_string)
 
-        while i < GetLengthFromExpression(self.LengthExpression) and i < limit2:
+        while i < ExpressionEvaluate(self.LengthExpression) and i < limit2:
             data += rside.original_string[i % len(rside.original_string)]
             i += 1
 
-        data += ' ' * (GetLengthFromExpression(self.LengthExpression) - i)
+        data += ' ' * (ExpressionEvaluate(self.LengthExpression) - i)
         # convert to bytearray, encoding hack for now:
         try:
             array = bytearray(data, "utf8")
@@ -3753,10 +3772,10 @@ class CobolVariable():
     def NumberOfDigits(self):
         retval = self.AttrDigits
         if not (self.AttrFlags & COB_FLAG_BINARY_TRUNC) and ((self.AttrFlags & COB_FLAG_REAL_BINARY) or (self.AttrType == COB_TYPE_NUMERIC_BINARY)):
-            if GetLengthFromExpression(self.LengthExpression) in SIZE_TO_DIGITS:
-                retval = SIZE_TO_DIGITS[GetLengthFromExpression(self.LengthExpression)]
+            if ExpressionEvaluate(self.LengthExpression) in SIZE_TO_DIGITS:
+                retval = SIZE_TO_DIGITS[ExpressionEvaluate(self.LengthExpression)]
             else:
-                ConditionalRaise("We don't know how to handle a REAL_BINARY with a size of {0}.".format(GetLengthFromExpression(self.LengthExpression)))
+                ConditionalRaise("We don't know how to handle a REAL_BINARY with a size of {0}.".format(ExpressionEvaluate(self.LengthExpression)))
                 retval = 3
         return retval
 
@@ -5999,7 +6018,7 @@ class CWatchWorker():
             wp_length = payload.RefmodLength
         else:
             wp_startloc = payload.location_of_data + payload.table_offset
-            wp_length = GetLengthFromExpression(payload.LengthExpression)
+            wp_length = ExpressionEvaluate(payload.LengthExpression)
 
         spec = "*(char(*)"
         spec += '[' + str(wp_length) + '])'
