@@ -1713,18 +1713,6 @@ cprint/v0 ?
  8 : 02 NAME-FIRST/PEANUTS  : 123.456789
  9 : 01 LEGUMES  : ' ' <repeats 63 times>, "123456789"
 10 : 02 NAME-FIRST/LEGUMES  : 123456.789
-11 : 77 RETURN-CODE  : +0000000000
-12 : 01 WS-JIM  : "Lowden    " Lowden    "
-13 : 02 WS-FIRSTNAME/WS-JIM  : "Lowden    "
-14 : 02 WS-MIDDLE-INITIAL/WS-JIM  : """
-15 : 02 FILLER/WS-JIM  : " "
-16 : 02 WS-LASTNAME/WS-JIM  : "Lowden    "
-17 : 01 WS-BOB  : "bobby     J Dubner    "
-18 : 02 WS-FIRSTNAME/WS-BOB  : "bobby     "
-19 : 02 WS-MIDDLE-INITIAL/WS-BOB  : "J"
-20 : 02 FILLER/WS-BOB  : " "
-21 : 02 WS-LASTNAME/WS-BOB  : "Dubner    "
-22 : 01 WS-FLOATTEST  : 4.3210001
 cprint/v3 *
  1 : 77 RETURN-CODE/test [W-S] : +0000000000
  2 : 01 GEORGE/test [L-S] : ' ' <repeats 13 times>, "GEORGE    "
