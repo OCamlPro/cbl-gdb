@@ -4367,9 +4367,6 @@ class ModuleInformation():
     def FlagAllAsDirty(self):
         self.var_trie.FlagAllAsDirty()
 
-
-GV_ModuleInformation = ModuleInformation()
-
 DISPLAY_SUBMODE_NONE = None
 DISPLAY_SUBMODE_BINARY = 'b'
 DISPLAY_SUBMODE_HEX = 'x'
@@ -4379,6 +4376,15 @@ DISPLAY_SUBMODE_Q = 'q'
 class ModuleState():
     """State of the inferior as it is debugged"""
     def __init__(self):
+        # These variables contain static information that changes depending on the user request
+        self.question_mark_range = int(os.environ.get("CPRINT_R", '6'))
+        self.sticky_display_mode = '0'
+        self.current_display_mode = '0'
+        self.current_display_submode = DISPLAY_SUBMODE_NONE
+        self.sticky_pretty_mode = ''
+        self.cstart_entry_name = None
+
+    def reset(self):
         # These variables contain state information that changes as the inferior
         # is debugged.
         self.old_dogs = set()  # One level of retained former variables when doing 'cprint ?'
@@ -4386,15 +4392,9 @@ class ModuleState():
         self.current_trapped_file = ""
         self.current_trapped_frame = -1
         self.current_trapped_line = 0
-        self.question_mark_range = int(os.environ.get("CPRINT_R", '6'))
         self.current_full_path = ""
         self.Stack = False
-        self.sticky_display_mode = '0'
-        self.current_display_mode = '0'
-        self.current_display_submode = DISPLAY_SUBMODE_NONE
-        self.sticky_pretty_mode = ''
         self.current_pretty_mode = ''
-        self.cstart_entry_name = None
 
     def ProcessStack(self):
         """ Figures out which routine we are currently trapped in"""
@@ -7735,6 +7735,26 @@ def stop_handler(event):
     GV_ModuleInformation.FlagAllAsDirty()
 
 
+def reset_handler(event):
+    # In case of exit/re-attach we need a clean state
+    init_me()
+
+gdb.events.exited.connect(reset_handler)
+try:
+    gdb.events.inferior_deleted.connect(reset_handler)
+except AttributeError:
+    pass # that's a GDB 11+ event registry, no problem if not available
+
+def init_me():
+    # In case of exit/re-attach we need a clean state
+    global GV_ModuleInformation
+    GV_ModuleInformation = ModuleInformation()
+    GV_ModuleState.reset()
+
+GV_ModuleState = ModuleState()
+init_me()
+
+
 class CmdAutoStep (gdb.Command):
     """Auto-Step through the code until something happens or manually interrupted.
 An argument says how fast auto stepping is done (see parameter "auto-step")."""
@@ -7845,7 +7865,6 @@ try:
 except AttributeError:
     pass # that's a GDB 11+ event registry, no problem if not available
 
-GV_ModuleState = ModuleState()
 CFrameWorker()
 CBLDBG_CBREAK_WORKER = CBreakWorker()
 CPrint()
