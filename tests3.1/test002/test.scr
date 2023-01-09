@@ -1,0 +1,281 @@
+set height 0
+set width 0
+set print repeats 10
+set print elements 200
+
+define stutter_step
+    set variable $_exitcode=1031
+    while $_exitcode==1031
+        echo 
+        cprint *
+        cprint ?
+        cprint/x #1
+        step
+        end
+    end
+
+define printem
+    echo KNOWN GOOD START\n
+    echo cprint/v0 *\n
+    cprint/v0 *
+    echo cprint/v0 ?\n
+    cprint/v0 ?
+    echo cprint/v3 *\n
+    cprint/v3 *
+    echo cprint/v3 ?\n
+    cprint/v3 ?
+    echo cprint/x #1\n
+    cprint/x #1
+    echo cprint/m *\n
+    cprint/m *
+    echo cprint/m ?\n
+    cprint/m ?
+	echo cprint/x #1\n
+	cprint/x #1
+	echo cprint/b #1\n
+	cprint/b #1
+    echo KNOWN GOOD FINISH\n
+    end
+
+define printloop
+    set variable $_exitcode=1031
+    while $_exitcode==1031
+       printem
+       continue
+       end
+    end
+
+file test
+cprint/v3
+cprint/r 6
+
+break 129
+break 139
+break 149
+break 159
+break 170
+break 177
+break 187
+break 197
+break 206
+break 216
+break 226
+break 230
+
+run
+printloop
+
+delete
+break 230
+run
+
+echo KNOWN GOOD START\n
+echo cprint com\n
+cprint com
+echo cprint com!\n
+cprint com!
+echo cprint *com\n
+cprint *com
+echo cprint com*\n
+cprint com*
+echo cprint *com*\n
+cprint *com*
+echo cprint def-b*\n
+cprint def-b*
+echo cprint *x\n
+cprint *x
+
+cprint/v0
+echo cprint com\n
+cprint com
+echo cprint com!\n
+cprint com!
+echo cprint *com\n
+cprint *com
+echo cprint com*\n
+cprint com*
+echo cprint *com*\n
+cprint *com*
+echo cprint def-b*\n
+cprint def-b*
+echo cprint *x\n
+cprint *x
+
+echo TESTING ASSIGNMENT:\n
+
+cprint header                     = "10.31e1"
+cprint withpic                    = "10.31e1"
+cprint def-BINARY-CHAR            = "10.31e1"
+cprint def-BINARY-CHAR            =  10.31e1 
+cprint def-BINARY-CHAR-SIGNED     = "10.31e1"
+cprint def-BINARY-CHAR-UNSIGNED   = "10.31e1"
+cprint def-BINARY-C-LONG          = "10.31e1"
+cprint def-BINARY-C-LONG-SIGNED   = "10.31e1"
+cprint def-BINARY-C-LONG-UNSIGNED = "10.31e1"
+cprint def-BINARY-DOUBLE          = "10.31e1"
+cprint def-BINARY-DOUBLE-SIGNED   = "10.31e1"
+cprint def-BINARY-DOUBLE-UNSIGNED = "10.31e1"
+cprint def-BINARY-INT             = "10.31e1"
+cprint def-BINARY-LONG            = "10.31e1"
+cprint def-BINARY-LONG-SIGNED     = "10.31e1"
+cprint def-BINARY-LONG-UNSIGNED   = "10.31e1"
+cprint def-BINARY-LONG-LONG       = "10.31e1"
+cprint def-BINARY-SHORT           = "10.31e1"
+cprint def-BINARY-SHORT-SIGNED    = "10.31e1"
+cprint def-BINARY-SHORT-UNSIGNED  = "10.31e1"
+cprint def-COMPUTATIONAL          = "10.31e1"
+cprint def-COMP-1                 = "10.31e1"
+cprint def-COMP-2                 = "10.31e1"
+cprint def-COMPUTATIONAL-1        = "10.31e1"
+cprint def-COMPUTATIONAL-2        = "10.31e1"
+cprint def-FLOAT-DECIMAL-16       = "10.31e1"
+cprint def-FLOAT-DECIMAL-34       = "10.31e1"
+cprint def-FLOAT-LONG             = "10.31e1"
+cprint def-FLOAT-SHORT            = "10.31e1"
+cprint def-INDEX                  = "10.31e1"
+cprint def-SIGNED-INT             = "10.31e1"
+cprint def-SIGNED-LONG            = "10.31e1"
+cprint def-SIGNED-SHORT           = "10.31e1"
+cprint def-UNSIGNED-INT           = "10.31e1"
+cprint def-UNSIGNED-LONG          = "10.31e1"
+cprint def-UNSIGNED-SHORT         = "10.31e1"
+cprint def-COMP-3                 = "10.31e1"
+cprint def-COMPUTATIONAL-3        = "10.31e1"
+cprint def-PACKED-DECIMAL         = "10.31e1"
+cprint def-PACKED-DECIMAL-S       = "10.31e1"
+cprint def-BINARY                 = "10.31e1"
+cprint def-BINARY-S               = "10.31e1"
+cprint def-COMP                   = "10.31e1"
+cprint def-COMPUTATIONAL          = "10.31e1"
+cprint def-COMP-4                 = "10.31e1"
+cprint def-COMPUTATIONAL-4        = "10.31e1"
+cprint def-COMP-5                 = "10.31e1"
+cprint def-COMPUTATIONAL-5        = "10.31e1"
+cprint def-COMP-6                 = "10.31e1"
+cprint def-COMP-X                 = "10.31e1"
+cprint def-COMPUTATIONAL-X        = "10.31e1"
+cprint def-COMP-XX                = "10.31e1"
+cprint def-DISPLAY                = "10.31e1"
+
+cp *
+
+echo KNOWN GOOD FINISH\n
+
+echo Checking the debugger CPRINT LENGTH OF feature\n
+delete
+b 134
+b 135
+b 136
+b 137
+b 138
+b 139
+b 140
+b 141
+b 142
+b 143
+b 144
+b 145
+b 146
+b 147
+b 148
+b 149
+b 150
+b 151
+b 152
+b 153
+b 154
+b 155
+b 156
+b 157
+b 158
+b 159
+b 160
+b 161
+b 162
+b 163
+b 164
+b 165
+b 166
+b 167
+b 168
+b 170
+
+echo KNOWN GOOD START\n
+r
+cprint LENGTH OF def-BINARY-CHAR
+c
+cprint LENGTH OF def-BINARY-CHAR-SIGNED
+c
+cprint LENGTH OF def-BINARY-CHAR-UNSIGNED
+c
+cprint LENGTH OF def-BINARY-C-LONG
+c
+cprint LENGTH OF def-BINARY-C-LONG-SIGNED
+c
+cprint LENGTH OF def-BINARY-C-LONG-UNSIGNED
+c
+cprint LENGTH OF def-BINARY-DOUBLE
+c
+cprint LENGTH OF def-BINARY-DOUBLE-SIGNED
+c
+cprint LENGTH OF def-BINARY-DOUBLE-UNSIGNED
+c
+cprint LENGTH OF def-BINARY-INT
+c
+cprint LENGTH OF def-BINARY-LONG
+c
+cprint LENGTH OF def-BINARY-LONG-SIGNED
+c
+cprint LENGTH OF def-BINARY-LONG-UNSIGNED
+c
+cprint LENGTH OF def-BINARY-LONG-LONG
+c
+cprint LENGTH OF def-BINARY-SHORT
+c
+cprint LENGTH OF def-BINARY-SHORT-SIGNED
+c
+cprint LENGTH OF def-BINARY-SHORT-UNSIGNED
+c
+cprint LENGTH OF def-COMPUTATIONAL
+c
+cprint LENGTH OF def-COMP-1
+c
+cprint LENGTH OF def-COMP-2
+c
+cprint LENGTH OF def-COMPUTATIONAL-1
+c
+cprint LENGTH OF def-COMPUTATIONAL-2
+c
+cprint LENGTH OF def-FLOAT-DECIMAL-16
+c
+cprint LENGTH OF def-FLOAT-DECIMAL-34
+c
+cprint LENGTH OF def-FLOAT-LONG
+c
+cprint LENGTH OF def-FLOAT-SHORT
+c
+cprint LENGTH OF def-INDEX
+c
+cprint LENGTH OF def-POINTER
+c
+cprint LENGTH OF def-PROCEDURE-POINTER
+c
+cprint LENGTH OF def-PROGRAM-POINTER
+c
+cprint LENGTH OF def-SIGNED-INT
+c
+cprint LENGTH OF def-SIGNED-LONG
+c
+cprint LENGTH OF def-SIGNED-SHORT
+c
+cprint LENGTH OF def-UNSIGNED-INT
+c
+cprint LENGTH OF def-UNSIGNED-LONG
+c
+cprint LENGTH OF def-UNSIGNED-SHORT
+echo KNOWN GOOD FINISH\n
+
+c
+q
+
+

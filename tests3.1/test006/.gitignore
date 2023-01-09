@@ -1,0 +1,11 @@
+*.dll
+*.so
+known-good.txt
+under-test.txt
+under-test.stripped
+*.py
+*.c
+*.i
+*.s
+*.h
+*.o

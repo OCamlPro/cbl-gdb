@@ -1,0 +1,361 @@
+set height 0
+set width 0
+set print repeats 10
+set print elements 200
+
+define printem
+    echo KNOWN GOOD START\n
+    echo cprint/v0 *\n
+    cprint/v0 *
+    echo cprint/v0 ?\n
+    cprint/v0 ?
+    echo cprint/v3 *\n
+    cprint/v3 *
+    echo cprint/v3 ?\n
+    cprint/v3 ?
+    echo cprint/x 1\n
+    cprint/x 1
+    echo cprint/m *\n
+    cprint/p *
+    echo cprint/m ?\n
+    cprint/m *
+    echo cprint/m ?\n
+    cprint/m ?
+    echo KNOWN GOOD FINISH\n
+    end
+
+define printloop
+    set variable $_exitcode=1031
+    while $_exitcode==1031
+       printem
+       continue
+       end
+    end
+
+file test
+cprint/v3
+cprint/r 6
+
+echo KNOWN GOOD START\n
+r
+echo KNOWN GOOD FINISH\n
+
+b 146
+echo KNOWN GOOD START\n
+r
+
+echo cprint/v3\n
+cprint/v3
+echo cprint *\n
+cprint *
+echo cprint/v0\n
+cprint/v0
+echo cprint *\n
+cprint *
+echo cprint/p *\n
+cprint/p *
+echo cprint/v1\n
+cprint/v1
+echo cprint/p *\n
+cprint/p *
+echo cprint/v3\n
+cprint/v3
+
+echo cp ws-table\n
+cp ws-table
+echo cp ws-a\n
+cp ws-a
+echo cp ws-a(0)\n
+cp ws-a(0)
+echo cp ws-a(1)\n
+cp ws-a(1)
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(3)\n
+cp ws-a(3)
+echo cp ws-a(4)\n
+cp ws-a(4)
+echo cp ws-a(zed)\n
+cp ws-a(zed)
+echo cp ws-a(one)\n
+cp ws-a(one)
+echo cp ws-a(two)\n
+cp ws-a(two)
+echo cp ws-a(three of nums1)\n
+cp ws-a(three of nums1)
+echo cp ws-a(four of nums1)\n
+cp ws-a(four of nums1)
+echo cp ws-a(banana)\n
+cp ws-a(banana)
+echo cp ws-table\n
+cp ws-table
+echo cp ws-table(:)\n
+cp ws-table(:)
+echo cp ws-table(0:)\n
+cp ws-table(0:)
+echo cp ws-table(25:)\n
+cp ws-table(25:)
+echo cp ws-table(:24)\n
+cp ws-table(:24)
+echo cp ws-table(:12)\n
+cp ws-table(:12)
+echo cp ws-table(:100)\n
+cp ws-table(:100)
+echo cp ws-table(23:100)\n
+cp ws-table(23:100)
+echo cp ws-table(24:100)\n
+cp ws-table(24:100)
+echo cp ws-table(25:100)\n
+cp ws-table(25:100)
+echo cp ws-table(3:4)\n
+cp ws-table(3:4)
+echo cp/x ws-table(3:4)\n
+cp/x ws-table(3:4)
+echo cp/b ws-table(3:4)\n
+cp/b ws-table(3:4)
+echo cp ws-table(three of nums1:4)\n
+cp ws-table(three of nums1:4)
+echo cp ws-table(3:four of nums2)\n
+cp ws-table(3:four of nums1)
+echo cp ws-table(three of nums1:four of nums2)\n
+cp ws-table(three of nums1:four of nums2)
+echo cp ws-table(three of nums1:four of nums1:two)\n
+cp ws-table(three of nums1:four of nums1:two)
+echo cp ws-table(three of nums1:banana)\n
+cp ws-table(three of nums1:banana)
+echo cp ws-table(banana:4)\n
+cp ws-table(banana:4)
+echo cp ws-table(banana:banana)\n
+cp ws-table(banana:banana)
+echo cp ws-table(banana:banana\n
+cp ws-table(banana:banana
+echo cp ws-c\n
+cp ws-c
+echo cp ws-c(1)\n
+cp ws-c(1)
+echo cp ws-c(,)\n
+cp ws-c(,)
+echo cp ws-c(0,)\n
+cp ws-c(0,)
+echo cp ws-c(,0)\n
+cp ws-c(,0)
+echo cp ws-c(4,)\n
+cp ws-c(4,)
+echo cp ws-c(,4)\n
+cp ws-c(,4)
+echo cp ws-c(1,1,1)\n
+cp ws-c(1,1,1)
+echo cp ws-c(zed,)\n
+cp ws-c(zed,)
+echo cp ws-c(,zed)\n
+cp ws-c(,zed)
+echo cp ws-c(four of nums1,)\n
+cp ws-c(four of nums1,)
+echo cp ws-c(,four of nums1)\n
+cp ws-c(,four of nums1)
+echo cp ws-c(2,1)\n
+cp ws-c(2,1)
+echo cp ws-c(two,1)\n
+cp ws-c(two,1)
+echo cp ws-c(2,one)\n
+cp ws-c(2,one)
+echo cp ws-c(two,one)\n
+cp ws-c(two,one)
+
+echo cp ws-c(two one)\n
+cp ws-c(two one)
+echo cp ws-c(two;one)\n
+cp ws-c(two;one)
+echo cp ws-c(two;;;;one)\n
+cp ws-c(two;;;;one)
+echo cp ws-c(three of nums1 one)\n
+cp ws-c(three of nums1 one)
+echo cp ws-c(three of nums1,one)\n
+cp ws-c(three of nums1,one)
+echo cp ws-c(three of nums1;one)\n
+cp ws-c(three of nums1;one)
+echo cp ws-c(three of nums1;;;;one)\n
+cp ws-c(three of nums1;;;;one)
+
+echo cp ws-a(2) = "1"\n
+cp ws-a(2) = "1"
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(2:) = "1"\n
+cp ws-a(2)(2:) = "1"
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(3:) = "1"\n
+cp ws-a(2)(3:) = "1"
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(4:) = "1"\n
+cp ws-a(2)(4:) = "1"
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(5:) = "1"\n
+cp ws-a(2)(5:) = "1"
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(6:) = "1"\n
+cp ws-a(2)(6:) = "1"
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(7:)= "1"\n
+cp ws-a(2)(7:)= "1"
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(8:)= "1"\n
+cp ws-a(2)(8:)= "1"
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(9:)= "1"\n
+cp ws-a(2)(9:)= "1"
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(zed:1)   = " "\n
+cp ws-a(2)(zed:1)   = " "
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(one:1)   = " "\n
+cp ws-a(2)(one:1)   = " "
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(two:1)   = " "\n
+cp ws-a(2)(two:1)   = " "
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(three of nums1:1) = " "\n
+cp ws-a(2)(three of nums1:1) = " "
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(four of nums1:1)  = " "\n
+cp ws-a(2)(four of nums1:1)  = " "
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(5:one)   = " "\n
+cp ws-a(2)(5:one)   = " "
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(2)(6:one)   = " "\n
+cp ws-a(2)(6:one)   = " "
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(two)(7:1)   = " "\n
+cp ws-a(two)(7:1)   = " "
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(two)(8:1)   = " "\n
+cp ws-a(two)(8:1)   = " "
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(two)(9:1)   = " "\n
+cp ws-a(two)(9:1)   = " "
+echo cp ws-a(2)\n
+cp ws-a(2)
+
+echo cp ws-a(1)\n
+cp ws-a(1)
+echo cp ws-a(2)\n
+cp ws-a(2)
+echo cp ws-a(3)\n
+cp ws-a(3)
+
+echo cp *\n
+cp *
+
+echo cp/x ws-table(:)\n
+cp/x ws-table(:)
+echo cp/x ws-table(three of nums1:four of nums1)\n
+cp/x ws-table(three of nums1:four of nums1)
+
+echo cprint tab-adr-prgm\n
+cprint tab-adr-prgm
+echo cprint tab-adr-prgm(2)\n
+cprint tab-adr-prgm(2)
+echo \'cprint tab-adr-prgm\' (2)\n
+cprint 'tab-adr-prgm' (2)
+echo \'cprint tab-adr-prgm\' (two)\n
+cprint 'tab-adr-prgm' (two)
+echo \'cprint tab-adr-prgm\' (\'two\')\n
+cprint 'tab-adr-prgm' ('two')
+
+echo cprint tab-adr-prgm(2)(3:4)\n
+cprint tab-adr-prgm(2)(3:4)
+echo cprint tab-adr-prgm(2)(3:4) = "zz"\n
+cprint tab-adr-prgm(2)(3:4) = "zz"
+echo cprint tab-adr-prgm(2)\n
+cprint tab-adr-prgm(2)
+echo cprint tab-adr-prgm(2)(3:4) = ws-a(one)(two:three of nums1)\n
+cprint tab-adr-prgm(2)(3:4) = ws-a(one)(two:three of nums1)
+echo cprint tab-adr-prgm(2)\n
+cprint tab-adr-prgm(2)
+
+echo cp TAB-ADR-IND\n
+cp TAB-ADR-IND
+echo cp TAB-ADR-IND!\n
+cp TAB-ADR-IND!
+echo cp TAB-ADR-IND of z-table = 1234\n
+cp TAB-ADR-IND of z-table = 1234
+echo cp TAB-ADR-IND of T_ADDRESSES = 5432\n
+cp TAB-ADR-IND of T_ADDRESSES = 5432
+
+echo cp TAB-ADR-IND of T_ENTRY = 9999\n
+cp TAB-ADR-IND of T_ENTRY = 9999
+
+echo cp svalue\n
+cp svalue
+echo cp svalue = 1234\n
+cp svalue = 1234
+echo cp svalue\n
+cp svalue
+echo cp svalue(2:2) = 89\n
+cp svalue(2:2) = 89
+echo cp svalue\n
+cp svalue
+echo cp svalue(2:2) = x'89'\n
+cp svalue(2:2) = x'89'
+echo cp svalue\n
+cp svalue
+echo cp svalue(2:2) = x'1234'\n
+cp svalue(2:2) = x'1234'
+echo cp svalue\n
+cp svalue
+echo cp svalue = -12345\n
+cp svalue = -12345
+echo cp svalue\n
+cp svalue
+
+# Sadly, these instruction don't work, in my test script.  The diff(1)
+# routine seems to ignore the extended ASCII character
+#echo cp ws-table(3:1) = x'fc' (u with umlaut)\n
+#cp ws-table(3:1) = x'fc'
+#echo cp ws-table\n
+#cp ws-table
+
+
+
+echo cp WS-BASED\n
+cp WS-BASED
+echo cp WS-BASED(8:5)\n
+cp WS-BASED(8:5)
+
+echo cp ws-c(one two)(one : three of nums2)\n
+cp ws-c(one two)(one : three of nums2)
+echo cp/v0 ws-c(one two)(one : three of nums2)\n
+cp/v0 ws-c(one two)(one : three of nums2)
+echo cp/v1 ws-c(one two)(one : three of nums2)\n
+cp/v1 ws-c(one two)(one : three of nums2)
+echo cp/v2 ws-c(one two)(one : three of nums2)\n
+cp/v2 ws-c(one two)(one : three of nums2)
+echo cp/v3 ws-c(one two)(one : three of nums2)\n
+cp/v3 ws-c(one two)(one : three of nums2)
+echo cp/v4 ws-c(one two)(one : three of nums2)\n
+cp/v4 ws-c(one two)(one : three of nums2)
+echo cp/v5 ws-c(one two)(one : three of nums2)\n
+cp/v5 ws-c(one two)(one : three of nums2)
+
+echo KNOWN GOOD FINISH\n
+
+## And having stepped through the program line-by-line, we are done
+q

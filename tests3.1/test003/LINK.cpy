@@ -1,0 +1,3 @@
+        01 CALLED-BLOCK.
+            05 CALLED-FROM PICTURE X(4).
+            05 INDENT PICTURE 9.

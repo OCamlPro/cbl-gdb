@@ -11,11 +11,14 @@ define printem
 
 # initialisation
 file test
+
+# Do a cstart so that cprint/vX works
+cstart
+
 cprint/v3
 cprint/r 6
 
 # cwatch test
-cstart
 cwatch D
 
 continue
