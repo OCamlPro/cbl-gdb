@@ -5710,6 +5710,10 @@ class CPrintWorker():
                 print (num)
             return
 
+        # Having processed display switches, we can now check to if we are in
+        # a frame, and process accordingly:
+        GV_ModuleState.EstablishModuleState(True)
+
         if not GV_ModuleState.Stack:
             # "No stack." is the message GDB reports when debugging statements
             # are issued when the program hasn't been run, which is checked in the
@@ -6525,9 +6529,8 @@ class CPrint(gdb.Command):
         except gdb.error:
             pass
 
-    def invoke(self, arguments, from_tty):
+    def invoke(self, arguments, from_tty):  # invoke cprint (this comment is for finding this invoke)
         try:
-            GV_ModuleState.EstablishModuleState(True)   # we want errors seen early
             self.worker.ProcessArguments(arguments)
         # pass user errors unchanged
         except gdb.GdbError:
