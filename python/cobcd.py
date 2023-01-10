@@ -6684,21 +6684,25 @@ A breakpoint stops execution of your program whenever the expression matches
             pass
         CTBreak()
         CCondition()
+        self.bp_initialized = False
 
-        if GV_GlobalVariables.gdb_version >= 70700:
-            if GV_noisy_registration:
-                print('Registering silent maintenance breakpoint for showing note about ACCEPT')
-            bp = CobolBreakpoint("cob_accept", False, True)
-            if bp:
-                # in an ideal world we would know what the last command executed
-                # was and would for step/next/cnext do a "finish", otherwise a "continue"
-                # bad as that command can come from "everywhere" (python/guile/gdbscript, mi, console)
-                # ["direct console only" would have been solved by looking at the GDB history]
-                # we play safe stopping after the accept and let the user re-execute "continue"
-                # if this is what he wanted
-                bp.commands = "silent \n cup 0 \n down-silently \n finish"
+    def invoke(self, arguments, from_tty): # invoke cbreak
+        GV_ModuleState.EstablishModuleState(True)
+        if not self.bp_initialized:
+            self.bp_initialized = True
+            if GV_GlobalVariables.gdb_version >= 70700:
+                if GV_noisy_registration:
+                    print('Registering silent maintenance breakpoint for showing note about ACCEPT')
+                bp = CobolBreakpoint("cob_accept", False, True)
+                if bp:
+                    # in an ideal world we would know what the last command executed
+                    # was and would for step/next/cnext do a "finish", otherwise a "continue"
+                    # bad as that command can come from "everywhere" (python/guile/gdbscript, mi, console)
+                    # ["direct console only" would have been solved by looking at the GDB history]
+                    # we play safe stopping after the accept and let the user re-execute "continue"
+                    # if this is what he wanted
+                    bp.commands = "silent \n cup 0 \n down-silently \n finish"
 
-    def invoke(self, arguments, from_tty):
         self.dont_repeat()
         self.worker.process_break_arguments(arguments, False, False)
 
