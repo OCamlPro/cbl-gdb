@@ -6028,10 +6028,28 @@ class CWatchWorker():
         spec += '[' + str(wp_length) + '])'
         spec += '(' + hex(wp_startloc) + ')'
 
-        if GV_GlobalVariables.gdb_version >= 80300:
+        if False and GV_GlobalVariables.gdb_version >= 80300:
+            #
+            # I have effectively removed this code because I have determined that it doesn't work
+            # as intended.  For the CWATCH test program compiled with GnuCOBOL 3.1.2, it seems to
+            # work once, but somehow memory gets corrupted and a second attempt to run through
+            # the program fails.  When compiled with 3.2, the breakpoint appears to be set but
+            # the trap never occurs, and, again, memory is corrupted.
+            #
+            # I saw the corruption with 3.1 by setting a CWATCH and then continuing my way
+            # through the program (TEST006 is an example) until the inferior completed.  A
+            # subsequent RUN command results in an SIGILL illegal instruction trap.  With
+            # 3.2, the trap never occurs, and the second attempt at RUN results in SIGILL.
+            #
+            # Using the gdb.Breakpoint method seems to work.  The display isn't as nice, because
+            # it appears the more complex CobolWatchBreakpoint processing apparently tries to
+            # find the frame with the relevant COBOL source code, but I don't regard this as
+            # a problem; the user can always use backtrace to see where in the COBOL source code
+            # the access was initiated.  Dubner, 2022-01-10
+            #
             break_point = CobolWatchBreakpoint(payload, spec, wp_type)
         else:
-            break_point = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, gdb.WP_ACCESS)
+            break_point = gdb.Breakpoint(spec, gdb.BP_WATCHPOINT, wp_type)
             if break_point.type == gdb.BP_WATCHPOINT:
                 break_point.delete()
                 ConditionalRaise("Expression cannot be implemented as hardware watchpoint.\n... and therefore removed")
