@@ -156,7 +156,7 @@ FindFunctionReferences(WHOLEFILE &fd)
     return retval;
 }
 
-map<int,int>
+map<int, int>
 FigureOutReplacements(const PARAMETERS &params,
                       const map<string,int> &input_file_mappings)
 {
@@ -167,7 +167,27 @@ FigureOutReplacements(const PARAMETERS &params,
     for( map<string,int>::const_iterator it=input_file_mappings.begin();
             it != input_file_mappings.end();
             it ++) {
-        string filename = StripQuotes(it->first);
+
+        // Get the final piece of the original file name:
+        VSTRING tokens = Split(it->first,"\t ");
+        string filename = tokens.back();
+
+        filename = StripQuotes(filename);
+
+        // For our purposes, we care only about the final filename
+        size_t nfound;
+        nfound = filename.find_last_of("/");
+        if( nfound != string::npos ) {
+          filename = filename.substr(nfound+1);
+        }
+        else {
+          // Check for a backslash, because, you know, Windows
+          nfound = filename.find_last_of("\\");
+          if( nfound != string::npos ) {
+            filename = filename.substr(nfound+1);
+          }
+        }
+
         if( filename EQ params.c_filename ) {
             // Skip over the cobc-generated .c file
             retval[it->second] = 0;
@@ -407,18 +427,22 @@ build(PARAMETERS &params,
         }
     }
 
-
     int next_function_reference_index = 0;
 
     char ach[OVERSIZED];
     fd.current_index = 0;
     int i = -1;   // i is the record we are looking at right now
 
-    fgets(ach,sizeof(ach),fd);  // Skip the original ".file blah.c" line
-    i += 1;
-
     while(fgets(ach,sizeof(ach),fd)) {
         i += 1;
+
+        VSTRING tokens = Split(string(ach),"\t ");
+        if( tokens.size() > 1
+            && tokens[0] == ".file" 
+            && tokens[1][0] == '"' ) {
+            // Skip the informative '.file "test.c"' line
+            continue;
+        }
 
         // With the advent of GnuCOBOL 3.2, the problem of #line information
         // not finding its way into the .debug_line section reared its ugly head

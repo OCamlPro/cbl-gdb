@@ -1,1 +1,0 @@
-./cobcd-sfix test.original.s test.debug.s test.c test.cbl
