@@ -1,12 +1,17 @@
 	.file	"test.cbl"
-	.file 3 "/data/data/com.termux/files"
-	.file 6 "/data/data/com.termux/files/home/cbl-gdb/tests/test002"
+	.file 2 "/data/data/com.termux/files" "usr/include/libcob/common.h"
+	.file 3 "/data/data/com.termux/files" "usr/lib/clang/15.0.6/include/stddef.h"
+	.file 5 "/data/data/com.termux/files/home/cbl-gdb/tests/test002" "./test.c.h"
+	.file 1 "/data/data/com.termux/files/home/cbl-gdb/tests/test002" "./test.c.l.h"
+	.file 4 "/data/data/com.termux/files/home/cbl-gdb/tests/test002" "test.c"
+	.file 6 "/data/data/com.termux/files/home/cbl-gdb/tests/test002" "test.cbl"
 	.globl	main                            // -- Begin function main
 	.p2align	2
 	.type	main,@function
 main:                                   // @main
-	.loc 6 127
+	.loc 4 32
 .Lfunc_begin0:
+	.loc 4 32 0                          // test.c:32:0
 	.cfi_startproc
 // %bb.0:
 	sub	sp, sp, #32
@@ -20,10 +25,15 @@ main:                                   // @main
 	str	w0, [sp, #8]
 	str	x1, [sp]
 .Ltmp0:
+	.loc 4 33 13 prologue_end            // test.c:33:13
 	ldr	w0, [sp, #8]
+	.loc 4 33 19 is_stmt 0               // test.c:33:19
 	ldr	x1, [sp]
+	.loc 4 33 3                          // test.c:33:3
 	bl	cob_init
+	.loc 4 34 17 is_stmt 1               // test.c:34:17
 	bl	test
+	.loc 4 34 3 is_stmt 0                // test.c:34:3
 	bl	cob_stop_run
 .Ltmp1:
 .Lfunc_end0:
@@ -34,6 +44,7 @@ main:                                   // @main
 	.type	test,@function
 test:                                   // @test
 .Lfunc_begin1:
+	.loc 4 45 0 is_stmt 1                // test.c:45:0
 	.cfi_startproc
 // %bb.0:
 	stp	x29, x30, [sp, #-16]!           // 16-byte Folded Spill
@@ -44,8 +55,10 @@ test:                                   // @test
 	.cfi_offset w29, -16
 	mov	w0, wzr
 .Ltmp2:
+	.loc 4 46 10 prologue_end            // test.c:46:10
 	bl	test_
 	.cfi_def_cfa wsp, 16
+	.loc 4 46 3 is_stmt 0                // test.c:46:3
 	ldp	x29, x30, [sp], #16             // 16-byte Folded Reload
 	.cfi_def_cfa_offset 0
 	.cfi_restore w30
@@ -60,6 +73,7 @@ test:                                   // @test
 	.type	test_,@function
 test_:                                  // @test_
 .Lfunc_begin2:
+	.loc 4 51 0 is_stmt 1                // test.c:51:0
 	.cfi_startproc
 // %bb.0:
 	stp	x29, x30, [sp, #-32]!           // 16-byte Folded Spill
@@ -78,36 +92,47 @@ test_:                                  // @test_
 	stur	x8, [x29, #-8]
 	str	w0, [sp, #128]
 .Ltmp4:
+	.loc 4 58 7 prologue_end             // test.c:58:7
 	ldr	w8, [sp, #128]
 .Ltmp5:
+	.loc 4 58 7 is_stmt 0                // test.c:58:7
 	tbz	w8, #31, .LBB2_6
 	b	.LBB2_1
 .LBB2_1:
 .Ltmp6:
+	.loc 4 59 8 is_stmt 1                // test.c:59:8
 	ldr	w8, [sp, #128]
 .Ltmp7:
+	.loc 4 59 8 is_stmt 0                // test.c:59:8
 	adds	w8, w8, #10
 	b.ne	.LBB2_3
 	b	.LBB2_2
 .LBB2_2:
 .Ltmp8:
+	.loc 4 60 5 is_stmt 1                // test.c:60:5
 	b	.LBB2_19
 .Ltmp9:
 .LBB2_3:
+	.loc 4 61 8                          // test.c:61:8
 	ldr	w8, [sp, #128]
 .Ltmp10:
+	.loc 4 61 8 is_stmt 0                // test.c:61:8
 	adds	w8, w8, #20
 	b.ne	.LBB2_5
 	b	.LBB2_4
 .LBB2_4:
 .Ltmp11:
+	.loc 4 62 5 is_stmt 1                // test.c:62:5
 	b	.LBB2_26
 .Ltmp12:
 .LBB2_5:
+	.loc 4 63 4                          // test.c:63:4
 	b	.LBB2_20
 .Ltmp13:
 .LBB2_6:
+	.loc 4 69 59                         // test.c:69:59
 	ldr	w3, [sp, #128]
+	.loc 4 69 7 is_stmt 0                // test.c:69:7
 	adrp	x0, test_.module
 	add	x0, x0, :lo12:test_.module
 	add	x1, sp, #136
@@ -115,48 +140,65 @@ test_:                                  // @test_
 	mov	x4, xzr
 	bl	cob_module_global_enter
 .Ltmp14:
+	.loc 4 69 7                          // test.c:69:7
 	cbz	w0, .LBB2_8
 	b	.LBB2_7
 .LBB2_7:
+	.loc 4 0 7                           // test.c:0:7
 	mov	w8, #-1
 .Ltmp15:
+	.loc 4 70 4 is_stmt 1                // test.c:70:4
 	str	w8, [sp, #132]
 	b	.LBB2_27
 .Ltmp16:
 .LBB2_8:
+	.loc 4 73 3                          // test.c:73:3
 	adrp	x8, test_.module
 	ldr	x9, [x8, :lo12:test_.module]
 	sub	x8, x29, #16
+	.loc 4 73 32 is_stmt 0               // test.c:73:32
 	str	x8, [x9, #8]
 	add	x8, sp, #144
+	.loc 4 76 13 is_stmt 1               // test.c:76:13
 	str	x8, [sp, #120]
+	.loc 4 77 3                          // test.c:77:3
 	ldr	x9, [sp, #120]
 	mov	w8, wzr
+	.loc 4 77 30 is_stmt 0               // test.c:77:30
 	str	w8, [x9, #8]
+	.loc 4 78 3 is_stmt 1                // test.c:78:3
 	ldr	x9, [sp, #120]
 	mov	w8, #1
                                         // kill: def $x8 killed $w8
+	.loc 4 78 33 is_stmt 0               // test.c:78:33
 	str	x8, [x9]
 .Ltmp17:
+	.loc 4 81 7 is_stmt 1                // test.c:81:7
 	adrp	x8, test_.initialized
 	ldr	w8, [x8, :lo12:test_.initialized]
 .Ltmp18:
+	.loc 4 81 7 is_stmt 0                // test.c:81:7
 	cbnz	w8, .LBB2_10
 	b	.LBB2_9
 .LBB2_9:
 .Ltmp19:
+	.loc 4 82 4 is_stmt 1                // test.c:82:4
 	b	.LBB2_18
 .Ltmp20:
 .LBB2_10:
+	.loc 4 81 7                          // test.c:81:7
 	b	.LBB2_11
 .Ltmp21:
 .LBB2_11:
 	//DEBUG_LABEL: test_:P_ret_initialize
+	.loc 4 87 3                          // test.c:87:3
 	adrp	x8, test_.module
 	ldr	x9, [x8, :lo12:test_.module]
+	.loc 4 87 24 is_stmt 0               // test.c:87:24
 	ldr	w8, [x9, #96]
 	add	w8, w8, #1
 	str	w8, [x9, #96]
+	.loc 4 90 3 is_stmt 1                // test.c:90:3
 	b	.LBB2_12
 .LBB2_12:
 .Ltmp22:
@@ -173,6 +215,7 @@ test_:                                  // @test_
 	bl	cob_nop
 	.loc 6 129 3                         // test.cbl:129:3
 	bl	cob_nop
+	.loc 4 112 3                         // test.c:112:3
 	adrp	x3, c_1
 	add	x3, x3, :lo12:c_1
 	mov	w0, wzr
@@ -185,12 +228,14 @@ test_:                                  // @test_
 	bl	cob_nop
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #112]                  // 4-byte Folded Reload
+	.loc 4 118 3                         // test.c:118:3
 	adrp	x3, c_2
 	add	x3, x3, :lo12:c_2
 	mov	w1, w2
 	bl	cob_display
 	.loc 6 131 3                         // test.cbl:131:3
 	bl	cob_nop
+	.loc 4 124 3                         // test.c:124:3
 	adrp	x8, test_.b_8
 	add	x8, x8, :lo12:test_.b_8
 	mov	x9, #2314885530818453536
@@ -205,6 +250,7 @@ test_:                                  // @test_
 	bl	cob_nop
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #112]                  // 4-byte Folded Reload
+	.loc 4 130 3                         // test.c:130:3
 	adrp	x3, c_3
 	add	x3, x3, :lo12:c_3
 	str	x3, [sp, #80]                   // 8-byte Folded Spill
@@ -214,6 +260,7 @@ test_:                                  // @test_
 	bl	cob_nop
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
+	.loc 4 136 3                         // test.c:136:3
 	adrp	x3, c_4
 	add	x3, x3, :lo12:c_4
 	adrp	x4, c_5
@@ -228,6 +275,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 142 3                         // test.c:142:3
 	adrp	x3, c_6
 	add	x3, x3, :lo12:c_6
 	bl	cob_display
@@ -237,6 +285,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 148 3                         // test.c:148:3
 	adrp	x3, c_7
 	add	x3, x3, :lo12:c_7
 	bl	cob_display
@@ -245,6 +294,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 154 3                         // test.c:154:3
 	adrp	x3, c_8
 	add	x3, x3, :lo12:c_8
 	adrp	x4, c_9
@@ -257,6 +307,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 160 3                         // test.c:160:3
 	adrp	x3, c_10
 	add	x3, x3, :lo12:c_10
 	bl	cob_display
@@ -266,6 +317,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 166 3                         // test.c:166:3
 	adrp	x3, c_11
 	add	x3, x3, :lo12:c_11
 	bl	cob_display
@@ -274,6 +326,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 172 3                         // test.c:172:3
 	adrp	x3, c_12
 	add	x3, x3, :lo12:c_12
 	adrp	x4, c_13
@@ -286,6 +339,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 178 3                         // test.c:178:3
 	adrp	x3, c_14
 	add	x3, x3, :lo12:c_14
 	bl	cob_display
@@ -295,6 +349,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 184 3                         // test.c:184:3
 	adrp	x3, c_15
 	add	x3, x3, :lo12:c_15
 	bl	cob_display
@@ -304,6 +359,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 190 3                         // test.c:190:3
 	adrp	x3, c_16
 	add	x3, x3, :lo12:c_16
 	bl	cob_display
@@ -313,6 +369,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 196 3                         // test.c:196:3
 	adrp	x3, c_17
 	add	x3, x3, :lo12:c_17
 	bl	cob_display
@@ -322,6 +379,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 202 3                         // test.c:202:3
 	adrp	x3, c_18
 	add	x3, x3, :lo12:c_18
 	bl	cob_display
@@ -331,6 +389,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 208 3                         // test.c:208:3
 	adrp	x3, c_19
 	add	x3, x3, :lo12:c_19
 	bl	cob_display
@@ -340,6 +399,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 214 3                         // test.c:214:3
 	adrp	x3, c_20
 	add	x3, x3, :lo12:c_20
 	bl	cob_display
@@ -348,6 +408,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 220 3                         // test.c:220:3
 	adrp	x3, c_21
 	add	x3, x3, :lo12:c_21
 	adrp	x4, c_22
@@ -360,6 +421,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 226 3                         // test.c:226:3
 	adrp	x3, c_23
 	add	x3, x3, :lo12:c_23
 	bl	cob_display
@@ -369,6 +431,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 232 3                         // test.c:232:3
 	adrp	x3, c_24
 	add	x3, x3, :lo12:c_24
 	bl	cob_display
@@ -378,6 +441,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 238 3                         // test.c:238:3
 	adrp	x3, c_25
 	add	x3, x3, :lo12:c_25
 	bl	cob_display
@@ -387,6 +451,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 244 3                         // test.c:244:3
 	adrp	x3, c_26
 	add	x3, x3, :lo12:c_26
 	bl	cob_display
@@ -396,6 +461,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 250 3                         // test.c:250:3
 	adrp	x3, c_27
 	add	x3, x3, :lo12:c_27
 	bl	cob_display
@@ -405,6 +471,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 256 3                         // test.c:256:3
 	adrp	x3, c_28
 	add	x3, x3, :lo12:c_28
 	bl	cob_display
@@ -414,6 +481,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 262 3                         // test.c:262:3
 	adrp	x3, c_29
 	add	x3, x3, :lo12:c_29
 	bl	cob_display
@@ -423,6 +491,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 268 3                         // test.c:268:3
 	adrp	x3, c_30
 	add	x3, x3, :lo12:c_30
 	bl	cob_display
@@ -431,6 +500,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 274 3                         // test.c:274:3
 	adrp	x3, c_31
 	add	x3, x3, :lo12:c_31
 	adrp	x4, c_32
@@ -442,6 +512,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 280 3                         // test.c:280:3
 	adrp	x3, c_33
 	add	x3, x3, :lo12:c_33
 	bl	cob_display
@@ -451,6 +522,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 286 3                         // test.c:286:3
 	adrp	x3, c_34
 	add	x3, x3, :lo12:c_34
 	bl	cob_display
@@ -460,6 +532,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 292 3                         // test.c:292:3
 	adrp	x3, c_35
 	add	x3, x3, :lo12:c_35
 	bl	cob_display
@@ -469,6 +542,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 298 3                         // test.c:298:3
 	adrp	x3, c_36
 	add	x3, x3, :lo12:c_36
 	bl	cob_display
@@ -478,6 +552,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 304 3                         // test.c:304:3
 	adrp	x3, c_37
 	add	x3, x3, :lo12:c_37
 	bl	cob_display
@@ -487,6 +562,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 310 3                         // test.c:310:3
 	adrp	x3, c_38
 	add	x3, x3, :lo12:c_38
 	bl	cob_display
@@ -496,6 +572,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 316 3                         // test.c:316:3
 	adrp	x3, c_39
 	add	x3, x3, :lo12:c_39
 	bl	cob_display
@@ -505,6 +582,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 322 3                         // test.c:322:3
 	adrp	x3, c_40
 	add	x3, x3, :lo12:c_40
 	bl	cob_display
@@ -514,6 +592,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 328 3                         // test.c:328:3
 	adrp	x3, c_41
 	add	x3, x3, :lo12:c_41
 	bl	cob_display
@@ -523,6 +602,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 334 3                         // test.c:334:3
 	adrp	x3, c_42
 	add	x3, x3, :lo12:c_42
 	bl	cob_display
@@ -532,6 +612,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 340 3                         // test.c:340:3
 	adrp	x3, c_43
 	add	x3, x3, :lo12:c_43
 	bl	cob_display
@@ -541,6 +622,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 346 3                         // test.c:346:3
 	adrp	x3, c_44
 	add	x3, x3, :lo12:c_44
 	bl	cob_display
@@ -549,12 +631,14 @@ test_:                                  // @test_
 	ldr	x3, [sp, #80]                   // 8-byte Folded Reload
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #112]                  // 4-byte Folded Reload
+	.loc 4 352 3                         // test.c:352:3
 	mov	w1, w2
 	bl	cob_display
 	.loc 6 171 3                         // test.cbl:171:3
 	bl	cob_nop
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #112]                  // 4-byte Folded Reload
+	.loc 4 358 3                         // test.c:358:3
 	adrp	x3, c_45
 	add	x3, x3, :lo12:c_45
 	mov	w1, w2
@@ -564,12 +648,14 @@ test_:                                  // @test_
 	ldr	x3, [sp, #80]                   // 8-byte Folded Reload
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #112]                  // 4-byte Folded Reload
+	.loc 4 364 3                         // test.c:364:3
 	mov	w1, w2
 	bl	cob_display
 	.loc 6 177 3                         // test.cbl:177:3
 	bl	cob_nop
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #112]                  // 4-byte Folded Reload
+	.loc 4 370 3                         // test.c:370:3
 	adrp	x3, test_.f_8
 	add	x3, x3, :lo12:test_.f_8
 	mov	w1, w2
@@ -578,6 +664,7 @@ test_:                                  // @test_
 	bl	cob_nop
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #112]                  // 4-byte Folded Reload
+	.loc 4 376 3                         // test.c:376:3
 	adrp	x3, test_.f_9
 	add	x3, x3, :lo12:test_.f_9
 	mov	w1, w2
@@ -587,6 +674,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 382 3                         // test.c:382:3
 	adrp	x3, test_.f_10
 	add	x3, x3, :lo12:test_.f_10
 	adrp	x4, c_46
@@ -597,6 +685,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 388 3                         // test.c:388:3
 	adrp	x3, test_.f_11
 	add	x3, x3, :lo12:test_.f_11
 	adrp	x4, c_47
@@ -607,6 +696,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 394 3                         // test.c:394:3
 	adrp	x3, test_.f_12
 	add	x3, x3, :lo12:test_.f_12
 	adrp	x4, c_48
@@ -617,6 +707,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 400 3                         // test.c:400:3
 	adrp	x3, test_.f_13
 	add	x3, x3, :lo12:test_.f_13
 	adrp	x4, c_49
@@ -627,6 +718,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 406 3                         // test.c:406:3
 	adrp	x3, test_.f_14
 	add	x3, x3, :lo12:test_.f_14
 	adrp	x4, c_50
@@ -637,6 +729,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 412 3                         // test.c:412:3
 	adrp	x3, test_.f_15
 	add	x3, x3, :lo12:test_.f_15
 	adrp	x4, c_51
@@ -647,6 +740,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 418 3                         // test.c:418:3
 	adrp	x3, test_.f_16
 	add	x3, x3, :lo12:test_.f_16
 	adrp	x4, c_52
@@ -657,6 +751,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 424 3                         // test.c:424:3
 	adrp	x3, test_.f_17
 	add	x3, x3, :lo12:test_.f_17
 	adrp	x4, c_53
@@ -667,6 +762,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 430 3                         // test.c:430:3
 	adrp	x3, test_.f_18
 	add	x3, x3, :lo12:test_.f_18
 	adrp	x4, c_54
@@ -677,6 +773,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 436 3                         // test.c:436:3
 	adrp	x3, test_.f_19
 	add	x3, x3, :lo12:test_.f_19
 	adrp	x4, c_55
@@ -687,6 +784,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 442 3                         // test.c:442:3
 	adrp	x3, test_.f_20
 	add	x3, x3, :lo12:test_.f_20
 	adrp	x4, c_56
@@ -697,6 +795,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 448 3                         // test.c:448:3
 	adrp	x3, test_.f_21
 	add	x3, x3, :lo12:test_.f_21
 	adrp	x4, c_57
@@ -707,6 +806,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 454 3                         // test.c:454:3
 	adrp	x3, test_.f_22
 	add	x3, x3, :lo12:test_.f_22
 	adrp	x4, c_58
@@ -717,6 +817,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 460 3                         // test.c:460:3
 	adrp	x3, test_.f_23
 	add	x3, x3, :lo12:test_.f_23
 	adrp	x4, c_59
@@ -727,6 +828,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 466 3                         // test.c:466:3
 	adrp	x3, test_.f_24
 	add	x3, x3, :lo12:test_.f_24
 	adrp	x4, c_60
@@ -737,6 +839,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 472 3                         // test.c:472:3
 	adrp	x3, test_.f_25
 	add	x3, x3, :lo12:test_.f_25
 	adrp	x4, c_61
@@ -747,6 +850,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 478 3                         // test.c:478:3
 	adrp	x3, test_.f_26
 	add	x3, x3, :lo12:test_.f_26
 	adrp	x4, c_62
@@ -757,6 +861,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 484 3                         // test.c:484:3
 	adrp	x3, test_.f_52
 	add	x3, x3, :lo12:test_.f_52
 	str	x3, [sp, #88]                   // 8-byte Folded Spill
@@ -769,6 +874,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 490 3                         // test.c:490:3
 	adrp	x3, test_.f_27
 	add	x3, x3, :lo12:test_.f_27
 	adrp	x4, c_64
@@ -779,6 +885,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 496 3                         // test.c:496:3
 	adrp	x3, test_.f_29
 	add	x3, x3, :lo12:test_.f_29
 	adrp	x4, c_65
@@ -789,6 +896,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 502 3                         // test.c:502:3
 	adrp	x3, test_.f_28
 	add	x3, x3, :lo12:test_.f_28
 	adrp	x4, c_66
@@ -799,6 +907,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 508 3                         // test.c:508:3
 	adrp	x3, test_.f_30
 	add	x3, x3, :lo12:test_.f_30
 	adrp	x4, c_67
@@ -809,6 +918,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 514 3                         // test.c:514:3
 	adrp	x3, test_.f_31
 	add	x3, x3, :lo12:test_.f_31
 	adrp	x4, c_68
@@ -819,6 +929,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 520 3                         // test.c:520:3
 	adrp	x3, test_.f_32
 	add	x3, x3, :lo12:test_.f_32
 	adrp	x4, c_69
@@ -829,6 +940,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 526 3                         // test.c:526:3
 	adrp	x3, test_.f_33
 	add	x3, x3, :lo12:test_.f_33
 	adrp	x4, c_70
@@ -839,6 +951,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 532 3                         // test.c:532:3
 	adrp	x3, test_.f_34
 	add	x3, x3, :lo12:test_.f_34
 	adrp	x4, c_71
@@ -849,6 +962,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 538 3                         // test.c:538:3
 	adrp	x3, test_.f_35
 	add	x3, x3, :lo12:test_.f_35
 	adrp	x4, c_72
@@ -859,6 +973,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 544 3                         // test.c:544:3
 	adrp	x3, test_.f_39
 	add	x3, x3, :lo12:test_.f_39
 	adrp	x4, c_73
@@ -869,6 +984,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 550 3                         // test.c:550:3
 	adrp	x3, test_.f_40
 	add	x3, x3, :lo12:test_.f_40
 	adrp	x4, c_74
@@ -879,6 +995,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 556 3                         // test.c:556:3
 	adrp	x3, test_.f_41
 	add	x3, x3, :lo12:test_.f_41
 	adrp	x4, c_75
@@ -889,6 +1006,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 562 3                         // test.c:562:3
 	adrp	x3, test_.f_42
 	add	x3, x3, :lo12:test_.f_42
 	adrp	x4, c_76
@@ -899,6 +1017,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 568 3                         // test.c:568:3
 	adrp	x3, test_.f_43
 	add	x3, x3, :lo12:test_.f_43
 	adrp	x4, c_77
@@ -909,6 +1028,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 574 3                         // test.c:574:3
 	adrp	x3, test_.f_44
 	add	x3, x3, :lo12:test_.f_44
 	adrp	x4, c_78
@@ -919,6 +1039,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 580 3                         // test.c:580:3
 	adrp	x3, test_.f_45
 	add	x3, x3, :lo12:test_.f_45
 	adrp	x4, c_79
@@ -929,6 +1050,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 586 3                         // test.c:586:3
 	adrp	x3, test_.f_46
 	add	x3, x3, :lo12:test_.f_46
 	adrp	x4, c_80
@@ -939,6 +1061,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 592 3                         // test.c:592:3
 	adrp	x3, test_.f_47
 	add	x3, x3, :lo12:test_.f_47
 	adrp	x4, c_81
@@ -949,6 +1072,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 598 3                         // test.c:598:3
 	adrp	x3, test_.f_48
 	add	x3, x3, :lo12:test_.f_48
 	adrp	x4, c_82
@@ -959,6 +1083,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 604 3                         // test.c:604:3
 	adrp	x3, test_.f_49
 	add	x3, x3, :lo12:test_.f_49
 	adrp	x4, c_83
@@ -969,6 +1094,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 610 3                         // test.c:610:3
 	adrp	x3, test_.f_50
 	add	x3, x3, :lo12:test_.f_50
 	adrp	x4, c_84
@@ -979,6 +1105,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 616 3                         // test.c:616:3
 	adrp	x3, test_.f_51
 	add	x3, x3, :lo12:test_.f_51
 	adrp	x4, c_85
@@ -991,12 +1118,14 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 622 3                         // test.c:622:3
 	bl	cob_display
 	.loc 6 221 3                         // test.cbl:221:3
 	bl	cob_nop
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 628 3                         // test.c:628:3
 	adrp	x3, test_.f_53
 	add	x3, x3, :lo12:test_.f_53
 	adrp	x4, c_86
@@ -1007,6 +1136,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 634 3                         // test.c:634:3
 	adrp	x3, test_.f_54
 	add	x3, x3, :lo12:test_.f_54
 	adrp	x4, c_87
@@ -1017,6 +1147,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 640 3                         // test.c:640:3
 	adrp	x3, test_.f_55
 	add	x3, x3, :lo12:test_.f_55
 	adrp	x4, c_88
@@ -1027,6 +1158,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 646 3                         // test.c:646:3
 	adrp	x3, test_.f_56
 	add	x3, x3, :lo12:test_.f_56
 	adrp	x4, c_89
@@ -1037,6 +1169,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 652 3                         // test.c:652:3
 	adrp	x3, test_.f_57
 	add	x3, x3, :lo12:test_.f_57
 	adrp	x4, c_90
@@ -1047,6 +1180,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 658 3                         // test.c:658:3
 	adrp	x3, test_.f_58
 	add	x3, x3, :lo12:test_.f_58
 	adrp	x4, c_91
@@ -1057,6 +1191,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 664 3                         // test.c:664:3
 	adrp	x3, test_.f_59
 	add	x3, x3, :lo12:test_.f_59
 	adrp	x4, c_92
@@ -1067,6 +1202,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 670 3                         // test.c:670:3
 	adrp	x3, test_.f_60
 	add	x3, x3, :lo12:test_.f_60
 	adrp	x4, c_93
@@ -1077,6 +1213,7 @@ test_:                                  // @test_
 	ldr	w0, [sp, #108]                  // 4-byte Folded Reload
 	ldr	w1, [sp, #112]                  // 4-byte Folded Reload
 	ldr	w2, [sp, #116]                  // 4-byte Folded Reload
+	.loc 4 676 3                         // test.c:676:3
 	adrp	x3, test_.f_61
 	add	x3, x3, :lo12:test_.f_61
 	adrp	x4, c_94
@@ -1084,36 +1221,48 @@ test_:                                  // @test_
 	bl	cob_display
 	.loc 6 230 3                         // test.cbl:230:3
 	bl	cob_nop
+	.loc 4 682 3                         // test.c:682:3
 	b	.LBB2_15
 .LBB2_15:
 .Ltmp25:
 	//DEBUG_LABEL: test_:exit_program
+	.loc 4 689 7                         // test.c:689:7
 	adrp	x8, test_.module
 	ldr	x8, [x8, :lo12:test_.module]
+	.loc 4 689 15 is_stmt 0              // test.c:689:15
 	ldr	w8, [x8, #96]
 .Ltmp26:
+	.loc 4 689 7                         // test.c:689:7
 	cbz	w8, .LBB2_17
 	b	.LBB2_16
 .LBB2_16:
 .Ltmp27:
+	.loc 4 690 4 is_stmt 1               // test.c:690:4
 	adrp	x8, test_.module
 	ldr	x9, [x8, :lo12:test_.module]
+	.loc 4 690 25 is_stmt 0              // test.c:690:25
 	ldr	w8, [x9, #96]
 	subs	w8, w8, #1
 	str	w8, [x9, #96]
+	.loc 4 691 3 is_stmt 1               // test.c:691:3
 	b	.LBB2_17
 .Ltmp28:
 .LBB2_17:
+	.loc 4 694 21                        // test.c:694:21
 	adrp	x8, test_.module
 	ldr	x0, [x8, :lo12:test_.module]
+	.loc 4 694 3 is_stmt 0               // test.c:694:3
 	bl	cob_module_leave
+	.loc 4 697 10 is_stmt 1              // test.c:697:10
 	adrp	x8, test_.b_2
 	ldr	w8, [x8, :lo12:test_.b_2]
+	.loc 4 697 3 is_stmt 0               // test.c:697:3
 	str	w8, [sp, #132]
 	b	.LBB2_27
 .LBB2_18:
 .Ltmp29:
 	//DEBUG_LABEL: test_:P_initialize
+	.loc 4 705 3 is_stmt 1               // test.c:705:3
 	adrp	x0, .L.str.1
 	add	x0, x0, :lo12:.L.str.1
 	adrp	x1, .L.str.2
@@ -1121,24 +1270,35 @@ test_:                                  // @test_
 	mov	w2, wzr
 	str	w2, [sp, #20]                   // 4-byte Folded Spill
 	bl	cob_check_version
+	.loc 4 707 21                        // test.c:707:21
 	ldr	x8, [sp, #136]
+	.loc 4 707 35 is_stmt 0              // test.c:707:35
 	ldr	x8, [x8, #48]
+	.loc 4 707 19                        // test.c:707:19
 	adrp	x9, cob_module_path
 	str	x8, [x9, :lo12:cob_module_path]
+	.loc 4 709 21 is_stmt 1              // test.c:709:21
 	adrp	x8, test_.module
 	str	x8, [sp, #8]                    // 8-byte Folded Spill
 	ldr	x0, [x8, :lo12:test_.module]
+	.loc 4 709 3 is_stmt 0               // test.c:709:3
 	bl	test_module_init
 	ldr	x8, [sp, #8]                    // 8-byte Folded Reload
+	.loc 4 711 3 is_stmt 1               // test.c:711:3
 	ldr	x10, [x8, :lo12:test_.module]
 	mov	x9, xzr
 	str	x9, [sp, #24]                   // 8-byte Folded Spill
+	.loc 4 711 22 is_stmt 0              // test.c:711:22
 	str	x9, [x10, #64]
+	.loc 4 714 19 is_stmt 1              // test.c:714:19
 	ldr	x0, [x8, :lo12:test_.module]
+	.loc 4 714 3 is_stmt 0               // test.c:714:3
 	bl	cob_set_cancel
 	ldr	w8, [sp, #20]                   // 4-byte Folded Reload
+	.loc 4 717 7 is_stmt 1               // test.c:717:7
 	adrp	x9, test_.b_2
 	str	w8, [x9, :lo12:test_.b_2]
+	.loc 4 718 3                         // test.c:718:3
 	adrp	x8, test_.b_8
 	add	x8, x8, :lo12:test_.b_8
 	mov	x9, #2314885530818453536
@@ -1146,183 +1306,221 @@ test_:                                  // @test_
 	movi	v0.16b, #32
 	str	q0, [x8, #16]
 	str	q0, [x8]
+	.loc 4 719 3                         // test.c:719:3
 	adrp	x0, c_95
 	add	x0, x0, :lo12:c_95
 	adrp	x1, test_.f_9
 	add	x1, x1, :lo12:test_.f_9
 	bl	cob_move
+	.loc 4 720 3                         // test.c:720:3
 	adrp	x0, c_96
 	add	x0, x0, :lo12:c_96
 	adrp	x1, test_.f_10
 	add	x1, x1, :lo12:test_.f_10
 	bl	cob_move
+	.loc 4 721 3                         // test.c:721:3
 	adrp	x0, c_97
 	add	x0, x0, :lo12:c_97
 	adrp	x1, test_.f_11
 	add	x1, x1, :lo12:test_.f_11
 	bl	cob_move
+	.loc 4 722 3                         // test.c:722:3
 	adrp	x0, c_98
 	add	x0, x0, :lo12:c_98
 	adrp	x1, test_.f_12
 	add	x1, x1, :lo12:test_.f_12
 	bl	cob_move
+	.loc 4 723 3                         // test.c:723:3
 	adrp	x0, c_9
 	add	x0, x0, :lo12:c_9
 	adrp	x1, test_.f_13
 	add	x1, x1, :lo12:test_.f_13
 	bl	cob_move
+	.loc 4 724 3                         // test.c:724:3
 	adrp	x0, c_99
 	add	x0, x0, :lo12:c_99
 	adrp	x1, test_.f_14
 	add	x1, x1, :lo12:test_.f_14
 	bl	cob_move
+	.loc 4 725 3                         // test.c:725:3
 	adrp	x0, c_100
 	add	x0, x0, :lo12:c_100
 	adrp	x1, test_.f_15
 	add	x1, x1, :lo12:test_.f_15
 	bl	cob_move
+	.loc 4 726 3                         // test.c:726:3
 	adrp	x0, c_101
 	add	x0, x0, :lo12:c_101
 	adrp	x1, test_.f_16
 	add	x1, x1, :lo12:test_.f_16
 	bl	cob_move
+	.loc 4 727 3                         // test.c:727:3
 	adrp	x0, c_102
 	add	x0, x0, :lo12:c_102
 	adrp	x1, test_.f_17
 	add	x1, x1, :lo12:test_.f_17
 	bl	cob_move
+	.loc 4 728 3                         // test.c:728:3
 	adrp	x0, c_103
 	add	x0, x0, :lo12:c_103
 	adrp	x1, test_.f_18
 	add	x1, x1, :lo12:test_.f_18
 	bl	cob_move
+	.loc 4 729 3                         // test.c:729:3
 	adrp	x0, c_104
 	add	x0, x0, :lo12:c_104
 	adrp	x1, test_.f_19
 	add	x1, x1, :lo12:test_.f_19
 	bl	cob_move
+	.loc 4 730 3                         // test.c:730:3
 	adrp	x0, c_105
 	add	x0, x0, :lo12:c_105
 	adrp	x1, test_.f_20
 	add	x1, x1, :lo12:test_.f_20
 	bl	cob_move
+	.loc 4 731 3                         // test.c:731:3
 	adrp	x0, c_106
 	add	x0, x0, :lo12:c_106
 	adrp	x1, test_.f_21
 	add	x1, x1, :lo12:test_.f_21
 	bl	cob_move
+	.loc 4 732 3                         // test.c:732:3
 	adrp	x0, c_107
 	add	x0, x0, :lo12:c_107
 	adrp	x1, test_.f_22
 	add	x1, x1, :lo12:test_.f_22
 	bl	cob_move
+	.loc 4 733 3                         // test.c:733:3
 	adrp	x0, c_108
 	add	x0, x0, :lo12:c_108
 	adrp	x1, test_.f_23
 	add	x1, x1, :lo12:test_.f_23
 	bl	cob_move
+	.loc 4 734 3                         // test.c:734:3
 	adrp	x0, c_109
 	add	x0, x0, :lo12:c_109
 	adrp	x1, test_.f_24
 	add	x1, x1, :lo12:test_.f_24
 	bl	cob_move
+	.loc 4 735 3                         // test.c:735:3
 	adrp	x0, c_110
 	add	x0, x0, :lo12:c_110
 	adrp	x1, test_.f_25
 	add	x1, x1, :lo12:test_.f_25
 	bl	cob_move
+	.loc 4 736 3                         // test.c:736:3
 	adrp	x0, c_111
 	add	x0, x0, :lo12:c_111
 	adrp	x1, test_.f_26
 	add	x1, x1, :lo12:test_.f_26
 	bl	cob_move
+	.loc 4 737 3                         // test.c:737:3
 	adrp	x0, c_112
 	add	x0, x0, :lo12:c_112
 	adrp	x1, test_.f_27
 	add	x1, x1, :lo12:test_.f_27
 	bl	cob_move
+	.loc 4 738 3                         // test.c:738:3
 	adrp	x0, c_113
 	add	x0, x0, :lo12:c_113
 	adrp	x1, test_.f_28
 	add	x1, x1, :lo12:test_.f_28
 	bl	cob_move
+	.loc 4 739 3                         // test.c:739:3
 	adrp	x0, c_114
 	add	x0, x0, :lo12:c_114
 	adrp	x1, test_.f_29
 	add	x1, x1, :lo12:test_.f_29
 	bl	cob_move
+	.loc 4 740 3                         // test.c:740:3
 	adrp	x0, c_115
 	add	x0, x0, :lo12:c_115
 	adrp	x1, test_.f_30
 	add	x1, x1, :lo12:test_.f_30
 	bl	cob_move
+	.loc 4 741 3                         // test.c:741:3
 	adrp	x0, c_116
 	add	x0, x0, :lo12:c_116
 	adrp	x1, test_.f_31
 	add	x1, x1, :lo12:test_.f_31
 	bl	cob_move
+	.loc 4 742 3                         // test.c:742:3
 	adrp	x0, c_117
 	add	x0, x0, :lo12:c_117
 	adrp	x1, test_.f_32
 	add	x1, x1, :lo12:test_.f_32
 	bl	cob_move
+	.loc 4 743 3                         // test.c:743:3
 	adrp	x0, c_118
 	add	x0, x0, :lo12:c_118
 	adrp	x1, test_.f_33
 	add	x1, x1, :lo12:test_.f_33
 	bl	cob_move
+	.loc 4 744 3                         // test.c:744:3
 	adrp	x0, c_119
 	add	x0, x0, :lo12:c_119
 	adrp	x1, test_.f_34
 	add	x1, x1, :lo12:test_.f_34
 	bl	cob_move
 	ldr	x8, [sp, #24]                   // 8-byte Folded Reload
+	.loc 4 745 21                        // test.c:745:21
 	adrp	x10, test_.b_35
 	mov	w9, #52501
 	movk	w9, #1883, lsl #16
 	str	w9, [x10, :lo12:test_.b_35]
+	.loc 4 746 3                         // test.c:746:3
 	adrp	x9, test_.b_36
 	str	x8, [x9, :lo12:test_.b_36]
+	.loc 4 747 3                         // test.c:747:3
 	adrp	x9, test_.b_37
 	str	x8, [x9, :lo12:test_.b_37]
+	.loc 4 748 3                         // test.c:748:3
 	adrp	x9, test_.b_38
 	str	x8, [x9, :lo12:test_.b_38]
+	.loc 4 749 3                         // test.c:749:3
 	adrp	x0, c_120
 	add	x0, x0, :lo12:c_120
 	adrp	x1, test_.f_39
 	add	x1, x1, :lo12:test_.f_39
 	bl	cob_move
+	.loc 4 750 3                         // test.c:750:3
 	adrp	x0, c_121
 	add	x0, x0, :lo12:c_121
 	adrp	x1, test_.f_40
 	add	x1, x1, :lo12:test_.f_40
 	bl	cob_move
+	.loc 4 751 3                         // test.c:751:3
 	adrp	x0, c_122
 	add	x0, x0, :lo12:c_122
 	adrp	x1, test_.f_41
 	add	x1, x1, :lo12:test_.f_41
 	bl	cob_move
+	.loc 4 752 3                         // test.c:752:3
 	adrp	x0, c_123
 	add	x0, x0, :lo12:c_123
 	adrp	x1, test_.f_42
 	add	x1, x1, :lo12:test_.f_42
 	bl	cob_move
+	.loc 4 753 3                         // test.c:753:3
 	adrp	x0, c_124
 	add	x0, x0, :lo12:c_124
 	adrp	x1, test_.f_43
 	add	x1, x1, :lo12:test_.f_43
 	bl	cob_move
+	.loc 4 754 3                         // test.c:754:3
 	adrp	x0, c_125
 	add	x0, x0, :lo12:c_125
 	adrp	x1, test_.f_44
 	add	x1, x1, :lo12:test_.f_44
 	bl	cob_move
+	.loc 4 755 3                         // test.c:755:3
 	adrp	x0, c_126
 	add	x0, x0, :lo12:c_126
 	str	x0, [sp, #40]                   // 8-byte Folded Spill
 	adrp	x1, test_.f_45
 	add	x1, x1, :lo12:test_.f_45
 	bl	cob_move
+	.loc 4 756 3                         // test.c:756:3
 	adrp	x0, c_127
 	add	x0, x0, :lo12:c_127
 	str	x0, [sp, #32]                   // 8-byte Folded Spill
@@ -1330,123 +1528,158 @@ test_:                                  // @test_
 	add	x1, x1, :lo12:test_.f_46
 	bl	cob_move
 	ldr	x0, [sp, #40]                   // 8-byte Folded Reload
+	.loc 4 757 3                         // test.c:757:3
 	adrp	x1, test_.f_47
 	add	x1, x1, :lo12:test_.f_47
 	bl	cob_move
+	.loc 4 758 3                         // test.c:758:3
 	adrp	x0, c_128
 	add	x0, x0, :lo12:c_128
 	adrp	x1, test_.f_48
 	add	x1, x1, :lo12:test_.f_48
 	bl	cob_move
+	.loc 4 759 3                         // test.c:759:3
 	adrp	x0, c_129
 	add	x0, x0, :lo12:c_129
 	adrp	x1, test_.f_49
 	add	x1, x1, :lo12:test_.f_49
 	bl	cob_move
 	ldr	x0, [sp, #32]                   // 8-byte Folded Reload
+	.loc 4 760 3                         // test.c:760:3
 	adrp	x1, test_.f_50
 	add	x1, x1, :lo12:test_.f_50
 	bl	cob_move
 	ldr	x0, [sp, #40]                   // 8-byte Folded Reload
+	.loc 4 761 3                         // test.c:761:3
 	adrp	x1, test_.f_51
 	add	x1, x1, :lo12:test_.f_51
 	bl	cob_move
 	ldr	x0, [sp, #32]                   // 8-byte Folded Reload
+	.loc 4 762 3                         // test.c:762:3
 	adrp	x1, test_.f_52
 	add	x1, x1, :lo12:test_.f_52
 	bl	cob_move
 	ldr	x0, [sp, #40]                   // 8-byte Folded Reload
+	.loc 4 763 3                         // test.c:763:3
 	adrp	x1, test_.f_53
 	add	x1, x1, :lo12:test_.f_53
 	bl	cob_move
 	ldr	x0, [sp, #32]                   // 8-byte Folded Reload
+	.loc 4 764 3                         // test.c:764:3
 	adrp	x1, test_.f_54
 	add	x1, x1, :lo12:test_.f_54
 	bl	cob_move
 	ldr	x0, [sp, #40]                   // 8-byte Folded Reload
+	.loc 4 765 3                         // test.c:765:3
 	adrp	x1, test_.f_55
 	add	x1, x1, :lo12:test_.f_55
 	bl	cob_move
 	ldr	x0, [sp, #32]                   // 8-byte Folded Reload
+	.loc 4 766 3                         // test.c:766:3
 	adrp	x1, test_.f_56
 	add	x1, x1, :lo12:test_.f_56
 	bl	cob_move
+	.loc 4 767 3                         // test.c:767:3
 	adrp	x0, c_130
 	add	x0, x0, :lo12:c_130
 	adrp	x1, test_.f_57
 	add	x1, x1, :lo12:test_.f_57
 	bl	cob_move
 	ldr	x0, [sp, #40]                   // 8-byte Folded Reload
+	.loc 4 768 3                         // test.c:768:3
 	adrp	x1, test_.f_58
 	add	x1, x1, :lo12:test_.f_58
 	bl	cob_move
 	ldr	x0, [sp, #40]                   // 8-byte Folded Reload
+	.loc 4 769 3                         // test.c:769:3
 	adrp	x1, test_.f_59
 	add	x1, x1, :lo12:test_.f_59
 	bl	cob_move
+	.loc 4 770 3                         // test.c:770:3
 	adrp	x0, c_131
 	add	x0, x0, :lo12:c_131
 	adrp	x1, test_.f_60
 	add	x1, x1, :lo12:test_.f_60
 	bl	cob_move
+	.loc 4 771 3                         // test.c:771:3
 	adrp	x8, .L.str.3
 	add	x8, x8, :lo12:.L.str.3
 	ldr	q0, [x8]
 	adrp	x8, test_.b_61
 	str	q0, [x8, :lo12:test_.b_61]
+	.loc 4 774 15                        // test.c:774:15
 	adrp	x9, test_.initialized
 	mov	w8, #1
 	str	w8, [x9, :lo12:test_.initialized]
+	.loc 4 775 3                         // test.c:775:3
 	b	.LBB2_11
 .LBB2_19:
 .Ltmp30:
 	//DEBUG_LABEL: test_:P_dump
+	.loc 4 0 3 is_stmt 0                 // test.c:0:3
 	mov	w8, wzr
+	.loc 4 778 5 is_stmt 1               // test.c:778:5
 	str	w8, [sp, #132]
 	b	.LBB2_27
 .LBB2_20:
 .Ltmp31:
 	//DEBUG_LABEL: test_:P_cancel
+	.loc 4 784 8                         // test.c:784:8
 	adrp	x8, test_.initialized
 	ldr	w8, [x8, :lo12:test_.initialized]
 .Ltmp32:
+	.loc 4 784 7 is_stmt 0               // test.c:784:7
 	cbnz	w8, .LBB2_22
 	b	.LBB2_21
 .LBB2_21:
+	.loc 4 0 7                           // test.c:0:7
 	mov	w8, wzr
 .Ltmp33:
+	.loc 4 785 4 is_stmt 1               // test.c:785:4
 	str	w8, [sp, #132]
 	b	.LBB2_27
 .Ltmp34:
 .LBB2_22:
+	.loc 4 786 7                         // test.c:786:7
 	adrp	x8, test_.module
 	ldr	x8, [x8, :lo12:test_.module]
+	.loc 4 786 14 is_stmt 0              // test.c:786:14
 	cbz	x8, .LBB2_25
 	b	.LBB2_23
 .LBB2_23:
+	.loc 4 786 17                        // test.c:786:17
 	adrp	x8, test_.module
 	ldr	x8, [x8, :lo12:test_.module]
+	.loc 4 786 25                        // test.c:786:25
 	ldr	w8, [x8, #96]
 .Ltmp35:
+	.loc 4 786 7                         // test.c:786:7
 	cbz	w8, .LBB2_25
 	b	.LBB2_24
 .LBB2_24:
+	.loc 4 0 7                           // test.c:0:7
 	mov	w0, #1
 .Ltmp36:
+	.loc 4 787 4 is_stmt 1               // test.c:787:4
 	bl	cob_fatal_error
 .Ltmp37:
 .LBB2_25:
+	.loc 4 789 15                        // test.c:789:15
 	adrp	x9, test_.initialized
 	mov	w8, wzr
 	str	w8, [x9, :lo12:test_.initialized]
+	.loc 4 789 3 is_stmt 0               // test.c:789:3
 	b	.LBB2_26
 .LBB2_26:
 .Ltmp38:
 	//DEBUG_LABEL: test_:P_clear_decimal
+	.loc 4 0 3                           // test.c:0:3
 	mov	w8, wzr
+	.loc 4 792 3 is_stmt 1               // test.c:792:3
 	str	w8, [sp, #132]
 	b	.LBB2_27
 .LBB2_27:
+	.loc 4 794 1                         // test.c:794:1
 	ldr	w0, [sp, #132]
 	str	w0, [sp, #4]                    // 4-byte Folded Spill
 	mrs	x8, TPIDR_EL0
@@ -1456,7 +1689,9 @@ test_:                                  // @test_
 	b.ne	.LBB2_29
 	b	.LBB2_28
 .LBB2_28:
+	.loc 4 0 1 is_stmt 0                 // test.c:0:1
 	ldr	w0, [sp, #4]                    // 4-byte Folded Reload
+	.loc 4 794 1                         // test.c:794:1
 	add	sp, sp, #1, lsl #12             // =4096
 	add	sp, sp, #144
 	.cfi_def_cfa wsp, 32
@@ -1469,6 +1704,7 @@ test_:                                  // @test_
 	ret
 .LBB2_29:
 	.cfi_restore_state
+	.loc 4 0 0                           // test.c:0:0
 	bl	__stack_chk_fail
 .Ltmp39:
 .Lfunc_end2:
@@ -1479,88 +1715,146 @@ test_:                                  // @test_
 	.type	test_module_init,@function
 test_module_init:                       // @test_module_init
 .Lfunc_begin3:
+	.loc 4 800 0 is_stmt 1               // test.c:800:0
 	.cfi_startproc
 // %bb.0:
 	sub	sp, sp, #16
 	.cfi_def_cfa_offset 16
 	str	x0, [sp, #8]
 .Ltmp41:
+	.loc 4 801 3 prologue_end            // test.c:801:3
 	ldr	x9, [sp, #8]
 	adrp	x8, .L.str.98
 	add	x8, x8, :lo12:.L.str.98
+	.loc 4 801 23 is_stmt 0              // test.c:801:23
 	str	x8, [x9, #16]
+	.loc 4 802 3 is_stmt 1               // test.c:802:3
 	ldr	x9, [sp, #8]
 	adrp	x8, .L.str.99
 	add	x8, x8, :lo12:.L.str.99
+	.loc 4 802 33 is_stmt 0              // test.c:802:33
 	str	x8, [x9, #24]
+	.loc 4 803 3 is_stmt 1               // test.c:803:3
 	ldr	x9, [sp, #8]
 	adrp	x8, .L.str.1
 	add	x8, x8, :lo12:.L.str.1
+	.loc 4 803 25 is_stmt 0              // test.c:803:25
 	str	x8, [x9, #32]
+	.loc 4 804 3 is_stmt 1               // test.c:804:3
 	ldr	x9, [sp, #8]
 	adrp	x8, test
 	add	x8, x8, :lo12:test
+	.loc 4 804 32 is_stmt 0              // test.c:804:32
 	str	x8, [x9, #40]
+	.loc 4 805 3 is_stmt 1               // test.c:805:3
 	ldr	x9, [sp, #8]
 	adrp	x8, test_
 	add	x8, x8, :lo12:test_
+	.loc 4 805 33 is_stmt 0              // test.c:805:33
 	str	x8, [x9, #48]
+	.loc 4 806 3 is_stmt 1               // test.c:806:3
 	ldr	x8, [sp, #8]
                                         // kill: def $x9 killed $xzr
+	.loc 4 806 28 is_stmt 0              // test.c:806:28
 	str	xzr, [x8, #80]
+	.loc 4 807 3 is_stmt 1               // test.c:807:3
 	ldr	x9, [sp, #8]
 	adrp	x8, cob_module_path
 	add	x8, x8, :lo12:cob_module_path
+	.loc 4 807 23 is_stmt 0              // test.c:807:23
 	str	x8, [x9, #88]
+	.loc 4 808 3 is_stmt 1               // test.c:808:3
 	ldr	x8, [sp, #8]
+	.loc 4 808 25 is_stmt 0              // test.c:808:25
 	str	wzr, [x8, #96]
+	.loc 4 809 3 is_stmt 1               // test.c:809:3
 	ldr	x9, [sp, #8]
 	mov	w8, #45019
 	movk	w8, #308, lsl #16
+	.loc 4 809 23 is_stmt 0              // test.c:809:23
 	str	w8, [x9, #100]
+	.loc 4 810 3 is_stmt 1               // test.c:810:3
 	ldr	x9, [sp, #8]
 	mov	w8, #10626
+	.loc 4 810 23 is_stmt 0              // test.c:810:23
 	str	w8, [x9, #104]
+	.loc 4 811 3 is_stmt 1               // test.c:811:3
 	ldr	x8, [sp, #8]
+	.loc 4 811 23 is_stmt 0              // test.c:811:23
 	str	wzr, [x8, #108]
+	.loc 4 812 3 is_stmt 1               // test.c:812:3
 	ldr	x8, [sp, #8]
+	.loc 4 812 28 is_stmt 0              // test.c:812:28
 	str	wzr, [x8, #112]
+	.loc 4 813 3 is_stmt 1               // test.c:813:3
 	ldr	x8, [sp, #8]
+	.loc 4 813 23 is_stmt 0              // test.c:813:23
 	strb	wzr, [x8, #124]
+	.loc 4 814 3 is_stmt 1               // test.c:814:3
 	ldr	x9, [sp, #8]
 	mov	w8, #46
+	.loc 4 814 25 is_stmt 0              // test.c:814:25
 	strb	w8, [x9, #125]
+	.loc 4 815 3 is_stmt 1               // test.c:815:3
 	ldr	x9, [sp, #8]
 	mov	w8, #36
+	.loc 4 815 27 is_stmt 0              // test.c:815:27
 	strb	w8, [x9, #126]
+	.loc 4 816 3 is_stmt 1               // test.c:816:3
 	ldr	x9, [sp, #8]
 	mov	w8, #44
+	.loc 4 816 29 is_stmt 0              // test.c:816:29
 	strb	w8, [x9, #127]
+	.loc 4 817 3 is_stmt 1               // test.c:817:3
 	ldr	x9, [sp, #8]
 	mov	w8, #1
+	.loc 4 817 33 is_stmt 0              // test.c:817:33
 	strb	w8, [x9, #128]
+	.loc 4 818 3 is_stmt 1               // test.c:818:3
 	ldr	x9, [sp, #8]
+	.loc 4 818 32 is_stmt 0              // test.c:818:32
 	strb	w8, [x9, #129]
+	.loc 4 819 3 is_stmt 1               // test.c:819:3
 	ldr	x9, [sp, #8]
+	.loc 4 819 31 is_stmt 0              // test.c:819:31
 	strb	w8, [x9, #130]
+	.loc 4 820 3 is_stmt 1               // test.c:820:3
 	ldr	x9, [sp, #8]
+	.loc 4 820 26 is_stmt 0              // test.c:820:26
 	strb	wzr, [x9, #131]
+	.loc 4 821 3 is_stmt 1               // test.c:821:3
 	ldr	x9, [sp, #8]
+	.loc 4 821 29 is_stmt 0              // test.c:821:29
 	strb	w8, [x9, #132]
+	.loc 4 822 3 is_stmt 1               // test.c:822:3
 	ldr	x9, [sp, #8]
+	.loc 4 822 21 is_stmt 0              // test.c:822:21
 	strb	w8, [x9, #133]
+	.loc 4 823 3 is_stmt 1               // test.c:823:3
 	ldr	x8, [sp, #8]
+	.loc 4 823 26 is_stmt 0              // test.c:823:26
 	strb	wzr, [x8, #134]
+	.loc 4 824 3 is_stmt 1               // test.c:824:3
 	ldr	x8, [sp, #8]
+	.loc 4 824 29 is_stmt 0              // test.c:824:29
 	strb	wzr, [x8, #135]
+	.loc 4 825 3 is_stmt 1               // test.c:825:3
 	ldr	x8, [sp, #8]
+	.loc 4 825 28 is_stmt 0              // test.c:825:28
 	strb	wzr, [x8, #138]
+	.loc 4 826 3 is_stmt 1               // test.c:826:3
 	ldr	x8, [sp, #8]
+	.loc 4 826 27 is_stmt 0              // test.c:826:27
 	strb	wzr, [x8, #137]
+	.loc 4 827 3 is_stmt 1               // test.c:827:3
 	ldr	x8, [sp, #8]
+	.loc 4 827 23 is_stmt 0              // test.c:827:23
 	str	wzr, [x8, #140]
+	.loc 4 828 3 is_stmt 1               // test.c:828:3
 	ldr	x8, [sp, #8]
+	.loc 4 828 26 is_stmt 0              // test.c:828:26
 	str	xzr, [x8, #144]
+	.loc 4 829 1 is_stmt 1               // test.c:829:1
 	add	sp, sp, #16
 	.cfi_def_cfa_offset 0
 	ret

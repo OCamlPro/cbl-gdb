@@ -75,11 +75,11 @@ fgets(char *buf,size_t max, WHOLEFILE &fd)
     return retval;
 }
 
-map<string,int>
+map<string, int>
 GetInputFileMappings(WHOLEFILE &fd, const string &primary_file)
 {
     PROFILER;
-    map<string,int> retval;
+    map<string, int> retval;
 
     // Prime the pump with the primary COBOL source file name.  We absolutely
     // want this reference to be in there, but it might not actually be in the
@@ -105,7 +105,8 @@ GetInputFileMappings(WHOLEFILE &fd, const string &primary_file)
             VSTRING tokens = Split(s,"\t ");
             if( tokens.size() >= 3 AND tokens[0] EQ ".file" AND isdigit(tokens[1][0]) ) {
                 int nfile = STOI(tokens[1]);
-                string file = StripQuotes(tokens[2]);
+                size_t nfound = s.find('\"');
+                string file = s.substr(nfound);
                 retval[file] = nfile;
             }
         }
@@ -166,18 +167,19 @@ FigureOutReplacements(const PARAMETERS &params,
     for( map<string,int>::const_iterator it=input_file_mappings.begin();
             it != input_file_mappings.end();
             it ++) {
-        if( it->first EQ params.c_filename ) {
+        string filename = StripQuotes(it->first);
+        if( filename EQ params.c_filename ) {
             // Skip over the cobc-generated .c file
             retval[it->second] = 0;
             continue;
         }
-        if( it->first.substr(it->first.length()-2) EQ ".h"
-                OR it->first.substr(it->first.length()-2) EQ ".c") {
+        if( filename.substr(filename.length()-2) EQ ".h"
+                OR filename.substr(filename.length()-2) EQ ".c") {
             // Skip over any xxxx.h file
             retval[it->second] = 0;
             continue;
         }
-        if( it->first EQ params.cbl_filename ) {
+        if( filename EQ params.cbl_filename ) {
             // Force the COBOL source file to be #1
             retval[it->second] = 1;
             continue;
@@ -397,11 +399,11 @@ build(PARAMETERS &params,
     }
 #endif
 
-    for(map<string,int>::const_iterator it=input_file_mappings.begin();
+    for(map<string, int>::const_iterator it=input_file_mappings.begin();
             it != input_file_mappings.end();
             it++) {
         if( it->second != -1 ){
-            fprintf(f,"\t.file %d \"%s\"\n",it->second,it->first.c_str());
+            fprintf(f, "\t.file %d %s\n", it->second, it->first.c_str() );
         }
     }
 
@@ -558,10 +560,10 @@ main(int argc, char **argv)
 
     WHOLEFILE fd;
     ReadEntireFile(params.s_input_filename.WholePath(),fd);
-    map<string,int>input_file_mappings = GetInputFileMappings(fd,params.cbl_filename);
+    map<string,int>input_file_mappings = GetInputFileMappings(fd, params.cbl_filename);
     VINT function_references = FindFunctionReferences(fd);
-    map<int,int>replacements = FigureOutReplacements(params,input_file_mappings);
-    build(params,input_file_mappings,replacements,fd,function_references);
+    map<int, int>replacements = FigureOutReplacements(params, input_file_mappings);
+    build(params,input_file_mappings, replacements, fd, function_references);
 
     return 0;
 }
