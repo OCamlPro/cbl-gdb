@@ -448,12 +448,12 @@ check_for_another_perform:
             /* cob_dump_output("WORKING-STORAGE"); */
             /* cob_dump_output("LINKAGE"); */
             /* cob_dump_output("LOCAL-STORAGE"); */
-            p += strlen(COB_DUMP_OUTPUT) + 2;
-            if( strstr(p,"WORKING-STORAGE") EQ p ) {
+            p += strlen(COB_DUMP_OUTPUT);
+            if( strstr(p,"WORKING-STORAGE") ) {
                 current_record_type = "W";
-            } else if( strstr(p,"LOCAL-STORAGE") EQ p ) {
+            } else if( strstr(p,"LOCAL-STORAGE") ) {
                 current_record_type = "L";
-            } else if( strstr(p,"LINKAGE") EQ p ) {
+            } else if( strstr(p,"LINKAGE") ) {
                 current_record_type = "I";
             }
             // There are other types: REPORT and SCREEN.  We don't care about them
@@ -463,10 +463,10 @@ check_for_another_perform:
         if( strncmp(p, COB_DUMP_FILE, strlen(COB_DUMP_FILE)) EQ 0 ) {
             /* cob_dump_file ("FD pgm-input", h_PGM_INPUT); */
             /* cob_dump_file ("SD pgm-input", h_PGM_INPUT); */
-            p += strlen(COB_DUMP_FILE) + 3;
-            if( strstr(p,"SD ") EQ p ) {
+            p += strlen(COB_DUMP_FILE);
+            if( strstr(p,"SD ") ) {
                 current_record_type = "S";
-            } else if( strstr(p,"FD ") EQ p ) {
+            } else if( strstr(p,"FD ") ) {
                 current_record_type = "F";
             }
             continue;
