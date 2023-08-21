@@ -1,0 +1,38 @@
+KNOWN GOOD START
+TESTING cprint/v0 *
+ 1 : 01 VAR-999  : 123
+ 2 : 01 VAR-S999  : 123
+ 3 : 01 VAR-S999N  : -123
+TESTING cprint/v1 *
+ 1 : 01 VAR-999  : 123
+ 2 : 01 VAR-S999  : 123
+ 3 : 01 VAR-S999N  : -123
+TESTING cprint/v2 *
+ 1 : 01 VAR-999  : 123
+ 2 : 01 VAR-S999  : 123
+ 3 : 01 VAR-S999N  : -123
+TESTING cprint/v3 *
+ 1 : 01 VAR-999/test [W-S] : 123
+ 2 : 01 VAR-S999/test [W-S] : 123
+ 3 : 01 VAR-S999N/test [W-S] : -123
+TESTING cprint/v4 *
+ 1 : 01 VAR-999/test [W-S] : 123
+ 2 : 01 VAR-S999/test [W-S] : 123
+ 3 : 01 VAR-S999N/test [W-S] : -123
+TESTING cprint/v5 *
+ 1 : 01 VAR-999/test [W-S] : 123
+ 2 : 01 VAR-S999/test [W-S] : 123
+ 3 : 01 VAR-S999N/test [W-S] : -123
+TESTING cprint/v6 *
+ 1 : VAR-999 : 123
+ 2 : VAR-S999 : 123
+ 3 : VAR-S999N : -123
+TESTING cprint/v7 *
+ 1 : VAR-999 : 123
+ 2 : VAR-S999 : 123
+ 3 : VAR-S999N : -123
+TESTING cprint/v8 *
+ 1 : VAR-999 : 123
+ 2 : VAR-S999 : 123
+ 3 : VAR-S999N : -123
+KNOWN GOOD FINISH

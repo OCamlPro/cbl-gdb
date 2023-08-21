@@ -69,7 +69,7 @@ GV_noisy_registration = False
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
-COBCD_VERSION = '[Version 4.28.6]'
+COBCD_VERSION = '[Version 5.1.1-dev]'
 
 #   This module implements the gdb extension commands like cprint and cwatch
 #   It is executed by GDB.
@@ -322,6 +322,9 @@ class GlobalVariables():
         self.VarLeft = None
         self.VarLeftIndex = None
 
+        # This is flag that the first parameter is a standalone asterisk.  We 
+        # use this to suppress printing RETURN-CODE in a "cprint *" command.
+        self.FirstIsStar = False
 
 GV_GlobalVariables = GlobalVariables()
 
@@ -4857,6 +4860,7 @@ def get_sorted_possibilities(args, limit, no_data=False):
     possibilities_1 = []
     possibilities = []
     prefix = None
+    GV_GlobalVariables.FirstIsStar = False
 
     # It's possible that the user is asking for LENGTH OF or ADDRESS OF
 
@@ -4870,6 +4874,7 @@ def get_sorted_possibilities(args, limit, no_data=False):
             # If the first, presumably single, argument is an asterisk, then
             # he is asking for all variables:
             possibilities_1 = GV_ModuleInformation.var_trie.GetAllPossibilities()
+            GV_GlobalVariables.FirstIsStar = True
         elif args[0].find('*') != -1:
             # If the first, presumably single, argument contains an asterisk, then
             # he is asking for a list of variables that match the pattern:
@@ -5707,7 +5712,7 @@ class CPrintWorker():
             # The user is talking to himself for some reason.  Just play along.
             num, _ret = IntegerOrVariable(args)
             if num:
-                print (num)
+                print(num)
             return
 
         # Having processed display switches, we can now check to if we are in
@@ -5761,9 +5766,21 @@ class CPrintWorker():
         GV_GlobalVariables.VarLeft = None
         GV_GlobalVariables.VarLeftIndex = None
 
-        # note: if we do have a right-side then we do not need the actual data, maybe add , no_data=True here
+        # note: if we do have a right-side then we do not need the actual data, maybe add "no_data=True" here
         # ... but we do need to know if this variable is in the current context
         leftside_possibilities, limit_reached = get_sorted_possibilities(left_side, 0)
+
+        # In the case of "cprint *" we want to remove RETURN-CODE from the list
+        # because it is unnecessary and untidy.
+
+        replacement_list = []
+        if not right_side and GV_GlobalVariables.FirstIsStar:
+            for index in range(len(leftside_possibilities)):
+                payload = GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[index]]
+                if payload.Name.find("RETURN-CODE") != 0:
+                    replacement_list.append(leftside_possibilities[index])
+            leftside_possibilities = replacement_list
+
         if not leftside_possibilities:
             # There are no leftside possibilities.  Let him know why, and then bug out
             if left_side[0] == '?' or left_side[0].isdigit():
