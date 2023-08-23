@@ -1,3 +1,0 @@
-        PERFORM INDENT TIMES
-            DISPLAY ' ' WITH NO ADVANCING
-            END-PERFORM

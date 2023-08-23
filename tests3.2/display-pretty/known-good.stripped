@@ -1,0 +1,132 @@
+KNOWN GOOD START
+TESTING cprint/v0 *
+ 1 : 01 VAR-01  : "12345123451234uRobert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 2 : 02 VAR-02A/VAR-01  : 123.45
+ 3 : 02 VAR-02B/VAR-01  : +123.45
+ 4 : 02 VAR-02C/VAR-01  : -123.45
+ 5 : 02 VAR-02/VAR-01  : "Robert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 6 : 03 VAR-03A/VAR-02/VAR-01  : "Robert", ' ' <repeats 14 times>
+ 7 : 03 VAR-03B/VAR-02/VAR-01  : "Joseph", ' ' <repeats 14 times>
+ 8 : 03 VAR-03C/VAR-02/VAR-01  : "Dubner", ' ' <repeats 14 times>
+ 9 : 03 VAR-03/VAR-02/VAR-01  : "19530227"
+10 : 04 VAR-03A/VAR-03/VAR-02/VAR-01  : 1953
+11 : 04 VAR-03B/VAR-03/VAR-02/VAR-01  : 02
+12 : 04 VAR-03C/VAR-03/VAR-02/VAR-01  : 27
+TESTING cprint/v1 *
+ 1 : 01 VAR-01  : "12345123451234uRobert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 2 : 02 VAR-02A/VAR-01  : 123.45
+ 3 : 02 VAR-02B/VAR-01  : +123.45
+ 4 : 02 VAR-02C/VAR-01  : -123.45
+ 5 : 02 VAR-02/VAR-01  : "Robert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 6 : 03 VAR-03A/VAR-02/VAR-01  : "Robert", ' ' <repeats 14 times>
+ 7 : 03 VAR-03B/VAR-02/VAR-01  : "Joseph", ' ' <repeats 14 times>
+ 8 : 03 VAR-03C/VAR-02/VAR-01  : "Dubner", ' ' <repeats 14 times>
+ 9 : 03 VAR-03/VAR-02/VAR-01  : "19530227"
+10 : 04 VAR-03A/VAR-03/VAR-02/VAR-01  : 1953
+11 : 04 VAR-03B/VAR-03/VAR-02/VAR-01  : 02
+12 : 04 VAR-03C/VAR-03/VAR-02/VAR-01  : 27
+TESTING cprint/v2 *
+ 1 : 01 VAR-01  : "12345123451234uRobert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 2 : 02 VAR-02A/VAR-01  : 123.45
+ 3 : 02 VAR-02B/VAR-01  : +123.45
+ 4 : 02 VAR-02C/VAR-01  : -123.45
+ 5 : 02 VAR-02/VAR-01  : "Robert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 6 : 03 VAR-03A/VAR-02/VAR-01  : "Robert", ' ' <repeats 14 times>
+ 7 : 03 VAR-03B/VAR-02/VAR-01  : "Joseph", ' ' <repeats 14 times>
+ 8 : 03 VAR-03C/VAR-02/VAR-01  : "Dubner", ' ' <repeats 14 times>
+ 9 : 03 VAR-03/VAR-02/VAR-01  : "19530227"
+10 : 04 VAR-03A/VAR-03/VAR-02/VAR-01  : 1953
+11 : 04 VAR-03B/VAR-03/VAR-02/VAR-01  : 02
+12 : 04 VAR-03C/VAR-03/VAR-02/VAR-01  : 27
+TESTING cprint/v3 *
+ 1 : 01 VAR-01/test [W-S] : "12345123451234uRobert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 2 : 02 VAR-02A/VAR-01/test [W-S] : 123.45
+ 3 : 02 VAR-02B/VAR-01/test [W-S] : +123.45
+ 4 : 02 VAR-02C/VAR-01/test [W-S] : -123.45
+ 5 : 02 VAR-02/VAR-01/test [W-S] : "Robert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 6 : 03 VAR-03A/VAR-02/VAR-01/test [W-S] : "Robert", ' ' <repeats 14 times>
+ 7 : 03 VAR-03B/VAR-02/VAR-01/test [W-S] : "Joseph", ' ' <repeats 14 times>
+ 8 : 03 VAR-03C/VAR-02/VAR-01/test [W-S] : "Dubner", ' ' <repeats 14 times>
+ 9 : 03 VAR-03/VAR-02/VAR-01/test [W-S] : "19530227"
+10 : 04 VAR-03A/VAR-03/VAR-02/VAR-01/test [W-S] : 1953
+11 : 04 VAR-03B/VAR-03/VAR-02/VAR-01/test [W-S] : 02
+12 : 04 VAR-03C/VAR-03/VAR-02/VAR-01/test [W-S] : 27
+TESTING cprint/v4 *
+ 1 : 01 VAR-01/test [W-S] : "12345123451234uRobert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 2 : 02 VAR-02A/VAR-01/test [W-S] : 123.45
+ 3 : 02 VAR-02B/VAR-01/test [W-S] : +123.45
+ 4 : 02 VAR-02C/VAR-01/test [W-S] : -123.45
+ 5 : 02 VAR-02/VAR-01/test [W-S] : "Robert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 6 : 03 VAR-03A/VAR-02/VAR-01/test [W-S] : "Robert", ' ' <repeats 14 times>
+ 7 : 03 VAR-03B/VAR-02/VAR-01/test [W-S] : "Joseph", ' ' <repeats 14 times>
+ 8 : 03 VAR-03C/VAR-02/VAR-01/test [W-S] : "Dubner", ' ' <repeats 14 times>
+ 9 : 03 VAR-03/VAR-02/VAR-01/test [W-S] : "19530227"
+10 : 04 VAR-03A/VAR-03/VAR-02/VAR-01/test [W-S] : 1953
+11 : 04 VAR-03B/VAR-03/VAR-02/VAR-01/test [W-S] : 02
+12 : 04 VAR-03C/VAR-03/VAR-02/VAR-01/test [W-S] : 27
+TESTING cprint/v5 *
+ 1 : 01 VAR-01/test [W-S] : "12345123451234uRobert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 2 : 02 VAR-02A/VAR-01/test [W-S] : 123.45
+ 3 : 02 VAR-02B/VAR-01/test [W-S] : +123.45
+ 4 : 02 VAR-02C/VAR-01/test [W-S] : -123.45
+ 5 : 02 VAR-02/VAR-01/test [W-S] : "Robert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 6 : 03 VAR-03A/VAR-02/VAR-01/test [W-S] : "Robert", ' ' <repeats 14 times>
+ 7 : 03 VAR-03B/VAR-02/VAR-01/test [W-S] : "Joseph", ' ' <repeats 14 times>
+ 8 : 03 VAR-03C/VAR-02/VAR-01/test [W-S] : "Dubner", ' ' <repeats 14 times>
+ 9 : 03 VAR-03/VAR-02/VAR-01/test [W-S] : "19530227"
+10 : 04 VAR-03A/VAR-03/VAR-02/VAR-01/test [W-S] : 1953
+11 : 04 VAR-03B/VAR-03/VAR-02/VAR-01/test [W-S] : 02
+12 : 04 VAR-03C/VAR-03/VAR-02/VAR-01/test [W-S] : 27
+TESTING cprint/v6 *
+ 1 : VAR-01 : "12345123451234uRobert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 2 : VAR-02A/VAR-01 : 123.45
+ 3 : VAR-02B/VAR-01 : +123.45
+ 4 : VAR-02C/VAR-01 : -123.45
+ 5 : VAR-02/VAR-01 : "Robert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 6 : VAR-03A/VAR-02/VAR-01 : "Robert", ' ' <repeats 14 times>
+ 7 : VAR-03B/VAR-02/VAR-01 : "Joseph", ' ' <repeats 14 times>
+ 8 : VAR-03C/VAR-02/VAR-01 : "Dubner", ' ' <repeats 14 times>
+ 9 : VAR-03/VAR-02/VAR-01 : "19530227"
+10 : VAR-03A/VAR-03/VAR-02/VAR-01 : 1953
+11 : VAR-03B/VAR-03/VAR-02/VAR-01 : 02
+12 : VAR-03C/VAR-03/VAR-02/VAR-01 : 27
+TESTING cprint/v7 *
+ 1 : VAR-01 : "12345123451234uRobert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 2 : VAR-02A/VAR-01 : 123.45
+ 3 : VAR-02B/VAR-01 : +123.45
+ 4 : VAR-02C/VAR-01 : -123.45
+ 5 : VAR-02/VAR-01 : "Robert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 6 : VAR-03A/VAR-02/VAR-01 : "Robert", ' ' <repeats 14 times>
+ 7 : VAR-03B/VAR-02/VAR-01 : "Joseph", ' ' <repeats 14 times>
+ 8 : VAR-03C/VAR-02/VAR-01 : "Dubner", ' ' <repeats 14 times>
+ 9 : VAR-03/VAR-02/VAR-01 : "19530227"
+10 : VAR-03A/VAR-03/VAR-02/VAR-01 : 1953
+11 : VAR-03B/VAR-03/VAR-02/VAR-01 : 02
+12 : VAR-03C/VAR-03/VAR-02/VAR-01 : 27
+TESTING cprint/v8 *
+ 1 : VAR-01 : "12345123451234uRobert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 2 : VAR-02A/VAR-01 : 123.45
+ 3 : VAR-02B/VAR-01 : +123.45
+ 4 : VAR-02C/VAR-01 : -123.45
+ 5 : VAR-02/VAR-01 : "Robert", ' ' <repeats 14 times>, "Joseph", ' ' <repeats 14 times>, "Dubner", ' ' <repeats 14 times>, "19530227"
+ 6 : VAR-03A/VAR-02/VAR-01 : "Robert", ' ' <repeats 14 times>
+ 7 : VAR-03B/VAR-02/VAR-01 : "Joseph", ' ' <repeats 14 times>
+ 8 : VAR-03C/VAR-02/VAR-01 : "Dubner", ' ' <repeats 14 times>
+ 9 : VAR-03/VAR-02/VAR-01 : "19530227"
+10 : VAR-03A/VAR-03/VAR-02/VAR-01 : 1953
+11 : VAR-03B/VAR-03/VAR-02/VAR-01 : 02
+12 : VAR-03C/VAR-03/VAR-02/VAR-01 : 27
+TESTING cprint/p *
+01 VAR-01/test
+  02 VAR-02A : 123.45
+  02 VAR-02B : +123.45
+  02 VAR-02C : -123.45
+  02 VAR-02
+    03 VAR-03A : "Robert", ' ' <repeats 14 times>
+    03 VAR-03B : "Joseph", ' ' <repeats 14 times>
+    03 VAR-03C : "Dubner", ' ' <repeats 14 times>
+    03 VAR-03
+      04 VAR-03A : 1953
+      04 VAR-03B : 02
+      04 VAR-03C : 27
+KNOWN GOOD FINISH

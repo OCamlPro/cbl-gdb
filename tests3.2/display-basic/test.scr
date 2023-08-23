@@ -25,6 +25,26 @@ echo TESTING cprint/v7 *\n
 cprint/v7 *
 echo TESTING cprint/v8 *\n
 cprint/v8 *
+
+echo \ncprint/v0 VAR-BINARY-DOUBLE-SIGNED-N\n
+cprint/v0 VAR-BINARY-DOUBLE-SIGNED-N
+echo \ncprint/v1 VAR-BINARY-DOUBLE-SIGNED-N\n
+cprint/v1 VAR-BINARY-DOUBLE-SIGNED-N
+echo \ncprint/v2 VAR-BINARY-DOUBLE-SIGNED-N\n
+cprint/v2 VAR-BINARY-DOUBLE-SIGNED-N
+echo \ncprint/v3 VAR-BINARY-DOUBLE-SIGNED-N\n
+cprint/v3 VAR-BINARY-DOUBLE-SIGNED-N
+echo \ncprint/v4 VAR-BINARY-DOUBLE-SIGNED-N\n
+cprint/v4 VAR-BINARY-DOUBLE-SIGNED-N
+echo \ncprint/v5 VAR-BINARY-DOUBLE-SIGNED-N\n
+cprint/v5 VAR-BINARY-DOUBLE-SIGNED-N
+echo \ncprint/v6 VAR-BINARY-DOUBLE-SIGNED-N\n
+cprint/v6 VAR-BINARY-DOUBLE-SIGNED-N
+echo \ncprint/v7 VAR-BINARY-DOUBLE-SIGNED-N\n
+cprint/v7 VAR-BINARY-DOUBLE-SIGNED-N
+echo \ncprint/v8 VAR-BINARY-DOUBLE-SIGNED-N\n
+cprint/v8 VAR-BINARY-DOUBLE-SIGNED-N
+
 echo KNOWN GOOD FINISH\n
 continue
 quit
