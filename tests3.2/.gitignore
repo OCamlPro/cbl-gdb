@@ -11,3 +11,4 @@ under-test.stripped
 *.s
 *.h
 *.o
+!vartype.py
