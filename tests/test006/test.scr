@@ -1,0 +1,162 @@
+set height 0
+set width 0
+set print repeats 10
+set print elements 200
+
+define printem
+	echo KNOWN GOOD START\n
+	cprint/v0 *
+	echo KNOWN GOOD FINISH\n
+	end
+
+# initialisation
+file test
+
+# Do a cstart so that cprint/vX works
+cstart
+
+cprint/v3
+cprint/r 6
+
+# cwatch test
+cwatch D
+
+continue
+frame 5
+printem
+frame 5
+continue
+frame 5
+printem
+continue
+frame 5
+printem
+continue
+frame 5
+printem
+continue
+frame 5
+printem
+continue
+frame 5
+printem
+continue
+frame 5
+printem
+continue
+frame 5
+printem
+continue
+frame 5
+printem
+continue
+frame 5
+printem
+
+delete
+continue
+
+# cbreak variable test
+cstart
+cbreak  37 if b == 3
+ctbreak 39 if d == 5
+cbreak  41 if f == 7
+
+continue 
+printem
+continue 
+printem
+continue 
+printem
+delete
+continue 
+
+# ccondition variable test
+cstart
+cbreak  41 if f == 3
+continue
+printem
+
+ccondition 5 f == 7
+continue 
+printem
+delete
+continue 
+
+# cbreak string test
+cstart
+cbreak 47 if TSTR = "TESTSTRING"
+continue
+printem
+delete
+continue
+
+# cbreak substring test
+cstart
+cbreak 47 if TSTR (2:3) = "EST"
+continue
+printem
+delete
+continue
+
+# cbreak substring + string test
+cstart
+cbreak 47 if TSTR (3:3) = TSUBSTR
+continue
+printem
+delete
+continue
+
+# cbreak string + occurs
+cstart
+cbreak 37 if TOSTR(3) = "TESTSTRING"
+continue
+printem
+delete
+continue
+
+# cbreak string + occurs + substring
+cstart
+cbreak 37 if TOSTR(3)(3:3) = TSUBSTR
+continue
+printem
+delete
+continue
+
+# cbreak section test
+cstart
+cbreak SECTION P-CALC
+continue
+printem
+delete
+continue
+
+# cbreak file:section test
+cstart
+cbreak test:P-CALC
+continue
+printem
+delete
+continue
+
+# cwatch IN (FULL)
+cstart
+cwatch TRECGRPVAL IN TRECGRP IN TREC
+continue
+printem
+continue
+printem
+delete
+continue
+
+# cwatch IN (QUICK)
+cstart
+cwatch TRECGRPVAL IN TREC
+continue
+printem
+continue
+printem
+delete
+continue
+
+quit

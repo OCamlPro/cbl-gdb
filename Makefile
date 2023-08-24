@@ -128,15 +128,13 @@ pregit:
 #	'make known-good' creates a series of known-good files, while
 #	'make test' does a similar run, but compares the under_test to known_good files
 
-# The test results for GnuCOBOL 3.2 are not quite the same as for 3.1:
-
 COBC_VERSION=$(shell cobc --version | grep "cobc " | sed 's/^.*\(3[.].\).*/\1/g')
 $(info COBC_VERSION IS $(COBC_VERSION))
-TESTDIR=tests$(COBC_VERSION)
+TESTDIR=tests
 
 .PHONY : known-good
 known-good :
-	@echo "For safety, you need to 'cd tests3.1' or 'cd tests3.2' and then issue 'make known-good'"
+	@echo "For safety, you need to 'cd tests and then issue 'make known-good'"
 
 .PHONY : test
 test :
