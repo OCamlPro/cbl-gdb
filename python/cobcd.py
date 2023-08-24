@@ -277,6 +277,12 @@ def get_repeats_size():
   # something reasonable when the setting is "unlimited", where a "None" is returned
   return gdb.parameter("print repeats") or 1000000    # happy scrolling
 
+def tab_after(lead:str, tabcolumn:int) -> str:
+  retval = lead
+  fill = tabcolumn - len(lead)
+  if fill > 0:
+    retval += fill * ' '
+  return retval
 
 class GlobalVariables():
   def __init__(self):
@@ -2456,6 +2462,7 @@ class CobolVariable():
     return n_str
 
   def ShowFields(self):
+    """This routine generates information in response to cprint/d"""
     elements = get_element_size()
     try:
       bname_location = GetPointerTo(self.Bname)
@@ -2465,25 +2472,26 @@ class CobolVariable():
     if bname_location:
       bname_text = "( %s )" % hex(bname_location)
 
-    print("Name:     ", self.NameToStringFull())
+    tab = 13
+    print(tab_after("Name:", tab), self.NameToStringFull())
     if self.OccursMax:
-      print("OCCURS:    min: {0} max: {1}".format(self.OccursMin, self.OccursMax))
+      print(tab_after("OCCURS:", tab), "min: {0} max: {1}".format(self.OccursMin, self.OccursMax))
 
     if self.Subscripts:
-      print("Subscripts: ", self.Subscripts, end='')
+      print(tab_after("Subscripts:", tab), self.Subscripts, end='')
       resolved = "(" + ",".join(map(str, self.ResolvedSubscripts)) + ")"
       if resolved != self.Subscripts:
         print("; resolves to {0}".format(resolved), end='')
       print("")
 
     if self.Refmod:
-      print("Refmod:     ", self.Refmod, end='')
+      print(tab_after("Refmod:", tab), self.Refmod, end='')
       resolved = "({0}:{1})".format(self.RefmodOffset + 1, self.RefmodLength)
       if resolved != self.Refmod:
         print("; resolves to {0}".format(resolved), end='')
       print("")
 
-      print("Display:   ", end="")
+      print(tab_after("Display:", tab), end="")
       if self.IsAlphanumeric():
         data = self.Data()[0:elements]
         for byte in data:
@@ -2500,33 +2508,33 @@ class CobolVariable():
 
       print("")
     else:
-      print("Display:    ", WithRepeatCount(self.display_body))
+      print(tab_after("Display:", tab), WithRepeatCount(self.display_body))
 
-    print("Hex:      ", self.GetDataAsHex())
+    print(tab_after("Hex:", tab), self.GetDataAsHex())
 
-    print("Field:    ", self.Fname or "<none>")
+    print(tab_after("Field:", tab), self.Fname or "<none>")
 
     if self.Section == 'L':
       # This is local-storage
-      print("Base:     ", "cob_local_ptr")
+      print(tab_after("Base:", tab), "cob_local_ptr")
     else:
-      print("Base:     ", self.Bname, '  ', bname_text)
+      print(tab_after("Base:", tab), self.Bname, '  ', bname_text)
 
     if self.IsRedefines:
-      print("RefOffset: {0} [REDEFINES]".format(self.ReferenceOffset))
+      print(tab_after("RefOffset:", tab),"{0} [REDEFINES]".format(self.ReferenceOffset))
     else:
-      print("RefOffset:  ", self.ReferenceOffset)
-    print("data_offset:", self.data_offset)
+      print(tab_after("RefOffset:", tab), self.ReferenceOffset)
+    print(tab_after("data_offset:", tab), self.data_offset)
     if self.Subscripts:
-      print("TableOffset:", self.table_offset)
-    print("Length:     ", ExpressionEvaluate(self.LengthExpression))
+      print(tab_after("TableOffset:", tab), self.table_offset)
+    print(tab_after("Length:", tab), ExpressionEvaluate(self.LengthExpression))
     if self.Refmod:
-      print("RefmodOff:  ", self.RefmodOffset)
-      print("RefmodRun:  ", self.RefmodLength)
-    print("DataLoc:    ", hex(self.ActualLocation))
+      print(tab_after("RefmodOff:", tab), self.RefmodOffset)
+      print(tab_after("RefmodRun:", tab), self.RefmodLength)
+    print(tab_after("DataLoc:", tab), hex(self.ActualLocation))
 
-    print("Attr:     ", self.Aname)
-    print("AttrType:   ", self.AttrType, end="")
+    print(tab_after("Attr:", tab), self.Aname)
+    print(tab_after("AttrType:", tab), self.AttrType, end="")
     print(" (", hex(self.AttrType), ") ", sep='', end="")
     if self.AttrType == 0:
       print(" (Unknown)", end="")
@@ -2576,10 +2584,10 @@ class CobolVariable():
       print("NATIONAL_EDITED    ", end="")
     print()
 
-    print("AttrDigits: ", self.AttrDigits)
-    print("AttrScale:  ", self.AttrScale)
+    print(tab_after("AttrDigits:", tab), self.AttrDigits)
+    print(tab_after("AttrScale:", tab), self.AttrScale)
 
-    print("AttrFlags:  ", hex(self.AttrFlags), end='')
+    print(tab_after("AttrFlags:", tab), hex(self.AttrFlags), end='')
     if (self.AttrFlags & COB_FLAG_HAVE_SIGN) != 0:
       print(" HAVE_SIGN", end='')
     if (self.AttrFlags & COB_FLAG_SIGN_SEPARATE) != 0:
@@ -2608,13 +2616,13 @@ class CobolVariable():
       print(" CONSTANT ", end='')
     print()
     if self.Picture:
-      print("Picture:    ", self.Picture)
+      print(tab_after("Picture:", tab), self.Picture)
 
     # At this point, we want to show the raw data in byte order.  Note that
     # the hex representation isn't necessarily the same as the Hex: up above;
     # that one is corrected for little-endian, and this one isn't
     raw_data = self.Data()[0:elements]
-    print("Data: (HEX)   [", end=" ")
+    print(tab_after("Data: (HEX)   [", tab), end=" ")
     for byte in raw_data:
       hexout = hex(256 + byte)[-2:]
       print(hexout, end=" ")
@@ -2622,7 +2630,7 @@ class CobolVariable():
       print("...", end="")
     print("]")
 
-    print("Data: (ASCII) \"", end="")
+    print(tab_after("Data: (ASCII) \"", tab), end="")
     for byte in raw_data:
       if byte >= 32:   # valid ASCII characters
         print(chr(byte), end="")
