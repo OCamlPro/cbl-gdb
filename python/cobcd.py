@@ -1994,7 +1994,7 @@ class CobolVariable():
               break
           ResolvedSubscripts = [subscript] + ResolvedSubscripts
           list_of_subscripts = list_of_subscripts[0:-1]
-          if subscript < 1 or subscript > variable.OccursMax:
+          if subscript < 1 or (variable.OccursMax > 0 and subscript > variable.OccursMax):
             msg = "The subscript '{0}({1})' is out of range (1 through {2})".format(variable.Name,
                                                 subscript,
                                                 variable.OccursMax)
