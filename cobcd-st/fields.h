@@ -72,13 +72,15 @@ public:
     friend COB_FIELDS;
 } ;
 typedef std::vector<COB_FIELD> V_COB_FIELDS_2;
-typedef std::map<std::string,size_t> M_COB_FIELDS_2;
+typedef std::map<std::string, size_t> M_COB_FIELDS_2;
+typedef std::map<std::string, size_t> M_COB_DATA;
 
 class COB_FIELDS
 {
 private:
     M_COB_FIELDS_2 m_cob_fields;
     V_COB_FIELDS_2 v_cob_fields;
+    M_COB_DATA m_cob_data;
 
 private:
     void ScanDotHFile(std::ifstream &ifs, const std::string &source);
@@ -88,12 +90,12 @@ private:
                 int         size,
                 std::string a_name);
 
-
 public:
     void ScanAllDotHFiles(const std::string &path, const std::string &fname);
     void ScanCFile(const std::string &path, const std::string &fname);
 
     COB_FIELD *Find(const std::string &f_name_) ;
+    size_t GetBSize(const std::string b_name) const;
 
     void Dump() const ;
 };

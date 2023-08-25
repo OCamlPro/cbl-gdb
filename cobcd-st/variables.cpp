@@ -32,6 +32,7 @@
 #include <iomanip>
 #include <map>
 #include <set>
+#include <deque>
 #include <sstream>
 #include <assert.h>
 #include "variables.h"
@@ -46,896 +47,1121 @@ using namespace std;
 
 static string
 ExtractVariableNameFrom(const string &p)
-{
-    string retval = Trim(p);
-    size_t nfound=retval.find("_");
-    if( nfound != string::npos ) {
-        // Extract the b_10 from around the '_' character
-        size_t nleft  = nfound;
-        size_t nright = nfound+1;
+  {
+  string retval = Trim(p);
+  size_t nfound=retval.find("_");
+  if( nfound != string::npos )
+    {
+    // Extract the b_10 from around the '_' character
+    size_t nleft  = nfound;
+    size_t nright = nfound+1;
 
-        while( nleft >= 1 ) {
-            if( !isalpha(retval[nleft-1]) ) {
-                break;
-            }
-            nleft -= 1;
+    while( nleft >= 1 )
+      {
+      if( !isalpha(retval[nleft-1]) )
+        {
+        break;
         }
-        while( nright < retval.size() ) {
-            if( !isdigit(retval[nright]) ) {
-                break;
-            }
-            nright += 1;
+      nleft -= 1;
+      }
+    while( nright < retval.size() )
+      {
+      if( !isdigit(retval[nright]) )
+        {
+        break;
         }
-        retval = retval.substr(nleft,nright-nleft);
+      nright += 1;
+      }
+    retval = retval.substr(nleft,nright-nleft);
     }
-    return retval;
-}
+  return retval;
+  }
 
 static string
 HackAwayCobGetNumdisp(const string &p_)
-{
-    string p = p_;
-    // cob_dump_field ( 1, "G-1", COB_SET_FLD(f0, cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1), b_9, &a_1), 0, 0);
-    // Let's hack at that last one first. Anyplace we see "cob_get_numdisp (b_8, 1)", we want to replace it with, simply, "b_8"
+  {
+  string p = p_;
+  // cob_dump_field ( 1, "G-1", COB_SET_FLD(f0, cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1), b_9, &a_1), 0, 0);
+  // Let's hack at that last one first. Anyplace we see
+  //    "cob_get_numdisp (b_8, 1)",
+  // we want to extract, simply "b_8"
 
-    string retval;
-    while(!p.empty()) {
-        size_t nfound1 = p.find("cob_get_numdisp");
-        if( nfound1 EQ string::npos ) {
-            nfound1 = p.size();
-        }
-        // nfound1 is where cob_get_numdisp starts
-        size_t nfound2 = p.find(')',nfound1);
-        string replacement = "";
-        if( nfound2 != string::npos ) {
-            size_t nfoundm = nfound1 + strlen("cob_get_numdisp");
-            nfound2 += 1;
-            string fragment = p.substr(nfoundm,nfound2-nfoundm);
-            // Fragment looks like
-            //      " (b_8, 1)"
-            replacement = " " + ExtractVariableNameFrom(fragment) + " ";
-        } else {
-            nfound2 = nfound1;
-        }
+  string retval;
+  while(!p.empty())
+    {
+    size_t nfound1 = p.find("cob_get_numdisp");
+    if( nfound1 EQ string::npos )
+      {
+      nfound1 = p.size();
+      }
+    // nfound1 is where cob_get_numdisp starts
+    size_t nfound2 = p.find(')',nfound1);
+    string replacement = "";
+    if( nfound2 != string::npos )
+      {
+      size_t nfoundm = nfound1 + strlen("cob_get_numdisp");
+      nfound2 += 1;
+      string fragment = p.substr(nfoundm,nfound2-nfoundm);
+      // Fragment looks like
+      //      " (b_8, 1)"
+      replacement = " " + ExtractVariableNameFrom(fragment) + " ";
+      }
+    else
+      {
+      nfound2 = nfound1;
+      }
 
-        retval += p.substr(0,nfound1);
-        retval += replacement;
-        p = p.substr(nfound2);
+    retval += p.substr(0,nfound1);
+    retval += replacement;
+    p = p.substr(nfound2);
     }
-    return retval;
-}
+  return retval;
+  }
 
 static string
 SquishAwayStarIntStar(const string &s_)
-{
-    string s = s_;
-    string retval;
+  {
+  string s = s_;
+  string retval;
 
-    while( !s.empty() ) {
-        size_t nfound1 = s.find( "(*(int *)" );
-        size_t nfound2;
-        string stripped;
-        if( nfound1 != string::npos ) {
-            nfound2 = s.find(')',nfound1 + strlen("(*(int *)") );
-            if( nfound2 != string::npos ) {
-                nfound2 += 2;
-                string param = ExtractVariableNameFrom( s.substr(nfound1 + strlen("(*(int *)")) );
-                retval = s.substr(0,nfound1);
-                retval += ' ';
-                retval += param;
-                retval += ' ';
-            }
-        } else {
-            nfound1 = s.size();
-            nfound2 = nfound1;
-            retval += s;
+  while( !s.empty() )
+    {
+    size_t nfound1 = s.find( "(*(int *)" );
+    size_t nfound2;
+    string stripped;
+    if( nfound1 != string::npos )
+      {
+      nfound2 = s.find(')',nfound1 + strlen("(*(int *)") );
+      if( nfound2 != string::npos )
+        {
+        nfound2 += 2;
+        string param = ExtractVariableNameFrom( s.substr(nfound1 + strlen("(*(int *)")) );
+        retval = s.substr(0,nfound1);
+        retval += ' ';
+        retval += param;
+        retval += ' ';
         }
-        s = s.substr(nfound2);
+      }
+    else
+      {
+      nfound1 = s.size();
+      nfound2 = nfound1;
+      retval += s;
+      }
+    s = s.substr(nfound2);
     }
 
-    return retval;
-}
+  return retval;
+  }
 
 VSTRING
 ParametersInsideParentheses(const string &s, size_t &final)
-{
-    VSTRING retval;
-    final = 0;
-    string next;
-    const char *p = s.c_str();
+  {
+  VSTRING retval;
+  final = 0;
+  string next;
+  const char *p = s.c_str();
 
-    int pcount = 0;
-    if( *p++ EQ '(' ) {
-        pcount = 1;
+  int pcount = 0;
+  if( *p++ EQ '(' )
+    {
+    pcount = 1;
     }
-    while( pcount && *p ) {
-        char ch = *p++;
-        final += 1;
-        if( ch EQ '(' ) {
-            pcount += 1;
-            next += ch;
-            continue;
-        }
-        if( ch EQ ')' ) {
-            if( --pcount ) {
-                next += ch;
-            }
-            continue;
-        }
-        if( pcount > 1 ) {
-            next += ch;
-            continue;
-        }
-        // Arriving here means pcount is 1
-        if( ch EQ ',' ) {
-            retval.push_back(Trim(next));
-            next.clear();
-            continue;
-        }
+  while( pcount && *p )
+    {
+    char ch = *p++;
+    final += 1;
+    if( ch EQ '(' )
+      {
+      pcount += 1;
+      next += ch;
+      continue;
+      }
+    if( ch EQ ')' )
+      {
+      if( --pcount )
+        {
         next += ch;
+        }
+      continue;
+      }
+    if( pcount > 1 )
+      {
+      next += ch;
+      continue;
+      }
+    // Arriving here means pcount is 1
+    if( ch EQ ',' )
+      {
+      retval.push_back(Trim(next));
+      next.clear();
+      continue;
+      }
+    next += ch;
     }
-    if( !retval.empty() ) {
-        retval.push_back(Trim(next));
+  if( !retval.empty() )
+    {
+    retval.push_back(Trim(next));
     }
 
-    return retval;
-}
+  return retval;
+  }
 
 void
 VARIABLES::ScanCFile(const string &path, const string &fname)
-{
-    CPROFILER;
-    string full_path = path;
-    full_path += fname;
-    full_path += ".c";
+  {
+  CPROFILER;
+  string full_path = path;
+  full_path += fname;
+  full_path += ".c";
 
-    FILE *f = fopen(full_path.c_str(),"r");
-    if( !f ) {
-        cout << "Couldn't open the input file " << full_path << endl;
-        exit(1);
+  FILE *f = fopen(full_path.c_str(),"r");
+  if( !f )
+    {
+    cout << "Couldn't open the input file " << full_path << endl;
+    exit(1);
     }
 
-    set<string>externals;
+  set<string>externals;
 
-    char ach[16384];
+  char ach[16384];
 
-    string current_perform_file;
-    int current_perform_line=-1;
+  string current_perform_file;
+  int current_perform_line=-1;
 
-    enum {
-        PR_LOOKING,
-        PR_FIRST_COMMENT,
-        PR_RETURN_ADDRESS,
-        PR_SECOND_COMMENT,
+  enum
+    {
+    PR_LOOKING,
+    PR_FIRST_COMMENT,
+    PR_RETURN_ADDRESS,
+    PR_SECOND_COMMENT,
     } perform_return = PR_LOOKING;
 
-    string current_record_type = "-" ;
-    int line_number = 1;
+  string current_record_type = "-" ;
+  int line_number = 1;
 
-    bool looking_for_cstart = false;
-    bool found_cstart = false;
+  bool looking_for_cstart = false;
+  bool found_cstart = false;
 
-    while( fgets(ach,sizeof(ach),f) ) {
-        extern bool GV_echo_line;
-        if( GV_echo_line ) {
-            printf("A-%d %s",line_number++,ach);
+  deque<VARIABLE> list_of_indexes;
+
+  while( fgets(ach,sizeof(ach),f) )
+    {
+    extern bool GV_echo_line;
+    if( GV_echo_line )
+      {
+      printf("A-%d %s",line_number++,ach);
+      }
+    if( strstr(ach, ": Entry ") )
+      {
+      string input = ach;
+
+      VSTRING tokens = Split(input," \t");
+      if( tokens.size() EQ 9
+          AND tokens[0] EQ "/*"
+          AND tokens[1] EQ "Line:"
+          AND tokens[3] EQ ":"
+          AND tokens[4] EQ "Entry"
+          AND tokens[6] EQ ":"
+          AND tokens[8] EQ "*/\n" )
+        {
+        VARIABLE variable;
+        variable.record_type = "P";
+        variable.offset = tokens[2];
+        variable.name = tokens[5];
+        variable.f_name = tokens[7];
+        Insert(variable);
+        variable.record_type = "E";
+        Insert(variable);
         }
-        if( strstr(ach, ": Entry ") ) {
-            string input = ach;
+      continue;
+      }
 
-            VSTRING tokens = Split(input," \t");
-            if( tokens.size() EQ 9
-                    AND tokens[0] EQ "/*"
-                    AND tokens[1] EQ "Line:"
-                    AND tokens[3] EQ ":"
-                    AND tokens[4] EQ "Entry"
-                    AND tokens[6] EQ ":"
-                    AND tokens[8] EQ "*/\n" ) {
-                VARIABLE variable;
-                variable.record_type = "P";
-                variable.offset = tokens[2];
-                variable.name = tokens[5];
-                variable.f_name = tokens[7];
-                Insert(variable);
-                variable.record_type = "E";
-                Insert(variable);
-            }
-            continue;
+    if( strstr(ach, " PROGRAM-ID ") )
+      {
+      //  When a PROCEDURE DIVISION starts off with a DECLARATIVES section,
+      //  it's possible to have executable code before the ENTRY point
+      //  of the PROGRAM-ID.  The CBL-GDB Python, however, requires
+      //  the "P" record_type to be the first entry for a program block.
+
+      //  We're handling this by putting a marker in when we see a PROGRAM-ID
+      //  line.  Later on, before we output the VARIABLE_STRING, we'll
+      //  bubble each "P" entry up to its parent PROGRAM-ID entry.
+
+      string input = ach;
+
+      VSTRING tokens = Split(input," \t");
+      if( tokens.size() EQ 4
+          AND tokens[0] EQ "/*"
+          AND tokens[1] EQ "PROGRAM-ID"
+          AND tokens[3] EQ "*/\n" )
+        {
+        VARIABLE variable;
+        variable.record_type = "PROGRAM-ID";
+        Insert(variable);
         }
 
-        if( strstr(ach, " PROGRAM-ID ") ) {
-            //  When a PROCEDURE DIVISION starts off with a DECLARATIVES section,
-            //  it's possible to have executable code before the ENTRY point
-            //  of the PROGRAM-ID.  The CBL-GDB Python, however, requires
-            //  the "P" record_type to be the first entry for a program block.
+      looking_for_cstart = true;
+      continue;
+      }
 
-            //  We're handling this by putting a marker in when we see a PROGRAM-ID
-            //  line.  Later on, before we output the VARIABLE_STRING, we'll
-            //  bubble each "P" entry up to its parent PROGRAM-ID entry.
+    if( looking_for_cstart AND !found_cstart )
+      {
+      // Our assumption is that the first return after the first
+      // PROGRAM-ID is where we want CSTART to break:
+      string input = ach;
+      VSTRING tokens = Split(input," \t");
 
-            string input = ach;
-
-            VSTRING tokens = Split(input," \t");
-            if( tokens.size() EQ 4
-                    AND tokens[0] EQ "/*"
-                    AND tokens[1] EQ "PROGRAM-ID"
-                    AND tokens[3] EQ "*/\n" ) {
-                VARIABLE variable;
-                variable.record_type = "PROGRAM-ID";
-                Insert(variable);
-            }
-
-            looking_for_cstart = true;
-            continue;
+      if( tokens.size() >= 3 && tokens[0] == "return")
+        {
+        // We have found that first return
+        VARIABLE variable;
+        variable.record_type = "C";
+        variable.name = tokens[1];
+        Insert(variable);
+        found_cstart = true;
         }
-
-        if( looking_for_cstart AND !found_cstart ) {
-            // Our assumption is that the first return after the first
-            // PROGRAM-ID is where we want CSTART to break:
-            string input = ach;
-            VSTRING tokens = Split(input," \t");
-
-            if( tokens.size() >= 3 && tokens[0] == "return") {
-                // We have found that first return
-                VARIABLE variable;
-                variable.record_type = "C";
-                variable.name = tokens[1];
-                Insert(variable);
-                found_cstart = true;
-            }
-        }
+      }
 
 
 check_for_another_perform:
-        switch(perform_return) {
-        case PR_LOOKING: {
-            if( strstr(ach, ": PERFORM ") ) {
-                string input = ach;
+    switch(perform_return)
+      {
+      case PR_LOOKING:
+        {
+        if( strstr(ach, ": PERFORM ") )
+          {
+          string input = ach;
 
-                VSTRING tokens = Split(input," \t");
-                if( tokens.size() EQ 8
-                        AND tokens[0] EQ "/*"
-                        AND tokens[1] EQ "Line:"
-                        AND tokens[3] EQ ":"
-                        AND tokens[4] EQ "PERFORM"
-                        AND tokens[5] EQ ":"
-                        AND tokens[7] EQ "*/\n" ) {
-                    VARIABLE variable;
-                    variable.record_type = "p";
-                    variable.f_name = tokens[6] + ':' + tokens[2];
-                    current_perform_file = tokens[6];
-                    current_perform_line = stoi(tokens[2]);
-                    Insert(variable);
-                    perform_return = PR_FIRST_COMMENT;
-                    continue;
-                }
+          VSTRING tokens = Split(input," \t");
+          if( tokens.size() EQ 8
+              AND tokens[0] EQ "/*"
+              AND tokens[1] EQ "Line:"
+              AND tokens[3] EQ ":"
+              AND tokens[4] EQ "PERFORM"
+              AND tokens[5] EQ ":"
+              AND tokens[7] EQ "*/\n" )
+            {
+            VARIABLE variable;
+            variable.record_type = "p";
+            variable.f_name = tokens[6] + ':' + tokens[2];
+            current_perform_file = tokens[6];
+            current_perform_line = stoi(tokens[2]);
+            Insert(variable);
+            perform_return = PR_FIRST_COMMENT;
+            continue;
             }
+          }
         }
+      break;
+
+      case PR_FIRST_COMMENT:
+        if( strstr (ach,"/*") )
+          {
+          // This is the first comment after the PERFORM.
+          string input = ach;
+          VSTRING tokens = Split(input," \t");
+          if( tokens.size() > 1
+              AND tokens[0] == "/*"
+              AND tokens[1] == "PERFORM")
+            // This is a PERFORM A
+            {
+            perform_return = PR_RETURN_ADDRESS;
+            continue;
+            }
+          else
+            {
+            //
+            // This is a PERFORM N TIMES or PERFORM UNTIL
+
+            // We ignore those
+            variables.pop_back();
+            perform_return = PR_LOOKING;
+            goto check_for_another_perform;
+            }
+          }
         break;
 
-        case PR_FIRST_COMMENT:
-            if( strstr (ach,"/*") ) {
-                // This is the first comment after the PERFORM.
-                string input = ach;
-                VSTRING tokens = Split(input," \t");
-                if( tokens.size() > 1
-                        AND tokens[0] == "/*"
-                        AND tokens[1] == "PERFORM")
-                    // This is a PERFORM A
+      case PR_RETURN_ADDRESS:
+        {
+        // When looking for a return location, the first thing we
+        // find is the default:
+        //     frame_ptr->return_address_ptr = &&l_50;
+        // This might be our only choice, when, for example, this
+        // PERFORM is itself followed by an implicit return, which can
+        // happen when the PERFORM statement is itself the last statement
+        // of a paragraph that ends a section or a program.
+
+        char *p = strstr(ach,"&&");
+        if( p )
+          {
+          p += 2;
+          char *p2 = strstr(ach,";");
+          if( p2 )
+            {
+            *p2 = '\0';
+            }
+          variables.back().name = p;
+          perform_return = PR_SECOND_COMMENT;
+          }
+        continue;
+        }
+      break;
+
+      case PR_SECOND_COMMENT:
+        // But what we prefer to find is the /* Line: nn that follows
+        // the PERFORM.  If we can find that line number, it makes for
+        // a cleaner-looking sequence in GDB
+
+        // From something like
+        //      /* Line: 109       : Paragraph PARTEND-001             : rtest.cbl */
+        // we will build rtest.cbl:109 as the target:
+
+        // Discovered a problem, though.
+        //
+        //64        PERFORM until end-of-file
+        //65            PERFORM 02-process
+        //66            PERFORM 01-read
+        //67            END-PERFORM.
+        //68        DISPLAY my-counters.
+
+        // It turns out that the END-PERFORM line doesn't generate any code
+        // at all in the generated C file.  So, the next line after 66 PERFORM
+        // was getting picked up as line 68 -- which isn't what we had in mind.
+
+        // So, I only issue the "nice" line number if it is the one right after
+        // the perform; otherwise we go through the until/step sequenct that
+        // doesn't look as good in GDB when it happens, but is more accurate
+        // in this case.
+
+        char *p = strstr(ach,"/*");
+        if( p )
+          {
+          VSTRING tokens = Split(ach," \t");
+          if( tokens.size() > 2 AND tokens[1] == "Line:")
+            {
+            size_t i;
+            for( i=5; i<tokens.size(); i++ )
+              {
+              if( tokens[i] EQ ":" )
                 {
-                    perform_return = PR_RETURN_ADDRESS;
-                    continue;
-                } else {
-                    //
-                    // This is a PERFORM N TIMES or PERFORM UNTIL
-
-                    // We ignore those
-                    variables.pop_back();
-                    perform_return = PR_LOOKING;
-                    goto check_for_another_perform;
+                break;
                 }
-            }
-            break;
-
-        case PR_RETURN_ADDRESS: {
-            // When looking for a return location, the first thing we
-            // find is the default:
-            //     frame_ptr->return_address_ptr = &&l_50;
-            // This might be our only choice, when, for example, this
-            // PERFORM is itself followed by an implicit return, which can
-            // happen when the PERFORM statement is itself the last statement
-            // of a paragraph that ends a section or a program.
-
-            char *p = strstr(ach,"&&");
-            if( p ) {
-                p += 2;
-                char *p2 = strstr(ach,";");
-                if( p2 ) {
-                    *p2 = '\0';
+              }
+            i += 1;
+            if( i < tokens.size() )
+              {
+              if( tokens[i] EQ current_perform_file
+                  AND (current_perform_line+1) EQ stoi(tokens[2]) )
+                {
+                variables.back().name = tokens[i] + ':' + tokens[2];
                 }
-                variables.back().name = p;
-                perform_return = PR_SECOND_COMMENT;
+              }
             }
-            continue;
-        }
+          perform_return = PR_LOOKING;
+          goto check_for_another_perform;
+          }
         break;
+      }
 
-        case PR_SECOND_COMMENT:
-            // But what we prefer to find is the /* Line: nn that follows
-            // the PERFORM.  If we can find that line number, it makes for
-            // a cleaner-looking sequence in GDB
+    static const char COB_EXTERNAL_ADDR[]   = "cob_external_addr";
+    static const char COB_DUMP_FILE[]       = "cob_dump_file";
+    static const char COB_DUMP_FIELD[]      = "cob_dump_field";
+    static const char COB_DUMP_OUTPUT[]     = "cob_dump_output";
+    static const char COB_SET_DATA[]        = "COB_SET_DATA";
+    static const char COB_SET_FLD[]         = "COB_SET_FLD";
+    char *p = ach;
 
-            // From something like
-            //      /* Line: 109       : Paragraph PARTEND-001             : rtest.cbl */
-            // we will build rtest.cbl:109 as the target:
+    // Skip over leading spaces
+    while( *p EQ ' ' OR *p EQ '\t' )
+      {
+      p += 1;
+      }
 
-            // Discovered a problem, though.
-            //
-            //64        PERFORM until end-of-file
-            //65            PERFORM 02-process
-            //66            PERFORM 01-read
-            //67            END-PERFORM.
-            //68        DISPLAY my-counters.
+    // The lines we are looking for can be commented out.
+    // So, we just ignore the "/*" if it's the first thing on a line:
+    if( *p EQ '/' AND *(p+1) EQ '*' )
+      {
+      p += 2;
+      }
 
-            // It turns out that the END-PERFORM line doesn't generate any code
-            // at all in the generated C file.  So, the next line after 66 PERFORM
-            // was getting picked up as line 68 -- which isn't what we had in mind.
+    // Skip over spaces
+    while( *p EQ ' ' OR *p EQ '\t' )
+      {
+      p += 1;
+      }
 
-            // So, I only issue the "nice" line number if it is the one right after
-            // the perform; otherwise we go through the until/step sequenct that
-            // doesn't look as good in GDB when it happens, but is more accurate
-            // in this case.
+    if( strstr(p,COB_EXTERNAL_ADDR) )
+      {
+      // We are looking for
+      //  b_13 = cob_external_addr ("Z_TABLE", 3160);
+      VSTRING t = Split(p, " \t");
+      if( t[1] EQ "=" AND t[2] EQ COB_EXTERNAL_ADDR )
+        {
+        // That's good enough for me
+        externals.insert(t[0]);
+        }
+      }
 
-            char *p = strstr(ach,"/*");
-            if( p ) {
-                VSTRING tokens = Split(ach," \t");
-                if( tokens.size() > 2 AND tokens[1] == "Line:") {
-                    size_t i;
-                    for( i=5; i<tokens.size(); i++ ) {
-                        if( tokens[i] EQ ":" ) {
-                            break;
+    if( strncmp(p, COB_DUMP_OUTPUT, strlen(COB_DUMP_OUTPUT)) EQ 0 )
+      {
+      /* cob_dump_output("WORKING-STORAGE"); */
+      /* cob_dump_output("LINKAGE"); */
+      /* cob_dump_output("LOCAL-STORAGE"); */
+      p += strlen(COB_DUMP_OUTPUT);
+      if( strstr(p,"WORKING-STORAGE") )
+        {
+        current_record_type = "W";
+        }
+      else if( strstr(p,"LOCAL-STORAGE") )
+        {
+        current_record_type = "L";
+        }
+      else if( strstr(p,"LINKAGE") )
+        {
+        current_record_type = "I";
+        }
+      // There are other types: REPORT and SCREEN.  We don't care about them
+      continue;
+      }
+
+    if( strncmp(p, COB_DUMP_FILE, strlen(COB_DUMP_FILE)) EQ 0 )
+      {
+      /* cob_dump_file ("FD pgm-input", h_PGM_INPUT); */
+      /* cob_dump_file ("SD pgm-input", h_PGM_INPUT); */
+      p += strlen(COB_DUMP_FILE);
+      if( strstr(p,"SD ") )
+        {
+        current_record_type = "S";
+        }
+      else if( strstr(p,"FD ") )
+        {
+        current_record_type = "F";
+        }
+      continue;
+      }
+
+    if( strncmp(p, COB_DUMP_FIELD, strlen(COB_DUMP_FIELD)) EQ 0 )
+      {
+      // As time has gone on, and I have been exposed to steadily more complex COBOL
+      // constructions, this routine has been forced to become more and more complex.
+      // The cob_dump_field routine takes these parameters
+      //   cob_dump_field (const int level, const char *name, cob_field *f_addr, const int offset, const int indexes, ...)
+      // What makes this generally useful is that the field pointer gets built at dump time using the
+      // COB_SET_FLD() macro
+      //   COB_SET_FLD(f_name, length, bname + offset, aname)
+      //
+      // Where it gets complicated is when the length and/or the offset are themselves variable
+
+      // So, examples:
+
+      //  /* cob_dump_field ( 1, "WRK-DU-1V0-1", COB_SET_FLD(f0, 1, b_52, &a_7), 0, 0); */
+      //  /* cob_dump_field (10, "datyr", COB_SET_FLD(f0, 4, b_15 + 17, &a_7), 0, 0); */
+      //  /* cob_dump_field ( 5, "new-dat1", COB_SET_FLD(f0, 8, b_15 + 17, &a_3), 0, 0); REDEFINES */
+      //  /* cob_dump_field ( 2, "ELMT", &f_278, 0, 1, i_1, 1); OCCURS 1 3 */
+      //  /* cob_dump_field ( 2, "G-2", COB_SET_FLD(f0, cob_get_numdisp (b_8, 1), b_9, &a_1), 0, 0); */
+      //  /* cob_dump_field ( 1, "result", COB_SET_FLD(f0, (*(int *)(b_8)), b_10, &a_3), 0, 0); */
+      //  /* cob_dump_field ( 1, "G-1", COB_SET_FLD(f0, cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1), b_9, &a_1), 0, 0); */
+      //  /* cob_dump_field ( 2, "G-3", COB_SET_FLD(f0, cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1), b_9 + 0 + cob_get_numdisp (b_8, 1), &a_1), 0, 0); */
+      //  /* cob_dump_field ( 3, "G-4", COB_SET_FLD(f1, cob_get_numdisp (b_8, 1), b_9 + 0 + cob_get_numdisp (b_8, 1), &a_1), 0, 0); */
+      //  /* cob_dump_field ( 4, "X", COB_SET_FLD(f0, 1, b_9 + 0 + cob_get_numdisp (b_8, 1), &a_4), 0, 1, i_1, 1); OCCURS 1 3 */
+      //  /* cob_dump_field ( 3, "G-5", COB_SET_FLD(f2, cob_get_numdisp (b_8, 1), b_9 + 0 + cob_get_numdisp (b_8, 1) + 0 + cob_get_numdisp (b_8, 1), &a_1), 0, 0); */
+      //  /* cob_dump_field ( 4, "X", COB_SET_FLD(f0, 1, b_9 + 0 + cob_get_numdisp (b_8, 1) + 0 + cob_get_numdisp (b_8, 1), &a_4), 0, 1, i_1, 1); OCCURS 1 3 */
+      //  /* cob_dump_field ( 2, "WS-LASTNAME", COB_SET_DATA (f_88, b_84 + 12), 0, 0); EXTERNAL */
+      //  /* cob_dump_field_ext ( 1, "WS-BASED", COB_SET_DATA (f_55, b_55), 0, 0); BASED */
+      //
+      // Arriving here means that the first thing on the line after removing "/*" is "cob_dump_field"
+
+      string cdf = p;
+      size_t nfound = cdf.find('(');
+      if( nfound != string::npos )
+        {
+        cdf = cdf.substr(nfound);
+        VARIABLE variable;
+        variable.record_type = current_record_type;
+
+        // If this variable is a REDEFINES, that word, flanked by spaces, will be on the line.
+        variable.redefines = strstr(p," REDEFINES ") != NULL;
+
+        // If this variable is an OCCURS, that word, flanked by spaces, will be on the line:
+
+        char *poccurs = strstr(ach," OCCURS ");
+        if( poccurs )
+          {
+          VSTRING t = Split(poccurs," ");
+          if( t.size() >= 3 )
+            {
+            variable.occurs_min = stoi(t[1]);
+            variable.occurs_max = stoi(t[2]);
+            }
+          }
+
+        // This is yet another hack:
+        bool is_based = !!strstr(ach,"; BASED */"); // Becomes true if non-NULL, false if NULL
+
+        // Hack away at cob_get_numdisp() entries:
+        cdf = HackAwayCobGetNumdisp(cdf);
+        // Squish away any (*(int *)b_8) entries:
+        cdf = SquishAwayStarIntStar(cdf);
+
+        size_t final_paren;
+        VSTRING cdf_parameters = ParametersInsideParentheses(cdf,final_paren);
+        if( cdf_parameters.size() >= 5  )
+          {
+          variable.level = stoi(Trim(cdf_parameters[0]));
+          variable.name  = StripQuotes(cdf_parameters[1]);
+          string field_pointer = Trim(cdf_parameters[2]);
+          string occurs_offset = Trim(cdf_parameters[3]);
+          string occurs_indexes = Trim(cdf_parameters[4]);
+
+          if( !field_pointer.empty() && field_pointer[0] EQ '&')
+            {
+            // Minimal association: COBOL_name with f_name
+            variable.f_name = field_pointer.substr(1);
+            }
+          else
+            {
+            if( field_pointer.find(COB_SET_FLD) != string::npos )
+              {
+              nfound = field_pointer.find( '(' );
+              if( nfound != string::npos )
+                {
+                field_pointer = field_pointer.substr(nfound);
+                VSTRING csf_parameters = ParametersInsideParentheses(field_pointer,final_paren);
+                if( csf_parameters.size() EQ 4 )
+                  {
+                  //   COB_SET_FLD(f_name, length, bname + offset, aname)
+                  // fname is meaningless in this context
+                  // length might be combinations of integer constants and/or text :
+
+                  for(size_t i=0; i<csf_parameters[1].size(); i++ )
+                    {
+                    char ch = csf_parameters[1][i];
+                    if( ch != ' ' )
+                      {
+                      variable.length += ch;
+                      }
+                    }
+
+                  // The third parameter is the b_name with, possibly, an offset added to it.
+                  VSTRING base_offset = Split(csf_parameters[2],"+");
+                  if( base_offset.size() )
+                    {
+                    variable.b_name = Trim(base_offset[0]);
+                    }
+                  size_t i = 1;
+                  while( i < base_offset.size() )
+                    {
+                    string offset = Trim(base_offset[i++]);
+                    if( offset != "0" )
+                      {
+                      if( !variable.offset.empty() )
+                        {
+                        variable.offset += '+';
                         }
+                      variable.offset += offset ;
+                      }
                     }
-                    i += 1;
-                    if( i < tokens.size() ) {
-                        if( tokens[i] EQ current_perform_file
-                                AND (current_perform_line+1) EQ stoi(tokens[2]) ) {
-                            variables.back().name = tokens[i] + ':' + tokens[2];
-                        }
-                    }
+                  variable.a_name = csf_parameters[3].substr(1);
+                  }
+                else
+                  {
+                  cerr << "VARIABLES::ScanCFile() doesn't know how to handle the COB_SET_FLD macro in" << endl ;
+                  cerr << "   " << ach ;
+                  cerr << "Please alert Bob Dubner at support@cobolworx.com" << endl;
+                  cerr << "Thank you." << endl;
+                  continue;
+                  }
                 }
-                perform_return = PR_LOOKING;
-                goto check_for_another_perform;
-            }
-            break;
-        }
+              }
+            else if( field_pointer.find(COB_SET_DATA) != string::npos )
+              {
+              nfound = field_pointer.find( '(' );
+              if( nfound != string::npos )
+                {
+                field_pointer = field_pointer.substr(nfound);
+                VSTRING csd_parameters = ParametersInsideParentheses(field_pointer,final_paren);
+                if(csd_parameters.size() == 2)
+                  {
+                  variable.f_name = csd_parameters[0];
+                  }
 
-        static const char COB_EXTERNAL_ADDR[]   = "cob_external_addr";
-        static const char COB_DUMP_FILE[]       = "cob_dump_file";
-        static const char COB_DUMP_FIELD[]      = "cob_dump_field";
-        static const char COB_DUMP_OUTPUT[]     = "cob_dump_output";
-        static const char COB_SET_DATA[]        = "COB_SET_DATA";
-        static const char COB_SET_FLD[]         = "COB_SET_FLD";
-        char *p = ach;
-
-        // Skip over leading spaces
-        while( *p EQ ' ' OR *p EQ '\t' ) {
-            p += 1;
-        }
-
-        // The lines we are looking for can be commented out.
-        // So, we just ignore the "/*" if it's the first thing on a line:
-        if( *p EQ '/' AND *(p+1) EQ '*' ) {
-            p += 2;
-        }
-
-        // Skip over spaces
-        while( *p EQ ' ' OR *p EQ '\t' ) {
-            p += 1;
-        }
-
-        if( strstr(p,COB_EXTERNAL_ADDR) ) {
-            // We are looking for
-            //  b_13 = cob_external_addr ("Z_TABLE", 3160);
-            VSTRING t = Split(p, " \t");
-            if( t[1] EQ "=" AND t[2] EQ COB_EXTERNAL_ADDR ) {
-                // That's good enough for me
-                externals.insert(t[0]);
-            }
-        }
-
-        if( strncmp(p, COB_DUMP_OUTPUT, strlen(COB_DUMP_OUTPUT)) EQ 0 ) {
-            /* cob_dump_output("WORKING-STORAGE"); */
-            /* cob_dump_output("LINKAGE"); */
-            /* cob_dump_output("LOCAL-STORAGE"); */
-            p += strlen(COB_DUMP_OUTPUT);
-            if( strstr(p,"WORKING-STORAGE") ) {
-                current_record_type = "W";
-            } else if( strstr(p,"LOCAL-STORAGE") ) {
-                current_record_type = "L";
-            } else if( strstr(p,"LINKAGE") ) {
-                current_record_type = "I";
-            }
-            // There are other types: REPORT and SCREEN.  We don't care about them
-            continue;
-        }
-
-        if( strncmp(p, COB_DUMP_FILE, strlen(COB_DUMP_FILE)) EQ 0 ) {
-            /* cob_dump_file ("FD pgm-input", h_PGM_INPUT); */
-            /* cob_dump_file ("SD pgm-input", h_PGM_INPUT); */
-            p += strlen(COB_DUMP_FILE);
-            if( strstr(p,"SD ") ) {
-                current_record_type = "S";
-            } else if( strstr(p,"FD ") ) {
-                current_record_type = "F";
-            }
-            continue;
-        }
-
-        if( strncmp(p, COB_DUMP_FIELD, strlen(COB_DUMP_FIELD)) EQ 0 ) {
-            // As time has gone on, and I have been exposed to steadily more complex COBOL
-            // constructions, this routine has been forced to become more and more complex.
-            // The cob_dump_field routine takes these parameters
-            //   cob_dump_field (const int level, const char *name, cob_field *f_addr, const int offset, const int indexes, ...)
-            // What makes this generally useful is that the field pointer gets built at dump time using the
-            // COB_SET_FLD() macro
-            //   COB_SET_FLD(f_name, length, bname + offset, aname)
-            //
-            // Where it gets complicated is when the length and/or the offset are themselves variable
-
-            // So, examples:
-
-            //  /* cob_dump_field ( 1, "WRK-DU-1V0-1", COB_SET_FLD(f0, 1, b_52, &a_7), 0, 0); */
-            //  /* cob_dump_field (10, "datyr", COB_SET_FLD(f0, 4, b_15 + 17, &a_7), 0, 0); */
-            //  /* cob_dump_field ( 5, "new-dat1", COB_SET_FLD(f0, 8, b_15 + 17, &a_3), 0, 0); REDEFINES */
-            //  /* cob_dump_field ( 2, "ELMT", &f_278, 0, 1, i_1, 1); OCCURS 1 3 */
-            //  /* cob_dump_field ( 2, "G-2", COB_SET_FLD(f0, cob_get_numdisp (b_8, 1), b_9, &a_1), 0, 0); */
-            //  /* cob_dump_field ( 1, "result", COB_SET_FLD(f0, (*(int *)(b_8)), b_10, &a_3), 0, 0); */
-            //  /* cob_dump_field ( 1, "G-1", COB_SET_FLD(f0, cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1), b_9, &a_1), 0, 0); */
-            //  /* cob_dump_field ( 2, "G-3", COB_SET_FLD(f0, cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1), b_9 + 0 + cob_get_numdisp (b_8, 1), &a_1), 0, 0); */
-            //  /* cob_dump_field ( 3, "G-4", COB_SET_FLD(f1, cob_get_numdisp (b_8, 1), b_9 + 0 + cob_get_numdisp (b_8, 1), &a_1), 0, 0); */
-            //  /* cob_dump_field ( 4, "X", COB_SET_FLD(f0, 1, b_9 + 0 + cob_get_numdisp (b_8, 1), &a_4), 0, 1, i_1, 1); OCCURS 1 3 */
-            //  /* cob_dump_field ( 3, "G-5", COB_SET_FLD(f2, cob_get_numdisp (b_8, 1), b_9 + 0 + cob_get_numdisp (b_8, 1) + 0 + cob_get_numdisp (b_8, 1), &a_1), 0, 0); */
-            //  /* cob_dump_field ( 4, "X", COB_SET_FLD(f0, 1, b_9 + 0 + cob_get_numdisp (b_8, 1) + 0 + cob_get_numdisp (b_8, 1), &a_4), 0, 1, i_1, 1); OCCURS 1 3 */
-            //  /* cob_dump_field ( 2, "WS-LASTNAME", COB_SET_DATA (f_88, b_84 + 12), 0, 0); EXTERNAL */
-            //  /* cob_dump_field_ext ( 1, "WS-BASED", COB_SET_DATA (f_55, b_55), 0, 0); BASED */
-            //
-            // Arriving here means that the first thing on the line after removing "/*" is "cob_dump_field"
-
-            string cdf = p;
-            size_t nfound = cdf.find('(');
-            if( nfound != string::npos ) {
-                cdf = cdf.substr(nfound);
-                VARIABLE variable;
-                variable.record_type = current_record_type;
-
-                // If this variable is a REDEFINES, that word, flanked by spaces, will be on the line.
-                variable.redefines = strstr(p," REDEFINES ") != NULL;
-
-                // If this variable is an OCCURS, that word, flanked by spaces, will be on the line:
-
-                char *poccurs = strstr(ach," OCCURS ");
-                if( poccurs ) {
-                    VSTRING t = Split(poccurs," ");
-                    if( t.size() >= 3 ) {
-                        variable.occurs_min = stoi(t[1]);
-                        variable.occurs_max = stoi(t[2]);
+                // The second parameter is the b_name with, possibly, an offset added to it.
+                VSTRING base_offset = Split(csd_parameters[1],"+");
+                if( base_offset.size() )
+                  {
+                  variable.b_name = Trim(base_offset[0]);
+                  }
+                size_t i = 1;
+                while( i < base_offset.size() )
+                  {
+                  string offset = Trim(base_offset[i++]);
+                  if( offset != "0" )
+                    {
+                    if( !variable.offset.empty() )
+                      {
+                      variable.offset += '+';
+                      }
+                    variable.offset += offset ;
                     }
+                  }
                 }
-
-                // This is yet another hack:
-                bool is_based = !!strstr(ach,"; BASED */"); // Becomes true if non-NULL, false if NULL
-
-                // Hack away at cob_get_numdisp() entries:
-                cdf = HackAwayCobGetNumdisp(cdf);
-                // Squish away any (*(int *)b_8) entries:
-                cdf = SquishAwayStarIntStar(cdf);
-
-                size_t final_paren;
-                VSTRING cdf_parameters = ParametersInsideParentheses(cdf,final_paren);
-                if( cdf_parameters.size() >= 5  ) {
-                    variable.level = stoi(Trim(cdf_parameters[0]));
-                    variable.name  = StripQuotes(cdf_parameters[1]);
-                    string field_pointer = Trim(cdf_parameters[2]);
-                    string occurs_offset = Trim(cdf_parameters[3]);
-                    string occurs_indexes = Trim(cdf_parameters[4]);
-
-                    if( !field_pointer.empty() && field_pointer[0] EQ '&') {
-                        // Minimal association: COBOL_name with f_name
-                        variable.f_name = field_pointer.substr(1);
-                    } else {
-                        if( field_pointer.find(COB_SET_FLD) != string::npos ) {
-                            nfound = field_pointer.find( '(' );
-                            if( nfound != string::npos ) {
-                                field_pointer = field_pointer.substr(nfound);
-                                VSTRING csf_parameters = ParametersInsideParentheses(field_pointer,final_paren);
-                                if( csf_parameters.size() EQ 4 ) {
-                                    //   COB_SET_FLD(f_name, length, bname + offset, aname)
-                                    // fname is meaningless in this context
-                                    // length might be combinations of integer constants and/or text :
-
-                                    for(size_t i=0; i<csf_parameters[1].size(); i++ ) {
-                                        char ch = csf_parameters[1][i];
-                                        if( ch != ' ' ) {
-                                            variable.length += ch;
-                                        }
-                                    }
-
-                                    // The third parameter is the b_name with, possibly, an offset added to it.
-                                    VSTRING base_offset = Split(csf_parameters[2],"+");
-                                    if( base_offset.size() ) {
-                                        variable.b_name = Trim(base_offset[0]);
-                                    }
-                                    size_t i = 1;
-                                    while( i < base_offset.size() ) {
-                                        string offset = Trim(base_offset[i++]);
-                                        if( offset != "0" ) {
-                                            if( !variable.offset.empty() ) {
-                                                variable.offset += '+';
-                                            }
-                                            variable.offset += offset ;
-                                        }
-                                    }
-                                    variable.a_name = csf_parameters[3].substr(1);
-                                } else {
-                                    cerr << "VARIABLES::ScanCFile() doesn't know how to handle the COB_SET_FLD macro in" << endl ;
-                                    cerr << "   " << ach ;
-                                    cerr << "Please alert Bob Dubner at support@cobolworx.com" << endl;
-                                    cerr << "Thank you." << endl;
-                                    continue;
-                                }
-                            }
-                        } else if( field_pointer.find(COB_SET_DATA) != string::npos ) {
-                            nfound = field_pointer.find( '(' );
-                            if( nfound != string::npos ) {
-                                field_pointer = field_pointer.substr(nfound);
-                                VSTRING csd_parameters = ParametersInsideParentheses(field_pointer,final_paren);
-                                if(csd_parameters.size() == 2) {
-                                    variable.f_name = csd_parameters[0];
-                                }
-
-                                // The second parameter is the b_name with, possibly, an offset added to it.
-                                VSTRING base_offset = Split(csd_parameters[1],"+");
-                                if( base_offset.size() ) {
-                                    variable.b_name = Trim(base_offset[0]);
-                                }
-                                size_t i = 1;
-                                while( i < base_offset.size() ) {
-                                    string offset = Trim(base_offset[i++]);
-                                    if( offset != "0" ) {
-                                        if( !variable.offset.empty() ) {
-                                            variable.offset += '+';
-                                        }
-                                        variable.offset += offset ;
-                                    }
-                                }
-                            }
-                        } else {
-                            cerr << "VARIABLES::ScanCFile() doesn't know how to handle the field pointer in" << endl ;
-                            cerr << "   " << ach ;
-                            cerr << "Please alert Bob Dubner at support@cobolworx.com" << endl;
-                            cerr << "Thank you." << endl;
-                            continue;
-                        }
-                    }
-                    if( is_based ) {
-                        variable.record_type += "B"; // Reflag as BASED
-                    }
-                    Insert(variable);
-                }
+              }
+            else
+              {
+              cerr << "VARIABLES::ScanCFile() doesn't know how to handle the "
+                      "field pointer in" << endl ;
+              cerr << "   " << ach ;
+              cerr << "Please alert Bob Dubner at support@cobolworx.com" << endl;
+              cerr << "Thank you." << endl;
+              continue;
+              }
             }
+          if( is_based )
+            {
+            variable.record_type += "B"; // Reflag as BASED
+            }
+
+          // We need to do a bit of thinking, here.  GnuCOBOL 3.2 puts INDEXED
+          // BY variables into the C file just before the declaration of the
+          // array that uses them.  Such variables have a level of 00.  So,
+          // we are going to stash them in a list until we see their parent
+
+          if( variable.level == 0 )
+            {
+            list_of_indexes.push_back(variable);
+            }
+          else
+            {
+            Insert(variable);
+            while( list_of_indexes.size() )
+              {
+              Insert(list_of_indexes.front());
+              list_of_indexes.pop_front();
+              }
+            }
+          }
         }
+      }
     }
 
-    // We have a set of externals.  Let's scan through the variables.  Any
-    // variable whose b_name is in externals[] gets reflagged as 'X'
+  // We have a set of externals.  Let's scan through the variables.  Any
+  // variable whose b_name is in externals[] gets reflagged as 'X'
 
-    for( V_VARIABLES::iterator it=variables.begin(); it!=variables.end(); it++ ) {
-        if( externals.find(it->b_name) != externals.end() ) {
-            it->record_type = "X"; // Reflag as EXTERNAL
-        }
+  for( V_VARIABLES::iterator it=variables.begin(); it!=variables.end(); it++ )
+    {
+    if( externals.find(it->b_name) != externals.end() )
+      {
+      it->record_type = "X"; // Reflag as EXTERNAL
+      }
     }
 
-    ::fclose(f);
-}
+  ::fclose(f);
+  }
 
 void
 VARIABLES::FillInTheBlanks(COB_FIELDS &cob_fields)
-{
-    string current_bname = "";
-    for( V_VARIABLES::iterator it = variables.begin(); it!=variables.end(); it++) {
-        if( it->level <= 2 OR it->level EQ 78 OR it->level EQ 77 ) {
-            // This is a root variable, so reset the current name
-            current_bname = "";
-        }
+  {
+  string current_bname = "";
+  for( V_VARIABLES::iterator it = variables.begin(); it!=variables.end(); it++)
+    {
+    if( it->level <= 2 OR it->level EQ 78 OR it->level EQ 77 )
+      {
+      // This is a root variable, so reset the current name
+      current_bname = "";
+      }
 
-        if( it->a_name.empty() ) {
-            const COB_FIELD *pfield = cob_fields.Find(it->f_name);
-            if( pfield ) {
-                if( it->record_type EQ "L" ) {
-                    // Local variables are all referenced against cob_local_ptr
-                    it->b_name = "cob_local_ptr";
-                } else {
-                    if( !pfield->b_name.empty() ) {
-                        it->b_name = pfield->b_name;
-                    }
-                }
-                it->a_name = pfield->a_name;
-                if( pfield->size) {
-                    it->length = to_string(pfield->size);
-                }
-                if( pfield->offset ) {
-                    it->offset = to_string(pfield->offset);
-                }
+    if( it->a_name.empty() )
+      {
+      const COB_FIELD *pfield = cob_fields.Find(it->f_name);
+      if( pfield )
+        {
+        if( it->record_type EQ "L" )
+          {
+          // Local variables are all referenced against cob_local_ptr
+          it->b_name = "cob_local_ptr";
+          }
+        else
+          {
+          if( !pfield->b_name.empty() )
+            {
+            it->b_name = pfield->b_name;
             }
+          }
+        it->a_name = pfield->a_name;
+        if( pfield->size)
+          {
+          it->length = to_string(pfield->size);
+          }
+        if( pfield->offset )
+          {
+          it->offset = to_string(pfield->offset);
+          }
         }
-        if( it->b_name.empty() ) {
-            it->b_name = current_bname;
-        } else {
-            current_bname = it->b_name;
-        }
+      }
+    if( it->b_name.empty() )
+      {
+      it->b_name = current_bname;
+      }
+    else
+      {
+      current_bname = it->b_name;
+      }
 
-        V_VARIABLES::iterator it2 = it;
-        while( it2 > variables.begin() ) {
-            if( it2->b_name.empty() ) {
-                // We have nothing to propogate upward
-                break;
-            }
-            if( it2->level EQ 77 OR it2->level EQ 77 ) {
-                // Level 77 doesn't propogate upward
-                break;
-            }
-            V_VARIABLES::iterator it1 = it2-1;
-            if( !it1->b_name.empty() ) {
-                // The one before ours is already populated
-                break;
-            }
-            // When you get here, it1 has no b_name, and it2 does
-            if( it1->level <= it2->level AND it2->level >= 2 ) {
-                it1->b_name = it2->b_name;
-            }
-            it2--;
+    V_VARIABLES::iterator it2 = it;
+    while( it2 > variables.begin() )
+      {
+      if( it2->b_name.empty() )
+        {
+        // We have nothing to propogate upward
+        break;
         }
+      if( it2->level EQ 77 OR it2->level EQ 77 )
+        {
+        // Level 77 doesn't propogate upward
+        break;
+        }
+      V_VARIABLES::iterator it1 = it2-1;
+      if( !it1->b_name.empty() )
+        {
+        // The one before ours is already populated
+        break;
+        }
+      // When you get here, it1 has no b_name, and it2 does
+      if( it1->level <= it2->level AND it2->level >= 2 )
+        {
+        it1->b_name = it2->b_name;
+        }
+      it2--;
+      }
     }
-}
+  }
 
 void
 VARIABLES::Dump() const
-{
-    CPROFILER;
-    cout << "VARIABLES:" << endl;
-    cout << setw( 3) << "RT" ;
-    cout << setw( 4) << "lvl";
-    cout << setw(20) << "name" ;
-    cout << setw(20) << "f_name";
-    cout << setw(20) << "b_name";
-    cout << setw(20) << "a_name" ;
-    cout << setw(20) << "offset" ;
-    cout << setw(20) << "length";
-    cout << setw( 6) << "o_min";
-    cout << setw( 6) << "o_max";
-    cout << setw( 6) << "redef";
-    cout << endl;
+  {
+  CPROFILER;
+  cout << "VARIABLES:" << endl;
+  cout << setw( 3) << "RT" ;
+  cout << setw( 4) << "lvl";
+  cout << setw(20) << "name" ;
+  cout << setw(20) << "f_name";
+  cout << setw(20) << "b_name";
+  cout << setw(20) << "a_name" ;
+  cout << setw(20) << "offset" ;
+  cout << setw(20) << "length";
+  cout << setw( 6) << "o_min";
+  cout << setw( 6) << "o_max";
+  cout << setw( 6) << "redef";
+  cout << endl;
 
-    for( V_VARIABLES::const_iterator variable = variables.begin();
-            variable!=variables.end();
-            variable++) {
-        cout << setw( 3) << variable->record_type;    // One character:
-        cout << setw( 4) << variable->level;          // FD, SD, 01-49, 66, 77, 78, 88
-        cout << setw(20) << variable->name;           // COBOL variable identifier
-        cout << setw(20) << variable->f_name;         // Name of the associated cob_field variable
-        cout << setw(20) << variable->b_name;         // Name of the location of the data
-        cout << setw(20) << variable->a_name;         // Name of the associated cob_field_attrib variable
-        cout << setw(20) << variable->offset;         // When f_name exists, offset should have the same runtime value as f_name->data - b_name;
-        cout << setw(20) << variable->length;      // When f_name exists, length should be the same as f_name->size.  But it might be a b_ variable
-        cout << setw( 6) << variable->occurs_min;     //
-        cout << setw( 6) << variable->occurs_max;     // -1 for unbounded
-        cout << setw( 6) << (variable->redefines ? "REDEF" : "");
-        cout << endl;
-    }
+  for( V_VARIABLES::const_iterator variable = variables.begin();
+       variable!=variables.end();
+       variable++)
+    {
+    cout << setw( 3) << variable->record_type;    // One character:
+    cout << setw( 4) << variable->level;          // FD, SD, 01-49, 66, 77, 78, 88
+    cout << setw(20) << variable->name;           // COBOL variable identifier
+    cout << setw(20) << variable->f_name;         // Name of the associated cob_field variable
+    cout << setw(20) << variable->b_name;         // Name of the location of the data
+    cout << setw(20) << variable->a_name;         // Name of the associated cob_field_attrib variable
+    cout << setw(20) << variable->offset;         // When f_name exists, offset should have the same runtime value as f_name->data - b_name;
+    cout << setw(20) << variable->length;      // When f_name exists, length should be the same as f_name->size.  But it might be a b_ variable
+    cout << setw( 6) << variable->occurs_min;     //
+    cout << setw( 6) << variable->occurs_max;     // -1 for unbounded
+    cout << setw( 6) << (variable->redefines ? "REDEF" : "");
     cout << endl;
-}
+    }
+  cout << endl;
+  }
 
 void
 VARIABLES::BubbleUpProgramEntries()
-{
-    // When a COBOL program has a DECLARATIVES section in the PROCEDURE division, it's possible
-    // to have, for example PERFORM entries in the variables vector before the "P" entry.
-    // The cobcd.py Python extension to GDB requires, however, that the "P" entry be
-    // the first for each program-id block.
-    //
-    // This routine looks for "P" entries and bubbles them up to the "PROGRAM-ID" entry
-    // that was inserted in the list when the /* PROGRAM-ID */ line was encountered
+  {
+  // When a COBOL program has a DECLARATIVES section in the PROCEDURE division, it's possible
+  // to have, for example PERFORM entries in the variables vector before the "P" entry.
+  // The cobcd.py Python extension to GDB requires, however, that the "P" entry be
+  // the first for each program-id block.
+  //
+  // This routine looks for "P" entries and bubbles them up to the "PROGRAM-ID" entry
+  // that was inserted in the list when the /* PROGRAM-ID */ line was encountered
 
-    for( size_t i=variables.size()-1; i>0; i-- ) {
-        if( variables[i].record_type EQ "P" ) {
-            // This is a "P entry.
-            if( variables[i-1].record_type != "PROGRAM-ID" ) {
-                // It needs to be bubbled up:
-                swap(variables[i],variables[i-1]);
-            }
+  for( size_t i=variables.size()-1; i>0; i-- )
+    {
+    if( variables[i].record_type EQ "P" )
+      {
+      // This is a "P entry.
+      if( variables[i-1].record_type != "PROGRAM-ID" )
+        {
+        // It needs to be bubbled up:
+        swap(variables[i],variables[i-1]);
         }
+      }
     }
-}
+  }
 
 void
 VARIABLES::FormatVariablesInfo(stringstream &ss) const
-{
-    CPROFILER;
-    for( V_VARIABLES::const_iterator variable = variables.begin();
-            variable!=variables.end();
-            variable++) {
-        if( variable->record_type == "PROGRAM-ID" ) {
-            // This is a marker entry, which was needed by BubbleUpProgramEntries().
-            // It must not be included in the output
-            continue;
-        }
+  {
+  CPROFILER;
+  for( V_VARIABLES::const_iterator variable = variables.begin();
+       variable!=variables.end();
+       variable++)
+    {
+    if( variable->record_type == "PROGRAM-ID" )
+      {
+      // This is a marker entry, which was needed by BubbleUpProgramEntries().
+      // It must not be included in the output
+      continue;
+      }
 
-        if( variable->record_type == "L" AND variable->level == 66) {
-            // GnuCOBOL 3.1.2 is not providing enough information for CBL-GDB
-            // to find 66 RENAMES variables in LOCAL-STORAGE.  So, until that's
-            // fixed, we just skip them here.  The fix will be when the
-            // cob_dump_field_ext field provides the offset and length from
-            // cob_local_ptr
-            continue;
-        }
+    if( variable->record_type == "L" AND variable->level == 66)
+      {
+      // GnuCOBOL 3.1.2 is not providing enough information for CBL-GDB
+      // to find 66 RENAMES variables in LOCAL-STORAGE.  So, until that's
+      // fixed, we just skip them here.  The fix will be when the
+      // cob_dump_field_ext field provides the offset and length from
+      // cob_local_ptr
+      continue;
+      }
 
-        string name = variable->name;
-        if( name.empty() ) {
-            name = "FILLER";
-        }
+    string name = variable->name;
+    if( name.empty() )
+      {
+      name = "FILLER";
+      }
 
-        ss << variable->record_type             << "|" ;
-        ss << ZeroIsNull(variable->level)       << "|" ;
-        ss << name                              << "|" ;
-        ss << variable->f_name                  << "|" ;
-        ss << (variable->b_name EQ "cob_local_ptr" ? "" : variable->b_name) << "|" ;
-        ss << variable->a_name                  << "|" ;
-        ss << ZeroIsNull(variable->offset)      << "|" ;
-        ss << variable->length               << "|" ;
-        ss << ZeroIsNull(variable->occurs_min)  << "|" ;
-        if( variable->occurs_min EQ 0 AND variable->occurs_max EQ 1 ) {
-            // This is the default, so output nothing
-            ss << "|" ;
-        } else {
-            ss << variable->occurs_max;
-            ss << "|" ;
-        }
-        ss << "~";
+    //cerr << "Fixed lengths " << variable->length << endl;
+
+    ss << variable->record_type             << "|" ;
+    ss << ZeroIsNull(variable->level)       << "|" ;
+    ss << name                              << "|" ;
+    ss << variable->f_name                  << "|" ;
+    ss << (variable->b_name EQ "cob_local_ptr" ? "" : variable->b_name) << "|" ;
+    ss << variable->a_name                  << "|" ;
+    ss << ZeroIsNull(variable->offset)      << "|" ;
+    ss << variable->length                  << "|" ;
+    ss << ZeroIsNull(variable->occurs_min)  << "|" ;
+    if( variable->occurs_min EQ 0 AND variable->occurs_max EQ 1 )
+      {
+      // This is the default, so output nothing
+      ss << "|" ;
+      }
+    else
+      {
+      ss << variable->occurs_max;
+      ss << "|" ;
+      }
+    ss << "~";
     }
-}
+  }
 
 void
 VARIABLES::Insert(VARIABLE &v)
-{
-    // From the "Department of Dirty Tricks at GnuCOBOL, we need to be able to handle
-    // this weirdness:
-    //
-    //        /* cob_dump_field_ext ( 0, "TAB-ADR-IND", COB_SET_FLD(f0, 4, (cob_u8_t *)&b_25, &a_12), 0, 0); */
-    //
-    // That's a LEVEL 00 INDEXED variable.  I first encountered it in an OCCURS clause
-    // with an "INDEXED BY" subclause.  The pointer cast is because indexed variables, in
-    // this case b_25, are declared as "static int" rather than "static cob_u8_t[]", and
-    // the cast avoids compiler warnings or errors when the statement is compiled.
-    //
-    // We, however, don't want the cast:
-    static char achCast[] = "(cob_u8_t *)&";
-    size_t nfound = v.b_name.find(achCast);
-    if( nfound != string::npos ) {
-        v.b_name = v.b_name.replace(nfound,strlen(achCast),"");
+  {
+  // From the "Department of Dirty Tricks at GnuCOBOL, we need to be able to handle
+  // this weirdness:
+  //
+  //        /* cob_dump_field_ext ( 0, "TAB-ADR-IND", COB_SET_FLD(f0, 4, (cob_u8_t *)&b_25, &a_12), 0, 0); */
+  //
+  // That's a LEVEL 00 INDEXED variable.  I first encountered it in an OCCURS clause
+  // with an "INDEXED BY" subclause.  The pointer cast is because indexed variables, in
+  // this case b_25, are declared as "static int" rather than "static cob_u8_t[]", and
+  // the cast avoids compiler warnings or errors when the statement is compiled.
+  //
+  // We, however, don't want the cast:
+  static char achCast[] = "(cob_u8_t *)&";
+  size_t nfound = v.b_name.find(achCast);
+  if( nfound != string::npos )
+    {
+    v.b_name = v.b_name.replace(nfound,strlen(achCast),"");
     }
-    variables.push_back(v);
-}
+  variables.push_back(v);
+  }
 
 static int
 VARIABLE_LEVEL(int a)
-{
-    return ((a EQ 77 OR a EQ 78) ? 1 : a);
-}
+  {
+  return ((a EQ 77 OR a EQ 78) ? 1 : a);
+  }
 
 static int
 AddEmUp(const string &s)
-{
-    int retval = 0;
+  {
+  int retval = 0;
 
-    VSTRING tokens = Split(s,"+");
-    for(size_t i=0; i<tokens.size(); i++) {
-        string token = Trim(tokens[i]);
-        if( !token.empty() AND isdigit(token[0]) ) {
-            retval += stoi(token);
-        }
+  VSTRING tokens = Split(s,"+");
+  for(size_t i=0; i<tokens.size(); i++)
+    {
+    string token = Trim(tokens[i]);
+    if( !token.empty() AND isdigit(token[0]) )
+      {
+      retval += stoi(token);
+      }
     }
 
-    return retval;
-}
+  return retval;
+  }
 
 void
 VARIABLES::FixLocalStorageOffsets()
-{
-    // The purpose of this routine is to cope with the fact that
-    // GnuCOBOL doesn't generate LOCAL-VARIABLE offset information
-    // for variables that are not referenced in the body of the code.
+  {
+  // The purpose of this routine is to cope with the fact that
+  // GnuCOBOL doesn't generate LOCAL-VARIABLE offset information
+  // for variables that are not referenced in the body of the code.
 
-    // So, we have to infer the locations within cob_local_ptr by the
-    // lengths of each variable.
+  // So, we have to infer the locations within cob_local_ptr by the
+  // lengths of each variable.
 
-    // This is further complicated by observation that 01/77 variables are
-    // placed on 16-byte boundaries.
+  // This is further complicated by observation that 01/77 variables are
+  // placed on 16-byte boundaries.
 
-    // We also have to take into account the possibility of REDEFINES, which
-    // reset a variable to the same offset as the previous one on the same
-    // level
+  // We also have to take into account the possibility of REDEFINES, which
+  // reset a variable to the same offset as the previous one on the same
+  // level
 
-    // Use a <map> to prevent O(N-squared) in the highly-theoretical and extremely
-    // unlikely limit when handling REDEFINES.
-    //
-    // It would take an extremely long time to become N-squared, and even that
-    // would require a huge input file with a lot of REDEFINES and other odd
-    // circumstances.  But I couldn't make myself skip it.
+  // Use a <map> to prevent O(N-squared) in the highly-theoretical and extremely
+  // unlikely limit when handling REDEFINES.
+  //
+  // It would take an extremely long time to become N-squared, and even that
+  // would require a huge input file with a lot of REDEFINES and other odd
+  // circumstances.  But I couldn't make myself skip it.
 
-    map<int,V_VARIABLES::iterator>elder_sibling;
+  map<int,V_VARIABLES::iterator>elder_sibling;
 
-    for( V_VARIABLES::iterator variable = variables.begin();
-            variable!=variables.end();
-            variable++) {
-        if( variable->level EQ 66 ) {
-            // We can't handle Level 66 here
-            continue;
+  for( V_VARIABLES::iterator variable = variables.begin();
+       variable!=variables.end();
+       variable++)
+    {
+    if( variable->level EQ 66 )
+      {
+      // We can't handle Level 66 here
+      continue;
+      }
+
+    if( variable->record_type EQ "L" )
+      {
+      int our_level = VARIABLE_LEVEL(variable->level);
+
+      if( variable->redefines )
+        {
+        // Make sure our offset is the same as our elder sibling's offset
+        map<int,V_VARIABLES::iterator>::iterator elder = elder_sibling.find(our_level);
+        if( elder != elder_sibling.end() )
+          {
+          variable->offset = elder->second->offset;
+          }
         }
 
-        if( variable->record_type EQ "L" ) {
-            int our_level = VARIABLE_LEVEL(variable->level);
+      elder_sibling[our_level] = variable;
 
-            if( variable->redefines ) {
-                // Make sure our offset is the same as our elder sibling's offset
-                map<int,V_VARIABLES::iterator>::iterator elder = elder_sibling.find(our_level);
-                if( elder != elder_sibling.end() ) {
-                    variable->offset = elder->second->offset;
-                }
+      if( variable->offset.empty() OR variable->offset EQ "0" )
+        {
+        // We have a possible rework here:
+        // Find somebody older than us.  And, yes, this, too, is O(N-squared) in
+        // the insane limit.  I half-thought of a couple of Nlog(N) ways of avoiding the N-squared,
+        // and wouldn't bet that there isn't an O(N) possibilitiy.
+        // But it doesn't matter.  It just doesn't.  And unlike the simple map for handling
+        // redefines, this would require real work and testing.  Screw it.
+
+        V_VARIABLES::iterator it = variable - 1;
+        while( it->record_type EQ "L" AND our_level < VARIABLE_LEVEL(it->level) )
+          {
+          it--;
+          }
+
+        // our_level is >= it->level
+        if( it->record_type EQ "L" AND our_level EQ VARIABLE_LEVEL(it->level) )
+          {
+          // We have found our immediately elder sibling
+          // Replace us with his offset plus his length:
+
+          // When I learned that offsets and lengths could variable, I turned
+          // variable.length and variable.offset into strings, rather than
+          // integers.  For this code, assume we have integers and names
+          // separated by plus signs.  Ignore names.  That's all I can do
+          // without samples.
+
+          int parent_offset = AddEmUp(it->offset);
+          int parent_length = AddEmUp(it->length);
+
+          int our_offset = parent_offset + parent_length;
+
+          // cob_local_ptr idiosyncracy:  Level 01 variables are allocated on
+          // 16-byte boundaries:
+          if( our_level EQ 1 )
+            {
+            our_offset = (our_offset + 15) & ~15;
             }
-
-            elder_sibling[our_level] = variable;
-
-            if( variable->offset.empty() OR variable->offset EQ "0" ) {
-                // We have a possible rework here:
-                // Find somebody older than us.  And, yes, this, too, is O(N-squared) in
-                // the insane limit.  I half-thought of a couple of Nlog(N) ways of avoiding the N-squared,
-                // and wouldn't bet that there isn't an O(N) possibilitiy.
-                // But it doesn't matter.  It just doesn't.  And unlike the simple map for handling
-                // redefines, this would require real work and testing.  Screw it.
-
-                V_VARIABLES::iterator it = variable - 1;
-                while( it->record_type EQ "L" AND our_level < VARIABLE_LEVEL(it->level) ) {
-                    it--;
-                }
-
-                // our_level is >= it->level
-                if( it->record_type EQ "L" AND our_level EQ VARIABLE_LEVEL(it->level) ) {
-                    // We have found our immediately elder sibling
-                    // Replace us with his offset plus his length:
-
-                    // When I learned that offsets and lengths could variable, I turned
-                    // variable.length and variable.offset into strings, rather than
-                    // integers.  For this code, assume we have integers and names
-                    // separated by plus signs.  Ignore names.  That's all I can do
-                    // without samples.
-
-                    int parent_offset = AddEmUp(it->offset);
-                    int parent_length = AddEmUp(it->length);
-
-                    int our_offset = parent_offset + parent_length;
-
-                    // cob_local_ptr idiosyncracy:  Level 01 variables are allocated on
-                    // 16-byte boundaries:
-                    if( our_level EQ 1 ) {
-                        our_offset = (our_offset + 15) & ~15;
-                    }
-                    variable->offset = to_string(our_offset);
-                } else if( it->record_type EQ "L" AND our_level > VARIABLE_LEVEL(it->level) ) {
-                    // We have found our parent.  Our offset is their offset
-                    variable->offset = it->offset;
-                }
-            }
+          variable->offset = to_string(our_offset);
+          }
+        else if( it->record_type EQ "L" AND our_level > VARIABLE_LEVEL(it->level) )
+          {
+          // We have found our parent.  Our offset is their offset
+          variable->offset = it->offset;
+          }
         }
+      }
     }
-}
+  }
+
+void
+VARIABLES::FixTheLengths(const COB_FIELDS &cob_fields)
+  {
+  for( V_VARIABLES::iterator variable = variables.begin();
+       variable!=variables.end();
+       variable++)
+    {
+    size_t found1 = 0;
+    for(;;)
+      {
+      found1 = variable->length.find("b_", found1);
+      if( found1 == string::npos )
+        {
+        break;
+        }
+      size_t found2 = found1+2;
+      while( isdigit(variable->length[found2]) )
+        {
+        found2 += 1;
+        }
+      string b_name = variable->length.substr(found1, found2-found1);
+      // cerr << "XXXXX " << b_name << std::endl;
+
+      // Because there is something like a calculation in the length, the
+      // variable is probably a DEPENDING ON variable.  In that case we very
+      // might have seen its length in a .h file:
+
+      size_t b_size = cob_fields.GetBSize(variable->b_name);
+
+      if( b_size )
+        {
+        // For EXTERNAL variables, we see the size directly.
+        char ach[32];
+        sprintf(ach, "%ld", b_size);
+        variable->length = ach;
+        }
+      else
+        {
+        // This is going to be a bit weird.  This is probably a DEPENDING ON
+        // situation.  In that case, we need to replace the b_name in the 
+        // variable->length with the OCCURS_MAX value that we haven't seen yet
+        V_VARIABLES::iterator itmax = variable + 1;
+        while( itmax != variables.end() )
+          {
+          // cerr << itmax->name << " " << itmax->occurs_min << " " << itmax->occurs_max << std::endl;
+          if( itmax->occurs_max > 0 )
+            {
+            char ach[32];
+            sprintf(ach, "%d", itmax->occurs_max);
+            variable->length.replace(found1, found2-found1, ach);
+            break;
+            }
+          itmax += 1;
+          }
+        }
+
+      found1 = found2;
+      }
+    }
+  }

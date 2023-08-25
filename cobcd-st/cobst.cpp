@@ -275,7 +275,6 @@ TackVariablesOntoCfile(PARAMETERS &params,
     return;
 }
 
-
 int
 main(int argc, char *argv[])
 {
@@ -315,6 +314,8 @@ main(int argc, char *argv[])
 #endif
 
     variables.BubbleUpProgramEntries();
+
+    variables.FixTheLengths(cob_fields);
 
     TackVariablesOntoCfile(params,
                            variables,

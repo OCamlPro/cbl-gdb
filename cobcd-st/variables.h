@@ -64,6 +64,7 @@ public:
     Insert(VARIABLE &v);
     void BubbleUpProgramEntries();
     void FormatVariablesInfo(std::stringstream &ss) const;
+    void FixTheLengths(const COB_FIELDS &cob_fields);
 };
 
 
