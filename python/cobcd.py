@@ -1160,13 +1160,6 @@ class VarTrie():
     self.StackOfNames = []
     self.StackOfLevels = []
 
-    # When processing a line like "05 T-ENTRIES OCCURS 90 INDEXED BY TAB-ADR-IND."
-    # it turns out that TAB-ADR-IND shows up the line *before* the 05 T-ENTRIES line
-    # in the generated C code.  In order to make the name hierarchy work properly,
-    # I am stashing that line here until the OCCURS line (presumably the next line)
-    # is seen.
-    self.stashed_line = None
-
   @staticmethod
   def AddToTrie(trie, name_tokens, payload_index):
     our_node = trie
@@ -1224,11 +1217,13 @@ class VarTrie():
       # its own grand_data[] and grand_dirty flag
       payload.index_of_granddaddy = payload_index
 
+      if payload.Level != 0:
+        level_zero_parent = payload_index
+
       if payload.Level == 0:
         # Level 00 is an INDEXED BY variable whose parent is
-        # the immediate preceding entry.  See self.LoadFromLine
-        payload.index_of_parent = payload_index - 1
-
+        # the preceding entry that has a non-zero level.
+        payload.index_of_parent = level_zero_parent
       elif payload.Level >= 1 and payload.Level <= 49 or payload.Level == 66 or payload.Level == 88:
         # LEVELs 02-49 obviously have parents.  LEVEL 01 usually doesn't have a parent
 
@@ -1322,28 +1317,6 @@ class VarTrie():
               self.StackOfNames.pop(-1)
               self.StackOfLevels.pop(-1)
 
-          # There is a caveat:
-          # When the GnuCOBOL compiler encounters:
-          #
-          #    05 T-ENTRIES OCCURS 90 INDEXED BY TAB-ADR-IND.
-          #
-          # The variables generated look like this:
-
-#  /* cob_dump_field_ext ( 0, "TAB-ADR-IND", COB_SET_FLD(f0, 4, (cob_u8_t *)&b_40, &a_2), 0, 0); */
-#  {
-#  /* int max_1 = 90; */
-#  {
-#    /* cob_dump_field_ext ( 5, "T-ENTRIES", COB_SET_FLD(f0, 1037, b_36 + 10, &a_4), 0, 1, i_1, 1037UL); OCCURS 1 90 */
-          #
-          # We need to somehow associate  TAB-ADR-IND with T-ENTRIES
-          #
-          # I am going to do this by stashing the LEVEL 00 line and not processing
-          # it until right after the OCCURS line
-
-          if our_level == 0 and self.stashed_line is None:
-            # This is a LEVEL 00 indexed variable, and we aren't processing it yet.
-            self.stashed_line = tokens[:]
-            return
 
           # and now we put ourselves into the position of
           # most favored child
@@ -1375,16 +1348,6 @@ class VarTrie():
                    rev_StackOfNames,
                    payload.payload_index)
           self.program_ids.add(payload.Program)
-
-          # We just added a line.  Was it an OCCURS line?
-          if payload.OccursMax:
-            # It was an OCCURS line.
-            # Do we have a stashed LEVEL 00 INDEXED BY line?
-            if self.stashed_line:
-              # We do.  It's time to process it:
-              # (Recursion is a beautiful thing)
-              self.LoadTrieFromLine(self.stashed_line)
-              self.stashed_line = None
     except:   # TODO: use appropriate exception
       traceback.print_exc()
       sys.exit(1)
@@ -5576,20 +5539,23 @@ class CPrintWorker():
     possibilities = []
 
     for index in range(len(GV_ModuleInformation.var_trie.storage_list)):
+      payload = GV_ModuleInformation.var_trie.storage_list[index]
+      # print(">>", index, payload.Level, payload.Name, payload.index_of_parent)
       if index in all_parents:
         # If we are a founding father, we go into the list
         # Make sure our data are available
-        GV_ModuleInformation.var_trie.storage_list[index].FetchVariableData(False)
+        payload.FetchVariableData(False)
         possibilities.append(index)
         continue
-      if GV_ModuleInformation.var_trie.storage_list[index].index_of_parent in all_parents:
+      if payload.index_of_parent in all_parents:
         # We aren't in the list, but our parent is, so we go onto the list
-        GV_ModuleInformation.var_trie.storage_list[index].FetchVariableData(False)
+        payload.FetchVariableData(False)
         # Make sure our data are available, including AttrType
         possibilities.append(index)
         # And if we have children, we go onto the parents list:
-        if GV_ModuleInformation.var_trie.storage_list[index].AttrType == COB_TYPE_GROUP:
+        if payload.AttrType == COB_TYPE_GROUP:
           all_parents.add(index)
+        continue
 
     root = BuildHierarchicalTree(possibilities, False)
     result = BuildHumanHString(root, 0)

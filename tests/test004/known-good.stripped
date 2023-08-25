@@ -79,10 +79,10 @@ cprint *
  7 : 05 Z-PID/Z-TABLE/test [EXT] : 87654321
  8 : 05 Z-ADR/Z-TABLE/test [EXT] : ^^
  9 : 05 T-ENTRIES/Z-TABLE/test(1) [EXT] : "Hi, bob!        ", '^' <repeats 23 times>, "subtext    ", '^' <repeats 213 times>
-10 : 08 T-ADR/T-ENTRIES/Z-TABLE/test [EXT] : "Hi, bob!        "
-11 : 08 T-STAT/T-ENTRIES/Z-TABLE/test [EXT] : "^"
-12 : 08 SUBTABLE/T-ENTRIES/Z-TABLE/test(1) [EXT] : '^' <repeats 22 times>
-13 : 00 TAB-ADR-IND/SUBTABLE/T-ENTRIES/Z-TABLE/test [W-S] : +0000000001
+10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S] : +0000000001
+11 : 08 T-ADR/T-ENTRIES/Z-TABLE/test [EXT] : "Hi, bob!        "
+12 : 08 T-STAT/T-ENTRIES/Z-TABLE/test [EXT] : "^"
+13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE/test(1) [EXT] : '^' <repeats 22 times>
 14 : 10 SUBTEXT/SUBTABLE/T-ENTRIES/Z-TABLE/test [EXT] : '^' <repeats 11 times>
 15 : 10 SUBTEXT2/SUBTABLE/T-ENTRIES/Z-TABLE/test [EXT] : '^' <repeats 11 times>
 16 : 08 T-PRGM/T-ENTRIES/Z-TABLE/test [EXT] : "^^^^^^^^"
@@ -90,28 +90,28 @@ cprint *
 18 : 08 T-ADR-SAVE/T-ENTRIES/Z-TABLE/test [EXT] : +^^^^^^^^^^^^^^^^
 19 : 01 T_ENTRY/test [W-S] : 0013
 20 : 01 T_ADDRESSES/test(1) [W-S] : "First---11", '0' <repeats 12 times>, "11110000000000111111"
-21 : 05 TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11", '0' <repeats 12 times>, "11110000000000111111"
-22 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11"
-23 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---"
-24 : 15 TAB-ADR-ID/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "11"
-25 : 10 TAB-ADR-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : +0000000000001111
-26 : 10 TAB-ADR-LAST-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : +0000000000111111
-27 : 01 zed/test [W-S] : 0000
-28 : 01 one/test [W-S] : 0001
-29 : 01 two/test [W-S] : 0002
-30 : 01 nums1/test [W-S] : "00030004"
-31 : 05 three/nums1/test [W-S] : 0003
-32 : 05 four/nums1/test [W-S] : 0004
-33 : 01 nums2/test [W-S] : "00030004"
-34 : 05 three/nums2/test [W-S] : 0003
-35 : 05 four/nums2/test [W-S] : 0004
-36 : 01 svalue/test [W-S] : -123456
-37 : 01 WS-BASED/test [W-B] : "I am a BASED variable", ' ' <repeats 43 times>
-38 : 77 var-one/test [W-S] : 1
-39 : 77 var-two/test [W-S] : 2
-40 : 01 FILLER/test [W-S] : "1234567890 "
-41 : 03 var-tab/FILLER/test(1) [W-S] : "1"
-42 : 00 TAB-ADR-IND/var-tab/FILLER/test [W-S] : +0000000003
+21 : 00 TAB-ADR-IND/T_ADDRESSES/test [W-S] : +0000000003
+22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11", '0' <repeats 12 times>, "11110000000000111111"
+23 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11"
+24 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---"
+25 : 15 TAB-ADR-ID/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "11"
+26 : 10 TAB-ADR-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : +0000000000001111
+27 : 10 TAB-ADR-LAST-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : +0000000000111111
+28 : 01 zed/test [W-S] : 0000
+29 : 01 one/test [W-S] : 0001
+30 : 01 two/test [W-S] : 0002
+31 : 01 nums1/test [W-S] : "00030004"
+32 : 05 three/nums1/test [W-S] : 0003
+33 : 05 four/nums1/test [W-S] : 0004
+34 : 01 nums2/test [W-S] : "00030004"
+35 : 05 three/nums2/test [W-S] : 0003
+36 : 05 four/nums2/test [W-S] : 0004
+37 : 01 svalue/test [W-S] : -123456
+38 : 01 WS-BASED/test [W-B] : "I am a BASED variable", ' ' <repeats 43 times>
+39 : 77 var-one/test [W-S] : 1
+40 : 77 var-two/test [W-S] : 2
+41 : 01 FILLER/test [W-S] : "1234567890 "
+42 : 03 var-tab/FILLER/test(1) [W-S] : "1"
 43 : 03 var-entry/FILLER/test [W-S] : " "
 cprint/v0
 cprint *
@@ -124,10 +124,10 @@ cprint *
  7 : 05 Z-PID/Z-TABLE  : 87654321
  8 : 05 Z-ADR/Z-TABLE  : ^^
  9 : 05 T-ENTRIES/Z-TABLE(1)  : "Hi, bob!        ", '^' <repeats 23 times>, "subtext    ", '^' <repeats 213 times>
-10 : 08 T-ADR/T-ENTRIES/Z-TABLE  : "Hi, bob!        "
-11 : 08 T-STAT/T-ENTRIES/Z-TABLE  : "^"
-12 : 08 SUBTABLE/T-ENTRIES/Z-TABLE(1)  : '^' <repeats 22 times>
-13 : 00 TAB-ADR-IND/SUBTABLE/T-ENTRIES/Z-TABLE  : +0000000001
+10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE  : +0000000001
+11 : 08 T-ADR/T-ENTRIES/Z-TABLE  : "Hi, bob!        "
+12 : 08 T-STAT/T-ENTRIES/Z-TABLE  : "^"
+13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE(1)  : '^' <repeats 22 times>
 14 : 10 SUBTEXT/SUBTABLE/T-ENTRIES/Z-TABLE  : '^' <repeats 11 times>
 15 : 10 SUBTEXT2/SUBTABLE/T-ENTRIES/Z-TABLE  : '^' <repeats 11 times>
 16 : 08 T-PRGM/T-ENTRIES/Z-TABLE  : "^^^^^^^^"
@@ -135,28 +135,28 @@ cprint *
 18 : 08 T-ADR-SAVE/T-ENTRIES/Z-TABLE  : +^^^^^^^^^^^^^^^^
 19 : 01 T_ENTRY  : 0013
 20 : 01 T_ADDRESSES(1)  : "First---11", '0' <repeats 12 times>, "11110000000000111111"
-21 : 05 TAB-ADR-ELEMENT/T_ADDRESSES  : "First---11", '0' <repeats 12 times>, "11110000000000111111"
-22 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES  : "First---11"
-23 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES  : "First---"
-24 : 15 TAB-ADR-ID/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES  : "11"
-25 : 10 TAB-ADR-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES  : +0000000000001111
-26 : 10 TAB-ADR-LAST-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES  : +0000000000111111
-27 : 01 zed  : 0000
-28 : 01 one  : 0001
-29 : 01 two  : 0002
-30 : 01 nums1  : "00030004"
-31 : 05 three/nums1  : 0003
-32 : 05 four/nums1  : 0004
-33 : 01 nums2  : "00030004"
-34 : 05 three/nums2  : 0003
-35 : 05 four/nums2  : 0004
-36 : 01 svalue  : -123456
-37 : 01 WS-BASED  : "I am a BASED variable", ' ' <repeats 43 times>
-38 : 77 var-one  : 1
-39 : 77 var-two  : 2
-40 : 01 FILLER  : "1234567890 "
-41 : 03 var-tab/FILLER(1)  : "1"
-42 : 00 TAB-ADR-IND/var-tab/FILLER  : +0000000003
+21 : 00 TAB-ADR-IND/T_ADDRESSES  : +0000000003
+22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES  : "First---11", '0' <repeats 12 times>, "11110000000000111111"
+23 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES  : "First---11"
+24 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES  : "First---"
+25 : 15 TAB-ADR-ID/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES  : "11"
+26 : 10 TAB-ADR-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES  : +0000000000001111
+27 : 10 TAB-ADR-LAST-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES  : +0000000000111111
+28 : 01 zed  : 0000
+29 : 01 one  : 0001
+30 : 01 two  : 0002
+31 : 01 nums1  : "00030004"
+32 : 05 three/nums1  : 0003
+33 : 05 four/nums1  : 0004
+34 : 01 nums2  : "00030004"
+35 : 05 three/nums2  : 0003
+36 : 05 four/nums2  : 0004
+37 : 01 svalue  : -123456
+38 : 01 WS-BASED  : "I am a BASED variable", ' ' <repeats 43 times>
+39 : 77 var-one  : 1
+40 : 77 var-two  : 2
+41 : 01 FILLER  : "1234567890 "
+42 : 03 var-tab/FILLER(1)  : "1"
 43 : 03 var-entry/FILLER  : " "
 cprint/p *
 01 WS-TABLE
@@ -168,10 +168,10 @@ cprint/p *
   05 Z-PID : 87654321
   05 Z-ADR : ^^
   05 T-ENTRIES(1)
+    00 TAB-ADR-IND : +0000000001
     08 T-ADR : "Hi, bob!        "
     08 T-STAT : "^"
     08 SUBTABLE(1)
-      00 TAB-ADR-IND : +0000000001
       10 SUBTEXT : '^' <repeats 11 times>
       10 SUBTEXT2 : '^' <repeats 11 times>
     08 T-PRGM : "^^^^^^^^"
@@ -179,6 +179,7 @@ cprint/p *
     08 T-ADR-SAVE : +^^^^^^^^^^^^^^^^
 01 T_ENTRY : 0013
 01 T_ADDRESSES(1)
+  00 TAB-ADR-IND : +0000000003
   05 TAB-ADR-ELEMENT
     10 TAB-ADR-PRGM-ID
       15 TAB-ADR-PRGM : "First---"
@@ -199,8 +200,7 @@ cprint/p *
 77 var-one : 1
 77 var-two : 2
 01 FILLER
-  03 var-tab(1)
-    00 TAB-ADR-IND : +0000000003
+  03 var-tab(1) : "1"
   03 var-entry : " "
 cprint/v1
 cprint/p *
@@ -213,10 +213,10 @@ cprint/p *
   05 Z-PID : 87654321
   05 Z-ADR : ^^
   05 T-ENTRIES(1)
+    00 TAB-ADR-IND : +0000000001
     08 T-ADR : "Hi, bob!        "
     08 T-STAT : "^"
     08 SUBTABLE(1)
-      00 TAB-ADR-IND : +0000000001
       10 SUBTEXT : '^' <repeats 11 times>
       10 SUBTEXT2 : '^' <repeats 11 times>
     08 T-PRGM : "^^^^^^^^"
@@ -224,6 +224,7 @@ cprint/p *
     08 T-ADR-SAVE : +^^^^^^^^^^^^^^^^
 01 T_ENTRY : 0013
 01 T_ADDRESSES(1)
+  00 TAB-ADR-IND : +0000000003
   05 TAB-ADR-ELEMENT
     10 TAB-ADR-PRGM-ID
       15 TAB-ADR-PRGM : "First---"
@@ -244,8 +245,7 @@ cprint/p *
 77 var-one : 1
 77 var-two : 2
 01 FILLER
-  03 var-tab(1)
-    00 TAB-ADR-IND : +0000000003
+  03 var-tab(1) : "1"
   03 var-entry : " "
 cprint/v3
 cp ws-table
@@ -454,10 +454,10 @@ cp *
  7 : 05 Z-PID/Z-TABLE/test [EXT] : 87654321
  8 : 05 Z-ADR/Z-TABLE/test [EXT] : ^^
  9 : 05 T-ENTRIES/Z-TABLE/test(1) [EXT] : "Hi, bob!        ", '^' <repeats 23 times>, "subtext    ", '^' <repeats 213 times>
-10 : 08 T-ADR/T-ENTRIES/Z-TABLE/test [EXT] : "Hi, bob!        "
-11 : 08 T-STAT/T-ENTRIES/Z-TABLE/test [EXT] : "^"
-12 : 08 SUBTABLE/T-ENTRIES/Z-TABLE/test(1) [EXT] : '^' <repeats 22 times>
-13 : 00 TAB-ADR-IND/SUBTABLE/T-ENTRIES/Z-TABLE/test [W-S] : +0000000001
+10 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S] : +0000000001
+11 : 08 T-ADR/T-ENTRIES/Z-TABLE/test [EXT] : "Hi, bob!        "
+12 : 08 T-STAT/T-ENTRIES/Z-TABLE/test [EXT] : "^"
+13 : 08 SUBTABLE/T-ENTRIES/Z-TABLE/test(1) [EXT] : '^' <repeats 22 times>
 14 : 10 SUBTEXT/SUBTABLE/T-ENTRIES/Z-TABLE/test [EXT] : '^' <repeats 11 times>
 15 : 10 SUBTEXT2/SUBTABLE/T-ENTRIES/Z-TABLE/test [EXT] : '^' <repeats 11 times>
 16 : 08 T-PRGM/T-ENTRIES/Z-TABLE/test [EXT] : "^^^^^^^^"
@@ -465,28 +465,28 @@ cp *
 18 : 08 T-ADR-SAVE/T-ENTRIES/Z-TABLE/test [EXT] : +^^^^^^^^^^^^^^^^
 19 : 01 T_ENTRY/test [W-S] : 0013
 20 : 01 T_ADDRESSES/test(1) [W-S] : "First---11", '0' <repeats 12 times>, "11110000000000111111"
-21 : 05 TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11", '0' <repeats 12 times>, "11110000000000111111"
-22 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11"
-23 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---"
-24 : 15 TAB-ADR-ID/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "11"
-25 : 10 TAB-ADR-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : +0000000000001111
-26 : 10 TAB-ADR-LAST-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : +0000000000111111
-27 : 01 zed/test [W-S] : 0000
-28 : 01 one/test [W-S] : 0001
-29 : 01 two/test [W-S] : 0002
-30 : 01 nums1/test [W-S] : "00030004"
-31 : 05 three/nums1/test [W-S] : 0003
-32 : 05 four/nums1/test [W-S] : 0004
-33 : 01 nums2/test [W-S] : "00030004"
-34 : 05 three/nums2/test [W-S] : 0003
-35 : 05 four/nums2/test [W-S] : 0004
-36 : 01 svalue/test [W-S] : -123456
-37 : 01 WS-BASED/test [W-B] : "I am a BASED variable", ' ' <repeats 43 times>
-38 : 77 var-one/test [W-S] : 1
-39 : 77 var-two/test [W-S] : 2
-40 : 01 FILLER/test [W-S] : "1234567890 "
-41 : 03 var-tab/FILLER/test(1) [W-S] : "1"
-42 : 00 TAB-ADR-IND/var-tab/FILLER/test [W-S] : +0000000003
+21 : 00 TAB-ADR-IND/T_ADDRESSES/test [W-S] : +0000000003
+22 : 05 TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11", '0' <repeats 12 times>, "11110000000000111111"
+23 : 10 TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---11"
+24 : 15 TAB-ADR-PRGM/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "First---"
+25 : 15 TAB-ADR-ID/TAB-ADR-PRGM-ID/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : "11"
+26 : 10 TAB-ADR-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : +0000000000001111
+27 : 10 TAB-ADR-LAST-ADR-64/TAB-ADR-ELEMENT/T_ADDRESSES/test [W-S] : +0000000000111111
+28 : 01 zed/test [W-S] : 0000
+29 : 01 one/test [W-S] : 0001
+30 : 01 two/test [W-S] : 0002
+31 : 01 nums1/test [W-S] : "00030004"
+32 : 05 three/nums1/test [W-S] : 0003
+33 : 05 four/nums1/test [W-S] : 0004
+34 : 01 nums2/test [W-S] : "00030004"
+35 : 05 three/nums2/test [W-S] : 0003
+36 : 05 four/nums2/test [W-S] : 0004
+37 : 01 svalue/test [W-S] : -123456
+38 : 01 WS-BASED/test [W-B] : "I am a BASED variable", ' ' <repeats 43 times>
+39 : 77 var-one/test [W-S] : 1
+40 : 77 var-two/test [W-S] : 2
+41 : 01 FILLER/test [W-S] : "1234567890 "
+42 : 03 var-tab/FILLER/test(1) [W-S] : "1"
 43 : 03 var-entry/FILLER/test [W-S] : " "
 cp/x ws-table(:)
 01 WS-TABLE/test(1:24) [W-S]  :  [0x3132414243444546202020202020202035364d4e4f505152]
@@ -515,12 +515,12 @@ cprint tab-adr-prgm(2)
 cp TAB-ADR-IND
 Multiple (2) symbols match "TAB-ADR-IND" in current context
 cp TAB-ADR-IND!
- 1 : 00 TAB-ADR-IND/SUBTABLE/T-ENTRIES/Z-TABLE/test [W-S] : +0000000001
- 2 : 00 TAB-ADR-IND/var-tab/FILLER/test [W-S] : +0000000003
+ 1 : 00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S] : +0000000001
+ 2 : 00 TAB-ADR-IND/T_ADDRESSES/test [W-S] : +0000000003
 cp TAB-ADR-IND of z-table = 1234
-00 TAB-ADR-IND/SUBTABLE/T-ENTRIES/Z-TABLE/test [W-S]  :  +0000001234
+00 TAB-ADR-IND/T-ENTRIES/Z-TABLE/test [W-S]  :  +0000001234
 cp TAB-ADR-IND of T_ADDRESSES = 5432
-No symbol matches "TAB-ADR-IND/T_ADDRESSES" in current context
+00 TAB-ADR-IND/T_ADDRESSES/test [W-S]  :  +0000005432
 cp TAB-ADR-IND of T_ENTRY = 9999
 No symbol matches "TAB-ADR-IND/T_ENTRY" in current context
 cp svalue
