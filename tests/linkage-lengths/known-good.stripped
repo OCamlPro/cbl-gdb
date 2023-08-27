@@ -1,0 +1,28 @@
+KNOWN GOOD START
+TESTING cprint/v3 *
+ 1 : 01 aaa/prog [W-S] : "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+ 2 : 03 bbb/aaa/prog(1) [W-S] : "0 0 0 0 "
+ 3 : 05 ccc/bbb/aaa/prog(1) [W-S] : "0 "
+ 4 : 07 ccc1/ccc/bbb/aaa/prog [W-S] : 0
+ 5 : 07 ccc2/ccc/bbb/aaa/prog [W-S] : " "
+TESTING cprint/p *
+01 aaa/prog
+  03 bbb(1)
+    05 ccc(1)
+      07 ccc1 : 0
+      07 ccc2 : " "
+KNOWN GOOD FINISH
+KNOWN GOOD START
+TESTING cprint/v3 *
+ 1 : 01 aaa/prog2 [LNK] : "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "
+ 2 : 03 bbb/aaa/prog2(1) [LNK] : "0 0 0 0 "
+ 3 : 05 ccc/bbb/aaa/prog2(1) [LNK] : "0 "
+ 4 : 07 ccc1/ccc/bbb/aaa/prog2 [LNK] : 0
+ 5 : 07 ccc2/ccc/bbb/aaa/prog2 [LNK] : " "
+TESTING cprint/p *
+01 aaa/prog2
+  03 bbb(1)
+    05 ccc(1)
+      07 ccc1 : 0
+      07 ccc2 : " "
+KNOWN GOOD FINISH

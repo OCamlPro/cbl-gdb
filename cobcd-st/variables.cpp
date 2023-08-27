@@ -1132,6 +1132,8 @@ VARIABLES::FixTheLengths(const COB_FIELDS &cob_fields)
       // variable is probably a DEPENDING ON variable.  In that case we very
       // might have seen its length in a .h file:
 
+      // cerr << "XXXXX " << variable->name << variable->length << " " << variable->occurs_min << " " << variable->occurs_max << std::endl;
+
       size_t b_size = cob_fields.GetBSize(variable->b_name);
 
       if( b_size )
@@ -1149,7 +1151,7 @@ VARIABLES::FixTheLengths(const COB_FIELDS &cob_fields)
         V_VARIABLES::iterator itmax = variable + 1;
         while( itmax != variables.end() )
           {
-          // cerr << itmax->name << " " << itmax->occurs_min << " " << itmax->occurs_max << std::endl;
+          // cerr << itmax->name << itmax->length << " " << itmax->occurs_min << " " << itmax->occurs_max << std::endl;
           if( itmax->occurs_max > 0 )
             {
             char ach[32];

@@ -3,7 +3,7 @@
         DATA             DIVISION.
         WORKING-STORAGE  SECTION.
         01 SHM-AREA.
-         05 SHM-AMNT                    PIC  9(008) value 13.
+         05 SHM-AMNT                    PIC  9(008) value 100.
          05 SHM-ELEMENT-LEN             PIC  9(018).
          05 SHM-ELEMENTS.
           07 SHM-ELEMENT

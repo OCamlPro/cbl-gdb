@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+#!/usr/bin/python3
 
 ################################################################################
 # Copyright (c) 2019-2022 COBOLworx and contributors
@@ -631,6 +632,7 @@ class VarTrieNode():
     self.piece_of_name = ""
     self.count = 0
     self.payload_index = None
+    self.program = ""
 
 
 def GetBytesAt(address, length):
@@ -1161,7 +1163,7 @@ class VarTrie():
     self.StackOfLevels = []
 
   @staticmethod
-  def AddToTrie(trie, name_tokens, payload_index):
+  def AddToTrie(trie, name_tokens, payload_index, program):
     our_node = trie
 
     for name in name_tokens:
@@ -1169,6 +1171,7 @@ class VarTrie():
         new_child = VarTrieNode()
         new_child.piece_of_name = name
         new_child.parent = our_node
+        new_child.program = program
         our_node.children[name] = new_child
       our_node = our_node.children[name]
 
@@ -1328,35 +1331,36 @@ class VarTrie():
           rev_StackOfNames.reverse()
 
           payload = CobolVariable()
-          payload.Program      = self.StackOfNames[0]
-          payload.Section      = tokens[self.IndexType]
-          payload.Level      = int(tokens[self.IndexLevel])
-          payload.Name       = '/'.join(rev_StackOfNames)
-          payload.Fname      = tokens[self.IndexFname]
-          payload.Bname      = tokens[self.IndexBname]
-          payload.Aname      = tokens[self.IndexAname]
+          payload.Program          = self.StackOfNames[0]
+          payload.Section          = tokens[self.IndexType]
+          payload.Level            = int(tokens[self.IndexLevel])
+          payload.Name             = '/'.join(rev_StackOfNames)
+          payload.Fname            = tokens[self.IndexFname]
+          payload.Bname            = tokens[self.IndexBname]
+          payload.Aname            = tokens[self.IndexAname]
           payload.ReferenceOffset  = AddEmUp(tokens[self.IndexOffset])
           payload.LengthExpression = tokens[self.IndexLength]
-#          payload.Length       = ExpressionEvaluate(payload.LengthExpression)
-          payload.OccursMin    = int(tokens[self.IndexOccursMin] or "0")
-          payload.OccursMax    = int(tokens[self.IndexOccursMax] or "0")
+#          payload.Length           = ExpressionEvaluate(payload.LengthExpression)
+          payload.OccursMin        = int(tokens[self.IndexOccursMin] or "0")
+          payload.OccursMax        = int(tokens[self.IndexOccursMax] or "0")
 
           # print("Loading", payload.Level, payload.Name, payload.index_of_parent)
           payload.payload_index = len(self.storage_list)
           self.storage_list.append(payload)
-          self.AddToTrie(self.storage_trie,
-                   rev_StackOfNames,
-                   payload.payload_index)
+          self.AddToTrie( self.storage_trie,
+                          rev_StackOfNames,
+                          payload.payload_index,
+                          payload.Program.lower())
           self.program_ids.add(payload.Program)
     except:   # TODO: use appropriate exception
       traceback.print_exc()
       sys.exit(1)
 
   def NameMatcher(self,
-          boys,
-          boy_index,
-          trie,
-          paths):
+                  boys,
+                  boy_index,
+                  trie,
+                  paths):
     # Nomenclature:  We have a list of lost_boys: A/B/C
     # We have a forest, where some of the trees are labeled.
     # The labels might be
@@ -1381,6 +1385,7 @@ class VarTrie():
     # possibilities, then the user gets shown those possibilities with a
     # simple option for selecting one.
     #
+
     if boy_index < len(boys):
       # we still have at least one boy to leave off at his tree
       boy = boys[boy_index]
@@ -1422,12 +1427,14 @@ class VarTrie():
       # and terminate.
       return
 
-    # This node has no children, which means we have reached the
-    # edge of the forest.
+    # This node has no children, which means we have reached the edge of the
+    # forest.  It's time to store the variable in, but only if it is in
+    # context:
+    payload = self.storage_list[trie.payload_index]
+    if payload.FetchVariableData(False):
+      # It is available, so add it to the list.
+      paths.append(trie.payload_index)
 
-    # Log it:
-    paths.append(trie.payload_index)
-    #
     # and terminate
     return
 
@@ -1465,6 +1472,7 @@ class VarTrie():
     return paths
 
   def GetListOfPossibilities(self, cobol_variable_name):
+    # print("GetListOfPossibilities", cobol_variable_name)
     # We know that cobol_variable_name is a list of tokens that has already
     # been through TokenizeCanonicalName
     # We were handed a bunch of pieces.  Let's
@@ -2223,11 +2231,11 @@ class CobolVariable():
     if self.attribute:
       # typedef struct __cob_field_attr
       #   {
-      #   unsigned short     type;     /* Field type */
-      #   unsigned short     digits;   /* Digit count */
-      #   signed short     scale;    /* Field scale */
-      #   unsigned short     flags;    /* Field flags */
-      #   const cob_pic_symbol *pic;     /* Pointer to picture string */
+      #   unsigned short        type;     /* Field type */
+      #   unsigned short        digits;   /* Digit count */
+      #   signed short          scale;    /* Field scale */
+      #   unsigned short        flags;    /* Field flags */
+      #   const cob_pic_symbol *pic;      /* Pointer to picture string */
       #   } cob_field_attr;
 
       # CHECKME: can/should we keep the GDB values here instead of the current int value?
@@ -5767,6 +5775,8 @@ class CPrintWorker():
       return
 
     if len(leftside_possibilities) > 1 and left_side[0].find('*') == -1 and left_side[0][0] != '?' and just_count_ambiguities:
+      for index in leftside_possibilities:
+        ppp = GV_ModuleInformation.var_trie.storage_list[index]
       ConditionalRaise('Multiple ({0}) symbols match "{1}" in current context'.format(len(leftside_possibilities), '/'.join(left_side)))
       return
 
