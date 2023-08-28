@@ -5765,14 +5765,33 @@ class CPrintWorker():
     # ... but we do need to know if this variable is in the current context
     leftside_possibilities, limit_reached = get_sorted_possibilities(left_side, 0)
 
-    # In the case of "cprint *" we want to remove RETURN-CODE from the list
-    # because it is unnecessary and untidy.
+    # In the case of "cprint *" we want to remove RETURN-CODE and other globals
+    # from the list because they are unnecessary and untidy.
+
+    skippers = ["RETURN-CODE",
+                "SORT-RETURN",
+                "TALLY",
+                "XML-CODE",
+                "XML-EVENT",
+                "XML-INFORMATION",
+                "XML-NAMESPACE",
+                "XML-NAMESPACE-PREFIX",
+                "XML-NNAMESPACE",
+                "XML-NNAMESPACE-PREFIX",
+                "XML-NTEXT",
+                "XML-TEXT",
+                "JSON-CODE",
+                "JSON-STATUS"]
 
     replacement_list = []
     if not right_side and GV_GlobalVariables.FirstIsStar:
       for index in range(len(leftside_possibilities)):
         payload = GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[index]]
-        if payload.Name.find("RETURN-CODE") != 0:
+        not_global = True
+        for skipper in skippers:
+          if payload.Name.find(skipper) == 0:
+            not_global = False
+        if not_global:
           replacement_list.append(leftside_possibilities[index])
       leftside_possibilities = replacement_list
 
