@@ -4430,6 +4430,9 @@ class ModuleState():
   def ProcessStack(self):
     """ Figures out which routine we are currently trapped in"""
 
+    # c_f = gdb.selected_frame()
+    # print("ProcessStack aaa ", c_f.find_sal().symtab.fullname(), c_f.find_sal().line)
+
     # That's seems innocent enough.  But we're dealing with a multitude of sins.
 
     # In the simplest incarnation, we have a simple program with a simple trap, in which
@@ -4497,12 +4500,16 @@ class ModuleState():
       # If necessary, walk up the stack looking for a frame with debugging information
       current_frame = gdb.selected_frame()
       while True:
+        # c_f = gdb.selected_frame()
+        # print("ProcessStack bbb ", c_f.find_sal().symtab.fullname(), c_f.find_sal().line)
         st = current_frame.find_sal().symtab
         if st:
           # We have found a frame with debugging information
           break
         current_frame = current_frame.older()
         current_frame.select()
+      # c_f = gdb.selected_frame()
+      # print("ProcessStack ccc ", c_f.find_sal().symtab.fullname(), c_f.find_sal().line)
 
       # Get the frame number and filename from current frame:
       frame_from_frame = CFrameWorker.get_frame_level(current_frame)
@@ -4510,6 +4517,9 @@ class ModuleState():
       if st is None:
         # current frame has no debugging info - we can't do anything here
         return False
+
+      # c_f = gdb.selected_frame()
+      # print("ProcessStack ddd ", c_f.find_sal().symtab.fullname(), c_f.find_sal().line)
 
       filename_frame = st.filename
       filename_frame_full = st.fullname()
@@ -4540,8 +4550,8 @@ class ModuleState():
       # Unexpected and confusing things happen when the frame is set
       # to a PROCEDURE DIVISION line (outer COBOL frame).
       # So, if an adjustment is necessary, we make it here:
-      if frame != current_frame:
-        frame.select()
+#      if frame != current_frame:
+#        frame.select()
 
       # TODO: CFrameWorker.Go(0, False, True) = "cdown-silently 0" seems more robust than the above code
 
@@ -4600,6 +4610,9 @@ class ModuleState():
       self.current_trapped_frame = -1
       self.current_trapped_line = 0
       return False
+
+    # c_f = gdb.selected_frame()
+    # print("ProcessStack zzz ", c_f.find_sal().symtab.fullname(), c_f.find_sal().line)
 
     return True
 

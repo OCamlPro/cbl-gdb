@@ -17,14 +17,14 @@ define stutter_step
 
 define printem
     echo KNOWN GOOD START\n
-    echo cprint/v0 *\n
-    cprint/v0 *
-    echo cprint/v0 ?\n
-    cprint/v0 ?
     echo cprint/v3 *\n
     cprint/v3 *
     echo cprint/v3 ?\n
     cprint/v3 ?
+    echo cprint/v0 *\n
+    cprint/v0 *
+    echo cprint/v0 ?\n
+    cprint/v0 ?
     echo cprint/x #1\n
     cprint/x #1
     echo cprint/m *\n
@@ -55,56 +55,48 @@ echo KNOWN GOOD FINISH\n
 
 ## We want to check the 'frame N' handling
 
+echo KNOWN GOOD START\n
+echo \nSet breakpoint at INDENTER.cpy\n
+echo Run from beginning\n
+echo KNOWN GOOD FINISH\n
 b INDENTER.cpy:2
 run
 
 echo KNOWN GOOD START\n
-echo select-frame 8\n
+echo \nThese should be the C.cbl variables\n
+echo Run from beginning\n
 echo KNOWN GOOD FINISH\n
-select-frame 8
 printem
+
+cup
 echo KNOWN GOOD START\n
-echo select-frame 7\n
+echo \nThese should be the B.cbl variables after CUP\n
+echo Run from beginning\n
 echo KNOWN GOOD FINISH\n
-select-frame 7
 printem
+
+cup
 echo KNOWN GOOD START\n
-echo select-frame 6\n
+echo \nThese should be the A.cbl variables after CUP\n
+echo Run from beginning\n
 echo KNOWN GOOD FINISH\n
-select-frame 6
 printem
+
+cdown
 echo KNOWN GOOD START\n
-echo select-frame 5\n
+echo \nThese should be the B.cbl variables after CDOWN\n
+echo Run from beginning\n
 echo KNOWN GOOD FINISH\n
-select-frame 5
 printem
+
+cdown
 echo KNOWN GOOD START\n
-echo select-frame 4\n
+echo \nThese should be the C.cbl variables after CDOWN\n
+echo Run from beginning\n
 echo KNOWN GOOD FINISH\n
-select-frame 4
 printem
-echo KNOWN GOOD START\n
-echo select-frame 3\n
-echo KNOWN GOOD FINISH\n
-select-frame 3
-printem
-echo KNOWN GOOD START\n
-echo select-frame 2\n
-echo KNOWN GOOD FINISH\n
-select-frame 2
-printem
-echo KNOWN GOOD START\n
-echo select-frame 1\n
-echo KNOWN GOOD FINISH\n
-select-frame 1
-printem
-echo KNOWN GOOD START\n
-echo select-frame 0\n
-echo KNOWN GOOD FINISH\n
-select-frame 0
-printem
-c
-echo KNOWN GOOD FINISH\n
+
+continue
 
 ### Let's check the reloading of PICTURE_STRING when switching from module
 ### to module
