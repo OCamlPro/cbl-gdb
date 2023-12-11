@@ -2,7 +2,7 @@
 #!/usr/bin/python3
 
 ################################################################################
-# Copyright (c) 2019-2022 COBOLworx and contributors
+# Copyright (c) 2019-2024 COBOLworx and contributors
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without

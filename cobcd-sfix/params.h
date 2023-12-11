@@ -1,5 +1,5 @@
 /* #######################################################################
-# Copyright (c) 2019-2020 COBOLworx Corporation
+# Copyright (c) 2019-2024 COBOLworx Corporation
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
