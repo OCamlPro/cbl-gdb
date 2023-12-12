@@ -1140,7 +1140,7 @@ VARIABLES::FixTheLengths(const COB_FIELDS &cob_fields)
         {
         // For EXTERNAL variables, we see the size directly.
         char ach[32];
-        sprintf(ach, "%ld", b_size);
+        sprintf(ach, "%z", b_size);
         variable->length = ach;
         }
       else
