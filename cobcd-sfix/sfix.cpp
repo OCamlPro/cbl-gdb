@@ -303,6 +303,9 @@ pseudo_strstr( const char *data, const char *find_me )
 static
 void purge_cob_nop(WHOLEFILE &fd)
     {
+#ifdef _WIN32
+    return;
+#endif
     // With the advent of GNUCobol 3.2, this construction became ubiquitous in 
     // the .s file:
     /*
