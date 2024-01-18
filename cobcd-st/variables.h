@@ -33,6 +33,8 @@ private:
     //                          // When f_name exists, b_name, a_name, offset, and length, won't be available
     //                          // When f_name doesn't exist, the others should be present, and can be used
     //                          // to synthesize an f0 cob_field structure to hand to the cob_get routine
+    std::vector<std::pair<std::string, std::string>>conditions; 
+                                // These are the upper/lower conditions associated with a LEVEL88 conditional
 
 public:
     VARIABLE()

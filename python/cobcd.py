@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-#!/usr/bin/python3
 
 ################################################################################
 # Copyright (c) 2019-2024 COBOLworx and contributors
@@ -70,7 +69,7 @@ GV_noisy_registration = False
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
-COBCD_VERSION = '[Version 5.1.2]'
+COBCD_VERSION = '[Version 5.2.1]'
 
 # This module implements the gdb extension commands like cprint and cwatch
 # It is executed by GDB.
@@ -329,7 +328,7 @@ class GlobalVariables():
     self.VarLeft = None
     self.VarLeftIndex = None
 
-    # This is flag that the first parameter is a standalone asterisk.  We 
+    # This is flag that the first parameter is a standalone asterisk.  We
     # use this to suppress printing RETURN-CODE in a "cprint *" command.
     self.FirstIsStar = False
 
@@ -698,6 +697,17 @@ def GetValueAt(address, nr_bytes):
     print("Failure in GetValueAt()")
     traceback.print_exc()
     return None
+
+def GetStringAt(address):
+  # returns the nul-terminated string at address
+  retval = ""
+  while True:
+    byte = GetBytesAt(address, 1)[0]
+    address += 1
+    if byte == 0:
+      break
+    retval += chr(byte)
+  return retval
 
 def GetPointerTo(name):
   # This routine returns the address of memory referred to by 'name'.  It
@@ -1340,7 +1350,7 @@ class VarTrie():
           payload.Aname            = tokens[self.IndexAname]
           payload.ReferenceOffset  = AddEmUp(tokens[self.IndexOffset])
           payload.LengthExpression = tokens[self.IndexLength]
-#          payload.Length           = ExpressionEvaluate(payload.LengthExpression)
+#          payload.Length          = ExpressionEvaluate(payload.LengthExpression)
           payload.OccursMin        = int(tokens[self.IndexOccursMin] or "0")
           payload.OccursMax        = int(tokens[self.IndexOccursMax] or "0")
 
@@ -1352,6 +1362,13 @@ class VarTrie():
                           payload.payload_index,
                           payload.Program.lower())
           self.program_ids.add(payload.Program)
+
+      if tokens[self.IndexType] == 'c':
+        # The prior entry is a LEVEL88, and this is a min/max pair of
+        # conditional values
+        self.storage_list[-1].conditional_min.append(tokens[self.IndexFname])
+        self.storage_list[-1].conditional_max.append(tokens[self.IndexBname])
+
     except:   # TODO: use appropriate exception
       traceback.print_exc()
       sys.exit(1)
@@ -1684,6 +1701,9 @@ class CobolVariable():
     self.Picture  = None
     self.payload_index = -1
     self.standalone = False
+    self.conditional_min = []
+    self.conditional_max = []
+    self.conditional_false = None
 
     # These values are calculated at runtime from the information up above
     #
@@ -4111,7 +4131,59 @@ class CobolVariable():
           value = '0' + value
         value = stash + self.decimal_point + value
 
+    if self.Level == 88:
+      value = self.TrueFalse88(value) + " (" + value + ")"
     return value
+
+  def TrueFalse88(self, value):
+    retval = "False"
+    if self.IsAlphanumeric():
+      value = value[1:-1]
+    else:
+      nvalue = int(value)
+    # print("We need to learn the truth of ", self.Name, value)
+    dtext = ""
+
+    for i in range(len(self.conditional_min)):
+      pmin = GetPointerTo(self.conditional_min[i]+".data")
+      pmax = GetPointerTo(self.conditional_max[i]+".data")
+      tmin = GetStringAt(pmin)
+      tmax = GetStringAt(pmax)
+      if self.IsAlphanumeric():
+        if tmin <= value <= tmax:
+          retval = "True"
+          break
+      else:
+        nmin = int(tmin)
+        nmax = int(tmax)
+        if nmin <= nvalue <= nmax:
+          retval = "True"
+          break
+    if retval == "False":
+      self.conditional_false = value
+    return retval
+
+  def RightSide88(self, value):
+    retval = []
+    if self.Level == 88:
+      truefalse = value[0].lower()
+      if truefalse == "true":
+        # We set self to Trueness by choosing the first element from the list
+        pmin = GetPointerTo(self.conditional_min[0]+".data")
+        tmin = GetStringAt(pmin)
+        retval.append('"' + tmin + '"')
+      elif truefalse == "false":
+        # We set it to False by using a known-good False value, if we have one
+        if self.conditional_false:
+          retval.append('"' + self.conditional_false + '"')
+        else:
+          ConditionalRaise("Please supply a known False value")
+          retval = value
+      else:
+        retval = value
+    else:
+      retval = value
+    return retval
 
   # special method to "fake" a constant - out of the common tree
   def set_constant_attributes (self, name, value):
@@ -5814,9 +5886,15 @@ class CPrintWorker():
 
     if len(leftside_possibilities) == 1:
       # because there is but a single leftside possibility, we might be in a "cprint var1=var2" situation
+
       if leftside_possibilities[0]<0 and right_side:
         ConditionalRaise("Invalid assignment")
         return
+
+      if right_side:
+        lside = GV_ModuleInformation.var_trie.storage_list[leftside_possibilities[0]]
+        right_side = lside.RightSide88(right_side)
+
       GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[abs(leftside_possibilities[0])%LENADDR_FLAG_BIAS])
       GV_GlobalVariables.VarLeftIndex = abs(leftside_possibilities[0])%LENADDR_FLAG_BIAS
       if GV_GlobalVariables.VarLeft.SubscriptFailure or GV_GlobalVariables.VarLeft.RefmodFailure:
@@ -5853,6 +5931,10 @@ class CPrintWorker():
           flag  = (-index) // LENADDR_FLAG_BIAS
           index = (-index)  % LENADDR_FLAG_BIAS
         payload = GV_ModuleInformation.var_trie.storage_list[index]
+        if payload.Level == 88:
+          ConditionalRaise("A LEVEL 88 conditional variable may not be used as the right-hand-side source")
+          return
+
         payload.FetchVariableData(False)
         if flag == LENADDR_FLAG_LENGTH:
           # The length of the data is desired as a RHS variable
@@ -5866,12 +5948,12 @@ class CPrintWorker():
 
     if self.machine_interface_mode:
       self.ProcessArgumentsMachineMode(left_side,
-                       rside,
-                       leftside_possibilities,
-                       rightside_possibilities)
+                                       rside,
+                                       leftside_possibilities,
+                                       rightside_possibilities)
     else:
       self.ProcessArgumentsHumanMode(leftside_possibilities,
-                       rside)
+                                     rside)
 
   @staticmethod
   def HandleDoubleQuote(arguments):

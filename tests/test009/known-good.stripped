@@ -11,7 +11,7 @@ We're done
  3 : 05 CHAR_2/THREE_CHARS  : "B"
  4 : 05 CHAR_3/THREE_CHARS  : "C"
  5 : 01 FILLER  : "ABC"
- 6 : 88 JX/FILLER  : "ABC"
+ 6 : 88 JX/FILLER  : False ("ABC")
  1 : 01 THREE_CHARS  : 0x414243
  2 : 05 CHAR_1/THREE_CHARS  : 0x41
  3 : 05 CHAR_2/THREE_CHARS  : 0x42
@@ -23,5 +23,5 @@ We're done
   05 CHAR_2 : "B"
   05 CHAR_3 : "C"
 01 FILLER
-  88 JX : "ABC"
+  88 JX : False ("ABC")
 KNOWN GOOD FINISH

@@ -1,0 +1,33 @@
+KNOWN GOOD START
+Please supply a known False value
+No symbol matches "false" in current context
+88 AFLAG/A   :  False ("x")
+88 AFLAG/A   :  True ("A")
+88 AFLAG/A   :  False ("x")
+
+14	        if aflag 
+88 AFLAG/A   :  False ("D")
+false
+
+19	        if aflag 
+True ("A")
+true
+
+24	        if aflag 
+88 AFLAG/A 
+False ("Y")
+false
+
+30	        if bflag 
+88 BFLAG/B/test [W-S]  :  False (002)
+false
+
+35	        if bflag 
+BFLAG/B  :  True (015)
+true
+
+40	        if bflag 
+BFLAG/B
+False (000)
+A LEVEL 88 conditional variable may not be used as the right-hand-side source
+KNOWN GOOD FINISH

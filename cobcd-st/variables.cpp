@@ -238,7 +238,8 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
     } perform_return = PR_LOOKING;
 
   string current_record_type = "-" ;
-  int line_number = 1;
+  int line_number = 0;
+  string input;
 
   bool looking_for_cstart = false;
   bool found_cstart = false;
@@ -247,15 +248,15 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
 
   while( fgets(ach,sizeof(ach),f) )
     {
+    input = ach;
+    line_number += 1;
     extern bool GV_echo_line;
     if( GV_echo_line )
       {
-      printf("A-%d %s",line_number++,ach);
+      printf("A-%d %s",line_number,ach);
       }
     if( strstr(ach, ": Entry ") )
       {
-      string input = ach;
-
       VSTRING tokens = Split(input," \t");
       if( tokens.size() EQ 9
           AND tokens[0] EQ "/*"
@@ -287,9 +288,6 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
       //  We're handling this by putting a marker in when we see a PROGRAM-ID
       //  line.  Later on, before we output the VARIABLE_STRING, we'll
       //  bubble each "P" entry up to its parent PROGRAM-ID entry.
-
-      string input = ach;
-
       VSTRING tokens = Split(input," \t");
       if( tokens.size() EQ 4
           AND tokens[0] EQ "/*"
@@ -309,7 +307,6 @@ VARIABLES::ScanCFile(const string &path, const string &fname)
       {
       // Our assumption is that the first return after the first
       // PROGRAM-ID is where we want CSTART to break:
-      string input = ach;
       VSTRING tokens = Split(input," \t");
 
       if( tokens.size() >= 3 && tokens[0] == "return")
@@ -331,8 +328,6 @@ check_for_another_perform:
         {
         if( strstr(ach, ": PERFORM ") )
           {
-          string input = ach;
-
           VSTRING tokens = Split(input," \t");
           if( tokens.size() EQ 8
               AND tokens[0] EQ "/*"
@@ -359,7 +354,6 @@ check_for_another_perform:
         if( strstr (ach,"/*") )
           {
           // This is the first comment after the PERFORM.
-          string input = ach;
           VSTRING tokens = Split(input," \t");
           if( tokens.size() > 1
               AND tokens[0] == "/*"
@@ -569,6 +563,7 @@ check_for_another_perform:
       //  /* cob_dump_field ( 4, "X", COB_SET_FLD(f0, 1, b_9 + 0 + cob_get_numdisp (b_8, 1) + 0 + cob_get_numdisp (b_8, 1), &a_4), 0, 1, i_1, 1); OCCURS 1 3 */
       //  /* cob_dump_field ( 2, "WS-LASTNAME", COB_SET_DATA (f_88, b_84 + 12), 0, 0); EXTERNAL */
       //  /* cob_dump_field_ext ( 1, "WS-BASED", COB_SET_DATA (f_55, b_55), 0, 0); BASED */
+      //  /* cob_dump_field_ext (88, "FLAG", &f_21, 0, 0); VALUE (cob_field *)&c_3 OR (cob_field *)&c_4 */
       //
       // Arriving here means that the first thing on the line after removing "/*" is "cob_dump_field"
 
@@ -722,6 +717,66 @@ check_for_another_perform:
             variable.record_type += "B"; // Reflag as BASED
             }
 
+          if( variable.level EQ 88 )
+            {
+            // This is a conditional variable.
+            // /* cob_dump_field_ext (88, "AFLAG", &f_17, 0, 0); VALUE (cob_field *)&c_3 
+            //    OR (cob_field *)&c_4 
+            //    OR (cob_field *)&c_5 THRU (cob_field *)&c_6 
+            //    OR (cob_field *)&c_7 
+            //    OR (cob_field *)&c_8 THRU (cob_field *)&c_9 OR (cob_field *)&c_10 */
+            nfound = cdf.find(" VALUE ");
+            if( nfound != string::npos )
+              {
+              string vcdf = cdf.substr(nfound + 7);
+              for(;;)
+                {
+                nfound = vcdf.find("(cob_field *)&");
+                if( nfound EQ string::npos )
+                  {
+                  break;
+                  }
+                vcdf.replace(nfound, 14, "");
+                //cout << vcdf << endl;
+                }
+              VSTRING tokens = Split(vcdf," \t");
+              if( tokens.size() && tokens.back() == "*/\n" )
+                {
+                tokens.pop_back();
+                }
+              for(size_t i=0; i<tokens.size(); i++)
+                {
+                if( tokens[i] == "OR" )
+                  {
+                  // This happens with ...A THRU B OR...
+                  continue;
+                  }
+                string lower = tokens[i];
+                string upper = tokens[i];
+                if( i+1 < tokens.size() )
+                  {
+                  if( tokens[i+1] EQ "OR" )
+                    {
+                    i += 1;
+                    }
+                  else if( tokens[i+1] == "THRU" )
+                    {
+                    upper = tokens[i+2];
+                    i += 2;
+                    }
+                  else
+                    {
+                    fprintf(stderr, "There was a problem parsing LEVEL 88 VALUE\n");
+                    fprintf(stderr, "%d: %s\n", line_number, input.c_str());
+                    exit(1);
+                    }
+                  }
+                pair<string, string> condition = {lower, upper};
+                variable.conditions.push_back(condition);
+                }
+              }
+            }
+
           // We need to do a bit of thinking, here.  GnuCOBOL 3.2 puts INDEXED
           // BY variables into the C file just before the declaration of the
           // array that uses them.  Such variables have a level of 00.  So,
@@ -816,7 +871,7 @@ VARIABLES::FillInTheBlanks(COB_FIELDS &cob_fields)
         // We have nothing to propogate upward
         break;
         }
-      if( it2->level EQ 77 OR it2->level EQ 77 )
+      if( it2->level EQ 77 )
         {
         // Level 77 doesn't propogate upward
         break;
@@ -953,6 +1008,28 @@ VARIABLES::FormatVariablesInfo(stringstream &ss) const
       ss << "|" ;
       }
     ss << "~";
+
+    // LEVEL88 conditional variableS have ->conditional entries.
+    // These values are not of the same form as other entries, because they 
+    // contain values determined by the user, and thus they might have the '|'
+    // or '~' characters that we use as delimiters.  So, we need to encode
+    // those strings differently:
+    for(std::vector<std::pair<std::string, std::string>>::const_iterator condition = variable->conditions.begin();
+        condition != variable->conditions.end();
+        condition++)
+      {
+      ss << "c"                     << "|" ;  // type
+      ss << ""                      << "|" ;  // level
+      ss << ""                      << "|" ;  // name
+      ss << condition->first        << "|" ;  // f_name
+      ss << condition->second       << "|" ;  // b_name
+      ss << ""                      << "|" ;  // a_name
+      ss << ""                      << "|" ;  // offset
+      ss << ""                      << "|" ;  // length
+      ss << ""                      << "|" ;  // occurs_min
+      ss << ""                      << "|" ;  // occurs_max
+      ss << "~";                              // end-of-line
+      }
     }
   }
 
