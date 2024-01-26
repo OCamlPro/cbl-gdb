@@ -5,7 +5,8 @@ set print elements 200
 
 file ./test
 
-cstart
+break 34
+run
 
 echo KNOWN GOOD START\n
 

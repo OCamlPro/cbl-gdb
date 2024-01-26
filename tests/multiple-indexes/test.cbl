@@ -29,5 +29,7 @@
                07  INIT2       PIC  X(01).
 
         PROCEDURE        DIVISION.
+        MOVE SPACES TO ATAB 
+        MOVE ZERO   TO ATAB-MAX
         GOBACK.
         END PROGRAM "prog".

@@ -80,6 +80,7 @@ ExtractVariableNameFrom(const string &p)
 static string
 HackAwayCobGetNumdisp(const string &p_)
   {
+  return p_;
   string p = p_;
   // cob_dump_field ( 1, "G-1", COB_SET_FLD(f0, cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1) + cob_get_numdisp (b_8, 1), b_9, &a_1), 0, 0);
   // Let's hack at that last one first. Anyplace we see
@@ -1185,6 +1186,7 @@ VARIABLES::FixLocalStorageOffsets()
 void
 VARIABLES::FixTheLengths(const COB_FIELDS &cob_fields)
   {
+  return;
   for( V_VARIABLES::iterator variable = variables.begin();
        variable!=variables.end();
        variable++)
@@ -1192,11 +1194,20 @@ VARIABLES::FixTheLengths(const COB_FIELDS &cob_fields)
     size_t found1 = 0;
     for(;;)
       {
+      size_t found_cob = variable->length.find("cob_", found1);
       found1 = variable->length.find("b_", found1);
       if( found1 == string::npos )
         {
         break;
         }
+      // We encounter a conflict when the length is something like
+      //        2 * (*(cob_u64_ptr)(b_43))
+      if( found_cob != string::npos )
+        {
+        found1 = found_cob + 4;
+        continue;
+        }
+
       size_t found2 = found1+2;
       while( isdigit(variable->length[found2]) )
         {
@@ -1220,6 +1231,7 @@ VARIABLES::FixTheLengths(const COB_FIELDS &cob_fields)
         sprintf(ach, "%zd", b_size);
         variable->length = ach;
         }
+#if 1
       else
         {
         // This is going to be a bit weird.  This is probably a DEPENDING ON
@@ -1239,6 +1251,7 @@ VARIABLES::FixTheLengths(const COB_FIELDS &cob_fields)
           itmax += 1;
           }
         }
+#endif
 
       found1 = found2;
       }

@@ -765,8 +765,26 @@ def AddEmUp(expression):
     # Returning 0, because that allows parsing to continue.
     return 0
 
+def ProcessCobGetNumdisp(expression):
+  retval = expression
+  while True:
+    pattern = re.compile(r"^(.*)cob_get_numdisp[(](.*)[,](.*)[)](.*)$")
+    match = re.search(pattern, retval)
+    if not match:
+      break
+    location = GetPointerTo(match[2])
+    digits = GetBytesAt(location, atoi(match[3]))
+    retval = match[1]
+    for digit in digits:
+      retval += chr(digit)
+    retval += match[4]
+  return retval
+
 def ExpressionEvaluate(expression):
   retval = 0
+
+  expression = ProcessCobGetNumdisp(expression)
+
   if expression.find("b_") == -1:
     retval = AddEmUp(expression)
   else:
@@ -784,6 +802,9 @@ def ExpressionEvaluate(expression):
     # which for our purposes is irrelevant.
     #
     # It turns out there are other things we need to get rid of:
+    
+    print("KILROY we need to work on ", expression)
+    
     expr = re.sub("[*][()]cob.*_ptr[)]", "", expression)
     expr = re.sub("[(]unsignedint[)]COB_BSWAP_32", "", expr)
     expr = re.sub("[(]unsignedshort[)]COB_BSWAP_16", "", expr)
@@ -795,7 +816,7 @@ def ExpressionEvaluate(expression):
     # We are going to walk expr, replacing each b_xxx with its current
     # numerical value:
     while True:
-      match = re.search(r"^(.*)(b_[0-9])(.*)$", expr)
+      match = re.search(r"^(.*)(b_[0-9]+)(.*)$", expr)
       if not match:
         break
 
@@ -805,7 +826,9 @@ def ExpressionEvaluate(expression):
           the_name = payload.Name
           break;
       if the_name:
-        the_value, limit_reached = IntegerOrVariable(the_name)
+        the_value = atoi(payload.display_body or "0")
+        #the_value, limit_reached = IntegerOrVariable(the_name)
+
         # We now reassemble the expr using the integer:
         expr = match.group(1) + str(the_value) + match.group(3)
       break
@@ -4924,7 +4947,6 @@ def get_sorted_possibilities(args, limit, no_data=False):
   possibilities_1 = []
   possibilities = []
   prefix = None
-  GV_GlobalVariables.FirstIsStar = False
 
   # It's possible that the user is asking for LENGTH OF or ADDRESS OF
 
@@ -5050,7 +5072,6 @@ def get_sorted_possibilities(args, limit, no_data=False):
   possibilities.sort()
 
   return possibilities, False  # False means there was no 'limit' overflow
-
 
 def get_completion_possibilities(word):
   GV_ModuleState.EstablishModuleState(False)
@@ -5739,6 +5760,7 @@ class CPrintWorker():
     if not arguments or len(arguments) == 0:
       return
 
+    GV_GlobalVariables.FirstIsStar = False
     # Special case:
     # If the final character is '!', we will list all ambiguous names
     if arguments[-1] == '!':

@@ -14,6 +14,7 @@
            10 SHM-REC.
              15 SHM-VAL1                PIC  9(001).
              15 SHM-VAL2                PIC  X(001).
+        01 I PIC 999.
 
         PROCEDURE DIVISION.
         COMPUTE SHM-VAL1(1) = 1
@@ -25,6 +26,11 @@
         COMPUTE SHM-VAL1(7) = 7
         COMPUTE SHM-VAL1(8) = 8
         COMPUTE SHM-VAL1(9) = 9
+        PERFORM VARYING I FROM 10 BY 1 UNTIL I > 20
+            DISPLAY I
+            MOVE ZERO  TO SHM-VAL1(I)
+            MOVE SPACE TO SHM-VAL2(I)
+            END-PERFORM
         CALL "prog2" using SHM-AREA
         GOBACK.
         END PROGRAM "prog".

@@ -7,7 +7,7 @@ file ./test
 
 cstart
 
-b 55
+b 61
 continue
 
 echo KNOWN GOOD START\n
@@ -30,7 +30,7 @@ cprint/v0 LS-SHM-VAL1(9)
 
 echo KNOWN GOOD FINISH\n
 
-b 29
+b 35
 continue
 
 echo KNOWN GOOD START\n

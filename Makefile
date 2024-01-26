@@ -41,6 +41,16 @@ all: cobcd cobcd.bat
 	$(MAKE) -C cobcd-sfix
 	$(MAKE) -C cobcd-rw
 
+.PHONY : d
+d: cobcd cobcd.bat
+# This is the -O0 debug version
+## Make sure the VERSION text in cobcd.py is up-to-date
+	$(MAKE) -C python
+## Then you can make cobst and friends
+	$(MAKE) -C cobcd-st   CXXFLAGS="-ggdb -O0"
+	$(MAKE) -C cobcd-sfix CXXFLAGS="-ggdb -O0"
+	$(MAKE) -C cobcd-rw   CXXFLAGS="-ggdb -O0"
+
 .PHONY : clean
 clean:
 	$(MAKE) -C cobcd-st clean
