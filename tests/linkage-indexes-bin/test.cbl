@@ -3,7 +3,7 @@
         DATA             DIVISION.
         WORKING-STORAGE  SECTION.
         01 SHM-AREA.
-         05 SHM-AMNT                    PIC  9(008) value 100.
+         05 SHM-AMNT                    PIC  9(008) binary value 10.
          05 SHM-ELEMENT-LEN             PIC  9(018).
          05 SHM-ELEMENTS.
           07 SHM-ELEMENT
@@ -27,7 +27,6 @@
         COMPUTE SHM-VAL1(8) = 8
         COMPUTE SHM-VAL1(9) = 9
         PERFORM VARYING I FROM 10 BY 1 UNTIL I > 20
-            DISPLAY I
             MOVE ZERO  TO SHM-VAL1(I)
             MOVE SPACE TO SHM-VAL2(I)
             END-PERFORM
@@ -40,7 +39,7 @@
         DATA             DIVISION.
         LINKAGE          SECTION.
         01 LS-SHM-AREA.
-         05 LS-SHM-AMNT                    PIC  9(008).
+         05 LS-SHM-AMNT                    PIC  9(008) binary.
          05 LS-SHM-ELEMENT-LEN             PIC  9(018).
          05 LS-SHM-ELEMENTS.
           07 LS-SHM-ELEMENT

@@ -775,15 +775,38 @@ def ProcessCobGetNumdisp(expression):
     location = GetPointerTo(match[2])
     digits = GetBytesAt(location, atoi(match[3]))
     retval = match[1]
+    leading = True
     for digit in digits:
-      retval += chr(digit)
+      if chr(digit) != '0':
+        leading = False
+      if not leading:
+        retval += chr(digit)
+    if leading:
+      retval += '0'
     retval += match[4]
+  return retval
+
+def ProcessCobU8Ptr(expression):
+  # "I|1|LS-SHM-AREA||b_44|a_3||19+2*(*(cob_u8_ptr)(b_44))|||~"
+  retval = expression
+  while True:
+    pattern = re.compile(r"^(.*)[*][(]cob_u8_ptr[)][(]([^)]*)[)](.*)$")
+    match = re.search(pattern, retval)
+    if not match:
+      break
+    # We are pickup up a one-byte binary number:
+    location = GetPointerTo(match[2])
+    digits = GetBytesAt(location, 1)
+    retval = match[1]
+    retval += str(digits[0])
+    retval += match[3]
   return retval
 
 def ExpressionEvaluate(expression):
   retval = 0
 
   expression = ProcessCobGetNumdisp(expression)
+  expression = ProcessCobU8Ptr(expression)
 
   if expression.find("b_") == -1:
     retval = AddEmUp(expression)
@@ -802,9 +825,7 @@ def ExpressionEvaluate(expression):
     # which for our purposes is irrelevant.
     #
     # It turns out there are other things we need to get rid of:
-    
-    print("KILROY we need to work on ", expression)
-    
+
     expr = re.sub("[*][()]cob.*_ptr[)]", "", expression)
     expr = re.sub("[(]unsignedint[)]COB_BSWAP_32", "", expr)
     expr = re.sub("[(]unsignedshort[)]COB_BSWAP_16", "", expr)
@@ -833,7 +854,7 @@ def ExpressionEvaluate(expression):
         expr = match.group(1) + str(the_value) + match.group(3)
       break
     retval = AddEmUp(expr)
-
+  print("KILROY expression", expression, retval)
   return retval
 
 def process_left_right_args(args):
