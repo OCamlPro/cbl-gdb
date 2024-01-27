@@ -305,7 +305,8 @@ main(int argc, char *argv[])
 #endif
 
     VARIABLES variables;
-    variables.ScanCFile(params.c_filename.Path(),
+    variables.ScanCFile(cob_fields,
+                        params.c_filename.Path(),
                         params.c_filename.GetFname() );
     variables.FillInTheBlanks(cob_fields);
     variables.FixLocalStorageOffsets();

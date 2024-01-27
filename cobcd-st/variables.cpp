@@ -128,7 +128,7 @@ NormRepl( string input,
   }
 
 static string
-NormalizeIntegerExtraction(string s)
+NormalizeIntegerExtraction(COB_FIELDS &cob_fields, string s)
   {
   string retval = s;
     /*
@@ -449,10 +449,21 @@ NormalizeIntegerExtraction(string s)
     nfound=retval.find(lookfor);
     if(nfound != string::npos)
       {
-      size_t p1 = retval.find("(", nfound) +1;
+      size_t p1 = retval.find("(", nfound) +2;
       size_t p2 = retval.find(")", p1);
       string f_name = retval.substr(p1, p2-p1);
       cout << "f_name is " << f_name << endl;
+      COB_FIELD *cob_field = cob_fields.Find(f_name);
+      assert(cob_field);
+      string b_name = cob_field->b_name;
+      int size = cob_field->size;
+      string a_name = cob_field->a_name;
+
+      COB_ATTR *cob_attr = cob_fields.FindAttr(a_name);
+      assert(cob_attr);
+      
+      
+      exit(1);
       continue;
       }
     break;
@@ -597,7 +608,9 @@ ParametersInsideParentheses(const string &s, size_t &final)
   }
 
 void
-VARIABLES::ScanCFile(const string &path, const string &fname)
+VARIABLES::ScanCFile( COB_FIELDS &cob_fields,
+                      const string &path,
+                      const string &fname)
   {
   CPROFILER;
   string full_path = path;
@@ -1168,7 +1181,7 @@ check_for_another_perform:
           // array that uses them.  Such variables have a level of 00.  So,
           // we are going to stash them in a list until we see their parent
 
-          variable.length = NormalizeIntegerExtraction(variable.length);
+          variable.length = NormalizeIntegerExtraction(cob_fields, variable.length);
 //          cout << "   Length parameter is " << variable.length << endl;
 
           if( variable.level == 0 )

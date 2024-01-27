@@ -69,6 +69,19 @@ COB_FIELDS::Insert(std::string f_name_,
   }
 
 void
+COB_FIELDS::InsertAttr(COB_ATTR &cob_attr)
+  {
+  M_COB_ATTR_2::const_iterator it = m_cob_attr.find(cob_attr.a_name);
+  if( it != m_cob_attr.end() )
+    {
+    std::cerr << "Creating the COB_ATTR " << cob_attr.a_name << " more than once in COB_FIELDS::InsertAttr()\n" ;
+    exit(1);
+    }
+  m_cob_attr[cob_attr.a_name] = v_cob_attr.size();
+  v_cob_attr.push_back(cob_attr);
+  }
+
+void
 COB_FIELDS::ScanDotHFile(ifstream &ifs, const string &source)
   {
   int line_number = 0;
@@ -259,6 +272,23 @@ COB_FIELDS::ScanDotHFile(ifstream &ifs, const string &source)
               // << std::endl;
         }
       }
+
+    const string field_attr = "static const cob_field_attr ";
+    if( input.find(field_attr) == 0 )
+      {
+      size_t p1 = field_attr.size();
+      size_t p2 = input.find(" ", p1);
+      string a_name = input.substr(p1, p2-p1);
+      p1 = input.find("{")+1;
+      p2 = input.find("}", p1)-1;
+      VSTRING tokens = Split(input.substr(p1, p2-p1), ", \t");
+      unsigned short  type   = std::stoi(tokens[0], nullptr, 16);
+      unsigned short  digits = std::stoi(tokens[1], nullptr, 10);
+      signed short    scale  = std::stoi(tokens[2], nullptr, 10);
+      unsigned short  flags  = std::stoi(tokens[3], nullptr, 16);
+      COB_ATTR cob_attr(a_name, type, digits, scale, flags, NULL);
+      InsertAttr(cob_attr);
+      }
     }
   }
 
@@ -347,6 +377,20 @@ COB_FIELDS::Find(const std::string &f_name_)
   if( it != m_cob_fields.end() )
     {
     retval = &v_cob_fields[it->second];
+    }
+
+  return retval;
+  }
+
+COB_ATTR *
+COB_FIELDS::FindAttr(const std::string &a_name)
+  {
+  COB_ATTR *retval = NULL;
+
+  map<std::string,size_t>::const_iterator it =  m_cob_attr.find(a_name);
+  if( it != m_cob_attr.end() )
+    {
+    retval = &v_cob_attr[it->second];
     }
 
   return retval;

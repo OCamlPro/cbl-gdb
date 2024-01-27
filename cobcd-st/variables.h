@@ -58,7 +58,7 @@ private:
     V_VARIABLES variables;
 
 public:
-    void ScanCFile(const std::string &path, const std::string &fname);
+    void ScanCFile(COB_FIELDS &cob_fields, const std::string &path, const std::string &fname);
     void FillInTheBlanks(COB_FIELDS &cob_fields);
     void FixLocalStorageOffsets();
     void Dump() const;

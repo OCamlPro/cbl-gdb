@@ -75,12 +75,46 @@ typedef std::vector<COB_FIELD> V_COB_FIELDS_2;
 typedef std::map<std::string, size_t> M_COB_FIELDS_2;
 typedef std::map<std::string, size_t> M_COB_DATA;
 
+class COB_ATTR
+{
+public:
+    std::string     a_name;     /* name of field         */
+    unsigned short  type;       /* Field type [TODO GC4: enum] */
+    unsigned short  digits;     /* Digit count */
+    signed short    scale;      /* Field scale */
+    unsigned short  flags;      /* Field flags */
+    const char     *pic;        /* Pointer to picture string */
+
+public:
+    COB_ATTR (std::string     a_name_,
+              unsigned short  type_,  
+              unsigned short  digits_,
+              signed short    scale_, 
+              unsigned short  flags_, 
+              const char     *pic_)
+    {
+    a_name       = a_name_  ;
+    type         = type_    ;
+    digits       = digits_  ;
+    scale        = scale_   ;
+    flags        = flags_   ;
+    pic          = pic_     ;
+    }
+
+    friend COB_FIELDS;
+} ;
+typedef std::vector<COB_ATTR> V_COB_ATTR_2;
+typedef std::map<std::string, size_t> M_COB_ATTR_2;
+
+
 class COB_FIELDS
 {
 private:
-    M_COB_FIELDS_2 m_cob_fields;
-    V_COB_FIELDS_2 v_cob_fields;
-    M_COB_DATA m_cob_data;
+    M_COB_FIELDS_2  m_cob_fields;
+    V_COB_FIELDS_2  v_cob_fields;
+    M_COB_DATA      m_cob_data;
+    V_COB_ATTR_2    v_cob_attr;
+    M_COB_ATTR_2    m_cob_attr;
 
 private:
     void ScanDotHFile(std::ifstream &ifs, const std::string &source);
@@ -89,14 +123,14 @@ private:
                 int         offset,
                 int         size,
                 std::string a_name);
-
+    void InsertAttr(COB_ATTR &cob_attr);
 public:
     void ScanAllDotHFiles(const std::string &path, const std::string &fname);
     void ScanCFile(const std::string &path, const std::string &fname);
 
-    COB_FIELD *Find(const std::string &f_name_) ;
-    size_t GetBSize(const std::string b_name) const;
-
+    COB_FIELD *Find(const std::string &f_name) ;
+    COB_ATTR  *FindAttr(const std::string &a_name) ;
+    size_t     GetBSize(const std::string b_name) const;
     void Dump() const ;
 };
 
