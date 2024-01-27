@@ -45,6 +45,8 @@ using namespace std;
 #define AND &&
 #define OR ||
 
+#if 0
+
 static string
 ExtractVariableNameFrom(const string &p)
   {
@@ -76,6 +78,390 @@ ExtractVariableNameFrom(const string &p)
     }
   return retval;
   }
+
+#endif
+
+static int
+CalculateParam(int type, bool signable, bool big_endian, int size)
+  {
+  int param = type;
+  param *= 2;
+  if( signable )
+    {
+    param += 1;
+    }
+  param *= 2;
+  if( big_endian )
+    {
+    param += 1;
+    }
+  param *= 100;
+  param += size;
+  return param;
+  }
+
+static string
+NormRepl( string input,
+          size_t nfound,
+          string lookfor,
+          int type,
+          bool big_endian,
+          bool signable,
+          bool size)
+  {
+  string retval;
+  size_t nstart = nfound + lookfor.size();
+  size_t p1 = input.find("(", nstart) + 1;
+  size_t p2 = input.find(")", nstart);
+  string b_val = input.substr(p1, p2-p1);
+  int param = CalculateParam(type, signable, big_endian, size);
+  char ach[64];
+  snprintf( ach,
+            sizeof(ach),
+            "Q(%s,%d)",
+            b_val.c_str(),
+            param);
+  retval =    input.substr(0, nfound)
+            + ach
+            + input.substr(p2+1);
+  return retval;
+  }
+
+static string
+NormalizeIntegerExtraction(string s)
+  {
+  string retval = s;
+    /*
+    // These are 1, 2, 4, 8 byte signed little-endian integers
+
+    *(cob_s8_ptr) (b_17)
+    *(short *)(b_20)
+    *(int *)(b_23)
+    *(cob_s64_ptr)(b_26)
+
+    // These are 1, 2, 4, 8 byte unsigned little-endian integers
+
+    *(cob_u8_ptr) (b_29)
+    *(unsigned short *)(b_32)
+    *(unsigned int *)(b_35)
+    *(cob_u64_ptr)(b_38)
+
+    // These are 2-byte big-endian integers
+
+    (short)COB_BSWAP_16(*(short *)(b_44))
+    (unsigned short)COB_BSWAP_16(*(short *)(b_56))
+
+    // These are 4-byte big-endian integers
+
+    (int)COB_BSWAP_32(*(int *)(b_47))
+    (unsigned int)COB_BSWAP_32(*(int *)(b_59))
+
+    // These are 8-byte big-endian integers
+
+    (cob_s64_t)COB_BSWAP_64(*(cob_s64_t *)(b_50))
+    (cob_u64_t)COB_BSWAP_64(*(cob_s64_t *)(b_62))
+
+    // These are N-character Numeric-Display variables
+
+    cob_get_numdisps (b_65, N)
+
+    // These are oddball variables that are less specifically described.
+    cob_get_int (&f_78)
+
+    // In a sample program we had
+
+    // numeric-display with a 16 characters:
+              05 TABD          PIC  s9(16) display value 5.
+                static cob_field f_78   = {16, b_77, &a_37};    // TABD
+    // packed-decimal, both COMP-3 and COMP-6
+              05 TABD          PIC  s9(2) COMP-3 value 5.
+                static cob_field f_96   = {2, b_95, &a_18};     // TABD
+    // comp-1 32-bit floating point:
+              05 TABD           COMP-1 value 5.
+                static cob_field f_132  = {4, b_131, &a_29};    // TABD
+    // comp-1 64-bit floating point:
+              05 TABD           COMP-2 value 5.
+                static cob_field f_135  = {8, b_134, &a_30};    // TABD
+
+    decoding those requires looking at the specified a_xxx attribute values:
+    static const cob_field_attr a_37 =  {0x10,   8,   0, 0x0001, NULL};
+    static const cob_field_attr a_18 =  {0x12,   2,   0, 0x0001, NULL}; 
+    static const cob_field_attr a_29 =  {0x13,  15,   8, 0x0201, NULL};
+    static const cob_field_attr a_30 =  {0x14,  34,  17, 0x0201, NULL};
+
+    where (from libcob/common.h)
+    
+    */
+
+    typedef struct  
+        {
+        unsigned short        type;       /* Field type [TODO GC4: enum] */
+        unsigned short        digits;     /* Digit count */
+        signed short          scale;      /* Field scale */
+        unsigned short        flags;      /* Field flags */
+        const char           *pic;        /* Pointer to picture string */
+        } cob_field_attr;
+
+    typedef struct
+        {
+        size_t           size;      /* Field size */
+        unsigned char   *data;      /* Pointer to field data */
+        cob_field_attr  *attr;      /* Pointer to attribute */
+        } cob_field;
+
+    /* Field types */
+    
+    #define COB_TYPE_UNKNOWN               0x00    // 0
+    #define COB_TYPE_GROUP                 0x01    // 1
+    #define COB_TYPE_BOOLEAN               0x02    // 2
+    #define COB_TYPE_NUMERIC               0x10    // 16
+    #define COB_TYPE_NUMERIC_DISPLAY       0x10    // 16
+    #define COB_TYPE_NUMERIC_BINARY        0x11    // 17
+    #define COB_TYPE_NUMERIC_PACKED        0x12    // 18
+    #define COB_TYPE_NUMERIC_FLOAT         0x13    // 19
+    #define COB_TYPE_NUMERIC_DOUBLE        0x14    // 20
+    #define COB_TYPE_NUMERIC_L_DOUBLE      0x15    // 21
+    #define COB_TYPE_NUMERIC_FP_DEC64      0x16    // 22
+    #define COB_TYPE_NUMERIC_FP_DEC128     0x17    // 23
+    #define COB_TYPE_NUMERIC_FP_BIN32      0x18    // 24
+    #define COB_TYPE_NUMERIC_FP_BIN64      0x19    // 25
+    #define COB_TYPE_NUMERIC_FP_BIN128     0x1A    // 26
+    #define COB_TYPE_NUMERIC_COMP5         0x1B    // 27
+    #define COB_TYPE_ALNUM                 0x20    // 32
+    #define COB_TYPE_ALPHANUMERIC          0x21    // 33
+    #define COB_TYPE_ALPHANUMERIC_ALL      0x22    // 34
+    #define COB_TYPE_ALPHANUMERIC_EDITED   0x23    // 35
+    #define COB_TYPE_NUMERIC_EDITED        0x24    // 36
+    #define COB_TYPE_NATIONAL              0x40    // 48
+    #define COB_TYPE_NATIONAL_EDITED       0x41    // 49
+
+    /* Field flags */
+    
+    #define COB_FLAG_HAVE_SIGN      = (1 << 0)   // /* 0x0001 */
+    #define COB_FLAG_SIGN_SEPARATE  = (1 << 1)   // /* 0x0002 */
+    #define COB_FLAG_SIGN_LEADING   = (1 << 2)   // /* 0x0004 */
+    #define COB_FLAG_BLANK_ZERO     = (1 << 3)   // /* 0x0008 */
+    #define COB_FLAG_JUSTIFIED      = (1 << 4)   // /* 0x0010 */
+    #define COB_FLAG_BINARY_SWAP    = (1 << 5)   // /* 0x0020 */
+    #define COB_FLAG_REAL_BINARY    = (1 << 6)   // /* 0x0040 */
+    #define COB_FLAG_IS_POINTER     = (1 << 7)   // /* 0x0080 */
+    #define COB_FLAG_NO_SIGN_NIBBLE = (1 << 8)   // /* 0x0100 */
+    #define COB_FLAG_IS_FP          = (1 << 9)   // /* 0x0200 */
+    #define COB_FLAG_REAL_SIGN      = (1 << 10)  // /* 0x0400 */
+    #define COB_FLAG_BINARY_TRUNC   = (1 << 11)  // /* 0x0800 */
+    #define COB_FLAG_CONSTANT       = (1 << 12)  // /* 0x1000 */
+  // This is going to be far more tedious than is going to seem reasonable.
+  // There really isn't much we can do except hack at it.
+  
+  string lookfor;
+  size_t nfound;
+  int type;
+  bool big_endian;
+  bool signable;
+  int size;
+  
+  for(;;)
+    {
+    type = COB_TYPE_UNKNOWN;
+
+    lookfor = "(short)COB_BSWAP_16(*(short*)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = true;
+      signable    = true;
+      size        = 2;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "(int)COB_BSWAP_32(*(int*)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = true;
+      signable    = true;
+      size        = 4;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "(cob_s64_t)COB_BSWAP_64(*(cob_s64_t*)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = true;
+      signable    = true;
+      size        = 8;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "(unsignedshort)COB_BSWAP_16(*(short*)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = true;
+      signable    = false;
+      size        = 2;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "(unsignedint)COB_BSWAP_32(*(int*)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = true;
+      signable    = false;
+      size        = 4;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "(cob_u64_t)COB_BSWAP_64(*(cob_s64_t*)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = true;
+      signable    = false;
+      size        = 8;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "*(cob_s8_ptr)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = false;
+      signable    = true;
+      size        = 1;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "*(short*)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = false;
+      signable    = true;
+      size        = 2;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "*(int*)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = false;
+      signable    = true;
+      size        = 4;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "*(cob_s64_ptr)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = false;
+      signable    = true;
+      size        = 8;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "*(cob_u8_ptr)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = false;
+      signable    = false;
+      size        = 1;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "*(unsignedshort*)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = false;
+      signable    = false;
+      size        = 2;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "*(unsignedint*)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = false;
+      signable    = false;
+      size        = 4;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "*(cob_u64_ptr)";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      type        = COB_TYPE_NUMERIC_BINARY;
+      big_endian  = false;
+      signable    = false;
+      size        = 8;
+      retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      continue;
+      }
+    lookfor = "cob_get_numdisp";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      size_t p1 = retval.find("(", nfound) +1;
+      size_t p2 = retval.find(")", p1);
+
+      VSTRING pp = Split(retval.substr(p1, p2-p1), ",");
+      type        = COB_TYPE_NUMERIC_DISPLAY;
+      big_endian  = true;
+      signable    = true;
+      size        = stoi(Trim(pp[1]));
+      
+      int param = CalculateParam(type, signable, big_endian, size);
+
+      char ach[64];
+      snprintf( ach,
+                sizeof(ach),
+                "Q(%s,%d)",
+                Trim(pp[0]).c_str(),
+                param);
+      string input = retval;
+      retval =    input.substr(0, nfound)
+                + ach
+                + input.substr(p2+1);
+      continue;
+      }
+    lookfor = "cob_get_int";
+    nfound=retval.find(lookfor);
+    if(nfound != string::npos)
+      {
+      size_t p1 = retval.find("(", nfound) +1;
+      size_t p2 = retval.find(")", p1);
+      string f_name = retval.substr(p1, p2-p1);
+      cout << "f_name is " << f_name << endl;
+      continue;
+      }
+    break;
+    }
+
+  return retval;
+  }
+
+#if 0
 
 static string
 HackAwayCobGetNumdisp(const string &p_)
@@ -154,6 +540,8 @@ SquishAwayStarIntStar(const string &s_)
 
   return retval;
   }
+  
+#endif
 
 VSTRING
 ParametersInsideParentheses(const string &s, size_t &final)
@@ -595,11 +983,6 @@ check_for_another_perform:
         // This is yet another hack:
         bool is_based = !!strstr(ach,"; BASED */"); // Becomes true if non-NULL, false if NULL
 
-        // Hack away at cob_get_numdisp() entries:
-        cdf = HackAwayCobGetNumdisp(cdf);
-        // Squish away any (*(int *)b_8) entries:
-        cdf = SquishAwayStarIntStar(cdf);
-
         size_t final_paren;
         VSTRING cdf_parameters = ParametersInsideParentheses(cdf,final_paren);
         if( cdf_parameters.size() >= 5  )
@@ -619,56 +1002,58 @@ check_for_another_perform:
             {
             if( field_pointer.find(COB_SET_FLD) != string::npos )
               {
-              nfound = field_pointer.find( '(' );
-              if( nfound != string::npos )
-                {
-                field_pointer = field_pointer.substr(nfound);
-                VSTRING csf_parameters = ParametersInsideParentheses(field_pointer,final_paren);
-                if( csf_parameters.size() EQ 4 )
+                nfound = field_pointer.find( '(' );
+                if( nfound != string::npos )
                   {
-                  //   COB_SET_FLD(f_name, length, bname + offset, aname)
-                  // fname is meaningless in this context
-                  // length might be combinations of integer constants and/or text :
+                  field_pointer = field_pointer.substr(nfound);
+                  VSTRING csf_parameters = ParametersInsideParentheses(field_pointer,final_paren);
+                  if( csf_parameters.size() EQ 4 )
+                    {
+                    //   COB_SET_FLD(f_name, length, bname + offset, aname)
+                    // fname is meaningless in this context
+                    // length might be combinations of integer constants and/or text :
 
-                  for(size_t i=0; i<csf_parameters[1].size(); i++ )
-                    {
-                    char ch = csf_parameters[1][i];
-                    if( ch != ' ' )
+                    for(size_t i=0; i<csf_parameters[1].size(); i++ )
                       {
-                      variable.length += ch;
-                      }
-                    }
-
-                  // The third parameter is the b_name with, possibly, an offset added to it.
-                  VSTRING base_offset = Split(csf_parameters[2],"+");
-                  if( base_offset.size() )
-                    {
-                    variable.b_name = Trim(base_offset[0]);
-                    }
-                  size_t i = 1;
-                  while( i < base_offset.size() )
-                    {
-                    string offset = Trim(base_offset[i++]);
-                    if( offset != "0" )
-                      {
-                      if( !variable.offset.empty() )
+                      char ch = csf_parameters[1][i];
+                      if( ch != ' ' )
                         {
-                        variable.offset += '+';
+                        variable.length += ch;
                         }
-                      variable.offset += offset ;
                       }
+
+                    // The third parameter is the b_name with, possibly, an offset added to it.
+                    VSTRING base_offset = Split(csf_parameters[2],"+");
+                    if( base_offset.size() )
+                      {
+                      variable.b_name = Trim(base_offset[0]);
+                      }
+                    size_t i = 1;
+                    while( i < base_offset.size() )
+                      {
+                      string offset = Trim(base_offset[i++]);
+                      if( offset != "0" )
+                        {
+                        if( !variable.offset.empty() )
+                          {
+                          variable.offset += '+';
+                          }
+                        variable.offset += offset ;
+                        }
+                      }
+                    variable.a_name = csf_parameters[3].substr(1);
                     }
-                  variable.a_name = csf_parameters[3].substr(1);
+                  else
+                    {
+                    cerr << "VARIABLES::ScanCFile() doesn't know how to handle the COB_SET_FLD macro in" << endl ;
+                    cerr << "   " << ach << endl;
+                    cerr << "   " << cdf << endl;
+                    cerr << "   " << csf_parameters[2] << endl;
+                    cerr << "Please alert Bob Dubner at support@cobolworx.com" << endl;
+                    cerr << "Thank you." << endl;
+                    continue;
+                    }
                   }
-                else
-                  {
-                  cerr << "VARIABLES::ScanCFile() doesn't know how to handle the COB_SET_FLD macro in" << endl ;
-                  cerr << "   " << ach ;
-                  cerr << "Please alert Bob Dubner at support@cobolworx.com" << endl;
-                  cerr << "Thank you." << endl;
-                  continue;
-                  }
-                }
               }
             else if( field_pointer.find(COB_SET_DATA) != string::npos )
               {
@@ -782,6 +1167,9 @@ check_for_another_perform:
           // BY variables into the C file just before the declaration of the
           // array that uses them.  Such variables have a level of 00.  So,
           // we are going to stash them in a list until we see their parent
+
+          variable.length = NormalizeIntegerExtraction(variable.length);
+//          cout << "   Length parameter is " << variable.length << endl;
 
           if( variable.level == 0 )
             {
