@@ -84,19 +84,22 @@ ExtractVariableNameFrom(const string &p)
 static int
 CalculateParam(int type, bool signable, bool big_endian, int size)
   {
-  int param = type;
-  param *= 2;
+  // Let's not use more commas or characters than we need.
+  // Construct for size = 13, signable and big_endian, and type = 16
+  // the decimal value 13316 
+  int param = size;
+  param *= 10;
+
+  if( big_endian )
+    {
+    param += 2;
+    }
   if( signable )
     {
     param += 1;
     }
-  param *= 2;
-  if( big_endian )
-    {
-    param += 1;
-    }
   param *= 100;
-  param += size;
+  param += type;
   return param;
   }
 
@@ -107,7 +110,7 @@ NormRepl( string input,
           int type,
           bool big_endian,
           bool signable,
-          bool size)
+          int size)
   {
   string retval;
   size_t nstart = nfound + lookfor.size();
@@ -124,7 +127,14 @@ NormRepl( string input,
   retval =    input.substr(0, nfound)
             + ach
             + input.substr(p2+1);
+
   return retval;
+  }
+
+static string
+TrimParen(string s)
+  {
+  return s.substr(0, s.size()-1);
   }
 
 static string
@@ -237,19 +247,19 @@ NormalizeIntegerExtraction(COB_FIELDS &cob_fields, string s)
 
     /* Field flags */
     
-    #define COB_FLAG_HAVE_SIGN      = (1 << 0)   // /* 0x0001 */
-    #define COB_FLAG_SIGN_SEPARATE  = (1 << 1)   // /* 0x0002 */
-    #define COB_FLAG_SIGN_LEADING   = (1 << 2)   // /* 0x0004 */
-    #define COB_FLAG_BLANK_ZERO     = (1 << 3)   // /* 0x0008 */
-    #define COB_FLAG_JUSTIFIED      = (1 << 4)   // /* 0x0010 */
-    #define COB_FLAG_BINARY_SWAP    = (1 << 5)   // /* 0x0020 */
-    #define COB_FLAG_REAL_BINARY    = (1 << 6)   // /* 0x0040 */
-    #define COB_FLAG_IS_POINTER     = (1 << 7)   // /* 0x0080 */
-    #define COB_FLAG_NO_SIGN_NIBBLE = (1 << 8)   // /* 0x0100 */
-    #define COB_FLAG_IS_FP          = (1 << 9)   // /* 0x0200 */
-    #define COB_FLAG_REAL_SIGN      = (1 << 10)  // /* 0x0400 */
-    #define COB_FLAG_BINARY_TRUNC   = (1 << 11)  // /* 0x0800 */
-    #define COB_FLAG_CONSTANT       = (1 << 12)  // /* 0x1000 */
+    #define COB_FLAG_HAVE_SIGN      (1 << 0)   // /* 0x0001 */
+    #define COB_FLAG_SIGN_SEPARATE  (1 << 1)   // /* 0x0002 */
+    #define COB_FLAG_SIGN_LEADING   (1 << 2)   // /* 0x0004 */
+    #define COB_FLAG_BLANK_ZERO     (1 << 3)   // /* 0x0008 */
+    #define COB_FLAG_JUSTIFIED      (1 << 4)   // /* 0x0010 */
+    #define COB_FLAG_BINARY_SWAP    (1 << 5)   // /* 0x0020 */
+    #define COB_FLAG_REAL_BINARY    (1 << 6)   // /* 0x0040 */
+    #define COB_FLAG_IS_POINTER     (1 << 7)   // /* 0x0080 */
+    #define COB_FLAG_NO_SIGN_NIBBLE (1 << 8)   // /* 0x0100 */
+    #define COB_FLAG_IS_FP          (1 << 9)   // /* 0x0200 */
+    #define COB_FLAG_REAL_SIGN      (1 << 10)  // /* 0x0400 */
+    #define COB_FLAG_BINARY_TRUNC   (1 << 11)  // /* 0x0800 */
+    #define COB_FLAG_CONSTANT       (1 << 12)  // /* 0x1000 */
   // This is going to be far more tedious than is going to seem reasonable.
   // There really isn't much we can do except hack at it.
   
@@ -259,7 +269,7 @@ NormalizeIntegerExtraction(COB_FIELDS &cob_fields, string s)
   bool big_endian;
   bool signable;
   int size;
-  
+
   for(;;)
     {
     type = COB_TYPE_UNKNOWN;
@@ -273,6 +283,7 @@ NormalizeIntegerExtraction(COB_FIELDS &cob_fields, string s)
       signable    = true;
       size        = 2;
       retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      retval = TrimParen(retval);
       continue;
       }
     lookfor = "(int)COB_BSWAP_32(*(int*)";
@@ -284,6 +295,7 @@ NormalizeIntegerExtraction(COB_FIELDS &cob_fields, string s)
       signable    = true;
       size        = 4;
       retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      retval = TrimParen(retval);
       continue;
       }
     lookfor = "(cob_s64_t)COB_BSWAP_64(*(cob_s64_t*)";
@@ -295,6 +307,7 @@ NormalizeIntegerExtraction(COB_FIELDS &cob_fields, string s)
       signable    = true;
       size        = 8;
       retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      retval = TrimParen(retval);
       continue;
       }
     lookfor = "(unsignedshort)COB_BSWAP_16(*(short*)";
@@ -306,6 +319,7 @@ NormalizeIntegerExtraction(COB_FIELDS &cob_fields, string s)
       signable    = false;
       size        = 2;
       retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      retval = TrimParen(retval);
       continue;
       }
     lookfor = "(unsignedint)COB_BSWAP_32(*(int*)";
@@ -317,6 +331,7 @@ NormalizeIntegerExtraction(COB_FIELDS &cob_fields, string s)
       signable    = false;
       size        = 4;
       retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      retval = TrimParen(retval);
       continue;
       }
     lookfor = "(cob_u64_t)COB_BSWAP_64(*(cob_s64_t*)";
@@ -328,6 +343,7 @@ NormalizeIntegerExtraction(COB_FIELDS &cob_fields, string s)
       signable    = false;
       size        = 8;
       retval = NormRepl(retval, nfound, lookfor, type, big_endian, signable, size);
+      retval = TrimParen(retval);
       continue;
       }
     lookfor = "*(cob_s8_ptr)";
@@ -452,18 +468,35 @@ NormalizeIntegerExtraction(COB_FIELDS &cob_fields, string s)
       size_t p1 = retval.find("(", nfound) +2;
       size_t p2 = retval.find(")", p1);
       string f_name = retval.substr(p1, p2-p1);
-      cout << "f_name is " << f_name << endl;
+
       COB_FIELD *cob_field = cob_fields.Find(f_name);
       assert(cob_field);
       string b_name = cob_field->b_name;
+
       int size = cob_field->size;
       string a_name = cob_field->a_name;
 
       COB_ATTR *cob_attr = cob_fields.FindAttr(a_name);
       assert(cob_attr);
-      
-      
-      exit(1);
+      type = cob_attr->type;
+      unsigned short flags = cob_attr->flags;
+
+      big_endian = !!(flags & COB_FLAG_BINARY_SWAP);
+      signable   = !!(flags & COB_FLAG_HAVE_SIGN);
+
+      int param = CalculateParam(type, signable, big_endian, size);
+      char ach[64];
+      snprintf( ach,
+                sizeof(ach),
+                "Q(%s,%d)",
+                b_name.c_str(),
+                param);
+      string input = retval;
+      retval =    input.substr(0, nfound)
+                + ach
+                + input.substr(p2+1);
+
+
       continue;
       }
     break;
