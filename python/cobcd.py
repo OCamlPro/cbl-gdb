@@ -69,7 +69,7 @@ GV_noisy_registration = False
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
-COBCD_VERSION = '[Version 5.2.2-dev]'
+COBCD_VERSION = '[Version 5.3.1]'
 
 # This module implements the gdb extension commands like cprint and cwatch
 # It is executed by GDB.
@@ -765,96 +765,128 @@ def AddEmUp(expression):
     # Returning 0, because that allows parsing to continue.
     return 0
 
-def ProcessCobGetNumdisp(expression):
-  retval = expression
-  while True:
-    pattern = re.compile(r"^(.*)cob_get_numdisp[(](.*)[,](.*)[)](.*)$")
-    match = re.search(pattern, retval)
-    if not match:
-      break
-    location = GetPointerTo(match[2])
-    digits = GetBytesAt(location, atoi(match[3]))
-    retval = match[1]
-    leading = True
-    for digit in digits:
-      if chr(digit) != '0':
-        leading = False
-      if not leading:
-        retval += chr(digit)
-    if leading:
-      retval += '0'
-    retval += match[4]
+def GetIntegerNumericPacked(b_name, b_signable, b_big_endian, b_size):
+  b_location = GetPointerTo(b_name)
+  digits = GetBytesAt(b_location, b_size)
+  is_negative = False
+  value = 0;
+  for digit in digits:
+    nybble = digit >> 4
+    if nybble == 0x0B or nybble == 0x0D:
+      is_negative = True
+    elif nybble <= 0x09:
+      value *= 10
+      value += nybble
+    nybble = digit & 0x0F
+    if nybble == 0x0B or nybble == 0x0D:
+      is_negative = True
+    elif nybble <= 0x09:
+      value *= 10
+      value += nybble
+  if is_negative:
+    retval = "-"
+  else:
+    retval = ""
+  retval += str(value)
   return retval
 
-def ProcessCobU8Ptr(expression):
-  # "I|1|LS-SHM-AREA||b_44|a_3||19+2*(*(cob_u8_ptr)(b_44))|||~"
-  retval = expression
-  while True:
-    pattern = re.compile(r"^(.*)[*][(]cob_u8_ptr[)][(]([^)]*)[)](.*)$")
-    match = re.search(pattern, retval)
-    if not match:
-      break
-    # We are pickup up a one-byte binary number:
-    location = GetPointerTo(match[2])
-    digits = GetBytesAt(location, 1)
-    retval = match[1]
-    retval += str(digits[0])
-    retval += match[3]
+def GetIntegerNumericDisplay(b_name, b_signable, b_big_endian, b_size):
+  b_location = GetPointerTo(b_name)
+  digits = GetBytesAt(b_location, b_size)
+  is_negative = False
+  value = 0;
+  for digit in digits:
+    if digit == '+':
+      continue
+    if digit == '-':
+      is_negative = 0
+      continue
+    if digit & 0x40:
+      is_negative = 0
+    value *= 10
+    value += digit & 0x0F
+  if is_negative:
+    retval = "-"
+  else:
+    retval = ""
+  retval += str(value)
+  return retval
+
+def GetIntegerBinary(b_name, b_signable, b_big_endian, b_size):
+  b_location = GetPointerTo(b_name)
+  digits = GetBytesAt(b_location, b_size)
+  # We want them in big-endian order:
+  is_negative = False
+  if not b_big_endian:
+    digits.reverse()
+  # If it's signable and the highest order bit is on, then take the 
+  # two's complement:
+  if b_signable:
+    if digits[0] & 0x80:
+      # This is a negative number.
+      is_negative = True
+      for i in range(b_size):
+        digits[i] = digits[i] ^ 0xFF
+      for i in range(b_size):
+        digits[b_size-1-i] += 1
+        digits[b_size-1-i] &= 0xFF
+        if digits[b_size-1-i] != 0:
+          break
+  # Convert the "digits" to a single value:
+  value = 0;
+  for digit in digits:
+    value <<= 8
+    value += digit
+  if is_negative:
+    retval = "-"
+  else:
+    retval = ""
+  retval += str(value)
   return retval
 
 def ExpressionEvaluate(expression):
-  retval = 0
-
-  expression = ProcessCobGetNumdisp(expression)
-  expression = ProcessCobU8Ptr(expression)
-
-  if expression.find("b_") == -1:
-    retval = AddEmUp(expression)
-  else:
-    #
-    # There is a "b_" variable in the expression, so we have to go through
-    # the effort of extracting its value.  This is critical, for example,
-    # for dealing with DEPENDING ON variables, where the effective length
-    # of an array can look like
-    #
-    #   10*(*(cob_u8_ptr)(b_8))
-    #
-    #print("The expression is", expression)
-    #
-    # The first order of business is to eliminate the "(*(cob_u8_ptr)",
-    # which for our purposes is irrelevant.
-    #
-    # It turns out there are other things we need to get rid of:
-
-    expr = re.sub("[*][()]cob.*_ptr[)]", "", expression)
-    expr = re.sub("[(]unsignedint[)]COB_BSWAP_32", "", expr)
-    expr = re.sub("[(]unsignedshort[)]COB_BSWAP_16", "", expr)
-    expr = re.sub(r"[*][(]short[*][)]", "", expr)
-    expr = re.sub(r"[(]short[)]COB_BSWAP_16", "", expr)
-    expr = re.sub(r"[(]int[)]COB_BSWAP_32", "", expr)
-    #print("The final expr is", expr)
-
-    # We are going to walk expr, replacing each b_xxx with its current
-    # numerical value:
+  try:
+    retval = 0
+    expr = expression
     while True:
-      match = re.search(r"^(.*)(b_[0-9]+)(.*)$", expr)
+      match = re.search(r"^(.*)Q[(](b_[0-9]+),([0-9]+)[)](.*)$", expr)
       if not match:
-        break
+        break;
+      # The cobcd-st program took a bunch of "pick up this integer" possiblities
+      # and converted them to a common format.  Let's deconvert them:
+      b_name  = match.group(2)
+      param   = atoi(match.group(3))
+      b_type  = param % 100
+      param   = param // 100
+      b_flags = param % 10
+      b_flags = b_flags % 10
+      b_signable = b_flags % 2
+      b_big_endian = b_flags // 2
+      param   = param // 10
+      b_size  = param
+      if b_type == COB_TYPE_NUMERIC_BINARY:
+        piece = GetIntegerBinary(b_name, b_signable, b_big_endian, b_size)
+      elif b_type == COB_TYPE_NUMERIC_DISPLAY:
+        piece = GetIntegerNumericDisplay(b_name, b_signable, b_big_endian, b_size)
+      elif b_type == COB_TYPE_NUMERIC_PACKED:
+        piece = GetIntegerNumericPacked(b_name, b_signable, b_big_endian, b_size)
+      elif b_type == COB_TYPE_NUMERIC_FLOAT:
+        print("warning: We can't handle a FLOAT32 OCCURS DEPENDING ON variable")
+        piece = "1"
+      elif b_type == COB_TYPE_NUMERIC_DOUBLE:
+        print("warning: We can't handle a FLOAT64 OCCURS DEPENDING ON variable")
+        piece = "1"
+      else:
+        print("ExpressionEvaluate doesn't know how to handle type", b_type)
+        ConditionalRaise("ExpressionEvaluate doesn't know how to handle type", b_type)
+        raise
+      expr = match.group(1) + piece + match.group(4)
 
-      the_name = None
-      for payload in GV_ModuleInformation.var_trie.storage_list:
-        if payload.Bname == match.group(2):
-          the_name = payload.Name
-          break;
-      if the_name:
-        the_value = atoi(payload.display_body or "0")
-        #the_value, limit_reached = IntegerOrVariable(the_name)
-
-        # We now reassemble the expr using the integer:
-        expr = match.group(1) + str(the_value) + match.group(3)
-      break
+    # There are no b_xxx values left in the string
     retval = AddEmUp(expr)
-  print("KILROY expression", expression, retval)
+  except:
+    traceback.print_exc()
+    sys.exit(1)
   return retval
 
 def process_left_right_args(args):
@@ -2303,11 +2335,11 @@ class CobolVariable():
       #   } cob_field_attr;
 
       # CHECKME: can/should we keep the GDB values here instead of the current int value?
-      self.AttrType = int(self.attribute['type'])
+      self.AttrType   = int(self.attribute['type'])
       self.AttrDigits = int(self.attribute['digits'])
       self.AttrScale  = int(self.attribute['scale'])
       self.AttrFlags  = int(self.attribute['flags'])
-      self.Picture = ""
+      self.Picture    = ""
 
       curr_pic    = self.attribute['pic']
 

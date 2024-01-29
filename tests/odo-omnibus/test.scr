@@ -1,0 +1,128 @@
+set height 0
+set width 0
+set print repeats 10
+set print elements 200
+set print repeat 0
+
+file ./test
+
+break 315
+run
+
+echo KNOWN GOOD START\n
+
+cp/v0 TAB01
+cp/v0 TAB02
+cp/v0 TAB03
+cp/v0 TAB04
+cp/v0 TAB05
+cp/v0 TAB06
+cp/v0 TAB07
+cp/v0 TAB08
+cp/v0 TAB11
+cp/v0 TAB12
+cp/v0 TAB13
+cp/v0 TAB14
+cp/v0 TAB15
+cp/v0 TAB16
+cp/v0 TAB17
+cp/v0 TAB18
+cp/v0 TAB31
+cp/v0 TAB32
+cp/v0 TAB33
+cp/v0 TAB34
+cp/v0 TAB35
+cp/v0 TAB36
+cp/v0 TAB37
+cp/v0 TAB38
+cp/v0 TAB41
+cp/v0 TAB42
+cp/v0 TAB43
+cp/v0 TAB44
+cp/v0 TAB45
+cp/v0 TAB46
+cp/v0 TAB47
+cp/v0 TAB48
+cp/v0 TAB51
+cp/v0 TAB52
+cp/v0 TAB53
+cp/v0 TAB54
+
+cp TABD OF TAB01=12
+cp TABD OF TAB02=12
+cp TABD OF TAB03=12
+cp TABD OF TAB04=12
+cp TABD OF TAB05=12
+cp TABD OF TAB06=12
+cp TABD OF TAB07=12
+cp TABD OF TAB08=12
+cp TABD OF TAB11=12
+cp TABD OF TAB12=12
+cp TABD OF TAB13=12
+cp TABD OF TAB14=12
+cp TABD OF TAB15=12
+cp TABD OF TAB16=12
+cp TABD OF TAB17=12
+cp TABD OF TAB18=12
+cp TABD OF TAB31=12
+cp TABD OF TAB32=12
+cp TABD OF TAB33=12
+cp TABD OF TAB34=12
+cp TABD OF TAB35=12
+cp TABD OF TAB36=12
+cp TABD OF TAB37=12
+cp TABD OF TAB38=12
+cp TABD OF TAB41=12
+cp TABD OF TAB42=12
+cp TABD OF TAB43=12
+cp TABD OF TAB44=12
+cp TABD OF TAB45=12
+cp TABD OF TAB46=12
+cp TABD OF TAB47=12
+cp TABD OF TAB48=12
+cp TABD OF TAB51=12
+cp TABD OF TAB52=12
+cp TABD OF TAB53=12
+cp TABD OF TAB54=12
+
+cp/v0 TAB01
+cp/v0 TAB02
+cp/v0 TAB03
+cp/v0 TAB04
+cp/v0 TAB05
+cp/v0 TAB06
+cp/v0 TAB07
+cp/v0 TAB08
+cp/v0 TAB11
+cp/v0 TAB12
+cp/v0 TAB13
+cp/v0 TAB14
+cp/v0 TAB15
+cp/v0 TAB16
+cp/v0 TAB17
+cp/v0 TAB18
+cp/v0 TAB31
+cp/v0 TAB32
+cp/v0 TAB33
+cp/v0 TAB34
+cp/v0 TAB35
+cp/v0 TAB36
+cp/v0 TAB37
+cp/v0 TAB38
+cp/v0 TAB41
+cp/v0 TAB42
+cp/v0 TAB43
+cp/v0 TAB44
+cp/v0 TAB45
+cp/v0 TAB46
+cp/v0 TAB47
+cp/v0 TAB48
+cp/v0 TAB51
+cp/v0 TAB52
+cp/v0 TAB53
+cp/v0 TAB54
+
+echo KNOWN GOOD FINISH\n
+
+continue
+quit
