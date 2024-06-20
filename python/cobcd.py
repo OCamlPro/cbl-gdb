@@ -8129,6 +8129,22 @@ try:
 except AttributeError:
   pass # that's a GDB 11+ event registry, no problem if not available
 
+
+# skip COBOL runtime calls (supporting a debug build of libcob)
+# while providing the option top restore that by "skip disable 3"
+try:
+    output = gdb.execute("info skip", False, True)
+    skip_cmds = ""
+
+    for rfunc in ('cob_trace_*', 'cob_check_*', 'cob_*'):
+        if not rfunc in output:
+            skip_cmds += "\n" + "skip -rfunction " + rfunc
+    if skip_cmds:
+        gdb.execute(skip_cmds, False, True)
+except gdb.error:
+    pass
+
+
 CFrameWorker()
 CBLDBG_CBREAK_WORKER = CBreakWorker()
 CPrint()
