@@ -7293,6 +7293,9 @@ class CFrameWorker:
     CFinishModule()
     CFinishOutOfLinePerform()
     CLocalBacktrace()
+    if GV_noisy_registration:
+        print('Registering command cbacktrace-full')
+    CBacktraceFull()
     CListSection()
     # Note: frame filter support in python API only with GDB 7.7+
     if GV_GlobalVariables.gdb_version > 70700:
@@ -7308,10 +7311,25 @@ class CFrameWorker:
         gdb.execute("alias -a cbt = cbacktrace", False, True)
       except gdb.error:
         pass
-      try:
-        gdb.execute("alias cwhere = cbacktrace", False, True)
-      except gdb.error:
-        pass
+      cbt_target = "cbacktrace"
+    else:
+      if GV_noisy_registration:
+          print('Aliasing cbacktrace from cbacktrace-full')
+      # "cbt" will be already used by GDB because the single match is cbtf
+      cbt_target = "cbacktrace-full"
+
+    # set alias, ignore errors (most likely because already defined)
+    # note: postponed as otherwise the cbt alias above will not work
+    try:
+      gdb.execute("alias -a cbtf = cbacktrace-full", False, True)
+    except gdb.error:
+      pass
+
+    # set aliases, ignore errors (most likely because already defined)
+    try:
+      gdb.execute("alias cwhere = " + cbt_target, False, True)
+    except gdb.error:
+      pass
 
   @staticmethod
   def is_cobol_frame(frame):
@@ -7789,6 +7807,34 @@ class CLocalBacktrace(gdb.Command):
         gdb.execute("set listsize unlimited", False, False)
       else:
         gdb.execute("set listsize {0}".format(listsize), False, False)
+
+
+class CBacktraceFull (gdb.Command):
+    """Print module and local backtrace of all COBOL stack frames.
+
+Effectively switching to all COBOL frames, doing a local-backtrace there."""
+
+  def __init__(self):
+    super(CBacktraceFull, self).__init__("cbacktrace-full", gdb.COMMAND_STACK)
+
+  def invoke(self, arguments, from_tty):
+    currentframe = gdb.selected_frame()
+
+    # TODO: handle numeric argument to limit amount of COBOL frames,
+    #       _maybe_ even handle negative ones (from first COBOL frame)
+
+    try:
+      frame = gdb.newest_frame()
+      frame.select()
+      frame = CFrameWorker.Frame(True, 0) # => "cdown-silently 0"
+      while frame:
+        frame.select()
+        gdb.execute("frame")
+        gdb.execute("local-backtrace")
+        frame = CFrameWorker.Frame(True, 1) # => "cdown-silently 1"
+      pass
+    finally:
+      currentframe.select()
 
 
 class CBacktrace (gdb.Command):
