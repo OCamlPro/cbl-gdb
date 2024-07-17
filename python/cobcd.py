@@ -7810,8 +7810,7 @@ class CLocalBacktrace(gdb.Command):
 
 
 class CBacktraceFull (gdb.Command):
-    """Print module and local backtrace of all COBOL stack frames.
-
+  """Print module and local backtrace of all COBOL stack frames.
 Effectively switching to all COBOL frames, doing a local-backtrace there."""
 
   def __init__(self):
