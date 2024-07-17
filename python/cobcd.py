@@ -8019,6 +8019,87 @@ GV_ModuleState = ModuleState()
 init_me()
 
 
+class CHelp(gdb.Command):
+    """Shows help for gdb COBOL debugging"""
+
+    CHELP_TEXT = """
+For details: see help <cmd>
+
+-cmd----------(abbr.)-|----------------------------------
+step            (s)   | step
+cnext           (cn)  | step over (COBOL)
+cfinish         (cf)  | go until exit section/program
+                      |         (back to PERFORM/CALL)
+fp                    | finish program (back to CALL)
+until-cobol           | go until COBOL
+continue        (c)   | continue
+add-symbol-file-cobol | load COBOL module  [BUG, DO NOT USE]
+cbreak          (cb)  | set breakpoint
+cb [<pos>9 [if <cond>]| set breakpoint [at <pos> or current line]
+                      |   [with COBOL <cond>]
+cb section <sec>      | set section breakpoint
+cb <prgm>             | set program breakpoint
+ctbreak         (ctb) | set temporary breakpoint
+info break      (i b) | show current breakpoints
+delete  <N>     (d)   | delete breakpoint
+disable <N>     (dis) | disable breakpoint
+enable  <N>     (en)  | enable breakpoint
+commands [<N>]        | set/remove commands to be
+                      |    executed at breakpoint
+ccondition <N>  (cc)  | remove COBOL condition for breakpoint
+cc <N> <cond>         | set COBOL condition for breakpoint
+ignore <N> <cnt> (ig) | skips breakpoint <cnt> times
+cprint          (cp)  | show or assign values
+cprint /p  <VAR>      | show all variables below the group
+cwatch          (cw)  | watch var - break+print on change
+list            (l)   | show source context
+list [PROG.cob:]<l>   | set context to show
+list-section <N>      | set list to start on section
+cbacktrace      (cbt) | COBOL backtrace -> filtered frames
+cbacktrace-full (cbtf)| COBOL backtrace with PERFORM trace
+backtrace       (bt)  | backtrace -> frames
+frame <n>             | switch to frame n
+cup [n]               | switch n COBOL frames up
+cdown [n]             | switch n COBOL frames down
+finish          (fin) | finish current C function
+cstart                | restart debug session
+quit                  | quit debugger
+pipe                  | send output of gdb command to shell
+shell <cmd>           | execute shell comamnd
+help-cobol            | shows this help
+"""
+
+    def __init__(self):
+      if GV_noisy_registration:
+        print('Registering command help-cobol')
+        super(CHelp, self).__init__("help-cobol", gdb.COMMAND_USER)
+
+    def invoke(self, arguments, from_tty):
+        try:
+            print(self.CHELP_TEXT)
+        except KeyboardInterrupt as ki:
+            print(ki)
+
+def stop_handler_auto_step(event):
+  # check the _type_ of stop, _not_ the instance:
+  # the following is the common one after step/next, a more complex one would be a subclass
+  # (for example breakpoint or signal) which we say "that is complex" -> stop auto step
+  # Note that we can't set the value directly because we never should set it to False here
+  # when it is already True, as we may get flooded by a lot of events, so we otherwise
+  # ending with scenarios like  False, False, False, True, False  otherwise
+  global got_complex_stop_event
+  if not type(event) is gdb.StopEvent:
+    got_complex_stop_event = True
+
+
+gdb.events.exited.connect(exit_handler)
+gdb.events.stop.connect(stop_handler)
+try:
+  gdb.events.inferior_deleted.connect(stop_handler)
+except AttributeError:
+  pass # that's a GDB 11+ event registry, no problem if not available
+
+
 class CmdAutoStep (gdb.Command):
   """Auto-Step through the code until something happens or manually interrupted.
 An argument says how fast auto stepping is done (see parameter "auto-step")."""
@@ -8138,9 +8219,10 @@ CLoad()
 CNext()
 CmdAutoStep()
 CStart()
+CHelp()
 
 if not GV_noisy_registration:
-  print("Registering the CBL-GDB debugger {0}.  Help is available for".format(COBCD_VERSION))
+  print("Registering the CBL-GDB debugger {0}.  Help is available with help-cobol and for".format(COBCD_VERSION))
   print("   cprint cwatch cbreak ctbreak ccondition add-symbol-file-cobol cstart cnext")
   print("   cup cup-silently cdown cdown-silently cfinish")
   print("   finish-out-of-line-perform finish-module until-cobol list-section local-backtrace cbacktrace auto-step")
