@@ -69,7 +69,7 @@ GV_noisy_registration = False
 
 # Version to be printed upon request - Don't mess with it!
 # It is updated by a Linux bash script, the text "Version x.x" has to appear in square brackets.
-COBCD_VERSION = '[Version 5.3.1]'
+COBCD_VERSION = '[Version 5.4.1]'
 
 # This module implements the gdb extension commands like cprint and cwatch
 # It is executed by GDB.
@@ -8072,7 +8072,7 @@ help-cobol            | shows this help
     def __init__(self):
       if GV_noisy_registration:
         print('Registering command help-cobol')
-        super(CHelp, self).__init__("help-cobol", gdb.COMMAND_USER)
+      super(CHelp, self).__init__("help-cobol", gdb.COMMAND_USER)
 
     def invoke(self, arguments, from_tty):
         try:
