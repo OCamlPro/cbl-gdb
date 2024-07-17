@@ -5,6 +5,8 @@ set print elements 200
 
 file ./test
 
+cprint/v3
+
 cstart
 echo KNOWN GOOD START\n
 echo TESTING cprint/v0 *\n

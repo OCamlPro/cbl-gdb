@@ -22,35 +22,24 @@ cprint/r 6
 cwatch D
 
 continue
-frame 4
-printem
-frame 4
-continue
-frame 4
 printem
 continue
-frame 4
 printem
 continue
-frame 4
 printem
 continue
-frame 4
 printem
 continue
-frame 4
 printem
 continue
-frame 4
 printem
 continue
-frame 4
 printem
 continue
-frame 4
 printem
 continue
-frame 4
+printem
+continue
 printem
 
 delete

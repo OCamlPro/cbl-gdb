@@ -5,6 +5,7 @@ set print elements 200
 
 file ./test
 
+cprint/v3
 cstart
 
 b 34

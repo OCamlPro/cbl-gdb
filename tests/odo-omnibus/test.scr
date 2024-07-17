@@ -6,6 +6,7 @@ set print repeat 0
 
 file ./test
 
+cprint/v3
 break 315
 run
 
