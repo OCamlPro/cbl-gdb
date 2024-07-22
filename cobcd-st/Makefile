@@ -1,3 +1,5 @@
+PYTHON=/usr/bin/python3
+
 project=cobcd-st
 
 prefix ?=/usr/local
@@ -17,9 +19,9 @@ $(project) : $(obj)
 	@$(CPP) $(CFLAGS) $< -MM -MT $(@:.d=.o) >$@
 	
 cobst.cpp : cobcd_py.h
-	
+
 cobcd_py.h : ../python/cobcd.py
-	xxd -i ../python/cobcd.py >cobcd_py.new.h
+	$(PYTHON) ./py2h ../python/cobcd.py cobcd_py.new.h
 	mv cobcd_py.new.h cobcd_py.h
 
 .PHONY: clean

@@ -1,0 +1,27 @@
+#!/usr/bin/python3
+
+import sys
+
+def bin_to_c_header(input_file, output_file):
+    with open(input_file, 'rb') as f:
+        byte_array = f.read()
+
+    variable_name = input_file.replace('.', '_').replace('/', '_')
+
+    with open(output_file, 'w') as f:
+        f.write(f"unsigned char {variable_name}[] = {{\n")
+        for i in range(0, len(byte_array), 12):
+            line = byte_array[i:i+12]
+            f.write("  " + ", ".join(f"0x{b:02x}" for b in line) + ",\n")
+        f.write("};\n")
+        f.write(f"unsigned int {variable_name}_len = {len(byte_array)};\n")
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print(f"Usage: {sys.argv[0]} <input_file> <output_file>")
+        sys.exit(1)
+    
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+
+    bin_to_c_header(input_file, output_file)

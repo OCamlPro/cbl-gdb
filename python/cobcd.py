@@ -47,8 +47,6 @@
 # os.environ.get('CPRINT_R', '6')) Default p/? range
 # os.environ.get('CPRINT_RAISE, 1) 1 means gdb.error, 0 means just print and continue
 
-from __future__ import print_function
-
 import re
 import sys
 import platform
@@ -234,26 +232,17 @@ def GdbExecute(curframe, command):
 
 
 def get_memoryview(address, length):
-  # GDB creates memoryview objects for Python 3, because Python 2.6 only has buffer
-  # and that is the documented API for Python 2;
-  # but as Python 2.7 (which is a dependency for cbl-gdb) has backported memoryview
-  # we can check for this type and convert the buffer if necessary, because conveniently
-  # memoryview a constructor that takes a buffer object
 
   if address == 0:
     ConditionalRaise("We're not going to try to access memory with a NULL pointer")
     return None
 
   try:
-    obj = gdb.selected_inferior().read_memory(address, length)
-    if isinstance(obj, memoryview):
-      return obj
+    return gdb.selected_inferior().read_memory(address, length)
   except gdb.MemoryError as ex:
     # pass on as user error to make it visible without a stacktrace
     ConditionalRaise("MemoryError: " + str(ex))
     return None
-
-  return memoryview(obj)
 
 
 def get_max_completions():
@@ -646,36 +635,23 @@ def GetBytesAt(address, length):
     return []
 
   memlist = get_memoryview(address, length).tolist()
-  # Note: Python2 returns a list of ints here, Python3 a list of bytes,
-  #   which results in problems later - convert if necessary:
-  if not isinstance(memlist[0], int):
-    retval = []
-    for byte in memlist:
-      retval.append(ord(byte))
-    return retval
+  # Note: Python3 returns a list of bytes,
+  #   which results in problems later - convert:
+  retval = []
+  for byte in memlist:
+    retval.append(ord(byte))
+  return retval
 
   return memlist
 
 
 def PutBytesAt(address, list_of_values, length):
-  # Not surprisingly, this works differently in Python2 than in Python3:
-
-  if sys.version[0] == '2':
-    # Put <length> elements of list_of_values into <address> as bytes
-    # We expect list_of_values to be bytes or ints
-    #
-    # Converting to a string is necessary for Python2
-    vals = ""
-    for i in range(length):
-      vals += chr(list_of_values[i])
-    gdb.selected_inferior().write_memory(address, vals, length)
-  else:
-    # Put <length> elements of list_of_values into <address> as bytes
-    # We expect list_of_values to be bytes or ints
-    vals = bytearray(length)
-    for i in range(length):
-      vals[i] = list_of_values[i]
-    gdb.selected_inferior().write_memory(address, vals, length)
+  # Put <length> elements of list_of_values into <address> as bytes
+  # We expect list_of_values to be bytes or ints
+  vals = bytearray(length)
+  for i in range(length):
+    vals[i] = list_of_values[i]
+  gdb.selected_inferior().write_memory(address, vals, length)
 
 
 def GetValueAt(address, nr_bytes):
@@ -734,19 +710,12 @@ def GetPointerTo(name):
           and result.dereference().type.code == gdb.TYPE_CODE_PTR:
     # 'result' is a pointer to a pointer, so we need to pick up
     # the value of the pointer:
-    if sys.version[0] == '2':
-      result = result.referenced_value()
-      pointer  = int(str(result).split()[0], 16)
-    else:
-      pointer = int(gdb.parse_and_eval(name))
+    pointer = int(gdb.parse_and_eval(name))
   else:
     # Otherwise, it was defined as the name of a block of some kind:
     # " char name[22] " or "cob_field name", or "int".  In that case,
     # 'result' already is the answer we need
-    if sys.version[0] == '2':
-      pointer  = int(str(result).split()[0], 16)
-    else:
-      pointer = int(result)
+    pointer = int(result)
 
   return pointer
 
@@ -6719,9 +6688,7 @@ class CPrint(gdb.Command):
       if ex.returncode != 1:
         print("WARNING: \"cprint ?\" not available: {0} not available, consider setting COBCDRW".format(COBCDRW_BINARY))
         COBCDRW_AVAILABLE = False
-    # note: specific errors were only added with Python 3.3, so we catch everything...
-    # except subprocess.CalledProcessError:
-    except:   # TODO: use appropriate exception
+    except subprocess.CalledProcessError:
       print("WARNING: \"cprint ?\" not available: {0} not available, consider setting COBCDRW".format(COBCDRW_BINARY))
       COBCDRW_AVAILABLE = False
 
@@ -7097,9 +7064,7 @@ Usage: add-symbol-file-cobol MODULE       try to load given COBOL module into GD
 
     try:
       subprocess.check_output([READELF_BINARY, '--version'])
-    # note: specific errors were only added with Python 3.3, so we catch everything...
-    # except subprocess.CalledProcessError:
-    except:
+    except subprocess.CalledProcessError:
       READELF_AVAILABLE = False
       # No raise here as we don't want a backtrace
       print("WARNING: {0} not found on path, not registering add-symbol-file-cobol, consider setting READELF".format(READELF_BINARY))
@@ -7899,11 +7864,6 @@ class ElideNonCobolIterator():
     # pass non-COBOL-inner-frames as-is
     return frame
 
-  # python2 iteration
-  def next(self):
-    return self.__next__()
-
-
 class CobolFrameFilter():
   def __init__(self):
     self.name = "COBOL-FrameFilter"
@@ -8008,10 +7968,6 @@ class RemoveNonCobolIterator():
       # we have nothing returned yet, but an outer frame --> return as-is
       return frame
 
-    return self.__next__()
-
-  # python2 iteration
-  def next(self):
     return self.__next__()
 
 
