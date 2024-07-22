@@ -10,6 +10,7 @@ These tools are known to compile with GCC-4.8.5 and later.  They have been demon
 During building the binaries `xxd` and possibly `sed` are necessary, too.
 
 Actual debugging requires that your version of GDB was compiled with Python2 or Python3 support.  The default installations of GDB in the above-mentioned operating systems are known to have Python support.
+GDB 9+ is needed
 
 ## Building and Installation
 
