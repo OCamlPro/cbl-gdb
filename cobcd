@@ -42,8 +42,6 @@
 ## Nasty command line for testing:
 ## mkdir -p /tmp/list && cobcd -gv -T /tmp/lis/TEST.lis -Xref -ftsymbols -tlines=0 -Wall -fno-ec=DATA-INCOMPATIBLE -foptional-file -ext lib -fdump=all -D 'MY-COMPILER=2' -D 'MY-OS=Linux' -fno-ec=bound-ref-mod -lgmp -o TEST.so /home/bob/repos/cbl-gdb-samples/ref_test_2/rtest.cbl
 
-from __future__ import print_function
-
 import sys
 import os
 import platform
@@ -103,12 +101,7 @@ def DeSpace(command) :
                 retval.append(element)
         return retval
 
-    if isinstance(command,unicode) :
-        # This will come into play with Python2
-        command = command.encode('ascii','replace')
-        return command.split()
-
-    # It's not a list, or a string, or a Python2 unicode string, so
+    # It's not a list, or a string, so
     # we don't know what to do with it.
     return command
 
@@ -183,13 +176,6 @@ def RunCommand(command) :
     err_file.seek(0)
     result_err = err_file.read().decode("utf-8").replace('\r','')  # A nod to Windows
     err_file.close()
-
-    if not isinstance(result_std,str) and isinstance(result_std,unicode) :
-        # This will come into play with Python2
-        result_std = result_std.encode('ascii','replace')
-    if not isinstance(result_err,str) and isinstance(result_err,unicode) :
-        # This will come into play with Python2
-        result_err = result_err.encode('ascii','replace')
 
     return errcode, result_std, result_err
 
@@ -267,7 +253,7 @@ def Main() :
     show_time = os.environ.get("SHOW_TIME","0")
     SHOW_TIME = False
     if show_time != "0" :
-        SHOW_TIME = True    # For timing analysis.  Won't work on Python2
+        SHOW_TIME = True    # For timing analysis.
     if SHOW_TIME :
         clock_start = time.monotonic()
         lap_start = 0
@@ -970,8 +956,7 @@ def Main() :
                     PY_DEST .append(TARGET+"-gdb.py")
                     PY_DEST = '/'.join(PY_DEST)
                     if FMODE == "3" : ## This means make a soft link:
-                        ## This won't work on Python2.  So don't try.  And on Windows, you
-                        ## need admin privileges, so don't try there, either.
+                        ## Needs admin privileges on Windows, so don't try there.
                         DeleteAFile(PY_DEST)
                         if ECHO :
                             print("Creating symlink: os.symlink(" + PYTHON + "," + PY_DEST +")")
