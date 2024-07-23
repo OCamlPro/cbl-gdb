@@ -1,7 +1,8 @@
-set height 0
-set width 0
-set print repeats 10
-set print elements 200
+# testing ...
+
+source ../tests_init.gdb
+
+# no summary for repeated elements in this test
 set print repeat 0
 
 file ./test

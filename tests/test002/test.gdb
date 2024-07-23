@@ -1,18 +1,6 @@
-set height 0
-set width 0
-set print repeats 10
-set print elements 200
+# testing ...
 
-define stutter_step
-    set variable $_exitcode=1031
-    while $_exitcode==1031
-        echo 
-        cprint *
-        cprint ?
-        cprint/x #1
-        step
-        end
-    end
+source ../tests_init.gdb
 
 define printem
     echo KNOWN GOOD START\n
@@ -35,15 +23,8 @@ define printem
 	echo cprint/b #1\n
 	cprint/b #1
     echo KNOWN GOOD FINISH\n
-    end
+end
 
-define printloop
-    set variable $_exitcode=1031
-    while $_exitcode==1031
-       printem
-       continue
-       end
-    end
 
 file test
 cprint/v3
@@ -163,119 +144,118 @@ echo KNOWN GOOD FINISH\n
 
 echo Checking the debugger CPRINT LENGTH OF feature\n
 delete
-b 134
-b 135
-b 136
-b 137
-b 138
-b 139
-b 140
-b 141
-b 142
-b 143
-b 144
-b 145
-b 146
-b 147
-b 148
-b 149
-b 150
-b 151
-b 152
-b 153
-b 154
-b 155
-b 156
-b 157
-b 158
-b 159
-b 160
-b 161
-b 162
-b 163
-b 164
-b 165
-b 166
-b 167
-b 168
-b 170
+break 134
+break 135
+break 136
+break 137
+break 138
+break 139
+break 140
+break 141
+break 142
+break 143
+break 144
+break 145
+break 146
+break 147
+break 148
+break 149
+break 150
+break 151
+break 152
+break 153
+break 154
+break 155
+break 156
+break 157
+break 158
+break 159
+break 160
+break 161
+break 162
+break 163
+break 164
+break 165
+break 166
+break 167
+break 168
+break 170
 
 echo KNOWN GOOD START\n
-r
+run
 cprint LENGTH OF def-BINARY-CHAR
-c
+continue
 cprint LENGTH OF def-BINARY-CHAR-SIGNED
-c
+continue
 cprint LENGTH OF def-BINARY-CHAR-UNSIGNED
-c
+continue
 cprint LENGTH OF def-BINARY-C-LONG
-c
+continue
 cprint LENGTH OF def-BINARY-C-LONG-SIGNED
-c
+continue
 cprint LENGTH OF def-BINARY-C-LONG-UNSIGNED
-c
+continue
 cprint LENGTH OF def-BINARY-DOUBLE
-c
+continue
 cprint LENGTH OF def-BINARY-DOUBLE-SIGNED
-c
+continue
 cprint LENGTH OF def-BINARY-DOUBLE-UNSIGNED
-c
+continue
 cprint LENGTH OF def-BINARY-INT
-c
+continue
 cprint LENGTH OF def-BINARY-LONG
-c
+continue
 cprint LENGTH OF def-BINARY-LONG-SIGNED
-c
+continue
 cprint LENGTH OF def-BINARY-LONG-UNSIGNED
-c
+continue
 cprint LENGTH OF def-BINARY-LONG-LONG
-c
+continue
 cprint LENGTH OF def-BINARY-SHORT
-c
+continue
 cprint LENGTH OF def-BINARY-SHORT-SIGNED
-c
+continue
 cprint LENGTH OF def-BINARY-SHORT-UNSIGNED
-c
+continue
 cprint LENGTH OF def-COMPUTATIONAL
-c
+continue
 cprint LENGTH OF def-COMP-1
-c
+continue
 cprint LENGTH OF def-COMP-2
-c
+continue
 cprint LENGTH OF def-COMPUTATIONAL-1
-c
+continue
 cprint LENGTH OF def-COMPUTATIONAL-2
-c
+continue
 cprint LENGTH OF def-FLOAT-DECIMAL-16
-c
+continue
 cprint LENGTH OF def-FLOAT-DECIMAL-34
-c
+continue
 cprint LENGTH OF def-FLOAT-LONG
-c
+continue
 cprint LENGTH OF def-FLOAT-SHORT
-c
+continue
 cprint LENGTH OF def-INDEX
-c
+continue
 cprint LENGTH OF def-POINTER
-c
+continue
 cprint LENGTH OF def-PROCEDURE-POINTER
-c
+continue
 cprint LENGTH OF def-PROGRAM-POINTER
-c
+continue
 cprint LENGTH OF def-SIGNED-INT
-c
+continue
 cprint LENGTH OF def-SIGNED-LONG
-c
+continue
 cprint LENGTH OF def-SIGNED-SHORT
-c
+continue
 cprint LENGTH OF def-UNSIGNED-INT
-c
+continue
 cprint LENGTH OF def-UNSIGNED-LONG
-c
+continue
 cprint LENGTH OF def-UNSIGNED-SHORT
 echo KNOWN GOOD FINISH\n
 
-c
-q
+continue
 
-
+quit

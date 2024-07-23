@@ -1,7 +1,6 @@
-set height 0
-set width 0
-set print repeats 10
-set print elements 200
+# testing basic cprint
+
+source ../tests_init.gdb
 
 file ./test
 

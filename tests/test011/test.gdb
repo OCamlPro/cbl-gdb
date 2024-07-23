@@ -1,17 +1,17 @@
-set height 0
-set width 0
-set print repeats 10
-set print elements 200
+# testing ...
+
+source ../tests_init.gdb
+
 
 file ./test
 cprint/v0
 
-b 14
-b 19
-b 24
-b 30
-b 35
-b 40
+break 14
+break 19
+break 24
+break 30
+break 35
+break 40
 
 cstart
 echo KNOWN GOOD START\n
@@ -34,4 +34,5 @@ cprint/v8 BFLAG
 cprint AFLAG=BFLAG
 echo KNOWN GOOD FINISH\n
 continue
+
 quit

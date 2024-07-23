@@ -1,15 +1,14 @@
-set height 0
-set width 0
-set print repeats 10
-set print elements 200
+# testing handling of binary indexes
+
+source ../tests_init.gdb
 
 file ./test
 
 cprint/v3
 cstart
 
-b 34
-b 63
+break 34
+break 63
 continue
 
 echo KNOWN GOOD START\n
