@@ -281,17 +281,10 @@ class GlobalVariables():
     if m.group(4):
       self.gdb_version = self.gdb_version + int(m.group(4))
 
-    if self.gdb_version < 80300:
-      if self.gdb_version < 70600:
-        # Sanity check with expected stack trace - as everything will be broken in this case
-        raise Exception("The COBOL extension cannot work with GDB-{0}.{1} (GDB 7.6+ is required)!".format(
-          self.gdb_version / 10000, self.gdb_version % 10000))
-      if self.gdb_version < 70700:
-        print(" !! Warning: frame-filters and cbacktrace are not available with GDB-{0}.{1} (GDB 7.7+ is required)\n{2}".format(
-          self.gdb_version / 10000, self.gdb_version % 10000,
-          "cwatch handling will be severely limited"))
-      if self.gdb_version >= 80000:
-        print(" !! Warning: there are known problems with GDB-8.1 and GDB-8.2")
+    if self.gdb_version < 90000:
+      # Sanity check with expected stack trace - as everything will be broken in this case
+      raise Exception("The COBOL extension cannot work with GDB-{0}.{1} (GDB 9.0+ is required)!".format(
+        self.gdb_version / 10000, self.gdb_version % 10000))
 
     # Establish what we do on ConditionalRaise:
     conraise = int(os.environ.get('CPRINT_RAISE', '1'))
@@ -1151,15 +1144,7 @@ def IntegerOrVariable(s):
       except gdb.error as ex:
         raise gdb.GdbError(ex)
     else:
-      if GV_GlobalVariables.gdb_version >= 80200:
-        val = gdb.convenience_variable(conv_id)
-      else:
-        try:
-          val = str(gdb.parse_and_eval("$"+conv_id))
-          if val == "void":
-            val = None
-        except gdb.error:
-          val = None
+      val = gdb.convenience_variable(conv_id)
       if not val:
         raise gdb.GdbError("unknown convenience variable " + s)
     pyval = str(val)
@@ -4489,9 +4474,7 @@ class ModuleInformation():
     self.perform_commands = {}
 
     # ensure GDB can resolve dynamic field references
-    if GV_GlobalVariables.gdb_version < 80000 or GV_GlobalVariables.gdb_version > 80200:
-      # With RedHat 7 and GDB-8.2, this next statement throws an error
-      gdb.execute("macro define COB_SET_DATA(x, z) (x.data = z, &x)", True, False)
+    gdb.execute("macro define COB_SET_DATA(x, z) (x.data = z, &x)", True, False)
 
     # Load the new tables
     # Pull apart the variable_string
@@ -6015,10 +5998,6 @@ class CPrintWorker():
 
 class CobolAfterWatchBreakpoint(gdb.Breakpoint):
   def __init__(self, creating_wp):
-    if GV_GlobalVariables.gdb_version < 80300:
-      # sanity check, this code is only executed on manual function call
-      raise gdb.GdbError("pure COBOL cwatch needs GDB 8.3+")
-
     # frame we are currently in, to get the resume address
     frame = CFrameWorker.Frame(True, 0)
     if not frame:
@@ -6122,9 +6101,6 @@ class CobolWatchpointHandler():
 
 class CobolWatchBreakpoint(gdb.Breakpoint):
   def __init__(self, payload, bp_spec, bp_action):
-    if GV_GlobalVariables.gdb_version < 80300:
-      # sanity check, this code is only executed on manual function call
-      raise gdb.GdbError("pure COBOL cwatch needs GDB 8.3+")
     try:
       super(CobolWatchBreakpoint, self).__init__(bp_spec, gdb.BP_WATCHPOINT, bp_action)
       CBLDBG_CBREAK_WORKER.cobol_breaks.append(self)
@@ -6187,7 +6163,7 @@ class CWatchWorker():
     spec += '[' + str(wp_length) + '])'
     spec += '(' + hex(wp_startloc) + ')'
 
-    if False and GV_GlobalVariables.gdb_version >= 80300:
+    if False:
       #
       # I have effectively removed this code because I have determined that it doesn't work
       # as intended.  For the CWATCH test program compiled with GnuCOBOL 3.1.2, it seems to
@@ -6212,9 +6188,7 @@ class CWatchWorker():
       if break_point.type == gdb.BP_WATCHPOINT:
         break_point.delete()
         ConditionalRaise("Expression cannot be implemented as hardware watchpoint.\n... and therefore removed")
-        return
-      # Note: GDB 7.6 has no writable commands attribute, gdb.execute with multi-lines does not work either)
-      # break_point.commands = "echo Watched: {0} from {1}\\n \n cup 0".format(payload.NameWithSubscripts(), payload.Program)
+        break_point.commands = "echo Watched: {0} from {1}\\n \n cup 0".format(payload.NameWithSubscripts(), payload.Program)
 
   def process_watch_arguments(self, arguments):
     left_side = []
@@ -6278,10 +6252,7 @@ class CWatchWorker():
 class CobolBreakpoint(gdb.Breakpoint):
   def __init__(self, bp_spec, t_flag, i_flag):
     try:
-      if GV_GlobalVariables.gdb_version >= 70700:
-        super(CobolBreakpoint, self).__init__(bp_spec, type=gdb.BP_BREAKPOINT, temporary=t_flag, internal=i_flag)
-      else:
-        super(CobolBreakpoint, self).__init__(bp_spec, type=gdb.BP_BREAKPOINT, internal=i_flag)
+      super(CobolBreakpoint, self).__init__(bp_spec, type=gdb.BP_BREAKPOINT, temporary=t_flag, internal=i_flag)
       CBLDBG_CBREAK_WORKER.cobol_breaks.append(self)
     except gdb.error:
       # pass errors as is, most likely: malformed bp_spec
@@ -6304,8 +6275,6 @@ class CobolBreakpoint(gdb.Breakpoint):
     l_value = ""
 
     if self.comp_op == "":
-      if GV_GlobalVariables.gdb_version < 70700 and self.t_flag:
-        gdb.post_event(BPRemover(self))
       return True
 
     self.payload_f.SetIsDirty()
@@ -6345,9 +6314,6 @@ class CobolBreakpoint(gdb.Breakpoint):
 
     if retval:
       print("\n{0}: {1}".format(self.payload_f.Name, l_value))
-
-    if retval and GV_GlobalVariables.gdb_version < 70700 and self.t_flag:
-      gdb.post_event(BPRemover(self))
 
     return retval
 
@@ -6628,14 +6594,6 @@ class CBreakWorker():
       return
 
 
-class BPRemover():
-  def __init__(self, break_point):
-    self.bp = break_point
-
-  def __call__(self):
-    self.bp.delete()
-
-
 class CPrint(gdb.Command):
   """Prints COBOL-NAMED variables when debugging cobcd (via cobst) processed object files.
 
@@ -6847,18 +6805,17 @@ A breakpoint stops execution of your program whenever the expression matches
     GV_ModuleState.EstablishModuleState(True)
     if not self.bp_initialized:
       self.bp_initialized = True
-      if GV_GlobalVariables.gdb_version >= 70700:
-        if GV_noisy_registration:
-          print('Registering silent maintenance breakpoint for showing note about ACCEPT')
-        bp = CobolBreakpoint("cob_accept", False, True)
-        if bp:
-          # in an ideal world we would know what the last command executed
-          # was and would for step/next/cnext do a "finish", otherwise a "continue"
-          # bad as that command can come from "everywhere" (python/guile/gdbscript, mi, console)
-          # ["direct console only" would have been solved by looking at the GDB history]
-          # we play safe stopping after the accept and let the user re-execute "continue"
-          # if this is what he wanted
-          bp.commands = "silent \n cup 0 \n down-silently \n finish"
+      if GV_noisy_registration:
+        print('Registering silent maintenance breakpoint for showing note about ACCEPT')
+      bp = CobolBreakpoint("cob_accept", False, True)
+      if bp:
+        # in an ideal world we would know what the last command executed
+        # was and would for step/next/cnext do a "finish", otherwise a "continue"
+        # bad as that command can come from "everywhere" (python/guile/gdbscript, mi, console)
+        # ["direct console only" would have been solved by looking at the GDB history]
+        # we play safe stopping after the accept and let the user re-execute "continue"
+        # if this is what he wanted
+        bp.commands = "silent \n cup 0 \n down-silently \n finish"
 
     self.dont_repeat()
     self.worker.process_break_arguments(arguments, False, False)
@@ -7008,11 +6965,8 @@ class CLoadWorker():
       text_addr, symbol_addrs = CBLDBG_CLOAD_WORKER.get_symbol_addrs(solibpath)
       try:
         gdb_cmd = "add-symbol-file " + solibpath
-        if not text_addr:
-          ConditionalRaise("no text section found")
-          return return_list
-        # GDB 7.6 has text-address as mandatory
-        gdb_cmd = gdb_cmd + " " + text_addr
+        if text_addr:
+          gdb_cmd = gdb_cmd + " " + text_addr
         for s_section, s_address in symbol_addrs.items():
           gdb_cmd = gdb_cmd + " -s {0} {1}".format(s_section, s_address)
         gdb.execute(gdb_cmd, False, True)
@@ -7262,26 +7216,10 @@ class CFrameWorker:
         print('Registering command cbacktrace-full')
     CBacktraceFull()
     CListSection()
-    # Note: frame filter support in python API only with GDB 7.7+
-    if GV_GlobalVariables.gdb_version > 70700:
-      if GV_noisy_registration:
-        print('Registering frame-filters COBOL-FrameFilter (disabled), COBOL-Only-FrameFilter (disabled)')
-      CobolOnlyFrameFilter()
-      CobolFrameFilter()
-      if GV_noisy_registration:
-        print('Registering command cbacktrace')
-      CBacktrace()
-      # set aliases, ignore errors (most likely because already defined)
-      try:
-        gdb.execute("alias -a cbt = cbacktrace", False, True)
-      except gdb.error:
-        pass
-      cbt_target = "cbacktrace"
-    else:
-      if GV_noisy_registration:
-          print('Aliasing cbacktrace from cbacktrace-full')
-      # "cbt" will be already used by GDB because the single match is cbtf
-      cbt_target = "cbacktrace-full"
+    if GV_noisy_registration:
+        print('Aliasing cbacktrace from cbacktrace-full')
+    # "cbt" will be already used by GDB because the single match is cbtf
+    cbt_target = "cbacktrace-full"
 
     # set alias, ignore errors (most likely because already defined)
     # note: postponed as otherwise the cbt alias above will not work
