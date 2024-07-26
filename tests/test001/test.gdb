@@ -1,26 +1,6 @@
-set height 0
-set width 0
-set print repeats 10
-set print elements 200
+# testing ...
 
-define stutter_step
-    set variable $_exitcode=1031
-    while $_exitcode==1031
-        echo
-        cprint *
-        cprint ?
-        cprint/x 1
-        step
-        end
-    end
-
-define stutter
-    echo
-    cprint *
-    cprint ?
-    cprint/x 1
-    step
-    end
+source ../tests_init.gdb
 
 define printem
     echo KNOWN GOOD START\n
@@ -41,15 +21,8 @@ define printem
     echo cprint/m ?\n
     cprint/m ?
     echo KNOWN GOOD FINISH\n
-    end
+end
 
-define printloop
-    set variable $_exitcode=1031
-    while $_exitcode==1031
-       printem
-       continue
-       end
-    end
 
 file test
 cprint/v3
@@ -91,7 +64,7 @@ printem
 continue
 
 delete
-b 121
+break 121
 run
 
 echo KNOWN GOOD START\n

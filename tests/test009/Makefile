@@ -48,12 +48,12 @@ all:
 
 known-good:
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
-	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.scr > known-good.txt
+	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.gdb > known-good.txt
 	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
 
 test:
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
-	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.scr > under-test.txt
+	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.gdb > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
 
@@ -68,7 +68,7 @@ dev:
 
 testprod:
 	cobcd -x test.cbl
-	CPRINT_RAISE=0 $(GDB) --batch -x test.scr > under-test.txt
+	CPRINT_RAISE=0 $(GDB) --batch -x test.gdb > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
 

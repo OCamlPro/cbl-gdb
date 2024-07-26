@@ -1,7 +1,6 @@
-set height 0
-set width 0
-set print repeats 10
-set print elements 200
+# testing ...
+
+source ../tests_init.gdb
 
 define printem
     echo KNOWN GOOD START\n
@@ -22,27 +21,20 @@ define printem
     echo cprint/m ?\n
     cprint/m ?
     echo KNOWN GOOD FINISH\n
-    end
+end
 
-define printloop
-    set variable $_exitcode=1031
-    while $_exitcode==1031
-       printem
-       continue
-       end
-    end
 
 file test
 cprint/v3
 cprint/r 6
 
 echo KNOWN GOOD START\n
-r
+run
 echo KNOWN GOOD FINISH\n
 
-b 146
+break 146
 echo KNOWN GOOD START\n
-r
+run
 
 echo cprint/v3\n
 cprint/v3
@@ -183,7 +175,7 @@ echo cp ws-a(2)\n
 cp ws-a(2)
 echo cp ws-a(2)(2:) = "1"\n
 cp ws-a(2)(2:) = "1"
-echo cp ws-a(2)\n
+echo cp ws-a(2)\n 
 cp ws-a(2)
 echo cp ws-a(2)(3:) = "1"\n
 cp ws-a(2)(3:) = "1"
@@ -358,4 +350,4 @@ cp/v5 ws-c(one two)(one : three of nums2)
 echo KNOWN GOOD FINISH\n
 
 ## And having stepped through the program line-by-line, we are done
-q
+quit

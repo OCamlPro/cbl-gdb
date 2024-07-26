@@ -1,13 +1,12 @@
-set height 0
-set width 0
-set print repeats 10
-set print elements 200
+# testing ...
+
+source ../tests_init.gdb
 
 define printem
 	echo KNOWN GOOD START\n
 	cprint/v0 *
 	echo KNOWN GOOD FINISH\n
-	end
+end
 
 # initialisation
 file test

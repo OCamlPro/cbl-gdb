@@ -1,19 +1,6 @@
-set height 0
-set width 0
-set print repeats 10
-set print elements 200
-set breakpoint pending on
+# testing ...
 
-define stutter_step
-    set variable $_exitcode=1031
-    while $_exitcode==1031
-        echo 
-        cprint *
-        cprint ?
-        cprint/x #1
-        step
-        end
-    end
+source ../tests_init.gdb
 
 define printem
     echo KNOWN GOOD START\n
@@ -31,16 +18,8 @@ define printem
     cprint/m *
     echo cprint/m ?\n
     cprint/m ?
-    echo KNOWN GOOD FINISH\n
-    end
-
-define printloop
-    set variable $_exitcode=1031
-    while $_exitcode==1031
-       printem
-       continue
-       end
-    end
+    echo KNOWN GOOD FINISH\nend
+end
 
 file test
 cprint/v3
@@ -50,7 +29,7 @@ cprint/r 6
 ### (We don't want to think we have a debugging problem when
 ###  in fact it was the test program that changed.)
 echo KNOWN GOOD START\n
-r
+run
 echo KNOWN GOOD FINISH\n
 
 ## We want to check the 'frame N' handling
@@ -59,7 +38,7 @@ echo KNOWN GOOD START\n
 echo \nSet breakpoint at INDENTER.cpy\n
 echo Run from beginning\n
 echo KNOWN GOOD FINISH\n
-b INDENTER.cpy:2
+break INDENTER.cpy:2
 run
 
 echo KNOWN GOOD START\n
@@ -103,49 +82,49 @@ continue
 
 echo Testing module switching...\n
 delete
-b MAIN.cbl:10
-b MAIN.cbl:11
-b MAIN.cbl:12
-b MAIN.cbl:13
-b A.cbl:18
-b A.cbl:19
-b A.cbl:20
-b B.cbl:18
-b B.cbl:19
-b C.cbl:16
+break MAIN.cbl:10
+break MAIN.cbl:11
+break MAIN.cbl:12
+break MAIN.cbl:13
+break A.cbl:18
+break A.cbl:19
+break A.cbl:20
+break B.cbl:18
+break B.cbl:19
+break C.cbl:16
 echo KNOWN GOOD START\n
 
-r
+run
 cprint *
-c
+continue
 cprint *
-c
+continue
 cprint *
-c
+continue
 cprint *
-c
+continue
 cprint *
-c
+continue
 cprint *
-c
+continue
 cprint *
-c
+continue
 cprint *
-c
+continue
 cprint *
-c
+continue
 cprint *
-c
+continue
 cprint *
-c
+continue
 cprint *
-c
+continue
 cprint *
-c
+continue
 cprint *
-c
+continue
 cprint *
 
 echo KNOWN GOOD FINISH\n
 
-q
+quit

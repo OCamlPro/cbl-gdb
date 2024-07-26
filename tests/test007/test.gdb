@@ -1,18 +1,6 @@
-set height 0
-set width 0
-set print repeats 10
-set print elements 200
+# testing ...
 
-define stutter_step
-    set variable $_exitcode=1031
-    while $_exitcode==1031
-        echo 
-        cprint *
-        cprint ?
-        cprint/x 1
-        step
-        end
-    end
+source ../tests_init.gdb
 
 define printem
     echo KNOWN GOOD START\n
@@ -35,21 +23,14 @@ define printem
 	echo cprint/b 1\n
 	cprint/b 1
     echo KNOWN GOOD FINISH\n
-    end
+end
 
-define printloop
-    set variable $_exitcode=1031
-    while $_exitcode==1031
-       printem
-       continue
-       end
-    end
 
 file test
 cprint/v1
 cprint/r 6
 
-b 73
+break 73
 echo KNOWN GOOD START\n
 run
 cprint disp
@@ -138,22 +119,22 @@ next
 #next
 #cprint net-num3
 #next
-#cprint net-num4            
+#cprint net-num4
 #next
-cprint point        
+cprint point
 next
-cprint numeric-data        
+cprint numeric-data
 next
-cprint floating-data       
+cprint floating-data
 next
-cprint special-data        
+cprint special-data
 next
-#cprint national-data       
+#cprint national-data
 #next
 
 #continue
 delete
-b 122
+break 122
 run
 echo Filler for Redhat7/GDB7\n
 echo KNOWN GOOD START\n
@@ -162,7 +143,6 @@ cprint dispp=.123456789
 echo cprint disppp= 123456789\n
 cprint disppp= 123456789
 echo KNOWN GOOD FINISH\n
-
 
 
 quit
