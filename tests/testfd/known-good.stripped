@@ -1,0 +1,39 @@
+KNOWN GOOD START
+cprint/v0 *
+ 1 : 01 FS-1  : "A"
+ 2 : 00 SOMEFILE Record/FS-1  : "A"
+ 3 : 01 FS-2  : "A"
+ 4 : 01 FS-3  : "B"
+ 5 : 00 ANOTHER-FILE Record/FS-3  : "B"
+ 6 : 01 FS-4  : "B"
+cprint/v0 ?
+ 1 : 01 FS-1  : "A"
+ 2 : 01 FS-3  : "B"
+ 3 : 01 FS-4  : "B"
+cprint/v3 *
+ 1 : 01 FS-1/SFECA20 [I/O] : "A"
+ 2 : 00 SOMEFILE Record/FS-1/SFECA20 [I/O] : "A"
+ 3 : 01 FS-2/SFECA20 [I/O] : "A"
+ 4 : 01 FS-3/SFECA20 [I/O] : "B"
+ 5 : 00 ANOTHER-FILE Record/FS-3/SFECA20 [I/O] : "B"
+ 6 : 01 FS-4/SFECA20 [I/O] : "B"
+cprint/v3 ?
+ 1 : 01 FS-1/SFECA20 [I/O] : "A"
+ 2 : 01 FS-3/SFECA20 [I/O] : "B"
+ 3 : 01 FS-4/SFECA20 [I/O] : "B"
+cprint/v6 *
+ 1 : FS-1 : "A"
+ 2 : SOMEFILE Record/FS-1 : "A"
+ 3 : FS-2 : "A"
+ 4 : FS-3 : "B"
+ 5 : ANOTHER-FILE Record/FS-3 : "B"
+ 6 : FS-4 : "B"
+cprint/v6 ?
+ 1 : FS-1 : "A"
+ 2 : FS-3 : "B"
+ 3 : FS-4 : "B"
+cprint/m *
+variables=[{name="FS-1/SFECA20",value="{_groupvalue=\"\\\"A\\\"\",SOMEFILE Record=\"\\\"A\\\"\"}"},{name="FS-2/SFECA20",value="\"\\\"A\\\"\""},{name="FS-3/SFECA20",value="{_groupvalue=\"\\\"B\\\"\",ANOTHER-FILE Record=\"\\\"B\\\"\"}"},{name="FS-4/SFECA20",value="\"\\\"B\\\"\""}]
+cprint/m ?
+variables=[{name="FS-1/SFECA20",value="{_groupvalue=\"\\\"A\\\"\",SOMEFILE Record=\"\\\"A\\\"\"}"},{name="FS-3/SFECA20",value="{_groupvalue=\"\\\"B\\\"\",ANOTHER-FILE Record=\"\\\"B\\\"\"}"},{name="FS-4/SFECA20",value="\"\\\"B\\\"\""}]
+KNOWN GOOD FINISH

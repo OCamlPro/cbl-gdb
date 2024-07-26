@@ -1252,6 +1252,8 @@ class VarTrie():
       payload.index_of_granddaddy = 0
       payload.SetIsDirty()
 
+    level_zero_parent = 0
+
     for payload_index in range(1, len(self.storage_list)):
       payload = self.storage_list[payload_index]
 
