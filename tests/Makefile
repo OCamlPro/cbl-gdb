@@ -23,7 +23,7 @@ $(DIRS):
 	$(MAKE) -C $@
 .PHONY: $(DIRS)
 
-# if explcit targets where given: use them in the macro down below. each target will be delivered to each subdirectory contained in $(DIRS).
+# if explicit targets where given: use them in the macro down below. each target will be delivered to each subdirectory contained in $(DIRS).
 EXTRA_TARGETS=$(MAKECMDGOALS)
 
 define RECURSIVE_MAKE_WITH_TARGET

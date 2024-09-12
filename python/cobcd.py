@@ -6643,13 +6643,8 @@ class CPrint(gdb.Command):
 
     try:
       subprocess.check_output([COBCDRW_BINARY, '-v'])
-    except subprocess.CalledProcessError as ex:
-      # cobcd-rw until 4.26 release returned "1", assume this is fine
-      if ex.returncode != 1:
-        print("WARNING: \"cprint ?\" not available: {0} not available, consider setting COBCDRW".format(COBCDRW_BINARY))
-        COBCDRW_AVAILABLE = False
-    except subprocess.CalledProcessError:
-      print("WARNING: \"cprint ?\" not available: {0} not available, consider setting COBCDRW".format(COBCDRW_BINARY))
+    except :
+      print("WARNING: \"cprint ?\" not available: {0} not available; consider setting COBCDRW".format(COBCDRW_BINARY))
       COBCDRW_AVAILABLE = False
 
     self.worker = CPrintWorker()
