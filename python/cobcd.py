@@ -4720,23 +4720,25 @@ class ModuleState():
 
   def EstablishModuleState(self, announce):
     # sanity check first
+    retval:bool = True
     try:
       gdb.selected_frame()
     except gdb.error as ex:
       # Depending on the scenario commonly raises one of "No stack.", "No frame currently selected." or others
+      retval = False
       ConditionalRaise(str(ex))
-      return
 
-    # Go read the frame and stack, and, if necessary, fetch the VARIABLE_STRING
-    try:
-      self.Stack = self.ProcessStack()
-    except gdb.GdbError:
-      if announce:
-        # pass user errors unchanged
-        raise
-      return
+    if retval:
+      # Go read the frame and stack, and, if necessary, fetch the VARIABLE_STRING
+      try:
+        self.Stack = self.ProcessStack()
+      except gdb.GdbError:
+        if announce:
+          # pass user errors unchanged
+          raise
+        retval = False
 
-    if self.Stack:
+    if retval and self.Stack:
       # Figure out what routine we are trapped in, from
       # the line number
       for line in GV_ModuleInformation.line_list.line_list:
@@ -4750,7 +4752,7 @@ class ModuleState():
     # else:
     #   if announce:
     #     ConditionalRaise("No stack.")
-
+    return retval
 
 class HNode():
   def __init__(self):
@@ -5081,29 +5083,28 @@ def get_sorted_possibilities(args, limit, no_data=False):
   return possibilities, False  # False means there was no 'limit' overflow
 
 def get_completion_possibilities(word):
-  GV_ModuleState.EstablishModuleState(False)
-  pending_completions = get_max_completions()
   possibilities = []
+  if GV_ModuleState.EstablishModuleState(False):
+    pending_completions = get_max_completions()
 
-  if word == '*':
-    possibilities_1, _limit_reached = get_sorted_possibilities(['*'], 0, no_data=True)
-    for index in possibilities_1:
-      name = GV_ModuleInformation.var_trie.storage_list[abs(index)%LENADDR_FLAG_BIAS].Name.upper()
-      possibilities.append(name)
-      pending_completions -= 1
-      if pending_completions < 0:
-        break
-  else:
-    word = word.upper()
-    for index in range(len(GV_ModuleInformation.var_trie.storage_list)):
-      name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
-      if name.startswith(word):
-        possibilities.append("'" + name + "'")
+    if word == '*':
+      possibilities_1, _limit_reached = get_sorted_possibilities(['*'], 0, no_data=True)
+      for index in possibilities_1:
+        name = GV_ModuleInformation.var_trie.storage_list[abs(index)%LENADDR_FLAG_BIAS].Name.upper()
+        possibilities.append(name)
         pending_completions -= 1
         if pending_completions < 0:
           break
+    else:
+      word = word.upper()
+      for index in range(len(GV_ModuleInformation.var_trie.storage_list)):
+        name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
+        if name.startswith(word):
+          possibilities.append("'" + name + "'")
+          pending_completions -= 1
+          if pending_completions < 0:
+            break
   return possibilities
-
 
 def get_cobol_breakpoints(bp_filter, internal=False):
   possibilities = []
@@ -5271,6 +5272,7 @@ class CPrintWorker():
     GV_ModuleState.sticky_display_mode = os.environ.get("CPRINT_V", '0')
     GV_ModuleState.sticky_pretty_mode = os.environ.get("CPRINT_P", '')
     self.machine_interface_mode = False
+    self.programs_in_modules = {}
 
     # ensure GDB can resolve dynamic field references in parse_and_eval
     try:
@@ -5278,6 +5280,27 @@ class CPrintWorker():
     except:
       pass   # failed in some cases (GDB version and/or already defined?) - ignore
 
+    self.LoadUpProgramsInModules()
+    
+#    GV_ModuleState.EstablishModuleState(False)
+
+  def LoadUpProgramsInModules(self):
+    current_file:str = None
+  ###  print("DEBUG LoadUpProgramsInModules()")
+    program_list = gdb.execute("info functions .*_", True, True).split('\n')
+    for line in program_list:
+      tokens = line.split();
+      if len(tokens):
+        if tokens[0] == "Non-debugging":
+          break;
+        if tokens[0] == "File":
+          current_file = tokens[1].replace(":", "")
+        else:
+          match = re.search(r"^.*[ ](.*_)[(].*$", line)
+          if match:
+            self.programs_in_modules.update({match.group(1): current_file})
+  ###  for key, value in self.programs_in_modules.items():
+  ###    print(key, value)
 
   @staticmethod
   def ProcessSlashV(args):
@@ -5813,7 +5836,8 @@ class CPrintWorker():
 
     # Having processed display switches, we can now check to if we are in
     # a frame, and process accordingly:
-    GV_ModuleState.EstablishModuleState(True)
+    if not GV_ModuleState.EstablishModuleState(True):
+      return
 
     if not GV_ModuleState.Stack:
       # "No stack." is the message GDB reports when debugging statements
@@ -5837,6 +5861,8 @@ class CPrintWorker():
     # Go split it up on the '=', if there is one, and return
     # the canonicalized strings:
     left_side, right_side = process_left_right_args(args)
+    
+    ###print("LEFT_SIDE: ", left_side)
 
     if not left_side:
       return
@@ -5902,6 +5928,9 @@ class CPrintWorker():
         # When '*' or '?' match nothing, then just return nothing
         return
       if left_side[0].find('*') == -1:
+        # We didn't find any matching symbol in the current context
+        ###print("These are the arguments", arguments)
+        ###print("These are the arguments", args)
         ConditionalRaise('No symbol matches "{0}" in current context'.format('/'.join(left_side)))
       else:
         ConditionalRaise('No symbols match "{0}" in current context'.format('/'.join(left_side)))
@@ -6378,26 +6407,26 @@ class CBreakWorker():
     payload = None
     possibilities = []
 
-    GV_ModuleState.EstablishModuleState(True)
-    # HACK to let cbreak work until it is refactored
-    # TODO do the refactoring or at least document the issue
-    possibilities, limit_reached = get_sorted_possibilities(search_args, 1)
+    if GV_ModuleState.EstablishModuleState(True):
+      # HACK to let cbreak work until it is refactored
+      # TODO do the refactoring or at least document the issue
+      possibilities, limit_reached = get_sorted_possibilities(search_args, 1)
 
-    if limit_reached:
-      ConditionalRaise('More than one symbol matching "{0}" in current context.'.format(''.join(search_args)))
-      return payload
+      if limit_reached:
+        ConditionalRaise('More than one symbol matching "{0}" in current context.'.format(''.join(search_args)))
+        return payload
 
-    if not possibilities and not limit_reached:
-      ConditionalRaise('No symbol matching "{0}" in current context'.format(" ".join(search_args)))
-      return payload
+      if not possibilities and not limit_reached:
+        ConditionalRaise('No symbol matching "{0}" in current context'.format(" ".join(search_args)))
+        return payload
 
-    payload_number = possibilities[0]
-    if payload_number < 0:
-      payload_number = (-payload_number) % LENADDR_FLAG_BIAS
+      payload_number = possibilities[0]
+      if payload_number < 0:
+        payload_number = (-payload_number) % LENADDR_FLAG_BIAS
 
-    # Pick up the payload from the list
-    payload = GV_ModuleInformation.var_trie.storage_list[payload_number]
-    payload.FetchVariableData(False)
+      # Pick up the payload from the list
+      payload = GV_ModuleInformation.var_trie.storage_list[payload_number]
+      payload.FetchVariableData(False)
 
     return payload
 
@@ -6669,31 +6698,33 @@ class CPrint(gdb.Command):
       traceback.print_exc()
 
   def complete(self, text, word):
-    # We expect COBOL variables which GDB doesn't have, so the fallback
-    # gdb.COMPLETE_SYMBOL can't be used.
+    possibilities = []
+    if len(GV_ModuleInformation.var_trie.storage_list) > 0 :
+      # We expect COBOL variables which GDB doesn't have, so the fallback
+      # gdb.COMPLETE_SYMBOL can't be used.
+      try:
+        # HACK: because of missing support for hypens: in identifiers
+        # we have to look at the text for that
+        # but the hack doesn't work because GDB won't complete at - either...
+        # if text and text.find('-'):
+        #  word = text # split, last part
 
-    try:
-      # HACK: because of missing support for hypens: in identifiers
-      # we have to look at the text for that
-      # but the hack doesn't work because GDB won't complete at - either...
-      # if text and text.find('-'):
-      #  word = text # split, last part
+        # note: modifier / slash is no word, so in this case word is None
+        if word and (word[0] in ('*', '?', '"', '\'') or word[0].isdigit()):
+          # if it doesn't look like a word then just return nothing
+          return gdb.COMPLETE_NONE
 
-      # note: modifier / slash is no word, so in this case word is None
-      if word and (word[0] in ('*', '?', '"', '\'') or word[0].isdigit()):
-        # if it doesn't look like a word then just return nothing
-        return gdb.COMPLETE_NONE
+        if word is None or word == "" or word[0] in ('(', ')', ',', ':'):
+          # gdb returns everything, do the same here
+          word = '*'
 
-      if word is None or word == "" or word[0] in ('(', ')', ',', ':'):
-        # gdb returns everything, do the same here
-        word = '*'
+        if GV_ModuleState.EstablishModuleState(True):
+          possibilities = get_completion_possibilities(word)
 
-      possibilities = get_completion_possibilities(word)
+      except:   # TODO: use appropriate exception
+        traceback.print_exc()
 
-      return possibilities
-    except:   # TODO: use appropriate exception
-      traceback.print_exc()
-
+    return possibilities
 
 class CWatch(gdb.Command):
   """Used for creating COBOL-NAMED watchpoints when debugging cobst processed object files.
@@ -6799,23 +6830,23 @@ A breakpoint stops execution of your program whenever the expression matches
     self.bp_initialized = False
 
   def invoke(self, arguments, from_tty): # invoke cbreak
-    GV_ModuleState.EstablishModuleState(True)
-    if not self.bp_initialized:
-      self.bp_initialized = True
-      if GV_noisy_registration:
-        print('Registering silent maintenance breakpoint for showing note about ACCEPT')
-      bp = CobolBreakpoint("cob_accept", False, True)
-      if bp:
-        # in an ideal world we would know what the last command executed
-        # was and would for step/next/cnext do a "finish", otherwise a "continue"
-        # bad as that command can come from "everywhere" (python/guile/gdbscript, mi, console)
-        # ["direct console only" would have been solved by looking at the GDB history]
-        # we play safe stopping after the accept and let the user re-execute "continue"
-        # if this is what he wanted
-        bp.commands = "silent \n cup 0 \n down-silently \n finish"
+    if GV_ModuleState.EstablishModuleState(True):
+      if not self.bp_initialized:
+        self.bp_initialized = True
+        if GV_noisy_registration:
+          print('Registering silent maintenance breakpoint for showing note about ACCEPT')
+        bp = CobolBreakpoint("cob_accept", False, True)
+        if bp:
+          # in an ideal world we would know what the last command executed
+          # was and would for step/next/cnext do a "finish", otherwise a "continue"
+          # bad as that command can come from "everywhere" (python/guile/gdbscript, mi, console)
+          # ["direct console only" would have been solved by looking at the GDB history]
+          # we play safe stopping after the accept and let the user re-execute "continue"
+          # if this is what he wanted
+          bp.commands = "silent \n cup 0 \n down-silently \n finish"
 
-    self.dont_repeat()
-    self.worker.process_break_arguments(arguments, False, False)
+      self.dont_repeat()
+      self.worker.process_break_arguments(arguments, False, False)
 
   def complete(self, text, word):
     # TODO: if we are behind "section" or the current word is "section",
@@ -8137,7 +8168,6 @@ def stop_handler_auto_step(event):
   global got_complex_stop_event
   if not type(event) is gdb.StopEvent:
     got_complex_stop_event = True
-
 
 gdb.events.exited.connect(exit_handler)
 gdb.events.stop.connect(stop_handler)

@@ -1,38 +1,39 @@
         identification  division.
-        program-id.     prog1.
+        program-id.     prog21.
         data            division.
         working-storage section.
-        01 variable1    pic x(16) value "I am variable1".
+        01 variable1    pic x(16) value "I am variable21".
         procedure       division.
         display         variable1
         display         variable1
         display         variable1
-        call            "prog2"
+        call            "prog22"
+        call            "prog31"
         goback.
-        end program     prog1.
+        end program     prog21.
 
         identification  division.
-        program-id.     prog2.
+        program-id.     prog22.
         data            division.
         working-storage section.
-        01 variable1    pic x(16) value "I am variable2".
+        01 variable1    pic x(16) value "I am variable22".
         procedure       division.
         display         variable1
         display         variable1
         display         variable1
-        call            "prog3"
+        call            "prog23"
         goback.
-        end program     prog2.
+        end program     prog22.
 
         identification  division.
-        program-id.     prog3.
+        program-id.     prog23.
         data            division.
         working-storage section.
-        01 variable1    pic x(16) value "I am variable3".
+        01 variable1    pic x(16) value "I am variable23".
         procedure       division.
         display         variable1
         display         variable1
         display         variable1
         goback.
-        end program     prog3.
+        end program     prog23.
 

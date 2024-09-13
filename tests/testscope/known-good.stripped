@@ -1,6 +1,5 @@
 KNOWN GOOD START
 No frame is currently selected.
-This doesn't look like a COBOL frame.
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -9,40 +8,40 @@ cprint/v0 ?
  1 : 77 RETURN-CODE  : +0000000000
  2 : 01 variable1  : '^' <repeats 16 times>
 cprint/v3 *
-01 variable1/prog3 [W-S]  :  '^' <repeats 16 times>
+01 variable1/prog13 [W-S]  :  '^' <repeats 16 times>
 cprint/v3 ?
- 1 : 77 RETURN-CODE/prog3 [W-S] : +0000000000
- 2 : 01 variable1/prog3 [W-S] : '^' <repeats 16 times>
+ 1 : 77 RETURN-CODE/prog13 [W-S] : +0000000000
+ 2 : 01 variable1/prog13 [W-S] : '^' <repeats 16 times>
 cprint/v6 *
 variable1  :  '^' <repeats 16 times>
 cprint/v6 ?
  1 : RETURN-CODE : +0000000000
  2 : variable1 : '^' <repeats 16 times>
 cprint/m *
-variables=[{name="variable1/prog3",value="\"'^' <repeats 16 times>\""}]
+variables=[{name="variable1/prog13",value="\"'^' <repeats 16 times>\""}]
 cprint/m ?
-variables=[{name="RETURN-CODE/prog3",value="\"+0000000000\""},{name="variable1/prog3",value="\"'^' <repeats 16 times>\""}]
+variables=[{name="RETURN-CODE/prog13",value="\"+0000000000\""},{name="variable1/prog13",value="\"'^' <repeats 16 times>\""}]
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
-01 variable1   :  "I am variable3  "
+01 variable1   :  "I am variable13 "
 cprint/v0 ?
  1 : 77 RETURN-CODE  : +0000000000
- 2 : 01 variable1  : "I am variable3  "
+ 2 : 01 variable1  : "I am variable13 "
 cprint/v3 *
-01 variable1/prog3 [W-S]  :  "I am variable3  "
+01 variable1/prog13 [W-S]  :  "I am variable13 "
 cprint/v3 ?
- 1 : 77 RETURN-CODE/prog3 [W-S] : +0000000000
- 2 : 01 variable1/prog3 [W-S] : "I am variable3  "
+ 1 : 77 RETURN-CODE/prog13 [W-S] : +0000000000
+ 2 : 01 variable1/prog13 [W-S] : "I am variable13 "
 cprint/v6 *
-variable1  :  "I am variable3  "
+variable1  :  "I am variable13 "
 cprint/v6 ?
  1 : RETURN-CODE : +0000000000
- 2 : variable1 : "I am variable3  "
+ 2 : variable1 : "I am variable13 "
 cprint/m *
-variables=[{name="variable1/prog3",value="\"\\\"I am variable3  \\\"\""}]
+variables=[{name="variable1/prog13",value="\"\\\"I am variable13 \\\"\""}]
 cprint/m ?
-variables=[{name="RETURN-CODE/prog3",value="\"+0000000000\""},{name="variable1/prog3",value="\"\\\"I am variable3  \\\"\""}]
+variables=[{name="RETURN-CODE/prog13",value="\"+0000000000\""},{name="variable1/prog13",value="\"\\\"I am variable13 \\\"\""}]
 KNOWN GOOD FINISH
 KNOWN GOOD START
 cprint/v0 *
@@ -51,25 +50,22 @@ cprint/v0 ?
  1 : 77 RETURN-CODE  : +0000000000
  2 : 01 variable1  : '^' <repeats 16 times>
 cprint/v3 *
-01 variable1/prog3 [W-S]  :  '^' <repeats 16 times>
+01 variable1/prog13 [W-S]  :  '^' <repeats 16 times>
 cprint/v3 ?
- 1 : 77 RETURN-CODE/prog3 [W-S] : +0000000000
- 2 : 01 variable1/prog3 [W-S] : '^' <repeats 16 times>
+ 1 : 77 RETURN-CODE/prog13 [W-S] : +0000000000
+ 2 : 01 variable1/prog13 [W-S] : '^' <repeats 16 times>
 cprint/v6 *
 variable1  :  '^' <repeats 16 times>
 cprint/v6 ?
  1 : RETURN-CODE : +0000000000
  2 : variable1 : '^' <repeats 16 times>
 cprint/m *
-variables=[{name="variable1/prog3",value="\"'^' <repeats 16 times>\""}]
+variables=[{name="variable1/prog13",value="\"'^' <repeats 16 times>\""}]
 cprint/m ?
-variables=[{name="RETURN-CODE/prog3",value="\"+0000000000\""},{name="variable1/prog3",value="\"'^' <repeats 16 times>\""}]
+variables=[{name="RETURN-CODE/prog13",value="\"+0000000000\""},{name="variable1/prog13",value="\"'^' <repeats 16 times>\""}]
 KNOWN GOOD FINISH
 KNOWN GOOD START
 No frame is currently selected.
-This doesn't look like a COBOL frame.
 No frame is currently selected.
-This doesn't look like a COBOL frame.
 No frame is currently selected.
-This doesn't look like a COBOL frame.
 KNOWN GOOD FINISH
