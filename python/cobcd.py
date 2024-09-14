@@ -1067,7 +1067,19 @@ def TokenizeCanonicalName(desired):
 
     desired = desired.replace("/", " ").strip()
     desired += suffix
-  retval = desired.split()
+
+  # We want "prog::var" to be the equivalent of "var of prog"
+  retval = []
+  for arg in desired.split():
+    nfound = arg.find("::")
+    final:str = None
+    if nfound > -1:
+      final = arg[:nfound]
+      retval.append( arg[nfound+2:])
+    else:
+      retval.append(arg)
+    if final:
+      retval.append(final)
   return retval
 
 
@@ -2178,7 +2190,7 @@ class CobolVariable():
       return False
 
   def FetchVariableDataInternal(self):
-    #print("FetchVariableData:", self.Name, self.Section)
+    ###print("DEBUG FetchVariableData:", self.Name, self.Section)
     #print("FetchVariableData", self.Name, self.IsDirty(), self.ReferenceOffset, ExpressionEvaluate(self.LengthExpression))
 
     # We have to do this work every time.  This might be the first time
@@ -5865,7 +5877,8 @@ class CPrintWorker():
     # the canonicalized strings:
     left_side, right_side = process_left_right_args(args)
     
-    ###print("LEFT_SIDE: ", left_side)
+    #print("LEFT_SIDE: ", left_side)
+    #print("RIGHT_SIDE: ", right_side)
 
     if not left_side:
       return
