@@ -1328,7 +1328,7 @@ class VarTrie():
           parent = GV_ModuleInformation.var_trie.storage_list[payload.index_of_parent].Name
         if payload.index_of_granddaddy is not None:
           granddaddy = GV_ModuleInformation.var_trie.storage_list[payload.index_of_granddaddy].Name
-        print("DEBUGDUMP   ", payload.Level, payload.Name, parent, granddaddy, payload.IsDirty())
+        print("ListDump   ", payload.Level, payload.Name, parent, granddaddy, payload.IsDirty())
 
   def LoadTrieFromLine(self, tokens):
     try:
@@ -1438,8 +1438,6 @@ class VarTrie():
     if boy_index < len(boys):
       # we still have at least one boy to leave off at his tree
       boy = boys[boy_index]
-      # print("DEBUG boy", boy)
-      # print("DEBUG trie.children.keys", trie.children.keys())
       # Do a case-insensitive match:
       bFound = False
       for child in trie.children:
@@ -4419,6 +4417,7 @@ class ModuleInformation():
     #
     # by stashing the results of the parsing in these maps, we avoid unnecessary
     # processing.  At the time of this writing, the costs in memory are unknown
+    self.current_string_name = None
     self.stashed_var_trie  = {}
     self.stashed_line_list = {}
     self.stashed_commands  = {}
@@ -4435,9 +4434,10 @@ class ModuleInformation():
         if string_name in GV_ModuleInformation.stashed_var_trie:
           # We have seen and parsed this string before
           #print("RELOAD", string_name)
-          GV_ModuleInformation.var_trie     = GV_ModuleInformation.stashed_var_trie[string_name]
-          GV_ModuleInformation.line_list      = GV_ModuleInformation.stashed_line_list[string_name]
-          GV_ModuleInformation.stashed_commands = GV_ModuleInformation.stashed_commands[string_name]
+          GV_ModuleInformation.current_string_name = string_name
+          GV_ModuleInformation.var_trie            = GV_ModuleInformation.stashed_var_trie[string_name]
+          GV_ModuleInformation.line_list           = GV_ModuleInformation.stashed_line_list[string_name]
+          GV_ModuleInformation.stashed_commands    = GV_ModuleInformation.stashed_commands[string_name]
         else:
           # We haven't seen these before, so we need to get the
           # VARIABLE_STRING and parse it:
@@ -4459,6 +4459,7 @@ class ModuleInformation():
           #time2 = time.process_time()
           #print("The time to parse {0} bytes of {1} was: {2}".format(total_length, string_name, time2-time1))
 
+          GV_ModuleInformation.current_string_name = string_name
           GV_ModuleInformation.stashed_var_trie[string_name]  = GV_ModuleInformation.var_trie
           GV_ModuleInformation.stashed_line_list[string_name] = GV_ModuleInformation.line_list
           GV_ModuleInformation.stashed_commands[string_name]  = GV_ModuleInformation.stashed_commands
@@ -5085,25 +5086,30 @@ def get_sorted_possibilities(args, limit, no_data=False):
 def get_completion_possibilities(word):
   possibilities = []
   if GV_ModuleState.EstablishModuleState(False):
+    routine = GV_ModuleState.current_trapped_routine.upper()
     pending_completions = get_max_completions()
 
     if word == '*':
       possibilities_1, _limit_reached = get_sorted_possibilities(['*'], 0, no_data=True)
       for index in possibilities_1:
         name = GV_ModuleInformation.var_trie.storage_list[abs(index)%LENADDR_FLAG_BIAS].Name.upper()
-        possibilities.append(name)
-        pending_completions -= 1
-        if pending_completions < 0:
-          break
+        routine_of_name = name.split("/")[-1]
+        if routine_of_name == routine:
+          possibilities.append(name)
+          pending_completions -= 1
+          if pending_completions < 0:
+            break
     else:
       word = word.upper()
       for index in range(len(GV_ModuleInformation.var_trie.storage_list)):
         name = GV_ModuleInformation.var_trie.storage_list[index].Name.upper()
-        if name.startswith(word):
-          possibilities.append("'" + name + "'")
-          pending_completions -= 1
-          if pending_completions < 0:
-            break
+        routine_of_name = name.split("/")[-1]
+        if routine_of_name == routine:
+          if name.startswith(word):
+            possibilities.append("'" + name + "'")
+            pending_completions -= 1
+            if pending_completions < 0:
+              break
   return possibilities
 
 def get_cobol_breakpoints(bp_filter, internal=False):
@@ -5286,7 +5292,6 @@ class CPrintWorker():
 
   def LoadUpProgramsInModules(self):
     current_file:str = None
-  ###  print("DEBUG LoadUpProgramsInModules()")
     program_list = gdb.execute("info functions .*_", True, True).split('\n')
     for line in program_list:
       tokens = line.split();
@@ -5299,8 +5304,6 @@ class CPrintWorker():
           match = re.search(r"^.*[ ](.*_)[(].*$", line)
           if match:
             self.programs_in_modules.update({match.group(1): current_file})
-  ###  for key, value in self.programs_in_modules.items():
-  ###    print(key, value)
 
   @staticmethod
   def ProcessSlashV(args):
@@ -6699,6 +6702,7 @@ class CPrint(gdb.Command):
 
   def complete(self, text, word):
     possibilities = []
+    GV_ModuleState.EstablishModuleState(True)
     if len(GV_ModuleInformation.var_trie.storage_list) > 0 :
       # We expect COBOL variables which GDB doesn't have, so the fallback
       # gdb.COMPLETE_SYMBOL can't be used.
@@ -6718,8 +6722,7 @@ class CPrint(gdb.Command):
           # gdb returns everything, do the same here
           word = '*'
 
-        if GV_ModuleState.EstablishModuleState(True):
-          possibilities = get_completion_possibilities(word)
+        possibilities = get_completion_possibilities(word)
 
       except:   # TODO: use appropriate exception
         traceback.print_exc()
