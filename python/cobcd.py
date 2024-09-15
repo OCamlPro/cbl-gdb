@@ -273,6 +273,9 @@ def tab_after(lead:str, tabcolumn:int) -> str:
     retval += fill * ' '
   return retval
 
+def NormalizeName(name:str):
+  return name.lower().replace("-", "__")
+
 class GlobalVariables():
   def __init__(self):
     # Establish the version of GDB
@@ -1487,7 +1490,7 @@ class VarTrie():
       return
 
     # This node has no children, which means we have reached the edge of the
-    # forest.  It's time to store the variable in, but only if it is in
+    # forest.  It's time to read the variable in, but only if it is in
     # context:
     payload = self.storage_list[trie.payload_index]
     if payload.FetchVariableData(False):
@@ -2181,6 +2184,15 @@ class CobolVariable():
       self.RefmodLength = length
     return
 
+  def InContext(self):
+    # This checks to see if this variable is in the context of the currently
+    # trapped program
+    variable_program = self.Name.split("/")[-1]
+    context_program  = GV_ModuleState.current_trapped_routine
+    if variable_program == context_program:
+      return True
+    return False
+
   def FetchVariableData(self, raise_error):
     try:
       return self.FetchVariableDataInternal()
@@ -2190,7 +2202,7 @@ class CobolVariable():
       return False
 
   def FetchVariableDataInternal(self):
-    ###print("DEBUG FetchVariableData:", self.Name, self.Section)
+    #print("FetchVariableData:", self.Name, self.Section)
     #print("FetchVariableData", self.Name, self.IsDirty(), self.ReferenceOffset, ExpressionEvaluate(self.LengthExpression))
 
     # We have to do this work every time.  This might be the first time
@@ -2271,6 +2283,8 @@ class CobolVariable():
       if self.Bname:
         #print("FetchVariableData Bname", self.Bname)
         try:
+          #lookup = self.Name.split("/")[-1] + "_::" + self.Bname
+          #self.location_of_data = GetPointerTo(lookup)
           self.location_of_data = GetPointerTo(self.Bname)
           # print("(from Bname) self.location_of_data", hex(self.location_of_data))
         except gdb.error:
@@ -4481,7 +4495,6 @@ class ModuleInformation():
     return False
 
   def ParseVariableString(self, variable_string):
-
     # We have a new variable string
     # Clear out the tables:
     self.var_trie = VarTrie()
@@ -5065,6 +5078,7 @@ def get_sorted_possibilities(args, limit, no_data=False):
 
   # We now have a list of possibilities_1 based on the names of the variables
   # typically, some of them will not be in context.
+
   target_limit = 0
   for payload_index in possibilities_1:
     if no_data:
@@ -5291,6 +5305,8 @@ class CPrintWorker():
     GV_ModuleState.sticky_pretty_mode = os.environ.get("CPRINT_P", '')
     self.machine_interface_mode = False
     self.programs_in_modules = {}
+    self.string_names_in_modules = {}
+    self.stashed_string_name:str = None
 
     # ensure GDB can resolve dynamic field references in parse_and_eval
     try:
@@ -5304,6 +5320,8 @@ class CPrintWorker():
 
   def LoadUpProgramsInModules(self):
     current_file:str = None
+    
+    # First, use "info functions" to find the file_name for each function
     program_list = gdb.execute("info functions .*_", True, True).split('\n')
     for line in program_list:
       tokens = line.split();
@@ -5315,7 +5333,26 @@ class CPrintWorker():
         else:
           match = re.search(r"^.*[ ](.*_)[(].*$", line)
           if match:
-            self.programs_in_modules.update({match.group(1): current_file})
+            self.programs_in_modules.update({NormalizeName(match.group(1)): current_file})
+
+    # Second, use "info variables" to find the VARIABLE_STRING name to each file
+    variable_names = gdb.execute("info variables ^VARIABLE_STRING", False, True).split('\n')
+    armed = False
+    for variable_name in variable_names:
+      if armed:
+        tokens = variable_name.split()
+        string_name = tokens[3]
+        nfound = string_name.find("[")
+        if nfound > -1:
+          string_name = string_name[:nfound]
+        self.string_names_in_modules.update({current_file: string_name})
+        armed = False
+
+      if variable_name.find("File") == 0:
+        tokens = variable_name.split()
+        current_file = tokens[1][:-1]
+        armed = True
+        continue;
 
   @staticmethod
   def ProcessSlashV(args):
@@ -5801,6 +5838,30 @@ class CPrintWorker():
         payload.Subscripts = None
         payload.Refmod = None
 
+  def ConditionalContextSwitch(self, args):
+    if len(args) > 1:
+      # There is more than one arg.  The final one might be a program name.
+      current_routine  = NormalizeName(GV_ModuleState.current_trapped_routine)
+      possible_routine = NormalizeName(args[-1])
+      if current_routine != possible_routine:
+        # The final argument does not match the routine we a currently trapped
+        # Let's see if that possible routine is in the list of "info function"
+        # entry points we collected at __init__ time.
+        filename = self.programs_in_modules.get(possible_routine + "_")
+        if filename:
+          # From the filename, we can look up the variable_string name
+          string_name = self.string_names_in_modules.get(filename)
+          if string_name:
+            self.stashed_string_name = GV_ModuleInformation.current_string_name
+            GV_ModuleInformation.ReadAndParseVariableString(string_name)
+    return
+    
+  def ConditionalContextRestore(self):
+    if self.stashed_string_name:
+      GV_ModuleInformation.ReadAndParseVariableString(self.stashed_string_name)
+      self.stashed_string_name = None
+    return
+
   def ProcessArguments(self, arguments):
     if not arguments or len(arguments) == 0:
       return
@@ -5906,6 +5967,7 @@ class CPrintWorker():
 
     # note: if we do have a right-side then we do not need the actual data, maybe add "no_data=True" here
     # ... but we do need to know if this variable is in the current context
+    self.ConditionalContextSwitch(left_side)
     leftside_possibilities, limit_reached = get_sorted_possibilities(left_side, 0)
 
     # In the case of "cprint *" we want to remove RETURN-CODE and other globals
@@ -5942,6 +6004,7 @@ class CPrintWorker():
       # There are no leftside possibilities.  Let him know why, and then bug out
       if left_side[0] == '?' or left_side[0].isdigit():
         # When '*' or '?' match nothing, then just return nothing
+        self.ConditionalContextRestore()
         return
       if left_side[0].find('*') == -1:
         # We didn't find any matching symbol in the current context
@@ -5950,12 +6013,14 @@ class CPrintWorker():
         ConditionalRaise('No symbol matches "{0}" in current context'.format('/'.join(left_side)))
       else:
         ConditionalRaise('No symbols match "{0}" in current context'.format('/'.join(left_side)))
+      self.ConditionalContextRestore()
       return
 
     if len(leftside_possibilities) > 1 and left_side[0].find('*') == -1 and left_side[0][0] != '?' and just_count_ambiguities:
       for index in leftside_possibilities:
         ppp = GV_ModuleInformation.var_trie.storage_list[index]
       ConditionalRaise('Multiple ({0}) symbols match "{1}" in current context'.format(len(leftside_possibilities), '/'.join(left_side)))
+      self.ConditionalContextRestore()
       return
 
     if len(leftside_possibilities) == 1:
@@ -5963,6 +6028,7 @@ class CPrintWorker():
 
       if leftside_possibilities[0]<0 and right_side:
         ConditionalRaise("Invalid assignment")
+        self.ConditionalContextRestore()
         return
 
       if right_side:
@@ -5972,6 +6038,7 @@ class CPrintWorker():
       GV_GlobalVariables.VarLeft = copy.copy(GV_ModuleInformation.var_trie.storage_list[abs(leftside_possibilities[0])%LENADDR_FLAG_BIAS])
       GV_GlobalVariables.VarLeftIndex = abs(leftside_possibilities[0])%LENADDR_FLAG_BIAS
       if GV_GlobalVariables.VarLeft.SubscriptFailure or GV_GlobalVariables.VarLeft.RefmodFailure:
+        self.ConditionalContextRestore()
         return
     elif right_side:
       # Our user wants to do an assignment: "cprint leftside=rightside"
@@ -5990,12 +6057,16 @@ class CPrintWorker():
       #  right_side = rside.original_string.split()
 
       if rside.is_symbol:
+        self.ConditionalContextSwitch(right_side)
         rightside_possibilities, limit_reached = get_sorted_possibilities(right_side, 1)
+        self.ConditionalContextRestore()
         if not rightside_possibilities and not limit_reached:
           ConditionalRaise('No symbol matches "{0}" in current context'.format('/'.join(right_side)))
+          self.ConditionalContextRestore()
           return
         if limit_reached:
           ConditionalRaise('Multiple symbols match the right-hand-side "{0}" in current context'.format('/'.join(right_side)))
+          self.ConditionalContextRestore()
           return
         # right_side seems to refer to one, and only one, variable.
         # Let's fetch its data:
@@ -6007,6 +6078,7 @@ class CPrintWorker():
         payload = GV_ModuleInformation.var_trie.storage_list[index]
         if payload.Level == 88:
           ConditionalRaise("A LEVEL 88 conditional variable may not be used as the right-hand-side source")
+          self.ConditionalContextRestore()
           return
 
         payload.FetchVariableData(False)
@@ -6028,6 +6100,8 @@ class CPrintWorker():
     else:
       self.ProcessArgumentsHumanMode(leftside_possibilities,
                                      rside)
+    self.ConditionalContextRestore()
+    return
 
   @staticmethod
   def HandleDoubleQuote(arguments):

@@ -48,26 +48,26 @@ all:
 
 known-good:
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -c test1.cbl
-	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c test2.cbl
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c HotDog
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c test3.cbl
-	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -o test test1.o test2.o test3.o
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -o test test1.o HotDog.o test3.o
 	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.gdb > known-good.txt
 	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
 
 test:
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -c test1.cbl
-	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c test2.cbl
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c HotDog
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c test3.cbl
-	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -o test test1.o test2.o test3.o
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -o test test1.o HotDog.o test3.o
 	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.gdb > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
 
 testv:
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -c test1.cbl
-	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c test2.cbl
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c HotDog
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c test3.cbl
-	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -o test test1.o test2.o test3.o
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -o test test1.o HotDog.o test3.o
 	./test
 
 dev:
