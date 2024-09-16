@@ -1,0 +1,68 @@
+KNOWN GOOD START
+Num     Type           Disp Enb Address            What
+1       breakpoint     keep y    0x1235 in test_ at test.cbl:27
+2       breakpoint     keep y    0x1236 in test_ at test.cbl:30
+3       breakpoint     keep y    0x1237 in test_ at test.cbl:34
+4       breakpoint     keep y    0x1238 in JIMBOB_ at test.cbl:68
+5       breakpoint     keep y    0x1239 in JIMBOB_ at test.cbl:72
+6       breakpoint     keep y    0x123a in JIMBOB_ at test.cbl:75
+7       breakpoint     keep y    0x123b in JIMBOB_ at test.cbl:79
+8       breakpoint     keep y    0x123c in JIM_1_ at test.cbl:85
+9       breakpoint     keep y    0x123d in JIM_1_ at test.cbl:91
+10      breakpoint     keep y    0x123e in JIM_1_ at test.cbl:95
+11      breakpoint     keep y    0x123f in DISPLAY__JIM__OR__BOB_1_ at test.cbl:119
+12      breakpoint     keep y    0x1240 in JUST_ONE_1_ at test.cbl:130
+13      breakpoint     keep y    0x1241 in JUST_ONE_1_ at test.cbl:133
+14      breakpoint     keep y    0x1242 in JUST_ONE_1_ at test.cbl:135
+15      breakpoint     keep y    0x1243 in BOB_1_ at test.cbl:141
+16      breakpoint     keep y    0x1244 in BOB_1_ at test.cbl:146
+No breakpoints or watchpoints.
+breakpoints loaded from ./testhome/.bp.gdb
+Num     Type           Disp Enb Address            What
+17      breakpoint     keep y    0x1235 in test_ at test.cbl:27
+18      breakpoint     keep y    0x1236 in test_ at test.cbl:30
+19      breakpoint     keep y    0x1237 in test_ at test.cbl:34
+20      breakpoint     keep y    0x1238 in JIMBOB_ at test.cbl:68
+21      breakpoint     keep y    0x1239 in JIMBOB_ at test.cbl:72
+22      breakpoint     keep y    0x123a in JIMBOB_ at test.cbl:75
+23      breakpoint     keep y    0x123b in JIMBOB_ at test.cbl:79
+24      breakpoint     keep y    0x123c in JIM_1_ at test.cbl:85
+25      breakpoint     keep y    0x123d in JIM_1_ at test.cbl:91
+26      breakpoint     keep y    0x123e in JIM_1_ at test.cbl:95
+27      breakpoint     keep y    0x123f in DISPLAY__JIM__OR__BOB_1_ at test.cbl:119
+28      breakpoint     keep y    0x1240 in JUST_ONE_1_ at test.cbl:130
+29      breakpoint     keep y    0x1241 in JUST_ONE_1_ at test.cbl:133
+30      breakpoint     keep y    0x1242 in JUST_ONE_1_ at test.cbl:135
+31      breakpoint     keep y    0x1243 in BOB_1_ at test.cbl:141
+32      breakpoint     keep y    0x1244 in BOB_1_ at test.cbl:146
+Breakpoint 33 at 0x1245: file test.cbl, line 152.
+Breakpoint 34 at 0x1246: file test.cbl, line 155.
+breakpoints loaded from ./testhome/.bp.gdb
+Num     Type           Disp Enb Address            What
+35      breakpoint     keep y    0x1235 in test_ at test.cbl:27
+36      breakpoint     keep y    0x1236 in test_ at test.cbl:30
+37      breakpoint     keep y    0x1237 in test_ at test.cbl:34
+38      breakpoint     keep y    0x1238 in JIMBOB_ at test.cbl:68
+39      breakpoint     keep y    0x1239 in JIMBOB_ at test.cbl:72
+40      breakpoint     keep y    0x123a in JIMBOB_ at test.cbl:75
+41      breakpoint     keep y    0x123b in JIMBOB_ at test.cbl:79
+42      breakpoint     keep y    0x123c in JIM_1_ at test.cbl:85
+43      breakpoint     keep y    0x123d in JIM_1_ at test.cbl:91
+44      breakpoint     keep y    0x123e in JIM_1_ at test.cbl:95
+45      breakpoint     keep y    0x123f in DISPLAY__JIM__OR__BOB_1_ at test.cbl:119
+46      breakpoint     keep y    0x1240 in JUST_ONE_1_ at test.cbl:130
+47      breakpoint     keep y    0x1241 in JUST_ONE_1_ at test.cbl:133
+48      breakpoint     keep y    0x1242 in JUST_ONE_1_ at test.cbl:135
+49      breakpoint     keep y    0x1243 in BOB_1_ at test.cbl:141
+50      breakpoint     keep y    0x1244 in BOB_1_ at test.cbl:146
+./testhome/.bp.TESTME.gdb: No such file or directory.
+Breakpoint 51 at 0x1235: file test.cbl, line 27.
+Breakpoint 52 at 0x1236: file test.cbl, line 30.
+breakpoints loaded from ./testhome/.bp.subset.TESTME.gdb
+Num     Type           Disp Enb Address            What
+53      breakpoint     keep y    0x1236 in test_ at test.cbl:27
+54      breakpoint     keep y    0x1237 in test_ at test.cbl:30
+breakpoints loaded from ./testhome/.bp.TESTME.gdb
+Num     Type           Disp Enb Address            What
+55      breakpoint     keep y    0x1236 in test_ at test.cbl:27
+KNOWN GOOD FINISH

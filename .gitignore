@@ -2,3 +2,5 @@
 *.rpm
 *.tar.*
 *.tar
+
+.bp.*gdb
