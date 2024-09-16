@@ -220,10 +220,10 @@ LENADDR_FLAG_LENGTH = 2
 def GdbExecute(curframe, command):
   # It is up to the caller to handle exceptions
   limiting_debug_level = 1
-  if GV_GlobalVariables.debug_level >= limiting_debug_level:
-    print("#### ", getframeinfo(curframe).lineno, ": gdb.execute: '", command, "'", sep='')
+  if GV_GlobalVariables.debug_level.value >= limiting_debug_level:
+    print("#### ", getframeinfo(frame).lineno, ": gdb.execute: '", command, "'", sep='')
   retval = gdb.execute(command, False, True)
-  if GV_GlobalVariables.debug_level >= limiting_debug_level:
+  if GV_GlobalVariables.debug_level.value >= limiting_debug_level:
     lines = retval.split('\n')
     for line in lines:
       if len(line) > 0:
@@ -273,6 +273,19 @@ def tab_after(lead:str, tabcolumn:int) -> str:
     retval += fill * ' '
   return retval
 
+
+class ParameterCPrintDebugLevel(gdb.Parameter):
+  """loglevel for cobcd.oy
+ADD DOCS FOR CPRINT_D HERE, which levels do what"""
+
+  def __init__(self):
+    self.set_doc = "Set loglvel for cobcd.py."
+    self.show_doc = "Loglevel used for cobcd.py code."
+    super(ParameterCPrintDebugLevel, self).__init__("debug cprint-level", gdb.COMMAND_MAINTENANCE, gdb.PARAM_ZUINTEGER)
+    legacy_setup = int(os.environ.get("CPRINT_D", '0'))
+    self.value = legacy_setup
+
+
 class GlobalVariables():
   def __init__(self):
     # Establish the version of GDB
@@ -294,21 +307,21 @@ class GlobalVariables():
       self.raise_error = False
 
     # Establish the debugging verbosity level:
-    self.debug_level = int(os.environ.get('CPRINT_D', '0'))
+    self.debug_level = ParameterCPrintDebugLevel()
 
     # Let's figure out some stuff about the environment
     self.SizeofPointer = calcsize('P')  # Returns 4 or 8
     self.byteorder = sys.byteorder  # Returns "big" or "little"
 
-    if self.debug_level >= 1:
+    if self.debug_level.value >= 1:
       print("#### SizeofPointer", self.SizeofPointer)
       print("#### byteorder", self.byteorder)
 
     self.ShortTermMemory = []
 
     # These are used in "cprint this=that"
-    self.VarLeft = None
-    self.VarLeftIndex = None
+    self.VarLeft = None # type: CobolVariable
+    self.VarLeftIndex = None # type: int
 
     # This is flag that the first parameter is a standalone asterisk.  We
     # use this to suppress printing RETURN-CODE in a "cprint *" command.
@@ -719,7 +732,7 @@ def AddEmUp(expression):
     retval = int(gdb.parse_and_eval(expression or "0"))
     return retval
   except gdb.error as ex:
-    if GV_GlobalVariables.debug_level >= 1:
+    if GV_GlobalVariables.debug_level.value >= 1:
       print("error while parsing the expression \'{0}\'".format(expression))
       print(str(ex))
     else:
