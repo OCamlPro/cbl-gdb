@@ -1,7 +1,8 @@
-Instructions for cobcd.py, version 0.5
+Instructions for cobcd.py, version 0.5 and newer.
 
-The key to making cobcd.py work is your personal ~/.gdbinit file.  
+The key to making cobcd.py work is to load it in into your debugging session.
 
+This may be done via your personal ~/.gdbinit file.
 However: ./python/make install now takes care of it.
 
 Remove any ~/.gdbinit instructions that look like
@@ -14,3 +15,6 @@ You can leave this next one; if you take it out, the install will put it back in
 
     set auto-load python-scripts on
 
+As an alternative cobcd may include it in the binaries - or you just source it
+manually / use a gdb wrapper scr
+ipt for that.
