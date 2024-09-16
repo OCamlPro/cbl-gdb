@@ -209,7 +209,7 @@ SIZE_TO_DIGITS = {1: len(str(2**(8*1))),
                   8: len(str(2**(8*8)))
                  }
 
-got_complex_stop_event = True
+got_complex_stop_event = None
 
 VARSTR_LEN_SIZE = 9  # as used by cobcd-st
 
@@ -7961,9 +7961,9 @@ init_me()
 
 
 class CHelp(gdb.Command):
-    """Shows help for gdb COBOL debugging"""
+  """Shows help for gdb COBOL debugging"""
 
-    CHELP_TEXT = """
+  CHELP_TEXT = """
 For details: see help <cmd>
 
 -cmd----------(abbr.)-|----------------------------------
@@ -8010,35 +8010,16 @@ shell <cmd>           | execute shell comamnd
 help-cobol            | shows this help
 """
 
-    def __init__(self):
-      if GV_noisy_registration:
-        print('Registering command help-cobol')
-      super(CHelp, self).__init__("help-cobol", gdb.COMMAND_USER)
+  def __init__(self):
+    if GV_noisy_registration:
+      print('Registering command help-cobol')
+    super(CHelp, self).__init__("help-cobol", gdb.COMMAND_USER)
 
-    def invoke(self, arguments, from_tty):
-        try:
-            print(self.CHELP_TEXT)
-        except KeyboardInterrupt as ki:
-            print(ki)
-
-def stop_handler_auto_step(event):
-  # check the _type_ of stop, _not_ the instance:
-  # the following is the common one after step/next, a more complex one would be a subclass
-  # (for example breakpoint or signal) which we say "that is complex" -> stop auto step
-  # Note that we can't set the value directly because we never should set it to False here
-  # when it is already True, as we may get flooded by a lot of events, so we otherwise
-  # ending with scenarios like  False, False, False, True, False  otherwise
-  global got_complex_stop_event
-  if not type(event) is gdb.StopEvent:
-    got_complex_stop_event = True
-
-
-gdb.events.exited.connect(exit_handler)
-gdb.events.stop.connect(stop_handler)
-try:
-  gdb.events.inferior_deleted.connect(stop_handler)
-except AttributeError:
-  pass # that's a GDB 11+ event registry, no problem if not available
+  def invoke(self, arguments, from_tty):
+    try:
+      print(self.CHELP_TEXT)
+    except KeyboardInterrupt as ki:
+      print(ki)
 
 
 class CmdAutoStep (gdb.Command):
@@ -8049,19 +8030,18 @@ An argument says how fast auto stepping is done (see parameter "auto-step")."""
       print('Registering command and parameter auto-step')
     super(CmdAutoStep, self).__init__("auto-step", gdb.COMMAND_RUNNING)
     self.defaultSpeed = ParameterAutoStep()
-    gdb.events.stop.connect(stop_handler_auto_step)
-    gdb.events.exited.connect(stop_handler_auto_step)
-    try:
-      gdb.events.inferior_deleted.connect(stop_handler_auto_step)
-    except AttributeError:
-      pass # that's a GDB 11+ event registry, no problem if not available
 
   def invoke(self, argument, from_tty):
+    global got_complex_stop_event
     # sanity check - are we even active, prevents a spurious "no registers" exception
     try:
       gdb.newest_frame()
     except gdb.error:
+      got_complex_stop_event = None
       raise gdb.GdbError("The program is not being run.")
+
+    if got_complex_stop_event is not None:
+      raise gdb.GdbError("auto-step already running.")
 
     # calculate sleep time
     if argument:
@@ -8073,6 +8053,10 @@ An argument says how fast auto stepping is done (see parameter "auto-step")."""
     else:
       sleep_time = 0
 
+    self.do_auto_step (sleep_time)
+
+  def do_auto_step (self, sleep_time):
+
     # activate GDB scrolling, otherwise we'd auto-step only one page
     pagination = gdb.parameter("pagination")
     if pagination:
@@ -8082,10 +8066,17 @@ An argument says how fast auto stepping is done (see parameter "auto-step")."""
     global got_complex_stop_event
     got_complex_stop_event = False
 
+    gdb.events.stop.connect(stop_handler_auto_step)
+    gdb.events.exited.connect(stop_handler_auto_step)
+    try:
+      gdb.events.inferior_deleted.connect(stop_handler_auto_step)
+    except AttributeError:
+      pass # that's a GDB 11+ event registry, no problem if not available
+
     # actual auto-stepping
     try:
       # note: the end condition may get in "late" as it is handled via asynchronous events,
-      #   especially when running at a high rate
+      #       especially when running at a high rate
       while not got_complex_stop_event:
         gdb.execute("step")
         time.sleep(sleep_time)
@@ -8098,6 +8089,13 @@ An argument says how fast auto stepping is done (see parameter "auto-step")."""
       traceback.print_exc()
     # never leave without cleanup...
     finally:
+      got_complex_stop_event = None  # to ensure the next run is possible
+      gdb.events.stop.disconnect(stop_handler_auto_step)
+      gdb.events.exited.disconnect(stop_handler_auto_step)
+      try:
+        gdb.events.inferior_deleted.disconnect(stop_handler_auto_step)
+      except AttributeError:
+        pass # that's a GDB 11+ event registry, no problem if not available
       if pagination:
         gdb.execute("set pagination on", False, False)
 
@@ -8140,6 +8138,8 @@ def stop_handler_auto_step(event):
   # when it is already True, as we may get flooded by a lot of events, so we otherwise
   # ending with scenarios like  False, False, False, True, False  otherwise
   global got_complex_stop_event
+  if got_complex_stop_event is None:
+    return
   if not type(event) is gdb.StopEvent:
     got_complex_stop_event = True
 
