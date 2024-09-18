@@ -4977,7 +4977,7 @@ def MachineInterfaceHierarchical(possibilities):
   return retval
 
 
-def get_sorted_possibilities(args, limit, no_data=False):
+def get_sorted_possibilities(args, limit, specific_program:str=None, no_data=False):
   # We take a list of strings as args
   possibilities_1 = []
   possibilities = []
@@ -5079,6 +5079,11 @@ def get_sorted_possibilities(args, limit, no_data=False):
   # We now have a list of possibilities_1 based on the names of the variables
   # typically, some of them will not be in context.
 
+  #print("DEBUG possibilities_1", possibilities_1)
+  for payload_index in possibilities_1:
+    payload = GV_ModuleInformation.var_trie.storage_list[abs(payload_index)%LENADDR_FLAG_BIAS]
+    #print("DEBUG possibilities_1[{0}]:{1}".format(payload_index, payload.Name))
+
   target_limit = 0
   for payload_index in possibilities_1:
     if no_data:
@@ -5116,7 +5121,7 @@ def get_completion_possibilities(word):
     pending_completions = get_max_completions()
 
     if word == '*':
-      possibilities_1, _limit_reached = get_sorted_possibilities(['*'], 0, no_data=True)
+      possibilities_1, _limit_reached = get_sorted_possibilities(['*'], 0, specific_program=None, no_data=True)
       for index in possibilities_1:
         name = GV_ModuleInformation.var_trie.storage_list[abs(index)%LENADDR_FLAG_BIAS].Name.upper()
         routine_of_name = name.split("/")[-1]
@@ -5843,6 +5848,7 @@ class CPrintWorker():
       # There is more than one arg.  The final one might be a program name.
       current_routine  = NormalizeName(GV_ModuleState.current_trapped_routine)
       possible_routine = NormalizeName(args[-1])
+      #print("DEBUG current/possible {0}/{1}".format(current_routine, possible_routine))
       if current_routine != possible_routine:
         # The final argument does not match the routine we a currently trapped
         # Let's see if that possible routine is in the list of "info function"
@@ -5934,6 +5940,11 @@ class CPrintWorker():
     # cprint VAR=ANOTHER_VAR
     # are allowed.
 
+    left_side_colons:bool = False
+
+    if args.split()[0].find("::") > -1:
+      left_side_colons = True
+
     # Go split it up on the '=', if there is one, and return
     # the canonicalized strings:
     left_side, right_side = process_left_right_args(args)
@@ -5967,8 +5978,12 @@ class CPrintWorker():
 
     # note: if we do have a right-side then we do not need the actual data, maybe add "no_data=True" here
     # ... but we do need to know if this variable is in the current context
-    self.ConditionalContextSwitch(left_side)
+
+    if left_side_colons:
+      self.ConditionalContextSwitch(left_side)
     leftside_possibilities, limit_reached = get_sorted_possibilities(left_side, 0)
+
+    #print("DEBUG leftside_possibilities", leftside_possibilities, self.stashed_string_name)
 
     # In the case of "cprint *" we want to remove RETURN-CODE and other globals
     # from the list because they are unnecessary and untidy.
@@ -6004,7 +6019,6 @@ class CPrintWorker():
       # There are no leftside possibilities.  Let him know why, and then bug out
       if left_side[0] == '?' or left_side[0].isdigit():
         # When '*' or '?' match nothing, then just return nothing
-        self.ConditionalContextRestore()
         return
       if left_side[0].find('*') == -1:
         # We didn't find any matching symbol in the current context
@@ -6046,6 +6060,9 @@ class CPrintWorker():
       ConditionalRaise('Multiple symbols match the left-hand-side "{0}" in current context.'.format('/'.join(left_side)))
       return
 
+    self.ConditionalContextRestore()
+
+
     rside = None
     if right_side:
       # We have something on the right side.
@@ -6057,16 +6074,12 @@ class CPrintWorker():
       #  right_side = rside.original_string.split()
 
       if rside.is_symbol:
-        self.ConditionalContextSwitch(right_side)
         rightside_possibilities, limit_reached = get_sorted_possibilities(right_side, 1)
-        self.ConditionalContextRestore()
         if not rightside_possibilities and not limit_reached:
           ConditionalRaise('No symbol matches "{0}" in current context'.format('/'.join(right_side)))
-          self.ConditionalContextRestore()
           return
         if limit_reached:
           ConditionalRaise('Multiple symbols match the right-hand-side "{0}" in current context'.format('/'.join(right_side)))
-          self.ConditionalContextRestore()
           return
         # right_side seems to refer to one, and only one, variable.
         # Let's fetch its data:
@@ -6078,7 +6091,6 @@ class CPrintWorker():
         payload = GV_ModuleInformation.var_trie.storage_list[index]
         if payload.Level == 88:
           ConditionalRaise("A LEVEL 88 conditional variable may not be used as the right-hand-side source")
-          self.ConditionalContextRestore()
           return
 
         payload.FetchVariableData(False)
@@ -6100,7 +6112,6 @@ class CPrintWorker():
     else:
       self.ProcessArgumentsHumanMode(leftside_possibilities,
                                      rside)
-    self.ConditionalContextRestore()
     return
 
   @staticmethod
