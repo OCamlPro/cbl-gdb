@@ -2193,15 +2193,15 @@ class CobolVariable():
       return True
     return False
 
-  def FetchVariableData(self, raise_error):
+  def FetchVariableData(self, raise_error, specific_program=False):
     try:
-      return self.FetchVariableDataInternal()
+      return self.FetchVariableDataInternal(specific_program)
     except:
       if raise_error:
         raise
       return False
 
-  def FetchVariableDataInternal(self):
+  def FetchVariableDataInternal(self, specific_program):
     #print("FetchVariableData:", self.Name, self.Section)
     #print("FetchVariableData", self.Name, self.IsDirty(), self.ReferenceOffset, ExpressionEvaluate(self.LengthExpression))
 
@@ -2281,13 +2281,15 @@ class CobolVariable():
         self.standalone = True
 
       if self.Bname:
-        #print("FetchVariableData Bname", self.Bname)
         try:
-          #lookup = self.Name.split("/")[-1] + "_::" + self.Bname
-          #self.location_of_data = GetPointerTo(lookup)
-          self.location_of_data = GetPointerTo(self.Bname)
+          if specific_program:
+            tokens = self.Name.split("/")
+            lookup = self.Name.split("/")[-1] + "_::" + self.Bname
+            self.location_of_data = GetPointerTo(lookup)
+          else:
+            self.location_of_data = GetPointerTo(self.Bname)
           # print("(from Bname) self.location_of_data", hex(self.location_of_data))
-        except gdb.error:
+        except gdb.error as ex:
           self.not_in_context = True
           return False
         self.data_offset = self.ReferenceOffset
@@ -4977,7 +4979,7 @@ def MachineInterfaceHierarchical(possibilities):
   return retval
 
 
-def get_sorted_possibilities(args, limit, specific_program:str=None, no_data=False):
+def get_sorted_possibilities(args, limit, specific_program:bool=False, no_data=False):
   # We take a list of strings as args
   possibilities_1 = []
   possibilities = []
@@ -5079,10 +5081,8 @@ def get_sorted_possibilities(args, limit, specific_program:str=None, no_data=Fal
   # We now have a list of possibilities_1 based on the names of the variables
   # typically, some of them will not be in context.
 
-  #print("DEBUG possibilities_1", possibilities_1)
   for payload_index in possibilities_1:
     payload = GV_ModuleInformation.var_trie.storage_list[abs(payload_index)%LENADDR_FLAG_BIAS]
-    #print("DEBUG possibilities_1[{0}]:{1}".format(payload_index, payload.Name))
 
   target_limit = 0
   for payload_index in possibilities_1:
@@ -5093,8 +5093,9 @@ def get_sorted_possibilities(args, limit, specific_program:str=None, no_data=Fal
       # is to try to read them.  If we can't read them,
       # then we don't add them to our list:
       payload = GV_ModuleInformation.var_trie.storage_list[abs(payload_index)%LENADDR_FLAG_BIAS]
-      payload.FetchVariableData(False)
+      payload.FetchVariableData(False, specific_program)
       add_to_list = not payload.not_in_context
+
     if add_to_list:
       possibilities.append(payload_index)
       target_limit = target_limit + 1
@@ -5121,7 +5122,7 @@ def get_completion_possibilities(word):
     pending_completions = get_max_completions()
 
     if word == '*':
-      possibilities_1, _limit_reached = get_sorted_possibilities(['*'], 0, specific_program=None, no_data=True)
+      possibilities_1, _limit_reached = get_sorted_possibilities(['*'], 0, specific_program=False, no_data=True)
       for index in possibilities_1:
         name = GV_ModuleInformation.var_trie.storage_list[abs(index)%LENADDR_FLAG_BIAS].Name.upper()
         routine_of_name = name.split("/")[-1]
@@ -5762,7 +5763,7 @@ class CPrintWorker():
     result = BuildHumanHString(root, 0)
     OurPrint(result, end='')
 
-  def ProcessArgumentsHumanMode(self, leftside_possibilities, rightside):
+  def ProcessArgumentsHumanMode(self, leftside_possibilities, specific_program:bool, rightside:bool):
     self.ConditionalClearSubscripts(leftside_possibilities)
     # If it happens that there is only one leftside_possibility, and it
     # happens to have a Refmod, then we can't do hierarchical:
@@ -5822,7 +5823,10 @@ class CPrintWorker():
 
       # Having done the assignment, if any,
       # now display the left-side data that was changed or requested to be printed:
-      if payload.FetchVariableData(True):
+      if specific_program:
+        # I am not sure why this is necessary.  But it is.
+        payload.SetIsDirty()
+      if payload.FetchVariableData(True, specific_program):
         if flag == 0:
           self.FormattedDisplay(payload)
         elif flag == LENADDR_FLAG_ADDRESS:
@@ -5848,7 +5852,6 @@ class CPrintWorker():
       # There is more than one arg.  The final one might be a program name.
       current_routine  = NormalizeName(GV_ModuleState.current_trapped_routine)
       possible_routine = NormalizeName(args[-1])
-      #print("DEBUG current/possible {0}/{1}".format(current_routine, possible_routine))
       if current_routine != possible_routine:
         # The final argument does not match the routine we a currently trapped
         # Let's see if that possible routine is in the list of "info function"
@@ -5941,14 +5944,29 @@ class CPrintWorker():
     # are allowed.
 
     left_side_colons:bool = False
+    right_side_colons:bool = False
 
-    if args.split()[0].find("::") > -1:
-      left_side_colons = True
+    if args.find("=") > -1:
+      # There is an equal sign, check left and right for doubled colons:
+      if args.split("=")[0].find("::") > -1:
+        left_side_colons = True
+      if args.split("=")[1].find("::") > -1:
+        right_side_colons = True
+    else:
+      # There is no equals sign
+      if args.split()[0].find("::") > -1:
+        left_side_colons = True
+
+    if left_side_colons and right_side_colons:
+      raise gdb.GdbError("\"cprint prog1::var1 = prog2::var2\" has not been implemented")
+
+    if right_side_colons:
+      raise gdb.GdbError("\"cprint var1 = prog2::var2\" has not been implemented")
 
     # Go split it up on the '=', if there is one, and return
     # the canonicalized strings:
     left_side, right_side = process_left_right_args(args)
-    
+
     #print("LEFT_SIDE: ", left_side)
     #print("RIGHT_SIDE: ", right_side)
 
@@ -5981,9 +5999,7 @@ class CPrintWorker():
 
     if left_side_colons:
       self.ConditionalContextSwitch(left_side)
-    leftside_possibilities, limit_reached = get_sorted_possibilities(left_side, 0)
-
-    #print("DEBUG leftside_possibilities", leftside_possibilities, self.stashed_string_name)
+    leftside_possibilities, limit_reached = get_sorted_possibilities(left_side, 0, specific_program=left_side_colons)
 
     # In the case of "cprint *" we want to remove RETURN-CODE and other globals
     # from the list because they are unnecessary and untidy.
@@ -6060,9 +6076,6 @@ class CPrintWorker():
       ConditionalRaise('Multiple symbols match the left-hand-side "{0}" in current context.'.format('/'.join(left_side)))
       return
 
-    self.ConditionalContextRestore()
-
-
     rside = None
     if right_side:
       # We have something on the right side.
@@ -6111,7 +6124,9 @@ class CPrintWorker():
                                        rightside_possibilities)
     else:
       self.ProcessArgumentsHumanMode(leftside_possibilities,
+                                     left_side_colons,
                                      rside)
+    self.ConditionalContextRestore()
     return
 
   @staticmethod
@@ -6730,10 +6745,11 @@ class CPrint(gdb.Command):
   """Prints COBOL-NAMED variables when debugging cobcd (via cobst) processed object files.
 
   COBOL cprint command usage:
-  cprint VAR      displays VAR using session-default formatting
-  cprint VAR!     when VAR is ambiguous, all the possibilities are listed instead of counted
-  cprint VAR(N)   displays the Nth element of table <arg>. Multiple subscripts are allowed
-  cprint VAR(S:R)   reference modification: displays R characters starting at S in <arg>
+  cprint VAR       displays VAR using session-default formatting
+  cprint VAR!      when VAR is ambiguous, all the possibilities are listed instead of counted
+  cprint VAR(N)    displays the Nth element of table <arg>. Multiple subscripts are allowed
+  cprint VAR(S:R)  reference modification: displays R characters starting at S in <arg>
+  cprint prog::VAR displays working-storage VAR in the 'prog' program context
   cprint/v0     session formatting is single line, with LEVEL & NAME and VALUE
   cprint/v1     session formatting is single line, just the value
   cprint/v2     session formatting two lines: LEVEL & NAME followed by VALUE
@@ -6749,14 +6765,14 @@ class CPrint(gdb.Command):
   cprint/x      show numeric value in hexadecimal
   cprint/b      show numeric value in binary
   cprint/d      show expanded information
-  cprint/v<n>     with no arguments sets the session formatting
+  cprint/v<n>   with no arguments sets the session formatting
   cprint/m      generate output compatible with '-stack-list-variables --simple-values
   cprint *      display all variables that are currently in context
   cprint #N     display the Nth variable in the context list
-  cprint/r N      set the range for 'cprint ?' to plus/minus N (default 6; -1 means 'all'; -2 'none')
+  cprint/r N    set the range for 'cprint ?' to plus/minus N (default 6; -1 means 'all'; -2 'none')
   cprint/r      show the current value of N
   cprint ?      display in-context variables within +/- N lines of current line
-  cprint ? R      display in-context variables within +/- R lines of current line
+  cprint ? R    display in-context variables within +/- R lines of current line
   cprint VARIABLE="STRING"  set variable to string
   cprint VARIABLE='STRING'  set variable to string
   cprint VARIABLE=NUMERIC   set variable to numeric

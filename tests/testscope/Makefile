@@ -48,32 +48,35 @@ all:
 
 known-good:
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -c test1.cbl
-	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c HotDog
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c NoExtension
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c test3.cbl
-	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -o test test1.o HotDog.o test3.o
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -o test test1.o NoExtension.o test3.o
 	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.gdb > known-good.txt
 	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
 
 test:
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -c test1.cbl
-	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c HotDog
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c NoExtension
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c test3.cbl
-	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -o test test1.o HotDog.o test3.o
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -o test test1.o NoExtension.o test3.o
 	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.gdb > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
 
 testv:
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -c test1.cbl
-	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c HotDog
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c NoExtension
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c test3.cbl
-	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -o test test1.o HotDog.o test3.o
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -o test test1.o NoExtension.o test3.o
 	./test
 
 dev:
 	# For development: launch test under GDB.
-	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
-	CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) $(PYTHON_SOURCE) test
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -c test1.cbl
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c NoExtension
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD)    -c test3.cbl
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x -o test test1.o NoExtension.o test3.o
+	COBCDRW=$(COBCDRW) $(GDB) $(PYTHON_SOURCE)
 
 testprod:
 	cobcd -x test.cbl

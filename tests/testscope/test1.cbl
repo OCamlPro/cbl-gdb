@@ -5,8 +5,6 @@
         01 variable1    pic x(16) value "I am variable11".
         procedure       division.
         display         variable1
-        display         variable1
-        display         variable1
         call            "prog12"
         call            "prog21"
         goback.
@@ -19,8 +17,6 @@
         01 variable1    pic x(16) value "I am variable12".
         procedure       division.
         display         variable1
-        display         variable1
-        display         variable1
         call            "prog13"
         goback.
         end program     prog12.
@@ -31,8 +27,6 @@
         working-storage section.
         01 variable1    pic x(16) value "I am variable13".
         procedure       division.
-        display         variable1
-        display         variable1
         display         variable1
         goback.
         end program     prog13.

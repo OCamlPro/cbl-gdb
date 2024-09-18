@@ -1,71 +1,13 @@
 KNOWN GOOD START
-No frame is currently selected.
-KNOWN GOOD FINISH
-KNOWN GOOD START
-cprint/v0 *
-01 variable1   :  '^' <repeats 16 times>
-cprint/v0 ?
- 1 : 77 RETURN-CODE  : +0000000000
- 2 : 01 variable1  : '^' <repeats 16 times>
-cprint/v3 *
-01 variable1/prog13 [W-S]  :  '^' <repeats 16 times>
-cprint/v3 ?
- 1 : 77 RETURN-CODE/prog13 [W-S] : +0000000000
- 2 : 01 variable1/prog13 [W-S] : '^' <repeats 16 times>
-cprint/v6 *
-variable1  :  '^' <repeats 16 times>
-cprint/v6 ?
- 1 : RETURN-CODE : +0000000000
- 2 : variable1 : '^' <repeats 16 times>
-cprint/m *
-variables=[{name="variable1/prog13",value="\"'^' <repeats 16 times>\""}]
-cprint/m ?
-variables=[{name="RETURN-CODE/prog13",value="\"+0000000000\""},{name="variable1/prog13",value="\"'^' <repeats 16 times>\""}]
-KNOWN GOOD FINISH
-KNOWN GOOD START
-cprint/v0 *
-01 variable1   :  "I am variable13 "
-cprint/v0 ?
- 1 : 77 RETURN-CODE  : +0000000000
- 2 : 01 variable1  : "I am variable13 "
-cprint/v3 *
+01 variable1/prog11 [W-S]  :  "I am variable11 "
 01 variable1/prog13 [W-S]  :  "I am variable13 "
-cprint/v3 ?
- 1 : 77 RETURN-CODE/prog13 [W-S] : +0000000000
- 2 : 01 variable1/prog13 [W-S] : "I am variable13 "
-cprint/v6 *
-variable1  :  "I am variable13 "
-cprint/v6 ?
- 1 : RETURN-CODE : +0000000000
- 2 : variable1 : "I am variable13 "
-cprint/m *
-variables=[{name="variable1/prog13",value="\"\\\"I am variable13 \\\"\""}]
-cprint/m ?
-variables=[{name="RETURN-CODE/prog13",value="\"+0000000000\""},{name="variable1/prog13",value="\"\\\"I am variable13 \\\"\""}]
-KNOWN GOOD FINISH
-KNOWN GOOD START
-cprint/v0 *
-01 variable1   :  '^' <repeats 16 times>
-cprint/v0 ?
- 1 : 77 RETURN-CODE  : +0000000000
- 2 : 01 variable1  : '^' <repeats 16 times>
-cprint/v3 *
-01 variable1/prog13 [W-S]  :  '^' <repeats 16 times>
-cprint/v3 ?
- 1 : 77 RETURN-CODE/prog13 [W-S] : +0000000000
- 2 : 01 variable1/prog13 [W-S] : '^' <repeats 16 times>
-cprint/v6 *
-variable1  :  '^' <repeats 16 times>
-cprint/v6 ?
- 1 : RETURN-CODE : +0000000000
- 2 : variable1 : '^' <repeats 16 times>
-cprint/m *
-variables=[{name="variable1/prog13",value="\"'^' <repeats 16 times>\""}]
-cprint/m ?
-variables=[{name="RETURN-CODE/prog13",value="\"+0000000000\""},{name="variable1/prog13",value="\"'^' <repeats 16 times>\""}]
-KNOWN GOOD FINISH
-KNOWN GOOD START
-No frame is currently selected.
-No frame is currently selected.
-No frame is currently selected.
+01 variable1/prog12 [W-S]  :  "I am variable12 "
+01 variable1/prog11 [W-S]  :  "I am variable11 "
+No symbol matches "variable1/prog31" in current context
+No symbol matches "variable1/prog32" in current context
+No symbol matches "variable1/prog33" in current context
+No symbol matches "variable1/prog21" in current context
+No symbol matches "variable1/prog23" in current context
+No symbol matches "variable1/prog22" in current context
+01 variable1/prog11 [W-S]  :  "I am variable11 "
 KNOWN GOOD FINISH
