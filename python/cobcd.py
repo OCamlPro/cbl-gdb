@@ -6107,6 +6107,8 @@ class CPrintWorker():
 
     rside = None
     if right_side:
+      if left_side_colons:
+        raise gdb.GdbError("\"cprint prog1::var1 = var2\" has not been implemented")
       # We have something on the right side.
       #
       # Let's see if it is a number:

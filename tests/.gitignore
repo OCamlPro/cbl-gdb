@@ -12,3 +12,4 @@ under-test.stripped
 *.h
 *.o
 !vartype.py
+testhome

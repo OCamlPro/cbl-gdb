@@ -50,6 +50,7 @@ known-good:
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
 	mkdir -p testhome
 	rm -f testhome/.bp*
+	cp ~/.gdbinit testhome
 	HOME=./testhome CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.gdb > known-good.txt
 	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
 
@@ -57,6 +58,7 @@ test:
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
 	mkdir -p testhome
 	rm -f testhome/.bp*
+	cp ~/.gdbinit testhome
 	HOME=./testhome CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.gdb > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
@@ -64,6 +66,7 @@ test:
 testv:
 	mkdir -p testhome
 	rm -f testhome/.bp*
+	cp ~/.gdbinit testhome
 	HOME=./testhome COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
 	./test
 
@@ -72,12 +75,14 @@ dev:
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
 	mkdir -p testhome
 	rm -f testhome/.bp*
+	cp ~/.gdbinit testhome
 	HOME=./testhome CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) $(PYTHON_SOURCE) test
 
 testprod:
 	cobcd -x test.cbl
 	mkdir -p testhome
 	rm -f testhome/.bp*
+	cp ~/.gdbinit testhome
 	HOME=./testhome CPRINT_RAISE=0 $(GDB) --batch -x test.gdb > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
