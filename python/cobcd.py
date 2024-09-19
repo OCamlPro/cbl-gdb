@@ -6900,8 +6900,7 @@ class CLoadWorker():
 
     # note: try to get the value from libcob won't help for remote-/cross-debugging,
     #       as the local python iterates over the folders
-    library_path = os.getenv
-  """wrapper to get memoryview of an address and given length"""('COB_LIBRARY_PATH', '.')
+    library_path = os.getenv('COB_LIBRARY_PATH', '.')
     self.module_paths = library_path.split(path.pathsep)
 
     self.modules = []
