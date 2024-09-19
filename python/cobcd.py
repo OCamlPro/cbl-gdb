@@ -265,7 +265,7 @@ def get_element_size():
 
 def get_repeats_size():
   # GDB reasonably combines the output for repeating characters, allowing both to "see more"
-  # and to "better corelate" the data
+  # and to "better correlate" the data
   # We try to follow GDBs rules here using the same parameter, but need to care to do
   # something reasonable when the setting is "unlimited", where a "None" is returned
   return gdb.parameter("print repeats") or 1000000    # happy scrolling
@@ -5336,15 +5336,18 @@ class CPrintWorker():
     except:
       pass   # failed in some cases (GDB version and/or already defined?) - ignore
 
-    self.LoadUpProgramsInModules()
-    
 #    GV_ModuleState.EstablishModuleState(False)
 
   def LoadUpProgramsInModules(self):
+    # Replace this with a better test in the event that a new file has been
+    # loaded.  See "info file"
+    if len(self.programs_in_modules) > 0:
+      return
+
     current_file:str = None
     
     # First, use "info functions" to find the file_name for each function
-    program_list = gdb.execute("info functions .*_", True, True).split('\n')
+    program_list = gdb.execute("info functions -q -n .*_$", True, True).split('\n')
     for line in program_list:
       tokens = line.split();
       if len(tokens):
@@ -6832,6 +6835,7 @@ class CPrint(gdb.Command):
       pass
 
   def invoke(self, arguments, from_tty):  # invoke cprint (this comment is for finding this invoke)
+    self.worker.LoadUpProgramsInModules()
     try:
       self.worker.ProcessArguments(arguments)
     # pass user errors unchanged
@@ -6841,6 +6845,7 @@ class CPrint(gdb.Command):
       traceback.print_exc()
 
   def complete(self, text, word):
+    self.worker.LoadUpProgramsInModules()
     possibilities = []
     GV_ModuleState.EstablishModuleState(True)
     if len(GV_ModuleInformation.var_trie.storage_list) > 0 :

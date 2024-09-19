@@ -3,11 +3,11 @@ KNOWN GOOD START
 01 variable1/prog13 [W-S]  :  "I am variable13 "
 01 variable1/prog12 [W-S]  :  "I am variable12 "
 01 variable1/prog11 [W-S]  :  "I am variable11 "
-No symbol matches "variable1/prog31" in current context
-No symbol matches "variable1/prog32" in current context
-No symbol matches "variable1/prog33" in current context
-No symbol matches "variable1/prog21" in current context
-No symbol matches "variable1/prog23" in current context
-No symbol matches "variable1/prog22" in current context
+01 variable1/prog31 [W-S]  :  "I am variable31 "
+01 variable1/prog32 [W-S]  :  "I am variable32 "
+01 variable1/prog33 [W-S]  :  "I am variable33 "
+01 variable1/prog21 [W-S]  :  "I am variable21 "
+01 variable1/prog23 [W-S]  :  "I am variable23 "
+01 variable1/prog22 [W-S]  :  "I am variable22 "
 01 variable1/prog11 [W-S]  :  "I am variable11 "
 KNOWN GOOD FINISH
