@@ -5324,6 +5324,7 @@ class CPrintWorker():
     self.programs_in_modules = {}
     self.string_names_in_modules = {}
     self.stashed_string_name:str = None
+    self.machine_interface_addname = False
 
     # ensure GDB can resolve dynamic field references in parse_and_eval
     try:
@@ -5463,12 +5464,17 @@ class CPrintWorker():
         # else:
         #   param = None
 
-        if mode in "mvdxbq":
+        if mode in "mMvdxbq":
           # Any of these switches suppress the hierarchical pretty printing
           GV_ModuleState.current_pretty_mode = ''
 
         if mode == 'm':
           self.machine_interface_mode = True
+          self.machine_interface_addname = False
+          args.pop(0)
+        elif mode == 'M':
+          self.machine_interface_mode = True
+          self.machine_interface_addname = True
           args.pop(0)
         elif mode == 'r':
           args = self.ProcessSlashR(args)
@@ -5682,12 +5688,17 @@ class CPrintWorker():
         payload_index = abs(payload_index)  % LENADDR_FLAG_BIAS
 
       payload = GV_ModuleInformation.var_trie.storage_list[payload_index]
+      if self.machine_interface_addname is True:
+        leader = 'name="' + payload.Name + '",value="'
+      else:
+        leader = 'value="'
+
       if flag == 0:
-        disp_str = 'value="' + MachineInterfaceBodyAlt(WithRepeatCount(payload.display_body)) + '"'
+        disp_str = leader + MachineInterfaceBodyAlt(WithRepeatCount(payload.display_body)) + '"'
       elif flag == LENADDR_FLAG_ADDRESS:
-        disp_str = 'value="' + MachineInterfaceBodyAlt(hex(payload.ActualLocation)) + '"'
+        disp_str = leader + MachineInterfaceBodyAlt(hex(payload.ActualLocation)) + '"'
       else: # flag == LENADDR_FLAG_LENGTH:
-        disp_str = 'value="' + MachineInterfaceBodyAlt(str(payload.ActualLength)) + '"'
+        disp_str = leader + MachineInterfaceBodyAlt(str(payload.ActualLength)) + '"'
 
       print(disp_str)
       return
