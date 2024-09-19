@@ -40,6 +40,11 @@ def main() :
         pattern_call = re.compile("^[0-9]+\t[ ]*cALl",re.IGNORECASE)
         pattern_entry = re.compile("^.* [(]entry=.*$")
         pattern_frame = re.compile("^#[0-9]+[ ]+0x.*$")
+        pattern_breakpoint_at = re.compile("at 0x[0-9a-f]+")
+        pattern_breakpoint_in = re.compile("0x[0-9a-f]+\s+in")
+        pattern_set_address = re.compile(r"^SET ADDRESS\s+0x([0-9a-f]+)")
+        dummy_address = 0
+        pattern_process = re.compile('(^.*process )([0-9]+[ ]*)(.*$)')
 
         ignoring = False
 
@@ -50,6 +55,11 @@ def main() :
             elif line.find("IGNORE FINISH") == 0 :
                 ignoring = False
             if ignoring :
+                continue
+
+            match = pattern_set_address.match(line)
+            if match :
+                dummy_address =  int(match.group(1), 16)
                 continue
 
             is_source_line = False
@@ -85,11 +95,18 @@ def main() :
                 in_print_count -= 1
 
             if print_this_line :
+                if not dummy_address == 0:
+                ## Some places may output function address for breakpoints:
+                ## If enabled replace that with an increasing dummy number and go on 
+                   line = pattern_breakpoint_at.sub(f"at {hex(dummy_address)}", line)
+                   line = pattern_breakpoint_in.sub(f" {hex(dummy_address)} in", line)
+                   dummy_address += 1
+
+            if print_this_line :
                 ## In general, when a process ends, it puts up a message like this:
                 ##      [Inferior 1 (process 14969) exited normally]
                 ## Let's replace the process number with "99999"
-                p = re.compile( '(^.*process )([0-9]+[ ]*)(.*$)' )
-                m = p.match(line)
+                m = pattern_process.match(line)
                 if m :
                     print(m.group(1) + "99999" + m.group(3))
                     print_this_line = False

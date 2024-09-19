@@ -8114,6 +8114,84 @@ GV_ModuleState = ModuleState()
 init_me()
 
 
+class BPHelper():
+  """internal helper routines"""
+
+  def __init__(self):
+    if GV_noisy_registration:
+      print('Registering commands breakpoints-load, breakpoints-save')
+    LoadBreakpoints(self)
+    SaveBreakpoints(self)
+
+  def breakpoint_save_filename(self, argument, Save=True):
+    fname = os.environ.get('HOME', os.environ.get('TMPDIR', '/tmp')) + "/.bp"
+    if argument:
+      fname += "." + argument
+    try:
+      prj = os.environ['project']
+    except: prj = None
+    if prj:
+      fname += "." + prj
+    fname +=  ".gdb"
+    if not Save:
+      if not path.isfile(fname):
+        ConditionalRaise (gdb.GdbError(fname + ": No such file or directory."))
+        return None
+    return fname
+
+class LoadBreakpoints(gdb.Command):
+  """loads saved breakpoints from ~/.bp.gdb files"""
+
+  def __init__(self, bp_helper):
+    super(LoadBreakpoints, self).__init__("breakpoints-load", gdb.COMMAND_USER)
+    self.bp_helper = bp_helper
+
+    # set alias, ignore errors (most likely because already defined)
+    try:
+      gdb.execute("alias -a lb = breakpoints-load", False, True)
+    except gdb.error:
+      pass
+
+  def invoke(self, arguments, from_tty):
+    self.dont_repeat()
+
+    fname = self.bp_helper.breakpoint_save_filename(arguments, Save=False)
+    if fname is None:
+      return
+    bp_pending = gdb.parameter("breakpoint pending")
+    command = "delete\n source " + fname
+    if bp_pending is None or bp_pending == False:
+      gdb.execute("set breakpoint pending on", False, False)
+    try:
+      gdb.execute(command, False, True)
+      print("breakpoints loaded from " + fname)
+    finally:
+      if bp_pending is None:
+        gdb.execute("set breakpoint pending auto", False, False)
+      elif not bp_pending:
+        gdb.execute("set breakpoint pending off", False, False)
+
+class SaveBreakpoints(gdb.Command):
+  """saves current breakpoints to ~/.bp.gdb files"""
+
+  def __init__(self, bp_helper):
+    super(SaveBreakpoints, self).__init__("breakpoints-save", gdb.COMMAND_USER)
+    self.bp_helper = bp_helper
+
+    # set alias, ignore errors (most likely because already defined)
+    try:
+      gdb.execute("alias -a sb = breakpoints-save", False, True)
+    except gdb.error:
+      pass
+
+  def invoke(self, arguments, from_tty):
+    self.dont_repeat()
+
+    fname = self.bp_helper.breakpoint_save_filename(arguments)
+    command = "save breakpoints " + fname
+    gdb.execute(command, False, False)
+
+
 class CHelp(gdb.Command):
   """Shows help for gdb COBOL debugging"""
 
@@ -8129,6 +8207,7 @@ fp                    | finish program (back to CALL)
 until-cobol           | go until COBOL
 continue        (c)   | continue
 add-symbol-file-cobol | load COBOL module  [BUG, DO NOT USE]
+info shared     (i sh)| show loaded shared objects
 cbreak          (cb)  | set breakpoint
 cb [<pos>9 [if <cond>]| set breakpoint [at <pos> or current line]
                       |   [with COBOL <cond>]
@@ -8144,6 +8223,8 @@ commands [<N>]        | set/remove commands to be
 ccondition <N>  (cc)  | remove COBOL condition for breakpoint
 cc <N> <cond>         | set COBOL condition for breakpoint
 ignore <N> <cnt> (ig) | skips breakpoint <cnt> times
+brerakpoints-save (sb)| save breakpoints
+brerakpoints-load (lb)| load breakpoints
 cprint          (cp)  | show or assign values
 cprint /p  <VAR>      | show all variables below the group
 cwatch          (cw)  | watch var - break+print on change
@@ -8331,8 +8412,10 @@ CmdAutoStep()
 CStart()
 CHelp()
 
+BPHelper()
+
 if not GV_noisy_registration:
   print("Registering the CBL-GDB debugger {0}.  Help is available with help-cobol and for".format(COBCD_VERSION))
   print("   cprint cwatch cbreak ctbreak ccondition add-symbol-file-cobol cstart cnext")
-  print("   cup cup-silently cdown cdown-silently cfinish")
+  print("   cup cup-silently cdown cdown-silently cfinish breakpoints-load breakpoints-save")
   print("   finish-out-of-line-perform finish-module until-cobol list-section local-backtrace cbacktrace auto-step")

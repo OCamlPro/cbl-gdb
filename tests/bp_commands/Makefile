@@ -1,0 +1,86 @@
+PYTHON=/usr/bin/python3
+COBCD=$(PYTHON) ../../cobcd
+COBCDRW=../../cobcd-rw/cobcd-rw
+GDB=gdb
+
+#
+# The FMODE variable defaults to "0" means "Do nothing"
+#                                "1" means embed a pointer to cobcd.py in the ELF
+#
+# This makefile defaults FMODEto "0"
+# Should you prefer "1", you have a couple of options:
+#
+#     make test FMODE=1
+#     COBCDFMODE=1 make test
+#
+# If you have a mode you really prefer, you can 
+#
+#     export COBCDFMODE=1 and then subsequently
+#     make test
+
+FMODE=$(COBCDFMODE)
+ifeq ($(FMODE),)
+	FMODE=0
+    PYTHON_SOURCE=-x ../../python/cobcd.py
+endif
+
+# For reasons that remain unknown -- probably because of the older
+# version of GDB, but who knows? -- the response on RedHat7 isn't quite
+# the same as for Ubuntu.
+
+# So, we cook up, and read, a different set of known-good files for RH7
+
+# start with "known-good"
+knowngood:=known-good
+
+# tack on "-rh7" on a RedHat7 system:
+#knowngood := $(knowngood)$(shell uname -r |grep el7| sed 's/\(^.*\)el7\(.*\)/-rh7/g')
+
+# We also need separate known-good files for MINGW32 and MINGW64
+#knowngood := $(knowngood)$(shell uname -s | grep MINGW | sed -e 's/^\(MINGW..\).*/-\1/g')
+
+# $(info known-good files: $(knowngood))
+
+.PHONY : known-good test all testprod clean
+
+all:
+	@echo "Your choices are 'make known-good' and 'make test' and 'make testprod'"
+
+known-good:
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
+	mkdir -p testhome
+	rm -f testhome/.bp*
+	HOME=./testhome CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.gdb > known-good.txt
+	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
+
+test:
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
+	mkdir -p testhome
+	rm -f testhome/.bp*
+	HOME=./testhome CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.gdb > under-test.txt
+	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
+	diff -uw $(knowngood).stripped under-test.stripped
+
+testv:
+	mkdir -p testhome
+	rm -f testhome/.bp*
+	HOME=./testhome COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
+	./test
+
+dev:
+	# For development: launch test under GDB.
+	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
+	mkdir -p testhome
+	rm -f testhome/.bp*
+	HOME=./testhome CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) $(PYTHON_SOURCE) test
+
+testprod:
+	cobcd -x test.cbl
+	mkdir -p testhome
+	rm -f testhome/.bp*
+	HOME=./testhome CPRINT_RAISE=0 $(GDB) --batch -x test.gdb > under-test.txt
+	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
+	diff -uw $(knowngood).stripped under-test.stripped
+
+clean:
+	rm -fr test-gdb.py test under-test.* testhome
