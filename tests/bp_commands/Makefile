@@ -49,21 +49,21 @@ all:
 known-good:
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
 	mkdir -p testhome
-	rm testhome/.bp*
+	rm -f testhome/.bp*
 	HOME=./testhome CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.gdb > known-good.txt
 	$(PYTHON) ../strip-diff known-good.txt >$(knowngood).stripped
 
 test:
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
 	mkdir -p testhome
-	rm testhome/.bp*
+	rm -f testhome/.bp*
 	HOME=./testhome CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) --batch $(PYTHON_SOURCE) -x test.gdb > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
 
 testv:
 	mkdir -p testhome
-	rm testhome/.bp*
+	rm -f testhome/.bp*
 	HOME=./testhome COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
 	./test
 
@@ -71,13 +71,13 @@ dev:
 	# For development: launch test under GDB.
 	COBCDEVEL=1 COBCDFMODE=$(FMODE) $(COBCD) -x test.cbl
 	mkdir -p testhome
-	rm testhome/.bp*
+	rm -f testhome/.bp*
 	HOME=./testhome CPRINT_RAISE=0 COBCDRW=$(COBCDRW) $(GDB) $(PYTHON_SOURCE) test
 
 testprod:
 	cobcd -x test.cbl
 	mkdir -p testhome
-	rm testhome/.bp*
+	rm -f testhome/.bp*
 	HOME=./testhome CPRINT_RAISE=0 $(GDB) --batch -x test.gdb > under-test.txt
 	$(PYTHON) ../strip-diff under-test.txt >under-test.stripped
 	diff -uw $(knowngood).stripped under-test.stripped
