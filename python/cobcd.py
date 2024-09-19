@@ -186,7 +186,7 @@ COBCDRW_AVAILABLE = True
 # Note: Replace "readelf" with path to binary if it is not in your PATH.
 READELF_BINARY = os.getenv('READELF', 'readelf')
 COBCDRW_BINARY = os.getenv('COBCDRW', 'cobcd-rw')
-COBCRUN_NAME = os.getenv('COBCRUN', 'cobcrun')  # _only_ the name, also: no extension
+COBCRUN_NAME    = os.getenv('COBCRUN', 'cobcrun')  # _only_ the name, also: no extension
 
 WATCHPOINT_NOTE = "echo note: watchpoint for "
 WATCHPOINT_NOTE_PATTERN = WATCHPOINT_NOTE + r'(.*)(\\n)?'
@@ -218,7 +218,10 @@ LENADDR_FLAG_ADDRESS = 1
 LENADDR_FLAG_LENGTH = 2
 
 def GdbExecute(curframe, command):
-  # It is up to the caller to handle exceptions
+  """execute command (in current frame)
+
+  Note: It is up to the caller to handle exceptions."""
+
   limiting_debug_level = 1
   if GV_GlobalVariables.debug_level.value >= limiting_debug_level:
     print("#### ", getframeinfo(frame).lineno, ": gdb.execute: '", command, "'", sep='')
@@ -232,6 +235,7 @@ def GdbExecute(curframe, command):
 
 
 def get_memoryview(address, length):
+  """wrapper to get memoryview of an address and given length"""
 
   if address == 0:
     ConditionalRaise("We're not going to try to access memory with a NULL pointer")
@@ -7059,8 +7063,8 @@ class CLoadWorker():
       else:
         self.objext = '.so'
 
-    # note: try to get the value from libcob won't help for renotte-/cross-debugging, as the local
-    #   python iterates over the folders
+    # note: try to get the value from libcob won't help for remote-/cross-debugging,
+    #       as the local python iterates over the folders
     library_path = os.getenv('COB_LIBRARY_PATH', '.')
     self.module_paths = library_path.split(path.pathsep)
 
