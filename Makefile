@@ -11,6 +11,8 @@ else
 	SED := sed
 endif
 
+PYTHON := $(shell which python3)
+
 BITS:=$(shell echo $(MINGW_PREFIX)| $(SED) -E 's/.*(32|64)/\1/g')
 
 prefix_default = /usr/local
