@@ -6181,12 +6181,13 @@ class CobolAfterWatchBreakpoint(gdb.Breakpoint):
     if not frame:
       frame = gdb.selected_frame()
 
-    # the "actual correct" address would be the following, but we'd need to until there, not break
     # resume_address = '*' + str(hex(frame.find_sal().last)) # last instruction of the current statement,
-    # so we use the return address of the current function which often will lead to a twice reached BP,
-    # "seemingly" at the end of the same COBOL line, worked around by "one more"
-    #resume_address = '*' + str(hex(frame.pc)  # current return instruction
-    resume_address = '*' + str(hex(frame.pc() + 1))    # current return instruction + 1 _seems_ to always work
+    # rem: so we use the return address of the current function
+    # rem: as this often lead to a twice reached BP, "seemingly" at the end of the same COBOL line,
+    #      we tried to work around that by "one more": as follows
+    # resume_address = '*' + str(hex(frame.pc() + 1))    # current return instruction + 1
+    # rem: but as this is possibly not executable and raised a SIGSEGV -> back to old one
+    resume_address = '*' + str(hex(frame.pc()))    # current return instruction + 1 _seems_ to always work
 
     super(CobolAfterWatchBreakpoint, self).__init__(resume_address, temporary=True, internal=True)
 
@@ -6341,7 +6342,7 @@ class CWatchWorker():
     spec += '[' + str(wp_length) + '])'
     spec += '(' + hex(wp_startloc) + ')'
 
-    if False:
+    if True:
       #
       # I have effectively removed this code because I have determined that it doesn't work
       # as intended.  For the CWATCH test program compiled with GnuCOBOL 3.1.2, it seems to
@@ -6359,6 +6360,10 @@ class CWatchWorker():
       # find the frame with the relevant COBOL source code, but I don't regard this as
       # a problem; the user can always use backtrace to see where in the COBOL source code
       # the access was initiated.  Dubner, 2022-01-10
+
+      # seems to be fixed with changes to CobolWatchBreakpoint 
+
+
       #
       break_point = CobolWatchBreakpoint(payload, spec, wp_type)
     else:
@@ -6366,7 +6371,12 @@ class CWatchWorker():
       if break_point.type == gdb.BP_WATCHPOINT:
         break_point.delete()
         ConditionalRaise("Expression cannot be implemented as hardware watchpoint.\n... and therefore removed")
-        break_point.commands = "echo Watched: {0} from {1}\\n \n cup 0".format(payload.NameWithSubscripts(), payload.Program)
+        return
+      # Add the expression to the breakpoint commands
+      break_point.commands = """
+      echo Watched: {0} from {1}\\n
+      cup 0
+      """.format(payload.NameWithSubscripts(), payload.Program)
 
   def process_watch_arguments(self, arguments):
     left_side = []
