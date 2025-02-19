@@ -248,7 +248,7 @@ def Main() :
     ## The text "Version x.x" has to appear in square brackets.               #
     ## Don't mess with it!                                                    #
     ###########################################################################
-    SCRIPT_VERSION="[Version 5.5.1]"
+    SCRIPT_VERSION="[Version 5.5.2]"
 
     show_time = os.environ.get("SHOW_TIME","0")
     SHOW_TIME = False
