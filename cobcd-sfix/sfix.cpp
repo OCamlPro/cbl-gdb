@@ -306,7 +306,7 @@ void purge_cob_nop(WHOLEFILE &fd)
 #ifdef _WIN32
     return;
 #endif
-    // With the advent of GNUCobol 3.2, this construction became ubiquitous in 
+    // With the advent of GNUCobol 3.2, this construction became ubiquitous in
     // the .s file:
     /*
           movq	module.116(%rip), %rax
@@ -336,7 +336,7 @@ void purge_cob_nop(WHOLEFILE &fd)
       stack[3] = stack[4];
       stack[4] = fd.current_index;
 
-      if( !fgets(ach,sizeof(ach),fd)) 
+      if( !fgets(ach,sizeof(ach),fd))
           {
           break;
           }
@@ -349,19 +349,19 @@ void purge_cob_nop(WHOLEFILE &fd)
       if( !pseudo_strstr(fd.data+stack[0], "movq") )
           {
           continue;
-          } 
+          }
       if( !pseudo_strstr(fd.data+stack[1], "testq") )
           {
           continue;
-          } 
+          }
       if( !pseudo_strstr(fd.data+stack[2], "jne") )
           {
           continue;
-          } 
+          }
       if( !pseudo_strstr(fd.data+stack[3], "loc") )
           {
           continue;
-          } 
+          }
 
       fd.data[stack[0]] = '#';
       fd.data[stack[1]] = '#';
@@ -439,9 +439,34 @@ build(PARAMETERS &params,
     while(fgets(ach,sizeof(ach),fd)) {
         i += 1;
 
+        // For cbl-gdb 5.6.1, Simon noted that compiling with
+        //      "cobcd -O"
+        // resulted in many an error during the assembly phase. A determination
+        // has been made that -O optimizations other than -O0 cause the creation
+        // of lines like
+        //       .loc 1 30 1 view .LVU12
+        // where file 1 is the COBOL source code file.
+        // When those "view" lines are filtered out, the assembly phase fails.
+        //
+        // It is a mystery.
+        //
+        // Empirically, letting those lines through allows the process to
+        // complete.  The resulting executable cannot be debugged; too much
+        // information gets scrambled or lost with optimizations other than -O.
+
+        if( ach[0] != '#'
+            AND strstr(ach, "view")
+            AND strstr(ach,".loc")
+            AND (strstr(ach,".loc ") OR strstr(ach,".loc\t")) )
+            {
+            // Just allow the line
+            fprintf(f,"%s\n",ach);
+            continue;
+            }
+
         VSTRING tokens = Split(string(ach),"\t ");
         if( tokens.size() > 1
-            && tokens[0] == ".file" 
+            && tokens[0] == ".file"
             && tokens[1][0] == '"' ) {
             // Skip the informative '.file "test.c"' line
             continue;
