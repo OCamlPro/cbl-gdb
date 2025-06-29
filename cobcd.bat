@@ -16,8 +16,8 @@ set VERSION=[Version 5.6.3]
 set COMMAND_LINE="python %~dp0cobcd
 
 :parameter_loop
-    IF not "%1"=="" (
-        SET COMMAND_LINE=%COMMAND_LINE% %1
+    IF not "%~1"=="" (
+        SET COMMAND_LINE=%COMMAND_LINE% %~1
         )
     shift
     if not "%~1"=="" goto parameter_loop
