@@ -1,4 +1,7 @@
 2026-11-17  David Declerck <david.declerck@ocamlpro.com>
+	* cobcd: Pass -M options (-MD, -MT, -MF) through to cobc
+
+2026-11-17  David Declerck <david.declerck@ocamlpro.com>
 	* cobcd: Keep cobc source context lines of warnings on separate lines
 
 2026-11-17  David Declerck <david.declerck@ocamlpro.com>
